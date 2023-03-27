@@ -11,6 +11,8 @@ import org.hibernate.annotations.DiscriminatorOptions;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.User;
@@ -38,6 +40,12 @@ public abstract class Notification extends DomainObject {
 
     @Column(name = "text")
     private String text;
+
+    @Column(name = "text_is_placeholder")
+    private boolean textIsPlaceholder;
+
+    @Column(name = "placeholder_values")
+    private String placeholderValues;
 
     @Column(name = "notification_date")
     private ZonedDateTime notificationDate;
@@ -87,6 +95,42 @@ public abstract class Notification extends DomainObject {
 
     public void setText(String text) {
         this.text = text;
+    }
+
+    public boolean getTextIsPlaceholder() {
+        return textIsPlaceholder;
+    }
+
+    public void setTextIsPlaceholder(boolean textIsPlaceholder) {
+        this.textIsPlaceholder = textIsPlaceholder;
+    }
+
+    public String getPlaceholderValues() {
+        return placeholderValues;
+    }
+
+    public void setPlaceholderValues(String notificationTextValues) {
+        this.placeholderValues = notificationTextValues;
+    }
+
+    /**
+     * @param notificationTextValues the notification text values as a string array
+     *                                   We convert it to a json string, so we can store it in the database
+     */
+    public void setPlaceholderValues(String[] notificationTextValues) {
+        if (notificationTextValues == null || notificationTextValues.length == 0) {
+            this.placeholderValues = null;
+        }
+        else {
+            String jsonString = null;
+            try {
+                jsonString = new ObjectMapper().writeValueAsString(notificationTextValues);
+            }
+            catch (JsonProcessingException exception) {
+                System.err.println(exception.getMessage());
+            }
+            this.placeholderValues = jsonString;
+        }
     }
 
     public ZonedDateTime getNotificationDate() {

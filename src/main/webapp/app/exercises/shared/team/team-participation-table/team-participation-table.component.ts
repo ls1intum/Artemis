@@ -144,7 +144,7 @@ export class TeamParticipationTableComponent implements OnInit {
      */
     getAssessmentLink(exercise: Exercise, participation: Participation | undefined, submission: Submission | 'new' | undefined): string[] {
         const submissionUrlParameter: number | 'new' = submission === 'new' || submission == undefined ? 'new' : submission.id!;
-        return getLinkToSubmissionAssessment(exercise.type!, this.course.id!, exercise.id!, participation?.id, submissionUrlParameter, 0, 0);
+        return getLinkToSubmissionAssessment(exercise.type!, this.course.id!, exercise.id!, participation?.id, submissionUrlParameter, undefined, undefined);
     }
 
     /**

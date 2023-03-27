@@ -3,9 +3,11 @@ package de.tum.in.www1.artemis.service.notifications;
 import static de.tum.in.www1.artemis.domain.enumeration.GroupNotificationType.*;
 import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.*;
 import static de.tum.in.www1.artemis.domain.notification.GroupNotificationFactory.createNotification;
+import static de.tum.in.www1.artemis.domain.notification.NotificationConstants.LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE;
 import static de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants.LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE;
 
 import java.time.ZonedDateTime;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -18,9 +20,10 @@ import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.Post;
+import de.tum.in.www1.artemis.domain.metis.Posting;
 import de.tum.in.www1.artemis.domain.notification.GroupNotification;
+import de.tum.in.www1.artemis.domain.notification.NotificationConstants;
 import de.tum.in.www1.artemis.domain.notification.NotificationTarget;
-import de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.GroupNotificationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
@@ -80,8 +83,11 @@ public class GroupNotificationService {
             GroupNotification resultingGroupNotification;
             resultingGroupNotification = switch (notificationType) {
                 // Post Types
-                case NEW_EXERCISE_POST, NEW_REPLY_FOR_EXERCISE_POST, NEW_LECTURE_POST, NEW_REPLY_FOR_LECTURE_POST, NEW_COURSE_POST, NEW_REPLY_FOR_COURSE_POST, NEW_ANNOUNCEMENT_POST -> createNotification(
-                        (Post) notificationSubject, author, group, notificationType, (Course) typeSpecificInformation);
+                case NEW_EXERCISE_POST, NEW_LECTURE_POST, NEW_COURSE_POST, NEW_ANNOUNCEMENT_POST -> createNotification((Post) notificationSubject, author, group, notificationType,
+                        (Course) typeSpecificInformation);
+                // Post Reply Types
+                case NEW_REPLY_FOR_EXERCISE_POST, NEW_REPLY_FOR_LECTURE_POST, NEW_REPLY_FOR_COURSE_POST -> createNotification((Post) ((List<Posting>) notificationSubject).get(0),
+                        (AnswerPost) ((List<Posting>) notificationSubject).get(1), author, group, notificationType, (Course) typeSpecificInformation);
                 // General Types
                 case ATTACHMENT_CHANGE -> createNotification((Attachment) notificationSubject, author, group, notificationType, (String) typeSpecificInformation);
                 case QUIZ_EXERCISE_STARTED -> createNotification((QuizExercise) notificationSubject, author, group, notificationType, (String) typeSpecificInformation);
@@ -241,7 +247,8 @@ public class GroupNotificationService {
      * @param course     that the post belongs to
      */
     public void notifyTutorAndEditorAndInstructorGroupAboutNewReplyForCoursePost(Post post, AnswerPost answerPost, Course course) {
-        notifyGroupsWithNotificationType(new GroupNotificationType[] { TA, EDITOR, INSTRUCTOR }, NEW_REPLY_FOR_COURSE_POST, post, course, answerPost.getAuthor());
+        notifyGroupsWithNotificationType(new GroupNotificationType[] { TA, EDITOR, INSTRUCTOR }, NEW_REPLY_FOR_COURSE_POST, Arrays.asList(post, answerPost), course,
+                answerPost.getAuthor());
     }
 
     /**
@@ -252,7 +259,8 @@ public class GroupNotificationService {
      * @param course     that the post belongs to
      */
     public void notifyTutorAndEditorAndInstructorGroupAboutNewReplyForExercise(Post post, AnswerPost answerPost, Course course) {
-        notifyGroupsWithNotificationType(new GroupNotificationType[] { TA, EDITOR, INSTRUCTOR }, NEW_REPLY_FOR_EXERCISE_POST, post, course, answerPost.getAuthor());
+        notifyGroupsWithNotificationType(new GroupNotificationType[] { TA, EDITOR, INSTRUCTOR }, NEW_REPLY_FOR_EXERCISE_POST, Arrays.asList(post, answerPost), course,
+                answerPost.getAuthor());
     }
 
     public void notifyTutorGroupAboutNewFeedbackRequest(Exercise exercise) {
@@ -277,7 +285,8 @@ public class GroupNotificationService {
      * @param course     that the post belongs to
      */
     public void notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForLecture(Post post, AnswerPost answerPost, Course course) {
-        notifyGroupsWithNotificationType(new GroupNotificationType[] { TA, EDITOR, INSTRUCTOR }, NEW_REPLY_FOR_LECTURE_POST, post, course, answerPost.getAuthor());
+        notifyGroupsWithNotificationType(new GroupNotificationType[] { TA, EDITOR, INSTRUCTOR }, NEW_REPLY_FOR_LECTURE_POST, Arrays.asList(post, answerPost), course,
+                answerPost.getAuthor());
     }
 
     /**
@@ -320,7 +329,7 @@ public class GroupNotificationService {
         groupNotificationRepository.save(notification);
         messagingTemplate.convertAndSend(notification.getTopic(), notification);
 
-        NotificationType type = NotificationTitleTypeConstants.findCorrespondingNotificationType(notification.getTitle());
+        NotificationType type = NotificationConstants.findCorrespondingNotificationType(notification.getTitle());
 
         // checks if this notification type has email support
         if (notificationSettingsService.checkNotificationTypeForInstantNotificationSupport(type)) {

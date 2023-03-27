@@ -96,7 +96,7 @@
         </div>
         <!-- LECTURE END -->
         <div class="col d-flex flex-grow-1 justify-end" style="max-width: min-content">
-            <router-outlet *ngIf="lecture && lecture.course?.postsEnabled" class="ms-3" (activate)="onChildActivate($event)"></router-outlet>
+            <router-outlet *ngIf="lecture && isCommunicationEnabled(lecture.course)" class="ms-3" (activate)="onChildActivate($event)"></router-outlet>
         </div>
     </div>
 </div>

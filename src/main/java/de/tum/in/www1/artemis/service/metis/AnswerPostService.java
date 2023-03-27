@@ -67,7 +67,7 @@ public class AnswerPostService extends PostingService {
             throw new BadRequestAlertException("A new answer post cannot already have an ID", METIS_ANSWER_POST_ENTITY_NAME, "idExists");
         }
 
-        final Course course = preCheckUserAndCourse(user, courseId);
+        final Course course = preCheckUserAndCourseForCommunication(user, courseId);
         Post post = postRepository.findPostByIdElseThrow(answerPost.getPost().getId());
 
         // increase answerCount of post needed for sorting
@@ -107,7 +107,7 @@ public class AnswerPostService extends PostingService {
             throw new BadRequestAlertException("Invalid id", METIS_ANSWER_POST_ENTITY_NAME, "idNull");
         }
         AnswerPost existingAnswerPost = this.findById(answerPostId);
-        final Course course = preCheckUserAndCourse(user, courseId);
+        final Course course = preCheckUserAndCourseForCommunication(user, courseId);
 
         AnswerPost updatedAnswerPost;
 
@@ -138,7 +138,7 @@ public class AnswerPostService extends PostingService {
      * @param courseId   id of the course the answer post belongs to
      */
     public void updateWithReaction(AnswerPost answerPost, Reaction reaction, Long courseId) {
-        final Course course = preCheckUserAndCourse(reaction.getUser(), courseId);
+        final Course course = preCheckUserAndCourseForCommunication(reaction.getUser(), courseId);
         answerPost.addReaction(reaction);
         AnswerPost updatedAnswerPost = answerPostRepository.save(answerPost);
         updatedAnswerPost.getPost().setConversation(answerPost.getPost().getConversation());
@@ -157,7 +157,7 @@ public class AnswerPostService extends PostingService {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
 
         // checks
-        final Course course = preCheckUserAndCourse(user, courseId);
+        final Course course = preCheckUserAndCourseForCommunication(user, courseId);
         AnswerPost answerPost = this.findById(answerPostId);
         Post post = postRepository.findPostByIdElseThrow(answerPost.getPost().getId());
 
@@ -190,13 +190,13 @@ public class AnswerPostService extends PostingService {
         // notify via course
         if (post.getCourseWideContext() != null) {
             groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewReplyForCoursePost(post, answerPost, course);
-            singleUserNotificationService.notifyUserAboutNewReplyForCoursePost(post, course);
+            singleUserNotificationService.notifyUserAboutNewReplyForCoursePost(post, answerPost, course);
             return;
         }
         // notify via exercise
         if (post.getExercise() != null) {
             groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewReplyForExercise(post, answerPost, course);
-            singleUserNotificationService.notifyUserAboutNewReplyForExercise(post, course);
+            singleUserNotificationService.notifyUserAboutNewReplyForExercise(post, answerPost, course);
             // protect Sample Solution, Grading Instructions, etc.
             post.getExercise().filterSensitiveInformation();
             return;
@@ -204,7 +204,7 @@ public class AnswerPostService extends PostingService {
         // notify via lecture
         if (post.getLecture() != null) {
             groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForLecture(post, answerPost, course);
-            singleUserNotificationService.notifyUserAboutNewReplyForLecture(post, course);
+            singleUserNotificationService.notifyUserAboutNewReplyForLecture(post, answerPost, course);
         }
     }
 

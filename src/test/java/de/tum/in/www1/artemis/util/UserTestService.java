@@ -23,9 +23,9 @@ import de.tum.in.www1.artemis.domain.notification.SingleUserNotification;
 import de.tum.in.www1.artemis.programmingexercise.MockDelegate;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
-import de.tum.in.www1.artemis.service.connectors.CIUserManagementService;
-import de.tum.in.www1.artemis.service.connectors.LtiService;
-import de.tum.in.www1.artemis.service.connectors.VcsUserManagementService;
+import de.tum.in.www1.artemis.service.connectors.ci.CIUserManagementService;
+import de.tum.in.www1.artemis.service.connectors.lti.LtiService;
+import de.tum.in.www1.artemis.service.connectors.vcs.VcsUserManagementService;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
 import de.tum.in.www1.artemis.service.dto.UserInitializationDTO;
 import de.tum.in.www1.artemis.service.user.PasswordService;
@@ -110,7 +110,7 @@ public class UserTestService {
         student.setInternal(true);
         userRepository.save(student);
         mockDelegate.mockDeleteUserInUserManagement(student, true, false, false);
-        var notification = singleUserNotificationRepository.save(new SingleUserNotification(student, "title", "text"));
+        var notification = singleUserNotificationRepository.save(new SingleUserNotification(student, "title", "text", false, null));
 
         request.delete("/api/admin/users/" + student.getLogin(), HttpStatus.OK);
 
@@ -468,7 +468,7 @@ public class UserTestService {
         student.setPassword("foobar");
         student.setEmail("batman@secret.invalid");
 
-        mockDelegate.mockFailToCreateUserInExernalUserManagement(student, false, true, false);
+        mockDelegate.mockFailToCreateUserInExternalUserManagement(student, false, true, false);
 
         final var response = request.postWithResponseBody("/api/admin/users", new ManagedUserVM(student), User.class, HttpStatus.INTERNAL_SERVER_ERROR);
         assertThat(response).isNull();
@@ -481,7 +481,7 @@ public class UserTestService {
         student.setPassword("foobar");
         student.setEmail("batman@secret.invalid");
 
-        mockDelegate.mockFailToCreateUserInExernalUserManagement(student, false, false, true);
+        mockDelegate.mockFailToCreateUserInExternalUserManagement(student, false, false, true);
 
         final var response = request.postWithResponseBody("/api/admin/users", new ManagedUserVM(student), User.class, HttpStatus.INTERNAL_SERVER_ERROR);
         assertThat(response).isNull();
@@ -496,7 +496,7 @@ public class UserTestService {
         student.setPassword("foobar");
         student.setEmail("batman@secret.invalid");
 
-        mockDelegate.mockFailToCreateUserInExernalUserManagement(student, true, false, false);
+        mockDelegate.mockFailToCreateUserInExternalUserManagement(student, true, false, false);
 
         final var response = request.postWithResponseBody("/api/admin/users", new ManagedUserVM(student), User.class, HttpStatus.INTERNAL_SERVER_ERROR);
         assertThat(response).isNull();

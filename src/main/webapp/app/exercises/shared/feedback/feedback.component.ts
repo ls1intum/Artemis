@@ -49,7 +49,6 @@ export class FeedbackComponent implements OnInit {
     @Input() result: Result;
     // Specify the feedback.text values that should be shown, all other values will not be visible.
     @Input() feedbackFilter: string[];
-    @Input() showTestDetails = false;
     @Input() showScoreChart = false;
     @Input() exerciseType: ExerciseType;
     /**
@@ -73,6 +72,7 @@ export class FeedbackComponent implements OnInit {
     faCircleNotch = faCircleNotch;
     faExclamationTriangle = faExclamationTriangle;
 
+    private showTestDetails = false;
     isLoading = false;
     loadingFailed = false;
     buildLogs: BuildLogEntryArray;
@@ -157,6 +157,9 @@ export class FeedbackComponent implements OnInit {
         if (!this.exerciseType && isProgrammingExerciseParticipation(this.result?.participation)) {
             this.exerciseType = ExerciseType.PROGRAMMING;
         }
+
+        this.showTestDetails =
+            this.exercise?.isAtLeastTutor || (this.exerciseType === ExerciseType.PROGRAMMING && (this.exercise as ProgrammingExercise)?.showTestNamesToStudents) || false;
     }
 
     /**

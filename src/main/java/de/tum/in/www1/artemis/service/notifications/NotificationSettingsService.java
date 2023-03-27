@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.service.notifications;
 
 import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.*;
-import static de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants.findCorrespondingNotificationType;
+import static de.tum.in.www1.artemis.domain.notification.NotificationConstants.findCorrespondingNotificationType;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -12,7 +12,7 @@ import de.tum.in.www1.artemis.domain.NotificationSetting;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.notification.Notification;
-import de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants;
+import de.tum.in.www1.artemis.domain.notification.NotificationConstants;
 import de.tum.in.www1.artemis.repository.NotificationSettingRepository;
 
 @Service
@@ -217,7 +217,7 @@ public class NotificationSettingsService {
      * @return the converted String Set
      */
     public Set<String> convertNotificationTypesToTitles(Set<NotificationType> types) {
-        return types.stream().map(NotificationTitleTypeConstants::findCorrespondingNotificationTitle).collect(Collectors.toSet());
+        return types.stream().map(NotificationConstants::findCorrespondingNotificationTitle).collect(Collectors.toSet());
     }
 
     /**

@@ -5,6 +5,7 @@
             "sessionOverlapsWithSession": "Die Sitzung überschneidet sich mit folgenden Sitzungen: {{ sessions }}"
         },
         "generic": {
+            "unknown": "Nicht bekannt",
             "more": "Mehr...",
             "offline": "Offline",
             "online": "Online",
@@ -19,11 +20,16 @@
                 "saturday": "Samstag",
                 "sunday": "Sonntag"
             },
+            "repetitions": {
+                "everyWeek": "Jede Woche",
+                "everyNWeeks": "Alle {{ n }} Wochen"
+            },
             "timeZone": "Zeitzone: {{ timeZone }}",
             "betaWarning": "Diese Funktion befindet sich derzeit im Beta-Stadium. Es können Bugs und Änderungen auftreten. Bitte melde Fehler unter: https://github.com/ls1intum/Artemis/issues "
         },
         "entities": {
             "tutorialGroup": {
+                "locationTime": "Ort/Zeit",
                 "plural": "Übungsgruppen",
                 "course": "Kurs",
                 "title": "Titel",
@@ -34,12 +40,19 @@
                 "language": "Sprache",
                 "teachingAssistant": "Tutor:in",
                 "registrations": "Registrierungen",
+                "capacityWithRegistrations": "Kapazität / Registrierungen",
                 "schedule": "Sitzungsplan",
                 "sessions": "Sitzungen",
                 "nextSession": "Nächste Sitzung",
-                "channel": "Nachrichtenkanal",
+                "channel": "Chat",
                 "channelWithName": "Kanal: {{ channel }}",
-                "channelReverse": "Kanal der Übungsgruppe {{ title }}"
+                "channelReverse": "Kanal der Übungsgruppe {{ title }}",
+                "utilization": "Auslastung",
+                "utilizationHelp": "Durchschnittliche Anwesenheit geteilt durch Kapazität (falls definiert). Die durchschnittliche Anwesenheit bezieht sich auf die letzten drei Sitzungen. Falls keine Anwesenheit eingetragen wurde, wird die entsprechende Sitzung ignoriert und die Berechnung mit zwei, bzw. einer Sitzung durchgeführt.",
+                "utilizationHelpDetail": "Durchschnittliche Anwesenheit geteilt durch Kapazität",
+                "averageAttendance": "Duchschnittliche Anwesenheit: {{ averageAttendance }}",
+                "averageAttendanceDetail": "Durchschnittliche Anwesenheit",
+                "averageAttendanceHelpDetail": "Durchschnittliche Anwesenheit in den letzten drei Sitzungen. Falls keine Anwesenheit eingetragen wurde, wird die entsprechende Sitzung ignoriert und die Berechnung mit zwei, bzw. einer Sitzung durchgeführt."
             },
             "tutorialGroupSchedule": {
                 "dayOfWeek": "Wochentag",
