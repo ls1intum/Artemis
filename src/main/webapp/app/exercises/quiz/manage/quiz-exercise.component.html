@@ -1,25 +1,26 @@
 <div>
-    <h4 class="d-flex mb-3 flex-wrap justify-content-end">
-        <span class="mb-1 me-auto">
+    <div class="d-flex mb-3 flex-wrap justify-content-end">
+        <h4 class="mb-1 me-auto">
             <span *ngIf="course && !showHeading">{{ course.title }} - </span>
             <span *ngIf="quizExercises && showHeading && !filter.isEmpty() && quizExercises.length">{{ getAmountOfExercisesString(filteredQuizExercises) }} / </span>
             <span *ngIf="quizExercises && showHeading">{{ getAmountOfExercisesString(quizExercises) }} </span>
             <span jhiTranslate="artemisApp.quizExercise.home.title">Quiz Exercises</span>
-        </span>
-        <a
+        </h4>
+
+        <button
             *ngIf="course && course.isAtLeastEditor"
-            class="btn me-2 btn-primary jh-create-entity create-quiz-exercise text-truncate mb-1 me-1"
+            class="btn btn-primary jh-create-entity create-quiz-exercise text-truncate mb-1 me-1"
             [routerLink]="['/course-management', courseId, 'quiz-exercises', 'new']"
             queryParamsHandling="merge"
             id="create-quiz-button"
         >
             <fa-icon [icon]="faPlus"></fa-icon>
             <span jhiTranslate="artemisApp.quizExercise.home.createLabel"> Create new Quiz </span>
-        </a>
-        <a *ngIf="course && course.isAtLeastEditor" class="btn me-2 btn-primary text-truncate mb-1 me-1" [routerLink]="['/course-management', courseId, 'apollon-diagrams']">
+        </button>
+        <button *ngIf="course && course.isAtLeastEditor" class="btn btn-primary text-truncate mb-1 me-1" [routerLink]="['/course-management', courseId, 'apollon-diagrams']">
             <fa-icon [icon]="faPlus"></fa-icon>
             <span jhiTranslate="artemisApp.quizExercise.home.createModelDragAndDrop"> Create new Drag and Drop Model Quiz </span>
-        </a>
+        </button>
         <button
             *ngIf="course && course.isAtLeastEditor"
             id="jh-import-entity"
@@ -29,15 +30,15 @@
             <fa-icon [icon]="faPlus"></fa-icon>
             <span class="hidden-sm-down" jhiTranslate="artemisApp.quizExercise.home.importLabel"> Import quiz </span>
         </button>
-        <a
+        <button
             *ngIf="quizExercises && quizExercises.length > 0 && course.isAtLeastEditor"
-            class="btn me-2 btn-primary jh-create-entity create-quiz-exercise text-truncate mb-1 me-1"
+            class="btn btn-primary jh-create-entity create-quiz-exercise text-truncate mb-1 me-1"
             [routerLink]="['/course-management', courseId, 'quiz-exercises', 'export']"
         >
             <fa-icon [icon]="faPlus"></fa-icon>
             <span jhiTranslate="artemisApp.quizExercise.home.exportLabel"> Export Quiz Exercises </span>
-        </a>
-    </h4>
+        </button>
+    </div>
     <div class="row"></div>
     <br />
     <div class="table-responsive" *ngIf="quizExercises && filteredQuizExercises.length > 0">

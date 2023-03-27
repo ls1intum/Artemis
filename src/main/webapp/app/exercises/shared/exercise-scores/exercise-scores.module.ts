@@ -1,5 +1,4 @@
 import { NgModule } from '@angular/core';
-
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ExerciseScoresComponent } from './exercise-scores.component';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
