@@ -35,7 +35,7 @@ Before the tutorial group feature can be used, three configurations need to be s
 
   * Deleting the channel when the tutorial group is deleted
 
-The three settings can be changed later in the ``Global Configuration`` section of the tutorial group page.
+The three settings can be changed later in the ``Global Configuration`` section of the tutorial group page. This setting is hidden behind the ``More...`` button.
 
 |instructors-checklist|
 
@@ -54,6 +54,13 @@ The assigned tutor and the session schedule are the most important settings of a
 
 |instructors-tutorial-group-form|
 |instructors-csv-import|
+
+Defining Tutorial Group Free Days
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+By clicking on the ``Holidays`` button, the instructor can define days where no tutorial group sessions are held. If such a day overlaps with a tutorial group session, the session is automatically cancelled and the holiday given as the reason.
+
+|instructors-holidays|
 
 
 Managing Tutorial Groups as a Tutor
@@ -103,6 +110,8 @@ Viewing Tutorial Groups as a Student
     :width: 500
 .. |instructors-csv-import| image:: tutorialgroups/instructors-csv-import.png
     :width: 500
+.. |instructors-holidays| image:: tutorialgroups/instructors-holidays.png
+    :width: 1000    
 
 .. |tutor-overview| image:: tutorialgroups/tutor-overview.png
     :width: 1000    
