@@ -20,6 +20,7 @@
         [max]="convert(max)"
         (ngModelChange)="updateField($event)"
         [owlDateTime]="dt"
+        [owlDateTimeTrigger]="dt"
         name="datePicker"
     />
     <button [owlDateTimeTrigger]="dt" class="btn position-absolute" type="button">

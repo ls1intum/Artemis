@@ -80,10 +80,10 @@ export class ExerciseService {
     }
 
     /**
-     * Validates if the dates are correct TODO
+     * Validates if the dates are correct
      */
     validateDate(exercise: Exercise) {
-        exercise.dateError = this.hasDateError(exercise.releaseDate);
+        // exercise.dateError = this.hasDateError(exercise.releaseDate);
         exercise.dueDateError = this.hasDueDateError(exercise);
         exercise.startDateError = this.hasStartDateError(exercise);
         exercise.assessmentDueDateError = this.hasAssessmentDueDateError(exercise);
@@ -97,13 +97,13 @@ export class ExerciseService {
     }
 
     public hasDateError(date: dayjs.Dayjs | undefined) {
-        //todo Strict
+        // todo Strict
         return dayjs(date, 'MMM D, YYYY, H:mm:ss A').isValid();
     }
 
     hasDueDateError(exercise: Exercise) {
         const relevantDateBefore = exercise.startDate ?? exercise.releaseDate;
-        return dayjs(exercise.dueDate, 'MMM, D, YYYY, H:mm:ss A').isValid() && relevantDateBefore && exercise.dueDate && dayjs(exercise.dueDate).isBefore(relevantDateBefore);
+        return relevantDateBefore && exercise.dueDate && dayjs(exercise.dueDate).isBefore(relevantDateBefore);
     }
 
     private hasAssessmentDueDateError(exercise: Exercise) {
