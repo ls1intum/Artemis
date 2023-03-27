@@ -11,7 +11,7 @@
             <div class="task__row__cell">
                 <input
                     [disabled]="task.taskName === NOT_ASSIGNED_TO_TASK_NAME"
-                    type="text"
+                    type="number"
                     class="form-control"
                     min="0"
                     [(ngModel)]="task.weight"
@@ -22,7 +22,7 @@
             <div class="task__row__cell">
                 <input
                     [disabled]="task.taskName === NOT_ASSIGNED_TO_TASK_NAME"
-                    type="text"
+                    type="number"
                     class="form-control"
                     min="0"
                     [(ngModel)]="task.bonusMultiplier"
@@ -33,7 +33,7 @@
             <div class="task__row__cell">
                 <input
                     [disabled]="task.taskName === NOT_ASSIGNED_TO_TASK_NAME"
-                    type="text"
+                    type="number"
                     class="form-control"
                     min="0"
                     [(ngModel)]="task.bonusPoints"
@@ -72,13 +72,20 @@
                 <span class="task__field ps-3">{{ test.testName }}</span>
             </div>
             <div class="task__row__cell">
-                <input type="text" class="form-control" min="0" [(ngModel)]="test.weight" name="{{ test.testName }}-name" (change)="testUpdateHandler(test)" />
+                <input type="number" class="form-control" min="0" [(ngModel)]="test.weight" name="{{ test.testName }}-name" (change)="testUpdateHandler(test)" />
             </div>
             <div class="task__row__cell">
-                <input type="text" class="form-control" min="0" [(ngModel)]="test.bonusMultiplier" name="{{ test.testName }}-bonusMultiplier" (change)="testUpdateHandler(test)" />
+                <input
+                    type="number"
+                    class="form-control"
+                    min="0"
+                    [(ngModel)]="test.bonusMultiplier"
+                    name="{{ test.testName }}-bonusMultiplier"
+                    (change)="testUpdateHandler(test)"
+                />
             </div>
             <div class="task__row__cell">
-                <input type="text" class="form-control" min="0" [(ngModel)]="test.bonusPoints" name="{{ test.testName }}-bonusPoints" (change)="testUpdateHandler(test)" />
+                <input type="number" class="form-control" min="0" [(ngModel)]="test.bonusPoints" name="{{ test.testName }}-bonusPoints" (change)="testUpdateHandler(test)" />
             </div>
             <div class="task__row__cell">
                 <select [(ngModel)]="test.visibility" class="form-select" name="{{ test.testName }}-visibility" (change)="testUpdateHandler(test)">
