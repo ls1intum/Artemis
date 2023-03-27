@@ -234,9 +234,6 @@ public class ProgrammingExerciseService {
             throw new BadRequestAlertException("A new programmingExercise cannot already have an ID", "Exercise", "idexists");
         }
 
-        // Valid exercises have set either a course or an exerciseGroup
-        programmingExercise.checkCourseAndExerciseGroupExclusivity("Exercise");
-
         programmingExercise.validateGeneralSettings();
         programmingExercise.validateProgrammingSettings();
         programmingExercise.validateManualFeedbackSettings();

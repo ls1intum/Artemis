@@ -176,6 +176,9 @@ public class ProgrammingExerciseResource {
     public ResponseEntity<ProgrammingExercise> createProgrammingExercise(@RequestBody ProgrammingExercise programmingExercise) {
         log.debug("REST request to setup ProgrammingExercise : {}", programmingExercise);
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(programmingExercise);
+
+        // Valid exercises have set either a course or an exerciseGroup
+        programmingExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
         programmingExerciseService.validateNewProgrammingExerciseSettings(programmingExercise, course);
 

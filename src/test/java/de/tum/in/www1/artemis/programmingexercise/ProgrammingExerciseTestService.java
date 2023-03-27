@@ -429,9 +429,13 @@ public class ProgrammingExerciseTestService {
         mockDelegate.mockConnectorRequestForImportFromFile(exercise);
         Resource resource = null;
         exercise.programmingLanguage(language);
+        exercise.setProjectType(null);
         switch (language) {
             case PYTHON -> resource = new ClassPathResource("test-data/import-from-file/valid-import-python.zip");
-            case C -> resource = new ClassPathResource("test-data/import-from-file/valid-import-c.zip");
+            case C -> {
+                resource = new ClassPathResource("test-data/import-from-file/valid-import-c.zip");
+                exercise.setProjectType(ProjectType.FACT);
+            }
             case HASKELL -> resource = new ClassPathResource("test-data/import-from-file/valid-import-haskell.zip");
             case OCAML -> resource = new ClassPathResource("test-data/import-from-file/valid-import-ocaml.zip");
             case ASSEMBLER -> resource = new ClassPathResource("test-data/import-from-file/valid-import-assembler.zip");

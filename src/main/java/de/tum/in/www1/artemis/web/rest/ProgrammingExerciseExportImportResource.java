@@ -222,6 +222,8 @@ public class ProgrammingExerciseExportImportResource {
     public ResponseEntity<ProgrammingExercise> importProgrammingExerciseFromFile(@RequestPart("programmingExercise") ProgrammingExercise programmingExercise,
             @RequestPart("file") MultipartFile zipFile) {
         final var user = userRepository.getUserWithGroupsAndAuthorities();
+        // Valid exercises have set either a course or an exerciseGroup
+        programmingExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
         final var course = courseService.findByIdElseThrow(programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
         try {
