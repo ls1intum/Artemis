@@ -4,12 +4,10 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 
 import java.util.List;
 import java.util.Optional;
-
-import javax.transaction.Transactional;
+import java.util.Set;
 
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -21,9 +19,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @Repository
 public interface OneToOneChatRepository extends JpaRepository<OneToOneChat, Long> {
 
-    @Transactional
-    @Modifying
-    void deleteAllByConversationParticipantsContaining(ConversationParticipant conversationParticipant);
+    Set<OneToOneChat> findAllByConversationParticipantsContaining(ConversationParticipant conversationParticipant);
 
     @EntityGraph(type = LOAD, attributePaths = { "conversationParticipants.user.groups" })
     @Query("""

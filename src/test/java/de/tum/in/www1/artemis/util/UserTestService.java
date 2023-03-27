@@ -22,12 +22,14 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.metis.conversation.GroupChat;
+import de.tum.in.www1.artemis.domain.metis.conversation.OneToOneChat;
 import de.tum.in.www1.artemis.domain.notification.SingleUserNotification;
 import de.tum.in.www1.artemis.programmingexercise.MockDelegate;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ConversationRepository;
+import de.tum.in.www1.artemis.repository.metis.conversation.OneToOneChatRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.connectors.ci.CIUserManagementService;
 import de.tum.in.www1.artemis.service.connectors.lti.LtiService;
@@ -85,6 +87,9 @@ public class UserTestService {
     @Autowired
     private ConversationParticipantRepository conversationParticipantRepository;
 
+    @Autowired
+    private OneToOneChatRepository oneToOneChatRepository;
+
     private String TEST_PREFIX;
 
     private MockDelegate mockDelegate;
@@ -128,18 +133,48 @@ public class UserTestService {
         var notification = singleUserNotificationRepository.save(new SingleUserNotification(student, "title", "text"));
 
         // Creating conversation-related objects
-        var postEntity = new Post();
+        var post = new Post();
+        var oneToOneChatPost = new Post();
         var conversationParticipant = new ConversationParticipant();
-        var conversationEntity = new GroupChat();
+        var conversationParticipant2 = new ConversationParticipant();
+        var conversationParticipant3 = new ConversationParticipant();
+        var conversation = new GroupChat();
+        var oneToOneChat = new OneToOneChat();
+
+        User student2 = new User();
+        student2.setLogin("student2");
+        student2.setPassword("password");
+        student2.setEmail("student2@for.chat");
+        student2.setInternal(true);
+        student2.setFirstName("Student2First");
+        student2.setLastName("Student2Last");
+        userRepository.save(student2);
 
         conversationParticipant.setUser(student);
-        conversationEntity.setConversationParticipants(Collections.singleton(conversationParticipant));
-        postEntity.setAuthor(student);
-        postEntity.setConversation(conversationEntity);
+        conversationParticipant2.setUser(student2);
+        conversationParticipant3.setUser(student);
 
-        conversationRepository.save(conversationEntity);
-        postRepository.save(postEntity);
+        conversation.setConversationParticipants(Collections.singleton(conversationParticipant));
+        conversation.setCreator(student);
+        oneToOneChat.setConversationParticipants(Set.of(conversationParticipant2, conversationParticipant3));
+        oneToOneChat.setCreator(student2);
+
+        conversationParticipant.setConversation(conversation);
+        conversationParticipant2.setConversation(oneToOneChat);
+        conversationParticipant3.setConversation(oneToOneChat);
+
+        post.setAuthor(student);
+        post.setConversation(conversation);
+        oneToOneChatPost.setAuthor(student2);
+        oneToOneChatPost.setConversation(oneToOneChat);
+
+        conversationRepository.save(conversation);
+        oneToOneChatRepository.save(oneToOneChat);
+        postRepository.save(post);
+        postRepository.save(oneToOneChatPost);
         conversationParticipantRepository.save(conversationParticipant);
+        conversationParticipantRepository.save(conversationParticipant2);
+        conversationParticipantRepository.save(conversationParticipant3);
 
         // Sending delete request
         request.delete("/api/admin/users/" + student.getLogin(), HttpStatus.OK);
@@ -148,9 +183,12 @@ public class UserTestService {
         var deletedUser = userRepository.findById(student.getId());
         assertThat(deletedUser).isEmpty();
         assertThat(singleUserNotificationRepository.findById(notification.getId())).isEmpty();
-        assertThat(postRepository.findById(postEntity.getId())).isEmpty();
+        assertThat(postRepository.findById(post.getId())).isEmpty();
         assertThat(conversationParticipantRepository.findById(conversationParticipant.getId())).isEmpty();
-        assertThat(postRepository.findById(postEntity.getId())).isEmpty();
+        assertThat(conversationParticipantRepository.findById(conversationParticipant3.getId())).isEmpty();
+        assertThat(postRepository.findById(post.getId())).isEmpty();
+        assertThat(conversationRepository.findById(conversation.getId())).isEmpty();
+        assertThat(oneToOneChatRepository.findById(oneToOneChat.getId())).isEmpty();
     }
 
     // Test

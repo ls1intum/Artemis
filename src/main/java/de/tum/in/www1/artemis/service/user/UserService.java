@@ -26,6 +26,7 @@ import org.springframework.util.StringUtils;
 import de.tum.in.www1.artemis.domain.Authority;
 import de.tum.in.www1.artemis.domain.GuidedTourSetting;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.metis.conversation.OneToOneChat;
 import de.tum.in.www1.artemis.exception.AccountRegistrationBlockedException;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.exception.UsernameAlreadyUsedException;
@@ -492,17 +493,25 @@ public class UserService {
         learningGoalProgressRepository.deleteAllByUserId(user.getId());
         exerciseHintActivationRepository.deleteAllByUser(user);
 
+        // deleting Posts belonging to the user and belonging to the conversations created by the user
         var conversationsByUser = conversationRepository.findAllByCreator(user);
         conversationsByUser.forEach(conversation -> postRepository.deleteAllByConversationId(conversation.getId()));
         postRepository.deleteAllByAuthor(user);
 
-        conversationRepository.deleteAllByCreator(user);
-
+        // deleting Posts belonging to all OneToOneChats where the user is a participant
         var conversationParticipantEntities = conversationParticipantRepository.findConversationParticipantsByUser(user);
+        var oneToOneChatsToDelete = new HashSet<OneToOneChat>();
+        conversationParticipantEntities.forEach(participant -> oneToOneChatsToDelete.addAll(oneToOneChatRepository.findAllByConversationParticipantsContaining(participant)));
+        oneToOneChatsToDelete.forEach(oneToOneChat -> postRepository.deleteAllByConversationId(oneToOneChat.getId()));
+
+        // deleting Conversations and ConversationParticipants created by the user
+        conversationRepository.deleteAllByCreator(user);
         conversationParticipantRepository.deleteAllByUser(user);
 
-        conversationParticipantEntities.forEach(participant -> oneToOneChatRepository.deleteAllByConversationParticipantsContaining(participant));
+        // deleting OneToOneChats where the user is a participant
+        oneToOneChatRepository.deleteAll(oneToOneChatsToDelete);
 
+        // deleting tutorial group registrations
         tutorialGroupRegistrationRepository.deleteAllByStudent(user);
         var taughtTutorialGroups = tutorialGroupRepository.findAllByTeachingAssistant(user);
         for (var tutorialGroup : taughtTutorialGroups) {
