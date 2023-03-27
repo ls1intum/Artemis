@@ -13,7 +13,6 @@ import javax.annotation.Nullable;
 import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
-import org.springframework.core.env.Environment;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
@@ -81,15 +80,12 @@ public class BambooBuildPlanService {
 
     private final BambooServer bambooServer;
 
-    private final Environment env;
-
     private final Optional<VersionControlService> versionControlService;
 
-    public BambooBuildPlanService(ResourceLoaderService resourceLoaderService, BambooServer bambooServer, Environment env, Optional<VersionControlService> versionControlService,
+    public BambooBuildPlanService(ResourceLoaderService resourceLoaderService, BambooServer bambooServer, Optional<VersionControlService> versionControlService,
             ProgrammingLanguageConfiguration programmingLanguageConfiguration) {
         this.resourceLoaderService = resourceLoaderService;
         this.bambooServer = bambooServer;
-        this.env = env;
         this.versionControlService = versionControlService;
         this.programmingLanguageConfiguration = programmingLanguageConfiguration;
     }
