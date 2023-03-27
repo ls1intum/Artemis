@@ -40,10 +40,6 @@
                 "title": "Maximale Anzahl von Zeichen für Antworten auf Beschwerden",
                 "description": "Diese Nummer gibt an, wie viele Zeichen für die Antwort pro Beschwerde maximal verwendet werden darf."
             },
-            "postsEnabled": {
-                "title": "Kommunikationsfunktionen aktivieren",
-                "description": "Kurskommunikationsübersicht und Kommunikationsbereich auf Vorlesungs- und Übungsseiten aktivieren."
-            },
             "complaintsEnabled": {
                 "title": "Beschwerden von Studierenden aktivieren",
                 "description": "Wenn du diese Option aktivierst, können sich Studierende über Ergebnisse beschweren."
@@ -85,6 +81,16 @@
             "onlineCourse": {
                 "title": "Onlinekurs",
                 "description": "Aktiviere diese Checkbox für externe Onlinekurse (z.B. auf edX/Moodle), damit Studierende diesen Artemis-Kurs (über die LTI Schnittstelle) nutzen können. Dies ermöglicht auch eine automatische Kontoerstellung, sofern dies vom Artemis Systemadministrator eingestellt ist. Du kannst dies auf der Seite LTI-Konfiguration weiter konfigurieren."
+            },
+            "courseCommunicationSetting": {
+                "communicationEnabled": {
+                    "label": "Kommunikation aktiviert",
+                    "tooltip": "Ermöglicht die Kommunikation zwischen Studierenden, Tutor:innen und Lehrenden durch ein Frage- und Antwortsystem. Die Studierenden können mit anderen Studierenden interagieren und Fragen stellen, während Moderator:innen Kursinformationen bereitstellen und inhaltliche Fragen beantworten können. Die Kommunikation kann direkt auf der Seite der jeweiligen Übung oder Vorlesung oder im speziellen Kommunikationsbereich des Kurses erfolgen."
+                },
+                "messagingEnabled": {
+                    "label": "Nachrichten aktiviert",
+                    "tooltip": "Ermöglicht den Nachrichtenaustausch zwischen Nutzer:innen in privaten oder öffentlichen Kanälen, Gruppenchats oder Direktnachrichten. Kanäle können nur von Lehrenden und Tutor:innen erstellt werden. Nutzer:innen können selbst öffentlichen Kanälen beitreten und müssen zu privaten Kanälen hinzugefügt werden. Alle Nutzer:innen können einen privaten Gruppenchat starten und andere Nutzer:innen hinzufügen. Ein Gruppenchat ist auf zehn Mitglieder:innen begrenzt. Alle Nutzer:innen können Direktnachrichten an andere Nutzer:innen senden. Die Chats finden im Nachrichtenbereich des Kurses statt."
+                }
             },
             "registrationEnabled": {
                 "title": "Kursregistrierung für Studierende aktiviert",

@@ -281,15 +281,38 @@
                 "downloadExercise": "Download Exercise",
                 "downloadAllStudents": "Or download the repositories of all students",
                 "downloadAllTeams": "Or download the repositories of all teams",
-                "filterLateSubmissions": "Filter late submissions",
-                "filterLateSubmissionsDate": "Date to filter late submissions (defaults to exercise due date if not set)",
-                "excludePracticeSubmissions": "Exclude practice submissions",
-                "addStudentName": "Add student name to project (allows importing multiple projects into Eclipse at the same time)",
-                "addTeamName": "Add team name to project (allows importing multiple projects into Eclipse at the same time)",
-                "addTeamOrStudentName": "Add team/student name to project (allows importing multiple projects into Eclipse at the same time)",
-                "combineStudentCommits": "Combine all student changes into one commit (to simplify the review)",
-                "anonymizeStudentCommits": "Anonymize all of the student's commits",
-                "normalizeCodeStyle": "Normalize code style (line endings, encoding)",
+                "filterLateSubmissions": {
+                    "title": "Filter late submissions",
+                    "tooltip": "Cut off all submissions and commits after a certain date"
+                },
+                "filterLateSubmissionsDate": {
+                    "title": "Date to filter late submissions",
+                    "tooltip": "Defaults to the due date of the exercise if not set"
+                },
+                "excludePracticeSubmissions": {
+                    "title": "Exclude practice submissions",
+                    "tooltip": "Ignore submissions marked as practice to only include graded submissions"
+                },
+                "addToProject": {
+                    "title": {
+                        "student": "Add student name to project",
+                        "team": "Add team name to project",
+                        "teamOrStudent": "Add team/student name to project"
+                    },
+                    "tooltip": "Allows importing multiple projects into Eclipse at the same time"
+                },
+                "combineStudentCommits": {
+                    "title": "Combine changes into one commit",
+                    "tooltip": "Squashes all commits of a student into a single commit for easier review"
+                },
+                "anonymizeStudentCommits": {
+                    "title": "Anonymize all of the student's commits",
+                    "tooltip": "Hide student names in commit messages for unbiased evaluation"
+                },
+                "normalizeCodeStyle": {
+                    "title": "Normalize code style",
+                    "tooltip": "Standardize line endings and encoding for consistency"
+                },
                 "successMessageRepos": "Export of repos was successful. The exported zip file with all repositories is currently being downloaded.",
                 "successMessageExercise": "Export of exercise was successful. The exported zip file with all exercise material is currently being downloaded."
             },
