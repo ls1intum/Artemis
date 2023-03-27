@@ -64,6 +64,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { ExerciseHintButtonOverlayComponent } from 'app/exercises/shared/exercise-hint/participate/exercise-hint-button-overlay.component';
 import { ProgrammingExerciseExampleSolutionRepoDownloadComponent } from 'app/exercises/programming/shared/actions/programming-exercise-example-solution-repo-download.component';
 import { ResetRepoButtonComponent } from 'app/shared/components/reset-repo-button/reset-repo-button.component';
+import { ProblemStatementComponent } from 'app/overview/exercise-details/problem-statement/problem-statement.component';
 
 describe('CourseExerciseDetailsComponent', () => {
     let comp: CourseExerciseDetailsComponent;
@@ -113,6 +114,7 @@ describe('CourseExerciseDetailsComponent', () => {
                 MockComponent(ComplaintsStudentViewComponent),
                 MockComponent(ExerciseHintButtonOverlayComponent),
                 MockComponent(ProgrammingExerciseExampleSolutionRepoDownloadComponent),
+                MockComponent(ProblemStatementComponent),
                 MockComponent(ResetRepoButtonComponent),
                 MockComponent(RatingComponent),
                 MockRouterLinkDirective,
