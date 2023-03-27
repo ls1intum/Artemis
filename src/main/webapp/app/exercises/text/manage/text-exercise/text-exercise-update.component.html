@@ -38,6 +38,7 @@
                     labelName="{{ 'artemisApp.exercise.releaseDate' | artemisTranslate }}"
                     [(ngModel)]="textExercise.releaseDate"
                     (valueChange)="validateDate()"
+                    (onDateReset)="textExercise.releaseDate = undefined; validateDate()"
                     [error]="false"
                     name="releaseDate"
                 ></jhi-date-time-picker>
@@ -50,6 +51,7 @@
                     [error]="!!textExercise.startDateError"
                     labelName="{{ 'artemisApp.exercise.startDate' | artemisTranslate }}"
                     (valueChange)="validateDate()"
+                    (onDateReset)="textExercise.startDate = undefined; validateDate()"
                     [(ngModel)]="textExercise.startDate"
                 ></jhi-date-time-picker>
                 <span *ngIf="textExercise.startDateError" class="invalid-feedback">{{ 'artemisApp.exercise.startDateError' | artemisTranslate }}</span>

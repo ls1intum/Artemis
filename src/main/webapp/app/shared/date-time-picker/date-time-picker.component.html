@@ -20,10 +20,11 @@
         [max]="convert(max)"
         (ngModelChange)="updateField($event)"
         [owlDateTime]="dt"
-        [owlDateTimeTrigger]="dt"
         name="datePicker"
-        (click)="updateField(null)"
         readonly
+        (click)="readOnly = !readOnly"
+        *ngIf="!readOnly"
+        [owlDateTimeTrigger]="dt"
     />
     <button [owlDateTimeTrigger]="dt" class="btn position-absolute" type="button" (click)="resetDate()">
         <fa-icon [icon]="faCalendarAlt"></fa-icon>

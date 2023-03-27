@@ -27,6 +27,9 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
     @Input() max: dayjs.Dayjs; // Dates after this date are not selectable.
     @Input() shouldDisplayTimeZoneWarning = true; // Displays a warning that the current time zone might differ from the participants'.
     @Output() valueChange = new EventEmitter();
+    @Output() onDateReset = new EventEmitter();
+    readOnly: boolean;
+    readonly = true;
 
     // Icons
     faCalendarAlt = faCalendarAlt;
@@ -100,6 +103,6 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
 
     resetDate() {
         this.writeValue(null);
-        this.valueChange.emit();
+        this.onDateReset.emit();
     }
 }
