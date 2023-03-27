@@ -37,12 +37,13 @@ export class ProgrammingExerciseTaskComponent {
 
     taskUpdateHandler() {
         const testCasesAmount = this.task.testCases.length;
+        const testCasesWeightSum = this.task.testCases.reduce((acc, { weight }) => acc + (weight ?? 0), 0);
 
         this.task.testCases.forEach((testCase) => {
             testCase.changed = true;
 
             if (this.task.weight != undefined) {
-                testCase.weight = this.task.weight / testCasesAmount;
+                testCase.weight = ((testCase.weight ?? 0) / testCasesWeightSum) * this.task.weight;
             }
             if (this.task.bonusMultiplier != undefined) {
                 testCase.bonusMultiplier = this.task.bonusMultiplier;
