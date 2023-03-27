@@ -39,7 +39,13 @@
             },
             "manageLearningGoals": {
                 "title": "Competency Management",
+                "import": "Import competency",
                 "create": "Create competency"
+            },
+            "importLearningGoal": {
+                "title": "Import a learning goal",
+                "search": "Search for a learning goal:",
+                "loading": "Loading..."
             },
             "createLearningGoal": {
                 "title": "Create a new competency",

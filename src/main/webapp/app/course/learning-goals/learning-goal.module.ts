@@ -12,6 +12,7 @@ import { LearningGoalsPopoverComponent } from './learning-goals-popover/learning
 import { PrerequisiteImportComponent } from 'app/course/learning-goals/learning-goal-management/prerequisite-import.component';
 import { NgxGraphModule } from '@swimlane/ngx-graph';
 import { LearningGoalRingsComponent } from 'app/course/learning-goals/learning-goal-rings/learning-goal-rings.component';
+import { LearningGoalImportComponent } from 'app/course/learning-goals/learning-goal-management/learning-goal-import.component';
 
 @NgModule({
     imports: [ArtemisSharedModule, FormsModule, ReactiveFormsModule, NgxGraphModule, ArtemisSharedComponentModule, RouterModule],
@@ -24,6 +25,7 @@ import { LearningGoalRingsComponent } from 'app/course/learning-goals/learning-g
         LearningGoalCardComponent,
         LearningGoalsPopoverComponent,
         PrerequisiteImportComponent,
+        LearningGoalImportComponent,
     ],
     exports: [LearningGoalCardComponent, LearningGoalsPopoverComponent, LearningGoalFormComponent, LearningGoalRingsComponent],
 })

@@ -13,6 +13,7 @@ import { PrerequisiteImportComponent } from 'app/course/learning-goals/learning-
 import { ClusterNode, Edge, Node } from '@swimlane/ngx-graph';
 import { AccountService } from 'app/core/auth/account.service';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
+import { LearningGoalImportComponent } from 'app/course/learning-goals/learning-goal-management/learning-goal-import.component';
 
 @Component({
     selector: 'jhi-learning-goal-management',
@@ -177,7 +178,7 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
             });
     }
 
-    openImportModal() {
+    openPrerequisiteSelectionModal() {
         const modalRef = this.modalService.open(PrerequisiteImportComponent, { size: 'lg', backdrop: 'static' });
         modalRef.componentInstance.disabledIds = this.learningGoals.concat(this.prerequisites).map((learningGoal) => learningGoal.id);
         modalRef.result.then(
@@ -197,6 +198,14 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
             },
             () => {},
         );
+    }
+
+    openImportModal() {
+        const modalRef = this.modalService.open(LearningGoalImportComponent, { size: 'lg', backdrop: 'static' });
+        modalRef.componentInstance.disabledIds = this.learningGoals.concat(this.prerequisites).map((learningGoal) => learningGoal.id);
+        modalRef.result.then((result: LearningGoal) => {
+            // this.router.navigate(['course-management', this.courseId, 'programming-exercises', 'import', result.id]);
+        });
     }
 
     createRelation() {
