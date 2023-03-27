@@ -49,15 +49,9 @@
                 overflow: hidden;
             }
 
-            .badge-row {
+            ::ng-deep .badge-row {
                 display: flex;
-                gap: 5px;
                 flex-wrap: wrap;
-
-                .exercise-categories {
-                    display: flex;
-                    gap: 5px;
-                }
             }
         }
 

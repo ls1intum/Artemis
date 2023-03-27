@@ -11,6 +11,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL } from 'app/shared/constants/exercise-exam-constants';
 import { TranslateService } from '@ngx-translate/core';
 import { faDownload, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import { addDelay } from 'app/shared/util/utils';
 
 @Component({
     selector: 'jhi-apollon-diagram-detail',
@@ -76,12 +77,13 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
                     this.alertService.error('artemisApp.apollonDiagram.detail.error.loading');
                 },
             });
-        });
 
-        this.languageHelper.language.subscribe((languageKey: string) => {
-            if (this.apollonEditor) {
-                this.apollonEditor.locale = languageKey as Locale;
-            }
+            this.languageHelper.language.subscribe(async (languageKey: string) => {
+                if (this.apollonEditor) {
+                    await addDelay(0);
+                    this.apollonEditor.locale = languageKey as Locale;
+                }
+            });
         });
     }
 
@@ -119,7 +121,6 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
         if (!this.apollonDiagram) {
             return;
         }
-
         const umlModel = this.apollonEditor!.model;
         const updatedDiagram: ApollonDiagram = {
             ...this.apollonDiagram,
@@ -183,7 +184,7 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
         }
 
         const selection = [...this.apollonEditor!.selection.elements, ...this.apollonEditor!.selection.relationships];
-        const svg = this.apollonEditor!.exportAsSVG({
+        const svg = await this.apollonEditor!.exportAsSVG({
             keepOriginalSize: !this.crop,
             include: selection,
         });

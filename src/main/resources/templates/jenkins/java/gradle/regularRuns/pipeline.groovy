@@ -89,7 +89,7 @@ void postBuildTasks() {
     rm -rf results
     mkdir results
     cp build/test-results/test/*.xml $WORKSPACE/results/ || true
-    sed -i 's/[^[:print:]]/�/g' $WORKSPACE/results/*.xml || true
+    sed -i 's/[^[:print:]\t]/�/g' $WORKSPACE/results/*.xml || true
     '''
 }
 

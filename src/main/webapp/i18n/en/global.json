@@ -288,7 +288,7 @@
             "title": "Confirm archive operation"
         },
         "exportRepos": {
-            "title": "Confirm download of repos"
+            "title": "Export Repositories"
         },
         "validation": {
             "required": "This field is required.",
