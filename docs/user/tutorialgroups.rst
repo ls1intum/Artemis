@@ -16,10 +16,10 @@ Setting up Tutorial Group Plan as an Instructor
 
 Tutorial groups can be managed by instructors by navigating to the course's  ``Tutorial Groups`` page.
 
+|instructors-button|
+
 Initial Configuration
 ^^^^^^^^^^^^^^^^^^^^^
-
-|instructors-button|
 
 Before the tutorial group feature can be used, three configurations need to be set up:
 
