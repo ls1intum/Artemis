@@ -1,0 +1,27 @@
+<div>
+    <h2>
+        <span id="privacy-statement-update-heading" jhiTranslate="artemisApp.privacyStatement.createOrEditLabel" data-cy="privacyStatementPageHeading"
+            >Create or edit privacy statement</span
+        >
+    </h2>
+    <jhi-markdown-editor
+        [markdown]="privacyStatement.text"
+        (markdownChange)="checkUnsavedChanges($event)"
+        [resizableMinHeight]="minHeight"
+        [resizableMaxHeight]="maxHeight"
+        [enableResize]="true"
+        minHeightEditor="500px"
+    ></jhi-markdown-editor>
+    <!--<div>-->
+    <!--    <jhi-button (click)="navigateBack()" [icon]="faBan" [title]="'entity.action.cancel'">Cancel</jhi-button>-->
+    <!--    <jhi-button (click)="updatePrivacyStatement()" [title]="submitButtonTitle" [icon]="faSave">Save</jhi-button>-->
+    <!--    <div ngbDropdown class="d-inline-block">-->
+    <!--        <button type="button" class="btn btn-outline-primary" id="dropdownBasic1" ngbDropdownToggle>-->
+    <!--            {{ 'artemisApp.generic.more' | artemisTranslate }}-->
+    <!--        </button>-->
+    <!--        <div ngbDropdownMenu>-->
+    <!--            <a ngbDropDownItem class="btn"> </a>-->
+    <!--        </div>-->
+    <!--    </div>-->
+    <!--</div>-->
+</div>

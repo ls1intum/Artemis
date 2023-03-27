@@ -31,7 +31,6 @@
         flex-flow: column nowrap;
         flex: 1 1 auto;
         touch-action: none;
-        min-height: 200px;
 
         // Fix for full screen mode, otherwise the color is black.
         background-color: var(--md-editor-background);

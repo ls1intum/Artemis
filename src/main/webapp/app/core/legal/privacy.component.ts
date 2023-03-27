@@ -3,7 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 import { SafeHtml } from '@angular/platform-browser';
 import { StaticContentService } from 'app/shared/service/static-content.service';
 
-const privacyStatementFile = 'privacy_statement.html';
+const privacyStatementFile = 'privacy_statement_de.html';
 
 @Component({
     selector: 'jhi-privacy',

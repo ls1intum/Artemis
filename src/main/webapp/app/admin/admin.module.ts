@@ -31,8 +31,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ReactiveFormsModule } from '@angular/forms';
-import { PrivacyStatementUpdateComponent } from './privacy-statement/privacy-statement-update/privacy-statement-update.component';
-import { EditablePrivacyStatementComponent } from './privacy-statement/editable-privacy-statement/editable-privacy-statement.component';
+import { PrivacyStatementUpdateComponent } from 'app/admin/privacy-statement/privacy-statement-update/privacy-statement-update.component';
 import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
 
 const ENTITY_STATES = [...adminState];
@@ -74,7 +73,6 @@ const ENTITY_STATES = [...adminState];
         OrganizationManagementDetailComponent,
         OrganizationManagementUpdateComponent,
         PrivacyStatementUpdateComponent,
-        EditablePrivacyStatementComponent,
     ],
 })
 export class ArtemisAdminModule {}
