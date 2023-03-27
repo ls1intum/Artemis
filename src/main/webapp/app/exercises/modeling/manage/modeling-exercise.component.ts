@@ -2,7 +2,6 @@ import { Component, Input } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
-import { ExerciseImportComponent } from 'app/exercises/shared/import/exercise-import.component';
 import { ModelingExerciseService } from './modeling-exercise.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';

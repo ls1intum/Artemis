@@ -16,7 +16,6 @@ import { EventManager } from 'app/core/util/event-manager.service';
 import { faBook, faPlus, faSort, faTable, faTimes, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
-import { ExerciseImportComponent } from 'app/exercises/shared/import/exercise-import.component';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ExerciseImportWrapperComponent } from 'app/exercises/shared/import/exercise-import-wrapper/exercise-import-wrapper.component';
