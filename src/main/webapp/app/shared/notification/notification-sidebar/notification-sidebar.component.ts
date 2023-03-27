@@ -41,6 +41,7 @@ export class NotificationSidebarComponent implements OnInit {
     lastNotificationRead?: dayjs.Dayjs;
     page = 0;
     notificationsPerPage = 25;
+    maxNotificationLength = 300;
     error?: string;
 
     // notification settings related
@@ -181,6 +182,9 @@ export class NotificationSidebarComponent implements OnInit {
             const translation = this.artemisTranslatePipe.transform(notification.text, { placeholderValues: this.getParsedPlaceholderValues(notification) });
             if (translation?.includes(translationNotFoundMessage)) {
                 return notification.text ? notification.text : 'No text found';
+            }
+            if (translation.length > this.maxNotificationLength) {
+                return translation.substring(0, this.maxNotificationLength - 1) + '...';
             }
             return translation;
         } else {
