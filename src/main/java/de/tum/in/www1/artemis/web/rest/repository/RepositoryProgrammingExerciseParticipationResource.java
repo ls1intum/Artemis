@@ -23,9 +23,9 @@ import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.BuildLogEntryService;
 import de.tum.in.www1.artemis.service.RepositoryService;
 import de.tum.in.www1.artemis.service.SubmissionPolicyService;
-import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
-import de.tum.in.www1.artemis.service.connectors.VersionControlService;
+import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
+import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.in.www1.artemis.service.exam.ExamSubmissionService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
@@ -394,6 +394,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
      *                            used.
      * @return the ResponseEntity with status 200 (OK) and with body the result, or with status 404 (Not Found)
      */
+    // TODO: rename to participation/{participationId}/buildlogs
     @GetMapping(value = "/repository/{participationId}/buildlogs", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<List<BuildLogEntry>> getBuildLogs(@PathVariable Long participationId, @RequestParam(name = "resultId") Optional<Long> resultId) {
         log.debug("REST request to get build log : {}", participationId);
@@ -427,16 +428,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         }
 
         // Load the logs from the database
-        List<BuildLogEntry> buildLogsFromDatabase = buildLogService.getLatestBuildLogs(programmingSubmission);
-
-        // If there are logs present in the database, return them (they were already filtered when inserted)
-        if (!buildLogsFromDatabase.isEmpty()) {
-            return new ResponseEntity<>(buildLogsFromDatabase, HttpStatus.OK);
-        }
-
-        // Otherwise attempt to fetch the build logs from the CI
-        List<BuildLogEntry> logs = continuousIntegrationService.get().getLatestBuildLogs(programmingSubmission);
-
-        return new ResponseEntity<>(logs, HttpStatus.OK);
+        List<BuildLogEntry> buildLogs = buildLogService.getLatestBuildLogs(programmingSubmission);
+        return new ResponseEntity<>(buildLogs, HttpStatus.OK);
     }
 }

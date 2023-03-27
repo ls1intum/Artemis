@@ -11,6 +11,7 @@ import { OrionModule } from 'app/shared/orion/orion.module';
 import { ArtemisProgrammingExerciseInstructionsEditorModule } from 'app/exercises/programming/manage/instructions-editor/programming-exercise-instructions-editor.module';
 import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
 import { SubmissionResultStatusModule } from 'app/overview/submission-result-status.module';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 
 @NgModule({
     imports: [
@@ -24,6 +25,7 @@ import { SubmissionResultStatusModule } from 'app/overview/submission-result-sta
         ArtemisProgrammingExerciseInstructionsEditorModule,
         ArtemisHeaderExercisePageWithDetailsModule,
         SubmissionResultStatusModule,
+        ArtemisSharedComponentModule,
     ],
     declarations: [CodeEditorInstructorAndEditorContainerComponent, CodeEditorInstructorAndEditorOrionContainerComponent],
 })

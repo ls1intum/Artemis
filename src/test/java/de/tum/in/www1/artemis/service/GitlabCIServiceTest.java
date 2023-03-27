@@ -8,7 +8,6 @@ import java.net.URL;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 import org.gitlab4j.api.GitLabApiException;
 import org.gitlab4j.api.models.PipelineStatus;
@@ -34,8 +33,8 @@ import de.tum.in.www1.artemis.repository.BuildLogStatisticsEntryRepository;
 import de.tum.in.www1.artemis.repository.BuildPlanRepository;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
-import de.tum.in.www1.artemis.service.connectors.gitlabci.GitLabCIService;
+import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
+import de.tum.in.www1.artemis.service.connectors.gitlabci.GitLabCIResultService;
 
 class GitlabCIServiceTest extends AbstractSpringIntegrationGitlabCIGitlabSamlTest {
 
@@ -54,7 +53,7 @@ class GitlabCIServiceTest extends AbstractSpringIntegrationGitlabCIGitlabSamlTes
     private BuildPlanRepository buildPlanRepository;
 
     @Autowired
-    private GitLabCIService gitlabCIService;
+    private GitLabCIResultService gitLabCIResultService;
 
     @Autowired
     private BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository;
@@ -140,14 +139,14 @@ class GitlabCIServiceTest extends AbstractSpringIntegrationGitlabCIGitlabSamlTes
         buildLogEntries.add(new BuildLogEntry(ZonedDateTime.now(), "Scanning for projects...", submission));
         buildLogEntries.add(new BuildLogEntry(ZonedDateTime.now(), "LogEntry", submission));
         buildLogEntries.add(new BuildLogEntry(ZonedDateTime.now(), "Total time:", submission));
-        gitlabCIService.extractAndPersistBuildLogStatistics(submission, ProgrammingLanguage.JAVA, ProjectType.MAVEN_MAVEN, buildLogEntries);
+        gitLabCIResultService.extractAndPersistBuildLogStatistics(submission, ProgrammingLanguage.JAVA, ProjectType.MAVEN_MAVEN, buildLogEntries);
         var buildLogStatisticSizeAfterSuccessfulSave = buildLogStatisticsEntryRepository.count();
         assertThat(buildLogStatisticSizeAfterSuccessfulSave).isEqualTo(buildLogStatisticSizeBefore + 1);
         // TODO: add an assertion on the average data and add more realistic build log entries
 
         // should not work
-        gitlabCIService.extractAndPersistBuildLogStatistics(submission, ProgrammingLanguage.JAVA, ProjectType.GRADLE_GRADLE, buildLogEntries);
-        gitlabCIService.extractAndPersistBuildLogStatistics(submission, ProgrammingLanguage.C, ProjectType.GCC, buildLogEntries);
+        gitLabCIResultService.extractAndPersistBuildLogStatistics(submission, ProgrammingLanguage.JAVA, ProjectType.GRADLE_GRADLE, buildLogEntries);
+        gitLabCIResultService.extractAndPersistBuildLogStatistics(submission, ProgrammingLanguage.C, ProjectType.GCC, buildLogEntries);
 
         var buildLogStatisticSizeAfterUnsuccessfulSave = buildLogStatisticsEntryRepository.count();
         assertThat(buildLogStatisticSizeAfterUnsuccessfulSave).isEqualTo(buildLogStatisticSizeAfterUnsuccessfulSave);
@@ -162,7 +161,7 @@ class GitlabCIServiceTest extends AbstractSpringIntegrationGitlabCIGitlabSamlTes
         final ProgrammingExerciseStudentParticipation participation = database.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
         mockTriggerBuild(null);
 
-        continuousIntegrationService.triggerBuild(participation);
+        continuousIntegrationTriggerService.triggerBuild(participation);
 
         verify(gitlab, atLeastOnce()).getPipelineApi();
         verify(gitlab.getPipelineApi(), atLeastOnce()).createPipelineTrigger(any(), anyString());
@@ -177,7 +176,7 @@ class GitlabCIServiceTest extends AbstractSpringIntegrationGitlabCIGitlabSamlTes
         final ProgrammingExerciseStudentParticipation participation = database.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
         mockTriggerBuildFailed(null);
 
-        assertThatThrownBy(() -> continuousIntegrationService.triggerBuild(participation)).isInstanceOf(GitLabCIException.class);
+        assertThatThrownBy(() -> continuousIntegrationTriggerService.triggerBuild(participation)).isInstanceOf(GitLabCIException.class);
 
         verify(gitlab, atLeastOnce()).getPipelineApi();
         verify(gitlab.getPipelineApi(), never()).triggerPipeline(eq(urlService.getRepositoryPathFromRepositoryUrl(participation.getVcsRepositoryUrl())), any(Trigger.class),
@@ -244,7 +243,7 @@ class GitlabCIServiceTest extends AbstractSpringIntegrationGitlabCIGitlabSamlTes
         continuousIntegrationService.removeAllDefaultProjectPermissions(null);
         continuousIntegrationService.givePlanPermissions(null, null);
         continuousIntegrationService.giveProjectPermissions(null, null, null);
-        continuousIntegrationService.updatePlanRepository(null, null, null, null, null, null, null, Optional.empty());
+        continuousIntegrationService.updatePlanRepository(null, null, null, null, null, null, null, List.of());
         continuousIntegrationService.enablePlan(null, null);
         continuousIntegrationService.deleteBuildPlan(null, null);
         continuousIntegrationService.deleteProject(null);
@@ -252,7 +251,6 @@ class GitlabCIServiceTest extends AbstractSpringIntegrationGitlabCIGitlabSamlTes
         assertThat(continuousIntegrationService.getWebHookUrl(null, null)).isNotPresent();
         assertThat(continuousIntegrationService.checkIfProjectExists(null, null)).isNull();
         assertThat(continuousIntegrationService.checkIfBuildPlanExists(null, null)).isTrue();
-        assertThat(continuousIntegrationService.getLatestBuildLogs(null)).isNull();
         assertThat(continuousIntegrationService.retrieveLatestArtifact(null)).isNull();
     }
 }
