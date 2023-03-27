@@ -49,6 +49,7 @@
                         <span jhiTranslate="artemisApp.exercise.presentationScoreEnabled.title">Presentation</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon>
                     </th>
                     <th><span jhiTranslate="artemisApp.modelingExercise.diagramType">Diagram Type</span></th>
+                    <th class="d-md-table-cell"><span jhiTranslate="artemisApp.exercise.categories">Categories</span></th>
                     <th></th>
                 </tr>
             </thead>
@@ -80,6 +81,7 @@
                     <td id="modeling-exercise-{{ modelingExercise.id }}-included">{{ exerciseService.isIncludedInScore(modelingExercise) }}</td>
                     <td *ngIf="course.presentationScore !== 0">{{ modelingExercise.presentationScoreEnabled }}</td>
                     <td jhiTranslate="{{ 'artemisApp.DiagramType.' + modelingExercise.diagramType }}">{{ modelingExercise.diagramType }}</td>
+                    <td class="d-md-table-cell"><jhi-exercise-categories [exercise]="modelingExercise"></jhi-exercise-categories></td>
                     <td class="text-end">
                         <div class="btn-group flex-btn-group-container">
                             <!-- Scores -->
