@@ -223,6 +223,18 @@ describe('ProgrammingExercise Service', () => {
         req.flush(expected);
         tick();
     }));
+    it('should make post request for import from file', fakeAsync(() => {
+        const request = new ProgrammingExercise(undefined, undefined);
+        const expected = new ProgrammingExercise(undefined, undefined);
+        const dummyFile = new File([''], 'dummyFile');
+        expected.studentParticipations = [];
+        expected.zipFileForImport = dummyFile;
+        request.zipFileForImport = dummyFile;
+        service.importFromFile(request).subscribe((resp) => expect(resp.body).toEqual(expected));
+        const req = httpMock.expectOne({ method: 'POST', url: `${resourceUrl}/import-from-file` });
+        req.flush(request);
+        tick();
+    }));
 
     afterEach(() => {
         httpMock.verify();

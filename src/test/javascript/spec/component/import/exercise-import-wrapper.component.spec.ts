@@ -9,6 +9,7 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTestModule } from '../../test.module';
 import { ExerciseImportTabsComponent } from 'app/exercises/shared/import/exercise-import-tabs.component';
+import { ProgrammingLanguage } from 'app/entities/programming-exercise.model';
 
 describe('ExerciseImportWrapperComponent', () => {
     let component: ExerciseImportWrapperComponent;
@@ -30,6 +31,24 @@ describe('ExerciseImportWrapperComponent', () => {
 
     it('should create', () => {
         expect(component).toBeTruthy();
+    });
+    it.each([ExerciseType.TEXT, ExerciseType.QUIZ, ExerciseType.PROGRAMMING, ExerciseType.MODELING, ExerciseType.FILE_UPLOAD])(
+        'should show correct header title for each exercise type',
+        (exerciseType) => {
+            component.exerciseType = exerciseType;
+            component.ngOnInit();
+            expect(component.titleKey).toBe(
+                component.exerciseType === ExerciseType.FILE_UPLOAD
+                    ? `artemisApp.fileUploadExercise.home.importLabel`
+                    : `artemisApp.${component.exerciseType}Exercise.home.importLabel`,
+            );
+        },
+    );
+    it('should show correct header title for SCA import', () => {
+        component.exerciseType = ExerciseType.PROGRAMMING;
+        component.programmingLanguage = ProgrammingLanguage.JAVA;
+        component.ngOnInit();
+        expect(component.titleKey).toBe('artemisApp.programmingExercise.configureGrading.categories.importLabel');
     });
     it('should show tabs component for programming-exercises', () => {
         component.exerciseType = ExerciseType.PROGRAMMING;

@@ -951,7 +951,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         this.programmingExercise = history.state.programmingExerciseForImportFromFile;
         this.programmingExercise.id = undefined;
         this.programmingExercise.projectKey = undefined;
-        this.programmingExercise.shortName = undefined;
         this.programmingExercise.dueDate = undefined;
         this.programmingExercise.assessmentDueDate = undefined;
         this.programmingExercise.releaseDate = undefined;

@@ -6,8 +6,8 @@ import { ArtemisTestModule } from '../../test.module';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { MockComponent, MockDirective } from 'ng-mocks';
 import { ButtonComponent } from 'app/shared/components/button.component';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { ExerciseType } from 'app/entities/exercise.model';
+import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/entities/programming-exercise.model';
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import JSZip from 'jszip';
@@ -90,6 +90,30 @@ describe('ExerciseImportFromFileComponent', () => {
         expect(alertServiceSpy).toHaveBeenCalledOnce();
         expect(alertServiceSpy).toHaveBeenCalledWith('artemisApp.exercise.importFromFile.exerciseTypeDoesntMatch');
     });
+    it.each([ProgrammingLanguage.SWIFT, ProgrammingLanguage.C, ProgrammingLanguage.EMPTY])(
+        'should raise error alert when programming language or exercise type is not supported',
+        async (programmingLanguage) => {
+            alertServiceSpy = jest.spyOn(alertService, 'error');
+            fixture.detectChanges();
+            component.exerciseType = ExerciseType.PROGRAMMING;
+            component.fileForImport = (await generateValidTestZipWithLanguage(programmingLanguage)) as File;
+            await fixture.whenStable();
+            fixture.detectChanges();
+            // WHEN
+            await component.uploadExercise();
+            await fixture.whenStable();
+            fixture.detectChanges();
+            // THEN
+            expect(alertServiceSpy).toHaveBeenCalledOnce();
+            if (programmingLanguage === ProgrammingLanguage.C) {
+                expect(alertServiceSpy).toHaveBeenCalledWith('artemisApp.programmingExercise.importFromFile.GccNotSupportedForC');
+            } else {
+                expect(alertServiceSpy).toHaveBeenCalledWith('artemisApp.programmingExercise.importFromFile.notSupportedProgrammingLanguage', {
+                    programmingLanguage: programmingLanguage,
+                });
+            }
+        },
+    );
     it('should set exercise attributes and open import dialog', async () => {
         const openImportSpy = jest.spyOn(component, 'openImport');
         component.exerciseType = ExerciseType.PROGRAMMING;
@@ -171,6 +195,7 @@ describe('ExerciseImportFromFileComponent', () => {
         expect(alertServiceSpy).toHaveBeenCalledWith('artemisApp.programmingExercise.importFromFile.fileExtensionError');
         expect(component.fileForImport).toBeUndefined();
     });
+
     it('should set file for import if no errors occur', () => {
         // GIVEN
         alertServiceSpy = jest.spyOn(alertService, 'error');
@@ -190,6 +215,19 @@ describe('ExerciseImportFromFileComponent', () => {
 async function generateValidTestZipFile(): Promise<Blob> {
     const zip = new JSZip();
     const zipFile = zip.file('test.json', '{ "type": "programming", "id": 1246, "title": "Test exercise" }');
+    return zipFile.generateAsync({ type: 'blob' });
+}
+
+async function generateValidTestZipWithLanguage(language: ProgrammingLanguage): Promise<Blob> {
+    const zip = new JSZip();
+    const programmingExercise = new ProgrammingExercise(undefined, undefined);
+    programmingExercise.programmingLanguage = language;
+    programmingExercise.id = 1246;
+    programmingExercise.title = 'Test exercise';
+    if (language === ProgrammingLanguage.C) {
+        programmingExercise.projectType = ProjectType.GCC;
+    }
+    const zipFile = zip.file('test.json', JSON.stringify(programmingExercise));
     return zipFile.generateAsync({ type: 'blob' });
 }
 
