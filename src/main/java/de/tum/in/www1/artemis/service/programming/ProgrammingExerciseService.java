@@ -228,6 +228,7 @@ public class ProgrammingExerciseService {
      * validates the settings of a new programming exercise
      *
      * @param programmingExercise The programming exercise that should be validated
+     * @param course              The course the programming exercise should be created in or imported to
      */
     public void validateNewProgrammingExerciseSettings(ProgrammingExercise programmingExercise, Course course) {
         if (programmingExercise.getId() != null) {

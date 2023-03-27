@@ -643,6 +643,11 @@ public class ProgrammingExerciseImportService {
      * Imports a programming exercise from an uploaded zip file that had previously been downloaded from an Artemis instance.
      * It first extracts the contents of the zip file, then creates a programming exercise (same process as creating a new one),
      * then deletes the template content initially pushed to the repositories and copies over the extracted content
+     *
+     * @param programmingExerciseForImport the programming exercise that should be imported
+     * @param zipFile                      the zip file that contains the exercise
+     * @param course                       the course to which the exercise should be added
+     * @return the imported programming exercise
      **/
     public ProgrammingExercise importProgrammingExerciseFromFile(ProgrammingExercise programmingExerciseForImport, MultipartFile zipFile, Course course)
             throws IOException, GitAPIException, URISyntaxException {
