@@ -51,7 +51,7 @@ class GeneralInstantNotificationServiceTest {
         student2.setId(2L);
         student2.setLogin("2");
 
-        notification = new GroupNotification(null, "test", "test", student1, GroupNotificationType.STUDENT);
+        notification = new GroupNotification(null, "test", "test", false, new String[0], student1, GroupNotificationType.STUDENT);
 
         generalInstantNotificationService = new GeneralInstantNotificationService(applePushNotificationService, firebasePushNotificationService, mailService,
                 notificationSettingsService);

@@ -24,7 +24,7 @@ import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.notification.Notification;
-import de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants;
+import de.tum.in.www1.artemis.domain.notification.NotificationConstants;
 import de.tum.in.www1.artemis.domain.push_notification.PushNotificationDeviceConfiguration;
 import de.tum.in.www1.artemis.domain.push_notification.PushNotificationDeviceType;
 import de.tum.in.www1.artemis.repository.PushNotificationDeviceConfigurationRepository;
@@ -75,13 +75,13 @@ public class PushNotificationService extends InstantNotificationService {
         if (relayServerBaseUrl.isEmpty())
             return;
 
-        NotificationType type = NotificationTitleTypeConstants.findCorrespondingNotificationType(notification.getTitle());
+        NotificationType type = NotificationConstants.findCorrespondingNotificationType(notification.getTitle());
 
         List<PushNotificationDeviceConfiguration> userDeviceConfigurations = getRepository().findByUserIn(users, getDeviceType());
         if (userDeviceConfigurations.isEmpty())
             return;
 
-        String payload = gson.toJson(new PushNotificationData(notification.getTitle(), notification.getText(), notification.getTarget(), type.name()));
+        String payload = gson.toJson(new PushNotificationData(notification.getTransientPlaceholderValuesAsArray(), notification.getTarget(), type.name()));
 
         final byte[] iv = new byte[16];
 
@@ -116,7 +116,7 @@ public class PushNotificationService extends InstantNotificationService {
         return null;
     }
 
-    record PushNotificationData(String title, String body, String target, String type) {
+    record PushNotificationData(String[] notificationPlaceholders, String target, String type) {
     }
 
     /**

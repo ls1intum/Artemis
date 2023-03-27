@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.notification.Notification;
-import de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants;
+import de.tum.in.www1.artemis.domain.notification.NotificationConstants;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.notifications.push_notifications.ApplePushNotificationService;
 import de.tum.in.www1.artemis.service.notifications.push_notifications.FirebasePushNotificationService;
@@ -50,7 +50,7 @@ public class GeneralInstantNotificationService extends InstantNotificationServic
 
         boolean allowsPush = notificationSettingsService.checkIfNotificationIsAllowedInCommunicationChannelBySettingsForGivenUser(notification, user, PUSH);
 
-        NotificationType type = NotificationTitleTypeConstants.findCorrespondingNotificationType(notification.getTitle());
+        NotificationType type = NotificationConstants.findCorrespondingNotificationType(notification.getTitle());
         if (allowsEmail && notificationSettingsService.checkNotificationTypeForEmailSupport(type)) {
             mailService.sendNotification(notification, user, notificationSubject);
         }
@@ -76,7 +76,7 @@ public class GeneralInstantNotificationService extends InstantNotificationServic
         applePushNotificationService.sendNotification(notification, pushRecipients, notificationSubject);
         firebasePushNotificationService.sendNotification(notification, pushRecipients, notificationSubject);
 
-        NotificationType type = NotificationTitleTypeConstants.findCorrespondingNotificationType(notification.getTitle());
+        NotificationType type = NotificationConstants.findCorrespondingNotificationType(notification.getTitle());
         if (notificationSettingsService.checkNotificationTypeForEmailSupport(type)) {
             mailService.sendNotification(notification, emailRecipients, notificationSubject);
         }
