@@ -22,11 +22,11 @@
         [owlDateTime]="dt"
         name="datePicker"
         readonly
-        (click)="resetDate()"
+        (click)="resetDate(); readOnly = !readOnly"
         [owlDateTimeTrigger]="dt"
     />
-    <button [owlDateTimeTrigger]="dt" class="btn position-absolute" type="button" (click)="resetDate()">
+    <button [owlDateTimeTrigger]="dt" class="btn position-absolute" type="button">
         <fa-icon [icon]="faCalendarAlt"></fa-icon>
     </button>
-    <owl-date-time [startAt]="convert(startAt)" #dt></owl-date-time>
+    <owl-date-time [startAt]="convert(startAt)" [disabled]="readOnly" #dt></owl-date-time>
 </div>
