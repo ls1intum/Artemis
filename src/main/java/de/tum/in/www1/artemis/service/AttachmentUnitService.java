@@ -1,18 +1,10 @@
 package de.tum.in.www1.artemis.service;
 
-import java.awt.image.BufferedImage;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.imageio.ImageIO;
-
-import org.apache.commons.io.FilenameUtils;
-import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.rendering.ImageType;
-import org.apache.pdfbox.rendering.PDFRenderer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cache.CacheManager;
@@ -22,7 +14,6 @@ import org.springframework.web.multipart.MultipartFile;
 import de.tum.in.www1.artemis.domain.Attachment;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
-import de.tum.in.www1.artemis.domain.lecture.Slide;
 import de.tum.in.www1.artemis.repository.AttachmentRepository;
 import de.tum.in.www1.artemis.repository.AttachmentUnitRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
@@ -49,16 +40,20 @@ public class AttachmentUnitService {
 
     private final LectureUnitProcessingService lectureUnitProcessingService;
 
+    private final AsyncSlideSplitterService asyncSlideSplitterService;
+
     private final SlideRepository slideRepository;
 
-    public AttachmentUnitService(SlideRepository slideRepository, LectureUnitProcessingService lectureUnitProcessingService, AttachmentUnitRepository attachmentUnitRepository,
-            AttachmentRepository attachmentRepository, FileService fileService, CacheManager cacheManager, LectureRepository lectureRepository) {
+    public AttachmentUnitService(SlideRepository slideRepository, AsyncSlideSplitterService asyncSlideSplitterService, LectureUnitProcessingService lectureUnitProcessingService,
+            AttachmentUnitRepository attachmentUnitRepository, AttachmentRepository attachmentRepository, FileService fileService, CacheManager cacheManager,
+            LectureRepository lectureRepository) {
         this.lectureUnitProcessingService = lectureUnitProcessingService;
         this.attachmentUnitRepository = attachmentUnitRepository;
         this.attachmentRepository = attachmentRepository;
         this.fileService = fileService;
         this.cacheManager = cacheManager;
         this.lectureRepository = lectureRepository;
+        this.asyncSlideSplitterService = asyncSlideSplitterService;
         this.slideRepository = slideRepository;
     }
 
@@ -88,8 +83,8 @@ public class AttachmentUnitService {
         Attachment savedAttachment = attachmentRepository.saveAndFlush(attachment);
         prepareAttachmentUnitForClient(savedAttachmentUnit, savedAttachment);
         evictCache(file, savedAttachmentUnit);
-        // split attachment into single slides and save them as pngs
-        splitAttachmentUnitIntoSingleSlides(file, savedAttachmentUnit);
+
+        asyncSlideSplitterService.splitAttachmentUnitIntoSingleSlides(file, savedAttachmentUnit);
 
         return savedAttachmentUnit;
     }
@@ -123,7 +118,7 @@ public class AttachmentUnitService {
                 lectureUnit.attachmentUnit().setAttachment(savedAttachment);
                 evictCache(lectureUnit.file(), savedAttachmentUnit);
                 // split attachment into single slides and save them as pngs
-                splitAttachmentUnitIntoSingleSlides(lectureUnit.file(), savedAttachmentUnit);
+                asyncSlideSplitterService.splitAttachmentUnitIntoSingleSlides(lectureUnit.file(), savedAttachmentUnit);
             });
             lectureRepository.save(lecture);
         }
@@ -147,7 +142,6 @@ public class AttachmentUnitService {
      */
     public AttachmentUnit updateAttachmentUnit(AttachmentUnit existingAttachmentUnit, AttachmentUnit updateUnit, Attachment updateAttachment, MultipartFile updateFile,
             boolean keepFilename) {
-        System.out.println("updateAttachmentUnit" + existingAttachmentUnit.getSlides().size());
         existingAttachmentUnit.setDescription(updateUnit.getDescription());
         existingAttachmentUnit.setName(updateUnit.getName());
         existingAttachmentUnit.setReleaseDate(updateUnit.getReleaseDate());
@@ -166,9 +160,9 @@ public class AttachmentUnitService {
         Attachment savedAttachment = attachmentRepository.saveAndFlush(existingAttachment);
         prepareAttachmentUnitForClient(savedAttachmentUnit, savedAttachment);
         evictCache(updateFile, savedAttachmentUnit);
-        // update slides
+
         slideRepository.deleteAll(existingAttachmentUnit.getSlides());
-        splitAttachmentUnitIntoSingleSlides(updateFile, savedAttachmentUnit);
+        asyncSlideSplitterService.splitAttachmentUnitIntoSingleSlides(updateFile, savedAttachmentUnit);
 
         return savedAttachmentUnit;
     }
@@ -201,49 +195,6 @@ public class AttachmentUnitService {
             String filePath = fileService.handleSaveFile(file, keepFilename, false);
             attachment.setLink(filePath);
             attachment.setUploadDate(ZonedDateTime.now());
-        }
-    }
-
-    /**
-     * Splits an Attachment Unit file into single slides and saves them as PNG files.
-     *
-     * @param file           The PDF file to split.
-     * @param attachmentUnit The attachment unit to which the slides belong.
-     */
-    private void splitAttachmentUnitIntoSingleSlides(MultipartFile file, AttachmentUnit attachmentUnit) {
-        log.debug("Splitting Attachment unit file {} into single slides", file);
-        try (PDDocument document = PDDocument.load(file.getInputStream());) {
-            String pdfFilename = file.getOriginalFilename();
-            String fileNameWithOutExt = FilenameUtils.removeExtension(pdfFilename);
-            PDFRenderer pdfRenderer = new PDFRenderer(document);
-            for (int page = 0; page < document.getNumberOfPages(); ++page) {
-                // dpi is the resolution of the image, higher dpi means higher quality
-                BufferedImage bufferedImage = pdfRenderer.renderImageWithDPI(page, 96, ImageType.RGB);
-                byte[] imageInByte = bufferedImageToByteArray(bufferedImage, "png");
-                MultipartFile slide = fileService.convertByteArrayToMultipart(fileNameWithOutExt + "-SLIDE-" + (page + 1), ".png", imageInByte);
-                String filePath = fileService.handleSaveFile(slide, true, false);
-                Slide slideEntity = new Slide();
-                slideEntity.setSlideImagePath(filePath);
-                slideEntity.setAttachmentUnit(attachmentUnit);
-                slideRepository.save(slideEntity);
-            }
-        }
-        catch (IOException e) {
-            log.error("Error while splitting PDF into single slides", e);
-            throw new InternalServerErrorException("Could not split PDF into single slides");
-        }
-    }
-
-    /**
-     * Converts BufferedImage to byte[]
-     *
-     * @param bufferedImage the image to convert
-     * @param format        the format of the image (e.g. png)
-     */
-    private byte[] bufferedImageToByteArray(BufferedImage bufferedImage, String format) throws IOException {
-        try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
-            ImageIO.write(bufferedImage, format, outputStream);
-            return outputStream.toByteArray();
         }
     }
 

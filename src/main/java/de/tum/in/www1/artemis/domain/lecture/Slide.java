@@ -32,6 +32,9 @@ public class Slide extends DomainObject {
     @Column(name = "slide_image_path", length = 150)
     private String slideImagePath;
 
+    @Column(name = "slide_number")
+    private int slideNumber;
+
     public AttachmentUnit getAttachmentUnit() {
         return attachmentUnit;
     }
@@ -46,6 +49,14 @@ public class Slide extends DomainObject {
 
     public void setSlideImagePath(String slideImagePath) {
         this.slideImagePath = slideImagePath;
+    }
+
+    public int getSlideNumber() {
+        return slideNumber;
+    }
+
+    public void setSlideNumber(int slideNumber) {
+        this.slideNumber = slideNumber;
     }
 
     /**

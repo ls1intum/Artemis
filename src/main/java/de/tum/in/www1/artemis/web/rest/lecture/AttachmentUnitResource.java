@@ -169,6 +169,7 @@ public class AttachmentUnitResource {
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, lecture.getCourse(), null);
 
         List<AttachmentUnit> savedAttachmentUnits = attachmentUnitService.createAttachmentUnits(lectureUnitInformationDTO, lecture, file);
+        savedAttachmentUnits.forEach(learningGoalProgressService::updateProgressByLearningObjectAsync);
         return ResponseEntity.ok().body(savedAttachmentUnits);
     }
 

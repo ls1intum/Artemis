@@ -11,6 +11,7 @@
             <column name="attachment_unit_id" type="BIGINT">
                 <constraints nullable="false"/>
             </column>
+            <column name="slide_number" type="SMALLINT"/>
         </createTable>
 
         <addForeignKeyConstraint baseColumnNames="attachment_unit_id" baseTableName="slide" constraintName="FK_slide_id" deferrable="false" initiallyDeferred="false"
