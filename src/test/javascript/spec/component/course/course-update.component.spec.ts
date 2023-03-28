@@ -495,16 +495,32 @@ describe('Course Management Update Component', () => {
     });
 
     describe('changeOrganizations', () => {
+        beforeEach(() => {
+            const organization = new Organization();
+            organization.id = 12345;
+            jest.spyOn(organizationService, 'getOrganizationsByCourse').mockReturnValue(of([organization]));
+        });
+
         it('should allow adding / removing organizations if admin', () => {
             jest.spyOn(accountService, 'isAdmin').mockReturnValue(true);
             fixture.detectChanges();
-            expect(comp.isAdmin).toBeTrue();
+
+            const addButton = fixture.debugElement.query(By.css('#addOrganizationButton'));
+            const removeButton = fixture.debugElement.query(By.css('#removeOrganizationButton'));
+
+            expect(addButton).not.toBeNull();
+            expect(removeButton).not.toBeNull();
         });
 
         it('should not allow adding / removing organizations if not admin', () => {
             jest.spyOn(accountService, 'isAdmin').mockReturnValue(false);
             fixture.detectChanges();
-            expect(comp.isAdmin).toBeFalse();
+
+            const addButton = fixture.debugElement.query(By.css('#addOrganizationButton'));
+            const removeButton = fixture.debugElement.query(By.css('#removeOrganizationButton'));
+
+            expect(addButton).toBeNull();
+            expect(removeButton).toBeNull();
         });
     });
 });
