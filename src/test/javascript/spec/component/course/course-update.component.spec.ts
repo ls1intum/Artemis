@@ -32,6 +32,7 @@ import { ProgrammingLanguage } from 'app/entities/programming-exercise.model';
 import { CourseAdminService } from 'app/course/manage/course-admin.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
+import { By } from '@angular/platform-browser';
 
 @Component({ selector: 'jhi-markdown-editor', template: '' })
 class MarkdownEditorStubComponent {
