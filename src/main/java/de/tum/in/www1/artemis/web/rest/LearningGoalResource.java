@@ -217,6 +217,36 @@ public class LearningGoalResource {
     }
 
     /**
+     * POST /courses/:courseId/learning-goals/import : creates a new learning goal.
+     *
+     * @param courseId             the id of the course to which the learning goal should be imported to
+     * @param learningGoalToImport the learning goal that should be imported
+     * @return the ResponseEntity with status 200 (OK) and with body containing the imported learning goal
+     * @throws URISyntaxException if the Location URI syntax is incorrect
+     */
+    @PostMapping("/courses/{courseId}/learning-goals/import")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
+    public ResponseEntity<LearningGoal> importLearningGoal(@PathVariable Long courseId, @RequestBody LearningGoal learningGoalToImport) throws URISyntaxException {
+        log.info("REST request to import a learning goal: {}", learningGoalToImport.getId());
+
+        var course = courseRepository.findWithEagerLearningGoalsByIdElseThrow(courseId);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, learningGoalToImport.getCourse(), null);
+
+        if (learningGoalToImport.getCourse().getId().equals(courseId)) {
+            throw new ConflictException("The learning goal is already added to this course", "LearningGoal", "learningGoalCycle");
+        }
+
+        learningGoalToImport.setCourse(course);
+        learningGoalToImport.setId(null);
+        learningGoalRepository.save(learningGoalToImport);
+
+        return ResponseEntity.ok().body(learningGoalToImport);
+        // TODO: change response to something like this (and also update the JavaDoc):
+        // return ResponseEntity.created(new URI("/api/file-upload-exercises/" + newFileUploadExercise.getId())).body(newFileUploadExercise);
+    }
+
+    /**
      * DELETE /courses/:courseId/learning-goals/:learningGoalId
      *
      * @param courseId       the id of the course to which the learning goal belongs

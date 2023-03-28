@@ -202,10 +202,24 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
 
     openImportModal() {
         const modalRef = this.modalService.open(LearningGoalImportComponent, { size: 'lg', backdrop: 'static' });
-        modalRef.componentInstance.disabledIds = this.learningGoals.concat(this.prerequisites).map((learningGoal) => learningGoal.id);
-        modalRef.result.then((result: LearningGoal) => {
-            // this.router.navigate(['course-management', this.courseId, 'programming-exercises', 'import', result.id]);
-        });
+        modalRef.componentInstance.disabledIds = this.learningGoals.map((learningGoal) => learningGoal.id);
+        modalRef.result.then(
+            (selectedLearningGoal: LearningGoal) => {
+                this.learningGoalService
+                    .import(selectedLearningGoal, this.courseId)
+                    .pipe(
+                        filter((res: HttpResponse<LearningGoal>) => res.ok),
+                        map((res: HttpResponse<LearningGoal>) => res.body),
+                    )
+                    .subscribe({
+                        next: (res: LearningGoal) => {
+                            this.learningGoals.push(res);
+                        },
+                        error: (res: HttpErrorResponse) => onError(this.alertService, res),
+                    });
+            },
+            () => {},
+        );
     }
 
     createRelation() {

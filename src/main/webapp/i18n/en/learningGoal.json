@@ -43,9 +43,15 @@
                 "create": "Create competency"
             },
             "importLearningGoal": {
-                "title": "Import a learning goal",
+                "title": "Import a Learning Goal",
                 "search": "Search for a learning goal:",
-                "loading": "Loading..."
+                "loading": "Loading...",
+                "table": {
+                    "title": "Title",
+                    "course": "Course",
+                    "semester": "Semester",
+                    "doSelect": "Select"
+                }
             },
             "createLearningGoal": {
                 "title": "Create a new competency",

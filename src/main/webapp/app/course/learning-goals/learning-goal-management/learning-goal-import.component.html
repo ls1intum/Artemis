@@ -1,6 +1,6 @@
 <form>
     <div class="modal-header">
-        <h4 class="modal-title" jhiTranslate="artemisApp.learningGoal.importLearningGoal.title">Select Prerequisite asdasda</h4>
+        <h4 class="modal-title" jhiTranslate="artemisApp.learningGoal.importLearningGoal.title">Import a Learning Goal</h4>
         <button (click)="clear()" aria-hidden="true" class="btn-close" data-dismiss="modal" type="button"></button>
     </div>
     <div class="modal-body">
@@ -17,15 +17,15 @@
                         <fa-icon [icon]="faSort"></fa-icon>
                     </th>
                     <th class="col-4" jhiSortBy="{{ column.TITLE }}">
-                        <span jhiTranslate="artemisApp.learningGoal.prerequisite.import.table.title">Title</span>
+                        <span jhiTranslate="artemisApp.learningGoal.importLearningGoal.table.title">Title</span>
                         <fa-icon [icon]="faSort"></fa-icon>
                     </th>
                     <th class="col-4" jhiSortBy="{{ column.COURSE_TITLE }}">
-                        <span jhiTranslate="artemisApp.learningGoal.prerequisite.import.table.course">Course</span>
+                        <span jhiTranslate="artemisApp.learningGoal.importLearningGoal.table.course">Course</span>
                         <fa-icon [icon]="faSort"></fa-icon>
                     </th>
                     <th class="col-2" jhiSortBy="{{ column.SEMESTER }}">
-                        <span jhiTranslate="artemisApp.learningGoal.prerequisite.import.table.semester">Semester</span>
+                        <span jhiTranslate="artemisApp.learningGoal.importLearningGoal.table.semester">Semester</span>
                         <fa-icon [icon]="faSort"></fa-icon>
                     </th>
                     <th class="col-1"></th>
@@ -49,7 +49,7 @@
                         <jhi-button
                             (onClick)="selectImport(learningGoal)"
                             [disabled]="disabledIds.includes(learningGoal.id!)"
-                            [title]="'artemisApp.learningGoal.prerequisite.import.table.doSelect'"
+                            [title]="'artemisApp.learningGoal.importLearningGoal.table.doSelect'"
                         ></jhi-button>
                     </td>
                 </tr>

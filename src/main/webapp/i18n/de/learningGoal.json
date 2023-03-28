@@ -43,6 +43,17 @@
                 "import": "Kompetenz importieren",
                 "create": "Kompetenz erstellen"
             },
+            "importLearningGoal": {
+                "title": "Kompetenz importieren",
+                "search": "Suche nach einer Kompetenz:",
+                "loading": "Lade...",
+                "table": {
+                    "title": "Titel",
+                    "course": "Kurs",
+                    "semester": "Semester",
+                    "doSelect": "Auswählen"
+                }
+            },
             "createLearningGoal": {
                 "title": "Erstelle eine neue Kompetenz",
                 "titlePlaceholder": "Gib der Kompetenz einen Titel",
