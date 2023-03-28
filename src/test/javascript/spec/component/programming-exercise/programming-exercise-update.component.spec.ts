@@ -477,6 +477,7 @@ describe('ProgrammingExercise Management Update Component', () => {
             programmingExercise.projectKey = 'projectKey';
 
             programmingExercise.assessmentDueDate = dayjs();
+            programmingExercise.exampleSolutionPublicationDate = dayjs();
             programmingExercise.programmingLanguage = ProgrammingLanguage.JAVA;
             programmingExercise.zipFileForImport = new File([''], 'test.zip');
             programmingExercise.allowOfflineIde = true;
@@ -502,6 +503,7 @@ describe('ProgrammingExercise Management Update Component', () => {
             expect(comp.programmingExercise.releaseDate).toBeUndefined();
             expect(comp.programmingExercise.startDate).toBeUndefined();
             expect(comp.programmingExercise.assessmentDueDate).toBeUndefined();
+            expect(comp.programmingExercise.exampleSolutionPublicationDate).toBeUndefined();
             expect(comp.programmingExercise.zipFileForImport?.name).toBe('test.zip');
             expect(comp.programmingExercise.allowComplaintsForAutomaticAssessments).toBeFalse();
             expect(comp.programmingExercise.allowManualFeedbackRequests).toBeFalse();

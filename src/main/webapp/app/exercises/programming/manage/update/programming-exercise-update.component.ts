@@ -283,7 +283,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         this.updateProjectTypeSettings(type);
 
         // Only load problem statement template when creating a new exercise and not when importing an existing exercise
-        if (this.programmingExercise.id === undefined) {
+        if (this.programmingExercise.id === undefined && !this.isImportFromFile) {
             this.loadProgrammingLanguageTemplate(this.programmingExercise.programmingLanguage!);
             // Rerender the instructions as the template has changed.
             this.rerenderSubject.next();
@@ -950,14 +950,19 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     private createProgrammingExerciseForImportFromFile() {
         this.programmingExercise = history.state.programmingExerciseForImportFromFile;
         this.programmingExercise.id = undefined;
+        this.programmingExercise.exerciseGroup = undefined;
+        this.programmingExercise.course = undefined;
         this.programmingExercise.projectKey = undefined;
         this.programmingExercise.dueDate = undefined;
         this.programmingExercise.assessmentDueDate = undefined;
         this.programmingExercise.releaseDate = undefined;
         this.programmingExercise.startDate = undefined;
+        this.programmingExercise.exampleSolutionPublicationDate = undefined;
         //without dates set, they can only be false
         this.programmingExercise.allowComplaintsForAutomaticAssessments = false;
         this.programmingExercise.allowManualFeedbackRequests = false;
+        this.selectedProgrammingLanguage = this.programmingExercise.programmingLanguage!;
+        this.selectedProjectType = this.programmingExercise.projectType!;
     }
 
     getInfoStepInputs() {

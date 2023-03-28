@@ -165,7 +165,7 @@ export class ExerciseGroupsComponent implements OnInit {
      * @param exerciseType The exercise type you want to import
      */
     openImportModal(exerciseGroup: ExerciseGroup, exerciseType: ExerciseType) {
-        const importBaseRoute = ['/course-management', this.courseId, 'exams', this.examId, 'exercise-groups', exerciseGroup.id, `${exerciseType}-exercises`, 'import'];
+        const importBaseRoute = ['/course-management', this.courseId, 'exams', this.examId, 'exercise-groups', exerciseGroup.id, `${exerciseType}-exercises`];
 
         const importModalRef = this.modalService.open(ExerciseImportWrapperComponent, {
             size: 'lg',
@@ -173,8 +173,18 @@ export class ExerciseGroupsComponent implements OnInit {
         });
         importModalRef.componentInstance.exerciseType = exerciseType;
         importModalRef.result.then((result: Exercise) => {
-            importBaseRoute.push(result.id);
-            this.router.navigate(importBaseRoute);
+            if (result.id) {
+                importBaseRoute.push('import', result.id);
+                this.router.navigate(importBaseRoute);
+            } else {
+                // we know it must be a programming exercise, because only programming exercises can be imported from a file
+                importBaseRoute.push('import-from-file');
+                this.router.navigate(importBaseRoute, {
+                    state: {
+                        programmingExerciseForImportFromFile: result,
+                    },
+                });
+            }
         });
     }
 

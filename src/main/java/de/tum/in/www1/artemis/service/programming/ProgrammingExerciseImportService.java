@@ -4,22 +4,20 @@ import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_REPO_NAME;
 import static de.tum.in.www1.artemis.config.Constants.TEST_REPO_NAME;
 
 import java.io.*;
-import java.io.File;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Stream;
 
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.filefilter.NameFileFilter;
+import org.apache.commons.io.filefilter.NotFileFilter;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-import org.springframework.util.FileSystemUtils;
 import org.springframework.web.multipart.MultipartFile;
-
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
@@ -37,7 +35,6 @@ import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationTriggerService;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
-import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
 @Service
 public class ProgrammingExerciseImportService {
@@ -144,12 +141,12 @@ public class ProgrammingExerciseImportService {
         }
     }
 
-    private void importRepositoriesFromFile(ProgrammingExercise newExercise, Path basePath, String oldPackageName) throws IOException, GitAPIException, URISyntaxException {
+    private void importRepositoriesFromFile(ProgrammingExercise newExercise, Path basePath) throws IOException, GitAPIException, URISyntaxException {
         Repository templateRepo = gitService.getOrCheckoutRepository(new VcsRepositoryUrl(newExercise.getTemplateRepositoryUrl()), false);
         Repository solutionRepo = gitService.getOrCheckoutRepository(new VcsRepositoryUrl(newExercise.getSolutionRepositoryUrl()), false);
         Repository testRepo = gitService.getOrCheckoutRepository(new VcsRepositoryUrl(newExercise.getTestRepositoryUrl()), false);
 
-        copyImportedExerciseContentToRepositories(templateRepo, solutionRepo, testRepo, basePath, newExercise, oldPackageName);
+        copyImportedExerciseContentToRepositories(templateRepo, solutionRepo, testRepo, basePath);
         gitService.stageAllChanges(templateRepo);
         gitService.stageAllChanges(solutionRepo);
         gitService.stageAllChanges(testRepo);
@@ -159,186 +156,19 @@ public class ProgrammingExerciseImportService {
 
     }
 
-    private void copyImportedExerciseContentToRepositories(Repository templateRepo, Repository solutionRepo, Repository testRepo, Path basePath, ProgrammingExercise newExercise,
-            String oldPackageName) throws IOException, GitAPIException {
-        deleteSourceAndTestFilesInRepository(templateRepo);
-        deleteSourceAndTestFilesInRepository(solutionRepo);
-        deleteSourceAndTestFilesInRepository(testRepo);
-        switch (newExercise.getProgrammingLanguage()) {
-            case JAVA, KOTLIN -> {
-
-                copyExerciseContentToRepositoryForJavaOrKotlinExercise(templateRepo, RepositoryType.TEMPLATE, basePath, newExercise, oldPackageName);
-                copyExerciseContentToRepositoryForJavaOrKotlinExercise(solutionRepo, RepositoryType.SOLUTION, basePath, newExercise, oldPackageName);
-                copyExerciseContentToRepositoryForJavaOrKotlinExercise(testRepo, RepositoryType.TESTS, basePath, newExercise, oldPackageName);
-            }
-            case C, VHDL, ASSEMBLER -> {
-                copyExerciseContentToRepositoryForExerciseWithPlainDirectoryStructure(templateRepo, RepositoryType.TEMPLATE, basePath);
-                copyExerciseContentToRepositoryForExerciseWithPlainDirectoryStructure(solutionRepo, RepositoryType.SOLUTION, basePath);
-                copyExerciseContentToRepositoryForExerciseWithPlainDirectoryStructure(testRepo, RepositoryType.TESTS, basePath);
-            }
-            case PYTHON -> {
-                copyExerciseContentToRepositoryForPythonExercise(templateRepo, RepositoryType.TEMPLATE, basePath);
-                copyExerciseContentToRepositoryForPythonExercise(solutionRepo, RepositoryType.SOLUTION, basePath);
-                copyExerciseContentToRepositoryForPythonExercise(testRepo, RepositoryType.TESTS, basePath);
-            }
-            case OCAML -> {
-                copyExerciseContentToRepositoryForOcamlExercise(templateRepo, RepositoryType.TEMPLATE, basePath);
-                copyExerciseContentToRepositoryForOcamlExercise(solutionRepo, RepositoryType.SOLUTION, basePath);
-                copyExerciseContentToRepositoryForOcamlExercise(testRepo, RepositoryType.TESTS, basePath);
-            }
-            case HASKELL -> {
-                copyExerciseContentToRepositoryForHaskellExercise(templateRepo, RepositoryType.TEMPLATE, basePath);
-                copyExerciseContentToRepositoryForHaskellExercise(solutionRepo, RepositoryType.SOLUTION, basePath);
-                copyExerciseContentToRepositoryForHaskellExercise(testRepo, RepositoryType.TESTS, basePath);
-            }
-        }
+    private void copyImportedExerciseContentToRepositories(Repository templateRepo, Repository solutionRepo, Repository testRepo, Path basePath) throws IOException {
+        repositoryService.deleteAllContentInRepository(templateRepo);
+        repositoryService.deleteAllContentInRepository(solutionRepo);
+        repositoryService.deleteAllContentInRepository(testRepo);
+        copyExerciseContentToRepository(templateRepo, RepositoryType.TEMPLATE, basePath);
+        copyExerciseContentToRepository(solutionRepo, RepositoryType.SOLUTION, basePath);
+        copyExerciseContentToRepository(testRepo, RepositoryType.TESTS, basePath);
     }
 
-    private void copyExerciseContentToRepositoryForExerciseWithPlainDirectoryStructure(Repository repository, RepositoryType repositoryType, Path exerciseDir) throws IOException {
-        for (Path file : retrieveRepositoryContentPaths(retrieveRepositoryDirectoryPath(exerciseDir, repositoryType.getName()))) {
-            repositoryService.createFile(repository, String.valueOf(file.getFileName()), Files.newInputStream(file));
-
-        }
-
-    }
-
-    private void copyExerciseContentToRepositoryForPythonExercise(Repository repository, RepositoryType repositoryType, Path exerciseDir) throws IOException {
-        boolean testRepo;
-        if (repositoryType == RepositoryType.TESTS) {
-            repositoryService.createFolderRecursively(repository, "behavior");
-            repositoryService.createFolderRecursively(repository, "structural");
-            testRepo = true;
-        }
-        else {
-            testRepo = false;
-        }
-
-        for (Path file : retrieveRepositoryContentPathsPython(exerciseDir, repositoryType)) {
-            if (testRepo) {
-                if (file.toAbsolutePath().toString().contains("behavior")) {
-                    repositoryService.createFile(repository, "behavior/" + file.getFileName(), Files.newInputStream(file));
-                }
-                else {
-                    repositoryService.createFile(repository, "structural/" + file.getFileName(), Files.newInputStream(file));
-                }
-            }
-            else {
-
-                repositoryService.createFile(repository, String.valueOf(file.getFileName()), Files.newInputStream(file));
-            }
-
-        }
-    }
-
-    private void copyExerciseContentToRepositoryForOcamlExercise(Repository repository, RepositoryType repositoryType, Path exerciseDir) throws IOException {
-        boolean testRepo;
-        if (repositoryType == RepositoryType.TESTS) {
-            repositoryService.createFolderRecursively(repository, "checker");
-            repositoryService.createFolderRecursively(repository, "overrides");
-            repositoryService.createFolderRecursively(repository, "solution");
-            repositoryService.createFolderRecursively(repository, "test");
-            repositoryService.createFolderRecursively(repository, "assignment");
-            testRepo = true;
-        }
-        else {
-            testRepo = false;
-            repositoryService.createFolderRecursively(repository, "src");
-        }
-
-        for (Path file : retrieveRepositoryContentPathsOcaml(exerciseDir, repositoryType)) {
-            if (testRepo) {
-                if (file.toAbsolutePath().toString().contains("checker")) {
-                    repositoryService.createFile(repository, "checker/" + file.getFileName(), Files.newInputStream(file));
-                }
-                else if (file.toAbsolutePath().toString().contains("overrides")) {
-                    repositoryService.createFile(repository, "overrides/" + file.getFileName(), Files.newInputStream(file));
-                }
-                else if (file.toAbsolutePath().toString().contains("solution")) {
-                    repositoryService.createFile(repository, "solution/" + file.getFileName(), Files.newInputStream(file));
-                }
-                else if (file.toAbsolutePath().toString().contains("assignment")) {
-                    repositoryService.createFile(repository, "assignment/" + file.getFileName(), Files.newInputStream(file));
-                }
-                else if (file.toAbsolutePath().toString().contains("test")) {
-                    repositoryService.createFile(repository, "test/" + file.getFileName(), Files.newInputStream(file));
-                }
-            }
-            else {
-                repositoryService.createFile(repository, "src/" + file.getFileName(), Files.newInputStream(file));
-            }
-
-        }
-    }
-
-    private void copyExerciseContentToRepositoryForHaskellExercise(Repository repository, RepositoryType repositoryType, Path exerciseDir) throws IOException {
-        boolean testRepo;
-        if (repositoryType == RepositoryType.TESTS) {
-            repositoryService.createFolderRecursively(repository, "test");
-            testRepo = true;
-        }
-        else {
-            testRepo = false;
-            repositoryService.createFolderRecursively(repository, "src");
-        }
-
-        for (Path file : retrieveRepositoryContentPathsHaskell(exerciseDir, repositoryType)) {
-            if (testRepo) {
-                repositoryService.createFile(repository, "test/" + file.getFileName(), Files.newInputStream(file));
-            }
-            else {
-                repositoryService.createFile(repository, "src/" + file.getFileName(), Files.newInputStream(file));
-            }
-
-        }
-    }
-
-    private void copyExerciseContentToRepositoryForJavaOrKotlinExercise(Repository repository, RepositoryType repositoryType, Path exerciseDir, ProgrammingExercise newExercise,
-            String oldPackageName) throws IOException {
-        boolean testRepo;
-        if (repositoryType == RepositoryType.TESTS) {
-            repositoryService.createFolderRecursively(repository, "test/" + newExercise.getPackageFolderName());
-            testRepo = true;
-        }
-        else {
-            testRepo = false;
-            repositoryService.createFolderRecursively(repository, "src/" + newExercise.getPackageFolderName());
-        }
-        Map<String, String> replacePackageName = Map.of(oldPackageName, newExercise.getPackageName());
-
-        retrieveRepositoryContentPathsJavaKotlin(exerciseDir, repositoryType).forEach(file -> {
-            try {
-                if (testRepo) {
-                    repositoryService.createFile(repository, "test/" + newExercise.getPackageFolderName() + "/" + file.getFileName(), Files.newInputStream(file));
-                }
-                else {
-                    repositoryService.createFile(repository, "src/" + newExercise.getPackageFolderName() + "/" + file.getFileName(), Files.newInputStream(file));
-                }
-                var path = repository.getLocalPath();
-                path = testRepo ? path.resolve("test") : path.resolve("src");
-                var absolutePath = path.toAbsolutePath();
-                fileService.replaceVariablesInFileRecursive(absolutePath.toString(), replacePackageName);
-            }
-            catch (IOException e) {
-                throw new InternalServerErrorException("Could not copy exercise content to repository");
-            }
-
-        });
-    }
-
-    private void deleteSourceAndTestFilesInRepository(Repository repository) {
-        // only the root level dir exists, delete all existing files
-        if (gitService.listFilesAndFolders(repository).entrySet().stream().filter(e -> e.getValue() == FileType.FOLDER).count() == 1) {
-            gitService.listFilesAndFolders(repository).entrySet().stream().filter(e -> FileType.FILE == e.getValue()).forEach(e -> {
-                if (!FileSystemUtils.deleteRecursively(e.getKey())) {
-                    log.error("failed to delete: " + e.getKey().getName());
-                }
-            });
-            repository.setContent(null);
-            return;
-        }
-        Stream.of("src", "test", "behavior", "structural", "assignment", "checker", "overrides", "solution", "tests", "testUtils")
-                .map(name -> gitService.listFilesAndFolders(repository).keySet().stream().filter(File::isDirectory).filter(dir -> name.equals(dir.getName())).findFirst())
-                .filter(Optional::isPresent).map(Optional::get).forEach(FileSystemUtils::deleteRecursively);
+    private void copyExerciseContentToRepository(Repository repository, RepositoryType repositoryType, Path basePath) throws IOException {
+        // copy everything but the .git folder
+        FileUtils.copyDirectory(retrieveRepositoryDirectoryPath(basePath, repositoryType.getName()).toFile(), repository.getLocalPath().toFile(),
+                new NotFileFilter(new NameFileFilter(".git")));
         repository.setContent(null);
     }
 
@@ -518,20 +348,6 @@ public class ProgrammingExerciseImportService {
         return importedProgrammingExercise;
     }
 
-    private String retrieveOldPackageName(Path dirPath, String fileName) {
-        ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        objectMapper.findAndRegisterModules();
-
-        try {
-            return objectMapper.readValue(dirPath.resolve(fileName).toFile(), ProgrammingExercise.class).getPackageName();
-        }
-        catch (IOException e) {
-            e.printStackTrace();
-            throw new BadRequestAlertException("The JSON file for the programming exercise is not valid or was not found.", "programmingExercise", "exerciseJsonNotValidOrFound");
-        }
-    }
-
     private Path retrieveRepositoryDirectoryPath(Path dirPath, String repoType) {
         List<Path> result;
         try (Stream<Path> walk = Files.walk(dirPath)) {
@@ -548,84 +364,7 @@ public class ProgrammingExerciseImportService {
         return result.get(0);
     }
 
-    private List<Path> retrieveRepositoryContentPathsJavaKotlin(Path dirPath, RepositoryType type) {
-        Path repositorySrcPath;
-        if (type == RepositoryType.TESTS) {
-            repositorySrcPath = retrieveRepositoryDirectoryPath(dirPath, type.getName()).resolve("test");
-        }
-        else {
-            repositorySrcPath = retrieveRepositoryDirectoryPath(dirPath, type.getName()).resolve("src");
-        }
-
-        return retrieveRepositoryContentPaths(repositorySrcPath);
-
-    }
-
-    private List<Path> retrieveRepositoryContentPathsPython(Path dirPath, RepositoryType type) {
-        Path assignmentPath;
-        Path behavioralPath;
-        if (type == RepositoryType.TESTS) {
-            behavioralPath = retrieveRepositoryDirectoryPath(dirPath, type.getName()).resolve("behavior");
-            assignmentPath = retrieveRepositoryDirectoryPath(dirPath, type.getName()).resolve("structural");
-            return retrieveRepositoryContentPaths(behavioralPath, assignmentPath);
-        }
-
-        return retrieveRepositoryContentPaths(retrieveRepositoryDirectoryPath(dirPath, type.getName()));
-
-    }
-
-    private List<Path> retrieveRepositoryContentPathsOcaml(Path dirPath, RepositoryType type) {
-        Path assignmentPath;
-        Path checkerPath;
-        Path overridesPath;
-        Path solutionPath;
-        Path testPath;
-        if (type == RepositoryType.TESTS) {
-            checkerPath = retrieveRepositoryDirectoryPath(dirPath, type.getName()).resolve("checker");
-            overridesPath = retrieveRepositoryDirectoryPath(dirPath, type.getName()).resolve("overrides");
-            solutionPath = retrieveRepositoryDirectoryPath(dirPath, type.getName()).resolve("solution");
-            testPath = retrieveRepositoryDirectoryPath(dirPath, type.getName()).resolve("test");
-            assignmentPath = retrieveRepositoryDirectoryPath(dirPath, type.getName()).resolve("assignment");
-            return retrieveRepositoryContentPaths(checkerPath, overridesPath, solutionPath, testPath, assignmentPath);
-        }
-        Path repositorySrcPath = retrieveRepositoryDirectoryPath(dirPath, type.getName()).resolve("src");
-
-        return retrieveRepositoryContentPaths(repositorySrcPath);
-
-    }
-
-    private List<Path> retrieveRepositoryContentPathsHaskell(Path dirPath, RepositoryType type) {
-        Path contentPath;
-        if (type == RepositoryType.TESTS) {
-            contentPath = retrieveRepositoryDirectoryPath(dirPath, type.getName()).resolve("test");
-        }
-        else {
-            contentPath = retrieveRepositoryDirectoryPath(dirPath, type.getName()).resolve("src");
-        }
-
-        return retrieveRepositoryContentPaths(contentPath);
-
-    }
-
-    private List<Path> retrieveRepositoryContentPaths(Path... dirPath) {
-        List<Path> files;
-        List<Path> allFiles = new ArrayList<>();
-        for (Path path : dirPath) {
-
-            try (Stream<Path> walk = Files.walk(path)) {
-
-                files = walk.filter(f -> !Files.isDirectory(f) && !f.toAbsolutePath().toString().contains(".git")).toList();
-            }
-            catch (IOException e) {
-                e.printStackTrace();
-                throw new InternalServerErrorException("Could not copy exercise content to new repository");
-            }
-            allFiles.addAll(files);
-        }
-        return allFiles;
-    }
-
-    private String findJsonFileAndReturnFileName(Path dirPath) throws IOException {
+    private void checkJsonFileExists(Path dirPath) throws IOException {
         List<String> result;
         try (Stream<Path> stream = Files.walk(dirPath)) {
             result = stream.filter(Files::isRegularFile).map(f -> f.getFileName().toString()).filter(name -> name.startsWith("Exercise-Details"))
@@ -635,8 +374,6 @@ public class ProgrammingExerciseImportService {
         if (result.size() != 1) {
             throw new BadRequestAlertException("There are either no or more than one json file in the directory!", "programmingExercise", "exerciseJsonNotValidOrFound");
         }
-
-        return result.get(0);
     }
 
     /**
@@ -658,15 +395,14 @@ public class ProgrammingExerciseImportService {
         }
         zipFile.transferTo(exerciseFilePath);
         zipFileService.extractZipFileRecursively(exerciseFilePath);
-        var exerciseDetailsFileName = findJsonFileAndReturnFileName(path);
+        checkJsonFileExists(path);
         checkRepositoriesExist(path);
-        String oldPackageName = retrieveOldPackageName(Path.of(exerciseFilePath.toString().substring(0, exerciseFilePath.toString().length() - 4)), exerciseDetailsFileName);
         programmingExerciseService.validateNewProgrammingExerciseSettings(programmingExerciseForImport, course);
         ProgrammingExercise importedProgrammingExercise = programmingExerciseService.createProgrammingExercise(programmingExerciseForImport);
         if (Boolean.TRUE.equals(programmingExerciseForImport.isStaticCodeAnalysisEnabled())) {
             staticCodeAnalysisService.createDefaultCategories(importedProgrammingExercise);
         }
-        importRepositoriesFromFile(importedProgrammingExercise, path, oldPackageName);
+        importRepositoriesFromFile(importedProgrammingExercise, path);
         return importedProgrammingExercise;
     }
 
