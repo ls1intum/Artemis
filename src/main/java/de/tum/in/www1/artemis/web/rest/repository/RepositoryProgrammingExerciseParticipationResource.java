@@ -86,14 +86,14 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
 
         // Add submission policy to the programming exercise.
         if (programmingExercise.getSubmissionPolicy() == null) {
-            programmingExercise.setSubmissionPolicy(submissionPolicyRepository.findByExerciseId(programmingExercise.getId()));
+            programmingExercise.setSubmissionPolicy(submissionPolicyRepository.findByProgrammingExerciseId(programmingExercise.getId()));
         }
 
         try {
             repositoryAccessService.checkAccessRepositoryElseThrow(programmingParticipation, userRepository.getUserWithGroupsAndAuthorities(), programmingExercise,
                     repositoryActionType);
         }
-        catch (AccessUnauthorizedException | AccessForbiddenException e) {
+        catch (AccessUnauthorizedException e) {
             // All methods calling this getRepository method only expect the AccessForbiddenException to determine whether a user has access to the repository.
             // The local version control system, that also uses checkAccessRepositoryElseThrow, needs a more fine-grained check to return the correct HTTP status and thus expects
             // both the AccessUnauthorizedException and the AccessForbiddenException.
@@ -128,7 +128,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         if (!(participation instanceof ProgrammingExerciseParticipation)) {
             throw new IllegalArgumentException();
         }
-        return participationService.canAccessParticipation((ProgrammingExerciseParticipation) participation, userRepository.getUserWithGroupsAndAuthorities());
+        return participationService.canAccessParticipation((ProgrammingExerciseParticipation) participation);
     }
 
     @Override
@@ -276,7 +276,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         // User must have the necessary permissions to update a file.
         // When the buildAndTestAfterDueDate is set, the student can't change the repository content anymore after the due date.
         boolean repositoryIsLocked = programmingExerciseParticipation.isLocked();
-        if (repositoryIsLocked || !participationService.canAccessParticipation(programmingExerciseParticipation, userRepository.getUserWithGroupsAndAuthorities())) {
+        if (repositoryIsLocked || !participationService.canAccessParticipation(programmingExerciseParticipation)) {
             FileSubmissionError error = new FileSubmissionError(participationId, "noPermissions");
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, error.getMessage(), error);
         }
@@ -361,7 +361,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
 
         ProgrammingExerciseParticipation participation = participationService.findProgrammingExerciseParticipationWithLatestSubmissionAndResult(participationId);
 
-        if (!participationService.canAccessParticipation(participation, userRepository.getUserWithGroupsAndAuthorities())) {
+        if (!participationService.canAccessParticipation(participation)) {
             throw new AccessForbiddenException("Participation", participationId);
         }
 
