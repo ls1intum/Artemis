@@ -176,9 +176,9 @@ public class GroupNotificationFactory {
                 notification.setTransientAndStringTarget(createExamExerciseTargetWithExerciseUpdate(exercise));
                 notification.setPriority(HIGH);
             }
-            else if (exercise instanceof ProgrammingExercise) {
+            else if (exercise instanceof ProgrammingExercise programmingExercise) {
                 notification.setTransientAndStringTarget(
-                        createExamProgrammingExerciseOrTestCaseTarget((ProgrammingExercise) exercise, NotificationTargetFactory.EXERCISE_UPDATED_TEXT));
+                        createExamProgrammingExerciseOrTestCaseTarget(programmingExercise, NotificationTargetFactory.EXERCISE_UPDATED_TEXT));
             }
         }
         // Exercises for courses (not for exams)
