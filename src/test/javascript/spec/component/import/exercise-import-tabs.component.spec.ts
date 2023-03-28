@@ -13,35 +13,37 @@ import { NgbPaginationNextMockDirective } from '../../helpers/mocks/directive/ng
 import { By } from '@angular/platform-browser';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 
-let fixture: ComponentFixture<ExerciseImportTabsComponent>;
-let comp: ExerciseImportTabsComponent;
+describe('ExerciseImportTabsComponent', () => {
+    let fixture: ComponentFixture<ExerciseImportTabsComponent>;
+    let comp: ExerciseImportTabsComponent;
 
-beforeEach(() => {
-    TestBed.configureTestingModule({
-        imports: [
-            ArtemisTestModule,
-            NgbNavModule,
-            MockComponent(ExerciseImportFromFileComponent),
-            MockComponent(HelpIconComponent),
-            MockComponent(ExerciseImportComponent),
-            FormsModule,
-        ],
-        declarations: [ExerciseImportTabsComponent, MockDirective(TranslateDirective)],
-    })
-        .compileComponents()
-        .then(() => {
-            fixture = TestBed.createComponent(ExerciseImportTabsComponent);
-            comp = fixture.componentInstance;
-        });
-});
+    beforeEach(() => {
+        TestBed.configureTestingModule({
+            imports: [
+                ArtemisTestModule,
+                NgbNavModule,
+                MockComponent(ExerciseImportFromFileComponent),
+                MockComponent(HelpIconComponent),
+                MockComponent(ExerciseImportComponent),
+                FormsModule,
+            ],
+            declarations: [ExerciseImportTabsComponent, MockDirective(TranslateDirective)],
+        })
+            .compileComponents()
+            .then(() => {
+                fixture = TestBed.createComponent(ExerciseImportTabsComponent);
+                comp = fixture.componentInstance;
+            });
+    });
 
-afterEach(() => {
-    jest.restoreAllMocks();
-});
+    afterEach(() => {
+        jest.restoreAllMocks();
+    });
 
-it('should show first tab when opened', () => {
-    // WHEN
-    fixture.detectChanges();
-    // THEN
-    expect(comp.active).toBe(1);
+    it('should show first tab when opened', () => {
+        // WHEN
+        fixture.detectChanges();
+        // THEN
+        expect(comp.active).toBe(1);
+    });
 });

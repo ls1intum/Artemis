@@ -44,7 +44,7 @@
                 "tabTitle": "Von dieser Instanz"
             },
             "importFromFile": {
-                "notSupportedExerciseType": "Der Import von Dateien wird für diese Aufgabentypen nicht unterstützt.",
+                "notSupportedExerciseType": "Der Import von Dateien wird für den Aufgabentyp {{ exerciseType }} nicht unterstützt.",
                 "tabTitle": "Aus einer Datei"
             },
             "exercise": "Aufgabe",

@@ -3,7 +3,6 @@ import { ExerciseType } from 'app/entities/exercise.model';
 
 @Component({
     selector: 'jhi-exercise-import-tabs',
-
     templateUrl: './exercise-import-tabs.component.html',
 })
 export class ExerciseImportTabsComponent {

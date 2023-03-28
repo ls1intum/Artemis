@@ -1,13 +1,11 @@
 package de.tum.in.www1.artemis.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.UUID;
 import java.util.stream.IntStream;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -24,7 +22,6 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.util.ModelFactory;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 class CourseServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -227,17 +224,5 @@ class CourseServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
 
         courses = courseService.getAllCoursesForManagementOverview(true);
         assertThat(courses).isEmpty();
-    }
-
-    @Test
-    void testFindCourseByIdFindsCourse() {
-        var course = database.addEmptyCourse();
-        var courseFromService = courseService.findByIdElseThrow(course.getId());
-        assertThat(courseFromService).isEqualTo(course);
-    }
-
-    @Test
-    void testFindCourseByIdThrowsForNonExistentId() {
-        assertThatThrownBy(() -> courseService.findByIdElseThrow(UUID.randomUUID().getMostSignificantBits())).isInstanceOf(EntityNotFoundException.class);
     }
 }

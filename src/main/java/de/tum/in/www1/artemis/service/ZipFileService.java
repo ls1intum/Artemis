@@ -81,7 +81,7 @@ public class ZipFileService {
             zipFile.extractAll(dirToUnzip.toString());
         }
         List<Path> zipFilesInDirList;
-        try (var zipFilesInDir = Files.list(dirToUnzip).filter(path -> "zip".equals(FileNameUtils.getExtension(path.toString())))) {
+        try (var zipFilesInDir = Files.list(dirToUnzip).filter(path -> "zip".equalsIgnoreCase(FileNameUtils.getExtension(path.toString())))) {
             zipFilesInDirList = zipFilesInDir.toList();
         }
         for (Path path : zipFilesInDirList) {

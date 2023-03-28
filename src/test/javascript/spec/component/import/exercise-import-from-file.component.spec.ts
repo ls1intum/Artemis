@@ -66,6 +66,7 @@ describe('ExerciseImportFromFileComponent', () => {
         expect(alertServiceSpy).toHaveBeenCalledWith('artemisApp.exercise.importFromFile.notSupportedExerciseType', { exerciseType: ExerciseType.TEXT });
         expect(component.exercise).toBeUndefined();
     });
+
     it('should raise error alert if not one json file at the root level', async () => {
         //
         alertServiceSpy = jest.spyOn(alertService, 'error');
@@ -75,6 +76,7 @@ describe('ExerciseImportFromFileComponent', () => {
         component.fileForImport = (await generateTestZipFileWithTwoJsonFiles()) as File;
         await assertErrorAlertIsRaisedWithoutOneValidJsonFile();
     });
+
     it('should raise error alert if exercise type does not match exercise type of imported exercise', async () => {
         alertServiceSpy = jest.spyOn(alertService, 'error');
         fixture.detectChanges();
@@ -90,6 +92,7 @@ describe('ExerciseImportFromFileComponent', () => {
         expect(alertServiceSpy).toHaveBeenCalledOnce();
         expect(alertServiceSpy).toHaveBeenCalledWith('artemisApp.exercise.importFromFile.exerciseTypeDoesntMatch');
     });
+
     it.each([ProgrammingLanguage.SWIFT, ProgrammingLanguage.C, ProgrammingLanguage.EMPTY])(
         'should raise error alert when programming language or exercise type is not supported',
         async (programmingLanguage) => {
@@ -114,6 +117,7 @@ describe('ExerciseImportFromFileComponent', () => {
             }
         },
     );
+
     it('should set exercise attributes and open import dialog', async () => {
         const openImportSpy = jest.spyOn(component, 'openImport');
         component.exerciseType = ExerciseType.PROGRAMMING;
@@ -131,6 +135,7 @@ describe('ExerciseImportFromFileComponent', () => {
         expect(openImportSpy).toHaveBeenCalledOnce();
         expect(openImportSpy).toHaveBeenCalledWith(component.exercise);
     });
+
     it('should disable upload button as long as no file is selected', () => {
         component.fileForImport = undefined;
         fixture.detectChanges();
@@ -139,6 +144,7 @@ describe('ExerciseImportFromFileComponent', () => {
         // @ts-ignore
         expect(JSON.parse(uploadButton.attributes.getNamedItem('ng-reflect-disabled').value)).toBeTrue();
     });
+
     it('should enable upload button once file is selected', () => {
         component.fileForImport = new File([''], 'test.zip', { type: 'application/zip' });
         fixture.detectChanges();

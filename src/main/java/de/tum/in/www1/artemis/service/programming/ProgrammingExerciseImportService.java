@@ -19,6 +19,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
@@ -141,12 +144,14 @@ public class ProgrammingExerciseImportService {
         }
     }
 
-    private void importRepositoriesFromFile(ProgrammingExercise newExercise, Path basePath) throws IOException, GitAPIException, URISyntaxException {
+    private void importRepositoriesFromFile(ProgrammingExercise newExercise, Path basePath, String oldExerciseShortName) throws IOException, GitAPIException, URISyntaxException {
         Repository templateRepo = gitService.getOrCheckoutRepository(new VcsRepositoryUrl(newExercise.getTemplateRepositoryUrl()), false);
         Repository solutionRepo = gitService.getOrCheckoutRepository(new VcsRepositoryUrl(newExercise.getSolutionRepositoryUrl()), false);
         Repository testRepo = gitService.getOrCheckoutRepository(new VcsRepositoryUrl(newExercise.getTestRepositoryUrl()), false);
 
         copyImportedExerciseContentToRepositories(templateRepo, solutionRepo, testRepo, basePath);
+        replaceImportedExerciseShortName(Map.of(oldExerciseShortName, newExercise.getShortName()), List.of("gradle-wrapper.jar"), templateRepo, solutionRepo, testRepo);
+
         gitService.stageAllChanges(templateRepo);
         gitService.stageAllChanges(solutionRepo);
         gitService.stageAllChanges(testRepo);
@@ -154,6 +159,12 @@ public class ProgrammingExerciseImportService {
         gitService.commitAndPush(solutionRepo, "Import solution from file", true, null);
         gitService.commitAndPush(testRepo, "Import tests from file", true, null);
 
+    }
+
+    private void replaceImportedExerciseShortName(Map<String, String> replacements, List<String> exclusions, Repository... repositories) throws IOException {
+        for (Repository repository : repositories) {
+            fileService.replaceVariablesInFileRecursive(repository.getLocalPath().toString(), replacements, exclusions);
+        }
     }
 
     private void copyImportedExerciseContentToRepositories(Repository templateRepo, Repository solutionRepo, Repository testRepo, Path basePath) throws IOException {
@@ -364,16 +375,16 @@ public class ProgrammingExerciseImportService {
         return result.get(0);
     }
 
-    private void checkJsonFileExists(Path dirPath) throws IOException {
-        List<String> result;
+    private Path retrieveExerciseJsonPath(Path dirPath) throws IOException {
+        List<Path> result;
         try (Stream<Path> stream = Files.walk(dirPath)) {
-            result = stream.filter(Files::isRegularFile).map(f -> f.getFileName().toString()).filter(name -> name.startsWith("Exercise-Details"))
-                    .filter(name -> name.endsWith(".json")).toList();
+            result = stream.filter(Files::isRegularFile).filter(file -> file.getFileName().startsWith("Exercise-Details")).filter(file -> file.endsWith(".json")).toList();
         }
 
         if (result.size() != 1) {
             throw new BadRequestAlertException("There are either no or more than one json file in the directory!", "programmingExercise", "exerciseJsonNotValidOrFound");
         }
+        return result.get(0);
     }
 
     /**
@@ -388,22 +399,36 @@ public class ProgrammingExerciseImportService {
      **/
     public ProgrammingExercise importProgrammingExerciseFromFile(ProgrammingExercise programmingExerciseForImport, MultipartFile zipFile, Course course)
             throws IOException, GitAPIException, URISyntaxException {
-        Path path = Files.createTempDirectory("imported-exercise-dir");
-        Path exerciseFilePath = Files.createTempFile(path, "exercise-for-import", ".zip");
+        Path importExerciseDir = Files.createTempDirectory("imported-exercise-dir");
+        Path exerciseFilePath = Files.createTempFile(importExerciseDir, "exercise-for-import", ".zip");
         if (zipFile.getName().endsWith(".zip")) {
             throw new BadRequestAlertException("The file is not a zip file", "programmingExercise", "fileNotZip");
         }
         zipFile.transferTo(exerciseFilePath);
         zipFileService.extractZipFileRecursively(exerciseFilePath);
-        checkJsonFileExists(path);
-        checkRepositoriesExist(path);
+        checkRepositoriesExist(importExerciseDir);
+        var oldShortName = getProgrammingExerciseFromDetailsFile(importExerciseDir).getShortName();
         programmingExerciseService.validateNewProgrammingExerciseSettings(programmingExerciseForImport, course);
         ProgrammingExercise importedProgrammingExercise = programmingExerciseService.createProgrammingExercise(programmingExerciseForImport);
         if (Boolean.TRUE.equals(programmingExerciseForImport.isStaticCodeAnalysisEnabled())) {
             staticCodeAnalysisService.createDefaultCategories(importedProgrammingExercise);
         }
-        importRepositoriesFromFile(importedProgrammingExercise, path);
+        importRepositoriesFromFile(importedProgrammingExercise, importExerciseDir, oldShortName);
         return importedProgrammingExercise;
+    }
+
+    private ProgrammingExercise getProgrammingExerciseFromDetailsFile(Path extractedZipPath) throws IOException {
+        var exerciseJsonPath = retrieveExerciseJsonPath(extractedZipPath);
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        objectMapper.findAndRegisterModules();
+
+        try {
+            return objectMapper.readValue(exerciseJsonPath.toFile(), ProgrammingExercise.class);
+        }
+        catch (IOException e) {
+            throw new BadRequestAlertException("The JSON file for the programming exercise is not valid or was not found.", "programmingExercise", "exerciseJsonNotValidOrFound");
+        }
     }
 
     private void checkRepositoriesExist(Path path) throws IOException {

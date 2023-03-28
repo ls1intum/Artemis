@@ -14,12 +14,12 @@ import JSZip from 'jszip';
 export class ExerciseImportFromFileComponent implements OnInit {
     @Input()
     exerciseType: ExerciseType;
-    titleKey: string;
-    fileForImport?: File;
-    faUpload = faUpload;
     @Input()
     exercise: Exercise;
-    private unsupportedType = false;
+    titleKey: string;
+    fileForImport?: File;
+    //Icons
+    faUpload = faUpload;
 
     constructor(private activeModal: NgbActiveModal, private alertService: AlertService) {}
 
@@ -47,7 +47,6 @@ export class ExerciseImportFromFileComponent implements OnInit {
         switch (this.exerciseType) {
             case ExerciseType.PROGRAMMING:
                 this.exercise = JSON.parse(exerciseDetails as string) as ProgrammingExercise;
-                this.handleProgrammingExercise(this.exercise);
                 break;
             default:
                 this.alertService.error('artemisApp.exercise.importFromFile.notSupportedExerciseType', {
@@ -55,24 +54,10 @@ export class ExerciseImportFromFileComponent implements OnInit {
                 });
                 return;
         }
-        // do not continue with the import if the type or language  is not supported
-        if (this.unsupportedType) {
-            return;
-        }
         this.exercise.id = undefined;
         this.exercise.zipFileForImport = this.fileForImport as File;
 
         this.openImport(this.exercise);
-    }
-
-    private handleProgrammingExercise(exercise: ProgrammingExercise) {
-        if (exercise.programmingLanguage === ProgrammingLanguage.SWIFT || exercise.programmingLanguage === ProgrammingLanguage.EMPTY) {
-            this.alertService.error('artemisApp.programmingExercise.importFromFile.notSupportedProgrammingLanguage', { programmingLanguage: exercise.programmingLanguage });
-            this.unsupportedType = true;
-        } else if (exercise.programmingLanguage === ProgrammingLanguage.C && exercise.projectType === ProjectType.GCC) {
-            this.alertService.error('artemisApp.programmingExercise.importFromFile.GccNotSupportedForC');
-            this.unsupportedType = true;
-        }
     }
 
     /** sets the zip file that is selected in the file input dialog **/

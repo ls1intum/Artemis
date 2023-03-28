@@ -271,10 +271,9 @@ public class ProgrammingExerciseService {
                 throw new BadRequestAlertException("The project type is not supported for this programming language", "Exercise", "projectTypeNotSupported");
             }
         }
-        else {
-            if (programmingExercise.getProjectType() != null) {
-                throw new BadRequestAlertException("The project type is set but not supported", "Exercise", "projectTypeSet");
-            }
+        else if (programmingExercise.getProjectType() != null) {
+            throw new BadRequestAlertException("The project type is set but not supported", "Exercise", "projectTypeSet");
+
         }
 
         // Check if checkout solution repository is enabled

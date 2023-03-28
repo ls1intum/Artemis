@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.function.Predicate;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,13 +28,14 @@ class ZipFileServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
         Path file1 = Files.createTempFile(rootDir, "file1", ".json");
         Path file2 = Files.createTempFile(subDir2, "file2", ".json");
         Path zipFile = Files.createTempFile(zipDir, "abc", ".zip");
-        Path p = zipFileService.createZipFileWithFolderContent(zipFile, testDir, null);
-        zipFileService.extractZipFileRecursively(p);
+        Path zippedFile = zipFileService.createZipFileWithFolderContent(zipFile, testDir, null);
+        zipFileService.extractZipFileRecursively(zippedFile);
 
-        Path extractedZipFilePath = p.getParent().resolve(p.getFileName().toString().replace(".zip", ""));
+        Path extractedZipFilePath = zippedFile.getParent().resolve(zippedFile.getFileName().toString().replace(".zip", ""));
         Path rootDirPathInZip = extractedZipFilePath.resolve(rootDir.getFileName());
         Path subDirPathInZip = extractedZipFilePath.resolve(rootDir.getFileName()).resolve(subDir.getFileName());
-        assertThat(Files.exists(rootDirPathInZip)).isTrue();
+        assertThat(rootDirPathInZip).isDirectoryContaining(Predicate.isEqual(subDirPathInZip));
+        assertThat(subDirPathInZip).isDirectoryContaining(Predicate.isEqual(subDir2));
         assertThat(Files.exists(subDirPathInZip)).isTrue();
         assertThat(Files.exists(subDirPathInZip.resolve(subDir2.getFileName()))).isTrue();
         assertThat(Files.exists(rootDirPathInZip.resolve(file1.getFileName()))).isTrue();
