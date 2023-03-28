@@ -22,8 +22,8 @@ import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service'
     `,
 })
 export class SubmissionExportButtonComponent {
-    ButtonType = ButtonType;
-    ButtonSize = ButtonSize;
+    readonly ButtonType = ButtonType;
+    readonly ButtonSize = ButtonSize;
     readonly FeatureToggle = FeatureToggle;
 
     @Input() exerciseId: number;
