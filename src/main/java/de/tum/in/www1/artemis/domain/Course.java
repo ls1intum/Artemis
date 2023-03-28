@@ -327,6 +327,7 @@ public class Course extends DomainObject {
      *
      * @return true if the current date is within the course period, false otherwise
      */
+    @JsonIgnore
     public boolean isActive() {
         ZonedDateTime now = ZonedDateTime.now();
         return (getStartDate() == null || getStartDate().isBefore(now)) && (getEndDate() == null || getEndDate().isAfter(now));
