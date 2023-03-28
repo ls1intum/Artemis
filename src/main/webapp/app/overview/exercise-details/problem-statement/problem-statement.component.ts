@@ -5,11 +5,12 @@ import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
     selector: 'jhi-problem-statement',
     templateUrl: './problem-statement.component.html',
-    styleUrls: ['./problem-statement.component.scss'],
+    styleUrls: ['../course-overview.scss'],
 })
 export class ProblemStatementComponent implements OnInit {
     @Input()
