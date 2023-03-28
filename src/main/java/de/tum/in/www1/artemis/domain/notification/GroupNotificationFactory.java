@@ -3,15 +3,15 @@ package de.tum.in.www1.artemis.domain.notification;
 import static de.tum.in.www1.artemis.domain.enumeration.NotificationPriority.*;
 import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.*;
 import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFactory.createAttachmentUpdatedTarget;
-import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFactory.createExamExerciseTargetWithExerciseUpdate;
-import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFactory.createExamProgrammingExerciseOrTestCaseTarget;
-import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFactory.createExerciseReleasedTarget;
-import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFactory.createDuplicateTestCaseTarget;
-import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFactory.createExerciseUpdatedTarget;
-import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFactory.createExercisePostTarget;
-import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFactory.createLecturePostTarget;
 import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFactory.createCoursePostTarget;
 import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFactory.createCourseTarget;
+import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFactory.createDuplicateTestCaseTarget;
+import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFactory.createExamExerciseTargetWithExerciseUpdate;
+import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFactory.createExamProgrammingExerciseOrTestCaseTarget;
+import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFactory.createExercisePostTarget;
+import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFactory.createExerciseReleasedTarget;
+import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFactory.createExerciseUpdatedTarget;
+import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFactory.createLecturePostTarget;
 
 import java.util.List;
 
@@ -177,7 +177,8 @@ public class GroupNotificationFactory {
                 notification.setPriority(HIGH);
             }
             else if (exercise instanceof ProgrammingExercise) {
-                notification.setTransientAndStringTarget(createExamProgrammingExerciseOrTestCaseTarget((ProgrammingExercise) exercise, NotificationTargetFactory.EXERCISE_UPDATED_TEXT));
+                notification.setTransientAndStringTarget(
+                        createExamProgrammingExerciseOrTestCaseTarget((ProgrammingExercise) exercise, NotificationTargetFactory.EXERCISE_UPDATED_TEXT));
             }
         }
         // Exercises for courses (not for exams)
