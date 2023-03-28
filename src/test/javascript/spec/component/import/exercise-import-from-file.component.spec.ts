@@ -7,7 +7,7 @@ import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { MockComponent, MockDirective } from 'ng-mocks';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/entities/programming-exercise.model';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { ExerciseType } from 'app/entities/exercise.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import JSZip from 'jszip';
@@ -33,9 +33,6 @@ describe('ExerciseImportFromFileComponent', () => {
         fixture.detectChanges();
     });
 
-    it('should create', () => {
-        expect(component).toBeTruthy();
-    });
     it('should close the active modal with result', () => {
         // GIVEN
         const activeModalSpy = jest.spyOn(activeModal, 'close');
