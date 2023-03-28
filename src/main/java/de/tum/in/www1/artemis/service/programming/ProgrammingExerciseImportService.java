@@ -3,11 +3,14 @@ package de.tum.in.www1.artemis.service.programming;
 import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_REPO_NAME;
 import static de.tum.in.www1.artemis.config.Constants.TEST_REPO_NAME;
 
-import java.io.*;
+import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 import org.apache.commons.io.FileUtils;
@@ -29,10 +32,9 @@ import de.tum.in.www1.artemis.domain.participation.AbstractBaseProgrammingExerci
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.AuxiliaryRepositoryRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.*;
-import de.tum.in.www1.artemis.service.FileService;
-import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationTriggerService;
@@ -378,7 +380,11 @@ public class ProgrammingExerciseImportService {
     private Path retrieveExerciseJsonPath(Path dirPath) throws IOException {
         List<Path> result;
         try (Stream<Path> stream = Files.walk(dirPath)) {
-            result = stream.filter(Files::isRegularFile).filter(file -> file.getFileName().startsWith("Exercise-Details")).filter(file -> file.endsWith(".json")).toList();
+            // if we do not convert the file name to a string, the second filter always returns false
+            // for the third filter, we need to convert it to a string as well as a path doesn't contain a file extension
+
+            result = stream.filter(Files::isRegularFile).filter(file -> file.getFileName().toString().startsWith("Exercise-Details"))
+                    .filter(file -> file.toString().endsWith(".json")).toList();
         }
 
         if (result.size() != 1) {
@@ -388,7 +394,7 @@ public class ProgrammingExerciseImportService {
     }
 
     /**
-     * Imports a programming exercise from an uploaded zip file that had previously been downloaded from an Artemis instance.
+     * Imports a programming exercise from an uploaded zip file that has previously been downloaded from an Artemis instance.
      * It first extracts the contents of the zip file, then creates a programming exercise (same process as creating a new one),
      * then deletes the template content initially pushed to the repositories and copies over the extracted content
      *
@@ -401,7 +407,7 @@ public class ProgrammingExerciseImportService {
             throws IOException, GitAPIException, URISyntaxException {
         Path importExerciseDir = Files.createTempDirectory("imported-exercise-dir");
         Path exerciseFilePath = Files.createTempFile(importExerciseDir, "exercise-for-import", ".zip");
-        if (zipFile.getName().endsWith(".zip")) {
+        if (zipFile.getName().toLowerCase().endsWith(".zip")) {
             throw new BadRequestAlertException("The file is not a zip file", "programmingExercise", "fileNotZip");
         }
         zipFile.transferTo(exerciseFilePath);

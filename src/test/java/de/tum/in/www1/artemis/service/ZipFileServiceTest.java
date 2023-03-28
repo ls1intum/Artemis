@@ -34,12 +34,12 @@ class ZipFileServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
         Path extractedZipFilePath = zippedFile.getParent().resolve(zippedFile.getFileName().toString().replace(".zip", ""));
         Path rootDirPathInZip = extractedZipFilePath.resolve(rootDir.getFileName());
         Path subDirPathInZip = extractedZipFilePath.resolve(rootDir.getFileName()).resolve(subDir.getFileName());
+        assertThat(extractedZipFilePath).isDirectoryContaining(Predicate.isEqual(rootDirPathInZip));
         assertThat(rootDirPathInZip).isDirectoryContaining(Predicate.isEqual(subDirPathInZip));
-        assertThat(subDirPathInZip).isDirectoryContaining(Predicate.isEqual(subDir2));
-        assertThat(Files.exists(subDirPathInZip)).isTrue();
-        assertThat(Files.exists(subDirPathInZip.resolve(subDir2.getFileName()))).isTrue();
-        assertThat(Files.exists(rootDirPathInZip.resolve(file1.getFileName()))).isTrue();
-        assertThat(Files.exists(subDirPathInZip.resolve(subDir2.getFileName()).resolve(file2.getFileName()))).isTrue();
+        assertThat(subDirPathInZip).isDirectoryContaining(Predicate.isEqual(subDirPathInZip.resolve(subDir2.getFileName())));
+        assertThat(subDirPathInZip.resolve(subDir2.getFileName()))
+                .isDirectoryContaining(Predicate.isEqual(subDirPathInZip.resolve(subDir2.getFileName()).resolve(file2.getFileName())));
+        assertThat(rootDirPathInZip).isDirectoryContaining(Predicate.isEqual(rootDirPathInZip.resolve(file1.getFileName())));
 
     }
 }
