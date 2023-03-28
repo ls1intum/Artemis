@@ -42,16 +42,16 @@ export class ProgrammingExerciseTaskComponent {
         this.task.testCases.forEach((testCase) => {
             testCase.changed = true;
 
-            if (this.task.weight != undefined) {
+            if (this.task.weight !== undefined && testCasesWeightSum !== 0) {
                 testCase.weight = ((testCase.weight ?? 0) / testCasesWeightSum) * this.task.weight;
             }
-            if (this.task.bonusMultiplier != undefined) {
+            if (this.task.bonusMultiplier !== undefined) {
                 testCase.bonusMultiplier = this.task.bonusMultiplier;
             }
-            if (this.task.bonusPoints != undefined) {
+            if (this.task.bonusPoints !== undefined) {
                 testCase.bonusPoints = this.task.bonusPoints / testCasesAmount;
             }
-            if (this.task.visibility != undefined) {
+            if (this.task.visibility !== undefined) {
                 testCase.visibility = this.task.visibility;
             }
         });
