@@ -139,4 +139,30 @@ describe('ProgrammingAssessmentRepoExportDialogComponent', () => {
         expect(comp.exportInProgress).toBeFalse();
         expect(exportReposStub).toHaveBeenCalledTimes(2);
     }));
+
+    describe('Export a repo with excludePracticeSubmissions as true', () => {
+        const httpResponse = createBlobHttpResponse();
+
+        beforeEach(() => {
+            fixture.detectChanges();
+            comp.repositoryExportOptions.excludePracticeSubmissions = true;
+        });
+
+        it('should call exportReposByParticipations with correct options', fakeAsync(() => {
+            comp.participationIdList = participationIdList;
+            const exportReposStub = jest.spyOn(repoExportService, 'exportReposByParticipations').mockReturnValue(of(httpResponse));
+            comp.exportRepos();
+            tick();
+            expect(exportReposStub).toHaveBeenCalledOnceWith(exerciseId, participationIdList, comp.repositoryExportOptions);
+        }));
+
+        it('should call exportReposByParticipantIdentifiers with correct options', fakeAsync(() => {
+            comp.participationIdList = [];
+            comp.participantIdentifierList = 'ALL';
+            const exportReposStub = jest.spyOn(repoExportService, 'exportReposByParticipantIdentifiers').mockReturnValue(of(httpResponse));
+            comp.exportRepos();
+            tick();
+            expect(exportReposStub).toHaveBeenCalledOnceWith(exerciseId, ['ALL'], comp.repositoryExportOptions);
+        }));
+    });
 });

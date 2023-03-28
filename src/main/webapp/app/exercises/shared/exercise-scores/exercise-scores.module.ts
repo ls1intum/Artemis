@@ -1,5 +1,4 @@
 import { NgModule } from '@angular/core';
-
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ExerciseScoresComponent } from './exercise-scores.component';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
@@ -15,6 +14,9 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
 import { SubmissionExportDialogComponent } from 'app/exercises/shared/submission-export/submission-export-dialog.component';
 import { ExerciseScoresExportButtonComponent } from 'app/exercises/shared/exercise-scores/exercise-scores-export-button.component';
 import { SubmissionResultStatusModule } from 'app/overview/submission-result-status.module';
+import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
+import { ExternalSubmissionDialogComponent } from 'app/exercises/shared/external-submission/external-submission-dialog.component';
+import { ExternalSubmissionButtonComponent } from 'app/exercises/shared/external-submission/external-submission-button.component';
 
 @NgModule({
     imports: [
@@ -29,8 +31,16 @@ import { SubmissionResultStatusModule } from 'app/overview/submission-result-sta
         FeatureToggleModule,
         ArtemisSharedComponentModule,
         SubmissionResultStatusModule,
+        ArtemisMarkdownModule,
     ],
-    declarations: [ExerciseScoresComponent, SubmissionExportButtonComponent, SubmissionExportDialogComponent, ExerciseScoresExportButtonComponent],
-    exports: [SubmissionExportButtonComponent, ExerciseScoresExportButtonComponent],
+    declarations: [
+        ExerciseScoresComponent,
+        SubmissionExportButtonComponent,
+        SubmissionExportDialogComponent,
+        ExerciseScoresExportButtonComponent,
+        ExternalSubmissionButtonComponent,
+        ExternalSubmissionDialogComponent,
+    ],
+    exports: [SubmissionExportButtonComponent, ExerciseScoresExportButtonComponent, ExternalSubmissionButtonComponent],
 })
 export class ArtemisExerciseScoresModule {}

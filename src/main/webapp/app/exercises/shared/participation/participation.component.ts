@@ -8,7 +8,6 @@ import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { HttpErrorResponse } from '@angular/common/http';
 import { tap } from 'rxjs/operators';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { areManualResultsAllowed } from 'app/exercises/shared/exercise/exercise.utils';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { formatTeamAsSearchResult } from 'app/exercises/shared/team/team.utils';
@@ -20,7 +19,7 @@ import { EventManager } from 'app/core/util/event-manager.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { setBuildPlanUrlForProgrammingParticipations } from 'app/exercises/shared/participation/participation.utils';
-import { faCircleNotch, faEraser, faFilePowerpoint, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faCircleNotch, faEraser, faFilePowerpoint, faTable, faTimes } from '@fortawesome/free-solid-svg-icons';
 
 enum FilterProp {
     ALL = 'all',
@@ -39,7 +38,6 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     readonly ExerciseType = ExerciseType;
     readonly ActionType = ActionType;
     readonly FeatureToggle = FeatureToggle;
-    readonly dayjs = dayjs;
 
     participations: StudentParticipation[] = [];
     participationsChangedDueDate: Map<number, StudentParticipation> = new Map<number, StudentParticipation>();
@@ -47,7 +45,6 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     eventSubscriber: Subscription;
     paramSub: Subscription;
     exercise: Exercise;
-    newManualResultAllowed: boolean;
     hasLoadedPendingSubmissions = false;
     presentationScoreEnabled = false;
 
@@ -66,7 +63,10 @@ export class ParticipationComponent implements OnInit, OnDestroy {
 
     isSaving: boolean;
 
+    afterDueDate = false;
+
     // Icons
+    faTable = faTable;
     faTimes = faTimes;
     faCircleNotch = faCircleNotch;
     faEraser = faEraser;
@@ -113,11 +113,11 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         this.hasLoadedPendingSubmissions = false;
         this.exerciseService.find(exerciseId).subscribe((exerciseResponse) => {
             this.exercise = exerciseResponse.body!;
+            this.afterDueDate = !!this.exercise.dueDate && dayjs().isAfter(this.exercise.dueDate);
             this.loadParticipations(exerciseId);
             if (this.exercise.type === ExerciseType.PROGRAMMING) {
                 this.loadSubmissions(exerciseId);
             }
-            this.newManualResultAllowed = areManualResultsAllowed(this.exercise);
             this.presentationScoreEnabled = this.checkPresentationScoreConfig();
         });
     }
@@ -351,4 +351,21 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         }
         return repoUrl;
     };
+
+    /**
+     * Get the route for the exercise's scores page.
+     *
+     * @param exercise the exercise for which the scores route should be extracted
+     */
+    getScoresRoute(exercise: Exercise): any[] {
+        let route: any[] = ['/course-management'];
+        const exam = exercise.exerciseGroup?.exam;
+        if (exam) {
+            route = [...route, exam.course!.id, 'exams', exam.id, 'exercise-groups', exercise.exerciseGroup!.id];
+        } else {
+            route = [...route, exercise.course!.id];
+        }
+        route = [...route, exercise.type + '-exercises', exercise.id, 'scores'];
+        return route;
+    }
 }

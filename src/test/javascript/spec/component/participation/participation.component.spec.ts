@@ -31,6 +31,8 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTestModule } from '../../test.module';
 import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
+import { Exam } from 'app/entities/exam.model';
+import { ExerciseGroup } from 'app/entities/exercise-group.model';
 
 describe('ParticipationComponent', () => {
     let component: ParticipationComponent;
@@ -97,7 +99,6 @@ describe('ParticipationComponent', () => {
         expect(component.isLoading).toBeFalse();
         expect(component.participations).toHaveLength(1);
         expect(component.participations[0].id).toBe(participation.id);
-        expect(component.newManualResultAllowed).toBeFalse();
         expect(component.presentationScoreEnabled).toBeFalse();
 
         expect(exerciseFindStub).toHaveBeenCalledOnce();
@@ -123,7 +124,6 @@ describe('ParticipationComponent', () => {
         expect(component.isLoading).toBeFalse();
         expect(component.participations).toHaveLength(1);
         expect(component.participations[0].id).toBe(participation.id);
-        expect(component.newManualResultAllowed).toBeFalse();
         expect(component.presentationScoreEnabled).toBeFalse();
         expect(component.exerciseSubmissionState).toEqual(submissionState);
 
@@ -377,6 +377,48 @@ describe('ParticipationComponent', () => {
 
             component.exercise = exercise2;
             expect(component.checkPresentationScoreConfig()).toBeFalse();
+        });
+    });
+
+    describe('getScoresRoute', () => {
+        const course = {
+            id: 1,
+            title: 'Course 1',
+        } as Course;
+
+        it('should return the correct route for an exercise without an exam', () => {
+            const exercise = {
+                id: 10,
+                title: 'Exercise 1',
+                type: 'text',
+                course: course,
+            } as Exercise;
+
+            const expectedRoute = ['/course-management', '1', 'text-exercises', '10', 'scores'];
+            const result = component.getScoresRoute(exercise).map((part) => part.toString());
+            expect(result).toEqual(expectedRoute);
+        });
+
+        it('should return the correct route for an exercise within an exam', () => {
+            const exam = {
+                id: 100,
+                course: course,
+            } as Exam;
+            const exerciseGroup = {
+                id: 50,
+                exam: exam,
+            } as ExerciseGroup;
+            const exercise = {
+                id: 20,
+                title: 'Exercise 2',
+                type: 'programming',
+                exerciseGroup: exerciseGroup,
+                course: undefined,
+            } as Exercise;
+
+            const expectedRoute = ['/course-management', '1', 'exams', '100', 'exercise-groups', '50', 'programming-exercises', '20', 'scores'];
+            const result = component.getScoresRoute(exercise).map((part) => part.toString());
+            expect(result).toEqual(expectedRoute);
         });
     });
 });

@@ -2,7 +2,7 @@ import { Component, Input, OnChanges } from '@angular/core';
 import { Exercise, ExerciseType, IncludedInOverallScore, getIcon } from 'app/entities/exercise.model';
 import { Submission } from 'app/entities/submission.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { getExerciseSubmissionsLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
+import { getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 import { Course } from 'app/entities/course.model';
 import { Result } from 'app/entities/result.model';
 import { StudentExam } from 'app/entities/student-exam.model';
@@ -63,10 +63,7 @@ export class StudentExamDetailTableRowComponent implements OnChanges {
             return;
         }
 
-        if (exercise.type === ExerciseType.PROGRAMMING) {
-            // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
-            route = getExerciseSubmissionsLink(exercise.type, this.courseId, exercise.id!, this.examId, exercise.exerciseGroup?.id!);
-        } else if (submission) {
+        if (submission) {
             this.openingAssessmentEditorForNewSubmission = true;
             route = getLinkToSubmissionAssessment(
                 exercise.type,
@@ -75,8 +72,7 @@ export class StudentExamDetailTableRowComponent implements OnChanges {
                 this.studentParticipation?.id,
                 submission.id!,
                 this.examId,
-                // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
-                exercise.exerciseGroup?.id!,
+                exercise.exerciseGroup?.id,
                 resultId,
             );
             this.openingAssessmentEditorForNewSubmission = false;

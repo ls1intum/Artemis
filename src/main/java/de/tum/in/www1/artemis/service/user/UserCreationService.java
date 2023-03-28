@@ -28,8 +28,8 @@ import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.OrganizationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
-import de.tum.in.www1.artemis.service.connectors.CIUserManagementService;
-import de.tum.in.www1.artemis.service.connectors.VcsUserManagementService;
+import de.tum.in.www1.artemis.service.connectors.ci.CIUserManagementService;
+import de.tum.in.www1.artemis.service.connectors.vcs.VcsUserManagementService;
 import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
 import tech.jhipster.security.RandomUtil;
 
