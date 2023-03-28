@@ -23,7 +23,7 @@ Instructors can still use those templates to generate programming exercises and 
   +----------------------+--------+---------+-----------+
   | Haskell              | yes    | yes     | no        |
   +----------------------+--------+---------+-----------+
-  | Kotlin               | yes    | no      | no        |
+  | Kotlin               | yes    | yes     | no        |
   +----------------------+--------+---------+-----------+
   | VHDL                 | yes    | no      | no        |
   +----------------------+--------+---------+-----------+
@@ -115,7 +115,7 @@ Exercise Creation
       This mode splits up the generation of a programming exercise into multiple steps. The following video shows an exemplary use of the guided mode.
 
     |
-    
+
     .. raw:: html
 
         <iframe src="https://live.rbg.tum.de/w/artemisintro/26850?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="400">
