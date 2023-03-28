@@ -388,10 +388,8 @@ public class CourseResource {
         List<Course> allCoursesToPotentiallyRegister = courseRepository.findAllActiveNotOnlineAndRegistrationEnabledWithOrganizationsAndPrerequisites();
         // check whether registration is actually possible for each of the courses
         return allCoursesToPotentiallyRegister.stream().filter(course -> {
-            boolean selfRegistrationAllowed = AuthorizationCheckService.RegistrationAuthorization.ALLOWED
-                    .equals(authCheckService.getUserRegistrationAuthorizationForCourse(user, course));
             boolean isAlreadyInCourse = allRegisteredCourses.contains(course);
-            return selfRegistrationAllowed && !isAlreadyInCourse;
+            return authCheckService.isUserAllowedToSelfRegisterForCourse(user, course) && !isAlreadyInCourse;
         }).toList();
     }
 
@@ -415,8 +413,7 @@ public class CourseResource {
             // user might be allowed to register for the course
             // We need the course with organizations so that we can check if the user is allowed to register
             course = courseRepository.findSingleNotOnlineWithOrganizationsAndPrerequisitesElseThrow(courseId);
-            var registrationAuthStatus = authCheckService.getUserRegistrationAuthorizationForCourse(user, course);
-            if (AuthorizationCheckService.RegistrationAuthorization.ALLOWED.equals(registrationAuthStatus)) {
+            if (authCheckService.isUserAllowedToSelfRegisterForCourse(user, course)) {
                 // suppress error alert with skipAlert: true so that the client can redirect to the registration page
                 throw new AccessForbiddenAlertException(ErrorConstants.DEFAULT_TYPE, "You don't have access to this course, but you could register.", ENTITY_NAME,
                         "noAccessButCouldRegister", true);

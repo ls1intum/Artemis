@@ -193,7 +193,7 @@ public class AuthorizationCheckService {
      * An enum that represents the different reasons why a user is not allowed to self register for a course,
      * or ALLOWED if the user is allowed to self register for the course.
      */
-    public enum RegistrationAuthorization {
+    private enum RegistrationAuthorization {
         ALLOWED, USERNAME_PATTERN, COURSE_STATUS, REGISTRATION_STATUS, ORGANIZATIONS
     }
 
@@ -223,6 +223,18 @@ public class AuthorizationCheckService {
             return RegistrationAuthorization.ORGANIZATIONS;
         }
         return RegistrationAuthorization.ALLOWED;
+    }
+
+    /**
+     * Checks if the user is allowed to self register for the given course.
+     * See also: {@link #checkUserAllowedToSelfRegisterForCourseElseThrow(User, Course)}
+     *
+     * @param user   The user that wants to self register
+     * @param course The course to which the user wants to self register
+     * @return boolean, true if the user is allowed to self register for the course, false otherwise
+     */
+    public boolean isUserAllowedToSelfRegisterForCourse(User user, Course course) {
+        return RegistrationAuthorization.ALLOWED.equals(getUserRegistrationAuthorizationForCourse(user, course));
     }
 
     /**
