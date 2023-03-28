@@ -69,6 +69,12 @@ public class LocalCIBuildJobService {
 
     /**
      * Runs the build job. This includes creating and starting a Docker container, executing the build script, and processing the build result.
+     *
+     * @param participation            The participation for which the build job should be run.
+     * @param assignmentRepositoryPath The path to the assignment repository.
+     * @param testRepositoryPath       The path to the test repository.
+     * @param scriptPath               The path to the build script.
+     * @return The build result.
      */
     public LocalCIBuildResult runBuildJob(ProgrammingExerciseParticipation participation, Path assignmentRepositoryPath, Path testRepositoryPath, Path scriptPath) {
         long timeNanoStart = System.nanoTime();

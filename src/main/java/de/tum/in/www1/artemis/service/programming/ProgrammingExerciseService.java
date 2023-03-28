@@ -656,7 +656,8 @@ public class ProgrammingExerciseService {
     /**
      * Finds one programming exercise including its submission policy by the exercise's project key.
      *
-     * @param projectKey the project key of the programming exercise.
+     * @param projectKey           the project key of the programming exercise.
+     * @param withSubmissionPolicy whether the submission policy should be included in the result.
      * @return the programming exercise.
      * @throws EntityNotFoundException if no programming exercise or multiple exercises with the given project key exist.
      */

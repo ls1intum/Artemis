@@ -48,13 +48,10 @@ public class ProgrammingExerciseParticipationService {
 
     private final TeamRepository teamRepository;
 
-    private final AuthorizationCheckService authorizationCheckService;
-
     public ProgrammingExerciseParticipationService(SolutionProgrammingExerciseParticipationRepository solutionParticipationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ParticipationRepository participationRepository,
             TemplateProgrammingExerciseParticipationRepository templateParticipationRepository, Optional<VersionControlService> versionControlService,
-            AuthorizationCheckService authCheckService, GitService gitService, ProgrammingExerciseRepository programmingExerciseRepository, TeamRepository teamRepository,
-            AuthorizationCheckService authorizationCheckService) {
+            AuthorizationCheckService authCheckService, GitService gitService, ProgrammingExerciseRepository programmingExerciseRepository, TeamRepository teamRepository) {
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.solutionParticipationRepository = solutionParticipationRepository;
         this.templateParticipationRepository = templateParticipationRepository;
@@ -64,7 +61,6 @@ public class ProgrammingExerciseParticipationService {
         this.gitService = gitService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.teamRepository = teamRepository;
-        this.authorizationCheckService = authorizationCheckService;
     }
 
     /**
@@ -128,37 +124,38 @@ public class ProgrammingExerciseParticipationService {
     /**
      * Retrieve the student participation of the given programming exercise and user.
      *
-     * @param userName             the username of the student or instructor or the login of the team.
-     * @param exercise             the programming exercise for which to retrieve the participation.
-     * @param isPracticeRepository true if the repository is a practice repository (repository URL contains "-practice-"), false otherwise.
-     * @param user                 the user for which to retrieve the participation.
+     * @param userName                the username of the student or instructor or the login of the team.
+     * @param exercise                the programming exercise for which to retrieve the participation.
+     * @param isPracticeRepository    true if the repository is a practice repository (repository URL contains "-practice-"), false otherwise.
+     * @param isInstructorForExercise true if the user is an instructor for the exercise, false otherwise.
      * @return the ProgrammingExerciseStudentParticipation of the given user and programming exercise.
      */
     public ProgrammingExerciseStudentParticipation findStudentParticipationByExerciseAndUserNameAndTestRunOrThrow(ProgrammingExercise exercise, String userName,
-            boolean isPracticeRepository, User user) {
+            boolean isPracticeRepository, boolean isInstructorForExercise) {
         if (exercise.isTeamMode()) {
-            return findTeamParticipationByExerciseAndTeamShortNameAndTestRunOrThrow(exercise, userName, true);
+            return findTeamParticipationByExerciseAndTeamShortNameOrThrow(exercise, userName, true);
         }
-        return findStudentParticipationByExerciseAndStudentLoginAndTestRunOrThrow(exercise, userName, isPracticeRepository, true, user);
+        return findStudentParticipationByExerciseAndStudentLoginAndTestRunOrThrow(exercise, userName, isPracticeRepository, true, isInstructorForExercise);
     }
 
     /**
      * Tries to retrieve a student participation for the given exercise and username and test run flag.
      *
-     * @param exercise             the exercise for which to find a participation.
-     * @param username             of the user to which the participation belongs.
-     * @param isPracticeRepository true if the repository URL contains "-practice-".
-     * @param withSubmissions      true if the participation should be loaded with its submissions.
+     * @param exercise                the exercise for which to find a participation.
+     * @param username                of the user to which the participation belongs.
+     * @param isPracticeRepository    true if the repository URL contains "-practice-".
+     * @param withSubmissions         true if the participation should be loaded with its submissions.
+     * @param isInstructorForExercise true if the user is an instructor for the exercise, false otherwise.
      * @return the participation for the given exercise and user.
      * @throws EntityNotFoundException if there is no participation for the given exercise and user.
      */
     @NotNull
     public ProgrammingExerciseStudentParticipation findStudentParticipationByExerciseAndStudentLoginAndTestRunOrThrow(ProgrammingExercise exercise, String username,
-            boolean isPracticeRepository, boolean withSubmissions, User user) {
+            boolean isPracticeRepository, boolean withSubmissions, boolean isInstructorForExercise) {
 
         Optional<ProgrammingExerciseStudentParticipation> participationOptional;
 
-        boolean isTestRun = isPracticeRepository || isExamTestRunRepository(exercise, user);
+        boolean isTestRun = isPracticeRepository || isExamTestRunRepository(exercise, isInstructorForExercise);
 
         if (withSubmissions) {
             participationOptional = programmingExerciseStudentParticipationRepository.findWithSubmissionsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), username,
@@ -178,15 +175,23 @@ public class ProgrammingExerciseParticipationService {
     /**
      * Check if the participation belongs to an exam test run.
      *
-     * @param exercise the exercise for which to check if the participation belongs to an exam test run.
-     * @param user     the user that is potentially an instructor for the exercise.
+     * @param exercise                the exercise for which to check if the participation belongs to an exam test run.
+     * @param isInstructorForExercise true if the user is an instructor for the exercise, false otherwise.
      * @return true if the participation belongs to an exam test run.
      */
-    private boolean isExamTestRunRepository(ProgrammingExercise exercise, User user) {
-        return exercise.isExamExercise() && authorizationCheckService.isAtLeastInstructorForExercise(exercise, user);
+    private boolean isExamTestRunRepository(ProgrammingExercise exercise, boolean isInstructorForExercise) {
+        return exercise.isExamExercise() && isInstructorForExercise;
     }
 
-    public ProgrammingExerciseStudentParticipation findTeamParticipationByExerciseAndTeamShortNameAndTestRunOrThrow(ProgrammingExercise exercise, String teamShortName,
+    /**
+     * Tries to retrieve a team participation for the given exercise and team short name.
+     *
+     * @param exercise        the exercise for which to find a participation.
+     * @param teamShortName   of the team to which the participation belongs.
+     * @param withSubmissions true if the participation should be fetched with its submissions.
+     * @return the participation for the given exercise and team.
+     */
+    public ProgrammingExerciseStudentParticipation findTeamParticipationByExerciseAndTeamShortNameOrThrow(ProgrammingExercise exercise, String teamShortName,
             boolean withSubmissions) {
         Team team = teamRepository.findOneByExerciseCourseIdAndShortNameOrThrow(exercise.getCourseViaExerciseGroupOrCourseMember().getId(), teamShortName);
 
@@ -229,6 +234,7 @@ public class ProgrammingExerciseParticipationService {
      * - Template/SolutionParticipations should only be accessible for users with at least the role TA in the courses.
      *
      * @param participation to check permissions for.
+     * @param user          to check permissions for.
      * @return true if the user can access the participation, false if not. Also returns false if the participation is not from a programming exercise.
      */
     public boolean canAccessParticipation(@NotNull ProgrammingExerciseParticipation participation, User user) {
