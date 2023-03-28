@@ -227,7 +227,7 @@ public class ProgrammingExerciseResource {
 
         // Check if auxiliary repositories are supported
         List<AuxiliaryRepository> auxiliaryRepositories = programmingExercise.getAuxiliaryRepositories();
-        if (auxiliaryRepositories.size() > 0 && !programmingLanguageFeature.auxiliaryRepositoriesSupported()) {
+        if (!auxiliaryRepositories.isEmpty() && !programmingLanguageFeature.auxiliaryRepositoriesSupported()) {
             return ResponseEntity.badRequest()
                     .headers(HeaderUtil.createAlert(applicationName, "Auxiliary repositories are not supported for this programming language", "auxiliaryRepositoryInvalid"))
                     .body(null);
