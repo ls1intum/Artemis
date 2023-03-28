@@ -6,11 +6,15 @@ import { ArtemisTestModule } from '../../test.module';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { MockComponent, MockDirective } from 'ng-mocks';
 import { ButtonComponent } from 'app/shared/components/button.component';
-import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import JSZip from 'jszip';
+import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
+import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
+import { TextExercise } from 'app/entities/text-exercise.model';
+import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 
 describe('ExerciseImportFromFileComponent', () => {
     let component: ExerciseImportFromFileComponent;
@@ -46,23 +50,26 @@ describe('ExerciseImportFromFileComponent', () => {
     });
 
     // using fakeasync and tick didn't work here, that's why I used whenStable and async
-    it('should raise error alert if not supported exercise type', async () => {
-        // GIVEN
-        const alertServiceSpy = jest.spyOn(alertService, 'error');
-        component.exerciseType = ExerciseType.TEXT;
-        fixture.detectChanges();
-        component.fileForImport = (await generateValidTestZipFileWithNotSupportedExerciseType()) as File;
-        await fixture.whenStable();
-        fixture.detectChanges();
-        // WHEN
-        await component.uploadExercise();
-        await fixture.whenStable();
-        fixture.detectChanges();
-        // THEN
-        expect(alertServiceSpy).toHaveBeenCalledOnce();
-        expect(alertServiceSpy).toHaveBeenCalledWith('artemisApp.exercise.importFromFile.notSupportedExerciseType', { exerciseType: ExerciseType.TEXT });
-        expect(component.exercise).toBeUndefined();
-    });
+    it.each([ExerciseType.QUIZ, ExerciseType.MODELING, ExerciseType.TEXT, ExerciseType.FILE_UPLOAD])(
+        'should raise error alert if not supported exercise type',
+        async (exerciseType) => {
+            // GIVEN
+            const alertServiceSpy = jest.spyOn(alertService, 'error');
+            component.exerciseType = exerciseType;
+            fixture.detectChanges();
+            component.fileForImport = (await generateValidTestZipFileWithExerciseType(exerciseType)) as File;
+            await fixture.whenStable();
+            fixture.detectChanges();
+            // WHEN
+            await component.uploadExercise();
+            await fixture.whenStable();
+            fixture.detectChanges();
+            // THEN
+            expect(alertServiceSpy).toHaveBeenCalledOnce();
+            expect(alertServiceSpy).toHaveBeenCalledWith('artemisApp.exercise.importFromFile.notSupportedExerciseType', { exerciseType: exerciseType });
+            expect(component.exercise).toBeUndefined();
+        },
+    );
 
     it('should raise error alert if not one json file at the root level', async () => {
         //
@@ -78,7 +85,7 @@ describe('ExerciseImportFromFileComponent', () => {
         alertServiceSpy = jest.spyOn(alertService, 'error');
         fixture.detectChanges();
         component.exerciseType = ExerciseType.TEXT;
-        component.fileForImport = (await generateValidTestZipFile()) as File;
+        component.fileForImport = (await generateValidTestZipFileWithExerciseType(ExerciseType.PROGRAMMING)) as File;
         await fixture.whenStable();
         fixture.detectChanges();
         // WHEN
@@ -90,35 +97,10 @@ describe('ExerciseImportFromFileComponent', () => {
         expect(alertServiceSpy).toHaveBeenCalledWith('artemisApp.exercise.importFromFile.exerciseTypeDoesntMatch');
     });
 
-    it.each([ProgrammingLanguage.SWIFT, ProgrammingLanguage.C, ProgrammingLanguage.EMPTY])(
-        'should raise error alert when programming language or exercise type is not supported',
-        async (programmingLanguage) => {
-            alertServiceSpy = jest.spyOn(alertService, 'error');
-            fixture.detectChanges();
-            component.exerciseType = ExerciseType.PROGRAMMING;
-            component.fileForImport = (await generateValidTestZipWithLanguage(programmingLanguage)) as File;
-            await fixture.whenStable();
-            fixture.detectChanges();
-            // WHEN
-            await component.uploadExercise();
-            await fixture.whenStable();
-            fixture.detectChanges();
-            // THEN
-            expect(alertServiceSpy).toHaveBeenCalledOnce();
-            if (programmingLanguage === ProgrammingLanguage.C) {
-                expect(alertServiceSpy).toHaveBeenCalledWith('artemisApp.programmingExercise.importFromFile.GccNotSupportedForC');
-            } else {
-                expect(alertServiceSpy).toHaveBeenCalledWith('artemisApp.programmingExercise.importFromFile.notSupportedProgrammingLanguage', {
-                    programmingLanguage: programmingLanguage,
-                });
-            }
-        },
-    );
-
     it('should set exercise attributes and open import dialog', async () => {
         const openImportSpy = jest.spyOn(component, 'openImport');
         component.exerciseType = ExerciseType.PROGRAMMING;
-        component.fileForImport = (await generateValidTestZipFile()) as File;
+        component.fileForImport = (await generateValidTestZipFileWithExerciseType(ExerciseType.PROGRAMMING)) as File;
         await fixture.whenStable();
         fixture.detectChanges();
         // WHEN
@@ -215,28 +197,32 @@ describe('ExerciseImportFromFileComponent', () => {
     });
 });
 
-async function generateValidTestZipFile(): Promise<Blob> {
+async function generateValidTestZipFileWithExerciseType(exerciseType: ExerciseType): Promise<Blob> {
     const zip = new JSZip();
-    const zipFile = zip.file('test.json', '{ "type": "programming", "id": 1246, "title": "Test exercise" }');
-    return zipFile.generateAsync({ type: 'blob' });
-}
+    let exercise;
 
-async function generateValidTestZipWithLanguage(language: ProgrammingLanguage): Promise<Blob> {
-    const zip = new JSZip();
-    const programmingExercise = new ProgrammingExercise(undefined, undefined);
-    programmingExercise.programmingLanguage = language;
-    programmingExercise.id = 1246;
-    programmingExercise.title = 'Test exercise';
-    if (language === ProgrammingLanguage.C) {
-        programmingExercise.projectType = ProjectType.GCC;
+    switch (exerciseType) {
+        case ExerciseType.MODELING:
+            exercise = new ModelingExercise(UMLDiagramType.ActivityDiagram, undefined, undefined);
+            break;
+        case ExerciseType.FILE_UPLOAD:
+            exercise = new FileUploadExercise(undefined, undefined);
+            break;
+        case ExerciseType.TEXT:
+            exercise = new TextExercise(undefined, undefined);
+            break;
+        case ExerciseType.QUIZ:
+            exercise = new QuizExercise(undefined, undefined);
+            break;
+        case ExerciseType.PROGRAMMING:
+            exercise = new ProgrammingExercise(undefined, undefined);
+            break;
+        default:
+            throw new Error('Unexpected exercise type');
     }
-    const zipFile = zip.file('test.json', JSON.stringify(programmingExercise));
-    return zipFile.generateAsync({ type: 'blob' });
-}
-
-async function generateValidTestZipFileWithNotSupportedExerciseType(): Promise<Blob> {
-    const zip = new JSZip();
-    const zipFile = zip.file('test.json', '{ "type": "text", "id": 1246, "title": "Test exercise" }');
+    exercise.id = 1246;
+    exercise.title = 'Test exercise';
+    const zipFile = zip.file('test.json', JSON.stringify(exercise));
     return zipFile.generateAsync({ type: 'blob' });
 }
 

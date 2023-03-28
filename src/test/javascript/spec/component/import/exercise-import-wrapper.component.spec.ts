@@ -29,9 +29,6 @@ describe('ExerciseImportWrapperComponent', () => {
         fixture.detectChanges();
     });
 
-    it('should create', () => {
-        expect(component).toBeTruthy();
-    });
     it.each([ExerciseType.TEXT, ExerciseType.QUIZ, ExerciseType.PROGRAMMING, ExerciseType.MODELING, ExerciseType.FILE_UPLOAD])(
         'should show correct header title for each exercise type',
         (exerciseType) => {
@@ -44,12 +41,14 @@ describe('ExerciseImportWrapperComponent', () => {
             );
         },
     );
+
     it('should show correct header title for SCA import', () => {
         component.exerciseType = ExerciseType.PROGRAMMING;
         component.programmingLanguage = ProgrammingLanguage.JAVA;
         component.ngOnInit();
         expect(component.titleKey).toBe('artemisApp.programmingExercise.configureGrading.categories.importLabel');
     });
+
     it('should show tabs component for programming-exercises', () => {
         component.exerciseType = ExerciseType.PROGRAMMING;
         fixture.detectChanges();
@@ -58,6 +57,7 @@ describe('ExerciseImportWrapperComponent', () => {
         expect(tabsComponent).toBeTruthy();
         expect(exerciseImportComponent).toBeNull();
     });
+
     it.each([ExerciseType.MODELING, ExerciseType.TEXT, ExerciseType.FILE_UPLOAD, ExerciseType.QUIZ])(
         'should show exercise-import component for all other exercise types',
         (exerciseType) => {
@@ -69,6 +69,7 @@ describe('ExerciseImportWrapperComponent', () => {
             expect(exerciseImportComponent).toBeTruthy();
         },
     );
+
     it('should close the active modal when clicking cancel button', () => {
         const activeModalSpy = jest.spyOn(activeModal, 'dismiss');
         fixture.debugElement.nativeElement.querySelector('#cancel-btn').click();
