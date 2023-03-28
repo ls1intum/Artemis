@@ -22,7 +22,21 @@ import { EventManager } from 'app/core/util/event-manager.service';
 import { createBuildPlanUrl } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ConsistencyCheckComponent } from 'app/shared/consistency-check/consistency-check.component';
-import { faBook, faCheckDouble, faDownload, faFileSignature, faListAlt, faPencilAlt, faPlus, faSort, faTable, faTimes, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
+import {
+    faBook,
+    faCheckDouble,
+    faDownload,
+    faFileSignature,
+    faLightbulb,
+    faListAlt,
+    faPencilAlt,
+    faPlus,
+    faSort,
+    faTable,
+    faTimes,
+    faUsers,
+    faWrench,
+} from '@fortawesome/free-solid-svg-icons';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 import { downloadZipFileFromResponse } from 'app/shared/util/download.util';
 import { PROFILE_LOCALVC } from 'app/app.constants';
@@ -60,6 +74,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
     faUsers = faUsers;
     faTable = faTable;
     faListAlt = faListAlt;
+    faLightbulb = faLightbulb;
     faPencilAlt = faPencilAlt;
     faFileSignature = faFileSignature;
 

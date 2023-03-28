@@ -38,6 +38,14 @@
             *ngIf="exercise?.isAtLeastInstructor && exercise?.type === ExerciseType.PROGRAMMING"
             [exercise]="exercise"
         ></jhi-programming-exercise-instructor-submission-state>
+        <div class="p-2">
+            <a class="btn btn-info" *ngIf="exercise?.isAtLeastTutor" [routerLink]="getScoresRoute(exercise)">
+                <div>
+                    <fa-icon [icon]="faTable"></fa-icon>
+                    <span class="d-md-inline" jhiTranslate="entity.action.scores">Scores</span>
+                </div>
+            </a>
+        </div>
     </div>
     <jhi-data-table
         [isLoading]="isLoading"
@@ -212,7 +220,7 @@
                 <ngx-datatable-column *ngIf="exercise.type === ExerciseType.PROGRAMMING && afterDueDate" prop="student" [minWidth]="80" [width]="80">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('testRun')">
-                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.participation.practiceMode"> Practice Mode </span>
+                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.participation.practice"> Practice </span>
                             <fa-icon [icon]="controls.iconForSortPropField('testRun')"></fa-icon>
                         </span>
                     </ng-template>

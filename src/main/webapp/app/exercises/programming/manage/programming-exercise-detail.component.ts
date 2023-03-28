@@ -34,11 +34,12 @@ import {
     faEraser,
     faExclamationTriangle,
     faEye,
+    faFileSignature,
+    faLightbulb,
     faListAlt,
     faPencilAlt,
     faTable,
     faTimes,
-    faUserCheck,
     faUsers,
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
@@ -101,9 +102,10 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     faCheckDouble = faCheckDouble;
     faTable = faTable;
     faExclamationTriangle = faExclamationTriangle;
-    faUserCheck = faUserCheck;
+    faFileSignature = faFileSignature;
     faListAlt = faListAlt;
     faChartBar = faChartBar;
+    faLightbulb = faLightbulb;
     faPencilAlt = faPencilAlt;
     faEraser = faEraser;
     faUsers = faUsers;

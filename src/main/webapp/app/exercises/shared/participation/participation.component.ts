@@ -19,7 +19,7 @@ import { EventManager } from 'app/core/util/event-manager.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { setBuildPlanUrlForProgrammingParticipations } from 'app/exercises/shared/participation/participation.utils';
-import { faCircleNotch, faEraser, faFilePowerpoint, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faCircleNotch, faEraser, faFilePowerpoint, faTable, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { PROFILE_LOCALVC } from 'app/app.constants';
 
 enum FilterProp {
@@ -69,6 +69,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     afterDueDate = false;
 
     // Icons
+    faTable = faTable;
     faTimes = faTimes;
     faCircleNotch = faCircleNotch;
     faEraser = faEraser;
@@ -354,4 +355,21 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         }
         return repoUrl;
     };
+
+    /**
+     * Get the route for the exercise's scores page.
+     *
+     * @param exercise the exercise for which the scores route should be extracted
+     */
+    getScoresRoute(exercise: Exercise): any[] {
+        let route: any[] = ['/course-management'];
+        const exam = exercise.exerciseGroup?.exam;
+        if (exam) {
+            route = [...route, exam.course!.id, 'exams', exam.id, 'exercise-groups', exercise.exerciseGroup!.id];
+        } else {
+            route = [...route, exercise.course!.id];
+        }
+        route = [...route, exercise.type + '-exercises', exercise.id, 'scores'];
+        return route;
+    }
 }
