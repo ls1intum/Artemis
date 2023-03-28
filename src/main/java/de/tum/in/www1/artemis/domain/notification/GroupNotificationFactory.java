@@ -50,7 +50,7 @@ public class GroupNotificationFactory {
             placeholderValues = new String[] {
                     attachment.getExercise() != null ? attachment.getExercise().getCourseViaExerciseGroupOrCourseMember().getTitle()
                             : attachment.getLecture().getCourse().getTitle(),
-                    attachment.getName(), (attachment.getExercise() != null ? attachment.getExercise().getTitle() : attachment.getLecture().getTitle()) };
+                    attachment.getName(), attachment.getExercise() != null ? attachment.getExercise().getTitle() : attachment.getLecture().getTitle() };
         }
         else {
             throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
