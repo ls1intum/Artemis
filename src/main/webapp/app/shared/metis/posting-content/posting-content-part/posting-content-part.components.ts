@@ -50,6 +50,8 @@ export class PostingContentPartComponent {
                 return faFont;
             case ReferenceType.FILE_UPLOAD:
                 return faFileUpload;
+            case ReferenceType.SLIDE:
+                return faFile;
             default:
                 return faPaperclip;
         }

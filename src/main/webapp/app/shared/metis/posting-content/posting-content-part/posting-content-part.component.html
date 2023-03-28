@@ -14,3 +14,17 @@
     *ngIf="postingContentPart.contentAfterReference"
     [innerHTML]="postingContentPart.contentAfterReference | htmlForPostingMarkdown : false : allowedHtmlTags : allowedHtmlAttributes"
 ></span>
+
+<div class="d-flex flex-column">
+    <a class="reference d-block" width="400" *ngIf="postingContentPart.slideToReference" (click)="openAttachment(postingContentPart.slideToReference)">
+        <img
+            class="object-fit-contain"
+            *ngIf="postingContentPart.slideToReference"
+            [src]="postingContentPart.slideToReference"
+            [alt]="postingContentPart.referenceStr"
+            [title]="postingContentPart.referenceStr"
+            height="auto"
+            width="400"
+        />
+    </a>
+</div>

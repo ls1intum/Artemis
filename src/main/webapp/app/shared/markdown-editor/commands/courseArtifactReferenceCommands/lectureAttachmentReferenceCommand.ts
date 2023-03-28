@@ -6,6 +6,7 @@ import { Lecture } from 'app/entities/lecture.model';
 import { map } from 'rxjs/operators';
 import { HttpResponse } from '@angular/common/http';
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
+import { Slide } from 'app/entities/lecture-unit/slide.model';
 
 export class LectureAttachmentReferenceCommand extends MultiOptionCommand {
     metisService: MetisService;
@@ -20,7 +21,6 @@ export class LectureAttachmentReferenceCommand extends MultiOptionCommand {
         this.lectureService = lectureService;
 
         this.metisService.getCourse().lectures?.map((lecture) => {
-            console.log(lecture);
             this.lectureService
                 .findWithDetails(lecture.id!)
                 .pipe(map((response: HttpResponse<Lecture>) => response.body!))
@@ -40,20 +40,27 @@ export class LectureAttachmentReferenceCommand extends MultiOptionCommand {
                                         courseArtifactType: ReferenceType.ATTACHMENT,
                                     })),
                                     attachmentUnits: lecture.lectureUnits?.map((unit: any) => {
-                                        if (unit instanceof AttachmentUnit) {
-                                            return {
-                                                id: unit.id!.toString(),
-                                                value: unit.name!,
-                                                courseArtifactType: ReferenceType.ATTACHMENT_UNITS,
-                                            };
-                                        }
+                                        return {
+                                            id: unit.id!.toString(),
+                                            value: unit.name!,
+                                            slides: unit.slides
+                                                ?.map((slide: Slide) => {
+                                                    return {
+                                                        id: slide.id!.toString(),
+                                                        slideNumber: slide.slideNumber!,
+                                                        slideImagePath: slide.slideImagePath!,
+                                                        courseArtifactType: ReferenceType.SLIDE,
+                                                    };
+                                                })
+                                                .sort((a: Slide, b: Slide) => a.slideNumber! - b.slideNumber!),
+                                            courseArtifactType: ReferenceType.ATTACHMENT_UNITS,
+                                        };
                                     }),
                                 },
                             ],
                         );
                     },
                 });
-            console.log(this.values);
         });
     }
 
@@ -63,26 +70,35 @@ export class LectureAttachmentReferenceCommand extends MultiOptionCommand {
      * @param type
      * @param selectedElementId
      * @param selectedUnitId
+     * @param selectedSlideId
      * @desc                                Add a lecture reference link in markdown language
      *                                      1. Add '[{lecture-title}](/courses/{courseId}/lectures/{lectureId}})' at the cursor in the editor
      *                                      2. Link in markdown language appears which when clicked navigates to the lecture page
      */
-    execute(selectedLectureId: string, type?: ReferenceType, selectedElementId?: string, selectedUnitId?: string): void {
+    execute(selectedLectureId: string, type?: ReferenceType, selectedElementId?: string, selectedUnitId?: string, selectedSlideId?: string): void {
         const selectedLecture = this.metisService.getCourse().lectures!.find((value) => value.id!.toString() === selectedLectureId)!;
         this.lectureService
             .findWithDetails(selectedLecture.id!)
             .pipe(map((response: HttpResponse<Lecture>) => response.body!))
             .subscribe({
                 next: (lecture: Lecture) => {
-                    console.log(lecture);
                     if (selectedUnitId) {
-                        // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
-                        const selectedUnit: AttachmentUnit = lecture.lectureUnits?.find((value: AttachmentUnit) => value.id!.toString() === selectedUnitId)!;
-                        const referenceLink = `[lecture-unit]${selectedUnit.name}(${selectedUnit.attachment?.link})[/lecture-unit]`;
-                        this.insertText(referenceLink);
-                        this.focus();
+                        if (!selectedSlideId) {
+                            // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
+                            const selectedUnit: AttachmentUnit = lecture.lectureUnits?.find((value: AttachmentUnit) => value.id!.toString() === selectedUnitId)!;
+                            const referenceLink = `[lecture-unit]${selectedUnit.name}(${selectedUnit.attachment?.link})[/lecture-unit]`;
+                            this.insertText(referenceLink);
+                            this.focus();
+                        } else {
+                            // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
+                            const selectedUnit: AttachmentUnit = lecture.lectureUnits?.find((value: AttachmentUnit) => value.id!.toString() === selectedUnitId)!;
+                            // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
+                            const selectedSlide: Slide = selectedUnit.slides?.find((value: Slide) => value.id!.toString() === selectedSlideId)!;
+                            const referenceLink = `[slide]${selectedUnit.name}_SLIDE_${selectedSlide.slideNumber}(${selectedSlide.slideImagePath})[/slide]`;
+                            this.insertText(referenceLink);
+                            this.focus();
+                        }
                     } else {
-                        // const selectedLecture = this.metisService.getCourse().lectures!.find((value) => value.id!.toString() === selectedLectureId)!;
                         // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
                         const selectedAttachment = selectedLecture.attachments?.find((value) => value.id!.toString() === selectedElementId)!;
                         const referenceLink =

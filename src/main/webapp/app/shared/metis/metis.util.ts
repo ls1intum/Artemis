@@ -84,6 +84,7 @@ export interface PostingContentPart {
     contentBeforeReference?: string; // string before occurrence of reference pattern -> only for the first PostContentPart in the content of a posting
     linkToReference?: RouteComponents; // link the reference navigates to
     attachmentToReference?: string; // attachment link the reference opens
+    slideToReference?: string; // slide link the reference opens
     queryParams?: Params; // params that are required for navigating
     referenceStr?: string; // string that is within the anchor tag
     referenceType?: ReferenceType; // type of artifact to reference
@@ -105,7 +106,8 @@ export enum ReferenceType {
     POST = 'POST',
     LECTURE = 'LECTURE',
     ATTACHMENT = 'ATTACHMENT',
-    ATTACHMENT_UNITS = 'lecture-unit',
+    ATTACHMENT_UNITS = 'ATTACHMENT_UNITS',
+    SLIDE = 'SLIDE',
     PROGRAMMING = 'programming',
     MODELING = 'modeling',
     QUIZ = 'quiz',

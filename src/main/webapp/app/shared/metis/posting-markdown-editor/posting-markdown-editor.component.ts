@@ -12,7 +12,6 @@ import { MarkdownEditorHeight } from 'app/shared/markdown-editor/markdown-editor
 import { MetisService } from 'app/shared/metis/metis.service';
 import { ExerciseReferenceCommand } from 'app/shared/markdown-editor/commands/courseArtifactReferenceCommands/exerciseReferenceCommand';
 import { LectureAttachmentReferenceCommand } from 'app/shared/markdown-editor/commands/courseArtifactReferenceCommands/lectureAttachmentReferenceCommand';
-import { LectureAttachmentUnitReferenceCommand } from 'app/shared/markdown-editor/commands/courseArtifactReferenceCommands/lectureAttachmentUnitReferenceCommand';
 import { LectureService } from 'app/lecture/lecture.service';
 
 @Component({
@@ -52,7 +51,6 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
             new LinkCommand(),
             new ExerciseReferenceCommand(this.metisService),
             new LectureAttachmentReferenceCommand(this.metisService, this.lectureService),
-            // new LectureAttachmentUnitReferenceCommand(this.metisService, this.lectureService),
         ];
     }
 
