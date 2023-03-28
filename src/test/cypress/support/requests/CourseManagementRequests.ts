@@ -22,6 +22,7 @@ import modelingExerciseSubmissionTemplate from '../../fixtures/exercise/modeling
 import lectureTemplate from '../../fixtures/lecture/template.json';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { Channel } from 'app/entities/metis/conversation/channel.model';
+import { Post } from 'app/entities/metis/post.model';
 
 export const COURSE_BASE = BASE_API + 'courses/';
 export const COURSE_ADMIN_BASE = BASE_API + 'admin/courses';
@@ -260,6 +261,31 @@ export class CourseManagementRequests {
     joinUserIntoChannel(course: Course, channel: Channel, user: CypressCredentials) {
         const body = [`${user.username}`];
         return cy.request({ method: POST, url: `${COURSE_BASE}${course.id}/channels/${channel.id}/register`, body });
+    }
+
+    createCoursePostReply(course: Course, post: Post, content: string) {
+        const body = {
+            content,
+            post,
+            resolvesPost: true,
+        };
+        return cy.request({ method: POST, url: `${COURSE_BASE}${course.id}/answer-posts`, body });
+    }
+
+    createCourseExercisePost(course: Course, exercise: Exercise, title: string, content: string) {
+        const body = {
+            content,
+            displayPriority: 'NONE',
+            exercise: {
+                id: exercise.id,
+                title: exercise.title,
+                type: exercise.type,
+            },
+            tags: [],
+            title,
+            visibleForStudents: true,
+        };
+        return cy.request({ method: POST, url: `${COURSE_BASE}${course.id}/posts`, body });
     }
 
     /**
