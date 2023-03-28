@@ -177,8 +177,7 @@ public class GroupNotificationFactory {
                 notification.setPriority(HIGH);
             }
             else if (exercise instanceof ProgrammingExercise programmingExercise) {
-                notification.setTransientAndStringTarget(
-                        createExamProgrammingExerciseOrTestCaseTarget(programmingExercise, NotificationTargetFactory.EXERCISE_UPDATED_TEXT));
+                notification.setTransientAndStringTarget(createExamProgrammingExerciseOrTestCaseTarget(programmingExercise, NotificationTargetFactory.EXERCISE_UPDATED_TEXT));
             }
         }
         // Exercises for courses (not for exams)
