@@ -53,7 +53,12 @@ describe('ProgrammingExerciseTaskComponent', () => {
             bonusMultiplier: 1,
             bonusPoints: 4,
             visibility: Visibility.Never,
-            testCases: [{ testName: 'test1' }, { testName: 'test2' }, { testName: 'test3' }, { testName: 'test4' }],
+            testCases: [
+                { testName: 'test1', weight: 1 },
+                { testName: 'test2', weight: 2 },
+                { testName: 'test3', weight: 3 },
+                { testName: 'test4', weight: 4 },
+            ],
         };
         const expected = [
             {
@@ -62,7 +67,7 @@ describe('ProgrammingExerciseTaskComponent', () => {
                 changed: true,
                 testName: 'test1',
                 visibility: 'NEVER',
-                weight: 1,
+                weight: 0.4,
             },
             {
                 bonusMultiplier: 1,
@@ -70,7 +75,7 @@ describe('ProgrammingExerciseTaskComponent', () => {
                 changed: true,
                 testName: 'test2',
                 visibility: 'NEVER',
-                weight: 1,
+                weight: 0.8,
             },
             {
                 bonusMultiplier: 1,
@@ -78,7 +83,7 @@ describe('ProgrammingExerciseTaskComponent', () => {
                 changed: true,
                 testName: 'test3',
                 visibility: 'NEVER',
-                weight: 1,
+                weight: 1.2,
             },
             {
                 bonusMultiplier: 1,
@@ -86,7 +91,7 @@ describe('ProgrammingExerciseTaskComponent', () => {
                 changed: true,
                 testName: 'test4',
                 visibility: 'NEVER',
-                weight: 1,
+                weight: 1.6,
             },
         ];
 
