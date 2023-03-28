@@ -1,8 +1,14 @@
 package de.tum.in.www1.artemis.service;
 
-import java.io.*;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.*;
+import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.security.Principal;
 import java.util.HashMap;
 import java.util.Map;
@@ -17,7 +23,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.FileSystemUtils;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.File;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.web.rest.dto.FileMove;
@@ -195,13 +200,6 @@ public class RepositoryService {
         inputStream.close();
     }
 
-    public void copyFile(Repository repository, String filename, InputStream inputStream) throws IOException {
-        File file = new File(Path.of(repository.getLocalPath().toString(), filename).toFile(), repository);
-        Files.copy(inputStream, file.toPath(), StandardCopyOption.REPLACE_EXISTING);
-        repository.setContent(null); // invalidate cache
-        inputStream.close();
-    }
-
     private File checkIfFileExistsInRepository(Repository repository, String filename) throws FileAlreadyExistsException {
         if (gitService.getFileByName(repository, filename).isPresent()) {
             throw new FileAlreadyExistsException("file already exists");
@@ -230,18 +228,6 @@ public class RepositoryService {
         Files.copy(inputStream, keep.toPath(), StandardCopyOption.REPLACE_EXISTING);
         repository.setContent(null); // invalidate cache
         inputStream.close();
-    }
-
-    /**
-     * Create a folder and all parent folders in a repository.
-     *
-     * @param repository in which the folder should be created.
-     * @param folderName of the folder to be created.
-     * @throws IOException if the inputStream is corrupt, the folder can't be stored, the repository is unavailable, etc.
-     */
-    public void createFolderRecursively(Repository repository, String folderName) throws IOException {
-        Files.createDirectories(repository.getLocalPath().resolve(folderName));
-        repository.setContent(null); // invalidate cache
     }
 
     /**

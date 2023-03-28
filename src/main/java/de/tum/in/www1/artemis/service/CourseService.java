@@ -1,12 +1,16 @@
 package de.tum.in.www1.artemis.service;
 
-import static de.tum.in.www1.artemis.domain.enumeration.ComplaintType.*;
+import static de.tum.in.www1.artemis.domain.enumeration.ComplaintType.COMPLAINT;
+import static de.tum.in.www1.artemis.domain.enumeration.ComplaintType.MORE_FEEDBACK;
 import static de.tum.in.www1.artemis.service.util.RoundingUtil.roundScoreSpecifiedByCourseSettings;
-import static tech.jhipster.config.JHipsterConstants.*;
+import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_PRODUCTION;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.*;
+import java.time.DayOfWeek;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.IsoFields;
@@ -234,10 +238,6 @@ public class CourseService {
             course.setExams(examRepository.filterVisibleExams(course.getExams()));
         }
         return course;
-    }
-
-    public Course findByIdElseThrow(Long courseId) {
-        return courseRepository.findByIdElseThrow(courseId);
     }
 
     /**
