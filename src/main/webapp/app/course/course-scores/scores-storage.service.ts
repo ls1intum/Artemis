@@ -28,7 +28,7 @@ export class ScoresStorageService {
     }
 
     getStoredParticipationResult(participationId: number): Result | undefined {
-        return this.participationResults.filter((result) => result.participation?.id === participationId)[0];
+        return this.participationResults.find((result: Result) => result.participation?.id === participationId);
     }
 
     setStoredParticipationResults(participationResults: Result[] | undefined): void {

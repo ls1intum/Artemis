@@ -192,9 +192,11 @@ export class CourseManagementService {
         // Convert the received object to a Map.
         const scoresPerExerciseType: ScoresPerExerciseType = new Map();
         Object.entries(courseForDashboardDTO.scoresPerExerciseType).forEach(([exerciseType, courseScores]) => {
+            // Convert exerciseType as returned from the server ExerciseType enum (e.g. "FILE_UPLOAD") to the format defined in the client enum (e.g. "file-upload").
+            const clientExerciseType = exerciseType.toLowerCase().replace('_', '-');
             let exerciseTypeTyped: ExerciseType | undefined = undefined;
-            if (Object.values(ExerciseType).some((value) => value === exerciseType.toLowerCase())) {
-                exerciseTypeTyped = exerciseType.toLowerCase() as ExerciseType;
+            if (Object.values(ExerciseType).some((value) => value === clientExerciseType)) {
+                exerciseTypeTyped = clientExerciseType as ExerciseType;
             }
 
             if (exerciseTypeTyped) {
