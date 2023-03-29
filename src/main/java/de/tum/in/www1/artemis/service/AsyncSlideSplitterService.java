@@ -53,12 +53,16 @@ public class AsyncSlideSplitterService {
             String pdfFilename = file.getOriginalFilename();
             String fileNameWithOutExt = FilenameUtils.removeExtension(pdfFilename);
             int numPages = document.getNumberOfPages();
-            PDFRenderer pdfRenderer = new PDFRenderer(document);
             List<CompletableFuture<Slide>> slideFutures = new ArrayList<>();
             for (int page = 0; page < numPages; ++page) {
                 int finalPage = page;
                 CompletableFuture<Slide> slideFuture = CompletableFuture.supplyAsync(() -> {
                     try {
+                        // this needs to be done in a separate thread, otherwise the PDFBox library will throw an IllegalStateException
+                        // when trying to render the image. This causes to not render some pages at all.
+                        // (e.g. Possible recursion found when searching for page)
+                        PDFRenderer pdfRenderer = new PDFRenderer(document);
+
                         BufferedImage bufferedImage = pdfRenderer.renderImageWithDPI(finalPage, 96, ImageType.RGB);
                         byte[] imageInByte = bufferedImageToByteArray(bufferedImage, "png");
                         MultipartFile slideFile = fileService.convertByteArrayToMultipart(fileNameWithOutExt + "-SLIDE-" + (finalPage + 1), ".png", imageInByte);

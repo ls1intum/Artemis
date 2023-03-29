@@ -1096,7 +1096,7 @@ public class FileService implements DisposableBean {
             Path tempPath = Path.of(FilePathService.getTempFilePath(), fileName + extension);
             Files.write(tempPath, streamByteArray);
             File outputFile = tempPath.toFile();
-            FileItem fileItem = new DiskFileItem("mainFile", Files.probeContentType(tempPath), false, outputFile.getName(), (int) outputFile.length(), outputFile.getParentFile());
+            FileItem fileItem = new DiskFileItem(fileName, Files.probeContentType(tempPath), false, outputFile.getName(), (int) outputFile.length(), outputFile.getParentFile());
 
             try (InputStream input = new FileInputStream(outputFile); OutputStream fileItemOutputStream = fileItem.getOutputStream()) {
                 IOUtils.copy(input, fileItemOutputStream);
