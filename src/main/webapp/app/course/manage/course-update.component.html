@@ -99,7 +99,7 @@
                             </h5>
                         </div>
                     </div>
-                    <div *ngIf="courseOrganizations.length === 0">
+                    <div *ngIf="courseOrganizations && courseOrganizations.length === 0">
                         <h5>
                             <span class="badge bg-secondary font-weight-normal m-1" jhiTranslate="artemisApp.course.noOrganizations"> No Organizations </span>
                             <fa-icon
