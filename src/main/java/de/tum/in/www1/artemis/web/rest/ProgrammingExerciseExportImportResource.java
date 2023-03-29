@@ -92,11 +92,14 @@ public class ProgrammingExerciseExportImportResource {
 
     private final CourseRepository courseRepository;
 
+    private final ProgrammingExerciseImportFromFileService programmingExerciseImportFromFileService;
+
     public ProgrammingExerciseExportImportResource(ProgrammingExerciseRepository programmingExerciseRepository, UserRepository userRepository,
             AuthorizationCheckService authCheckService, CourseService courseService, ProgrammingExerciseImportService programmingExerciseImportService,
             ProgrammingExerciseExportService programmingExerciseExportService, Optional<ProgrammingLanguageFeatureService> programmingLanguageFeatureService,
             AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, SubmissionPolicyService submissionPolicyService,
-            ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, ExamAccessService examAccessService, CourseRepository courseRepository) {
+            ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, ExamAccessService examAccessService, CourseRepository courseRepository,
+            ProgrammingExerciseImportFromFileService programmingExerciseImportFromFileService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.userRepository = userRepository;
         this.courseService = courseService;
@@ -109,6 +112,7 @@ public class ProgrammingExerciseExportImportResource {
         this.programmingExerciseTaskRepository = programmingExerciseTaskRepository;
         this.examAccessService = examAccessService;
         this.courseRepository = courseRepository;
+        this.programmingExerciseImportFromFileService = programmingExerciseImportFromFileService;
     }
 
     /**
@@ -231,7 +235,7 @@ public class ProgrammingExerciseExportImportResource {
         final var course = courseRepository.findByIdElseThrow(programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
         try {
-            return ResponseEntity.ok(programmingExerciseImportService.importProgrammingExerciseFromFile(programmingExercise, zipFile, course));
+            return ResponseEntity.ok(programmingExerciseImportFromFileService.importProgrammingExerciseFromFile(programmingExercise, zipFile, course));
         }
         catch (IOException | URISyntaxException | GitAPIException e) {
             log.error(e.getMessage(), e);
