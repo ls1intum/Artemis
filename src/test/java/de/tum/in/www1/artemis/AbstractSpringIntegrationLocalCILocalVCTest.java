@@ -2,12 +2,19 @@ package de.tum.in.www1.artemis;
 
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
+import java.nio.file.Files;
 import java.util.List;
 import java.util.Set;
 
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.lib.Constants;
+import org.eclipse.jgit.lib.RefUpdate;
+import org.eclipse.jgit.lib.Repository;
 import org.gitlab4j.api.GitLabApiException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -45,12 +52,44 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     @LocalServerPort
     protected int port;
 
-    // @Autowired
-    // protected Environment environment;
-
     @AfterEach
     protected void resetSpyBeans() {
         super.resetSpyBeans();
+    }
+
+    @AfterEach
+    public void tearDown() throws IOException {
+        repository.close();
+        Files.delete(tempRemoteRepoFolder.toPath());
+        Files.delete(tempLocalRepoFolder.toPath());
+    }
+
+    protected File tempRemoteRepoFolder;
+
+    protected File tempLocalRepoFolder;
+
+    protected Repository repository;
+
+    protected void createGitRepositoryWithInitialPush() {
+        try {
+            tempRemoteRepoFolder = Files.createTempDirectory("remoteRepo").toFile();
+            Git git = Git.init().setDirectory(tempRemoteRepoFolder).setBare(true).call();
+
+            // Change the default branch to the Artemis default branch name.
+            Repository repository = git.getRepository();
+            RefUpdate refUpdate = repository.getRefDatabase().newUpdate(Constants.HEAD, false);
+            refUpdate.setForceUpdate(true);
+            refUpdate.link("refs/heads/" + defaultBranch);
+
+            // Push some files to the repository.
+
+            git.close();
+
+            this.repository = repository;
+        }
+        catch (IOException | GitAPIException e) {
+            throw new RuntimeException("Could not create temp git repository", e);
+        }
     }
 
     // Note: Mocking requests to the VC and CI server is not necessary for local VC and local CI.

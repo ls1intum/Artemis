@@ -252,6 +252,8 @@ public class LocalVCService extends AbstractVersionControlService {
 
             // Create a bare local repository with JGit.
             Git git = Git.init().setDirectory(remoteDirPath.toFile()).setBare(true).call();
+
+            // Change the default branch to the Artemis default branch.
             Repository repository = git.getRepository();
             RefUpdate refUpdate = repository.getRefDatabase().newUpdate(Constants.HEAD, false);
             refUpdate.setForceUpdate(true);
