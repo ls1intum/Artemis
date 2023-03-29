@@ -199,7 +199,7 @@
             "activeStudents": "Aktive Studierende: {{ students }}",
             "notStartedYet": "Der Kurs hat noch nicht offiziell begonnen. Offizieller Kursstart:",
             "noOrganizations": "Keine Organisationen",
-            "organizationAddingHint": "Administratoren können Organisationen zu Kursen hinzufügen"
+            "organizationAddingHint": "Administratoren können Organisationen zu Kursen hinzufügen."
         },
         "courseStatistics": {
             "statistics": "Statistiken",
