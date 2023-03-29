@@ -142,10 +142,10 @@ public class UserTestService {
         var oneToOneChat = new OneToOneChat();
 
         User student2 = new User();
-        student2.setLogin("student2");
+        student2.setId(null);
+        student2.setLogin("student2Batman");
         student2.setPassword("password");
         student2.setEmail("student2@for.chat");
-        student2.setInternal(true);
         student2.setFirstName("Student2First");
         student2.setLastName("Student2Last");
         userRepository.save(student2);
