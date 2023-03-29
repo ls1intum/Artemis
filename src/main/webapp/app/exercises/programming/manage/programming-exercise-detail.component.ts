@@ -38,6 +38,7 @@ import {
     faLightbulb,
     faListAlt,
     faPencilAlt,
+    faScrewdriverWrench,
     faTable,
     faTimes,
     faUsers,
@@ -103,6 +104,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     faChartBar = faChartBar;
     faLightbulb = faLightbulb;
     faPencilAlt = faPencilAlt;
+    faScrewdriverWrench = faScrewdriverWrench;
     faEraser = faEraser;
     faUsers = faUsers;
     faEye = faEye;
