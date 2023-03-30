@@ -118,9 +118,9 @@ public class ProgrammingExerciseRepositoryService {
         final Repository repo = gitService.getOrCheckoutRepository(repoUrl, true);
 
         // Get path, files and prefix for the programming-language dependent files. They are copied first.
-        final Path generalTemplatePath = ProgrammingExerciseService.getProgrammingLanguageTemplatePath(programmingExercise.getProgrammingLanguage()).resolve(projectTypeTemplateDir)
-                .resolve(ALL_FILES_GLOB);
-        Resource[] resources = resourceLoaderService.getResources(generalTemplatePath);
+        final Path generalTemplatePath = Path.of(ProgrammingExerciseService.getProgrammingLanguageTemplatePath(programmingExercise.getProgrammingLanguage()))
+                .resolve(projectTypeTemplateDir).resolve(ALL_FILES_GLOB);
+        Resource[] resources = resourceLoaderService.getResources(String.valueOf(generalTemplatePath));
 
         Path prefix = Path.of(programmingLanguage).resolve(projectTypeTemplateDir);
 
@@ -129,14 +129,14 @@ public class ProgrammingExerciseRepositoryService {
 
         if (projectType != null && !ProjectType.PLAIN.equals(projectType)) {
             // Get path, files and prefix for the project-type dependent files. They are copied last and can overwrite the resources from the programming language.
-            final Path programmingLanguageProjectTypePath = ProgrammingExerciseService.getProgrammingLanguageProjectTypePath(programmingExercise.getProgrammingLanguage(),
-                    projectType);
+            final Path programmingLanguageProjectTypePath = Path
+                    .of(ProgrammingExerciseService.getProgrammingLanguageProjectTypePath(programmingExercise.getProgrammingLanguage(), projectType));
             final String projectTypePath = projectType.name().toLowerCase();
             final Path generalProjectTypePrefix = Path.of(programmingLanguage, projectTypePath);
             final Path projectTypeTemplatePath = programmingLanguageProjectTypePath.resolve(projectTypeTemplateDir).resolve(ALL_FILES_GLOB);
 
             final Path projectTypeSpecificPrefix = generalProjectTypePrefix.resolve(projectTypeTemplateDir);
-            final Resource[] projectTypeSpecificResources = resourceLoaderService.getResources(projectTypeTemplatePath);
+            final Resource[] projectTypeSpecificResources = resourceLoaderService.getResources(String.valueOf(projectTypeTemplatePath));
 
             if (ProjectType.XCODE.equals(projectType)) {
                 // For Xcode, we don't share source code, so we only copy files once
@@ -291,7 +291,7 @@ public class ProgrammingExerciseRepositoryService {
         final Path repoLocalPath = getRepoAbsoluteLocalPath(resources.repository);
 
         // First get files that are not dependent on the project type
-        final Path templatePath = ProgrammingExerciseService.getProgrammingLanguageTemplatePath(programmingExercise.getProgrammingLanguage()).resolve(TEST_DIR);
+        final Path templatePath = Path.of(ProgrammingExerciseService.getProgrammingLanguageTemplatePath(programmingExercise.getProgrammingLanguage())).resolve(TEST_DIR);
 
         // Java both supports Gradle and Maven as a test template
         Path projectTemplatePath = templatePath;
@@ -303,7 +303,7 @@ public class ProgrammingExerciseRepositoryService {
         }
         projectTemplatePath = projectTemplatePath.resolve("projectTemplate").resolve(ALL_FILES_GLOB);
 
-        final Resource[] projectTemplate = resourceLoaderService.getResources(projectTemplatePath);
+        final Resource[] projectTemplate = resourceLoaderService.getResources(String.valueOf(projectTemplatePath));
         // keep the folder structure
         fileService.copyResources(projectTemplate, "projectTemplate", repoLocalPath.toString(), true);
 
@@ -340,12 +340,12 @@ public class ProgrammingExerciseRepositoryService {
     private void setupJVMTestTemplateProjectTypeResources(final RepositoryResources resources, final ProgrammingExercise programmingExercise, final Path repoLocalPath)
             throws IOException {
         final ProjectType projectType = programmingExercise.getProjectType();
-        final Path projectTypeTemplatePath = ProgrammingExerciseService.getProgrammingLanguageProjectTypePath(programmingExercise.getProgrammingLanguage(), projectType)
+        final Path projectTypeTemplatePath = Path.of(ProgrammingExerciseService.getProgrammingLanguageProjectTypePath(programmingExercise.getProgrammingLanguage(), projectType))
                 .resolve(TEST_DIR);
         final Path projectTypeProjectTemplatePath = projectTypeTemplatePath.resolve("projectTemplate").resolve(ALL_FILES_GLOB);
 
         try {
-            final Resource[] projectTypeProjectTemplate = resourceLoaderService.getResources(projectTypeProjectTemplatePath);
+            final Resource[] projectTypeProjectTemplate = resourceLoaderService.getResources(String.valueOf(projectTypeProjectTemplatePath));
             fileService.copyResources(projectTypeProjectTemplate, resources.projectTypePrefix.toString(), repoLocalPath.toString(), false);
         }
         catch (FileNotFoundException fileNotFoundException) {
@@ -367,7 +367,7 @@ public class ProgrammingExerciseRepositoryService {
         final ProjectType projectType = programmingExercise.getProjectType();
         final Path repoLocalPath = getRepoAbsoluteLocalPath(resources.repository);
         final Path testFilePath = templatePath.resolve(TEST_FILES_PATH).resolve(ALL_FILES_GLOB);
-        final Resource[] testFileResources = resourceLoaderService.getResources(testFilePath);
+        final Resource[] testFileResources = resourceLoaderService.getResources(testFilePath.toString());
         final String packagePath = repoLocalPath.resolve(TEST_DIR).resolve(PACKAGE_NAME_FOLDER_PLACEHOLDER).toAbsolutePath().toString();
 
         sectionsMap.put("non-sequential", true);
@@ -408,18 +408,18 @@ public class ProgrammingExerciseRepositoryService {
 
     private void setupStaticCodeAnalysisConfigFiles(final RepositoryResources resources, final Path templatePath, final Path repoLocalPath) throws IOException {
         final Path staticCodeAnalysisConfigPath = templatePath.resolve("staticCodeAnalysisConfig").resolve(ALL_FILES_GLOB);
-        final Resource[] staticCodeAnalysisResources = resourceLoaderService.getResources(staticCodeAnalysisConfigPath);
+        final Resource[] staticCodeAnalysisResources = resourceLoaderService.getResources(String.valueOf(staticCodeAnalysisConfigPath));
         fileService.copyResources(staticCodeAnalysisResources, resources.prefix.toString(), repoLocalPath.toString(), true);
     }
 
     private void overwriteProjectTypeSpecificFiles(final RepositoryResources resources, final ProgrammingExercise programmingExercise, final String packagePath)
             throws IOException {
         final ProjectType projectType = programmingExercise.getProjectType();
-        final Path projectTypeTemplatePath = ProgrammingExerciseService.getProgrammingLanguageProjectTypePath(programmingExercise.getProgrammingLanguage(), projectType)
+        final Path projectTypeTemplatePath = Path.of(ProgrammingExerciseService.getProgrammingLanguageProjectTypePath(programmingExercise.getProgrammingLanguage(), projectType))
                 .resolve(TEST_DIR);
 
         try {
-            final Resource[] projectTypeTestFileResources = resourceLoaderService.getResources(projectTypeTemplatePath);
+            final Resource[] projectTypeTestFileResources = resourceLoaderService.getResources(String.valueOf(projectTypeTemplatePath));
             // filter non-existing resources to avoid exceptions
             final List<Resource> existingProjectTypeTestFileResources = new ArrayList<>();
             for (final Resource resource : projectTypeTestFileResources) {
@@ -486,7 +486,7 @@ public class ProgrammingExerciseRepositoryService {
             stagePomXmlPath = projectTemplatePath.resolve(stagePomXmlName);
         }
 
-        return Optional.ofNullable(resourceLoaderService.getResource(stagePomXmlPath));
+        return Optional.ofNullable(resourceLoaderService.getResource(stagePomXmlPath.toString()));
     }
 
     private enum BuildStage {
@@ -531,7 +531,7 @@ public class ProgrammingExerciseRepositoryService {
         }
 
         final Path buildStageResourcesPath = templatePath.resolve(TEST_FILES_PATH).resolve(buildStageTemplateSubDirectory).resolve(ALL_FILES_GLOB);
-        final Resource[] buildStageResources = resourceLoaderService.getResources(buildStageResourcesPath);
+        final Resource[] buildStageResources = resourceLoaderService.getResources(String.valueOf(buildStageResourcesPath));
         fileService.copyResources(buildStageResources, resourcePrefix.toString(), packagePath, false);
 
         if (projectType != null) {
@@ -543,7 +543,7 @@ public class ProgrammingExerciseRepositoryService {
             throws IOException {
         final Path buildStageResourcesPath = projectTemplatePath.resolve(TEST_FILES_PATH).resolve(buildStageTemplateSubDirectory).resolve(ALL_FILES_GLOB);
         try {
-            final Resource[] buildStageResources = resourceLoaderService.getResources(buildStageResourcesPath);
+            final Resource[] buildStageResources = resourceLoaderService.getResources(String.valueOf(buildStageResourcesPath));
             fileService.copyResources(buildStageResources, resourcePrefix.toString(), packagePath, false);
         }
         catch (FileNotFoundException fileNotFoundException) {
