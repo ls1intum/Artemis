@@ -64,7 +64,7 @@ describe('Example Modeling Submission Component', () => {
         correctionStatus: 'CORRECT',
     } as Feedback;
     const mockFeedbackWithoutReference = { text: 'FeedbackWithoutReference', credits: 30, type: FeedbackType.MANUAL_UNREFERENCED } as Feedback;
-    const mockFeedbackInvalid = { text: 'FeedbackInvalid', referenceId: '4', reference: 'reference', correctionStatus: FeedbackCorrectionErrorType.INCORRECT_SCORE };
+    const mockFeedbackInvalid = { text: 'FeedbackInvalid', referenceId: '4', reference: 'reference', correctionStatus: FeedbackCorrectionErrorType.INCORRECT_SCORE } as Feedback;
     const mockFeedbackCorrectionError = { reference: 'reference', type: FeedbackCorrectionErrorType.INCORRECT_SCORE } as FeedbackCorrectionError;
 
     const routeQueryParam = { readOnly: 0, toComplete: 0 };

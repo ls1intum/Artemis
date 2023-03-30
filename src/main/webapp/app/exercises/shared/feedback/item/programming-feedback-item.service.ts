@@ -96,7 +96,7 @@ export class ProgrammingFeedbackItemService implements FeedbackItemService {
      */
     private createAutomaticFeedbackItem(feedback: Feedback, showTestDetails: boolean): FeedbackItem {
         let title = undefined;
-        if (showTestDetails) {
+        if (showTestDetails && feedback.testCase?.testName) {
             if (feedback.positive === undefined) {
                 title = this.translateService.instant('artemisApp.result.detail.test.noInfo', { name: feedback.testCase.testName });
             } else {

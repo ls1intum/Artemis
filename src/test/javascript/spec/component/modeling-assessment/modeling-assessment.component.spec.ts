@@ -96,7 +96,7 @@ describe('ModelingAssessmentComponent', () => {
         copiedFeedbackId: 12,
     } as Feedback;
     const mockFeedbackWithoutReference = { text: 'FeedbackWithoutReference', credits: 30, type: FeedbackType.MANUAL_UNREFERENCED } as Feedback;
-    const mockFeedbackInvalid = { text: 'FeedbackInvalid', referenceId: '4', reference: 'reference', correctionStatus: FeedbackCorrectionErrorType.INCORRECT_SCORE };
+    const mockFeedbackInvalid = { text: 'FeedbackInvalid', referenceId: '4', reference: 'reference', correctionStatus: FeedbackCorrectionErrorType.INCORRECT_SCORE } as Feedback;
     const mockValidFeedbacks = [mockFeedbackWithReference, mockFeedbackWithoutReference];
     const mockFeedbacks = [...mockValidFeedbacks, mockFeedbackInvalid];
 

@@ -67,7 +67,7 @@ export class Feedback implements BaseEntity {
     public suggestedFeedbackReference?: string;
     public suggestedFeedbackOriginSubmissionReference?: number;
     public suggestedFeedbackParticipationReference?: number;
-    public testCase: ProgrammingExerciseTestCase;
+    public testCase?: ProgrammingExerciseTestCase;
 
     // Specifies whether the tutor feedback is correct relative to the instructor feedback (during tutor training) or if there is a validation error.
     // Client only property.
