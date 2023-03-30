@@ -6,7 +6,7 @@ import { ExerciseType } from 'app/entities/exercise.model';
     templateUrl: './exercise-import-tabs.component.html',
 })
 export class ExerciseImportTabsComponent {
-    active = 1;
+    activeTab = 1;
     @Input()
     exerciseType: ExerciseType;
 }

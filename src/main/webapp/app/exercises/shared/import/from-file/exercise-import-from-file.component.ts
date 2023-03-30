@@ -4,7 +4,7 @@ import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
 import { AlertService } from 'app/core/util/alert.service';
 import { faUpload } from '@fortawesome/free-solid-svg-icons';
-import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import JSZip from 'jszip';
 
 @Component({

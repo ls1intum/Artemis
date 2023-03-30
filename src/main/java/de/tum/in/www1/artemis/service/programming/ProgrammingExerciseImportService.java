@@ -4,10 +4,7 @@ import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_REPO_NAME;
 import static de.tum.in.www1.artemis.config.Constants.TEST_REPO_NAME;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
@@ -46,11 +43,7 @@ public class ProgrammingExerciseImportService {
 
     private final FileService fileService;
 
-    private final ZipFileService zipFileService;
-
     private final UserRepository userRepository;
-
-    private final RepositoryService repositoryService;
 
     private final AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
 
@@ -59,8 +52,6 @@ public class ProgrammingExerciseImportService {
     private final TemplateUpgradePolicy templateUpgradePolicy;
 
     private final ProgrammingExerciseImportBasicService programmingExerciseImportBasicService;
-
-    private final StaticCodeAnalysisService staticCodeAnalysisService;
 
     public ProgrammingExerciseImportService(Optional<VersionControlService> versionControlService, Optional<ContinuousIntegrationService> continuousIntegrationService,
             ProgrammingExerciseService programmingExerciseService, GitService gitService, FileService fileService, UserRepository userRepository,
@@ -73,14 +64,11 @@ public class ProgrammingExerciseImportService {
         this.programmingExerciseService = programmingExerciseService;
         this.gitService = gitService;
         this.fileService = fileService;
-        this.zipFileService = zipFileService;
         this.userRepository = userRepository;
-        this.repositoryService = repositoryService;
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
         this.urlService = urlService;
         this.templateUpgradePolicy = templateUpgradePolicy;
         this.programmingExerciseImportBasicService = programmingExerciseImportBasicService;
-        this.staticCodeAnalysisService = staticCodeAnalysisService;
     }
 
     /**

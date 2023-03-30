@@ -18,15 +18,9 @@ import org.springframework.web.multipart.MultipartFile;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.Repository;
-import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
-import de.tum.in.www1.artemis.service.FileService;
-import de.tum.in.www1.artemis.service.RepositoryService;
-import de.tum.in.www1.artemis.service.StaticCodeAnalysisService;
-import de.tum.in.www1.artemis.service.ZipFileService;
+import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
@@ -117,8 +111,14 @@ public class ProgrammingExerciseImportFromFileService {
         copyExerciseContentToRepository(testRepo, RepositoryType.TESTS, basePath);
     }
 
+    /**
+     * copies everything from the extracted zip file to the repository, except the .git folder
+     *
+     * @param repository     the repository to which the content should be copied
+     * @param repositoryType the type of the repository
+     * @param basePath       the path to the extracted zip file
+     **/
     private void copyExerciseContentToRepository(Repository repository, RepositoryType repositoryType, Path basePath) throws IOException {
-        // copy everything but the .git folder
         FileUtils.copyDirectory(retrieveRepositoryDirectoryPath(basePath, repositoryType.getName()).toFile(), repository.getLocalPath().toFile(),
                 new NotFileFilter(new NameFileFilter(".git")));
         repository.setContent(null);

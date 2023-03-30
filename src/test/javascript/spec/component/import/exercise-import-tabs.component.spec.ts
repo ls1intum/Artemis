@@ -40,6 +40,6 @@ describe('ExerciseImportTabsComponent', () => {
         // WHEN
         fixture.detectChanges();
         // THEN
-        expect(comp.active).toBe(1);
+        expect(comp.activeTab).toBe(1);
     });
 });

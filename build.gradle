@@ -32,8 +32,8 @@ group = "de.tum.in.www1.artemis"
 version = "6.1.2"
 description = "Interactive Learning with Individual Feedback"
 
-sourceCompatibility=17
-targetCompatibility=17
+sourceCompatibility = 17
+targetCompatibility = 17
 
 //this enables us to invoke ./gradlew liquibaseDiffChangelog
 apply from: "gradle/liquibase.gradle"
@@ -177,7 +177,7 @@ dependencies {
     implementation "org.apache.httpcomponents:httpclient:4.5.14"
     implementation "org.apache.httpcomponents:httpcore:4.4.16"
     implementation "org.apache.httpcomponents:httpmime:4.5.14"
-    implementation ("org.dom4j:dom4j:2.1.4") {
+    implementation("org.dom4j:dom4j:2.1.4") {
         // Note: avoid org.xml.sax.SAXNotRecognizedException: unrecognized feature http://xml.org/sax/features/external-general-entities
         // also see https://github.com/dom4j/dom4j/issues/99
         exclude module: 'pull-parser'
@@ -203,7 +203,7 @@ dependencies {
     // we have to override those values to avoid issues with Spring (JPlag wants to use a newer version which would conflict otherwise)
     implementation "org.slf4j:jcl-over-slf4j:${slf4j_version}"
     implementation "org.slf4j:jul-to-slf4j:${slf4j_version}"
-    implementation ("org.slf4j:slf4j-api") {
+    implementation("org.slf4j:slf4j-api") {
         version {
             strictly "${slf4j_version}"
         }
@@ -222,7 +222,7 @@ dependencies {
     implementation "org.jasypt:jasypt:1.9.3"
     implementation "me.xdrop:fuzzywuzzy:1.4.0"
     implementation "com.atlassian.bamboo:bamboo-specs:9.2.1"
-    implementation ("org.yaml:snakeyaml") {
+    implementation("org.yaml:snakeyaml") {
         version {
             strictly "1.33" // needed for Bamboo-specs and to reduce the number of vulnerabilities, also see https://mvnrepository.com/artifact/org.yaml/snakeyaml
         }
@@ -269,7 +269,7 @@ dependencies {
     implementation "org.springframework.boot:spring-boot-starter-aop:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-data-jpa:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-security:${spring_boot_version}"
-    implementation ("org.springframework.boot:spring-boot-starter-web:${spring_boot_version}") {
+    implementation("org.springframework.boot:spring-boot-starter-web:${spring_boot_version}") {
         exclude module: "spring-boot-starter-undertow"
     }
     implementation "org.springframework.boot:spring-boot-starter-tomcat:${spring_boot_version}"
@@ -298,7 +298,7 @@ dependencies {
     implementation "org.bouncycastle:bcprov-jdk15on:1.70"
     runtimeOnly "io.jsonwebtoken:jjwt-impl:0.11.5"
     runtimeOnly "io.jsonwebtoken:jjwt-jackson:0.11.5"
-    implementation ("io.springfox:springfox-swagger2:3.0.0") {
+    implementation("io.springfox:springfox-swagger2:3.0.0") {
         exclude module: "mapstruct"
     }
     implementation "io.springfox:springfox-bean-validators:3.0.0"
@@ -315,15 +315,17 @@ dependencies {
     implementation "org.commonmark:commonmark:0.21.0"
     implementation "de.tum.in.ase.athene:client:0.0.2"
     implementation "commons-fileupload:commons-fileupload:1.5"
+    implementation "net.lingala.zip4j:zip4j:2.11.5"
+
 
     annotationProcessor "org.hibernate:hibernate-jpamodelgen:${hibernate_version}"
-    annotationProcessor ("org.glassfish.jaxb:jaxb-runtime:${jaxb_runtime_version}") {
+    annotationProcessor("org.glassfish.jaxb:jaxb-runtime:${jaxb_runtime_version}") {
         exclude group: "javax.ws.rs", module: "jsr311-api"
     }
-    annotationProcessor ("org.springframework.boot:spring-boot-configuration-processor:${spring_boot_version}") {
+    annotationProcessor("org.springframework.boot:spring-boot-configuration-processor:${spring_boot_version}") {
         exclude group: "com.vaadin.external.google", module: "android-json"
     }
-    testImplementation ("org.springframework.boot:spring-boot-starter-test:${spring_boot_version}") {
+    testImplementation("org.springframework.boot:spring-boot-starter-test:${spring_boot_version}") {
         exclude module: "junit"
         exclude group: "org.junit.vintage", module: "junit-vintage-engine"
         exclude group: "com.vaadin.external.google", module: "android-json"
@@ -345,7 +347,6 @@ dependencies {
 
     // Lightweight JSON library needed for the internals of the MockRestServiceServer
     testImplementation "org.json:json:20230227"
-    implementation 'net.lingala.zip4j:zip4j:2.11.5'
 
 }
 
@@ -406,7 +407,7 @@ checkstyle {
     maxErrors = 0
 }
 
-task buildJarForDocker (type: Exec) {
+task buildJarForDocker(type: Exec) {
     commandLine "./gradlew", "build", "-x", "webapp", "-x", "test", "-x", "jacocoTestCoverageVerification"
 }
 

@@ -26,10 +26,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
-import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
-import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
-import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
+import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseSolutionEntry;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
@@ -59,6 +56,11 @@ import de.tum.in.www1.artemis.web.rest.util.PageUtil;
 @Service
 public class ProgrammingExerciseService {
 
+    /**
+     * Java package name Regex according to Java 14 JLS
+     * (<a href="https://docs.oracle.com/javase/specs/jls/se14/html/jls-7.html#jls-7.4.1">https://docs.oracle.com/javase/specs/jls/se14/html/jls-7.html#jls-7.4.1</a>)
+     * with the restriction to a-z,A-Z,_ as "Java letter" and 0-9 as digits due to JavaScript/Browser Unicode character class limitations
+     */
     private static final String packageNameRegex = "^(?!.*(?:\\.|^)(?:abstract|continue|for|new|switch|assert|default|if|package|synchronized|boolean|do|goto|private|this|break|double|implements|protected|throw|byte|else|import|public|throws|case|enum|instanceof|return|transient|catch|extends|int|short|try|char|final|interface|static|void|class|finally|long|strictfp|volatile|const|float|native|super|while|_|true|false|null)(?:\\.|$))[A-Z_a-z]\\w*(?:\\.[A-Z_a-z]\\w*)*$";
 
     /**
@@ -244,6 +246,39 @@ public class ProgrammingExerciseService {
         ProgrammingLanguageFeature programmingLanguageFeature = programmingLanguageFeatureService.get()
                 .getProgrammingLanguageFeatures(programmingExercise.getProgrammingLanguage());
 
+        validatePackageName(programmingExercise, programmingLanguageFeature);
+        validateProjectType(programmingExercise, programmingLanguageFeature);
+
+        // Check if checkout solution repository is enabled
+        if (programmingExercise.getCheckoutSolutionRepository() && !programmingLanguageFeature.isCheckoutSolutionRepositoryAllowed()) {
+            throw new BadRequestAlertException("Checkout solution repository is not supported for this programming language", "Exercise", "checkoutSolutionRepositoryNotSupported");
+        }
+
+        programmingExerciseRepository.validateCourseSettings(programmingExercise, course);
+        validateStaticCodeAnalysisSettings(programmingExercise);
+
+        programmingExercise.generateAndSetProjectKey();
+        checkIfProjectExists(programmingExercise);
+
+    }
+
+    private void validateProjectType(ProgrammingExercise programmingExercise, ProgrammingLanguageFeature programmingLanguageFeature) {
+        // Check if project type is selected
+        if (!programmingLanguageFeature.getProjectTypes().isEmpty()) {
+            if (programmingExercise.getProjectType() == null) {
+                throw new BadRequestAlertException("The project type is not set", "Exercise", "projectTypeNotSet");
+            }
+            if (!programmingLanguageFeature.getProjectTypes().contains(programmingExercise.getProjectType())) {
+                throw new BadRequestAlertException("The project type is not supported for this programming language", "Exercise", "projectTypeNotSupported");
+            }
+        }
+        else if (programmingExercise.getProjectType() != null) {
+            throw new BadRequestAlertException("The project type is set but not supported", "Exercise", "projectTypeSet");
+
+        }
+    }
+
+    private void validatePackageName(ProgrammingExercise programmingExercise, ProgrammingLanguageFeature programmingLanguageFeature) {
         // Check if package name is set
         if (programmingLanguageFeature.isPackageNameRequired()) {
             if (programmingExercise.getPackageName() == null) {
@@ -262,31 +297,6 @@ public class ProgrammingExerciseService {
                 throw new BadRequestAlertException("The package name is invalid", "Exercise", "packagenameInvalid");
             }
         }
-        // Check if project type is selected
-        if (!programmingLanguageFeature.getProjectTypes().isEmpty()) {
-            if (programmingExercise.getProjectType() == null) {
-                throw new BadRequestAlertException("The project type is not set", "Exercise", "projectTypeNotSet");
-            }
-            if (!programmingLanguageFeature.getProjectTypes().contains(programmingExercise.getProjectType())) {
-                throw new BadRequestAlertException("The project type is not supported for this programming language", "Exercise", "projectTypeNotSupported");
-            }
-        }
-        else if (programmingExercise.getProjectType() != null) {
-            throw new BadRequestAlertException("The project type is set but not supported", "Exercise", "projectTypeSet");
-
-        }
-
-        // Check if checkout solution repository is enabled
-        if (programmingExercise.getCheckoutSolutionRepository() && !programmingLanguageFeature.isCheckoutSolutionRepositoryAllowed()) {
-            throw new BadRequestAlertException("Checkout solution repository is not supported for this programming language", "Exercise", "checkoutSolutionRepositoryNotSupported");
-        }
-
-        programmingExerciseRepository.validateCourseSettings(programmingExercise, course);
-        validateStaticCodeAnalysisSettings(programmingExercise);
-
-        programmingExercise.generateAndSetProjectKey();
-        checkIfProjectExists(programmingExercise);
-
     }
 
     /**

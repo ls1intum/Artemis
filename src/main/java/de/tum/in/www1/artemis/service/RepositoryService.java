@@ -1,14 +1,8 @@
 package de.tum.in.www1.artemis.service;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.FileAlreadyExistsException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
+import java.nio.file.*;
 import java.security.Principal;
 import java.util.HashMap;
 import java.util.Map;
@@ -23,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.FileSystemUtils;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.File;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.web.rest.dto.FileMove;
@@ -88,10 +83,11 @@ public class RepositoryService {
     }
 
     /**
+     * Deletes all content in the repository except the .git folder
+     *
      * @param repository the repository the content should be deleted from
      **/
     public void deleteAllContentInRepository(Repository repository) throws IOException {
-        // delete everything but the .git folder
         try (var content = Files.list(repository.getLocalPath())) {
             content.filter(path -> !".git".equals(path.getFileName().toString())).forEach(path -> {
                 try {
@@ -102,6 +98,7 @@ public class RepositoryService {
                 }
             });
         }
+        // invalidate cache
         repository.setContent(null);
     }
 
