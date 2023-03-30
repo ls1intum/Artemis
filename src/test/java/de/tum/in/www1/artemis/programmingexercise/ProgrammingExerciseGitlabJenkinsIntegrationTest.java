@@ -171,7 +171,13 @@ class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpringInte
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importExerciseFromFileMissingExerciseDetailsJson_badRequest() throws Exception {
-        programmingExerciseTestService.importFromFile_missingExerciseDetailsJson_BadRequest();
+        programmingExerciseTestService.importFromFile_missingExerciseDetailsJson_badRequest();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void importExerciseFromFile_NoZip_badRequest() throws Exception {
+        programmingExerciseTestService.importFromFile_fileNoZip_badRequest();
     }
 
     @Test

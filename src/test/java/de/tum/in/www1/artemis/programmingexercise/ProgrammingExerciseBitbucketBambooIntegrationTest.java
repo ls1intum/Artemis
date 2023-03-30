@@ -4,7 +4,8 @@ import static de.tum.in.www1.artemis.programmingexercise.ProgrammingExerciseTest
 import static de.tum.in.www1.artemis.programmingexercise.ProgrammingExerciseTestService.studentLogin;
 import static de.tum.in.www1.artemis.programmingexercise.ProgrammingSubmissionConstants.BITBUCKET_PUSH_EVENT_REQUEST;
 import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -336,7 +337,13 @@ class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractSpringIn
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importExerciseFromFileMissingExerciseDetailsJson_badRequest() throws Exception {
-        programmingExerciseTestService.importFromFile_missingExerciseDetailsJson_BadRequest();
+        programmingExerciseTestService.importFromFile_missingExerciseDetailsJson_badRequest();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void importExerciseFromFileFile_NoZip_badRequest() throws Exception {
+        programmingExerciseTestService.importFromFile_fileNoZip_badRequest();
     }
 
     @Test

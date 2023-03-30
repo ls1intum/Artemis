@@ -48,10 +48,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import de.tum.in.www1.artemis.config.StaticCodeAnalysisConfigurer;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
-import de.tum.in.www1.artemis.domain.exam.Exam;
-import de.tum.in.www1.artemis.domain.exam.ExamUser;
-import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
-import de.tum.in.www1.artemis.domain.exam.StudentExam;
+import de.tum.in.www1.artemis.domain.exam.*;
 import de.tum.in.www1.artemis.domain.hestia.ExerciseHint;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
 import de.tum.in.www1.artemis.domain.participation.Participant;
@@ -445,9 +442,15 @@ public class ProgrammingExerciseTestService {
         request.postWithMultipartFile(ROOT + IMPORT_FROM_FILE, exercise, "programmingExercise", file, ProgrammingExercise.class, HttpStatus.OK);
     }
 
-    void importFromFile_missingExerciseDetailsJson_BadRequest() throws Exception {
+    void importFromFile_missingExerciseDetailsJson_badRequest() throws Exception {
         Resource resource = new ClassPathResource("test-data/import-from-file/missing-json.zip");
         var file = new MockMultipartFile("file", "test.zip", "application/zip", resource.getInputStream());
+        request.postWithMultipartFile(ROOT + IMPORT_FROM_FILE, exercise, "programmingExercise", file, ProgrammingExercise.class, HttpStatus.BAD_REQUEST);
+    }
+
+    void importFromFile_fileNoZip_badRequest() throws Exception {
+        Resource resource = new ClassPathResource("test-data/import-from-file/valid-import.zip");
+        var file = new MockMultipartFile("file", "test.txt", "application/zip", resource.getInputStream());
         request.postWithMultipartFile(ROOT + IMPORT_FROM_FILE, exercise, "programmingExercise", file, ProgrammingExercise.class, HttpStatus.BAD_REQUEST);
     }
 

@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
+import org.apache.commons.compress.utils.FileNameUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.NameFileFilter;
 import org.apache.commons.io.filefilter.NotFileFilter;
@@ -63,7 +64,7 @@ public class ProgrammingExerciseImportFromFileService {
             throws IOException, GitAPIException, URISyntaxException {
         Path importExerciseDir = Files.createTempDirectory("imported-exercise-dir");
         Path exerciseFilePath = Files.createTempFile(importExerciseDir, "exercise-for-import", ".zip");
-        if (zipFile.getName().toLowerCase().endsWith(".zip")) {
+        if (!".zip".equals(FileNameUtils.getExtension(zipFile.getOriginalFilename()))) {
             throw new BadRequestAlertException("The file is not a zip file", "programmingExercise", "fileNotZip");
         }
         zipFile.transferTo(exerciseFilePath);
