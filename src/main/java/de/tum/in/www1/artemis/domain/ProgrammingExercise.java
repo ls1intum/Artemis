@@ -292,6 +292,7 @@ public class ProgrammingExercise extends Exercise {
         this.branch = branch;
     }
 
+    @JsonIgnore
     public String getBranch() {
         return branch;
     }
@@ -698,6 +699,7 @@ public class ProgrammingExercise extends Exercise {
                 + ", packageName='" + getPackageName() + "'" + ", testCasesChanged='" + testCasesChanged + "'" + "}";
     }
 
+    @JsonIgnore
     public boolean getIsLocalSimulation() {
         return this.isLocalSimulationTransient;
     }
