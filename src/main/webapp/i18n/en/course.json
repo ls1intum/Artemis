@@ -4,8 +4,7 @@
             "home": {
                 "title": "Courses",
                 "createLabel": "Create new course",
-                "editLabel": "Edit course",
-                "createOrEditLabel": "Create or edit a course"
+                "editLabel": "Edit course"
             },
             "created": "Created new course with title {{ param }}",
             "updated": "Updated Course with title {{ param }}",

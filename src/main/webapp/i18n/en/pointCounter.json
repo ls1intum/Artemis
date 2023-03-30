@@ -3,8 +3,7 @@
         "pointCounter": {
             "home": {
                 "title": "Point Counters",
-                "createLabel": "Create a new Point Counter",
-                "createOrEditLabel": "Create or edit a Point Counter"
+                "createLabel": "Create a new Point Counter"
             },
             "created": "Created new Point Counter with identifier {{ param }}",
             "updated": "Updated Point Counter with identifier {{ param }}",
