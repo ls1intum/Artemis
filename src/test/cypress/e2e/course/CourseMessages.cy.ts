@@ -146,7 +146,7 @@ describe('Course messages', () => {
     after('Delete Course', () => {
         cy.login(admin);
         if (courseId) {
-            //courseManagementRequest.deleteCourse(courseId).its('status').should('eq', 200);
+            courseManagementRequest.deleteCourse(courseId).its('status').should('eq', 200);
         }
     });
 });
