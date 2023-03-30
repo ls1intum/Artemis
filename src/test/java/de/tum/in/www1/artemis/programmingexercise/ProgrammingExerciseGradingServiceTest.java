@@ -89,12 +89,10 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
         database.addUsers(TEST_PREFIX, 5, 1, 0, 1);
 
         programmingExercise = generateDefaultProgrammingExercise();
-        var tests = database.addTestCasesToProgrammingExercise(programmingExercise);
-        // testCaseRepository.save(tests.get(1).active(true));
+        database.addTestCasesToProgrammingExercise(programmingExercise);
 
         programmingExerciseSCAEnabled = generateScaProgrammingExercise();
-        tests = database.addTestCasesToProgrammingExercise(programmingExerciseSCAEnabled);
-        // testCaseRepository.save(tests.get(1).active(true));
+        database.addTestCasesToProgrammingExercise(programmingExerciseSCAEnabled);
 
         ProgrammingExerciseStudentParticipation participation = database.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
         result = new Result();
@@ -254,7 +252,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
 
         gradingService.calculateScoreForResult(result, programmingExercise, true);
 
-        // Only test one of 3 active tests (weight sum = 5) passed -> 8.4P / 20%
+        // Only one of 3 active tests (weight sum = 5) passed -> 8.4P / 20%
         Double expectedScore = 20D;
 
         assertThat(result.getScore()).isNotNull().isEqualTo(expectedScore);

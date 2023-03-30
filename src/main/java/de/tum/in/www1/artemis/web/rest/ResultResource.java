@@ -217,6 +217,7 @@ public class ResultResource {
      * @param programmingExerciseId ProgrammingExercise id that belongs to the result.
      * @param submission            ProgrammingSubmission
      */
+    // TODO double-check usages and find best fitting place
     private void triggerTemplateBuildIfTestCasesChanged(long programmingExerciseId, ProgrammingSubmission submission) {
         // We only trigger the template build when the test repository was changed.
         // If the submission is from type TEST but already has a result, this build was not triggered by a test repository change

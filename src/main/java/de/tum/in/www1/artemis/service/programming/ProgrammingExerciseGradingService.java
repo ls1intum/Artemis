@@ -316,32 +316,6 @@ public class ProgrammingExerciseGradingService {
     }
 
     /**
-     * Trigger the build of the template repository, if the submission of the provided result is of type TEST.
-     * Will use the commitHash of the submission for triggering the template build.
-     * <p>
-     * If the submission of the provided result is not of type TEST, the method will return without triggering the build.
-     *
-     * @param programmingExerciseId ProgrammingExercise id that belongs to the result.
-     * @param submission            ProgrammingSubmission
-     */
-    private void triggerTemplateBuildIfTestCasesChanged(long programmingExerciseId, ProgrammingSubmission submission) {
-        // We only trigger the template build when the test repository was changed.
-        // If the submission is from type TEST but already has a result, this build was not triggered by a test repository change
-        if (!submission.belongsToTestRepository() || (submission.belongsToTestRepository() && submission.getResults() != null && !submission.getResults().isEmpty())) {
-            return;
-        }
-        try {
-            programmingTriggerService.triggerTemplateBuildAndNotifyUser(programmingExerciseId, submission.getCommitHash(), SubmissionType.TEST);
-        }
-        catch (EntityNotFoundException ex) {
-            // If for some reason the programming exercise does not have a template participation, we can only log and abort.
-            log.error(
-                    "Could not trigger the build of the template repository for the programming exercise id {} because no template participation could be found for the given exercise",
-                    programmingExerciseId);
-        }
-    }
-
-    /**
      * Updates an incoming result with the information of the exercises test cases. This update includes:
      * - Checking which test cases were not executed as this is not part of the bamboo build (not all test cases are executed in an exercise with sequential test runs)
      * - Checking the due date and the visibility.
