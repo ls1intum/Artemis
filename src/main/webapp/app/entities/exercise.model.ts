@@ -107,7 +107,6 @@ export abstract class Exercise implements BaseEntity {
     public isAtLeastEditor?: boolean;
     public isAtLeastInstructor?: boolean;
     public teamMode?: boolean;
-    public dateError?: boolean;
     public assessmentDueDateError?: boolean;
     public dueDateError?: boolean;
     public startDateError?: boolean;

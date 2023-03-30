@@ -2,6 +2,7 @@ import { Component, ElementRef, EventEmitter, Input, Output, ViewChild, forwardR
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { faCalendarAlt, faClock, faGlobe, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
+import { isDate } from 'app/shared/util/utils';
 
 @Component({
     selector: 'jhi-date-time-picker',
@@ -58,12 +59,11 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
      * Function that writes the value safely.
      * @param value as dayjs or date
      */
-    writeValue(value: any) {
-        // convert dayjs to date, because owl-date-time only works correctly with date objects
-        if (dayjs.isDayjs(value)) {
-            this.value = (value as dayjs.Dayjs).toDate();
-        } else {
-            this.value = value;
+    writeValue(obj: any): void {
+        if (obj !== undefined && this.value !== obj) {
+            this.value = !obj ? null : isDate(obj) ? obj : obj.toDate();
+            this.value?.setSeconds(0, 0);
+            this._onChange(obj);
         }
     }
 
@@ -101,6 +101,6 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
 
     resetDate() {
         this.writeValue(null);
-        this.onDateReset.emit();
+        this.valueChange.emit();
     }
 }
