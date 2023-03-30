@@ -59,6 +59,9 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
     private ProgrammingExerciseTestCaseRepository testCaseRepository;
 
     @Autowired
+    private ExerciseRepository exerciseRepository;
+
+    @Autowired
     private StudentParticipationRepository studentParticipationRepository;
 
     @Autowired
