@@ -10,7 +10,6 @@ import java.util.List;
 import org.eclipse.jgit.lib.ObjectId;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -149,7 +148,6 @@ class ProgrammingExerciseResultBambooIntegrationTest extends AbstractSpringInteg
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "INSTRUCTOR")
-    @Disabled // TODO we should implement this in the future
     void shouldRemoveTestCaseNamesFromWebsocketNotification() throws Exception {
         var exercise = programmingExerciseResultTestService.getProgrammingExercise();
         var planKey = (exercise.getProjectKey() + "-" + TEST_PREFIX + "student1").toUpperCase();

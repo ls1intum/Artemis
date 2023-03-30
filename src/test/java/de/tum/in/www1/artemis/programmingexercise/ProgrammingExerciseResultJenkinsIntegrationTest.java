@@ -12,7 +12,6 @@ import org.eclipse.jgit.lib.ObjectId;
 import org.gitlab4j.api.GitLabApiException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -154,7 +153,6 @@ class ProgrammingExerciseResultJenkinsIntegrationTest extends AbstractSpringInte
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    @Disabled // TODO we should implement this in the future
     void shouldRemoveTestCaseNamesFromWebsocketNotification() throws Exception {
         var exercise = programmingExerciseResultTestService.getProgrammingExercise();
         var repoName = (exercise.getProjectKey() + "-" + TEST_PREFIX + "student1").toUpperCase();

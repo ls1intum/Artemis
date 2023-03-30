@@ -417,7 +417,7 @@ public class ProgrammingExerciseResultTestService {
         verify(messagingTemplate).convertAndSendToUser(eq(userPrefix + "student1"), eq(NEW_RESULT_TOPIC), resultArgumentCaptor.capture());
 
         Result result = resultArgumentCaptor.getValue();
-        assertThat(result.getFeedbacks()).hasSize(4).allMatch(feedback -> feedback.getText() == null);
+        assertThat(result.getFeedbacks()).hasSize(4).allMatch(feedback -> feedback.getTestCase().getTestName() == null);
     }
 
     private int getNumberOfBuildLogs(Object resultNotification) {
