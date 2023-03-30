@@ -96,6 +96,7 @@ describe('ProgrammingFeedbackItemService', () => {
         const feedback = {
             type: FeedbackType.AUTOMATIC,
             positive: undefined,
+            testCase: { testName: 'testCaseName' },
         } as Feedback;
 
         const expected = {
@@ -130,6 +131,7 @@ describe('ProgrammingFeedbackItemService', () => {
             text: 'automaticTestCase1',
             positive: undefined,
             credits: 0.3,
+            testCase: { testName: 'testCaseName' },
         };
 
         const expected = {
@@ -146,6 +148,7 @@ describe('ProgrammingFeedbackItemService', () => {
     it('should create automatic feedback item with details', () => {
         const feedback = {
             type: FeedbackType.AUTOMATIC,
+            testCase: { testName: 'testCaseName' },
         };
 
         const expected = {
