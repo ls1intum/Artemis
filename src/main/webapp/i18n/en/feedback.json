@@ -3,8 +3,7 @@
         "feedback": {
             "home": {
                 "title": "Feedbacks",
-                "createLabel": "Create a new Feedback",
-                "createOrEditLabel": "Create or edit a Feedback"
+                "createLabel": "Create a new Feedback"
             },
             "created": "Created new Feedback with identifier {{ param }}",
             "updated": "Updated Feedback with identifier {{ param }}",
