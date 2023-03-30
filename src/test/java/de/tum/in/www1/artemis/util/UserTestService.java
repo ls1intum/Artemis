@@ -141,14 +141,7 @@ public class UserTestService {
         var conversation = new GroupChat();
         var oneToOneChat = new OneToOneChat();
 
-        User student2 = new User();
-        student2.setId(null);
-        student2.setLogin("student2Batman");
-        student2.setPassword("password");
-        student2.setEmail("student2@for.chat");
-        student2.setFirstName("Student2First");
-        student2.setLastName("Student2Last");
-        userRepository.save(student2);
+        User student2 = userRepository.getUserByLoginElseThrow(TEST_PREFIX + "student2");
 
         conversationParticipant.setUser(student);
         conversationParticipant2.setUser(student2);
