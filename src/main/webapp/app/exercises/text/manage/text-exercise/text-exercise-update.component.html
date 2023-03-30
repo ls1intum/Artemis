@@ -66,6 +66,7 @@
                     [error]="!!textExercise.dueDateError"
                     labelName="{{ 'artemisApp.exercise.dueDate' | artemisTranslate }}"
                     (valueChange)="validateDate()"
+                    (onDateReset)="textExercise.dueDate = undefined; validateDate()"
                     [(ngModel)]="textExercise.dueDate"
                 ></jhi-date-time-picker>
                 <span *ngIf="textExercise.dueDateError" class="invalid-feedback">{{ 'artemisApp.exercise.dueDateError' | artemisTranslate }}</span>
@@ -78,6 +79,7 @@
                     [error]="!!textExercise.assessmentDueDateError"
                     labelName="{{ 'artemisApp.exercise.assessmentDueDate' | artemisTranslate }}"
                     (valueChange)="validateDate()"
+                    (onDateReset)="textExercise.assessmentDueDate = undefined; validateDate()"
                     [(ngModel)]="textExercise.assessmentDueDate"
                 ></jhi-date-time-picker>
                 <span *ngIf="textExercise.assessmentDueDateError" class="invalid-feedback">{{ 'artemisApp.exercise.assessmentDueDateError' | artemisTranslate }}</span>
@@ -181,6 +183,7 @@
                 [(ngModel)]="textExercise.exampleSolutionPublicationDate"
                 [error]="textExercise.exampleSolutionPublicationDateError!"
                 (valueChange)="validateDate()"
+                (onDateReset)="textExercise.exampleSolutionPublicationDate = undefined; validateDate()"
             ></jhi-date-time-picker>
             <span *ngIf="textExercise.exampleSolutionPublicationDateError" class="invalid-feedback">{{
                 'artemisApp.exercise.exampleSolutionPublicationDateError' | artemisTranslate

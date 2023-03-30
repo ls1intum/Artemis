@@ -28,8 +28,6 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
     @Input() shouldDisplayTimeZoneWarning = true; // Displays a warning that the current time zone might differ from the participants'.
     @Output() valueChange = new EventEmitter();
     @Output() onDateReset = new EventEmitter();
-    readOnly: boolean;
-    readonly = true;
 
     // Icons
     faCalendarAlt = faCalendarAlt;

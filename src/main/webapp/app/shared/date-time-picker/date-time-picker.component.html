@@ -22,11 +22,13 @@
         [owlDateTime]="dt"
         name="datePicker"
         readonly
-        (click)="resetDate(); readOnly = !readOnly"
         [owlDateTimeTrigger]="dt"
     />
-    <button [owlDateTimeTrigger]="dt" class="btn position-absolute" type="button">
+    <button *ngIf="value" (click)="resetDate()" class="btn position-absolute" type="button">
         <fa-icon [icon]="faCalendarAlt"></fa-icon>
     </button>
-    <owl-date-time [startAt]="convert(startAt)" [disabled]="readOnly" #dt></owl-date-time>
+    <button *ngIf="!value" [owlDateTimeTrigger]="dt" class="btn position-absolute" type="button">
+        <fa-icon [icon]="faCalendarAlt"></fa-icon>
+    </button>
+    <owl-date-time [startAt]="convert(startAt)" #dt></owl-date-time>
 </div>
