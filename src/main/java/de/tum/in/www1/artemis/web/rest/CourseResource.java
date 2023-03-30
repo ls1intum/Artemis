@@ -366,7 +366,7 @@ public class CourseResource {
         log.debug("REST request to get a currently active course for registration");
         User user = userRepository.getUserWithGroupsAndAuthoritiesAndOrganizations();
 
-        Course course = courseRepository.findSingleNotOnlineWithOrganizationsAndPrerequisitesElseThrow(courseId);
+        Course course = courseRepository.findSingleWithOrganizationsAndPrerequisitesElseThrow(courseId);
         authCheckService.checkUserAllowedToSelfRegisterForCourseElseThrow(user, course);
 
         return ResponseEntity.ok(course);
@@ -412,7 +412,7 @@ public class CourseResource {
         if (!authCheckService.isAtLeastStudentInCourse(course, user)) {
             // user might be allowed to register for the course
             // We need the course with organizations so that we can check if the user is allowed to register
-            course = courseRepository.findSingleNotOnlineWithOrganizationsAndPrerequisitesElseThrow(courseId);
+            course = courseRepository.findSingleWithOrganizationsAndPrerequisitesElseThrow(courseId);
             if (authCheckService.isUserAllowedToSelfRegisterForCourse(user, course)) {
                 // suppress error alert with skipAlert: true so that the client can redirect to the registration page
                 throw new AccessForbiddenAlertException(ErrorConstants.DEFAULT_TYPE, "You don't have access to this course, but you could register.", ENTITY_NAME,

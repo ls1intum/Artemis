@@ -143,10 +143,9 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
                 FROM Course course
                     LEFT JOIN FETCH course.organizations organizations
                     LEFT JOIN FETCH course.prerequisites prerequisites
-                WHERE course.onlineCourse = false
-                    AND course.id = :courseId
+                WHERE course.id = :courseId
             """)
-    Optional<Course> findSingleNotOnlineWithOrganizationsAndPrerequisites(@Param("courseId") long courseId);
+    Optional<Course> findSingleWithOrganizationsAndPrerequisites(@Param("courseId") long courseId);
 
     @Query("""
                 SELECT DISTINCT course
@@ -317,12 +316,13 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
      * @param courseId the id of the course
      * @return the course entity
      */
-    default Course findSingleNotOnlineWithOrganizationsAndPrerequisitesElseThrow(long courseId) {
-        return findSingleNotOnlineWithOrganizationsAndPrerequisites(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
+    default Course findSingleWithOrganizationsAndPrerequisitesElseThrow(long courseId) {
+        return findSingleWithOrganizationsAndPrerequisites(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
     }
 
     /**
      * Get all the courses to register with eagerly loaded organizations and prerequisites.
+     * Online courses are not included, as they are not meant to be registered for.
      *
      * @return the list of course entities
      */

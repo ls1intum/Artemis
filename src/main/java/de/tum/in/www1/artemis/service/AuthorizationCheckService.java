@@ -194,7 +194,7 @@ public class AuthorizationCheckService {
      * or ALLOWED if the user is allowed to self register for the course.
      */
     private enum RegistrationAuthorization {
-        ALLOWED, USERNAME_PATTERN, COURSE_STATUS, REGISTRATION_STATUS, ORGANIZATIONS
+        ALLOWED, USERNAME_PATTERN, COURSE_STATUS, REGISTRATION_STATUS, ONLINE, ORGANIZATIONS
     }
 
     /**
@@ -221,6 +221,9 @@ public class AuthorizationCheckService {
         Set<Organization> courseOrganizations = course.getOrganizations();
         if (courseOrganizations != null && !courseOrganizations.isEmpty() && !courseRepository.checkIfUserIsMemberOfCourseOrganizations(user, course)) {
             return RegistrationAuthorization.ORGANIZATIONS;
+        }
+        if (course.isOnlineCourse()) {
+            return RegistrationAuthorization.ONLINE;
         }
         return RegistrationAuthorization.ALLOWED;
     }
@@ -252,6 +255,7 @@ public class AuthorizationCheckService {
             case COURSE_STATUS -> throw new AccessForbiddenException("The course is not currently active.");
             case REGISTRATION_STATUS -> throw new AccessForbiddenException("The course does not allow registration.");
             case ORGANIZATIONS -> throw new AccessForbiddenException("User is not member of any organization of this course.");
+            case ONLINE -> throw new AccessForbiddenException("Online courses cannot be registered for.");
         }
     }
 
