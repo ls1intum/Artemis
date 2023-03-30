@@ -98,7 +98,8 @@ public class ProgrammingExerciseTestCaseResource {
     }
 
     /**
-     * Use with care: Set the weight of all test cases of an exercise to 1.
+     * Use with care: Resets all test cases of an exercise to their initial configuration
+     * Set all test case weights to 1, all bonus multipliers to 1 all bonus points to 0 and visibility to always.
      *
      * @param exerciseId the id of the exercise to reset the test case weights of.
      * @return the updated set of test cases for the programming exercise.
@@ -109,8 +110,10 @@ public class ProgrammingExerciseTestCaseResource {
         log.debug("REST request to reset the test case weights of exercise {}", exerciseId);
         var programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
+
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, user);
         programmingExerciseTestCaseService.logTestCaseReset(user, programmingExercise, programmingExercise.getCourseViaExerciseGroupOrCourseMember());
+
         List<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseService.reset(exerciseId);
         return ResponseEntity.ok(testCases);
     }
