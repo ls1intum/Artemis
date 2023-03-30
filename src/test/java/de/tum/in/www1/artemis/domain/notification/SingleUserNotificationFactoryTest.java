@@ -8,6 +8,7 @@ import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFacto
 import static de.tum.in.www1.artemis.domain.notification.SingleUserNotificationFactory.createNotification;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -61,6 +62,8 @@ class SingleUserNotificationFactoryTest {
     private static AnswerPost answerPost;
 
     private static final String ANSWER_POST_CONTENT = "answer post content";
+
+    private static final ZonedDateTime CURRENT_TIME = ZonedDateTime.now();
 
     private static TutorialGroup tutorialGroup;
 
@@ -167,11 +170,13 @@ class SingleUserNotificationFactoryTest {
         post.setAuthor(instructor);
         post.setTitle(POST_TITLE);
         post.setContent(POST_CONTENT);
+        post.setCreationDate(CURRENT_TIME);
 
         answerPost = new AnswerPost();
         answerPost.setPost(post);
         answerPost.setAuthor(instructor);
         answerPost.setContent(ANSWER_POST_CONTENT);
+        answerPost.setCreationDate(CURRENT_TIME);
     }
 
     /// Test for Notifications based on Posts
@@ -212,6 +217,7 @@ class SingleUserNotificationFactoryTest {
         assertThat(createdNotification.getTitle()).as("Created notification title should be equal to the expected one").isEqualTo(expectedTitle);
         assertThat(createdNotification.getText()).as("Created notification text should be equal to the expected one").isEqualTo(expectedText);
         assertThat(createdNotification.getTextIsPlaceholder()).as("Created notification placeholder flag should match expected one").isEqualTo(true);
+        assertThat(createdNotification.getPlaceholderValues()).as("Created notification placeholders should be equal to the expected ones").isEqualTo(expectedPlaceholderValues);
         assertThat(createdNotification.getTarget()).as("Created notification target should be equal to the expected one").isEqualTo(expectedTransientTarget.toJsonString());
         assertThat(createdNotification.getPriority()).as("Created notification priority should be equal to the expected one").isEqualTo(expectedPriority);
         assertThat(createdNotification.getAuthor()).as("Created notification author should be equal to the expected one").isEqualTo(null);
@@ -226,6 +232,8 @@ class SingleUserNotificationFactoryTest {
         notificationType = NEW_REPLY_FOR_EXERCISE_POST;
         expectedTitle = NEW_REPLY_FOR_EXERCISE_POST_TITLE;
         expectedText = NEW_REPLY_FOR_EXERCISE_POST_SINGLE_TEXT;
+        expectedPlaceholderValues = "[\"" + COURSE_TITLE + "\",\"" + POST_TITLE + "\",\"" + POST_CONTENT + "\",\"" + CURRENT_TIME + "\",\"John Smith\",\"" + ANSWER_POST_CONTENT
+                + "\",\"" + CURRENT_TIME + "\",\"John Smith\",\"" + EXERCISE_TITLE + "\"]";
         expectedPriority = MEDIUM;
         expectedTransientTarget = createExercisePostTarget(post, course);
         createAndCheckPostNotification();
@@ -240,6 +248,8 @@ class SingleUserNotificationFactoryTest {
         notificationType = NEW_REPLY_FOR_LECTURE_POST;
         expectedTitle = NEW_REPLY_FOR_LECTURE_POST_TITLE;
         expectedText = NEW_REPLY_FOR_LECTURE_POST_SINGLE_TEXT;
+        expectedPlaceholderValues = "[\"" + COURSE_TITLE + "\",\"" + POST_TITLE + "\",\"" + POST_CONTENT + "\",\"" + CURRENT_TIME + "\",\"John Smith\",\"" + ANSWER_POST_CONTENT
+                + "\",\"" + CURRENT_TIME + "\",\"John Smith\",\"" + LECTURE_TITLE + "\"]";
         expectedPriority = MEDIUM;
         expectedTransientTarget = createLecturePostTarget(post, course);
         createAndCheckPostNotification();
@@ -254,6 +264,8 @@ class SingleUserNotificationFactoryTest {
         notificationType = NEW_REPLY_FOR_COURSE_POST;
         expectedTitle = NEW_REPLY_FOR_COURSE_POST_TITLE;
         expectedText = NEW_REPLY_FOR_COURSE_POST_SINGLE_TEXT;
+        expectedPlaceholderValues = "[\"" + COURSE_TITLE + "\",\"" + POST_TITLE + "\",\"" + POST_CONTENT + "\",\"" + CURRENT_TIME + "\",\"John Smith\",\"" + ANSWER_POST_CONTENT
+                + "\",\"" + CURRENT_TIME + "\",\"John Smith\"]";
         expectedPriority = MEDIUM;
         expectedTransientTarget = createCoursePostTarget(post, course);
         createAndCheckPostNotification();
@@ -270,7 +282,7 @@ class SingleUserNotificationFactoryTest {
         notificationType = FILE_SUBMISSION_SUCCESSFUL;
         expectedTitle = FILE_SUBMISSION_SUCCESSFUL_TITLE;
         expectedText = FILE_SUBMISSION_SUCCESSFUL_TEXT;
-        expectedPlaceholderValues = "[\"" + exercise.getTitle() + "\"]";
+        expectedPlaceholderValues = "[\"" + course.getTitle() + "\",\"" + exercise.getTitle() + "\"]";
         expectedPriority = MEDIUM;
         expectedTransientTarget = createExerciseTarget(exercise, FILE_SUBMISSION_SUCCESSFUL_TITLE);
         createAndCheckExerciseNotification();
@@ -285,7 +297,7 @@ class SingleUserNotificationFactoryTest {
         notificationType = EXERCISE_SUBMISSION_ASSESSED;
         expectedTitle = EXERCISE_SUBMISSION_ASSESSED_TITLE;
         expectedText = EXERCISE_SUBMISSION_ASSESSED_TEXT;
-        expectedPlaceholderValues = "[\"" + exercise.getExerciseType().getExerciseTypeAsReadableString() + "\",\"" + exercise.getTitle() + "\"]";
+        expectedPlaceholderValues = "[\"" + course.getTitle() + "\",\"" + exercise.getExerciseType().getExerciseTypeAsReadableString() + "\",\"" + exercise.getTitle() + "\"]";
         expectedPriority = MEDIUM;
         expectedTransientTarget = createExerciseTarget(exercise, EXERCISE_SUBMISSION_ASSESSED_TITLE);
         createAndCheckExerciseNotification();
@@ -302,7 +314,8 @@ class SingleUserNotificationFactoryTest {
         notificationType = NEW_PLAGIARISM_CASE_STUDENT;
         expectedTitle = NEW_PLAGIARISM_CASE_STUDENT_TITLE;
         expectedText = NEW_PLAGIARISM_CASE_STUDENT_TEXT;
-        expectedPlaceholderValues = "[\"" + plagiarismCase.getExercise().getExerciseType().toString().toLowerCase() + "\",\"" + plagiarismCase.getExercise().getTitle() + "\"]";
+        expectedPlaceholderValues = "[\"" + course.getTitle() + "\",\"" + plagiarismCase.getExercise().getExerciseType().toString().toLowerCase() + "\",\""
+                + plagiarismCase.getExercise().getTitle() + "\"]";
         expectedPriority = HIGH;
         expectedTransientTarget = createPlagiarismCaseTarget(plagiarismCase.getId(), COURSE_ID);
         createAndCheckPlagiarismNotification();
@@ -317,7 +330,8 @@ class SingleUserNotificationFactoryTest {
         notificationType = PLAGIARISM_CASE_VERDICT_STUDENT;
         expectedTitle = PLAGIARISM_CASE_VERDICT_STUDENT_TITLE;
         expectedText = PLAGIARISM_CASE_VERDICT_STUDENT_TEXT;
-        expectedPlaceholderValues = "[\"" + plagiarismCase.getExercise().getExerciseType().toString().toLowerCase() + "\",\"" + plagiarismCase.getExercise().getTitle() + "\"]";
+        expectedPlaceholderValues = "[\"" + course.getTitle() + "\",\"" + plagiarismCase.getExercise().getExerciseType().toString().toLowerCase() + "\",\""
+                + plagiarismCase.getExercise().getTitle() + "\"]";
         expectedPriority = HIGH;
         expectedTransientTarget = createPlagiarismCaseTarget(plagiarismCase.getId(), COURSE_ID);
         createAndCheckPlagiarismNotification();
@@ -340,19 +354,21 @@ class SingleUserNotificationFactoryTest {
     private static Stream<Arguments> provideTutorialGroupTestParameters() {
         return Stream.of(
                 Arguments.of(TUTORIAL_GROUP_REGISTRATION_STUDENT, TUTORIAL_GROUP_REGISTRATION_STUDENT_TITLE, TUTORIAL_GROUP_REGISTRATION_STUDENT_TEXT,
-                        "[\"" + tutorialGroup.getTitle() + "\",\"" + teachingAssistant.getName() + "\"]", teachingAssistant, false, true),
+                        "[\"" + course.getTitle() + "\",\"" + tutorialGroup.getTitle() + "\",\"" + teachingAssistant.getName() + "\"]", teachingAssistant, false, true),
                 Arguments.of(TUTORIAL_GROUP_DEREGISTRATION_STUDENT, TUTORIAL_GROUP_DEREGISTRATION_STUDENT_TITLE, TUTORIAL_GROUP_DEREGISTRATION_STUDENT_TEXT,
-                        "[\"" + tutorialGroup.getTitle() + "\",\"" + teachingAssistant.getName() + "\"]", teachingAssistant, false, true),
+                        "[\"" + course.getTitle() + "\",\"" + tutorialGroup.getTitle() + "\",\"" + teachingAssistant.getName() + "\"]", teachingAssistant, false, true),
                 Arguments.of(TUTORIAL_GROUP_REGISTRATION_TUTOR, TUTORIAL_GROUP_REGISTRATION_TUTOR_TITLE, TUTORIAL_GROUP_REGISTRATION_TUTOR_TEXT,
-                        "[\"" + tutorialGroupStudent.getName() + "\",\"" + tutorialGroup.getTitle() + "\",\"" + instructor.getName() + "\"]", instructor, true, true),
+                        "[\"" + course.getTitle() + "\",\"" + tutorialGroupStudent.getName() + "\",\"" + tutorialGroup.getTitle() + "\",\"" + instructor.getName() + "\"]",
+                        instructor, true, true),
                 Arguments.of(TUTORIAL_GROUP_DEREGISTRATION_TUTOR, TUTORIAL_GROUP_DEREGISTRATION_TUTOR_TITLE, TUTORIAL_GROUP_DEREGISTRATION_TUTOR_TEXT,
-                        "[\"" + tutorialGroupStudent.getName() + "\",\"" + tutorialGroup.getTitle() + "\",\"" + instructor.getName() + "\"]", instructor, true, true),
+                        "[\"" + course.getTitle() + "\",\"" + tutorialGroupStudent.getName() + "\",\"" + tutorialGroup.getTitle() + "\",\"" + instructor.getName() + "\"]",
+                        instructor, true, true),
                 Arguments.of(TUTORIAL_GROUP_MULTIPLE_REGISTRATION_TUTOR, TUTORIAL_GROUP_REGISTRATION_MULTIPLE_TUTOR_TITLE, TUTORIAL_GROUP_REGISTRATION_MULTIPLE_TUTOR_TEXT,
-                        "[\"" + 1 + "\",\"" + tutorialGroup.getTitle() + "\",\"" + instructor.getName() + "\"]", instructor, true, true),
+                        "[\"" + course.getTitle() + "\",\"" + 1 + "\",\"" + tutorialGroup.getTitle() + "\",\"" + instructor.getName() + "\"]", instructor, true, true),
                 Arguments.of(TUTORIAL_GROUP_ASSIGNED, TUTORIAL_GROUP_ASSIGNED_TITLE, TUTORIAL_GROUP_ASSIGNED_TEXT,
-                        "[\"" + tutorialGroup.getTitle() + "\",\"" + instructor.getName() + "\"]", instructor, true, true),
+                        "[\"" + course.getTitle() + "\",\"" + tutorialGroup.getTitle() + "\",\"" + instructor.getName() + "\"]", instructor, true, true),
                 Arguments.of(TUTORIAL_GROUP_UNASSIGNED, TUTORIAL_GROUP_UNASSIGNED_TITLE, TUTORIAL_GROUP_UNASSIGNED_TEXT,
-                        "[\"" + tutorialGroup.getTitle() + "\",\"" + instructor.getName() + "\"]", instructor, true, true));
+                        "[\"" + course.getTitle() + "\",\"" + tutorialGroup.getTitle() + "\",\"" + instructor.getName() + "\"]", instructor, true, true));
     }
 
 }

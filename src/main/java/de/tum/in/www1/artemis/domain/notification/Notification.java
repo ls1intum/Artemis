@@ -7,6 +7,8 @@ import javax.persistence.*;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.DiscriminatorOptions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -35,6 +37,9 @@ import de.tum.in.www1.artemis.domain.enumeration.NotificationPriority;
         @JsonSubTypes.Type(value = SystemNotification.class, name = "system") })
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public abstract class Notification extends DomainObject {
+
+    @Transient
+    private final Logger log = LoggerFactory.getLogger(Notification.class);
 
     @Column(name = "title")
     private String title;
@@ -139,7 +144,7 @@ public abstract class Notification extends DomainObject {
                 jsonString = new ObjectMapper().writeValueAsString(notificationTextValues);
             }
             catch (JsonProcessingException exception) {
-                System.err.println(exception.getMessage());
+                log.error(exception.getMessage(), exception);
             }
             this.placeholderValues = jsonString;
         }
