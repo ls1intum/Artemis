@@ -22,8 +22,8 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
     `,
 })
 export class ProgrammingAssessmentRepoExportButtonComponent {
-    ButtonType = ButtonType;
-    ButtonSize = ButtonSize;
+    readonly ButtonType = ButtonType;
+    readonly ButtonSize = ButtonSize;
     readonly FeatureToggle = FeatureToggle;
 
     @Input() participationIdList: number[];
