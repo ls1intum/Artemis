@@ -100,6 +100,6 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
 
     resetDate() {
         this.writeValue(null);
-        this.valueChange.emit();
+        this.valueChanged();
     }
 }
