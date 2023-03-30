@@ -82,8 +82,8 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
     }
 
     /**
-     *
-     * @param newValue
+     * updates the value
+     * @param newValue used to update value
      */
     updateField(newValue: dayjs.Dayjs) {
         this.value = newValue;
@@ -98,6 +98,9 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
         return Intl.DateTimeFormat().resolvedOptions().timeZone;
     }
 
+    /**
+     * resets the date to null
+     */
     resetDate() {
         this.writeValue(null);
         this.valueChanged();
