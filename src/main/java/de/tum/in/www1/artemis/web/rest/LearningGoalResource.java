@@ -98,7 +98,7 @@ public class LearningGoalResource {
      */
     @GetMapping("learning-goals")
     @PreAuthorize("hasRole('EDITOR')")
-    public ResponseEntity<SearchResultPageDTO<LearningGoal>> getAllLecturesOnPage(PageableSearchDTO<String> search) {
+    public ResponseEntity<SearchResultPageDTO<LearningGoal>> getAllLearningGoalsOnPage(PageableSearchDTO<String> search) {
         final var user = userRepository.getUserWithGroupsAndAuthorities();
         return ResponseEntity.ok(learningGoalService.getAllOnPageWithSize(search, user));
     }
@@ -221,7 +221,7 @@ public class LearningGoalResource {
      *
      * @param courseId             the id of the course to which the learning goal should be imported to
      * @param learningGoalToImport the learning goal that should be imported
-     * @return the ResponseEntity with status 200 (OK) and with body containing the imported learning goal
+     * @return the ResponseEntity with status 201 (Created) and with body containing the imported learning goal
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("/courses/{courseId}/learning-goals/import")
@@ -239,11 +239,9 @@ public class LearningGoalResource {
 
         learningGoalToImport.setCourse(course);
         learningGoalToImport.setId(null);
-        learningGoalRepository.save(learningGoalToImport);
+        learningGoalToImport = learningGoalRepository.save(learningGoalToImport);
 
-        return ResponseEntity.ok().body(learningGoalToImport);
-        // TODO: change response to something like this (and also update the JavaDoc):
-        // return ResponseEntity.created(new URI("/api/file-upload-exercises/" + newFileUploadExercise.getId())).body(newFileUploadExercise);
+        return ResponseEntity.created(new URI("/api/courses/" + courseId + "/learning-goals/" + learningGoalToImport.getId())).body(learningGoalToImport);
     }
 
     /**
