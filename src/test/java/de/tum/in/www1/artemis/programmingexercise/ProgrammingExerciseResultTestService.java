@@ -11,7 +11,6 @@ import static org.mockito.Mockito.*;
 import java.util.*;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
-import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
@@ -108,6 +107,7 @@ public class ProgrammingExerciseResultTestService {
     public void setupForProgrammingLanguage(ProgrammingLanguage programmingLanguage) {
         Course course = database.addCourseWithOneProgrammingExercise(false, false, programmingLanguage);
         programmingExercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        database.addTestCasesToProgrammingExercise(programmingExercise);
         programmingExerciseWithStaticCodeAnalysis = database.addProgrammingExerciseToCourse(course, true, false, programmingLanguage);
         staticCodeAnalysisService.createDefaultCategories(programmingExerciseWithStaticCodeAnalysis);
         // This is done to avoid an unproxy issue in the processNewResult method of the ResultService.
@@ -413,11 +413,14 @@ public class ProgrammingExerciseResultTestService {
 
         postResult(resultNotification);
 
-        ArgumentCaptor<Result> resultArgumentCaptor = ArgumentCaptor.forClass(Result.class);
-        verify(messagingTemplate).convertAndSendToUser(eq(userPrefix + "student1"), eq(NEW_RESULT_TOPIC), resultArgumentCaptor.capture());
+        doAnswer(invocation -> {
+            // only one feedback should be visible, the others are not active / only visible after due date
+            assertThat(((Result) invocation.getArguments()[2]).getFeedbacks()).hasSize(1).allMatch(feedback -> feedback.getTestCase().getTestName() == null);
+            return null;
+        }).when(messagingTemplate).convertAndSendToUser(eq(userPrefix + "student1"), eq(NEW_RESULT_TOPIC), any());
 
-        Result result = resultArgumentCaptor.getValue();
-        assertThat(result.getFeedbacks()).hasSize(4).allMatch(feedback -> feedback.getTestCase().getTestName() == null);
+        // ensure that the method got called and the assertion above was executed
+        verify(messagingTemplate).convertAndSendToUser(eq(userPrefix + "student1"), eq(NEW_RESULT_TOPIC), any());
     }
 
     private int getNumberOfBuildLogs(Object resultNotification) {

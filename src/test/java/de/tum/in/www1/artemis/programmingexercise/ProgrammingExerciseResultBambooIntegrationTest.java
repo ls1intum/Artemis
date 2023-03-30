@@ -147,7 +147,7 @@ class ProgrammingExerciseResultBambooIntegrationTest extends AbstractSpringInteg
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldRemoveTestCaseNamesFromWebsocketNotification() throws Exception {
         var exercise = programmingExerciseResultTestService.getProgrammingExercise();
         var planKey = (exercise.getProjectKey() + "-" + TEST_PREFIX + "student1").toUpperCase();
