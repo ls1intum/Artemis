@@ -233,7 +233,7 @@ class ChannelIntegrationTest extends AbstractConversationTest {
     void deleteTutorialGroupChannel_asInstructor_shouldReturnBadRequest(boolean isPublicChannel) throws Exception {
         // given
         var channel = createChannel(isPublicChannel);
-        var tutorialGroup = database.createTutorialGroup(exampleCourseId, "tg-channel-test", "LoremIpsum", 10, false, "Garching", Language.ENGLISH,
+        var tutorialGroup = database.createTutorialGroup(exampleCourseId, "tg-channel-test", "LoremIpsum", 10, false, "Garching", Language.ENGLISH.name(),
                 userRepository.findOneByLogin(testPrefix + "tutor1").get(), Set.of());
         var channelFromDatabase = channelRepository.findById(channel.getId()).get();
 

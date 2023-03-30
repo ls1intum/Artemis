@@ -120,7 +120,12 @@
                 },
                 "languageInput": {
                     "label": "Language",
-                    "placeholder": "Select a Language"
+                    "placeholder": "Select a Language",
+                    "loadingText": "Languages are loading ...",
+                    "notFoundText": "No languages found.",
+                    "languageHelp": "You can search for a language used in other tutorial groups by typing into the field.",
+                    "maxLengthValidationError": "Language is limited to {{ max }} characters!",
+                    "requiredValidationError": "A language is required!"
                 },
                 "isOnlineInput": {
                     "label": "Does this tutorial group meet online or offline?"
