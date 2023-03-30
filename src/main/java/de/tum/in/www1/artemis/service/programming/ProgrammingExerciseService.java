@@ -44,8 +44,6 @@ import de.tum.in.www1.artemis.service.ExerciseSpecificationService;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.ResourceLoaderService;
-import de.tum.in.www1.artemis.service.connectors.CIPermission;
-import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.ci.CIPermission;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
