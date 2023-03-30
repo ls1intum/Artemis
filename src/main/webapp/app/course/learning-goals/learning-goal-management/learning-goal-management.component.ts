@@ -200,6 +200,11 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
     }
 
     createRelation() {
+        if (
+            this.doesCreateCircularRelation(this.nodes, this.edges, { source: this.tailLearningGoal! + '', target: this.headLearningGoal! + '', label: this.relationType! } as Edge)
+        ) {
+            throw new Error('There will be cycle!');
+        }
         this.learningGoalService
             .createLearningGoalRelation(this.tailLearningGoal!, this.headLearningGoal!, this.relationType!, this.courseId)
             .pipe(
@@ -221,5 +226,115 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
             },
             error: (res: HttpErrorResponse) => onError(this.alertService, res),
         });
+    }
+
+    private doesCreateCircularRelation(nodes: Node[], edges: Edge[], edgeToAdd: Edge): boolean {
+        let edgesWithNewEdge = JSON.parse(JSON.stringify(edges));
+        edgesWithNewEdge.push(edgeToAdd);
+        const graph = new Graph();
+        for (const node of nodes) {
+            graph.addVertex(new Vertex(node.id));
+        }
+        for (const edge of edgesWithNewEdge) {
+            let headVertex = graph.vertices.find((vertex: Vertex) => vertex.getLabel() === edge.target);
+            let tailVertex = graph.vertices.find((vertex: Vertex) => vertex.getLabel() === edge.source);
+            if (headVertex === undefined || tailVertex === undefined) {
+                throw new TypeError('Every edge needs a source or a target.');
+            }
+            switch (edge.label) {
+                case 'EXTENDS': {
+                    graph.addEdge(headVertex, tailVertex);
+                    break;
+                }
+                case 'ASSUMES': {
+                    graph.addEdge(tailVertex, headVertex);
+                    break;
+                }
+            }
+        }
+        return graph.hasCycle();
+    }
+}
+
+export class Vertex {
+    private readonly label: string;
+    private beingVisited: boolean;
+    private visited: boolean;
+    private readonly adjacencyList: Vertex[];
+
+    constructor(label: string) {
+        this.label = label;
+        this.adjacencyList = [];
+    }
+
+    addNeighbor(adjacent: Vertex): void {
+        this.adjacencyList.push(adjacent);
+    }
+
+    isBeingVisited(): boolean {
+        return this.beingVisited;
+    }
+
+    setBeingVisited(beingVisited: boolean): void {
+        this.beingVisited = beingVisited;
+    }
+
+    isVisited(): boolean {
+        return this.visited;
+    }
+
+    setVisited(visited: boolean) {
+        this.visited = visited;
+    }
+
+    getAdjacencyList(): Vertex[] {
+        return this.adjacencyList;
+    }
+
+    getLabel(): string {
+        return this.label;
+    }
+}
+
+export class Graph {
+    vertices: Vertex[];
+
+    constructor() {
+        this.vertices = [];
+    }
+
+    public addVertex(vertex: Vertex): void {
+        this.vertices.push(vertex);
+    }
+
+    public addEdge(from: Vertex, to: Vertex): void {
+        from.addNeighbor(to);
+    }
+
+    // ...
+    public hasCycle(): boolean {
+        for (const vertex of this.vertices) {
+            if (!vertex.isVisited() && this.vertexHasCycle(vertex)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private vertexHasCycle(sourceVertex: Vertex): boolean {
+        sourceVertex.setBeingVisited(true);
+
+        for (const neighbor of sourceVertex.getAdjacencyList()) {
+            if (neighbor.isBeingVisited()) {
+                // backward edge exists
+                return true;
+            } else if (!neighbor.isVisited() && this.vertexHasCycle(neighbor)) {
+                return true;
+            }
+        }
+
+        sourceVertex.setBeingVisited(false);
+        sourceVertex.setVisited(true);
+        return false;
     }
 }
