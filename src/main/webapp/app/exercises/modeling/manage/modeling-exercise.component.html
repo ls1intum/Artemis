@@ -35,20 +35,17 @@
                 <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" (sortChange)="sortRows()">
                     <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
                     <th jhiSortBy="title"><span jhiTranslate="artemisApp.exercise.title">Title</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
-                    <th jhiSortBy="releaseDate"><span jhiTranslate="artemisApp.exercise.releaseDate">Release Date</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
-                    <th jhiSortBy="dueDate"><span jhiTranslate="artemisApp.exercise.dueDate">Due Date</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
-                    <th jhiSortBy="assessmentDueDate">
-                        <span jhiTranslate="artemisApp.exercise.assessmentDueDate">Assessment Due Date</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon>
-                    </th>
+                    <th jhiSortBy="releaseDate"><span jhiTranslate="artemisApp.exercise.release">Release</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
+                    <th jhiSortBy="dueDate"><span jhiTranslate="artemisApp.exercise.due">Due</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
+                    <th jhiSortBy="assessmentDueDate"><span jhiTranslate="artemisApp.exercise.assessmentDue">Assessment Due</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
                     <th jhiSortBy="maxPoints"><span jhiTranslate="artemisApp.exercise.points">Points</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
-                    <th jhiSortBy="bonusPoints"><span jhiTranslate="artemisApp.exercise.bonusPoints">Bonus Points</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
-                    <th jhiSortBy="includedInOverallScore">
-                        <span jhiTranslate="artemisApp.exercise.includedInOverallScore">Included in Overall Score</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon>
-                    </th>
+                    <th jhiSortBy="bonusPoints"><span jhiTranslate="artemisApp.exercise.bonus">Bonus</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
+                    <th jhiSortBy="includedInOverallScore"><span jhiTranslate="artemisApp.exercise.includedCompletely">Included</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
                     <th jhiSortBy="presentationScoreEnabled" *ngIf="course.presentationScore !== 0">
                         <span jhiTranslate="artemisApp.exercise.presentationScoreEnabled.title">Presentation</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon>
                     </th>
                     <th><span jhiTranslate="artemisApp.modelingExercise.diagramType">Diagram Type</span></th>
+                    <th class="d-md-table-cell"><span jhiTranslate="artemisApp.exercise.categories">Categories</span></th>
                     <th></th>
                 </tr>
             </thead>
@@ -80,17 +77,9 @@
                     <td id="modeling-exercise-{{ modelingExercise.id }}-included">{{ exerciseService.isIncludedInScore(modelingExercise) }}</td>
                     <td *ngIf="course.presentationScore !== 0">{{ modelingExercise.presentationScoreEnabled }}</td>
                     <td jhiTranslate="{{ 'artemisApp.DiagramType.' + modelingExercise.diagramType }}">{{ modelingExercise.diagramType }}</td>
+                    <td class="d-md-table-cell"><jhi-exercise-categories [exercise]="modelingExercise"></jhi-exercise-categories></td>
                     <td class="text-end">
                         <div class="btn-group flex-btn-group-container">
-                            <!-- Scores -->
-                            <a
-                                *ngIf="modelingExercise.isAtLeastTutor"
-                                [routerLink]="['/course-management', modelingExercise.course?.id, 'modeling-exercises', modelingExercise.id, 'scores']"
-                                class="btn btn-info btn-sm me-1"
-                            >
-                                <fa-icon [icon]="faTable"></fa-icon>
-                                <span class="d-none d-md-inline" jhiTranslate="entity.action.scores">Scores</span>
-                            </a>
                             <!-- Participations -->
                             <a
                                 *ngIf="modelingExercise.isAtLeastTutor"
@@ -99,6 +88,15 @@
                             >
                                 <fa-icon [icon]="farListAlt"></fa-icon>
                                 <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations">Participations</span>
+                            </a>
+                            <!-- Scores -->
+                            <a
+                                *ngIf="modelingExercise.isAtLeastTutor"
+                                [routerLink]="['/course-management', modelingExercise.course?.id, 'modeling-exercises', modelingExercise.id, 'scores']"
+                                class="btn btn-info btn-sm me-1"
+                            >
+                                <fa-icon [icon]="faTable"></fa-icon>
+                                <span class="d-none d-md-inline" jhiTranslate="entity.action.scores">Scores</span>
                             </a>
                             <!-- Example Submission -->
                             <a
