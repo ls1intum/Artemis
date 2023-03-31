@@ -80,9 +80,9 @@ public class TextAssessmentResource extends AssessmentResource {
             GradingCriterionRepository gradingCriterionRepository, Optional<AtheneTrackingTokenProvider> atheneTrackingTokenProvider, ExamService examService,
             Optional<AutomaticTextAssessmentConflictService> automaticTextAssessmentConflictService, FeedbackConflictRepository feedbackConflictRepository,
             ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository, FeedbackRepository feedbackRepository,
-            SingleUserNotificationService singleUserNotificationService, ResultService resultService, ExerciseDateService exerciseDateService) {
+            SingleUserNotificationService singleUserNotificationService, ResultService resultService) {
         super(authCheckService, userRepository, exerciseRepository, textAssessmentService, resultRepository, examService, messagingService, exampleSubmissionRepository,
-                submissionRepository, singleUserNotificationService, exerciseDateService);
+                submissionRepository, singleUserNotificationService);
 
         this.textAssessmentService = textAssessmentService;
         this.textBlockService = textBlockService;

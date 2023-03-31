@@ -54,9 +54,9 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
             ProgrammingSubmissionRepository programmingSubmissionRepository, ExerciseRepository exerciseRepository, ResultRepository resultRepository, ExamService examService,
             WebsocketMessagingService messagingService, LtiNewResultService ltiNewResultService, StudentParticipationRepository studentParticipationRepository,
             ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository, SingleUserNotificationService singleUserNotificationService,
-            ProgrammingExerciseParticipationService programmingExerciseParticipationService, ExerciseDateService exerciseDateService) {
+            ProgrammingExerciseParticipationService programmingExerciseParticipationService) {
         super(authCheckService, userRepository, exerciseRepository, programmingAssessmentService, resultRepository, examService, messagingService, exampleSubmissionRepository,
-                submissionRepository, singleUserNotificationService, exerciseDateService);
+                submissionRepository, singleUserNotificationService);
         this.programmingAssessmentService = programmingAssessmentService;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.ltiNewResultService = ltiNewResultService;
@@ -202,7 +202,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         }
         // Note: we always need to report the result over LTI, otherwise it might never become visible in the external system
         ltiNewResultService.onNewResult((StudentParticipation) newManualResult.getParticipation());
-        if (submit && exerciseDateService.isAfterAssessmentDueDate(programmingExercise)) {
+        if (submit && ExerciseDateService.isAfterAssessmentDueDate(programmingExercise)) {
             messagingService.broadcastNewResult(newManualResult.getParticipation(), newManualResult);
         }
 

@@ -17,14 +17,11 @@ public class GroupNotificationScheduleService {
 
     private final GroupNotificationService groupNotificationService;
 
-    private final ExerciseDateService exerciseDateService;
-
     public GroupNotificationScheduleService(SingleUserNotificationService singleUserNotificationService, InstanceMessageSendService instanceMessageSendService,
-            GroupNotificationService groupNotificationService, ExerciseDateService exerciseDateService) {
+            GroupNotificationService groupNotificationService) {
         this.singleUserNotificationService = singleUserNotificationService;
         this.instanceMessageSendService = instanceMessageSendService;
         this.groupNotificationService = groupNotificationService;
-        this.exerciseDateService = exerciseDateService;
     }
 
     /**
@@ -171,7 +168,7 @@ public class GroupNotificationScheduleService {
      * @param exercise that is created
      */
     private void checkNotificationForAssessmentDueDate(Exercise exercise) {
-        if (exercise.isCourseExercise() && exerciseDateService.isBeforeAssessmentDueDate(exercise)) {
+        if (exercise.isCourseExercise() && ExerciseDateService.isBeforeAssessmentDueDate(exercise)) {
             instanceMessageSendService.sendAssessedExerciseSubmissionNotificationSchedule(exercise.getId());
         }
     }

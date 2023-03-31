@@ -36,16 +36,13 @@ public class NotificationScheduleService {
 
     private final SingleUserNotificationService singleUserNotificationService;
 
-    private final ExerciseDateService exerciseDateService;
-
     public NotificationScheduleService(ScheduleService scheduleService, ExerciseRepository exerciseRepository, GroupNotificationService groupNotificationService,
-            Environment environment, SingleUserNotificationService singleUserNotificationService, ExerciseDateService exerciseDateService) {
+            Environment environment, SingleUserNotificationService singleUserNotificationService) {
         this.scheduleService = scheduleService;
         this.exerciseRepository = exerciseRepository;
         this.environment = environment;
         this.groupNotificationService = groupNotificationService;
         this.singleUserNotificationService = singleUserNotificationService;
-        this.exerciseDateService = exerciseDateService;
     }
 
     /**
@@ -127,7 +124,7 @@ public class NotificationScheduleService {
      */
     public void updateSchedulingForAssessedExercisesSubmissions(Exercise exercise) {
         checkSecurityUtils();
-        if (exerciseDateService.isAfterAssessmentDueDate(exercise)) {
+        if (ExerciseDateService.isAfterAssessmentDueDate(exercise)) {
             // to make sure no wrong notification is sent out the date is checked again in the concrete notification method
             scheduleService.cancelScheduledTaskForLifecycle(exercise.getId(), ExerciseLifecycle.ASSESSMENT_DUE);
             return;

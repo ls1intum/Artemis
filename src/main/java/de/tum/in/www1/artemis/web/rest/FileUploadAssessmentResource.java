@@ -39,7 +39,7 @@ public class FileUploadAssessmentResource extends AssessmentResource {
             ExerciseRepository exerciseRepository, ResultRepository resultRepository, ExamService examService, ExampleSubmissionRepository exampleSubmissionRepository,
             SubmissionRepository submissionRepository, SingleUserNotificationService singleUserNotificationService, ExerciseDateService exerciseDateService) {
         super(authCheckService, userRepository, exerciseRepository, assessmentService, resultRepository, examService, messagingService, exampleSubmissionRepository,
-                submissionRepository, singleUserNotificationService, exerciseDateService);
+                submissionRepository, singleUserNotificationService);
         this.fileUploadExerciseRepository = fileUploadExerciseRepository;
         this.fileUploadSubmissionRepository = fileUploadSubmissionRepository;
     }

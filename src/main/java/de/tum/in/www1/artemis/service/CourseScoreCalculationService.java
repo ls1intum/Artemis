@@ -37,14 +37,11 @@ public class CourseScoreCalculationService {
 
     private final PlagiarismCaseRepository plagiarismCaseRepository;
 
-    private final ExerciseDateService exerciseDateService;
-
     public CourseScoreCalculationService(StudentParticipationRepository studentParticipationRepository, ExerciseRepository exerciseRepository,
             PlagiarismCaseRepository plagiarismCaseRepository, ExerciseDateService exerciseDateService) {
         this.studentParticipationRepository = studentParticipationRepository;
         this.exerciseRepository = exerciseRepository;
         this.plagiarismCaseRepository = plagiarismCaseRepository;
-        this.exerciseDateService = exerciseDateService;
     }
 
     /**
@@ -258,7 +255,7 @@ public class CourseScoreCalculationService {
      * @param exercise the exercise whose assessment state should be determined
      */
     private boolean isAssessmentDone(Exercise exercise) {
-        boolean isNonAutomaticAssessmentDone = !isAssessedAutomatically(exercise) && exerciseDateService.isAfterAssessmentDueDate(exercise);
+        boolean isNonAutomaticAssessmentDone = !isAssessedAutomatically(exercise) && ExerciseDateService.isAfterAssessmentDueDate(exercise);
         return isNonAutomaticAssessmentDone || isAutomaticAssessmentDone(exercise);
     }
 

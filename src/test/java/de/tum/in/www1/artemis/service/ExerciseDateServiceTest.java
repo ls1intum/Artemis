@@ -152,8 +152,8 @@ class ExerciseDateServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
         exercise.setAssessmentDueDate(null);
         exercise = exerciseRepository.save(exercise);
 
-        assertThat(exerciseDateService.isBeforeAssessmentDueDate(exercise)).isFalse();
-        assertThat(exerciseDateService.isAfterAssessmentDueDate(exercise)).isTrue();
+        assertThat(ExerciseDateService.isBeforeAssessmentDueDate(exercise)).isFalse();
+        assertThat(ExerciseDateService.isAfterAssessmentDueDate(exercise)).isTrue();
     }
 
     @Test
@@ -161,8 +161,8 @@ class ExerciseDateServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
         exercise.setAssessmentDueDate(ZonedDateTime.now().plusHours(1));
         exercise = exerciseRepository.save(exercise);
 
-        assertThat(exerciseDateService.isBeforeAssessmentDueDate(exercise)).isTrue();
-        assertThat(exerciseDateService.isAfterAssessmentDueDate(exercise)).isFalse();
+        assertThat(ExerciseDateService.isBeforeAssessmentDueDate(exercise)).isTrue();
+        assertThat(ExerciseDateService.isAfterAssessmentDueDate(exercise)).isFalse();
     }
 
     @Test
@@ -170,8 +170,8 @@ class ExerciseDateServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
         exercise.setAssessmentDueDate(ZonedDateTime.now().minusHours(1));
         exercise = exerciseRepository.save(exercise);
 
-        assertThat(exerciseDateService.isBeforeAssessmentDueDate(exercise)).isFalse();
-        assertThat(exerciseDateService.isAfterAssessmentDueDate(exercise)).isTrue();
+        assertThat(ExerciseDateService.isBeforeAssessmentDueDate(exercise)).isFalse();
+        assertThat(ExerciseDateService.isAfterAssessmentDueDate(exercise)).isTrue();
     }
 
     @Nested
@@ -230,8 +230,8 @@ class ExerciseDateServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
             exam.setExamStudentReviewEnd(null);
             exam = examRepository.save(exam);
 
-            assertThat(exerciseDateService.isBeforeAssessmentDueDate(exercise)).isTrue();
-            assertThat(exerciseDateService.isAfterAssessmentDueDate(exercise)).isFalse();
+            assertThat(ExerciseDateService.isBeforeAssessmentDueDate(exercise)).isTrue();
+            assertThat(ExerciseDateService.isAfterAssessmentDueDate(exercise)).isFalse();
         }
 
         @Test
@@ -239,8 +239,8 @@ class ExerciseDateServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
             exam.setPublishResultsDate(ZonedDateTime.now().plusHours(1));
             exam = examRepository.save(exam);
 
-            assertThat(exerciseDateService.isBeforeAssessmentDueDate(exercise)).isTrue();
-            assertThat(exerciseDateService.isAfterAssessmentDueDate(exercise)).isFalse();
+            assertThat(ExerciseDateService.isBeforeAssessmentDueDate(exercise)).isTrue();
+            assertThat(ExerciseDateService.isAfterAssessmentDueDate(exercise)).isFalse();
         }
 
         @Test
@@ -248,8 +248,8 @@ class ExerciseDateServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
             exam.setPublishResultsDate(ZonedDateTime.now().minusHours(1));
             exam = examRepository.save(exam);
 
-            assertThat(exerciseDateService.isBeforeAssessmentDueDate(exercise)).isFalse();
-            assertThat(exerciseDateService.isAfterAssessmentDueDate(exercise)).isTrue();
+            assertThat(ExerciseDateService.isBeforeAssessmentDueDate(exercise)).isFalse();
+            assertThat(ExerciseDateService.isAfterAssessmentDueDate(exercise)).isTrue();
         }
 
         @Test
@@ -259,8 +259,8 @@ class ExerciseDateServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
             exam.setExamStudentReviewEnd(ZonedDateTime.now().minusHours(1));
             exam = examRepository.save(exam);
 
-            assertThat(exerciseDateService.isBeforeAssessmentDueDate(exercise)).isFalse();
-            assertThat(exerciseDateService.isAfterAssessmentDueDate(exercise)).isTrue();
+            assertThat(ExerciseDateService.isBeforeAssessmentDueDate(exercise)).isFalse();
+            assertThat(ExerciseDateService.isAfterAssessmentDueDate(exercise)).isTrue();
         }
     }
 

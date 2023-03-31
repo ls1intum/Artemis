@@ -51,7 +51,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
             WebsocketMessagingService messagingService, ExerciseRepository exerciseRepository, ResultRepository resultRepository, ExamService examService,
             SubmissionRepository submissionRepository, SingleUserNotificationService singleUserNotificationService, ExerciseDateService exerciseDateService) {
         super(authCheckService, userRepository, exerciseRepository, assessmentService, resultRepository, examService, messagingService, exampleSubmissionRepository,
-                submissionRepository, singleUserNotificationService, exerciseDateService);
+                submissionRepository, singleUserNotificationService);
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.authCheckService = authCheckService;
         this.modelingSubmissionRepository = modelingSubmissionRepository;

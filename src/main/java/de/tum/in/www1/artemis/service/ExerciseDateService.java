@@ -154,7 +154,7 @@ public class ExerciseDateService {
      * @param exercise to check the assessment due date
      * @return true if the assessment due date is in the future
      */
-    public boolean isBeforeAssessmentDueDate(Exercise exercise) {
+    public static boolean isBeforeAssessmentDueDate(Exercise exercise) {
         return !isAfterAssessmentDueDate(exercise);
     }
 
@@ -165,7 +165,7 @@ public class ExerciseDateService {
      * @param exercise to check the assessment due date
      * @return true if the assessment due date is in the past
      */
-    public boolean isAfterAssessmentDueDate(Exercise exercise) {
+    public static boolean isAfterAssessmentDueDate(Exercise exercise) {
         if (exercise.isExamExercise()) {
             return exercise.getExamViaExerciseGroupOrCourseMember().resultsPublished();
         }

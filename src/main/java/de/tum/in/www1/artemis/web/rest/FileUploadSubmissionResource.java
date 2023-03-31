@@ -59,13 +59,11 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
 
     private final SingleUserNotificationService singleUserNotificationService;
 
-    private final ExerciseDateService exerciseDateService;
-
     public FileUploadSubmissionResource(SubmissionRepository submissionRepository, ResultService resultService, FileUploadSubmissionService fileUploadSubmissionService,
             FileUploadExerciseRepository fileUploadExerciseRepository, AuthorizationCheckService authCheckService, UserRepository userRepository,
             ExerciseRepository exerciseRepository, GradingCriterionRepository gradingCriterionRepository, ExamSubmissionService examSubmissionService,
             StudentParticipationRepository studentParticipationRepository, FileUploadSubmissionRepository fileUploadSubmissionRepository,
-            SingleUserNotificationService singleUserNotificationService, ExerciseDateService exerciseDateService) {
+            SingleUserNotificationService singleUserNotificationService) {
         super(submissionRepository, resultService, authCheckService, userRepository, exerciseRepository, fileUploadSubmissionService, studentParticipationRepository);
         this.fileUploadSubmissionService = fileUploadSubmissionService;
         this.fileUploadExerciseRepository = fileUploadExerciseRepository;
@@ -73,7 +71,6 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
         this.examSubmissionService = examSubmissionService;
         this.fileUploadSubmissionRepository = fileUploadSubmissionRepository;
         this.singleUserNotificationService = singleUserNotificationService;
-        this.exerciseDateService = exerciseDateService;
     }
 
     /**
@@ -311,7 +308,7 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
             // if the assessment is not finished
             boolean assessmentUnfinished = fileUploadSubmission.getLatestResult().getCompletionDate() == null || fileUploadSubmission.getLatestResult().getAssessor() == null;
             // or the assessment due date isn't over yet
-            boolean assessmentDueDateNotOver = exerciseDateService.isBeforeAssessmentDueDate(fileUploadExercise);
+            boolean assessmentDueDateNotOver = ExerciseDateService.isBeforeAssessmentDueDate(fileUploadExercise);
 
             if (assessmentUnfinished || assessmentDueDateNotOver) {
                 fileUploadSubmission.getLatestResult().setFeedbacks(new ArrayList<>());

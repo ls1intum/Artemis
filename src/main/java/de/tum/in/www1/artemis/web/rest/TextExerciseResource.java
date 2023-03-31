@@ -95,8 +95,6 @@ public class TextExerciseResource {
 
     private final TextAssessmentKnowledgeService textAssessmentKnowledgeService;
 
-    private final ExerciseDateService exerciseDateService;
-
     public TextExerciseResource(TextExerciseRepository textExerciseRepository, TextExerciseService textExerciseService, FeedbackRepository feedbackRepository,
             ExerciseDeletionService exerciseDeletionService, PlagiarismResultRepository plagiarismResultRepository, UserRepository userRepository,
             AuthorizationCheckService authCheckService, CourseService courseService, StudentParticipationRepository studentParticipationRepository,
@@ -104,7 +102,7 @@ public class TextExerciseResource {
             TextSubmissionExportService textSubmissionExportService, ExampleSubmissionRepository exampleSubmissionRepository, ExerciseService exerciseService,
             GradingCriterionRepository gradingCriterionRepository, TextBlockRepository textBlockRepository, GroupNotificationScheduleService groupNotificationScheduleService,
             InstanceMessageSendService instanceMessageSendService, TextPlagiarismDetectionService textPlagiarismDetectionService, CourseRepository courseRepository,
-            TextAssessmentKnowledgeService textAssessmentKnowledgeService, ExerciseDateService exerciseDateService) {
+            TextAssessmentKnowledgeService textAssessmentKnowledgeService) {
         this.feedbackRepository = feedbackRepository;
         this.exerciseDeletionService = exerciseDeletionService;
         this.plagiarismResultRepository = plagiarismResultRepository;
@@ -127,7 +125,6 @@ public class TextExerciseResource {
         this.textPlagiarismDetectionService = textPlagiarismDetectionService;
         this.courseRepository = courseRepository;
         this.textAssessmentKnowledgeService = textAssessmentKnowledgeService;
-        this.exerciseDateService = exerciseDateService;
     }
 
     /**
@@ -334,7 +331,7 @@ public class TextExerciseResource {
             // set reference to participation to null, since we are already inside a participation
             textSubmission.setParticipation(null);
 
-            if (exerciseDateService.isBeforeAssessmentDueDate(textExercise)) {
+            if (ExerciseDateService.isBeforeAssessmentDueDate(textExercise)) {
                 textSubmission.setResults(Collections.emptyList());
                 participation.setResults(Collections.emptySet());
             }

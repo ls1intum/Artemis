@@ -48,11 +48,9 @@ public abstract class AssessmentResource {
 
     protected final SingleUserNotificationService singleUserNotificationService;
 
-    protected final ExerciseDateService exerciseDateService;
-
     public AssessmentResource(AuthorizationCheckService authCheckService, UserRepository userRepository, ExerciseRepository exerciseRepository, AssessmentService assessmentService,
             ResultRepository resultRepository, ExamService examService, WebsocketMessagingService messagingService, ExampleSubmissionRepository exampleSubmissionRepository,
-            SubmissionRepository submissionRepository, SingleUserNotificationService singleUserNotificationService, ExerciseDateService exerciseDateService) {
+            SubmissionRepository submissionRepository, SingleUserNotificationService singleUserNotificationService) {
         this.authCheckService = authCheckService;
         this.userRepository = userRepository;
         this.exerciseRepository = exerciseRepository;
@@ -63,7 +61,6 @@ public abstract class AssessmentResource {
         this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.submissionRepository = submissionRepository;
         this.singleUserNotificationService = singleUserNotificationService;
-        this.exerciseDateService = exerciseDateService;
     }
 
     abstract String getEntityName();
@@ -135,7 +132,7 @@ public abstract class AssessmentResource {
         if (!isAtLeastInstructor) {
             participation.filterSensitiveInformation();
         }
-        if (submit && exerciseDateService.isAfterAssessmentDueDate(exercise)) {
+        if (submit && ExerciseDateService.isAfterAssessmentDueDate(exercise)) {
             messagingService.broadcastNewResult(result.getParticipation(), result);
         }
         return ResponseEntity.ok(result);

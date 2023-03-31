@@ -39,18 +39,15 @@ public class SingleUserNotificationService {
 
     private final StudentParticipationRepository studentParticipationRepository;
 
-    private final ExerciseDateService exerciseDateService;
-
     public SingleUserNotificationService(SingleUserNotificationRepository singleUserNotificationRepository, UserRepository userRepository,
             SimpMessageSendingOperations messagingTemplate, MailService mailService, NotificationSettingsService notificationSettingsService,
-            StudentParticipationRepository studentParticipationRepository, ExerciseDateService exerciseDateService) {
+            StudentParticipationRepository studentParticipationRepository) {
         this.singleUserNotificationRepository = singleUserNotificationRepository;
         this.userRepository = userRepository;
         this.messagingTemplate = messagingTemplate;
         this.mailService = mailService;
         this.notificationSettingsService = notificationSettingsService;
         this.studentParticipationRepository = studentParticipationRepository;
-        this.exerciseDateService = exerciseDateService;
     }
 
     /**
@@ -156,7 +153,7 @@ public class SingleUserNotificationService {
      */
     public void checkNotificationForAssessmentExerciseSubmission(Exercise exercise, User recipient, Result result) {
         // only send the notification now if no assessment due date was set or if it is in the past
-        if (exercise.isCourseExercise() && exerciseDateService.isAfterAssessmentDueDate(exercise)) {
+        if (exercise.isCourseExercise() && ExerciseDateService.isAfterAssessmentDueDate(exercise)) {
             saturateExerciseWithResultAndStudentParticipationForGivenUserForEmail(exercise, recipient, result);
             notifyUserAboutAssessedExerciseSubmission(exercise, recipient);
         }

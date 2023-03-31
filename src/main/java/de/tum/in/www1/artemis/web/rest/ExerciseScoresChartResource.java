@@ -88,7 +88,7 @@ public class ExerciseScoresChartResource {
 
         // If an assessment due date is set, only count the exercise as finished if we passed that date
         if (exercise.getAssessmentDueDate() != null) {
-            return exerciseDateService.isAfterAssessmentDueDate(exercise);
+            return ExerciseDateService.isAfterAssessmentDueDate(exercise);
         }
 
         // If no assessment due date is set, make sure to only count exercises which have a passed due date
