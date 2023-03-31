@@ -2,11 +2,11 @@ package de.tum.in.www1.artemis.service.notifications.push_notifications;
 
 import java.nio.charset.StandardCharsets;
 import java.security.*;
+import java.time.Instant;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Stream;
 
 import javax.crypto.Cipher;
 import javax.crypto.NoSuchPaddingException;
@@ -75,13 +75,14 @@ public class PushNotificationService extends InstantNotificationService {
         if (relayServerBaseUrl.isEmpty())
             return;
 
-        NotificationType type = NotificationConstants.findCorrespondingNotificationType(notification.getTitle());
+        final NotificationType type = NotificationConstants.findCorrespondingNotificationType(notification.getTitle());
 
-        List<PushNotificationDeviceConfiguration> userDeviceConfigurations = getRepository().findByUserIn(users, getDeviceType());
+        final List<PushNotificationDeviceConfiguration> userDeviceConfigurations = getRepository().findByUserIn(users, getDeviceType());
         if (userDeviceConfigurations.isEmpty())
             return;
 
-        String payload = gson.toJson(new PushNotificationData(notification.getTransientPlaceholderValuesAsArray(), notification.getTarget(), type.name()));
+        final String date = Instant.now().toString();
+        final String payload = gson.toJson(new PushNotificationData(notification.getTransientPlaceholderValuesAsArray(), notification.getTarget(), type.name(), date));
 
         final byte[] iv = new byte[16];
 
@@ -93,12 +94,7 @@ public class PushNotificationService extends InstantNotificationService {
             String ivAsString = Base64.getEncoder().encodeToString(iv);
             Optional<String> payloadCiphertext = encrypt(payload, key, iv);
 
-            if (payloadCiphertext.isPresent()) {
-                return Stream.of(new RelayNotificationRequest(ivAsString, payloadCiphertext.get(), deviceConfiguration.getToken()));
-            }
-            else {
-                return Stream.empty();
-            }
+            return payloadCiphertext.stream().map(s -> new RelayNotificationRequest(ivAsString, s, deviceConfiguration.getToken()));
         }).toList();
 
         sendNotificationRequestsToEndpoint(notificationRequests, relayServerBaseUrl.get());
@@ -116,7 +112,7 @@ public class PushNotificationService extends InstantNotificationService {
         return null;
     }
 
-    record PushNotificationData(String[] notificationPlaceholders, String target, String type) {
+    record PushNotificationData(String[] notificationPlaceholders, String target, String type, String date) {
     }
 
     /**
