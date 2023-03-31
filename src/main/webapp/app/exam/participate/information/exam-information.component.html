@@ -78,9 +78,9 @@
     <div *ngIf="exam && (exam.numberOfExercisesInExam || exam.examMaxPoints || exam.numberOfCorrectionRoundsInExam)">
         <span class="mx-2" *ngIf="exam.numberOfExercisesInExam">
             <strong class="font-weight-bold">{{ 'artemisApp.exam.exercises' | artemisTranslate }}:</strong>
-            {{ exam.numberOfExercisesInExam }}
+            {{ totalExercises }}
         </span>
-        <span class="mx-2" *ngIf="maxPoints">
+        <span class="mx-2" *ngIf="exam.examMaxPoints">
             <strong class="font-weight-bold">{{ 'artemisApp.exam.points' | artemisTranslate }}:</strong>
             {{ maxPoints }}
         </span>

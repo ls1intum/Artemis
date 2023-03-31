@@ -19,6 +19,7 @@ export class ExamInformationComponent implements OnInit, OnChanges {
     isTestExam?: boolean;
     currentDate?: dayjs.Dayjs;
     maxPoints?: number;
+    totalExercises?: number;
 
     ngOnInit(): void {
         this.examEndDate = endTime(this.exam, this.studentExam);
@@ -26,13 +27,23 @@ export class ExamInformationComponent implements OnInit, OnChanges {
         this.additionalWorkingTime = getAdditionalWorkingTime(this.exam, this.studentExam);
         this.isExamOverMultipleDays = isExamOverMultipleDays(this.exam, this.studentExam);
         this.isTestExam = this.exam?.testExam;
-        this.maxPoints = (this.exam?.examMaxPoints ?? 0) + (this.studentExam?.quizQuestionTotalPoints ?? 0);
+        this.maxPoints = this.getMaxPoints();
+        this.totalExercises = this.getTotalExercises();
         if (this.isTestExam) {
             this.currentDate = dayjs();
         }
     }
 
     ngOnChanges(): void {
-        this.maxPoints = (this.exam?.examMaxPoints ?? 0) + (this.studentExam?.quizQuestionTotalPoints ?? 0);
+        this.maxPoints = this.getMaxPoints();
+        this.totalExercises = this.getTotalExercises();
+    }
+
+    private getMaxPoints(): number {
+        return (this.exam?.examMaxPoints ?? 0) + (this.studentExam?.quizQuestionTotalPoints ?? 0);
+    }
+
+    private getTotalExercises(): number {
+        return (this.exam?.numberOfExercisesInExam ?? 0) + (this.studentExam?.quizQuestionTotalPoints ?? 0 > 0 ? 1 : 0);
     }
 }
