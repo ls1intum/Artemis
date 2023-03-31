@@ -126,7 +126,9 @@ describe('Test Run Management Component', () => {
             const componentInstance = { title: String, text: String };
             const result = new Promise((resolve) => resolve({} as StudentExam));
             jest.spyOn(modalService, 'open').mockReturnValue(<NgbModalRef>{ componentInstance, result });
-            jest.spyOn(examManagementService, 'createTestRun').mockReturnValue(of(new HttpResponse({ body: { id: 3, user: { id: 90 }, exercises: [exercise] } as StudentExam })));
+            jest.spyOn(examManagementService, 'createTestRun').mockReturnValue(
+                of(new HttpResponse({ body: { id: 3, user: { id: 90 } as User, exercises: [exercise], numberOfExamSessions: 1 } as StudentExam })),
+            );
             fixture.detectChanges();
 
             expect(component.examContainsExercises).toBeTruthy();
