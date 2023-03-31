@@ -4,7 +4,6 @@ import { QuizPointStatistic } from 'app/entities/quiz/quiz-point-statistic.model
 import { QuizQuestion } from 'app/entities/quiz/quiz-question.model';
 import { Course } from 'app/entities/course.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
-import { QuizExamExercise } from 'app/entities/quiz-exam-exercise.model';
 
 export enum QuizStatus {
     CLOSED,
@@ -32,7 +31,7 @@ export class QuizBatch {
     startTimeError?: boolean;
 }
 
-export class QuizExercise extends Exercise implements QuizExamExercise {
+export class QuizExercise extends Exercise {
     public visibleToStudents?: boolean; // (computed by server)
     public allowedNumberOfAttempts?: number;
     public remainingNumberOfAttempts?: number;

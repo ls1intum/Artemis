@@ -1,13 +1,12 @@
 import { ChangeDetectorRef, Component, Input, OnInit } from '@angular/core';
 import dayjs from 'dayjs/esm';
-import { IncludedInOverallScore } from 'app/entities/exercise.model';
+import { Exercise, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { GradeType } from 'app/entities/grading-scale.model';
 import { faAward, faClipboard } from '@fortawesome/free-solid-svg-icons';
 import { StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
 import { BonusStrategy } from 'app/entities/bonus.model';
-import { ExamExercise } from 'app/entities/exam-exercise.model';
 
 @Component({
     selector: 'jhi-exam-points-summary',
@@ -18,7 +17,9 @@ export class ExamPointsSummaryComponent implements OnInit {
     readonly IncludedInOverallScore = IncludedInOverallScore;
     readonly BonusStrategy = BonusStrategy;
     @Input() studentExamWithGrade: StudentExamWithGradeDTO;
-    @Input() exercises: ExamExercise[];
+    @Input() exercises: Exercise[];
+    @Input() hasQuizExam: boolean;
+    @Input() quizExamMaxPoints: number | undefined;
 
     gradingScaleExists = false;
     isBonus = false;
@@ -69,6 +70,10 @@ export class ExamPointsSummaryComponent implements OnInit {
         return this.studentExamWithGrade?.studentResult.overallPointsAchieved ?? 0;
     }
 
+    getQuizExamAchievedPointsSum() {
+        return this.studentExamWithGrade?.studentResult.quizExamOverallPointsAchieved ?? 0;
+    }
+
     /**
      * Returns the max. achievable (normal) points. It is possible to exceed this value if there are bonus points.
      */
@@ -76,7 +81,7 @@ export class ExamPointsSummaryComponent implements OnInit {
         return this.studentExamWithGrade?.maxPoints ?? 0;
     }
 
-    getAchievedPoints(exercise: ExamExercise): number {
+    getAchievedPoints(exercise: Exercise): number {
         return this.studentExamWithGrade?.achievedPointsPerExercise?.[exercise.id!] ?? 0;
     }
 

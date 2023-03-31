@@ -6,5 +6,7 @@ export class QuizExamSubmission extends AbstractQuizSubmission {
     public studentExam?: StudentExam;
     constructor() {
         super(SubmissionExerciseType.QUIZ_EXAM);
+        this.isSynced = true;
+        this.submitted = false;
     }
 }

@@ -6,7 +6,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.exam.QuizExamResult;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 
 @Entity
@@ -28,8 +28,8 @@ public class QuizExamSubmission extends AbstractQuizSubmission {
     }
 
     @JsonIgnore
-    public Result getResult() {
-        return getLatestResult();
+    public QuizExamResult getQuizExamResult() {
+        return (QuizExamResult) getLatestResult();
     }
 
     @Override

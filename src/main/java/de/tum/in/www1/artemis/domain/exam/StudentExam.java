@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.domain.exam;
 
 import java.time.ZonedDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import javax.persistence.*;
 
@@ -13,15 +12,9 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.ExerciseType;
-import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
-import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
-import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExamSubmission;
-import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizQuestion;
 
 @Entity
@@ -29,8 +22,6 @@ import de.tum.in.www1.artemis.domain.quiz.QuizQuestion;
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class StudentExam extends AbstractAuditingEntity {
-
-    private static final String QUIZ_EXAM_TITLE = "Quiz Exam";
 
     @Column(name = "submitted")
     private Boolean submitted;
@@ -149,36 +140,12 @@ public class StudentExam extends AbstractAuditingEntity {
         this.user = user;
     }
 
-    @JsonProperty(value = "exercises", access = JsonProperty.Access.READ_ONLY)
-    public List<ExamExercise> getExamExercises() {
-        List<ExamExercise> examExercises = new ArrayList<>();
-        if (exercises != null && Hibernate.isInitialized(exercises)) {
-            if (!getQuizQuestions().isEmpty()) {
-                examExercises.add(getQuizExamExercise());
-            }
-            examExercises.addAll(exercises);
-        }
-        return examExercises;
-    }
-
-    @JsonIgnore
     public List<Exercise> getExercises() {
         return exercises;
     }
 
-    @JsonProperty(value = "exercises", access = JsonProperty.Access.WRITE_ONLY)
     public void setExercises(List<Exercise> exercises) {
-        if (exercises != null) {
-            this.exercises = exercises.stream().filter(exercise -> {
-                if (exercise instanceof QuizExamExercise quizExamExercise) {
-                    return !quizExamExercise.getTitle().equals(QUIZ_EXAM_TITLE);
-                }
-                return true;
-            }).collect(Collectors.toCollection(ArrayList::new));
-        }
-        else {
-            this.exercises = null;
-        }
+        this.exercises = exercises;
     }
 
     public List<QuizQuestion> getQuizQuestions() {
@@ -303,163 +270,5 @@ public class StudentExam extends AbstractAuditingEntity {
             }
         }
         return maxPoints;
-    }
-
-    /**
-     * Create quiz exam exercise object that contains the information necessary for quiz exam participation and evaluation
-     * such as quiz questions, exercise title, max points, submission.
-     *
-     * @return quiz exam exercise
-     */
-    @JsonIgnore
-    public ExamExercise getQuizExamExercise() {
-        Long id = 0L;
-        String title = QUIZ_EXAM_TITLE;
-        return new QuizExamExercise() {
-
-            @Override
-            public List<QuizQuestion> getQuizQuestions() {
-                return StudentExam.this.getQuizQuestions();
-            }
-
-            @Override
-            public Boolean isRandomizeQuestionOrder() {
-                return false;
-            }
-
-            @Override
-            public Long getId() {
-                return id;
-            }
-
-            @Override
-            public String getTitle() {
-                return title;
-            }
-
-            @Override
-            public Double getMaxPoints() {
-                return getQuizQuestionTotalPoints();
-            }
-
-            @Override
-            public Set<StudentParticipation> getStudentParticipations() {
-                StudentParticipation studentParticipation = new StudentParticipation();
-                studentParticipation.setInitializationState(InitializationState.INITIALIZED);
-                Set<Submission> submissions = new HashSet<>();
-                Set<Result> results = new HashSet<>();
-                if (quizExamSubmission != null && Hibernate.isInitialized(quizExamSubmission)) {
-                    submissions.add(quizExamSubmission);
-                    if (quizExamSubmission.getResults() != null && Hibernate.isInitialized(quizExamSubmission.getResults())) {
-                        if (quizExamSubmission.getLatestResult() != null) {
-                            submissions.add(quizExamSubmission);
-                            results.add(quizExamSubmission.getLatestResult());
-                        }
-                    }
-                }
-                else {
-                    Submission submission = new QuizExamSubmission();
-                    submissions.add(submission);
-                }
-                studentParticipation.setSubmissions(submissions);
-                studentParticipation.setResults(results);
-                studentParticipation.setExercise(new QuizExercise() {
-
-                    @Override
-                    public ExerciseType getExerciseType() {
-                        return ExerciseType.QUIZ;
-                    }
-
-                    @Override
-                    public Long getId() {
-                        return id;
-                    }
-
-                    @Override
-                    public Double getMaxPoints() {
-                        return StudentExam.this.getQuizQuestionTotalPoints();
-                    }
-
-                    @Override
-                    public ExerciseGroup getExerciseGroup() {
-                        ExerciseGroup exerciseGroup = new ExerciseGroup();
-                        exerciseGroup.setId(0L);
-                        return exerciseGroup;
-                    }
-
-                    @Override
-                    public String getTitle() {
-                        return title;
-                    }
-                });
-                studentParticipation.setParticipant(StudentExam.this.getUser());
-                return Set.of(studentParticipation);
-            }
-
-            @Override
-            public IncludedInOverallScore getIncludedInOverallScore() {
-                return IncludedInOverallScore.INCLUDED_COMPLETELY;
-            }
-
-            @Override
-            public ExerciseGroup getExerciseGroup() {
-                return null;
-            }
-
-            @Override
-            public boolean isExampleSolutionPublished() {
-                return false;
-            }
-
-            @Override
-            public Double getBonusPoints() {
-                return 0.0;
-            }
-
-            @Override
-            public List<GradingCriterion> getGradingCriteria() {
-                return null;
-            }
-
-            @Override
-            public String getGradingInstructions() {
-                return null;
-            }
-
-            @Override
-            public void setCourse(Course course) {
-            }
-
-            @Override
-            public void filterSensitiveInformation() {
-            }
-
-            @Override
-            public void setExampleSolutionPublicationDate(ZonedDateTime exampleSolutionPublicationDate) {
-            }
-
-            @Override
-            public void setExerciseGroup(ExerciseGroup exerciseGroup) {
-            }
-
-            @Override
-            public StudentParticipation findParticipation(List<StudentParticipation> participations) {
-                return null;
-            }
-
-            @Override
-            public void setStudentParticipations(Set<StudentParticipation> participation) {
-            }
-
-            @Override
-            public String getType() {
-                return "quiz";
-            }
-
-            @Override
-            public Boolean isQuizExam() {
-                return true;
-            }
-        };
     }
 }

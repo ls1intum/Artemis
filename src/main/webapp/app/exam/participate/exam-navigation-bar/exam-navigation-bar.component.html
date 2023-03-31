@@ -1,13 +1,14 @@
 <div class="row justify-content-between align-items-start exam-navigation pt-3">
-    <div class="col d-none d-lg-block h3 m-0 text-overflow" *ngIf="exercises && exercises.length > 0 && !overviewPageOpen">
+    <div class="col d-none d-lg-block h3 m-0 text-overflow" *ngIf="exercises && exercises.length > 0 && !overviewPageOpen && !quizExamPageOpen">
         {{ 'artemisApp.examParticipation.progress' | artemisTranslate : { current: exerciseIndex + 1, all: exercises.length } }}
     </div>
-    <div class="col d-block d-lg-none h3 m-0 text-overflow" style="flex: 0.2" *ngIf="exercises && exercises.length > 0 && !overviewPageOpen">
+    <div class="col d-block d-lg-none h3 m-0 text-overflow" style="flex: 0.2" *ngIf="exercises && exercises.length > 0 && !overviewPageOpen && !quizExamPageOpen">
         {{ 'artemisApp.examParticipation.progressSmall' | artemisTranslate : { current: exerciseIndex + 1, all: exercises.length } }}
     </div>
     <div class="h3 m-0 text-overflow d-block col" *ngIf="overviewPageOpen">
         {{ 'artemisApp.examParticipation.examOverview' | artemisTranslate }}
     </div>
+    <div class="h3 m-0 text-overflow d-block col" *ngIf="quizExamPageOpen">Quiz Exam</div>
     <div class="col">
         <div class="d-flex justify-content-center">
             <!-- exam overview item -->
@@ -16,16 +17,28 @@
                     class="btn btn-primary w-100 synced"
                     [ngClass]="getOverviewStatus()"
                     [ngbTooltip]="'artemisApp.examParticipation.examOverview' | artemisTranslate"
-                    (click)="changePage(true, -1)"
+                    (click)="changePage(true, false, -1)"
                 >
                     <fa-icon [icon]="faBars"></fa-icon>
                 </button>
             </div>
             <div class="navigation-item">
-                <button class="btn btn-secondary w-100" (click)="changePage(false, exerciseIndex - 1, false)" [disabled]="exerciseIndex <= 0">
+                <button class="btn btn-secondary w-100" (click)="changePage(false, false, exerciseIndex - 1, false)" [disabled]="exerciseIndex <= 0">
                     <span aria-hidden="true">&laquo;</span>
                     <span class="sr-only">Previous</span>
                 </button>
+            </div>
+            <div class="navigation-item">
+                <button
+                    id="quiz-exam-exercise"
+                    class="btn btn-primary w-100"
+                    [ngClass]="setExerciseButtonStatus()"
+                    [ngbTooltip]="'artemisApp.examParticipation.' + getQuizExamButtonTooltip() | artemisTranslate"
+                    (click)="changePage(false, true, -1, false)"
+                >
+                    <fa-icon [icon]="icon"></fa-icon>
+                </button>
+                <div class="exerciseIndex">Quiz</div>
             </div>
             <ng-container *ngFor="let exercise of exercises; let i = index">
                 <div
@@ -43,17 +56,17 @@
                         class="btn btn-primary w-100"
                         [ngClass]="setExerciseButtonStatus(i)"
                         [ngbTooltip]="'artemisApp.examParticipation.' + getExerciseButtonTooltip(exercise) | artemisTranslate"
-                        (click)="changePage(false, i, false)"
+                        (click)="changePage(false, false, i, false)"
                     >
                         <fa-icon [icon]="icon"></fa-icon>
                     </button>
-                    <div class="exerciseIndex">{{ exercise.navigationTitle }}</div>
+                    <div class="exerciseIndex">{{ i + 1 }}</div>
                 </div>
             </ng-container>
             <div class="navigation-item">
                 <button
                     class="btn btn-secondary w-100"
-                    (click)="changePage(false, overviewPageOpen ? 0 : exerciseIndex + 1, false)"
+                    (click)="changePage(false, false, overviewPageOpen || quizExamPageOpen ? 0 : exerciseIndex + 1, false)"
                     [disabled]="exerciseIndex >= exercises.length - 1 || exerciseIndex < 0"
                 >
                     <span aria-hidden="true">&raquo;</span>

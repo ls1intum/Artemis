@@ -57,11 +57,6 @@ public class TextExercise extends Exercise {
     }
 
     @Override
-    public String getType() {
-        return "text";
-    }
-
-    @Override
     public ExerciseType getExerciseType() {
         return TEXT;
     }

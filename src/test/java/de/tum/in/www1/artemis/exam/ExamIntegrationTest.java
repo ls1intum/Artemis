@@ -596,7 +596,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         }
 
         for (var studentExam : studentExams) {
-            assertThat(studentExam.getExamExercises()).hasSize(exam.getNumberOfExercisesInExam());
+            assertThat(studentExam.getExercises()).hasSize(exam.getNumberOfExercisesInExam());
             assertThat(studentExam.getExam()).isEqualTo(exam);
             // TODO: check exercise configuration, each mandatory exercise group has to appear, one optional exercise should appear
         }
@@ -1357,7 +1357,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         // Ensure that the participations were not deleted
         List<StudentParticipation> participationsStudent2 = studentParticipationRepository
                 .findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(student2.getId(), studentExam2.getExercises());
-        assertThat(participationsStudent2).hasSize(studentExam2.getExamExercises().size());
+        assertThat(participationsStudent2).hasSize(studentExam2.getExercises().size());
 
         // Make sure delete also works if so many objects have been created before
         request.delete("/api/courses/" + course1.getId() + "/exams/" + exam.getId(), HttpStatus.OK);
@@ -1440,7 +1440,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         verify(gitService, times(getNumberOfProgrammingExercises(exam))).combineAllCommitsOfRepositoryIntoOne(any());
         List<StudentParticipation> participationsStudent1 = studentParticipationRepository
                 .findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(student1.getId(), studentExam1.getExercises());
-        assertThat(participationsStudent1).hasSize(studentExam1.getExamExercises().size());
+        assertThat(participationsStudent1).hasSize(studentExam1.getExercises().size());
 
         // explicitly set the user again to prevent issues in the following server call due to the use of SecurityUtils.setAuthorizationObject();
         database.changeUser(TEST_PREFIX + "instructor1");
@@ -2218,7 +2218,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
             // Ensure that the exercise ids of the student exam are the same as the exercise ids in the students exercise results
             Set<Long> exerciseIdsOfStudentResult = studentResult.exerciseGroupIdToExerciseResult().values().stream().map(ExamScoresDTO.ExerciseResult::exerciseId)
                     .collect(Collectors.toSet());
-            Set<Long> exerciseIdsInStudentExam = studentExamOfUser.getExamExercises().stream().map(ExamExercise::getId).collect(Collectors.toSet());
+            Set<Long> exerciseIdsInStudentExam = studentExamOfUser.getExercises().stream().map(Exercise::getId).collect(Collectors.toSet());
             assertThat(exerciseIdsOfStudentResult).isEqualTo(exerciseIdsInStudentExam);
             for (Map.Entry<Long, ExamScoresDTO.ExerciseResult> entry : studentResult.exerciseGroupIdToExerciseResult().entrySet()) {
                 var exerciseResult = entry.getValue();
@@ -2297,8 +2297,8 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     }
 
     private double calculateOverallPoints(Double correctionResultScore, StudentExam studentExamOfUser) {
-        return studentExamOfUser.getExamExercises().stream().filter(exercise -> !exercise.getIncludedInOverallScore().equals(IncludedInOverallScore.NOT_INCLUDED))
-                .map(ExamExercise::getMaxPoints).reduce(0.0, (total, maxScore) -> (Math.round((total + maxScore * correctionResultScore / 100) * 10) / 10.0));
+        return studentExamOfUser.getExercises().stream().filter(exercise -> !exercise.getIncludedInOverallScore().equals(IncludedInOverallScore.NOT_INCLUDED))
+                .map(Exercise::getMaxPoints).reduce(0.0, (total, maxScore) -> (Math.round((total + maxScore * correctionResultScore / 100) * 10) / 10.0));
     }
 
     @Test

@@ -1,6 +1,13 @@
 import { Component, Input, OnChanges, OnInit, Optional, SimpleChanges } from '@angular/core';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
-import { MissingResultInformation, ResultTemplateStatus, evaluateTemplateStatus, getResultIconClass, getTextColorClass } from 'app/exercises/shared/result/result.utils';
+import {
+    MissingResultInformation,
+    ResultTemplateStatus,
+    evaluateTemplateStatus,
+    getResultIconClass,
+    getTextColorClass,
+    initializedResultWithScore,
+} from 'app/exercises/shared/result/result.utils';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { HttpClient } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
@@ -25,7 +32,7 @@ import { Badge, ResultService } from 'app/exercises/shared/result/result.service
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { ExerciseCacheService } from 'app/exercises/shared/exercise/exercise-cache.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { ExamExercise } from 'app/entities/exam-exercise.model';
+import { Course } from 'app/entities/course.model';
 
 @Component({
     selector: 'jhi-result',
@@ -46,7 +53,7 @@ export class ResultComponent implements OnInit, OnChanges {
     readonly roundScoreSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
     readonly getCourseFromExercise = getCourseFromExercise;
 
-    @Input() participation: Participation;
+    @Input() participation: Participation | undefined;
     @Input() isBuilding: boolean;
     @Input() short = false;
     @Input() result?: Result;
@@ -54,7 +61,10 @@ export class ResultComponent implements OnInit, OnChanges {
     @Input() showBadge = false;
     @Input() showIcon = true;
     @Input() missingResultInfo = MissingResultInformation.NONE;
-    @Input() exercise?: ExamExercise;
+    @Input() exercise?: Exercise;
+    @Input() course?: Course;
+    @Input() isQuizExam? = false;
+    @Input() quizExamMaxPoints?: number;
 
     textColorClass: string;
     resultIconClass: IconProp;
@@ -88,56 +98,69 @@ export class ResultComponent implements OnInit, OnChanges {
      * participation and displays the corresponding message.
      */
     ngOnInit(): void {
-        if (!this.result && this.participation) {
-            this.exercise = this.exercise ?? getExercise(this.participation);
-            this.participation.exercise = this.exercise as Exercise;
-
-            if (this.participation.results?.length) {
-                if (this.exercise && this.exercise.type === ExerciseType.MODELING) {
-                    // sort results by completionDate descending to ensure the newest result is shown
-                    // this is important for modeling exercises since students can have multiple tries
-                    // think about if this should be used for all types of exercises
-                    this.participation.results.sort((r1: Result, r2: Result) => {
-                        if (r1.completionDate! > r2.completionDate!) {
-                            return -1;
-                        }
-                        if (r1.completionDate! < r2.completionDate!) {
-                            return 1;
-                        }
-                        return 0;
-                    });
-                }
-                // Make sure result and participation are connected
-                this.result = this.participation.results[0];
-                this.result.participation = this.participation;
+        if (this.isQuizExam) {
+            if (initializedResultWithScore(this.result)) {
+                this.templateStatus = ResultTemplateStatus.HAS_RESULT;
+                this.textColorClass = getTextColorClass(this.result, this.templateStatus);
+                this.resultIconClass = getResultIconClass(this.result, this.templateStatus);
+                this.resultString = this.resultService.getResultString(this.result, this.course, this.quizExamMaxPoints!, undefined, this.short);
+                this.resultTooltip = this.buildResultTooltip();
             }
-        } else if (!this.participation && this.result && this.result.participation) {
-            // make sure this.participation is initialized in case it was not passed
-            this.participation = this.result.participation;
-            this.exercise = this.exercise ?? getExercise(this.participation);
-            this.participation.exercise = this.exercise as Exercise;
-        } else if (this.participation) {
-            this.exercise = this.exercise ?? getExercise(this.participation);
-            this.participation.exercise = this.exercise as Exercise;
-        } else if (!this.result?.exampleResult) {
-            // result of example submission does not have participation
-            captureException(new Error('The result component did not get a participation or result as parameter and can therefore not display the score'));
-            return;
-        }
-        // Note: it can still happen here that this.result is undefined, e.g. when this.participation.results.length == 0
-        this.submission = this.result?.submission;
+        } else {
+            if (!this.result && this.participation) {
+                this.exercise = this.exercise ?? getExercise(this.participation);
+                this.participation.exercise = this.exercise as Exercise;
 
-        this.evaluate();
+                if (this.participation.results?.length) {
+                    if (this.exercise && this.exercise.type === ExerciseType.MODELING) {
+                        // sort results by completionDate descending to ensure the newest result is shown
+                        // this is important for modeling exercises since students can have multiple tries
+                        // think about if this should be used for all types of exercises
+                        this.participation.results.sort((r1: Result, r2: Result) => {
+                            if (r1.completionDate! > r2.completionDate!) {
+                                return -1;
+                            }
+                            if (r1.completionDate! < r2.completionDate!) {
+                                return 1;
+                            }
+                            return 0;
+                        });
+                    }
+                    // Make sure result and participation are connected
+                    this.result = this.participation.results[0];
+                    this.result.participation = this.participation;
+                }
+            } else if (!this.participation && this.result && this.result.participation) {
+                // make sure this.participation is initialized in case it was not passed
+                this.participation = this.result.participation;
+                this.exercise = this.exercise ?? getExercise(this.participation);
+                this.participation.exercise = this.exercise as Exercise;
+            } else if (this.participation) {
+                this.exercise = this.exercise ?? getExercise(this.participation);
+                this.participation.exercise = this.exercise as Exercise;
+            } else if (!this.result?.exampleResult) {
+                // result of example submission does not have participation
+                captureException(new Error('The result component did not get a participation or result as parameter and can therefore not display the score'));
+                return;
+            }
+            // Note: it can still happen here that this.result is undefined, e.g. when this.participation.results.length == 0
+            this.submission = this.result?.submission;
+            this.evaluate();
+
+            if (this.showBadge && this.result) {
+                this.badge = ResultService.evaluateBadge(this.participation!, this.result);
+            }
+        }
 
         this.translate.onLangChange.subscribe(() => {
             if (this.resultString) {
-                this.resultString = this.resultService.getResultString(this.result, this.exercise, this.short);
+                if (this.isQuizExam) {
+                    this.resultString = this.resultService.getResultString(this.result, this.course, this.quizExamMaxPoints!, undefined, this.short);
+                } else {
+                    this.resultString = this.resultService.getResultString(this.result, this.course, this.exercise!.maxPoints!, this.exercise, this.short);
+                }
             }
         });
-
-        if (this.showBadge && this.result) {
-            this.badge = ResultService.evaluateBadge(this.participation, this.result);
-        }
     }
 
     /**
@@ -167,11 +190,11 @@ export class ResultComponent implements OnInit, OnChanges {
         if (this.templateStatus === ResultTemplateStatus.LATE) {
             this.textColorClass = getTextColorClass(this.result, this.templateStatus);
             this.resultIconClass = getResultIconClass(this.result, this.templateStatus);
-            this.resultString = this.resultService.getResultString(this.result, this.exercise, this.short);
+            this.resultString = this.resultService.getResultString(this.result, this.course, this.exercise!.maxPoints!, this.exercise, this.short);
         } else if (this.result && this.result.score !== undefined && (this.result.rated || this.result.rated == undefined || this.showUngradedResults)) {
             this.textColorClass = getTextColorClass(this.result, this.templateStatus);
             this.resultIconClass = getResultIconClass(this.result, this.templateStatus);
-            this.resultString = this.resultService.getResultString(this.result, this.exercise, this.short);
+            this.resultString = this.resultService.getResultString(this.result, this.course, this.exercise!.maxPoints!, this.exercise, this.short);
             this.resultTooltip = this.buildResultTooltip();
         } else if (this.templateStatus !== ResultTemplateStatus.MISSING) {
             // make sure that we do not display results that are 'rated=false' or that do not have a score

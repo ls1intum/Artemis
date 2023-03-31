@@ -13,7 +13,6 @@ import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { DurationPipe } from 'app/shared/pipes/duration.pipe';
 import { CloseCircleComponent } from 'app/shared/close-circle/close-circle.component';
 import { ArtemisDateRangePipe } from 'app/shared/pipes/artemis-date-range.pipe';
-import { CastPipe } from 'app/shared/pipes/cast.pipe';
 
 @NgModule({
     imports: [ArtemisSharedLibsModule],
@@ -30,7 +29,6 @@ import { CastPipe } from 'app/shared/pipes/cast.pipe';
         ArtemisDurationFromSecondsPipe,
         DurationPipe,
         CloseCircleComponent,
-        CastPipe,
     ],
     exports: [
         ArtemisSharedLibsModule,
@@ -46,7 +44,6 @@ import { CastPipe } from 'app/shared/pipes/cast.pipe';
         ArtemisDurationFromSecondsPipe,
         DurationPipe,
         CloseCircleComponent,
-        CastPipe,
     ],
     providers: [ArtemisDatePipe, ArtemisDateRangePipe],
 })

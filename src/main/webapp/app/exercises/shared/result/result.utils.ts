@@ -17,7 +17,6 @@ import { Participation } from 'app/entities/participation/participation.model';
 import dayjs from 'dayjs/esm';
 import { ResultWithPointsPerGradingCriterion } from 'app/entities/result-with-points-per-grading-criterion.model';
 import { TestCaseResult } from 'app/entities/test-case-result.model';
-import { ExamExercise } from 'app/entities/exam-exercise.model';
 
 /**
  * Enumeration object representing the possible options that
@@ -105,7 +104,7 @@ export const getUnreferencedFeedback = (feedbacks: Feedback[] | undefined): Feed
 };
 
 export const evaluateTemplateStatus = (
-    exercise: ExamExercise | undefined,
+    exercise: Exercise | undefined,
     participation: Participation | undefined,
     result: Result | undefined,
     isBuilding: boolean,

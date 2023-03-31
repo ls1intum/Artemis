@@ -1,11 +1,10 @@
 import { Injectable } from '@angular/core';
 import { InitializationState } from 'app/entities/participation/participation.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
+import { QuizQuestion, QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
 import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
 import { captureException } from '@sentry/browser';
-import { QuizExamExercise } from 'app/entities/quiz-exam-exercise.model';
 
 @Injectable({ providedIn: 'root' })
 export class ArtemisQuizService {
@@ -14,17 +13,18 @@ export class ArtemisQuizService {
      * (and answerOptions or dragItems within each question)
      * if randomizeOrder is true
      *
-     * @param quizExercise {object} the quizExercise to randomize elements in
+     * @param quizQuestions {object} the quizQuestions to be randomized
+     * @param randomizeQuestionOrder {object} the flag whether or not to randomize the quiz questions
      */
-    randomizeOrder(quizExercise: QuizExamExercise) {
-        if (quizExercise.quizQuestions) {
+    randomizeOrder(quizQuestions: QuizQuestion[] | undefined, randomizeQuestionOrder: boolean | undefined) {
+        if (quizQuestions) {
             // shuffle questions
-            if (quizExercise.randomizeQuestionOrder) {
-                quizExercise.quizQuestions?.shuffle();
+            if (randomizeQuestionOrder) {
+                quizQuestions?.shuffle();
             }
 
             // shuffle answerOptions / dragItems within questions
-            quizExercise.quizQuestions.forEach((question) => {
+            quizQuestions.forEach((question) => {
                 if (question.randomizeOrder) {
                     if (question.type === QuizQuestionType.MULTIPLE_CHOICE) {
                         (question as MultipleChoiceQuestion).answerOptions?.shuffle();

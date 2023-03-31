@@ -261,16 +261,40 @@
                     </tr>
                 </thead>
                 <tbody>
+                    <tr
+                        jhi-student-exam-detail-table-row
+                        [course]="course"
+                        [examId]="examId"
+                        [busy]="busy"
+                        [isTestRun]="isTestRun"
+                        [studentExam]="studentExam"
+                        [exerciseTitle]="'Quiz Exam'"
+                        [exerciseMaxPoints]="studentExam.quizQuestionTotalPoints"
+                        [exerciseType]="ExerciseType.QUIZ"
+                        [includedInOverallScore]="IncludedInOverallScore.INCLUDED_COMPLETELY"
+                        [submission]="studentExam.quizExamSubmission"
+                        [result]="getQuizExamResult(studentExam)"
+                        [achievedPoints]="quizExamAchievedPoints"
+                    ></tr>
                     <ng-template ngFor let-exercise [ngForOf]="studentExam.exercises">
                         <tr
                             jhi-student-exam-detail-table-row
                             [course]="course"
                             [examId]="examId"
-                            [exercise]="exercise"
                             [busy]="busy"
                             [isTestRun]="isTestRun"
                             [studentExam]="studentExam"
-                            [achievedPointsPerExercise]="achievedPointsPerExercise"
+                            [exerciseId]="exercise!.id!"
+                            [exerciseGroupId]="exercise!.exerciseGroup?.id"
+                            [exerciseTitle]="exercise!.title"
+                            [exerciseMaxPoints]="exercise!.maxPoints"
+                            [exerciseBonusPoints]="exercise!.bonusPoints"
+                            [exerciseType]="exercise!.type"
+                            [includedInOverallScore]="exercise.includedInOverallScore"
+                            [studentParticipationId]="getStudentParticipation(exercise)?.id ?? undefined"
+                            [submission]="getSubmission(exercise)"
+                            [result]="getResult(exercise)"
+                            [achievedPoints]="achievedPointsPerExercise[exercise!.id!]"
                         ></tr>
                     </ng-template>
                     <tr>

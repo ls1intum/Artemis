@@ -9,12 +9,14 @@ import { AlertService } from 'app/core/util/alert.service';
 import { round } from 'app/shared/util/utils';
 import dayjs from 'dayjs/esm';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entities/submission.model';
+import { Submission, getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entities/submission.model';
 import { GradeType } from 'app/entities/grading-scale.model';
 import { faSave } from '@fortawesome/free-solid-svg-icons';
 import { getRelativeWorkingTimeExtension, normalWorkingTime } from 'app/exam/participate/exam.utils';
 import { StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
-import { ExamExercise } from 'app/entities/exam-exercise.model';
+import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
+import { Result } from 'app/entities/result.model';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 
 @Component({
     selector: 'jhi-student-exam-detail',
@@ -33,6 +35,7 @@ export class StudentExamDetailComponent implements OnInit {
     isTestExam: boolean;
     maxTotalPoints = 0;
     achievedTotalPoints = 0;
+    quizExamAchievedPoints: number;
     bonusTotalPoints = 0;
     busy = false;
 
@@ -53,6 +56,9 @@ export class StudentExamDetailComponent implements OnInit {
 
     // Icons
     faSave = faSave;
+
+    ExerciseType = ExerciseType;
+    IncludedInOverallScore = IncludedInOverallScore;
 
     constructor(
         private route: ActivatedRoute,
@@ -130,6 +136,7 @@ export class StudentExamDetailComponent implements OnInit {
             this.studentExam.examSessions.sort((s1, s2) => s1.id! - s2.id!);
         }
         this.achievedPointsPerExercise = studentExamWithGrade.achievedPointsPerExercise;
+        this.quizExamAchievedPoints = studentExamWithGrade.studentResult.quizExamOverallPointsAchieved;
 
         this.initWorkingTimeForm();
 
@@ -179,7 +186,7 @@ export class StudentExamDetailComponent implements OnInit {
      * @param exercise which should be included in the total points calculations.
      * @private
      */
-    private initExercise(exercise: ExamExercise) {
+    private initExercise(exercise: Exercise) {
         if (exercise.studentParticipations?.[0]?.submissions?.[0]) {
             exercise.studentParticipations[0].submissions[0].results = exercise.studentParticipations[0].results;
             setLatestSubmissionResult(exercise?.studentParticipations[0].submissions?.[0], getLatestSubmissionResult(exercise?.studentParticipations[0].submissions?.[0]));
@@ -286,5 +293,37 @@ export class StudentExamDetailComponent implements OnInit {
                 this.toggle();
             }
         });
+    }
+
+    getSubmission(exercise: Exercise): Submission | undefined {
+        if (exercise.studentParticipations && exercise.studentParticipations.length > 0) {
+            if (exercise.studentParticipations[0].submissions && exercise.studentParticipations[0].submissions.length > 0) {
+                return exercise.studentParticipations[0].submissions[0] ?? undefined;
+            }
+        }
+        return undefined;
+    }
+
+    getResult(exercise: Exercise): Result | undefined {
+        if (exercise.studentParticipations && exercise.studentParticipations.length > 0) {
+            if (exercise.studentParticipations[0].results && exercise.studentParticipations[0].results.length! > 0) {
+                return exercise.studentParticipations[0].results[0] ?? undefined;
+            }
+        }
+        return undefined;
+    }
+
+    getStudentParticipation(exercise: Exercise): StudentParticipation | undefined {
+        if (exercise.studentParticipations && exercise.studentParticipations.length > 0) {
+            return exercise.studentParticipations[0];
+        }
+        return undefined;
+    }
+
+    getQuizExamResult(studentExam: StudentExam) {
+        if (studentExam.quizExamSubmission && studentExam.quizExamSubmission.results && studentExam.quizExamSubmission.results.length > 0) {
+            return studentExam.quizExamSubmission.results[0];
+        }
+        return undefined;
     }
 }

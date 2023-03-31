@@ -1,6 +1,6 @@
 import { Submission } from 'app/entities/submission.model';
 import { ExamPageComponent } from 'app/exam/participate/exercises/exam-page.component';
-import { ExamExercise } from 'app/entities/exam-exercise.model';
+import { Exercise } from 'app/entities/exercise.model';
 
 export abstract class ExamSubmissionComponent extends ExamPageComponent {
     /**
@@ -23,5 +23,5 @@ export abstract class ExamSubmissionComponent extends ExamPageComponent {
     abstract updateViewFromSubmission(): void;
 
     abstract getSubmission(): Submission | undefined;
-    abstract getExercise(): ExamExercise;
+    abstract getExercise(): Exercise;
 }

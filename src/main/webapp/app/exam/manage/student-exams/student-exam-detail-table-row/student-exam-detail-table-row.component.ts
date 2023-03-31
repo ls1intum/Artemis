@@ -7,7 +7,6 @@ import { Course } from 'app/entities/course.model';
 import { Result } from 'app/entities/result.model';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { faFolderOpen } from '@fortawesome/free-solid-svg-icons';
-import { ExamExercise } from 'app/entities/exam-exercise.model';
 
 @Component({
     /* eslint-disable-next-line  @angular-eslint/component-selector */
@@ -16,18 +15,25 @@ import { ExamExercise } from 'app/entities/exam-exercise.model';
     providers: [],
 })
 export class StudentExamDetailTableRowComponent implements OnChanges {
-    @Input() exercise: ExamExercise;
     @Input() examId: number;
     @Input() isTestRun: boolean;
     @Input() course: Course;
     @Input() busy: boolean;
     @Input() studentExam: StudentExam;
-    @Input() achievedPointsPerExercise: { [exerciseId: number]: number };
+    @Input() exerciseId?: number;
+    @Input() exerciseType?: ExerciseType;
+    @Input() result?: Result;
+    @Input() submission?: Submission;
+    @Input() studentParticipationId?: number;
+    @Input() achievedPoints?: number;
+    @Input() exerciseGroupId?: number;
+    @Input() exerciseTitle?: string;
+    @Input() exerciseMaxPoints?: number;
+    @Input() exerciseBonusPoints?: number;
+    @Input() includedInOverallScore?: IncludedInOverallScore;
 
     courseId: number;
     studentParticipation: StudentParticipation;
-    submission: Submission;
-    result: Result;
     openingAssessmentEditorForNewSubmission = false;
     readonly ExerciseType = ExerciseType;
     getIcon = getIcon;
@@ -36,17 +42,6 @@ export class StudentExamDetailTableRowComponent implements OnChanges {
     faFolderOpen = faFolderOpen;
 
     ngOnChanges() {
-        if (this.exercise.studentParticipations?.[0]) {
-            this.studentParticipation = this.exercise.studentParticipations![0];
-            // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
-            if (this.studentParticipation.submissions?.length! > 0) {
-                this.submission = this.studentParticipation.submissions![0];
-            }
-            // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
-            if (this.studentParticipation.results?.length! > 0) {
-                this.result = this.studentParticipation.results![0];
-            }
-        }
         if (this.course && this.course.id) {
             this.courseId = this.course.id!;
         }
@@ -54,27 +49,25 @@ export class StudentExamDetailTableRowComponent implements OnChanges {
 
     /**
      * get the link for the assessment of a specific submission of the current exercise
-     * @param exercise
-     * @param submission
-     * @param resultId
+     *
      */
-    getAssessmentLink(exercise: ExamExercise, submission?: Submission, resultId?: number) {
+    getAssessmentLink() {
         let route;
-        if (!exercise || !exercise.type) {
+        if (!this.exerciseId || !this.exerciseType) {
             return;
         }
 
-        if (submission) {
+        if (this.submission) {
             this.openingAssessmentEditorForNewSubmission = true;
             route = getLinkToSubmissionAssessment(
-                exercise.type,
+                this.exerciseType!,
                 this.courseId,
-                exercise.id!,
-                this.studentParticipation?.id,
-                submission.id!,
+                this.exerciseId,
+                this.studentParticipationId,
+                this.submission!.id!,
                 this.examId,
-                exercise.exerciseGroup?.id,
-                resultId,
+                this.exerciseGroupId,
+                this.result?.id,
             );
             this.openingAssessmentEditorForNewSubmission = false;
         }
@@ -83,17 +76,13 @@ export class StudentExamDetailTableRowComponent implements OnChanges {
 
     /**
      * Gets the bonus points from the given exercise according to its includedInOverallScore value.
-     * @param exercise exercise with or without bonus points
      */
-    getBonusPoints(exercise?: ExamExercise): number | undefined {
-        if (!exercise) {
-            return 0;
-        }
-        switch (exercise.includedInOverallScore) {
+    getBonusPoints(): number | undefined {
+        switch (this.includedInOverallScore) {
             case IncludedInOverallScore.INCLUDED_COMPLETELY:
-                return exercise.bonusPoints;
+                return this.exerciseBonusPoints;
             case IncludedInOverallScore.INCLUDED_AS_BONUS:
-                return exercise.maxPoints;
+                return this.exerciseMaxPoints;
             default:
                 return 0;
         }
@@ -103,13 +92,10 @@ export class StudentExamDetailTableRowComponent implements OnChanges {
      * Gets the max points from the given exercise according to its includedInOverallScore value.
      * @param exercise relevant exercise
      */
-    getMaxPoints(exercise?: ExamExercise): number | undefined {
-        if (!exercise) {
-            return 0;
-        }
-        switch (exercise.includedInOverallScore) {
+    getMaxPoints(): number | undefined {
+        switch (this.includedInOverallScore) {
             case IncludedInOverallScore.INCLUDED_COMPLETELY:
-                return exercise.maxPoints;
+                return this.exerciseMaxPoints;
             case IncludedInOverallScore.INCLUDED_AS_BONUS:
             default:
                 return 0;

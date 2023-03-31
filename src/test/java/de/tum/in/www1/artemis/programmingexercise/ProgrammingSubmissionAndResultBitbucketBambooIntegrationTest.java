@@ -770,7 +770,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         StudentExam studentExam = createEndedStudentExamWithGracePeriod(user, 0);
 
         // Add a participation for the programming exercise
-        ProgrammingExercise programmingExercise = (ProgrammingExercise) studentExam.getExamExercises().get(0);
+        ProgrammingExercise programmingExercise = (ProgrammingExercise) studentExam.getExercises().get(0);
         var participation = database.addStudentParticipationForProgrammingExercise(programmingExercise, user.getLogin());
 
         // mock request for fetchCommitInfo()
@@ -820,7 +820,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         StudentExam studentExam = createEndedStudentExamWithGracePeriod(user, 180);
 
         // Add a participation for the programming exercise
-        ProgrammingExercise programmingExercise = (ProgrammingExercise) studentExam.getExamExercises().get(0);
+        ProgrammingExercise programmingExercise = (ProgrammingExercise) studentExam.getExercises().get(0);
 
         var participation = database.addStudentParticipationForProgrammingExercise(programmingExercise, user.getLogin());
 

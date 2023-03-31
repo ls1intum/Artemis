@@ -10,10 +10,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.domain.quiz.AbstractQuizSubmission;
-import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
-import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
-import de.tum.in.www1.artemis.domain.quiz.SubmittedAnswer;
+import de.tum.in.www1.artemis.domain.quiz.*;
 
 /**
  * Spring Data JPA repository for the SubmittedAnswer entity.
@@ -36,9 +33,10 @@ public interface SubmittedAnswerRepository extends JpaRepository<SubmittedAnswer
      * Loads submitted answers from the database in case there is a QuizSubmission in one of the passed student participation
      * Assumes that submissions are loaded eagerly in case they exist
      *
-     * @param participations the student participations for which the submitted answers in quiz submissions should be loaded
+     * @param participations     the student participations for which the submitted answers in quiz submissions should be loaded
+     * @param quizExamSubmission
      */
-    default void loadQuizSubmissionsSubmittedAnswers(Collection<StudentParticipation> participations) {
+    default void loadQuizSubmissionsSubmittedAnswers(Collection<StudentParticipation> participations, QuizExamSubmission quizExamSubmission) {
         for (var participation : participations) {
             if (participation.getExercise() instanceof QuizExercise) {
                 if (participation.getSubmissions() != null) {
@@ -51,6 +49,10 @@ public interface SubmittedAnswerRepository extends JpaRepository<SubmittedAnswer
                     }
                 }
             }
+        }
+        if (quizExamSubmission != null) {
+            var submittedAnswers = findBySubmission(quizExamSubmission);
+            quizExamSubmission.setSubmittedAnswers(submittedAnswers);
         }
     }
 }

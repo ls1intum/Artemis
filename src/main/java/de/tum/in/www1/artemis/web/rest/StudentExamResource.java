@@ -7,7 +7,6 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
@@ -144,7 +143,7 @@ public class StudentExamResource {
         List<StudentParticipation> participations = studentParticipationRepository.findByStudentExamWithEagerSubmissionsResult(studentExam, true);
 
         // fetch all submitted answers for quizzes
-        submittedAnswerRepository.loadQuizSubmissionsSubmittedAnswers(participations);
+        submittedAnswerRepository.loadQuizSubmissionsSubmittedAnswers(participations, studentExam.getQuizExamSubmission());
 
         // connect the exercises and student participations correctly and make sure all relevant associations are available
         for (Exercise exercise : studentExam.getExercises()) {
@@ -154,9 +153,6 @@ public class StudentExamResource {
         studentExam.getUser().setVisibleRegistrationNumber();
 
         examService.loadQuizExamSubmissionResultSubmittedAnswers(studentExam);
-
-        Optional<StudentParticipation> quizExamParticipation = studentExam.getQuizExamExercise().getStudentParticipations().stream().findFirst();
-        quizExamParticipation.ifPresent(participations::add);
 
         StudentExamWithGradeDTO studentExamWithGradeDTO = examService.calculateStudentResultWithGradeAndPoints(studentExam, participations);
 
@@ -307,8 +303,7 @@ public class StudentExamResource {
 
         prepareStudentExamForConduction(request, user, studentExam);
 
-        log.info("getStudentExamForConduction done in {}ms for {} exercises for user {}", System.currentTimeMillis() - start, studentExam.getExamExercises().size(),
-                user.getLogin());
+        log.info("getStudentExamForConduction done in {}ms for {} exercises for user {}", System.currentTimeMillis() - start, studentExam.getExercises().size(), user.getLogin());
         return ResponseEntity.ok(studentExam);
     }
 
@@ -411,7 +406,7 @@ public class StudentExamResource {
         // 5th fetch participations, submissions and results and connect them to the studentExam
         examService.fetchParticipationsSubmissionsAndResultsForExam(studentExam, user);
 
-        log.info("getStudentExamForSummary done in {}ms for {} exercises for user {}", System.currentTimeMillis() - start, studentExam.getExamExercises().size(), user.getLogin());
+        log.info("getStudentExamForSummary done in {}ms for {} exercises for user {}", System.currentTimeMillis() - start, studentExam.getExercises().size(), user.getLogin());
         return ResponseEntity.ok(studentExam);
     }
 
@@ -447,7 +442,7 @@ public class StudentExamResource {
         StudentExamWithGradeDTO studentExamWithGradeDTO = examService.getStudentExamGradesForSummaryAsStudent(targetUser, studentExam);
 
         log.info("getStudentExamGradesForSummary done in {}ms for {} exercises for target user {} by caller user {}", System.currentTimeMillis() - start,
-                studentExam.getExamExercises().size(), targetUser.getLogin(), currentUser.getLogin());
+                studentExam.getExercises().size(), targetUser.getLogin(), currentUser.getLogin());
         return ResponseEntity.ok(studentExamWithGradeDTO);
     }
 

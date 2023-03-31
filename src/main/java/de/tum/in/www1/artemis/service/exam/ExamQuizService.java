@@ -89,7 +89,7 @@ public class ExamQuizService {
         final var participations = studentExam.getExercises().stream()
                 .flatMap(exercise -> exercise.getStudentParticipations().stream().filter(participation -> participation.getExercise() instanceof QuizExercise))
                 .collect(Collectors.toSet());
-        submittedAnswerRepository.loadQuizSubmissionsSubmittedAnswers(participations);
+        submittedAnswerRepository.loadQuizSubmissionsSubmittedAnswers(participations, studentExam.getQuizExamSubmission());
         for (final var participation : participations) {
             var quizExercise = (QuizExercise) participation.getExercise();
             final var optionalExistingSubmission = participation.findLatestSubmission();
@@ -163,7 +163,7 @@ public class ExamQuizService {
     private Set<Result> evaluateSubmissions(@NotNull QuizExercise quizExercise) {
         Set<Result> createdResults = new HashSet<>();
         List<StudentParticipation> studentParticipations = studentParticipationRepository.findAllWithEagerLegalSubmissionsAndEagerResultsByExerciseId(quizExercise.getId());
-        submittedAnswerRepository.loadQuizSubmissionsSubmittedAnswers(studentParticipations);
+        submittedAnswerRepository.loadQuizSubmissionsSubmittedAnswers(studentParticipations, null);
 
         for (var participation : studentParticipations) {
             if (!participation.isTestRun()) {

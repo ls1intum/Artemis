@@ -50,11 +50,6 @@ public class FileUploadExercise extends Exercise {
     }
 
     @Override
-    public String getType() {
-        return "file-upload";
-    }
-
-    @Override
     public String toString() {
         return "FileUploadExercise{" + "id=" + getId() + "}";
     }

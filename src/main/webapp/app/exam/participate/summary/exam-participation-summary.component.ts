@@ -15,8 +15,8 @@ import { ExamParticipationService } from 'app/exam/participate/exam-participatio
 import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
 import { PlagiarismCaseInfo } from 'app/exercises/shared/plagiarism/types/PlagiarismCaseInfo';
 import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/PlagiarismVerdict';
-import { getExamExercises } from 'app/exam/participate/exam.utils';
-import { ExamExercise } from 'app/entities/exam-exercise.model';
+import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { Result } from 'app/entities/result.model';
 
 @Component({
     selector: 'jhi-exam-participation-summary',
@@ -39,7 +39,6 @@ export class ExamParticipationSummaryComponent implements OnInit {
      * Current student's exam.
      */
     private _studentExam: StudentExam;
-    examExercises: ExamExercise[];
     plagiarismCaseInfos: { [exerciseId: number]: PlagiarismCaseInfo } = {};
 
     get studentExam(): StudentExam {
@@ -49,7 +48,12 @@ export class ExamParticipationSummaryComponent implements OnInit {
     @Input()
     set studentExam(studentExam: StudentExam) {
         this._studentExam = studentExam;
-        this.examExercises = getExamExercises(studentExam);
+        this.hasQuizExam = (studentExam.quizQuestions?.length ?? 0) > 0;
+        if (this.hasQuizExam) {
+            if (studentExam.quizExamSubmission?.results && studentExam.quizExamSubmission?.results.length > 0) {
+                this.quizExamResult = studentExam.quizExamSubmission.results[0];
+            }
+        }
         if (this.studentExamGradeInfoDTO) {
             this.studentExamGradeInfoDTO.studentExam = studentExam;
         }
@@ -73,6 +77,10 @@ export class ExamParticipationSummaryComponent implements OnInit {
 
     testRunConduction = false;
     testExamConduction = false;
+
+    hasQuizExam = false;
+    collapseQuizExam = false;
+    quizExamResult: Result | undefined;
 
     examWithOnlyIdAndStudentReviewPeriod: Exam;
 
@@ -138,12 +146,8 @@ export class ExamParticipationSummaryComponent implements OnInit {
         return getIcon(exerciseType);
     }
 
-    asProgrammingExercise(exercise: ExamExercise): ProgrammingExercise {
+    asProgrammingExercise(exercise: Exercise): ProgrammingExercise {
         return exercise as ProgrammingExercise;
-    }
-
-    asExercise(exercise: ExamExercise): Exercise {
-        return exercise as Exercise;
     }
 
     get resultsPublished() {
@@ -164,7 +168,7 @@ export class ExamParticipationSummaryComponent implements OnInit {
         setTimeout(() => this.themeService.print());
     }
 
-    public generateLink(exercise: ExamExercise) {
+    public generateLink(exercise: Exercise) {
         if (exercise?.studentParticipations?.length) {
             return ['/courses', this.courseId, `${exercise.type}-exercises`, exercise.id, 'participate', exercise.studentParticipations[0].id];
         }
@@ -175,7 +179,7 @@ export class ExamParticipationSummaryComponent implements OnInit {
      * @param exercise
      * returns the students' submission for the exercise, undefined if no participation could be found
      */
-    getSubmissionForExercise(exercise: ExamExercise) {
+    getSubmissionForExercise(exercise: Exercise) {
         return exercise?.studentParticipations?.[0]?.submissions?.[0];
     }
 
@@ -183,7 +187,7 @@ export class ExamParticipationSummaryComponent implements OnInit {
      * @param exercise
      * returns the students' submission for the exercise, undefined if no participation could be found
      */
-    getParticipationForExercise(exercise: ExamExercise) {
+    getParticipationForExercise(exercise: Exercise) {
         return exercise.studentParticipations?.[0] || undefined;
     }
 
@@ -243,5 +247,9 @@ export class ExamParticipationSummaryComponent implements OnInit {
             return this.serverDateService.now().isBefore(this.studentExam.exam.examStudentReviewEnd);
         }
         return false;
+    }
+
+    asQuizExercise(exercise: Exercise): QuizExercise {
+        return exercise as QuizExercise;
     }
 }

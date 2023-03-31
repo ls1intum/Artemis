@@ -637,11 +637,6 @@ public class ProgrammingExercise extends Exercise {
         super.filterSensitiveInformation();
     }
 
-    @Override
-    public String getType() {
-        return "programming";
-    }
-
     /**
      * Get all results of a student participation which are rated or unrated
      *

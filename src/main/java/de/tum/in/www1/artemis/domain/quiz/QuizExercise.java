@@ -23,7 +23,6 @@ import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseType;
 import de.tum.in.www1.artemis.domain.enumeration.QuizMode;
-import de.tum.in.www1.artemis.domain.exam.QuizExamExercise;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.view.QuizView;
@@ -39,7 +38,7 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 @Entity
 @DiscriminatorValue(value = "Q")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class QuizExercise extends Exercise implements QuizConfiguration, QuizExamExercise {
+public class QuizExercise extends Exercise implements QuizConfiguration {
 
     @Column(name = "randomize_question_order")
     @JsonView(QuizView.Before.class)
@@ -607,11 +606,6 @@ public class QuizExercise extends Exercise implements QuizConfiguration, QuizExa
                 throw new BadRequestAlertException("Start time must not be before release date!", getTitle(), "noValidDates");
             }
         });
-    }
-
-    @Override
-    public Boolean isQuizExam() {
-        return false;
     }
 
     @Override

@@ -12,6 +12,19 @@
             </tr>
         </thead>
         <tbody>
+            <tr *ngIf="hasQuizExam">
+                <th scope="row">{{ 1 }}</th>
+                <td>
+                    <span>Quiz Exam</span>
+                </td>
+                <td>{{ 'artemisApp.exercise.yes' | artemisTranslate }}</td>
+                <td>
+                    {{ getQuizExamAchievedPointsSum() }}
+                </td>
+                <td>
+                    <span>{{ quizExamMaxPoints }}</span>
+                </td>
+            </tr>
             <tr
                 *ngFor="let exercise of exercises; let i = index"
                 [ngClass]="{
@@ -19,7 +32,7 @@
                     'font-italic text-warning font-weight-bold': exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_AS_BONUS
                 }"
             >
-                <th scope="row">{{ i + 1 }}</th>
+                <th scope="row">{{ i + (hasQuizExam ? 2 : 1) }}</th>
                 <td>
                     <span *ngIf="exercise.title">{{ exercise.title }}</span>
                 </td>

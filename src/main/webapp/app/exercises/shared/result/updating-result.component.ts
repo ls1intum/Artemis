@@ -16,7 +16,6 @@ import { getExerciseDueDate } from 'app/exercises/shared/exercise/exercise.utils
 import { hasParticipationChanged } from 'app/exercises/shared/participation/participation.utils';
 import { MissingResultInformation } from 'app/exercises/shared/result/result.utils';
 import { convertDateFromServer } from 'app/utils/date.utils';
-import { ExamExercise } from 'app/entities/exam-exercise.model';
 
 /**
  * A component that wraps the result component, updating its result on every websocket result event for the logged-in user.
@@ -29,7 +28,7 @@ import { ExamExercise } from 'app/entities/exam-exercise.model';
     providers: [ResultService, RepositoryService],
 })
 export class UpdatingResultComponent implements OnChanges, OnDestroy {
-    @Input() exercise: ExamExercise;
+    @Input() exercise: Exercise;
     @Input() participation: StudentParticipation;
     @Input() short = false;
     @Input() showUngradedResults = false;
