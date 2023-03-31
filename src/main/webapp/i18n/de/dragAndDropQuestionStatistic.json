@@ -3,8 +3,7 @@
         "dragAndDropQuestionStatistic": {
             "home": {
                 "title": "Drag-And-Drop Question Statistics",
-                "createLabel": "Drag-And-Drop Question Statistic erstellen",
-                "createOrEditLabel": "Drag-And-Drop Question Statistic erstellen oder bearbeiten"
+                "createLabel": "Drag-And-Drop Question Statistic erstellen"
             },
             "created": "Drag-And-Drop Question Statistic erstellt mit ID {{ param }}",
             "updated": "Drag-And-Drop Question Statistic aktualisiert mit ID {{ param }}",

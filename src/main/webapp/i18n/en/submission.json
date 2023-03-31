@@ -3,8 +3,7 @@
         "submission": {
             "home": {
                 "title": "Submissions",
-                "createLabel": "Create a new Submission",
-                "createOrEditLabel": "Create or edit a Submission"
+                "createLabel": "Create a new Submission"
             },
             "created": "Created new Submission with identifier {{ param }}",
             "updated": "Updated Submission with identifier {{ param }}",

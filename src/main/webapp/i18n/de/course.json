@@ -4,8 +4,7 @@
             "home": {
                 "title": "Kurse",
                 "createLabel": "Kurs erstellen",
-                "editLabel": "Kurs bearbeiten",
-                "createOrEditLabel": "Kurs erstellen oder bearbeiten"
+                "editLabel": "Kurs bearbeiten"
             },
             "created": "Kurs erstellt mit Titel {{ param }}",
             "updated": "Kurs aktualisiert mit Titel {{ param }}",
@@ -197,7 +196,9 @@
                 "averageStudentScoreTitle": "Durchschnittliche Punktzahl der Studierenden"
             },
             "activeStudents": "Aktive Studierende: {{ students }}",
-            "notStartedYet": "Der Kurs hat noch nicht offiziell begonnen. Offizieller Kursstart:"
+            "notStartedYet": "Der Kurs hat noch nicht offiziell begonnen. Offizieller Kursstart:",
+            "noOrganizations": "Keine Organisationen",
+            "organizationAddingHint": "Administratoren können Organisationen zu Kursen hinzufügen."
         },
         "courseStatistics": {
             "statistics": "Statistiken",

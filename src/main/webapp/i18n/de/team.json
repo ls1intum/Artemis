@@ -3,8 +3,7 @@
         "team": {
             "home": {
                 "title": "Teams",
-                "createLabel": "Team erstellen",
-                "createOrEditLabel": "Team erstellen oder bearbeiten"
+                "createLabel": "Team erstellen"
             },
             "created": "Team erstellt mit ID {{ param }}",
             "updated": "Team von {{ param }} aktualisiert",

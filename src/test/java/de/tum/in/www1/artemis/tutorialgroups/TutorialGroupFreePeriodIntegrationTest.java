@@ -33,8 +33,8 @@ class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGroupIntegr
         if (userRepository.findOneByLogin(testPrefix + "instructor42").isEmpty()) {
             userRepository.save(ModelFactory.generateActivatedUser(testPrefix + "instructor42"));
         }
-        this.exampleTutorialGroupId = databaseUtilService.createTutorialGroup(exampleCourseId, generateRandomTitle(), "LoremIpsum1", 10, false, "LoremIpsum1", Language.ENGLISH,
-                userRepository.findOneByLogin(testPrefix + "tutor1").get(), Collections.emptySet()).getId();
+        this.exampleTutorialGroupId = databaseUtilService.createTutorialGroup(exampleCourseId, generateRandomTitle(), "LoremIpsum1", 10, false, "LoremIpsum1",
+                Language.ENGLISH.name(), userRepository.findOneByLogin(testPrefix + "tutor1").get(), Collections.emptySet()).getId();
     }
 
     private static final String TEST_PREFIX = "tutorialgroupfreeperiod";
@@ -173,7 +173,7 @@ class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGroupIntegr
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void update_asInstructor_shouldActivatePreviouslyCancelledSessionsAndCancelNowOverlappingSessions() throws Exception {
         // given
-        var groupId = databaseUtilService.createTutorialGroup(exampleCourseId, generateRandomTitle(), "LoremIpsum1", 10, false, "LoremIpsum1", Language.ENGLISH,
+        var groupId = databaseUtilService.createTutorialGroup(exampleCourseId, generateRandomTitle(), "LoremIpsum1", 10, false, "LoremIpsum1", Language.ENGLISH.name(),
                 userRepository.findOneByLogin(testPrefix + "tutor1").get(), Set.of(userRepository.findOneByLogin(testPrefix + "student1").get())).getId();
 
         // given
