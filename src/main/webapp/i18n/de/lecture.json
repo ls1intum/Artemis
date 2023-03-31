@@ -32,6 +32,14 @@
             "detail": {
                 "title": "Vorlesung"
             },
+            "form": {
+                "startDate": {
+                    "invalid": "Muss vor dem Enddatum der Vorlesung liegen"
+                },
+                "endDate": {
+                    "invalid": "Muss nach dem Startdatum der Vorlesung liegen"
+                }
+            },
             "attachments": {
                 "title": "Anhänge der Vorlesung",
                 "name": "Name",

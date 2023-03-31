@@ -49,19 +49,23 @@
                         <jhi-date-time-picker
                             labelName="{{ 'artemisApp.lecture.startDate' | artemisTranslate }}"
                             [(ngModel)]="lecture.startDate"
-                            (valueChange)="onDatesValuesChanged()"
+                            (valueChange)="validateDate()"
+                            [error]="isInvalidDate"
                             name="startDate"
                             id="start-date"
                         ></jhi-date-time-picker>
+                        <span *ngIf="isInvalidDate" class="invalid-feedback"> {{ 'artemisApp.lecture.form.startDate.invalid' | artemisTranslate }}</span>
                     </div>
                     <div class="form-group flex-grow-1 ms-3">
                         <jhi-date-time-picker
                             labelName="{{ 'artemisApp.lecture.endDate' | artemisTranslate }}"
                             [(ngModel)]="lecture.endDate"
-                            (valueChange)="onDatesValuesChanged()"
+                            (valueChange)="validateDate()"
+                            [error]="isInvalidDate"
                             name="endDate"
                             id="end-date"
                         ></jhi-date-time-picker>
+                        <span *ngIf="isInvalidDate" class="invalid-feedback"> {{ 'artemisApp.lecture.form.endDate.invalid' | artemisTranslate }}</span>
                     </div>
                 </div>
                 <div class="form-group" *ngIf="lecture.course">
@@ -116,7 +120,7 @@
                     <button type="button" id="cancel-save" class="btn btn-secondary" (click)="previousState()">
                         <fa-icon [icon]="faBan"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
                     </button>
-                    <button type="submit" id="save-entity" [disabled]="editForm.form.invalid || isSaving || processUnitMode" class="btn btn-primary">
+                    <button type="submit" id="save-entity" [disabled]="editForm.form.invalid || isSaving || processUnitMode || isInvalidDate" class="btn btn-primary">
                         <fa-icon [icon]="faSave"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>
                     </button>
                 </div>
@@ -125,7 +129,7 @@
                         <button
                             type="button"
                             id="process-units-entity"
-                            [disabled]="editForm.form.invalid || isSaving || !processUnitMode || isProcessing || !fileName"
+                            [disabled]="editForm.form.invalid || isSaving || !processUnitMode || isProcessing || !fileName || isInvalidDate"
                             class="btn btn-success"
                             (click)="proceedToUnitSplit()"
                         >

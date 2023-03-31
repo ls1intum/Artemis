@@ -32,6 +32,14 @@
             "detail": {
                 "title": "Lecture"
             },
+            "form": {
+                "startDate": {
+                    "invalid": "Must be before the end date of the lecture"
+                },
+                "endDate": {
+                    "invalid": "Must be after the start date of the lecture"
+                }
+            },
             "attachments": {
                 "title": "Attachments of lecture",
                 "name": "Name",

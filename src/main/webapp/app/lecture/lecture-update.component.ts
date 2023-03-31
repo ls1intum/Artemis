@@ -16,6 +16,7 @@ import { faBan, faHandshakeAngle, faPuzzlePiece, faSave } from '@fortawesome/fre
 import { LectureUpdateWizardComponent } from 'app/lecture/wizard-mode/lecture-update-wizard.component';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { FILE_EXTENSIONS } from 'app/shared/constants/file-extensions.constants';
+import dayjs from 'dayjs/esm';
 
 @Component({
     selector: 'jhi-lecture-update',
@@ -33,6 +34,7 @@ export class LectureUpdateComponent implements OnInit {
     isProcessing: boolean;
     processUnitMode: boolean;
     isShowingWizardMode: boolean;
+    isInvalidDate: boolean;
 
     courses: Course[];
     startDate: string;
@@ -75,6 +77,7 @@ export class LectureUpdateComponent implements OnInit {
         this.processUnitMode = false;
         this.isProcessing = false;
         this.isShowingWizardMode = false;
+        this.isInvalidDate = false;
         this.activatedRoute.parent!.data.subscribe((data) => {
             // Create a new lecture to use unless we fetch an existing lecture
             const lecture = data['lecture'];
@@ -202,5 +205,12 @@ export class LectureUpdateComponent implements OnInit {
         }
 
         this.lecture.endDate = this.lecture.startDate;
+    }
+
+    /**
+     * sets isInvalidDate to true if the lecture end date is before the start date
+     */
+    validateDate() {
+        this.isInvalidDate = !!this.lecture.startDate && !!this.lecture.endDate && dayjs(this.lecture.endDate).isBefore(this.lecture.startDate);
     }
 }
