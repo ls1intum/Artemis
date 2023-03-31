@@ -160,7 +160,7 @@ class ExerciseGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
         final List<ExerciseGroup> listReceived = request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + targetExam.getId() + "/import-exercise-group",
                 listExpected, ExerciseGroup.class, HttpStatus.OK);
-        assertThat(listReceived.size()).isEqualTo(9);
+        assertThat(listReceived).hasSize(9);
 
         // We import into the same exam -> double the exercise groups
         listExpected.addAll(listExpected);
@@ -192,7 +192,7 @@ class ExerciseGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         final List<ExerciseGroup> listExpected = new ArrayList<>(targetExam.getExerciseGroups());
         listExpected.addAll(listSendToServer);
 
-        assertThat(listReceived.size()).isEqualTo(9);
+        assertThat(listReceived).hasSize(9);
         for (int i = 0; i <= 4; i++) {
             assertThat(listReceived.get(i)).isEqualTo(listExpected.get(i));
         }
@@ -215,7 +215,7 @@ class ExerciseGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
         final List<ExerciseGroup> listReceived = request.postListWithResponseBody("/api/courses/" + course2.getId() + "/exams/" + targetExam.getId() + "/import-exercise-group",
                 listSendToServer, ExerciseGroup.class, HttpStatus.OK);
-        assertThat(listReceived.size()).isEqualTo(9);
+        assertThat(listReceived).hasSize(9);
 
         final List<ExerciseGroup> listExpected = new ArrayList<>(targetExam.getExerciseGroups());
         listExpected.addAll(listSendToServer);

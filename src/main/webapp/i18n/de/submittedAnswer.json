@@ -3,8 +3,7 @@
         "submittedAnswer": {
             "home": {
                 "title": "Submitted Answers",
-                "createLabel": "Submitted Answer erstellen",
-                "createOrEditLabel": "Submitted Answer erstellen oder bearbeiten"
+                "createLabel": "Submitted Answer erstellen"
             },
             "created": "Submitted Answer erstellt mit ID {{ param }}",
             "updated": "Submitted Answer aktualisiert mit ID {{ param }}",

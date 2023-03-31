@@ -3,8 +3,7 @@
         "shortAnswerQuestionStatistic": {
             "home": {
                 "title": "Short Answer Question Statistics",
-                "createLabel": "Short Answer Question Statistic erstellen",
-                "createOrEditLabel": "Short Answer Question Statistic erstellen oder bearbeiten"
+                "createLabel": "Short Answer Question Statistic erstellen"
             },
             "created": "Short Answer Question Statistic erstellt mit ID {{ param }}",
             "updated": "Short Answer Question Statistic aktualisiert mit ID {{ param }}",
