@@ -233,7 +233,7 @@ public class ProgrammingExerciseTestCase extends DomainObject {
     @Override
     public String toString() {
         return "ProgrammingExerciseTestCase{" + "id=" + getId() + ", testName='" + testName + '\'' + ", weight=" + weight + ", active=" + active + ", visibility=" + visibility
-                + ", bonusMultiplier=" + bonusMultiplier + ", bonusPoints=" + bonusPoints + '}';
+                + ", bonusMultiplier=" + bonusMultiplier + ", bonusPoints=" + bonusPoints + ", type=" + type + '}';
     }
 
     /**

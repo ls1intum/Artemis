@@ -499,7 +499,11 @@ public class Result extends DomainObject implements Comparable<Result> {
     private void filterTestCaseFeedback(ProgrammingExercise programmingExercise) {
         var testCaseFeedback = feedbacks.stream().filter(Feedback::isTestFeedback).toList();
         if (!Boolean.TRUE.equals(programmingExercise.getShowTestNamesToStudents())) {
-            testCaseFeedback.forEach(feedback -> feedback.getTestCase().setTestName(null));
+            testCaseFeedback.forEach(feedback -> {
+                if (feedback.getTestCase() != null) {
+                    feedback.getTestCase().setTestName(null);
+                }
+            });
         }
 
         setTestCaseCount(testCaseFeedback.size());
