@@ -16,14 +16,14 @@
         </div>
         <div class="col-12 col-lg-5">
             <div *ngIf="!isExamMode" class="d-flex justify-content-lg-end">
-                <a *ngIf="course.isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'scores']" class="tab-item btn btn-info btn-md">
+                <a *ngIf="course && course.isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'scores']" class="tab-item btn btn-info btn-md">
                     <fa-icon [icon]="faTable"></fa-icon>
                     <span jhiTranslate="entity.action.scores">Scores</span>
                 </a>
-                <a *ngIf="course.isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'grading-system']" class="tab-item btn btn-info btn-md ms-1 me-1">
+                <a *ngIf="course && course.isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'grading-system']" class="tab-item btn btn-info btn-md ms-1 me-1">
                     <fa-icon [icon]="faClipboard"></fa-icon> <span jhitranslate="artemisApp.course.gradingSystem">Grading Key</span>
                 </a>
-                <a *ngIf="course.isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'plagiarism-cases']" class="tab-item btn btn-info btn-md">
+                <a *ngIf="course && course.isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'plagiarism-cases']" class="tab-item btn btn-info btn-md">
                     <fa-icon [icon]="faHeartBroken"></fa-icon>
                     <span jhiTranslate="artemisApp.plagiarism.cases.plagiarismCases">Plagiarism Cases</span>
                 </a>
@@ -206,9 +206,6 @@
                                         [togglingSecondCorrectionButton]="isTogglingSecondCorrection.get(exercise.id!)!"
                                     ></jhi-second-correction-enable-button>
                                 </ng-container>
-                                <a class="btn btn-primary btn-sm mb-1" *ngIf="course?.isAtLeastInstructor" [routerLink]="getSubmissionsLinkForExercise(exercise)">
-                                    <span jhiTranslate="artemisApp.assessmentDashboard.submissions">Submissions</span>
-                                </a>
                             </ng-container>
                         </td>
                     </tr>
@@ -217,7 +214,7 @@
         </div>
     </div>
 
-    <div *ngIf="course.isAtLeastInstructor && tutorIssues.length > 0" class="container-fluid mt-4">
+    <div *ngIf="course && course.isAtLeastInstructor && tutorIssues.length > 0" class="container-fluid mt-4">
         <h4>{{ 'artemisApp.assessmentDashboard.tutorPerformanceIssues.title' | artemisTranslate }}</h4>
         <ul *ngFor="let issue of tutorIssues">
             <li *ngIf="issue.averageTutorValue < issue.allowedRange.lowerBound">

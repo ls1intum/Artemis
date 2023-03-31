@@ -16,7 +16,6 @@ import { CodeEditorTutorAssessmentContainerComponent } from 'app/exercises/progr
 import { ArtemisProgrammingManualAssessmentModule } from 'app/exercises/programming/assess/programming-manual-assessment.module';
 import { AssessmentInstructionsModule } from 'app/assessment/assessment-instructions/assessment-instructions.module';
 import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
-import { ArtemisProgrammingAssessmentDashboardModule } from 'app/exercises/programming/assess/programming-assessment-dashboard/programming-exercises-submissions.module';
 import { OrionTutorAssessmentComponent } from 'app/orion/assessment/orion-tutor-assessment.component';
 import { SubmissionResultStatusModule } from 'app/overview/submission-result-status.module';
 
@@ -36,7 +35,6 @@ import { SubmissionResultStatusModule } from 'app/overview/submission-result-sta
         ArtemisProgrammingManualAssessmentModule,
         AssessmentInstructionsModule,
         ArtemisHeaderExercisePageWithDetailsModule,
-        ArtemisProgrammingAssessmentDashboardModule,
         SubmissionResultStatusModule,
     ],
     declarations: [

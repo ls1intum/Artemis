@@ -12,7 +12,7 @@ import de.tum.in.www1.artemis.domain.enumeration.TeamImportStrategyType;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.TeamRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.service.connectors.VersionControlService;
+import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.in.www1.artemis.service.dto.TeamSearchUserDTO;
 import de.tum.in.www1.artemis.service.team.TeamImportStrategy;
 import de.tum.in.www1.artemis.service.team.strategies.CreateOnlyStrategy;
@@ -85,13 +85,13 @@ public class TeamService {
             // Users in the existing team that are no longer in the updated team need to be removed
             Set<User> usersToRemove = new HashSet<>(existingTeam.getStudents());
             usersToRemove.removeAll(updatedTeam.getStudents());
-            usersToRemove.forEach(user -> versionControlService.get().removeMemberFromRepository(participation.getVcsRepositoryUrl(), user));
+            usersToRemove.forEach(user -> versionControlService.orElseThrow().removeMemberFromRepository(participation.getVcsRepositoryUrl(), user));
 
             // Users in the updated team that were not yet part of the existing team need to be added
             Set<User> usersToAdd = new HashSet<>(updatedTeam.getStudents());
             usersToAdd.removeAll(existingTeam.getStudents());
-            usersToAdd.forEach(
-                    user -> versionControlService.get().addMemberToRepository(participation.getVcsRepositoryUrl(), user, VersionControlService.RepositoryPermissions.READ_WRITE));
+            usersToAdd.forEach(user -> versionControlService.orElseThrow().addMemberToRepository(participation.getVcsRepositoryUrl(), user,
+                    VersionControlService.RepositoryPermissions.READ_WRITE));
         });
     }
 
@@ -184,7 +184,7 @@ public class TeamService {
 
     /**
      * Returns both students in database that has given logins and groupName, and logins with which no user could be found
-     *
+     * <p>
      * This is used to find the complete information of users of which we only know logins
      * It also returns the logins with which no user could be found so that the caller of the function can be informed that
      * the given user does not exist or login is wrong
@@ -213,7 +213,7 @@ public class TeamService {
 
     /**
      * Returns both students in database that has given registration numbers and group name, and registration numbers with which no user could be found
-     *
+     * <p>
      * This is used to find the complete information of users of which we only know registration numbers
      * It gets login list as argument as well since registration number is used as a fallback identifier and the same user could be found by login and registration number
      * It throws exception if such a user is found
