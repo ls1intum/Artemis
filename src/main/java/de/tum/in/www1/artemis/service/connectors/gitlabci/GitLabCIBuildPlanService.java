@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service.connectors.gitlabci;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.nio.file.Path;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -36,20 +37,10 @@ public class GitLabCIBuildPlanService {
      * @return the default build plan
      */
     public String generateDefaultBuildPlan(ProgrammingExercise programmingExercise) {
-        Optional<String> projectTypeName;
-        if (programmingExercise.getProgrammingLanguage().equals(ProgrammingLanguage.JAVA)) {
-            projectTypeName = Optional.of("maven");
-        }
-        else {
-            projectTypeName = Optional.empty();
-        }
-        String[] resourcePath = projectTypeName
-                .map(name -> new String[] { "templates", "gitlabci", programmingExercise.getProgrammingLanguage().name().toLowerCase(), name,
-                        programmingExercise.hasSequentialTestRuns() ? "sequentialRuns" : "regularRuns", FILE_NAME })
-                .orElseGet(() -> new String[] { "templates", "gitlabci", programmingExercise.getProgrammingLanguage().name().toLowerCase(),
-                        programmingExercise.hasSequentialTestRuns() ? "sequentialRuns" : "regularRuns", FILE_NAME });
-
+        final Optional<String> projectTypeName = getProjectTypeName(programmingExercise);
+        final Path resourcePath = buildResourcePath(programmingExercise.getProgrammingLanguage(), projectTypeName, programmingExercise.hasSequentialTestRuns());
         final Resource resource = resourceLoaderService.getResource(resourcePath);
+
         try {
             return StreamUtils.copyToString(resource.getInputStream(), Charset.defaultCharset());
         }
@@ -57,6 +48,26 @@ public class GitLabCIBuildPlanService {
             log.error("Error loading template GitLab CI build configuration", ex);
             throw new IllegalStateException("Error loading template GitLab CI build configuration", ex);
         }
+    }
 
+    private static Optional<String> getProjectTypeName(final ProgrammingExercise programmingExercise) {
+        if (ProgrammingLanguage.JAVA.equals(programmingExercise.getProgrammingLanguage())) {
+            return Optional.of("maven");
+        }
+        else {
+            return Optional.empty();
+        }
+    }
+
+    private static Path buildResourcePath(final ProgrammingLanguage programmingLanguage, final Optional<String> projectTypeName, final boolean sequentialTestRuns) {
+        final String programmingLanguageName = programmingLanguage.name().toLowerCase();
+        final String regularOrSequentialDir = sequentialTestRuns ? "sequentialRuns" : "regularRuns";
+
+        Path resourcePath = Path.of("templates", "gitlabci", programmingLanguageName);
+        if (projectTypeName.isPresent()) {
+            resourcePath = resourcePath.resolve(projectTypeName.get());
+        }
+
+        return resourcePath.resolve(regularOrSequentialDir).resolve(FILE_NAME);
     }
 }

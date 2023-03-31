@@ -175,7 +175,7 @@ abstract class AbstractTutorialGroupIntegrationTest extends AbstractSpringIntegr
         if (studentLogins != null) {
             students = Arrays.stream(studentLogins).map(login -> userRepository.findOneByLogin(login).get()).collect(Collectors.toSet());
         }
-        return databaseUtilService.createTutorialGroup(exampleCourseId, generateRandomTitle(), "LoremIpsum", 10, false, "Garching", Language.ENGLISH,
+        return databaseUtilService.createTutorialGroup(exampleCourseId, generateRandomTitle(), "LoremIpsum", 10, false, "Garching", Language.ENGLISH.name(),
                 userRepository.findOneByLogin(testPrefix + tutorLogin).get(), students);
     }
 

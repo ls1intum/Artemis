@@ -3,8 +3,7 @@
         "answerOption": {
             "home": {
                 "title": "Answer Options",
-                "createLabel": "Answer Option erstellen",
-                "createOrEditLabel": "Answer Option erstellen oder bearbeiten"
+                "createLabel": "Answer Option erstellen"
             },
             "created": "Answer Option erstellt mit ID {{ param }}",
             "updated": "Answer Option aktualisiert mit ID {{ param }}",
