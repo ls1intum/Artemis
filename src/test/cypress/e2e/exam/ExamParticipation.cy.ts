@@ -41,13 +41,14 @@ describe('Exam participation', () => {
                 .build();
             courseManagementRequest.createExam(examContent).then((examResponse) => {
                 exam = examResponse.body;
-                examExerciseGroupCreation.addGroupWithExercise(exerciseArray, exam, EXERCISE_TYPE.Text, { textFixture });
-
-                examExerciseGroupCreation.addGroupWithExercise(exerciseArray, exam, EXERCISE_TYPE.Programming, { submission });
-
-                examExerciseGroupCreation.addGroupWithExercise(exerciseArray, exam, EXERCISE_TYPE.Quiz, { quizExerciseID: 0 });
-
-                examExerciseGroupCreation.addGroupWithExercise(exerciseArray, exam, EXERCISE_TYPE.Modeling);
+                Promise.all([
+                    examExerciseGroupCreation.addGroupWithExercise(exam, EXERCISE_TYPE.Text, { textFixture }),
+                    examExerciseGroupCreation.addGroupWithExercise(exam, EXERCISE_TYPE.Programming, { submission }),
+                    examExerciseGroupCreation.addGroupWithExercise(exam, EXERCISE_TYPE.Quiz, { quizExerciseID: 0 }),
+                    examExerciseGroupCreation.addGroupWithExercise(exam, EXERCISE_TYPE.Modeling),
+                ]).then((responses) => {
+                    exerciseArray = exerciseArray.concat(responses);
+                });
 
                 courseManagementRequest.registerStudentForExam(exam, studentOne);
                 courseManagementRequest.registerStudentForExam(exam, studentTwo);
@@ -118,7 +119,7 @@ describe('Exam participation', () => {
             exerciseArray = [];
 
             cy.login(admin);
-            const examContent = new CypressExamBuilder(course)
+            const examContent = new ExamBuilder(course)
                 .title(examTitle)
                 .visibleDate(dayjs().subtract(3, 'minutes'))
                 .startDate(dayjs().subtract(2, 'minutes'))
@@ -128,7 +129,9 @@ describe('Exam participation', () => {
                 .build();
             courseManagementRequest.createExam(examContent).then((examResponse) => {
                 exam = examResponse.body;
-                examExerciseGroupCreation.addGroupWithExercise(exerciseArray, exam, EXERCISE_TYPE.Text, { textFixture });
+                examExerciseGroupCreation.addGroupWithExercise(exam, EXERCISE_TYPE.Text, { textFixture }).then((response) => {
+                    exerciseArray.push(response);
+                });
 
                 courseManagementRequest.registerStudentForExam(exam, studentOne);
                 courseManagementRequest.registerStudentForExam(exam, studentTwo);
@@ -214,7 +217,9 @@ describe('Exam participation', () => {
                 .build();
             courseManagementRequest.createExam(examContent).then((examResponse) => {
                 exam = examResponse.body;
-                examExerciseGroupCreation.addGroupWithExercise(exerciseArray, exam, EXERCISE_TYPE.Text, { textFixture });
+                examExerciseGroupCreation.addGroupWithExercise(exam, EXERCISE_TYPE.Text, { textFixture }).then((response) => {
+                    exerciseArray.push(response);
+                });
 
                 courseManagementRequest.registerStudentForExam(exam, studentOne);
                 courseManagementRequest.generateMissingIndividualExams(exam);

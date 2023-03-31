@@ -14,7 +14,7 @@ import { admin, instructor } from '../../support/users';
 const textFixture = 'loremIpsum.txt';
 const examTitle = 'exam' + generateUUID();
 
-const exerciseArray: Array<Exercise> = [];
+let exerciseArray: Array<Exercise> = [];
 
 describe('Exam test run', () => {
     let course: Course;
@@ -35,13 +35,14 @@ describe('Exam test run', () => {
                 .build();
             courseManagementRequest.createExam(examContent).then((examResponse) => {
                 exam = examResponse.body;
-                examExerciseGroupCreation.addGroupWithExercise(exerciseArray, exam, EXERCISE_TYPE.Text, { textFixture });
-
-                examExerciseGroupCreation.addGroupWithExercise(exerciseArray, exam, EXERCISE_TYPE.Programming, { submission, practiceMode: true });
-
-                examExerciseGroupCreation.addGroupWithExercise(exerciseArray, exam, EXERCISE_TYPE.Quiz, { quizExerciseID: 0 });
-
-                examExerciseGroupCreation.addGroupWithExercise(exerciseArray, exam, EXERCISE_TYPE.Modeling);
+                Promise.all([
+                    examExerciseGroupCreation.addGroupWithExercise(exam, EXERCISE_TYPE.Text, { textFixture }),
+                    examExerciseGroupCreation.addGroupWithExercise(exam, EXERCISE_TYPE.Programming, { submission, practiceMode: true }),
+                    examExerciseGroupCreation.addGroupWithExercise(exam, EXERCISE_TYPE.Quiz, { quizExerciseID: 0 }),
+                    examExerciseGroupCreation.addGroupWithExercise(exam, EXERCISE_TYPE.Modeling),
+                ]).then((responses) => {
+                    exerciseArray = exerciseArray.concat(responses);
+                });
             });
         });
     });
