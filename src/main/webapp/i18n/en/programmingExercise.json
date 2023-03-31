@@ -3,12 +3,10 @@
         "programmingExercise": {
             "home": {
                 "title": "Programming Exercises",
-                "createLabel": "Create new Programming Exercise",
+                "createLabel": "Create Programming Exercise",
                 "editLabel": "Edit Programming Exercise",
                 "importLabel": "Import Programming Exercise",
                 "linkLabel": "Link new Programming Exercise",
-                "generateLabel": "Generate new Programming Exercise",
-                "createOrEditLabel": "Create or edit a Programming Exercise",
                 "switchToGuidedModeLabel": "Switch to guided mode",
                 "switchToTraditionalModeLabel": "Switch to normal mode",
                 "nextStepLabel": "Next"
