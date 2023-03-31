@@ -4710,7 +4710,7 @@ public class DatabaseUtilService {
         return tutorialGroupFreePeriodRepository.save(newTutorialGroupFreePeriod);
     }
 
-    public TutorialGroup createTutorialGroup(Long courseId, String title, String additionalInformation, Integer capacity, Boolean isOnline, String campus, Language language,
+    public TutorialGroup createTutorialGroup(Long courseId, String title, String additionalInformation, Integer capacity, Boolean isOnline, String campus, String language,
             User teachingAssistant, Set<User> registeredStudents) {
         var course = courseRepo.findByIdElseThrow(courseId);
 

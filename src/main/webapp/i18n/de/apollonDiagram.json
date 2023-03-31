@@ -4,7 +4,6 @@
             "home": {
                 "title": "Apollon-Diagramme",
                 "createLabel": "Apollon-Diagramm erstellen",
-                "createOrEditLabel": "Apollon-Diagramm erstellen oder bearbeiten",
                 "error": {
                     "loading": "Es ist ein Fehler beim Laden der Diagramme aufgetreten"
                 }

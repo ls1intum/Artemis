@@ -55,7 +55,7 @@
                         >
                             <fa-icon [icon]="faPlus"></fa-icon>
                             <fa-icon class="d-xl-none" [icon]="faFileUpload"></fa-icon>
-                            <span class="d-none d-xl-inline">{{ 'artemisApp.examManagement.exerciseGroup.addFileUploadExercise' | artemisTranslate }}</span>
+                            <span class="d-none d-xl-inline">{{ 'artemisApp.fileUploadExercise.home.createLabel' | artemisTranslate }}</span>
                         </a>
                     </div>
                     <div class="btn-group-vertical me-1 mb-1" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_EDITOR']" style="justify-content: end">
@@ -72,7 +72,7 @@
                         >
                             <fa-icon [icon]="faPlus"></fa-icon>
                             <fa-icon class="d-xl-none" [icon]="faCheckDouble"></fa-icon>
-                            <span class="d-none d-xl-inline">{{ 'artemisApp.examManagement.exerciseGroup.addQuizExercise' | artemisTranslate }}</span>
+                            <span class="d-none d-xl-inline">{{ 'artemisApp.quizExercise.home.createLabel' | artemisTranslate }}</span>
                         </a>
                     </div>
                     <div class="btn-group-vertical me-1 mb-1" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_EDITOR']">
@@ -84,7 +84,7 @@
                         <a *ngIf="course?.isAtLeastEditor" [routerLink]="[exerciseGroup.id, 'text-exercises', 'new']" class="add-text-exercise btn btn-info btn-sm me-1 mb-1">
                             <fa-icon [icon]="faPlus"></fa-icon>
                             <fa-icon class="d-xl-none" [icon]="faFont"></fa-icon>
-                            <span class="d-none d-xl-inline">{{ 'artemisApp.examManagement.exerciseGroup.addTextExercise' | artemisTranslate }}</span>
+                            <span class="d-none d-xl-inline">{{ 'artemisApp.textExercise.home.createLabel' | artemisTranslate }}</span>
                         </a>
                     </div>
                     <div class="btn-group-vertical me-1 mb-1" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_EDITOR']">
@@ -100,7 +100,7 @@
                         >
                             <fa-icon [icon]="faPlus"></fa-icon>
                             <fa-icon class="d-xl-none" [icon]="faProjectDiagram"></fa-icon>
-                            <span class="d-none d-xl-inline">{{ 'artemisApp.examManagement.exerciseGroup.addModelingExercise' | artemisTranslate }}</span>
+                            <span class="d-none d-xl-inline">{{ 'artemisApp.modelingExercise.home.createLabel' | artemisTranslate }}</span>
                         </a>
                     </div>
                     <div class="btn-group-vertical me-1 mb-1" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_EDITOR']">
@@ -116,7 +116,7 @@
                         >
                             <fa-icon [icon]="faPlus"></fa-icon>
                             <fa-icon class="d-xl-none" [icon]="faKeyboard"></fa-icon>
-                            <span class="d-none d-xl-inline">{{ 'artemisApp.examManagement.exerciseGroup.addProgrammingExercise' | artemisTranslate }}</span>
+                            <span class="d-none d-xl-inline">{{ 'artemisApp.programmingExercise.home.createLabel' | artemisTranslate }}</span>
                         </a>
                     </div>
                     <div class="btn-group-vertical me-1 mb-1">

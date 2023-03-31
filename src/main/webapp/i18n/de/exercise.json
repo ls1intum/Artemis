@@ -3,8 +3,7 @@
         "exercise": {
             "home": {
                 "title": "Übungen",
-                "createLabel": "Übung erstellen",
-                "createOrEditLabel": "Übung erstellen oder bearbeiten"
+                "createLabel": "Übung erstellen"
             },
             "details": "Aufgabendetails",
             "addCriterion": "Bewertungskriterium hinzufügen",
