@@ -149,7 +149,9 @@ public class ExerciseDateService {
 
     /**
      * Checks if the current time is before the assessment due date
-     * and no manual results should be published to the student
+     * and no manual results should be published to the student.
+     *
+     * Returns false if the assessment due date is null.
      *
      * @param exercise to check the assessment due date
      * @return true if the assessment due date is in the future
@@ -160,7 +162,9 @@ public class ExerciseDateService {
 
     /**
      * Checks if the current time is after the assessment due date
-     * and manual results can be published to the student
+     * and manual results can be published to the student.
+     *
+     * Returns true if the assessment due date is null.
      *
      * @param exercise to check the assessment due date
      * @return true if the assessment due date is in the past

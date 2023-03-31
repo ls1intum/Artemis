@@ -83,7 +83,7 @@ class ResultServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
         Result result = database.addResultToParticipation(null, null, programmingExerciseStudentParticipation);
         result = database.addVariousVisibilityFeedbackToResult(result);
 
-        assertThat(resultService.filterFeedbacksForClient(result)).containsExactlyInAnyOrderElementsOf(result.getFeedbacks());
+        assertThat(resultService.filterFeedbackForClient(result)).containsExactlyInAnyOrderElementsOf(result.getFeedbacks());
     }
 
     @Test
@@ -93,7 +93,7 @@ class ResultServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
         result = database.addVariousFeedbackTypeFeedbacksToResult(result);
 
         // The ordering should be the same as is declared in addVariousFeedbackTypeFeedbacksToResult()
-        assertThat(resultService.filterFeedbacksForClient(result)).isEqualTo(result.getFeedbacks());
+        assertThat(resultService.filterFeedbackForClient(result)).isEqualTo(result.getFeedbacks());
     }
 
     @Test
@@ -107,7 +107,7 @@ class ResultServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
 
         List<Feedback> expectedFeedbacks = result.getFeedbacks().stream().filter(feedback -> !feedback.isInvisible() && !feedback.isAfterDueDate()).toList();
 
-        assertThat(resultService.filterFeedbacksForClient(result)).containsExactlyInAnyOrderElementsOf(expectedFeedbacks);
+        assertThat(resultService.filterFeedbackForClient(result)).containsExactlyInAnyOrderElementsOf(expectedFeedbacks);
     }
 
     @Test
@@ -121,7 +121,7 @@ class ResultServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
 
         List<Feedback> expectedFeedbacks = result.getFeedbacks().stream().filter(feedback -> !feedback.isInvisible()).toList();
 
-        assertThat(resultService.filterFeedbacksForClient(result)).containsExactlyInAnyOrderElementsOf(expectedFeedbacks);
+        assertThat(resultService.filterFeedbackForClient(result)).containsExactlyInAnyOrderElementsOf(expectedFeedbacks);
     }
 
     @Test
@@ -134,7 +134,7 @@ class ResultServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
 
         List<Feedback> expectedFeedbacks = result.getFeedbacks().stream().filter(feedback -> !feedback.isInvisible() && !feedback.isAfterDueDate()).toList();
 
-        assertThat(resultService.filterFeedbacksForClient(result)).containsExactlyInAnyOrderElementsOf(expectedFeedbacks);
+        assertThat(resultService.filterFeedbackForClient(result)).containsExactlyInAnyOrderElementsOf(expectedFeedbacks);
     }
 
     @Test
@@ -147,7 +147,7 @@ class ResultServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
 
         List<Feedback> expectedFeedbacks = result.getFeedbacks().stream().filter(feedback -> !feedback.isInvisible()).toList();
 
-        assertThat(resultService.filterFeedbacksForClient(result)).containsExactlyInAnyOrderElementsOf(expectedFeedbacks);
+        assertThat(resultService.filterFeedbackForClient(result)).containsExactlyInAnyOrderElementsOf(expectedFeedbacks);
     }
 
     @Test
@@ -163,7 +163,7 @@ class ResultServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
         List<Feedback> expectedFeedbacks = result.getFeedbacks().stream()
                 .filter(feedback -> !feedback.isInvisible() && feedback.getType() != null && feedback.getType().equals(FeedbackType.AUTOMATIC)).toList();
 
-        assertThat(resultService.filterFeedbacksForClient(result)).containsExactlyInAnyOrderElementsOf(expectedFeedbacks);
+        assertThat(resultService.filterFeedbackForClient(result)).containsExactlyInAnyOrderElementsOf(expectedFeedbacks);
     }
 
     @Test
@@ -178,7 +178,7 @@ class ResultServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
 
         List<Feedback> expectedFeedbacks = result.getFeedbacks().stream().filter(feedback -> !feedback.isInvisible()).toList();
 
-        assertThat(resultService.filterFeedbacksForClient(result)).containsExactlyInAnyOrderElementsOf(expectedFeedbacks);
+        assertThat(resultService.filterFeedbackForClient(result)).containsExactlyInAnyOrderElementsOf(expectedFeedbacks);
     }
 
     @Test
@@ -193,7 +193,7 @@ class ResultServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
 
         List<Feedback> expectedFeedbacks = result.getFeedbacks().stream().filter(feedback -> !feedback.isInvisible()).toList();
 
-        assertThat(resultService.filterFeedbacksForClient(result)).containsExactlyInAnyOrderElementsOf(expectedFeedbacks);
+        assertThat(resultService.filterFeedbackForClient(result)).containsExactlyInAnyOrderElementsOf(expectedFeedbacks);
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
@@ -221,7 +221,7 @@ class ResultServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
             expectedFeedbacks = result.getFeedbacks().stream().filter(feedback -> !feedback.isInvisible()).toList();
             assertThat(expectedFeedbacks).hasSize(3);
         }
-        assertThat(resultService.filterFeedbacksForClient(result)).containsExactlyInAnyOrderElementsOf(expectedFeedbacks);
+        assertThat(resultService.filterFeedbackForClient(result)).containsExactlyInAnyOrderElementsOf(expectedFeedbacks);
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
@@ -243,6 +243,6 @@ class ResultServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
         List<Feedback> expectedFeedbacks;
         expectedFeedbacks = result.getFeedbacks().stream().filter(feedback -> !feedback.isInvisible()).toList();
         assertThat(expectedFeedbacks).hasSize(3);
-        assertThat(resultService.filterFeedbacksForClient(result)).containsExactlyInAnyOrderElementsOf(expectedFeedbacks);
+        assertThat(resultService.filterFeedbackForClient(result)).containsExactlyInAnyOrderElementsOf(expectedFeedbacks);
     }
 }

@@ -212,7 +212,7 @@ public class ResultService {
      * @param result the result for which the feedback elements should be returned
      * @return the list of filtered feedbacks
      */
-    public List<Feedback> filterFeedbacksForClient(Result result) {
+    public List<Feedback> filterFeedbackForClient(Result result) {
         this.filterSensitiveInformationIfNecessary(result.getParticipation(), result);
 
         return result.getFeedbacks().stream() //
