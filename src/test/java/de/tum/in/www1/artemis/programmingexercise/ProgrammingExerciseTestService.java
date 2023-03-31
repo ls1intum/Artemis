@@ -155,7 +155,7 @@ public class ProgrammingExerciseTestService {
     @Autowired
     private UrlService urlService;
 
-    @Autowired // can be used as SpyBean
+    @Autowired
     private ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
 
     @Autowired
@@ -1696,7 +1696,7 @@ public class ProgrammingExerciseTestService {
         participation7b = programmingExerciseStudentParticipationRepository.findWithResultsById(participation7b.getId());
         participation8b = programmingExerciseStudentParticipationRepository.findWithResultsById(participation8b.getId());
 
-        // only return the relevant participations (cleanup service would otherwise return too much
+        // TODO: only return the relevant participations (cleanup service would otherwise return too much) but do it without a spy
         when(programmingExerciseStudentParticipationRepository.findAllWithBuildPlanIdWithResults()).thenReturn(Arrays.asList(participation1a, participation1b, participation2a,
                 participation2b, participation3a, participation3b, participation4b, participation5b, participation6b, participation7a, participation7b, participation8b));
 
