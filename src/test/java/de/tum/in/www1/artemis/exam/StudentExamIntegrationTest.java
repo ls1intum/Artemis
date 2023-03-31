@@ -2169,7 +2169,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     private void checkQuizSubmission(long quizExerciseId, long quizSubmissionId) {
 
-        assertThat(quizSubmissionRepository.findByParticipation_Exercise_Id(quizExerciseId).size()).isEqualTo(1);
+        assertThat(quizSubmissionRepository.findByParticipation_Exercise_Id(quizExerciseId)).hasSize(1);
 
         List<Result> results = resultRepository.findByParticipationExerciseIdOrderByCompletionDateAsc(quizExerciseId);
         assertThat(results).hasSize(1);

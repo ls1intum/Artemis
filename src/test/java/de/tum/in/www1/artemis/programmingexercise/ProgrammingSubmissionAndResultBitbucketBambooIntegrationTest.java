@@ -239,8 +239,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         submission = submissionRepository.findWithEagerResultsById(submission.getId()).get();
         assertThat(createdResult.getParticipation().getId()).isEqualTo(updatedParticipation.getId());
         assertThat(submission.getLatestResult().getId()).isEqualTo(createdResult.getId());
-        assertThat(updatedParticipation.getSubmissions()).hasSize(1);
-        assertThat(updatedParticipation.getSubmissions().stream().anyMatch(s -> s.getId().equals(submissionId))).isTrue();
+        assertThat(updatedParticipation.getSubmissions()).hasSize(1).anyMatch(s -> s.getId().equals(submissionId));
 
         // Do a call to new-result again and assert that no new submission is created.
         postResult(participation.getBuildPlanId(), HttpStatus.OK, false);
@@ -280,8 +279,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         submission = submissionRepository.findWithEagerResultsById(submission.getId()).get();
         assertThat(createdResult.getParticipation().getId()).isEqualTo(participation.getId());
         assertThat(submission.getLatestResult().getId()).isEqualTo(createdResult.getId());
-        assertThat(participation.getSubmissions()).hasSize(1);
-        assertThat(participation.getSubmissions().stream().anyMatch(s -> s.getId().equals(submissionId))).isTrue();
+        assertThat(participation.getSubmissions()).hasSize(1).anyMatch(s -> s.getId().equals(submissionId));
 
         // Do a call to new-result again and assert that no new submission is created.
         postResult(participationType, 0, HttpStatus.OK, additionalCommit);
@@ -530,7 +528,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         for (Participation participation : participations) {
             assertThat(submissions.stream().filter(s -> s.getParticipation().getId().equals(participation.getId())).toList()).hasSize(1);
         }
-        assertThat(submissions.stream().allMatch(s -> s.isSubmitted() && s.getCommitHash().equals(TEST_COMMIT) && s.getType().equals(SubmissionType.TEST))).isTrue();
+        assertThat(submissions).allMatch(s -> s.isSubmitted() && s.getCommitHash().equals(TEST_COMMIT) && s.getType().equals(SubmissionType.TEST));
 
         // Phase 2: Now the CI informs Artemis about the participation build results.
         postResult(IntegrationTestParticipationType.SOLUTION, 0, HttpStatus.OK, false);

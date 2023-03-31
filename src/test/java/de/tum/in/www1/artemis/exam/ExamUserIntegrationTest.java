@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.exam;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.http.HttpStatus.OK;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.io.File;
@@ -129,11 +130,11 @@ class ExamUserIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
         examUserDTOs.add(examUserDTO2);
 
         List<ExamUserDTO> responseNotFoundExamUsers = request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students", examUserDTOs,
-                ExamUserDTO.class, HttpStatus.OK);
-        assertThat(responseNotFoundExamUsers.size()).isEqualTo(0);
+                ExamUserDTO.class, OK);
+        assertThat(responseNotFoundExamUsers).isEmpty();
         Exam exam = examRepository.findWithExamUsersById(exam1.getId()).orElseThrow();
         var examUsers = exam.getExamUsers();
-        assertThat(examUsers.size()).isEqualTo(2);
+        assertThat(examUsers).hasSize(2);
 
         examUsers.forEach(eu -> {
             assertThat(eu.getSigningImagePath()).isNullOrEmpty();
@@ -158,8 +159,8 @@ class ExamUserIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
 
         // add students to exam with respective registration numbers, same as in pdf test file
         List<ExamUserDTO> responseNotFoundExamUsers = request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students", examUserDTOs,
-                ExamUserDTO.class, HttpStatus.OK);
-        assertThat(responseNotFoundExamUsers.size()).isEqualTo(0);
+                ExamUserDTO.class, OK);
+        assertThat(responseNotFoundExamUsers).isEmpty();
 
         // upload exam user images
         var imageUploadResponse = request.getMvc().perform(buildUploadExamUserImages(course1.getId(), exam1.getId())).andExpect(status().isOk()).andReturn();
@@ -170,7 +171,7 @@ class ExamUserIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
         // check if exam users have been updated with the images
         Exam exam = examRepository.findByIdWithExamUsersElseThrow(exam1.getId());
         // 4 exam users, 3 new and 1 already existing
-        assertThat(exam.getExamUsers().size()).isEqualTo(4);
+        assertThat(exam.getExamUsers()).hasSize(4);
         exam.getExamUsers().forEach(eu -> {
             assertThat(eu.getStudentImagePath()).isNotNull();
             assertThat(eu.getStudentImagePath()).isNotNull();

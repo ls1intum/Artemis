@@ -505,11 +505,6 @@
                     "question": "Are you sure you want to delete the exercise group <strong>{{ title }}</strong>? All associated exercises will also be deleted.",
                     "typeNameToConfirm": "Please type in the name of the exercise group to confirm."
                 },
-                "addTextExercise": "Add Text Exercise",
-                "addQuizExercise": "Add Quiz",
-                "addFileUploadExercise": "Add File Upload Exercise",
-                "addModelingExercise": "Add Modeling Exercise",
-                "addProgrammingExercise": "Add Programming Exercise",
                 "orderCouldNotBeSaved": "The order could not be saved",
                 "importModal": {
                     "title": "Import Exam Exercises",
