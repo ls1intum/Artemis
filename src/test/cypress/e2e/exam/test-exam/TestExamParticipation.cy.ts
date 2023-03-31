@@ -1,5 +1,5 @@
 import { Exam } from 'app/entities/exam.model';
-import { CypressExamBuilder, convertCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
+import { ExamBuilder, convertCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
 import dayjs from 'dayjs/esm';
 import allSuccessful from '../../../fixtures/exercise/programming/all_successful/submission.json';
 import buildError from '../../../fixtures/exercise/programming/build_error/submission.json';
@@ -32,7 +32,7 @@ describe('Test exam participation', () => {
 
         before('Create test exam', () => {
             cy.login(admin);
-            const examContent = new CypressExamBuilder(course)
+            const examContent = new ExamBuilder(course)
                 .title(examTitle)
                 .testExam()
                 .visibleDate(dayjs().subtract(3, 'days'))
@@ -126,7 +126,7 @@ describe('Test exam participation', () => {
             exerciseArray = [];
 
             cy.login(admin);
-            const examContent = new CypressExamBuilder(course)
+            const examContent = new ExamBuilder(course)
                 .title(examTitle)
                 .testExam()
                 .visibleDate(dayjs().subtract(3, 'days'))

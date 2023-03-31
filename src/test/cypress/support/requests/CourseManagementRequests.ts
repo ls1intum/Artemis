@@ -581,7 +581,7 @@ export class CourseManagementRequests {
 /**
  * Helper class to construct exam objects for the {@link CourseManagementRequests.createExam} method.
  */
-export class CypressExamBuilder {
+export class ExamBuilder {
     readonly template: any = examTemplate;
 
     /**
