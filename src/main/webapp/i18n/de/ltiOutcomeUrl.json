@@ -3,8 +3,7 @@
         "ltiOutcomeUrl": {
             "home": {
                 "title": "Lti Outcome Urls",
-                "createLabel": "Lti Outcome Url erstellen",
-                "createOrEditLabel": "Lti Outcome Url erstellen oder bearbeiten"
+                "createLabel": "Lti Outcome Url erstellen"
             },
             "created": "Lti Outcome Url erstellt mit ID {{ param }}",
             "updated": "Lti Outcome Url aktualisiert mit ID {{ param }}",
