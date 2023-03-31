@@ -27,6 +27,10 @@ export class TutorialGroupsService {
         return this.httpClient.get<string[]>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/campus-values`, { observe: 'response' });
     }
 
+    getUniqueLanguageValues(courseId: number): Observable<HttpResponse<string[]>> {
+        return this.httpClient.get<string[]>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/language-values`, { observe: 'response' });
+    }
+
     getAllForCourse(courseId: number): Observable<EntityArrayResponseType> {
         return this.httpClient
             .get<TutorialGroup[]>(`${this.resourceURL}/courses/${courseId}/tutorial-groups`, { observe: 'response' })

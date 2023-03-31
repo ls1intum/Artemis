@@ -3,8 +3,7 @@
         "dropLocationCounter": {
             "home": {
                 "title": "Drop Location Counters",
-                "createLabel": "Create a new Drop Location Counter",
-                "createOrEditLabel": "Create or edit a Drop Location Counter"
+                "createLabel": "Create a new Drop Location Counter"
             },
             "created": "Created new Drop Location Counter with identifier {{ param }}",
             "updated": "Updated Drop Location Counter with identifier {{ param }}",
