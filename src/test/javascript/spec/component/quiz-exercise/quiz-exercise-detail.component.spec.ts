@@ -1188,19 +1188,6 @@ describe('QuizExercise Management Detail Component', () => {
             });
         });
 
-        describe('show existing questions', () => {
-            let courseManagementServiceStub: jest.SpyInstance;
-            let examManagementServiceStub: jest.SpyInstance;
-
-            beforeEach(() => {
-                comp.courseRepository = courseManagementService;
-                courseManagementServiceStub = jest.spyOn(comp.courseRepository, 'getAllCoursesWithQuizExercises');
-                courseManagementServiceStub.mockReturnValue(of(new HttpResponse<Course>({ body: course })));
-                examManagementServiceStub = jest.spyOn(examManagementService, 'findAllExamsAccessibleToUser');
-                examManagementServiceStub.mockReturnValue(of(new HttpResponse<Exam>({ body: exam })));
-            });
-        });
-
         describe('invalid reasons', () => {
             const filterReasonAndExpectMoreThanOneInArray = (translateKey: string) => {
                 const invalidReasons = comp.computeInvalidReasons().filter((reason) => reason.translateKey === translateKey);
