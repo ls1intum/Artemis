@@ -3,8 +3,7 @@
         "shortAnswerMapping": {
             "home": {
                 "title": "Short Answer Mappings",
-                "createLabel": "Create a new Short Answer Mapping",
-                "createOrEditLabel": "Create or edit a Short Answer Mapping"
+                "createLabel": "Create a new Short Answer Mapping"
             },
             "created": "Created new Short Answer Mapping with identifier {{ param }}",
             "updated": "Updated Short Answer Mapping with identifier {{ param }}",

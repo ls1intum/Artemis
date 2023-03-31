@@ -24,10 +24,9 @@ following dependencies/tools on your machine:
    We use Java (JDK 17) to develop and run the Artemis application
    server which is based on `Spring
    Boot <http://projects.spring.io/spring-boot>`__.
-2. `MySQL Database Server 8 <https://dev.mysql.com/downloads/mysql>`__:
-   Artemis uses Hibernate to store entities in a MySQL database.
-   Download and install the MySQL Community Server (8.0.x) and configure it according to section
-   `MySQL Setup <#mysql-setup>`__.
+2. `MySQL Database Server 8 <https://dev.mysql.com/downloads/mysql>`__, or `PostgreSQL <https://www.postgresql.org/>`_:
+   Artemis uses Hibernate to store entities in an SQL database and Liquibase to
+   automatically apply schema transformations when updating Artemis.
 3. `Node.js <https://nodejs.org/en/download>`__: We use Node LTS (>=18.14.0 < 19) to compile
    and run the client Angular application. Depending on your system, you
    can install Node either from source or as a pre-packaged bundle.
@@ -53,11 +52,18 @@ following dependencies/tools on your machine:
 
 ------------------------------------------------------------------------------------------------------------------------
 
-MySQL Setup
-------------
 
-The required Artemis schema will be created / updated automatically at startup time of the
-server application.
+Database Setup
+--------------
+
+The required Artemis schema will be created / updated automatically at startup time of the server application.
+Artemis supports MySQL and PostgreSQL databases.
+
+
+MySQL Setup
+^^^^^^^^^^^
+
+`Download <https://dev.mysql.com/downloads/mysql>`_ and install the MySQL Community Server (8.0.x).
 
 You have to run a database on your local machine to be able to start Artemis.
 
@@ -84,7 +90,8 @@ Make sure the configuration file is used by MySQL when you start the server.
 You can find more information on `<https://dev.mysql.com/doc/refman/8.0/en/option-files.html>`__
 
 Users for MySQL
-^^^^^^^^^^^^^^^
+"""""""""""""""
+
 | For the development environment the default MySQL user is ‘root’ with an empty password.
 | (In case you want to use a different password, make sure to change the value in
   ``application-local.yml`` *(spring > datasource > password)* and in ``liquibase.gradle``
@@ -102,6 +109,31 @@ to reset the root password to an empty password:
 .. warning::
     Empty root passwords should only be used in a development environment.
     The root password for a production environment must never be empty.
+
+
+PostgreSQL Setup
+^^^^^^^^^^^^^^^^
+
+No special PostgreSQL settings are required.
+You can either use your package manager’s version, or set it up using a container.
+An example Docker Compose setup based on the `official container image <https://hub.docker.com/_/postgres>`_ is provided in ``src/main/docker/postgresql.yml``.
+
+When setting up the Artemis server, the following values need to be added/updated in the server configuration (see setup steps below) to connect to PostgreSQL instead of MySQL:
+
+.. code-block:: yaml
+
+    spring:
+        datasource:
+            url: "jdbc:postgresql://<IP/HOSTNAME of PostgreSQL database host>/Artemis?ssl=false"
+            username: <YOUR_DB_USER>
+            password: <YOUR_DB_PASSWORD>
+        jpa:
+            database-platform: org.hibernate.dialect.PostgreSQL10Dialect
+            database: POSTGRESQL
+
+.. note::
+    This example assumes that the database is called ``Artemis``.
+    You might have to update this part of ``spring.datasource.url`` as well if you chose a different name.
 
 ------------------------------------------------------------------------------------------------------------------------
 
