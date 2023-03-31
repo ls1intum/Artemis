@@ -9,6 +9,7 @@ export class LectureUpdateWizardPeriodComponent {
     @Input() currentStep: number;
     @Input() lecture: Lecture;
     @Input() validateDatesFunction: () => void;
+    @Input() isInvalidDate: boolean;
 
     constructor() {}
 }
