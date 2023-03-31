@@ -97,7 +97,7 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
 
         final Path configFilePath = Path.of("templates", "jenkins", "config.xml");
         final var configFileReplacements = Map.of(REPLACE_PIPELINE_SCRIPT, jenkinsfile, REPLACE_PUSH_TOKEN, pushToken);
-        final var xmlResource = resourceLoaderService.getResource(configFilePath.toString());
+        final var xmlResource = resourceLoaderService.getResource(configFilePath);
         return XmlFileUtils.readXmlFile(xmlResource, configFileReplacements);
     }
 
@@ -109,7 +109,7 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
     }
 
     private String loadJenkinsfile() {
-        Resource resource = resourceLoaderService.getResource("templates", "jenkins", "Jenkinsfile");
+        Resource resource = resourceLoaderService.getResource(Path.of("templates", "jenkins", "Jenkinsfile"));
 
         try (InputStream inputStream = resource.getInputStream()) {
             return IOUtils.toString(inputStream, Charset.defaultCharset());

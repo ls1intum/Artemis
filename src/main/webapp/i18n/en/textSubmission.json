@@ -3,8 +3,7 @@
         "textSubmission": {
             "home": {
                 "title": "Text Submissions",
-                "createLabel": "Create a new Text Submission",
-                "createOrEditLabel": "Create or edit a Text Submission"
+                "createLabel": "Create a new Text Submission"
             },
             "created": "Created new Text Submission with identifier {{ param }}",
             "updated": "Updated Text Submission with identifier {{ param }}",
