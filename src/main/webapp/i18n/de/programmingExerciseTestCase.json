@@ -3,8 +3,7 @@
         "programmingExerciseTestCase": {
             "home": {
                 "title": "Programming Exercise Test Cases",
-                "createLabel": "Programming Exercise Test Case erstellen",
-                "createOrEditLabel": "Programming Exercise Test Case erstellen oder bearbeiten"
+                "createLabel": "Programming Exercise Test Case erstellen"
             },
             "created": "Programming Exercise Test Case erstellt mit ID {{ param }}",
             "updated": "Programming Exercise Test Case aktualisiert mit ID {{ param }}",

@@ -3,8 +3,7 @@
         "quizQuestionStatistic": {
             "home": {
                 "title": "Question Statistics",
-                "createLabel": "Question Statistic erstellen",
-                "createOrEditLabel": "Question Statistic erstellen oder bearbeiten"
+                "createLabel": "Question Statistic erstellen"
             },
             "created": "Question Statistic erstellt mit ID {{ param }}",
             "updated": "Question Statistic aktualisiert mit ID {{ param }}",

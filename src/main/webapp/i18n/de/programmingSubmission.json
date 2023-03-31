@@ -3,8 +3,7 @@
         "programmingSubmission": {
             "home": {
                 "title": "Einreichungen",
-                "createLabel": "Einreichung erstellen",
-                "createOrEditLabel": "Einreichung erstellen oder bearbeiten"
+                "createLabel": "Einreichung erstellen"
             },
             "created": "Einreichung erstellt mit ID {{ param }}",
             "updated": "Einreichung aktualisiert mit ID {{ param }}",

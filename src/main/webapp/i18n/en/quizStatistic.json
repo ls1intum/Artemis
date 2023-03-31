@@ -3,8 +3,7 @@
         "quizStatistic": {
             "home": {
                 "title": "Statistics",
-                "createLabel": "Create a new Statistic",
-                "createOrEditLabel": "Create or edit a Statistic"
+                "createLabel": "Create a new Statistic"
             },
             "created": "Created new Statistic with identifier {{ param }}",
             "updated": "Updated Statistic with identifier {{ param }}",
