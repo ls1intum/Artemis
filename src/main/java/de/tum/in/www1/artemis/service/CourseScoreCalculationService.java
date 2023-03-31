@@ -38,7 +38,7 @@ public class CourseScoreCalculationService {
     private final PlagiarismCaseRepository plagiarismCaseRepository;
 
     public CourseScoreCalculationService(StudentParticipationRepository studentParticipationRepository, ExerciseRepository exerciseRepository,
-            PlagiarismCaseRepository plagiarismCaseRepository, ExerciseDateService exerciseDateService) {
+            PlagiarismCaseRepository plagiarismCaseRepository) {
         this.studentParticipationRepository = studentParticipationRepository;
         this.exerciseRepository = exerciseRepository;
         this.plagiarismCaseRepository = plagiarismCaseRepository;
