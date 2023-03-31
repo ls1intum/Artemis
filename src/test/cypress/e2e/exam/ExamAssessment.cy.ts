@@ -24,7 +24,6 @@ import { Exercise } from '../../support/pageobjects/exam/ExamParticipation';
 
 let exam: Exam;
 let course: Course;
-let exerciseArray: Array<Exercise> = [];
 
 // This is a workaround for uncaught athene errors. When opening a text submission athene throws an uncaught exception, which fails the test
 Cypress.on('uncaught:exception', () => {
@@ -48,8 +47,6 @@ describe('Exam assessment', () => {
 
     // For some reason the typing of cypress gets slower the longer the test runs, so we test the programming exercise first
     describe('Programming exercise assessment', () => {
-        exerciseArray = [];
-
         before('Prepare exam', () => {
             examEnd = dayjs().add(2.5, 'minutes');
             prepareExam(examEnd, EXERCISE_TYPE.Programming);
@@ -74,8 +71,6 @@ describe('Exam assessment', () => {
     });
 
     describe('Modeling exercise assessment', () => {
-        exerciseArray = [];
-
         before('Prepare exam', () => {
             examEnd = dayjs().add(30, 'seconds');
             prepareExam(examEnd, EXERCISE_TYPE.Modeling);
@@ -107,8 +102,6 @@ describe('Exam assessment', () => {
     });
 
     describe('Text exercise assessment', () => {
-        exerciseArray = [];
-
         before('Prepare exam', () => {
             examEnd = dayjs().add(30, 'seconds');
             prepareExam(examEnd, EXERCISE_TYPE.Text);
@@ -135,7 +128,6 @@ describe('Exam assessment', () => {
     });
 
     describe('Quiz exercise assessment', () => {
-        exerciseArray = [];
         let resultDate: Dayjs;
 
         before('Prepare exam', () => {
