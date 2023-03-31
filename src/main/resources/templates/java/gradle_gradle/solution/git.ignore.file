@@ -63,9 +63,6 @@ local.properties
 *.iml
 *.ipr
 
-# Mongo Explorer plugin
-.idea/**/mongoSettings.xml
-
 # File-based project format
 *.iws
 
