@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.web.rest.lecture;
 
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
@@ -26,6 +27,7 @@ import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.web.rest.dto.LectureUnitInformationDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
+import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
 @RestController
 @RequestMapping("api/")
@@ -168,9 +170,15 @@ public class AttachmentUnitResource {
         }
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, lecture.getCourse(), null);
 
-        List<AttachmentUnit> savedAttachmentUnits = attachmentUnitService.createAttachmentUnits(lectureUnitInformationDTO, lecture, file);
-        savedAttachmentUnits.forEach(learningGoalProgressService::updateProgressByLearningObjectAsync);
-        return ResponseEntity.ok().body(savedAttachmentUnits);
+        try {
+            List<AttachmentUnit> savedAttachmentUnits = lectureUnitProcessingService.splitUnits(lectureUnitInformationDTO, file, lecture);
+            savedAttachmentUnits.forEach(learningGoalProgressService::updateProgressByLearningObjectAsync);
+            return ResponseEntity.ok().body(savedAttachmentUnits);
+        }
+        catch (IOException e) {
+            log.error("Could not create attachment units automatically", e);
+            throw new InternalServerErrorException("Could not create attachment units automatically");
+        }
     }
 
     /**

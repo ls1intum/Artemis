@@ -1,12 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
-import java.io.IOException;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.cache.CacheManager;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -18,15 +13,10 @@ import de.tum.in.www1.artemis.repository.AttachmentRepository;
 import de.tum.in.www1.artemis.repository.AttachmentUnitRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.SlideRepository;
-import de.tum.in.www1.artemis.web.rest.dto.LectureUnitDTO;
-import de.tum.in.www1.artemis.web.rest.dto.LectureUnitInformationDTO;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
-import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
 @Service
 public class AttachmentUnitService {
-
-    private final Logger log = LoggerFactory.getLogger(AttachmentUnitService.class);
 
     private final AttachmentUnitRepository attachmentUnitRepository;
 
@@ -38,16 +28,12 @@ public class AttachmentUnitService {
 
     private final LectureRepository lectureRepository;
 
-    private final LectureUnitProcessingService lectureUnitProcessingService;
-
     private final AsyncSlideSplitterService asyncSlideSplitterService;
 
     private final SlideRepository slideRepository;
 
-    public AttachmentUnitService(SlideRepository slideRepository, AsyncSlideSplitterService asyncSlideSplitterService, LectureUnitProcessingService lectureUnitProcessingService,
-            AttachmentUnitRepository attachmentUnitRepository, AttachmentRepository attachmentRepository, FileService fileService, CacheManager cacheManager,
-            LectureRepository lectureRepository) {
-        this.lectureUnitProcessingService = lectureUnitProcessingService;
+    public AttachmentUnitService(SlideRepository slideRepository, AsyncSlideSplitterService asyncSlideSplitterService, AttachmentUnitRepository attachmentUnitRepository,
+            AttachmentRepository attachmentRepository, FileService fileService, CacheManager cacheManager, LectureRepository lectureRepository) {
         this.attachmentUnitRepository = attachmentUnitRepository;
         this.attachmentRepository = attachmentRepository;
         this.fileService = fileService;
@@ -84,50 +70,9 @@ public class AttachmentUnitService {
         prepareAttachmentUnitForClient(savedAttachmentUnit, savedAttachment);
         evictCache(file, savedAttachmentUnit);
 
-        asyncSlideSplitterService.splitAttachmentUnitIntoSingleSlides(file, savedAttachmentUnit);
+        asyncSlideSplitterService.splitAttachmentUnitIntoSingleSlides(savedAttachmentUnit);
 
         return savedAttachmentUnit;
-    }
-
-    /**
-     * Creates new attachment units for the given lecture.
-     *
-     * @param lectureUnitInformationDTO The split information which contains units as list, number of pages and removeBreakSlide flag
-     * @param lecture                   The lecture linked to the attachmentUnits
-     * @param file                      The file (lecture slide) to be split
-     * @return The created attachment units
-     */
-    public List<AttachmentUnit> createAttachmentUnits(LectureUnitInformationDTO lectureUnitInformationDTO, Lecture lecture, MultipartFile file) {
-        List<AttachmentUnit> createdUnits = new ArrayList<>();
-        try {
-            log.debug("Splitting attachment file {} with info {}", file, lectureUnitInformationDTO.units());
-            List<LectureUnitDTO> lectureUnitsDTO = lectureUnitProcessingService.splitUnits(lectureUnitInformationDTO, file);
-            lectureUnitsDTO.forEach(lectureUnit -> {
-                lectureUnit.attachmentUnit().setLecture(null);
-                AttachmentUnit savedAttachmentUnit = attachmentUnitRepository.saveAndFlush(lectureUnit.attachmentUnit());
-                createdUnits.add(savedAttachmentUnit);
-                lectureUnit.attachmentUnit().setLecture(lecture);
-                lecture.addLectureUnit(savedAttachmentUnit);
-
-                handleFile(lectureUnit.file(), lectureUnit.attachment(), true);
-
-                lectureUnit.attachment().setAttachmentUnit(savedAttachmentUnit);
-                lectureUnit.attachment().setVersion(1);
-
-                Attachment savedAttachment = attachmentRepository.saveAndFlush(lectureUnit.attachment());
-                lectureUnit.attachmentUnit().setAttachment(savedAttachment);
-                evictCache(lectureUnit.file(), savedAttachmentUnit);
-                // split attachment into single slides and save them as pngs
-                asyncSlideSplitterService.splitAttachmentUnitIntoSingleSlides(lectureUnit.file(), savedAttachmentUnit);
-            });
-            lectureRepository.save(lecture);
-        }
-        catch (IOException e) {
-            log.error("Error while splitting attachment file", e);
-            throw new InternalServerErrorException("Could not create attachment units");
-        }
-
-        return createdUnits;
     }
 
     /**
@@ -162,7 +107,7 @@ public class AttachmentUnitService {
         evictCache(updateFile, savedAttachmentUnit);
 
         slideRepository.deleteAll(existingAttachmentUnit.getSlides());
-        asyncSlideSplitterService.splitAttachmentUnitIntoSingleSlides(updateFile, savedAttachmentUnit);
+        asyncSlideSplitterService.splitAttachmentUnitIntoSingleSlides(savedAttachmentUnit);
 
         return savedAttachmentUnit;
     }
