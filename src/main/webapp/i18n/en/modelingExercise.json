@@ -3,7 +3,7 @@
         "modelingExercise": {
             "home": {
                 "title": "Modeling Exercises",
-                "createLabel": "Create new Modeling Exercise",
+                "createLabel": "Create Modeling Exercise",
                 "editLabel": "Edit Modeling Exercise",
                 "importLabel": "Import Modeling Exercise"
             },

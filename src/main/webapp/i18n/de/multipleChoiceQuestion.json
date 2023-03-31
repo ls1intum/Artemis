@@ -3,8 +3,7 @@
         "multipleChoiceQuestion": {
             "home": {
                 "title": "Multiple-Choice Questions",
-                "createLabel": "Multiple-Choice Question erstellen",
-                "createOrEditLabel": "Multiple-Choice Question erstellen oder bearbeiten"
+                "createLabel": "Multiple-Choice Question erstellen"
             },
             "created": "Multiple-Choice Question erstellt mit ID {{ param }}",
             "updated": "Multiple-Choice Question aktualisiert mit ID {{ param }}",

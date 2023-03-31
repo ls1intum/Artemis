@@ -182,10 +182,10 @@ public class FileResource {
             String languagePrefix = language.map(programmingLanguage -> programmingLanguage.name().toLowerCase()).orElse("");
             String projectTypePrefix = projectType.map(type -> type.name().toLowerCase()).orElse("");
 
-            Resource fileResource = resourceLoaderService.getResource("templates", languagePrefix, projectTypePrefix, filename);
+            Resource fileResource = resourceLoaderService.getResource(Path.of("templates", languagePrefix, projectTypePrefix, filename));
             if (!fileResource.exists()) {
                 // Load without project type if not found with project type
-                fileResource = resourceLoaderService.getResource("templates", languagePrefix, filename);
+                fileResource = resourceLoaderService.getResource(Path.of("templates", languagePrefix, filename));
             }
 
             var fileContent = IOUtils.toByteArray(fileResource.getInputStream());

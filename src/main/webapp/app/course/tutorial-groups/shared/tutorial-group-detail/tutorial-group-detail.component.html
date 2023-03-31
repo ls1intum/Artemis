@@ -29,7 +29,7 @@
             <span *ngIf="tutorialGroup.title">{{ tutorialGroup.title }}</span>
         </dd>
         <!-- Channel -->
-        <ng-container *ngIf="tutorialGroup.channel && course.postsEnabled">
+        <ng-container *ngIf="tutorialGroup.channel && isMessagingEnabled(course)">
             <dt>
                 <a class="th-link" [routerLink]="['/courses', course.id!, 'messages']">{{ 'artemisApp.entities.tutorialGroup.channel' | artemisTranslate }}</a>
             </dt>
@@ -121,8 +121,8 @@
             <span>{{ 'artemisApp.entities.tutorialGroup.language' | artemisTranslate }}</span>
         </dt>
         <dd>
-            <span *ngIf="tutorialGroup.language">
-                {{ (tutorialGroup.language === GERMAN ? 'artemisApp.generic.german' : 'artemisApp.generic.english') | artemisTranslate }}
+            <span>
+                {{ tutorialGroup.language ? tutorialGroup.language : '' }}
             </span>
         </dd>
         <!-- Campus -->

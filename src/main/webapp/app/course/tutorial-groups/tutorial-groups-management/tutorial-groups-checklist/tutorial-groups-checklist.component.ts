@@ -37,7 +37,11 @@ export class TutorialGroupsChecklistComponent implements OnInit, OnDestroy {
         return this.isTimeZoneConfigured && this.isTutorialGroupConfigurationCreated;
     }
 
-    onNoClick(event: Event): void {
+    /**
+     * Prevents the checkbox from being checked. They are only used to display the state of the tutorial group configuration.
+     * @param event the click event
+     */
+    preventCheckboxChecking(event: Event): void {
         event.preventDefault();
     }
 
