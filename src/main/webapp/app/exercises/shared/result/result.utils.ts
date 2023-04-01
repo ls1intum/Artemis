@@ -315,7 +315,7 @@ export function getTestCaseNamesFromResults(results: ResultWithPointsPerGradingC
         if (!result.result.feedbacks) {
             return [];
         }
-        result.result.feedbacks.map((f) => {
+        result.result.feedbacks.forEach((f) => {
             if (Feedback.isTestCaseFeedback(f)) {
                 testCasesNames.add(f.testCase?.testName ?? 'Test ' + result.result.feedbacks?.indexOf(f) + 1);
             }
@@ -361,6 +361,6 @@ export function getFeedbackByTestCase(testCase: string, feedbacks?: Feedback[]):
     if (!feedbacks) {
         return null;
     }
-    const i = feedbacks.findIndex((feedback) => feedback.text?.localeCompare(testCase) === 0);
+    const i = feedbacks.findIndex((feedback) => feedback.testCase?.testName?.localeCompare(testCase) === 0);
     return i !== -1 ? feedbacks[i] : null;
 }
