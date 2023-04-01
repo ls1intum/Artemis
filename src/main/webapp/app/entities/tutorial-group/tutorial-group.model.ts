@@ -1,5 +1,5 @@
 import { BaseEntity } from 'app/shared/model/base-entity';
-import { Course, Language } from 'app/entities/course.model';
+import { Course } from 'app/entities/course.model';
 import { User } from 'app/core/user/user.model';
 import { TutorialGroupSchedule } from 'app/entities/tutorial-group/tutorial-group-schedule.model';
 import { TutorialGroupSession } from 'app/entities/tutorial-group/tutorial-group-session.model';
@@ -12,7 +12,7 @@ export class TutorialGroup implements BaseEntity {
     public course?: Course;
     public capacity?: number;
     public campus?: string;
-    public language?: Language;
+    public language?: string;
     public additionalInformation?: string;
     public isOnline?: boolean;
     public teachingAssistant?: User;
@@ -28,4 +28,5 @@ export class TutorialGroup implements BaseEntity {
     public teachingAssistantName?: string;
     public courseTitle?: string;
     public nextSession?: TutorialGroupSession;
+    public averageAttendance?: number;
 }

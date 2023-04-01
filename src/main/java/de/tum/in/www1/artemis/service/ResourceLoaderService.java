@@ -3,14 +3,18 @@ package de.tum.in.www1.artemis.service;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
-import org.apache.commons.lang3.StringUtils;
+import javax.annotation.Nonnull;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
+import org.springframework.core.io.support.ResourcePatternResolver;
 import org.springframework.core.io.support.ResourcePatternUtils;
 import org.springframework.stereotype.Service;
 
@@ -20,114 +24,148 @@ import org.springframework.stereotype.Service;
 @Service
 public class ResourceLoaderService {
 
-    private final ResourceLoader resourceLoader;
+    private static final Logger log = LoggerFactory.getLogger(ResourceLoaderService.class);
+
+    private static final String ALL_FILES_GLOB = "**" + File.separator + "*.*";
 
     @Value("${artemis.template-path:#{null}}")
-    private Optional<String> templateFileSystemPath;
+    private Optional<Path> templateFileSystemPath;
 
-    // Files that start with a prefix that is included in this list can be overwritten from the file system
-    private final List<String> allowedOverridePrefixes = new ArrayList<>();
+    private final ResourcePatternResolver resourceLoader;
+
+    /**
+     * Files that start with a prefix that is included in this list can be overwritten from the file system
+     */
+    private static final List<Path> ALLOWED_OVERRIDE_PREFIXES = List.of(Path.of("templates", "jenkins"));
 
     public ResourceLoaderService(ResourceLoader resourceLoader) {
-        this.resourceLoader = resourceLoader;
-
-        allowedOverridePrefixes.add(Path.of("templates", "jenkins").toString());
+        this.resourceLoader = ResourcePatternUtils.getResourcePatternResolver(resourceLoader);
     }
 
     /**
-     * Load the resource from the specified path. The path MUST NOT start with a '/', it is appended automatically if needed.
-     * File will be loaded from the relative path, if it exists, from the classpath otherwise.
+     * Loads the resource from the specified path.
+     * <p>
+     * Only relative paths are allowed.
      *
-     * @param path the path to load the file from. Must not start with a '/'.
-     * @return the loaded resource, which might not exist ({@link Resource#exists()}.
+     * @param path A relative path to a resource.
+     * @return The resource located by the specified path.
      */
-    public Resource getResource(String path) {
+    public Resource getResource(final Path path) {
+        checkValidPathElseThrow(path);
+
         Resource resource = null;
+
         // Try to load from filesystem if override is allowed for path
         if (isOverrideAllowed(path)) {
-            resource = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResource("file:" + getTemplateFileSystemPath() + path);
+            final String resourceLocation = getFileResourceLocation(path);
+            resource = resourceLoader.getResource(resourceLocation);
         }
+
         // If loading from filesystem is not allowed or was not successful, load from classpath
         if (resource == null || !resource.exists()) {
-            resource = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResource("classpath:/" + path);
+            final String resourceLocation = getClassPathResourceLocation(path);
+            resource = resourceLoader.getResource(resourceLocation);
         }
 
         return resource;
     }
 
     /**
-     * Load the resource from the specified path.
-     * File will be loaded from the relative path, if it exists, from the classpath otherwise.
+     * Recursively loads the resources from the specified directory.
+     * <p>
+     * Only relative paths are allowed.
      *
-     * @param pathSegments the segments of the path (e.g. ["templates", "java", "pom.xml"]). Will automatically be joined with '/'.
-     * @return the loaded resource, which might not exist ({@link Resource#exists()}.
+     * @param basePath A relative path pattern to a resource.
+     * @return The resources located by the specified pathPattern.
      */
-    public Resource getResource(String... pathSegments) {
-        return getResource(StringUtils.join(pathSegments, File.separator));
+    @Nonnull
+    public Resource[] getResources(final Path basePath) {
+        return getResources(basePath, ALL_FILES_GLOB);
     }
 
     /**
-     * Load the resources from the specified path. The path MUST NOT start with a '/', it is appended automatically if needed.
-     * Files will be loaded from the relative path, it is non-empty (at least one resource), from the classpath otherwise.
+     * Loads the resources from the specified path pattern.
+     * <p>
+     * Only relative paths are allowed.
+     * <p>
+     * Examples for path patterns: {@code *.sh}, {@code base/**}. Use forward slashes to separate path parts.
      *
-     * @param path the path to load the file from. Must not start with a '/'.
-     * @return the loaded resources, which might be an empty array
+     * @param basePath A relative path pattern to a resource.
+     * @param pattern  A pattern that limits which files in the directory of the base path are matched.
+     * @return The resources located by the specified pathPattern.
      */
-    public Resource[] getResources(String path) {
+    @Nonnull
+    public Resource[] getResources(final Path basePath, final String pattern) {
+        checkValidPathElseThrow(basePath);
+
         Resource[] resources = null;
-        // Try to load from filesystem if override is allowed for path
-        if (isOverrideAllowed(path)) {
+
+        // Try to load from filesystem if override is allowed for pathPattern
+        if (isOverrideAllowed(basePath)) {
+            final String resourceLocation = getFileResourceLocation(basePath, pattern);
             try {
-                resources = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResources("file:" + getTemplateFileSystemPath() + path);
+                resources = resourceLoader.getResources(resourceLocation);
             }
-            catch (IOException ignored) {
+            catch (IOException e) {
+                log.debug("Could not load resources '{}' from filesystem.", resourceLocation, e);
             }
         }
 
         // If loading from filesystem is not allowed or was not successful, load from classpath
         if (resources == null || resources.length == 0) {
+            final String resourceLocation = getClassPathResourceLocation(basePath, pattern);
             try {
-                resources = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResources("classpath:/" + path);
+                resources = resourceLoader.getResources(resourceLocation);
             }
-            catch (IOException ignored) {
+            catch (IOException e) {
+                log.debug("Could not load resources '{}' from classpath.", resourceLocation, e);
             }
         }
 
-        return resources != null ? resources : new Resource[0];
+        return Objects.requireNonNullElseGet(resources, () -> new Resource[0]);
     }
 
-    /**
-     * Load the resources from the specified path.
-     * Files will be loaded from the relative path, it is non-empty (at least one resource), from the classpath otherwise.
-     *
-     * @param pathSegments the segments of the path (e.g. ["templates", "java"]). Will automatically be joined with '/'.
-     * @return the loaded resources, which might be an empty array
-     */
-    public Resource[] getResources(String... pathSegments) {
-        return getResources(StringUtils.join(pathSegments, File.separator));
-    }
-
-    /**
-     * Return the file system path where templates are stored.
-     * If no template path is defined, the current directory where Artemis was started from is used (e.g. the `templates` folder next to the 'Artemis.war' file).
-     * If a template path is defined, it is used.
-     *
-     * @return the template system path if defined (with a trailing '/') or "" if is not set
-     */
-    private String getTemplateFileSystemPath() {
-        if (templateFileSystemPath.isEmpty()) {
-            return "";
+    private void checkValidPathElseThrow(final Path path) {
+        if (path.isAbsolute()) {
+            throw new IllegalArgumentException("Cannot load resources from absolute paths!");
         }
+    }
 
-        if (templateFileSystemPath.get().endsWith(File.separator)) {
-            return templateFileSystemPath.get();
+    private String getFileResourceLocation(final Path resourcePath) {
+        return "file:" + resolveResourcePath(resourcePath).toString();
+    }
+
+    private String getFileResourceLocation(final Path resourcePath, final String pathPattern) {
+        final String systemPathPattern = File.separator + adaptPathPatternToSystem(pathPattern);
+        return "file:" + resolveResourcePath(resourcePath).toString() + systemPathPattern;
+    }
+
+    private String getClassPathResourceLocation(final Path resourcePath) {
+        return "classpath:/" + ensureUnixPath(resourcePath.toString());
+    }
+
+    private String getClassPathResourceLocation(final Path resourcePath, final String pathPattern) {
+        return "classpath:/" + ensureUnixPath(resourcePath.toString() + "/" + pathPattern);
+    }
+
+    private String adaptPathPatternToSystem(final String pathPattern) {
+        if ("/".equals(File.separator)) {
+            return ensureUnixPath(pathPattern);
         }
         else {
-            return templateFileSystemPath.get() + File.separator;
+            return pathPattern.replace("/", "\\");
         }
     }
 
-    private boolean isOverrideAllowed(String path) {
-        return allowedOverridePrefixes.stream().anyMatch(path::startsWith);
+    private String ensureUnixPath(final String pathPattern) {
+        return pathPattern.replace("\\", "/");
+    }
+
+    private Path resolveResourcePath(final Path resource) {
+        return templateFileSystemPath.map(path -> path.resolve(resource)).orElse(resource);
+    }
+
+    private boolean isOverrideAllowed(final Path path) {
+        return ALLOWED_OVERRIDE_PREFIXES.stream().anyMatch(path::startsWith);
     }
 }

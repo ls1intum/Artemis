@@ -183,7 +183,6 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
     // Provides the control configuration to be read and used by "CourseOverviewComponent"
     public readonly controlConfiguration: BarControlConfiguration = {
         subject: new Subject<TemplateRef<any>>(),
-        useIndentation: false,
     };
 
     constructor(

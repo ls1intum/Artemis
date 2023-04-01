@@ -54,12 +54,12 @@ artemis:
             images:
                 java:
                     # possible overrides: maven, gradle
-                    default: "ls1tum/artemis-maven-template:java17-15"
+                    default: "ls1tum/artemis-maven-template:java17-16"
                 kotlin:
                     # possible overrides: maven, gradle
-                    default: "ls1tum/artemis-maven-template:java17-15"
+                    default: "ls1tum/artemis-maven-template:java17-16"
                 empty:
-                    default: "ls1tum/artemis-maven-template:java17-15"
+                    default: "ls1tum/artemis-maven-template:java17-16"
                 python:
                     default: "ls1tum/artemis-python-docker:latest"
                 c:

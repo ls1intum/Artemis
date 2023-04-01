@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -18,6 +19,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.CourseInformationSharingConfiguration;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRepository;
 import de.tum.in.www1.artemis.service.tutorialgroups.TutorialGroupChannelManagementService;
@@ -104,37 +106,65 @@ class ChannelIntegrationTest extends AbstractConversationTest {
     }
 
     @ParameterizedTest
-    @ValueSource(booleans = { true, false })
+    @EnumSource(value = CourseInformationSharingConfiguration.class, names = { "COMMUNICATION_ONLY", "DISABLED" })
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void createChannel_nameInvalid_shouldReturnBadRequest(boolean isPublicChannel) throws Exception {
-        // given
-        var channel = createChannel(isPublicChannel);
+    void createChannel_messagingFeatureDeactivated_shouldReturnForbidden(CourseInformationSharingConfiguration courseInformationSharingConfiguration) throws Exception {
+        createTest_messagingDeactivated(courseInformationSharingConfiguration);
+    }
 
+    void createTest_messagingDeactivated(CourseInformationSharingConfiguration courseInformationSharingConfiguration) throws Exception {
+        setCourseInformationSharingConfiguration(courseInformationSharingConfiguration);
+
+        // given
         var channelDTO = new ChannelDTO();
-        channelDTO.setIsPublic(isPublicChannel);
+        channelDTO.setIsPublic(true);
         channelDTO.setIsAnnouncementChannel(false);
         channelDTO.setName(RandomConversationNameGenerator.generateRandomConversationName());
         channelDTO.setDescription("general channel");
 
-        // when
-        // duplicated name
-        channelDTO.setName(channel.getName());
-        expectCreateBadRequest(channelDTO);
-        // empty name
-        channelDTO.setName("");
-        expectCreateBadRequest(channelDTO);
-        // null name
-        channelDTO.setName(null);
-        expectCreateBadRequest(channelDTO);
-        // regex not matching
-        channelDTO.setName("general%%%%wow");
-        expectCreateBadRequest(channelDTO);
+        expectCreateForbidden(channelDTO);
 
-        // then
-        verifyNoParticipantTopicWebsocketSent();
+        // active messaging again
+        setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
+    }
 
-        // cleanup
-        conversationRepository.deleteById(channel.getId());
+    @ParameterizedTest
+    @EnumSource(value = CourseInformationSharingConfiguration.class, names = { "COMMUNICATION_ONLY", "DISABLED" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void update_messagingFeatureDeactivated_shouldReturnForbidden(CourseInformationSharingConfiguration courseInformationSharingConfiguration) throws Exception {
+        update_messagingDeactivated(courseInformationSharingConfiguration);
+    }
+
+    void update_messagingDeactivated(CourseInformationSharingConfiguration courseInformationSharingConfiguration) throws Exception {
+        setCourseInformationSharingConfiguration(courseInformationSharingConfiguration);
+
+        // given
+        var channelDTO = new ChannelDTO();
+        channelDTO.setIsPublic(true);
+        channelDTO.setIsAnnouncementChannel(false);
+        channelDTO.setName(RandomConversationNameGenerator.generateRandomConversationName());
+        channelDTO.setDescription("general channel");
+
+        expectUpdateForbidden(1L, channelDTO);
+
+        // active messaging again
+        setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = CourseInformationSharingConfiguration.class, names = { "COMMUNICATION_ONLY", "DISABLED" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void delete_messagingFeatureDeactivated_shouldReturnForbidden(CourseInformationSharingConfiguration courseInformationSharingConfiguration) throws Exception {
+        deleteTest_messagingDeactivated(courseInformationSharingConfiguration);
+    }
+
+    void deleteTest_messagingDeactivated(CourseInformationSharingConfiguration courseInformationSharingConfiguration) throws Exception {
+        setCourseInformationSharingConfiguration(courseInformationSharingConfiguration);
+
+        expectDeleteForbidden(1L);
+
+        // active messaging again
+        setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
     }
 
     @ParameterizedTest
@@ -203,7 +233,7 @@ class ChannelIntegrationTest extends AbstractConversationTest {
     void deleteTutorialGroupChannel_asInstructor_shouldReturnBadRequest(boolean isPublicChannel) throws Exception {
         // given
         var channel = createChannel(isPublicChannel);
-        var tutorialGroup = database.createTutorialGroup(exampleCourseId, "tg-channel-test", "LoremIpsum", 10, false, "Garching", Language.ENGLISH,
+        var tutorialGroup = database.createTutorialGroup(exampleCourseId, "tg-channel-test", "LoremIpsum", 10, false, "Garching", Language.ENGLISH.name(),
                 userRepository.findOneByLogin(testPrefix + "tutor1").get(), Set.of());
         var channelFromDatabase = channelRepository.findById(channel.getId()).get();
 
@@ -377,6 +407,27 @@ class ChannelIntegrationTest extends AbstractConversationTest {
     }
 
     @ParameterizedTest
+    @EnumSource(value = CourseInformationSharingConfiguration.class, names = { "COMMUNICATION_ONLY", "DISABLED" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void archiveAndUnarchiveChannel_messagingFeatureDeactivated_shouldReturnForbidden(CourseInformationSharingConfiguration courseInformationSharingConfiguration)
+            throws Exception {
+        archival_messagingDeactivated(courseInformationSharingConfiguration);
+
+    }
+
+    void archival_messagingDeactivated(CourseInformationSharingConfiguration courseInformationSharingConfiguration) throws Exception {
+        var channel = createChannel(true);
+        setCourseInformationSharingConfiguration(courseInformationSharingConfiguration);
+
+        // given
+        expectArchivalChangeForbidden(channel, true, true);
+        expectArchivalChangeForbidden(channel, true, false);
+
+        // active messaging again
+        setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
+    }
+
+    @ParameterizedTest
     @ValueSource(booleans = { true, false })
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void archiveAndUnarchiveChannel_asUserWithChannelModerationRights_shouldArchiveChannel(boolean isPublicChannel) throws Exception {
@@ -397,6 +448,28 @@ class ChannelIntegrationTest extends AbstractConversationTest {
 
         // cleanup
         conversationRepository.deleteById(channel.getId());
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = CourseInformationSharingConfiguration.class, names = { "COMMUNICATION_ONLY", "DISABLED" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void grantRevokeChannelModeratorRole_messagingFeatureDeactivated_shouldReturnForbidden(CourseInformationSharingConfiguration courseInformationSharingConfiguration)
+            throws Exception {
+        grantRevokeChannelModeratorRole_messagingDeactivated(courseInformationSharingConfiguration);
+
+    }
+
+    void grantRevokeChannelModeratorRole_messagingDeactivated(CourseInformationSharingConfiguration courseInformationSharingConfiguration) throws Exception {
+        var channel = createChannel(true);
+
+        setCourseInformationSharingConfiguration(courseInformationSharingConfiguration);
+
+        // given
+        expectGrantRevokeChannelModeratorRoleForbidden(channel, true);
+        expectGrantRevokeChannelModeratorRoleForbidden(channel, false);
+
+        // active messaging again
+        setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
     }
 
     @ParameterizedTest
@@ -453,6 +526,26 @@ class ChannelIntegrationTest extends AbstractConversationTest {
 
         // cleanup
         conversationRepository.deleteById(channel.getId());
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = CourseInformationSharingConfiguration.class, names = { "COMMUNICATION_ONLY", "DISABLED" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void registerDeregisterUsersToChannel_messagingFeatureDeactivated_shouldReturnForbidden(CourseInformationSharingConfiguration courseInformationSharingConfiguration)
+            throws Exception {
+        registerUsersToChannel_messagingDeactivated(courseInformationSharingConfiguration);
+
+    }
+
+    void registerUsersToChannel_messagingDeactivated(CourseInformationSharingConfiguration courseInformationSharingConfiguration) throws Exception {
+        var channel = createChannel(true);
+        setCourseInformationSharingConfiguration(courseInformationSharingConfiguration);
+        // given
+        expectRegisterDeregisterForbidden(channel, true);
+        expectRegisterDeregisterForbidden(channel, false);
+
+        // active messaging again
+        setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
     }
 
     @ParameterizedTest

@@ -3,8 +3,7 @@
         "quizStatisticCounter": {
             "home": {
                 "title": "Statistic Counters",
-                "createLabel": "Create a new Statistic Counter",
-                "createOrEditLabel": "Create or edit a Statistic Counter"
+                "createLabel": "Create a new Statistic Counter"
             },
             "created": "Created new Statistic Counter with identifier {{ param }}",
             "updated": "Updated Statistic Counter with identifier {{ param }}",

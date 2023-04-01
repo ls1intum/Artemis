@@ -34,7 +34,6 @@ import { AlertService } from 'app/core/util/alert.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { AccountService } from 'app/core/auth/account.service';
-import { Course } from 'app/entities/course.model';
 import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-router-link.directive';
 import { ParticipantScoresDistributionComponent } from 'app/shared/participant-scores/participant-scores-distribution/participant-scores-distribution.component';
 import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
@@ -64,9 +63,6 @@ describe('ExamScoresComponent', () => {
     let comp: ExamScoresComponent;
     let examService: ExamManagementService;
     let gradingSystemService: GradingSystemService;
-    let accountService: AccountService;
-
-    let routingStub: jest.SpyInstance;
 
     const gradeStep1: GradeStep = {
         isPassingGrade: false,
@@ -326,10 +322,6 @@ describe('ExamScoresComponent', () => {
                 findExamScoresSpy = jest
                     .spyOn(participationScoreService, 'findExamScores')
                     .mockReturnValue(of(new HttpResponse({ body: [examScoreStudent1, examScoreStudent2, examScoreStudent3] })));
-                accountService = TestBed.inject(AccountService);
-                const navigationUtilService = TestBed.inject(ArtemisNavigationUtilService);
-
-                routingStub = jest.spyOn(navigationUtilService, 'routeInNewTab');
             });
     });
 
@@ -897,24 +889,6 @@ describe('ExamScoresComponent', () => {
             expect(comp.tableState.medianGradeSubmittedInFirstCorrection).toBe('4');
             expect(comp.tableState.medianGradeTotalInFirstCorrection).toBe('4');
         });
-    });
-
-    it('should not delegate user if authorisation is not sufficient', () => {
-        jest.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(false);
-
-        comp.onSelect();
-
-        expect(routingStub).not.toHaveBeenCalled();
-    });
-
-    it('should delegate user if authorisation is sufficient', () => {
-        jest.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
-        comp.course = { id: 42 } as Course;
-        comp.examScoreDTO = examScoreDTO;
-
-        comp.onSelect();
-
-        expect(routingStub).toHaveBeenCalledWith(['course-management', 42, 'exams', 1, 'participant-scores']);
     });
 
     it('should toggle median correctly', () => {

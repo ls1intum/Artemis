@@ -1,9 +1,4 @@
 <div class="btn-group flex-btn-group-container">
-    <!-- Scores -->
-    <a *ngIf="exercise.isAtLeastTutor" [routerLink]="['/course-management', courseId, exercise.type + '-exercises', exercise.id, 'scores']" class="btn btn-info btn-sm me-1">
-        <fa-icon [icon]="faTable"></fa-icon>
-        <span class="d-none d-md-inline" jhiTranslate="entity.action.scores">Scores</span>
-    </a>
     <!-- Participations -->
     <a
         *ngIf="exercise.isAtLeastTutor"
@@ -13,14 +8,10 @@
         <fa-icon [icon]="farListAlt"></fa-icon>
         <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations">Participations</span>
     </a>
-    <!-- Submissions -->
-    <a
-        *ngIf="exercise.isAtLeastInstructor"
-        [routerLink]="['/course-management', courseId, exercise.type + '-exercises', exercise.id, 'submissions']"
-        class="btn btn-success btn-sm me-1"
-    >
-        <fa-icon [icon]="faBook"></fa-icon>
-        <span class="d-none d-md-inline" jhiTranslate="artemisApp.courseOverview.exerciseDetails.instructorActions.submissions">Submissions</span>
+    <!-- Scores -->
+    <a *ngIf="exercise.isAtLeastTutor" [routerLink]="['/course-management', courseId, exercise.type + '-exercises', exercise.id, 'scores']" class="btn btn-info btn-sm me-1">
+        <fa-icon [icon]="faTable"></fa-icon>
+        <span class="d-none d-md-inline" jhiTranslate="entity.action.scores">Scores</span>
     </a>
     <!-- Example Submission -->
     <a

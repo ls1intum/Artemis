@@ -3,8 +3,7 @@
         "multipleChoiceQuestionStatistic": {
             "home": {
                 "title": "Multiple-Choice Question Statistics",
-                "createLabel": "Multiple-Choice Question Statistic erstellen",
-                "createOrEditLabel": "Multiple-Choice Question Statistic erstellen oder bearbeiten"
+                "createLabel": "Multiple-Choice Question Statistic erstellen"
             },
             "created": "Multiple-Choice Question Statistic erstellt mit ID {{ param }}",
             "updated": "Multiple-Choice Question Statistic aktualisiert mit ID {{ param }}",

@@ -3,12 +3,13 @@
         "programmingExercise": {
             "home": {
                 "title": "Programming Exercises",
-                "createLabel": "Create new Programming Exercise",
+                "createLabel": "Create Programming Exercise",
                 "editLabel": "Edit Programming Exercise",
                 "importLabel": "Import Programming Exercise",
                 "linkLabel": "Link new Programming Exercise",
-                "generateLabel": "Generate new Programming Exercise",
-                "createOrEditLabel": "Create or edit a Programming Exercise"
+                "switchToGuidedModeLabel": "Switch to guided mode",
+                "switchToTraditionalModeLabel": "Switch to normal mode",
+                "nextStepLabel": "Next"
             },
             "created": "Created new Programming Exercise with title {{ param }}",
             "updated": "Updated Programming Exercise with title {{ param }}",
@@ -31,6 +32,44 @@
                 "showTemplateSubmissions": "Show Template Submissions",
                 "showSolutionSubmissions": "Show Solution Submissions"
             },
+            "wizardMode": {
+                "steps": {
+                    "generalInfoStepTitle": "Information",
+                    "difficultyStepTitle": "Difficulty",
+                    "languageStepTitle": "Language",
+                    "gradingStepTitle": "Grading",
+                    "problemStepTitle": "Problem"
+                },
+                "detailedSteps": {
+                    "generalInfoStepTitle": "General Information",
+                    "generalInfoStepMessage": "Add some general information about the new exercise.",
+                    "difficultyStepTitle": "Difficulty",
+                    "difficultyStepMessage": "Set the difficulty for the new exercise.",
+                    "languageStepTitle": "Programming Language",
+                    "languageStepMessage": "Specify the chosen programming language as well as the project type for the new exercise.",
+                    "gradingStepTitle": "Grading",
+                    "gradingStepMessage": "Specify how students should be graded when completing this exercise.",
+                    "problemStepTitle": "Problem Statement",
+                    "problemStepMessage": "Specify the problem statement for the new exercise."
+                },
+                "gradingLabels": {
+                    "points": "There is a total of {maxPoints} points to achieve in this {exerciseType}.",
+                    "noBonus": "There is no bonus to achieve.",
+                    "bonus": "{bonusPoints} bonus points can be achieved.",
+                    "assessment": "This exercise will be assessed {assessmentType}.",
+                    "lockedSubmission": "The repositories will be locked after {submissionLimit} submissions.",
+                    "penaltySubmission": "There will be a penalty of {exceedingPenalty} points for every submission after {submissionLimit} submissions.",
+                    "unrestrictedSubmission": "There is no limit for the amount of allowed submissions.",
+                    "staticAnalysisEnabled": "Static code analysis is enabled for this exercise and there is a maximum penalty of {maxPenalty} points from static code analysis.",
+                    "staticAnalysisDisabled": "Static code analysis is disabled for this exercise.",
+                    "normalExercise": "exercise",
+                    "bonusExercise": "bonus exercise",
+                    "assessmentAutomatic": "automatically",
+                    "assessmentSemiautomatic": "semi-automatically"
+                }
+            },
+            "noReleaseDateWarning": "You have not defined a release date for this exercise, this means that it will be immediately published and made visible to the students. But they can only participate after the currently defined start date.",
+            "noReleaseAndStartDateWarning": "You have not defined a release and start date for this exercise, this means that it will be immediately published and students cam participate in the exercise.",
             "unsavedChangesLanguageChange": "The problem statement still contains unsaved changes. Do you really want to change the programming language?",
             "unsavedChangesProjectTypeChange": "The problem statement still contains unsaved changes. Do you really want to change the project type?",
             "templateRepositoryUrl": "Template Repository Url",
@@ -242,14 +281,38 @@
                 "downloadExercise": "Download Exercise",
                 "downloadAllStudents": "Or download the repositories of all students",
                 "downloadAllTeams": "Or download the repositories of all teams",
-                "filterLateSubmissions": "Filter late submissions",
-                "filterLateSubmissionsDate": "Date to filter late submissions (defaults to exercise due date if not set)",
-                "addStudentName": "Add student name to project (allows importing multiple projects into Eclipse at the same time)",
-                "addTeamName": "Add team name to project (allows importing multiple projects into Eclipse at the same time)",
-                "addTeamOrStudentName": "Add team/student name to project (allows importing multiple projects into Eclipse at the same time)",
-                "combineStudentCommits": "Combine all student changes into one commit (to simplify the review)",
-                "anonymizeStudentCommits": "Anonymize all of the student's commits",
-                "normalizeCodeStyle": "Normalize code style (line endings, encoding)",
+                "filterLateSubmissions": {
+                    "title": "Filter late submissions",
+                    "tooltip": "Cut off all submissions and commits after a certain date"
+                },
+                "filterLateSubmissionsDate": {
+                    "title": "Date to filter late submissions",
+                    "tooltip": "Defaults to the due date of the exercise if not set"
+                },
+                "excludePracticeSubmissions": {
+                    "title": "Exclude practice submissions",
+                    "tooltip": "Ignore submissions marked as practice to only include graded submissions"
+                },
+                "addToProject": {
+                    "title": {
+                        "student": "Add student name to project",
+                        "team": "Add team name to project",
+                        "teamOrStudent": "Add team/student name to project"
+                    },
+                    "tooltip": "Allows importing multiple projects into Eclipse at the same time"
+                },
+                "combineStudentCommits": {
+                    "title": "Combine changes into one commit",
+                    "tooltip": "Squashes all commits of a student into a single commit for easier review"
+                },
+                "anonymizeStudentCommits": {
+                    "title": "Anonymize all of the student's commits",
+                    "tooltip": "Hide student names in commit messages for unbiased evaluation"
+                },
+                "normalizeCodeStyle": {
+                    "title": "Normalize code style",
+                    "tooltip": "Standardize line endings and encoding for consistency"
+                },
                 "successMessageRepos": "Export of repos was successful. The exported zip file with all repositories is currently being downloaded.",
                 "successMessageExercise": "Export of exercise was successful. The exported zip file with all exercise material is currently being downloaded."
             },

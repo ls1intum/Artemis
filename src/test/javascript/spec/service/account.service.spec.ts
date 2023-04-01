@@ -19,9 +19,11 @@ describe('AccountService', () => {
     let accountService: AccountService;
     let httpService: MockHttpService;
     let getStub: jest.SpyInstance;
+    let postStub: jest.SpyInstance;
     let translateService: TranslateService;
 
     const getUserUrl = 'api/public/account';
+    const updateLanguageUrl = 'api/public/account/change-language';
     const user = { id: 1, groups: ['USER'] } as User;
     const user2 = { id: 2, groups: ['USER'] } as User;
     const user3 = { id: 3, groups: ['USER', 'TA'], authorities: [Authority.USER] } as User;
@@ -46,6 +48,7 @@ describe('AccountService', () => {
         // @ts-ignore
         accountService = new AccountService(translateService, new MockSyncStorage(), httpService, new MockWebsocketService(), new MockFeatureToggleService());
         getStub = jest.spyOn(httpService, 'get');
+        postStub = jest.spyOn(httpService, 'post');
     });
 
     afterEach(() => {
@@ -483,6 +486,32 @@ describe('AccountService', () => {
             url = accountService.getImageUrl();
 
             expect(url).toBe(expectedUrl);
+        });
+    });
+
+    describe('test updateLanguage', () => {
+        it('should call update language url with language key', () => {
+            postStub.mockReturnValue(of({ body: {} }));
+
+            accountService.updateLanguage('EN');
+
+            expect(postStub).toHaveBeenCalledOnce();
+            expect(postStub).toHaveBeenCalledWith(updateLanguageUrl, 'EN');
+        });
+    });
+
+    describe('test prefilled username', () => {
+        it('should set prefilled username', () => {
+            accountService.setPrefilledUsername('user');
+
+            expect(accountService.getAndClearPrefilledUsername()).toBe('user');
+        });
+
+        it('should clear prefilledusername after get', () => {
+            accountService.setPrefilledUsername('test');
+
+            expect(accountService.getAndClearPrefilledUsername()).toBe('test');
+            expect(accountService.getAndClearPrefilledUsername()).toBeUndefined();
         });
     });
 });

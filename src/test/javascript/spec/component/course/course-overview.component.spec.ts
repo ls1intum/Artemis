@@ -98,7 +98,6 @@ class ControlsTestingComponent implements BarControlConfigurationProvider, After
     @ViewChild('controls', { static: false }) private controls: TemplateRef<any>;
     public readonly controlConfiguration: BarControlConfiguration = {
         subject: new Subject<TemplateRef<any>>(),
-        useIndentation: true,
     };
 
     ngAfterViewInit(): void {

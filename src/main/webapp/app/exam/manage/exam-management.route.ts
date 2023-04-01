@@ -23,16 +23,11 @@ import { ExamParticipationComponent } from 'app/exam/participate/exam-participat
 import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { ExerciseAssessmentDashboardComponent } from 'app/exercises/shared/dashboards/tutor/exercise-assessment-dashboard.component';
-import { ExamParticipantScoresComponent } from 'app/exam/manage/exam-participant-scores/exam-participant-scores.component';
 import { ParticipationSubmissionComponent } from 'app/exercises/shared/participation-submission/participation-submission.component';
 import { FileUploadAssessmentComponent } from 'app/exercises/file-upload/assess/file-upload-assessment.component';
 import { ParticipationComponent } from 'app/exercises/shared/participation/participation.component';
 import { ExerciseScoresComponent } from 'app/exercises/shared/exercise-scores/exercise-scores.component';
-import { FileUploadAssessmentDashboardComponent } from 'app/exercises/file-upload/assess/file-upload-assessment-dashboard.component';
-import { TextAssessmentDashboardComponent } from 'app/exercises/text/assess/text-assessment-dashboard/text-assessment-dashboard.component';
-import { ModelingAssessmentDashboardComponent } from 'app/exercises/modeling/assess/modeling-assessment-editor/modeling-assessment-dashboard.component';
 import { ModelingAssessmentEditorComponent } from 'app/exercises/modeling/assess/modeling-assessment-editor/modeling-assessment-editor.component';
-import { ProgrammingExerciseSubmissionsComponent } from 'app/exercises/programming/assess/programming-assessment-dashboard/programming-exercise-submissions.component';
 import { CodeEditorTutorAssessmentContainerComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-container.component';
 import { exerciseTypes } from 'app/entities/exercise.model';
 import { FileUploadExerciseDetailComponent } from 'app/exercises/file-upload/manage/file-upload-exercise-detail.component';
@@ -129,15 +124,6 @@ export const examManagementRoute: Routes = [
     {
         path: ':examId/monitoring',
         loadChildren: () => import('../monitoring/exam-monitoring.module').then((m) => m.ArtemisExamMonitoringModule),
-    },
-    {
-        path: ':examId/participant-scores',
-        component: ExamParticipantScoresComponent,
-        data: {
-            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
-            pageTitle: 'artemisApp.participantScores.pageTitle',
-        },
-        canActivate: [UserRouteAccessService],
     },
     {
         path: ':examId/exercise-groups',
@@ -432,6 +418,19 @@ export const examManagementRoute: Routes = [
         data: {
             authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.fileUploadExercise.home.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    // Import File Upload Exercise
+    {
+        path: ':examId/exercise-groups/:exerciseGroupId/file-upload-exercises/import/:exerciseId',
+        component: FileUploadExerciseUpdateComponent,
+        resolve: {
+            fileUploadExercise: FileUploadExerciseManagementResolve,
+        },
+        data: {
+            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            pageTitle: 'artemisApp.fileUploadExercise.home.importLabel',
         },
         canActivate: [UserRouteAccessService],
     },
@@ -753,24 +752,6 @@ export const examManagementRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: ':examId/exercise-groups/:exerciseGroupId/file-upload-exercises/:exerciseId/submissions',
-        component: FileUploadAssessmentDashboardComponent,
-        data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
-            pageTitle: 'artemisApp.assessmentDashboard.home.title',
-        },
-        canActivate: [UserRouteAccessService],
-    },
-    {
-        path: ':examId/exercise-groups/:exerciseGroupId/text-exercises/:exerciseId/submissions',
-        component: TextAssessmentDashboardComponent,
-        data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
-            pageTitle: 'artemisApp.assessmentDashboard.home.title',
-        },
-        canActivate: [UserRouteAccessService],
-    },
-    {
         path: ':examId/exercise-groups/:exerciseGroupId/text-exercises/:exerciseId/example-submissions',
         component: ExampleSubmissionsComponent,
         resolve: {
@@ -799,15 +780,6 @@ export const examManagementRoute: Routes = [
         loadChildren: () => import('../../exercises/text/manage/cluster-statistics/cluster-statistics.module').then((m) => m.ArtemisTextClusterStatisticsModule),
     },
     {
-        path: ':examId/exercise-groups/:exerciseGroupId/modeling-exercises/:exerciseId/submissions',
-        component: ModelingAssessmentDashboardComponent,
-        data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
-            pageTitle: 'artemisApp.assessmentDashboard.home.title',
-        },
-        canActivate: [UserRouteAccessService],
-    },
-    {
         path: ':examId/exercise-groups/:exerciseGroupId/modeling-exercises/:exerciseId/example-submissions',
         component: ExampleSubmissionsComponent,
         resolve: {
@@ -834,15 +806,6 @@ export const examManagementRoute: Routes = [
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
             pageTitle: 'artemisApp.apollonDiagram.detail.title',
-        },
-        canActivate: [UserRouteAccessService],
-    },
-    {
-        path: ':examId/exercise-groups/:exerciseGroupId/programming-exercises/:exerciseId/submissions',
-        component: ProgrammingExerciseSubmissionsComponent,
-        data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
-            pageTitle: 'artemisApp.assessmentDashboard.home.title',
         },
         canActivate: [UserRouteAccessService],
     },

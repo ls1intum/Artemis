@@ -377,10 +377,9 @@ describe('ProgrammingExerciseInstructionComponent', () => {
                 exerciseType: ExerciseType.PROGRAMMING,
                 feedbackFilter: ['testBubbleSort'],
                 result,
-                showTestDetails: true,
                 taskName: 'Implement Bubble Sort',
                 numberOfNotExecutedTests: 1,
-            },
+            } as FeedbackComponent,
         } as any);
 
         mergeSortStep.nativeElement.click();
@@ -390,10 +389,9 @@ describe('ProgrammingExerciseInstructionComponent', () => {
                 exerciseType: ExerciseType.PROGRAMMING,
                 feedbackFilter: ['testMergeSort'],
                 result,
-                showTestDetails: true,
                 taskName: 'Implement Merge Sort',
                 numberOfNotExecutedTests: 0,
-            },
+            } as FeedbackComponent,
         } as any);
     }));
 
@@ -455,10 +453,9 @@ describe('ProgrammingExerciseInstructionComponent', () => {
                 exerciseType: ExerciseType.PROGRAMMING,
                 feedbackFilter: ['testBubbleSort'],
                 result,
-                showTestDetails: false,
                 taskName: 'Implement Bubble Sort',
                 numberOfNotExecutedTests: 0,
-            },
+            } as FeedbackComponent,
         } as any);
 
         mergeSortStep.nativeElement.click();
@@ -468,10 +465,9 @@ describe('ProgrammingExerciseInstructionComponent', () => {
                 exerciseType: ExerciseType.PROGRAMMING,
                 feedbackFilter: ['testMergeSort'],
                 result,
-                showTestDetails: false,
                 taskName: 'Implement Merge Sort',
                 numberOfNotExecutedTests: 0,
-            },
+            } as FeedbackComponent,
         } as any);
     }));
 
@@ -534,10 +530,9 @@ describe('ProgrammingExerciseInstructionComponent', () => {
                 exerciseType: ExerciseType.PROGRAMMING,
                 feedbackFilter: ['testBubbleSort'],
                 result,
-                showTestDetails: true,
                 taskName: 'Bubble Sort',
                 numberOfNotExecutedTests: 0,
-            },
+            } as FeedbackComponent,
         } as any);
 
         mergeSortStep.nativeElement.click();

@@ -109,6 +109,40 @@ public class TutorialGroupService {
         channel.ifPresent(value -> tutorialGroup.setChannel(conversationDTOService.convertChannelToDto(user, value)));
 
         this.setNextSession(tutorialGroup);
+        this.setAverageAttendance(tutorialGroup);
+    }
+
+    /**
+     * Sets the averageAttendance transient field of the given tutorial group
+     * <p>
+     * Calculation:
+     * <ul>
+     * <li>Get set of the last three completed sessions (or less than three if not more available)</li>
+     * <li>Remove sessions without attendance data (null) from the set</li>
+     * <li>If set is empty, set attendance average of tutorial group to null (meaning could not be determined)</li>
+     * <li>If set is non empty, set the attendance average of the tutorial group to the arithmetic mean (rounded to integer)</li>
+     * </ul>
+     *
+     * @param tutorialGroup the tutorial group to set the averageAttendance for
+     */
+    private void setAverageAttendance(TutorialGroup tutorialGroup) {
+        Collection<TutorialGroupSession> sessions;
+        if (getPersistenceUtil().isLoaded(tutorialGroup, "tutorialGroupSessions") && tutorialGroup.getTutorialGroupSessions() != null) {
+            sessions = tutorialGroup.getTutorialGroupSessions();
+        }
+        else {
+            sessions = tutorialGroupSessionRepository.findAllByTutorialGroupId(tutorialGroup.getId());
+        }
+        sessions.stream()
+                .filter(tutorialGroupSession -> TutorialGroupSessionStatus.ACTIVE.equals(tutorialGroupSession.getStatus())
+                        && tutorialGroupSession.getEnd().isBefore(ZonedDateTime.now()))
+                .sorted(Comparator.comparing(TutorialGroupSession::getStart).reversed()).limit(3)
+                .map(tutorialGroupSession -> Optional.ofNullable(tutorialGroupSession.getAttendanceCount())).flatMap(Optional::stream).mapToInt(attendance -> attendance).average()
+                .ifPresentOrElse(value -> {
+                    tutorialGroup.setAverageAttendance((int) Math.round(value));
+                }, () -> {
+                    tutorialGroup.setAverageAttendance(null);
+                });
     }
 
     /**
@@ -366,7 +400,7 @@ public class TutorialGroupService {
                     tutorialGroup.setTitle(title);
                     tutorialGroup.setCourse(course);
                     // default values for the tutorial group
-                    tutorialGroup.setLanguage(Language.GERMAN);
+                    tutorialGroup.setLanguage(Language.GERMAN.name());
                     tutorialGroup.setCapacity(1);
                     tutorialGroup.setTeachingAssistant(requestingUser);
                     tutorialGroup.setIsOnline(false);

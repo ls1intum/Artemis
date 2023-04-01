@@ -25,7 +25,7 @@ import de.tum.in.www1.artemis.domain.OnlineCourseConfiguration;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.security.annotations.EnforceNothing;
-import de.tum.in.www1.artemis.service.connectors.Lti10Service;
+import de.tum.in.www1.artemis.service.connectors.lti.Lti10Service;
 import de.tum.in.www1.artemis.web.rest.dto.LtiLaunchRequestDTO;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;

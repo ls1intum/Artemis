@@ -69,19 +69,19 @@ public class ResultResource {
 
     private final StudentParticipationRepository studentParticipationRepository;
 
-    public ResultResource(ProgrammingExerciseParticipationService programmingExerciseParticipationService, ParticipationService participationService,
-            ExampleSubmissionRepository exampleSubmissionRepository, ResultService resultService, ExerciseRepository exerciseRepository, AuthorizationCheckService authCheckService,
-            ResultRepository resultRepository, UserRepository userRepository, ExamDateService examDateService, ParticipationRepository participationRepository,
+    public ResultResource(ResultRepository resultRepository, ParticipationService participationService, ExampleSubmissionRepository exampleSubmissionRepository,
+            ResultService resultService, ExamDateService examDateService, ExerciseRepository exerciseRepository, AuthorizationCheckService authCheckService,
+            UserRepository userRepository, ProgrammingExerciseParticipationService programmingExerciseParticipationService, ParticipationRepository participationRepository,
             StudentParticipationRepository studentParticipationRepository) {
-        this.exerciseRepository = exerciseRepository;
         this.resultRepository = resultRepository;
         this.participationService = participationService;
         this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.resultService = resultService;
-        this.authCheckService = authCheckService;
-        this.programmingExerciseParticipationService = programmingExerciseParticipationService;
-        this.userRepository = userRepository;
         this.examDateService = examDateService;
+        this.exerciseRepository = exerciseRepository;
+        this.authCheckService = authCheckService;
+        this.userRepository = userRepository;
+        this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.participationRepository = participationRepository;
         this.studentParticipationRepository = studentParticipationRepository;
     }
@@ -167,18 +167,18 @@ public class ResultResource {
         Result result = resultRepository.findByIdWithEagerFeedbacksElseThrow(resultId);
         Participation participation = result.getParticipation();
         if (!participation.getId().equals(participationId)) {
-            throw new BadRequestAlertException("participationId of the path doesnt match the participationId of the participation corresponding to the result " + resultId + " !",
+            throw new BadRequestAlertException("participationId of the path does not match the participationId of the participation corresponding to the result " + resultId + " !",
                     "participationId", "400");
         }
 
         // The permission check depends on the participation type (normal participations vs. programming exercise participations).
-        if (participation instanceof StudentParticipation) {
-            if (!authCheckService.canAccessParticipation((StudentParticipation) participation)) {
+        if (participation instanceof StudentParticipation studentParticipation) {
+            if (!authCheckService.canAccessParticipation(studentParticipation)) {
                 throw new AccessForbiddenException("participation", participationId);
             }
         }
-        else if (participation instanceof ProgrammingExerciseParticipation) {
-            if (!programmingExerciseParticipationService.canAccessParticipation((ProgrammingExerciseParticipation) participation)) {
+        else if (participation instanceof ProgrammingExerciseParticipation programmingExerciseParticipation) {
+            if (!programmingExerciseParticipationService.canAccessParticipation(programmingExerciseParticipation)) {
                 throw new AccessForbiddenException("participation", participationId);
             }
         }

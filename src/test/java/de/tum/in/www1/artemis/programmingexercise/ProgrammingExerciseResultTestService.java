@@ -1,19 +1,21 @@
 package de.tum.in.www1.artemis.programmingexercise;
 
+import static de.tum.in.www1.artemis.config.Constants.NEW_RESULT_TOPIC;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.*;
 
 import java.util.*;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -32,7 +34,6 @@ import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseGradingService;
-import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseTestCaseService;
 import de.tum.in.www1.artemis.util.*;
 
 /**
@@ -68,7 +69,7 @@ public class ProgrammingExerciseResultTestService {
     private StaticCodeAnalysisService staticCodeAnalysisService;
 
     @Autowired
-    private ProgrammingExerciseTestCaseService programmingExerciseTestCaseService;
+    private ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository;
 
     @Autowired
     private FeedbackRepository feedbackRepository;
@@ -196,7 +197,7 @@ public class ProgrammingExerciseResultTestService {
 
         final var optionalResult = gradingService.processNewProgrammingExerciseResult(solutionParticipation, resultNotification);
 
-        Set<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseService.findByExerciseId(programmingExercise.getId());
+        Set<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
         assertThat(testCases).usingRecursiveFieldByFieldElementComparatorIgnoringFields("exercise", "id", "tasks", "solutionEntries", "coverageEntries")
                 .containsExactlyInAnyOrderElementsOf(expectedTestCases);
         assertThat(optionalResult).isPresent();
@@ -249,6 +250,7 @@ public class ProgrammingExerciseResultTestService {
     }
 
     // Test
+    // TODO: why is this test not invoked at all?
     public void shouldStoreBuildLogsForSubmission(Object resultNotification) {
         final var optionalResult = gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultNotification);
 
@@ -264,6 +266,7 @@ public class ProgrammingExerciseResultTestService {
     }
 
     // Test
+    // TODO: why is this test not invoked at all?
     public void shouldNotStoreBuildLogsForSubmission(Object resultNotification) {
         final var optionalResult = gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultNotification);
 
@@ -326,6 +329,8 @@ public class ProgrammingExerciseResultTestService {
         assertThat(result.getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
         assertThat(result.getFeedbacks()).hasSize(6);
         assertThat(result.getFeedbacks().stream().filter((fb) -> fb.getType() == FeedbackType.AUTOMATIC).count()).isEqualTo(3);
+        assertThat(result.getTestCaseCount()).isEqualTo(3);
+        assertThat(result.getPassedTestCaseCount()).isEqualTo(3);
 
         // Call again and shouldn't re-create new submission.
         gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultNotification);
@@ -396,6 +401,22 @@ public class ProgrammingExerciseResultTestService {
 
         final var result = gradingService.processNewProgrammingExerciseResult(solutionParticipation, resultNotification);
         assertThat(result).isPresent();
+    }
+
+    // Test
+    public void shouldRemoveTestCaseNamesFromWebsocketNotification(AbstractBuildResultNotificationDTO resultNotification, SimpMessageSendingOperations messagingTemplate)
+            throws Exception {
+        var programmingSubmission = database.createProgrammingSubmission(programmingExerciseStudentParticipation, false);
+        programmingExerciseStudentParticipation.addSubmission(programmingSubmission);
+        programmingExerciseStudentParticipation = participationRepository.save(programmingExerciseStudentParticipation);
+
+        postResult(resultNotification);
+
+        ArgumentCaptor<Result> resultArgumentCaptor = ArgumentCaptor.forClass(Result.class);
+        verify(messagingTemplate).convertAndSendToUser(eq(userPrefix + "student1"), eq(NEW_RESULT_TOPIC), resultArgumentCaptor.capture());
+
+        Result result = resultArgumentCaptor.getValue();
+        assertThat(result.getFeedbacks()).hasSize(4).allMatch(feedback -> feedback.getText() == null);
     }
 
     private int getNumberOfBuildLogs(Object resultNotification) {

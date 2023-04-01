@@ -142,8 +142,7 @@
                 "totalLectures": "Vorlesungen insgesamt:",
                 "totalAttachments": "Anhänge insgesamt:",
                 "isLecture": "Das ist eine Vorlesung",
-                "noLectures": "Es gibt keine Vorlesungen für diesen Kurs.",
-                "sortLectures": "Vorlesungen sortieren"
+                "noLectures": "Es gibt keine Vorlesungen für diesen Kurs."
             },
             "lectureDetails": {
                 "description": "Beschreibung",
@@ -173,7 +172,6 @@
                     "title": "Aktionen für Lehrende:",
                     "titleTutor": "Aktionen für Tutor:innen",
                     "scores": "Bewertungen",
-                    "submissions": "Einreichungen",
                     "statistics": "Statistiken"
                 },
                 "notParticipated": "Nicht teilgenommen",

@@ -29,7 +29,6 @@ import de.tum.in.www1.artemis.config.GuidedTourConfiguration;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
-import de.tum.in.www1.artemis.domain.enumeration.QuizMode;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.domain.quiz.QuizBatch;
@@ -38,7 +37,7 @@ import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.*;
-import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
+import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.service.feature.FeatureToggleService;
@@ -683,7 +682,7 @@ public class ParticipationResource {
         quizExercise.setQuizBatches(null); // not available here
         var quizBatch = quizBatchService.getQuizBatchForStudentByLogin(quizExercise, user.getLogin());
 
-        if (quizBatch.isPresent() && quizBatch.get().isSubmissionAllowed()) {
+        if (quizBatch.isPresent() && quizBatch.get().isStarted()) {
             // Quiz is active => construct Participation from
             // filtered quizExercise and submission from HashMap
             quizExercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(quizExercise.getId());
@@ -862,7 +861,7 @@ public class ParticipationResource {
     // TODO: we should move this method (and others related to quizzes) into a QuizParticipationService (or similar) to make this resource independent of specific quiz exercise
     // functionality
     private StudentParticipation participationForQuizWithResult(QuizExercise quizExercise, String username, QuizBatch quizBatch) {
-        if (quizExercise.isQuizEnded() || (quizExercise.getQuizMode() == QuizMode.BATCHED && quizSubmissionService.isSubmitted(quizBatch, username))) {
+        if (quizExercise.isQuizEnded() || quizSubmissionService.isSubmitted(quizBatch, username)) {
             // try getting participation from database
             Optional<StudentParticipation> optionalParticipation = participationService.findOneByExerciseAndStudentLoginAnyState(quizExercise, username);
 

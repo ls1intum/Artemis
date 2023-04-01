@@ -16,7 +16,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.ChannelDTO;
 
@@ -50,9 +49,13 @@ public class TutorialGroup extends DomainObject {
     @Size(min = 1, max = 256)
     private String campus;
 
-    @Enumerated(EnumType.STRING)
+    /**
+     * The language of the tutorial group
+     * Defined as a string to allow more languages than english and german
+     */
     @Column(name = "language")
-    private Language language;
+    @Size(min = 1, max = 256)
+    private String language;
 
     @ManyToOne
     @JoinColumn(name = "teaching_assistant_id")
@@ -105,6 +108,14 @@ public class TutorialGroup extends DomainObject {
     @Transient
     private ChannelDTO channel;
 
+    /**
+     * This field represents the average attendance of this tutorial group
+     * <p>
+     * For more information on how this is calculated check out {@link de.tum.in.www1.artemis.service.tutorialgroups.TutorialGroupService#setAverageAttendance}
+     */
+    @Transient
+    private Integer averageAttendance;
+
     @OneToOne(mappedBy = "tutorialGroup", cascade = CascadeType.REMOVE, orphanRemoval = true)
     @JsonIgnoreProperties(value = "tutorialGroup", allowSetters = true)
     private TutorialGroupSchedule tutorialGroupSchedule;
@@ -144,7 +155,7 @@ public class TutorialGroup extends DomainObject {
         this.title = title;
     }
 
-    public TutorialGroup(Course course, String title, String additionalInformation, Integer capacity, Boolean isOnline, String campus, Language language, User teachingAssistant,
+    public TutorialGroup(Course course, String title, String additionalInformation, Integer capacity, Boolean isOnline, String campus, String language, User teachingAssistant,
             Set<TutorialGroupRegistration> registrations) {
         this.course = course;
         this.title = title;
@@ -197,11 +208,11 @@ public class TutorialGroup extends DomainObject {
         isOnline = online;
     }
 
-    public Language getLanguage() {
+    public String getLanguage() {
         return language;
     }
 
-    public void setLanguage(Language language) {
+    public void setLanguage(String language) {
         this.language = language;
     }
 
@@ -306,6 +317,16 @@ public class TutorialGroup extends DomainObject {
 
     public void setChannel(ChannelDTO channel) {
         this.channel = channel;
+    }
+
+    @JsonIgnore(false)
+    @JsonProperty
+    public Integer getAverageAttendance() {
+        return averageAttendance;
+    }
+
+    public void setAverageAttendance(Integer averageAttendance) {
+        this.averageAttendance = averageAttendance;
     }
 
     /**

@@ -231,10 +231,8 @@ class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
         database.changeUser(TEST_PREFIX + "tutor1");
         receivedLectureWithDetails = request.get("/api/lectures/" + lecture1.getId() + "/details", HttpStatus.OK, Lecture.class);
         assertThat(receivedLectureWithDetails.getId()).isEqualTo(lecture1.getId());
-        assertThat(receivedLectureWithDetails.getAttachments().stream().anyMatch(attachment -> attachment.getId().equals(lectureAttachment.getId()))).isTrue();
-        assertThat(receivedLectureWithDetails.getLectureUnits()).hasSize(4);
-        assertThat(receivedLectureWithDetails.getLectureUnits().stream().filter(lectureUnit -> lectureUnit instanceof AttachmentUnit).toList()).isNotEmpty();
-
+        assertThat(receivedLectureWithDetails.getAttachments()).anyMatch(attachment -> attachment.getId().equals(lectureAttachment.getId()));
+        assertThat(receivedLectureWithDetails.getLectureUnits()).hasSize(4).anyMatch(lectureUnit -> lectureUnit instanceof AttachmentUnit);
         testGetLecture(lecture1.getId());
     }
 

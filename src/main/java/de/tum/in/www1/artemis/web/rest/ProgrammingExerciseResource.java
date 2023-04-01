@@ -30,9 +30,9 @@ import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.*;
-import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
-import de.tum.in.www1.artemis.service.connectors.VersionControlService;
+import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
+import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.service.programming.*;
@@ -77,7 +77,9 @@ public class ProgrammingExerciseResource {
 
     private final ExerciseDeletionService exerciseDeletionService;
 
-    public final ProgrammingExerciseService programmingExerciseService;
+    private final ProgrammingExerciseService programmingExerciseService;
+
+    private final ProgrammingExerciseRepositoryService programmingExerciseRepositoryService;
 
     private final StudentParticipationRepository studentParticipationRepository;
 
@@ -122,7 +124,8 @@ public class ProgrammingExerciseResource {
     public ProgrammingExerciseResource(ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository,
             UserRepository userRepository, AuthorizationCheckService authCheckService, CourseService courseService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService, ExerciseService exerciseService,
-            ExerciseDeletionService exerciseDeletionService, ProgrammingExerciseService programmingExerciseService, StudentParticipationRepository studentParticipationRepository,
+            ExerciseDeletionService exerciseDeletionService, ProgrammingExerciseService programmingExerciseService,
+            ProgrammingExerciseRepositoryService programmingExerciseRepositoryService, StudentParticipationRepository studentParticipationRepository,
             StaticCodeAnalysisService staticCodeAnalysisService, GradingCriterionRepository gradingCriterionRepository,
             Optional<ProgrammingLanguageFeatureService> programmingLanguageFeatureService, CourseRepository courseRepository, GitService gitService,
             AuxiliaryRepositoryService auxiliaryRepositoryService, SubmissionPolicyService submissionPolicyService,
@@ -139,6 +142,7 @@ public class ProgrammingExerciseResource {
         this.exerciseService = exerciseService;
         this.exerciseDeletionService = exerciseDeletionService;
         this.programmingExerciseService = programmingExerciseService;
+        this.programmingExerciseRepositoryService = programmingExerciseRepositoryService;
         this.studentParticipationRepository = studentParticipationRepository;
         this.staticCodeAnalysisService = staticCodeAnalysisService;
         this.gradingCriterionRepository = gradingCriterionRepository;
@@ -356,7 +360,7 @@ public class ProgrammingExerciseResource {
         ProgrammingExercise savedProgrammingExercise = programmingExerciseService.updateProgrammingExercise(programmingExerciseBeforeUpdate, updatedProgrammingExercise,
                 notificationText);
 
-        programmingExerciseService.handleRepoAccessRightChanges(programmingExerciseBeforeUpdate, savedProgrammingExercise);
+        programmingExerciseRepositoryService.handleRepoAccessRightChanges(programmingExerciseBeforeUpdate, savedProgrammingExercise);
 
         exerciseService.logUpdate(updatedProgrammingExercise, updatedProgrammingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         exerciseService.updatePointsInRelatedParticipantScores(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
@@ -610,9 +614,8 @@ public class ProgrammingExerciseResource {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, programmingExercise, null);
         boolean hasAtLeastOneStudentResult = programmingExerciseService.hasAtLeastOneStudentResult(programmingExercise);
         boolean isReleased = programmingExercise.isReleased();
-        ProgrammingExerciseTestCaseStateDTO testCaseDTO = new ProgrammingExerciseTestCaseStateDTO().released(isReleased).studentResult(hasAtLeastOneStudentResult)
-                .testCasesChanged(programmingExercise.getTestCasesChanged())
-                .buildAndTestStudentSubmissionsAfterDueDate(programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate());
+        ProgrammingExerciseTestCaseStateDTO testCaseDTO = new ProgrammingExerciseTestCaseStateDTO(isReleased, hasAtLeastOneStudentResult, programmingExercise.getTestCasesChanged(),
+                programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate());
         return ResponseEntity.ok(testCaseDTO);
     }
 
@@ -662,7 +665,7 @@ public class ProgrammingExerciseResource {
     public ResponseEntity<Void> unlockAllRepositories(@PathVariable Long exerciseId) {
         var programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, null);
-        programmingExerciseService.unlockAllRepositories(exerciseId);
+        programmingExerciseRepositoryService.unlockAllRepositories(exerciseId);
         log.info("Unlocked all repositories of programming exercise {} upon manual request", exerciseId);
         return ResponseEntity.ok().build();
     }
@@ -678,7 +681,7 @@ public class ProgrammingExerciseResource {
     public ResponseEntity<Void> lockAllRepositories(@PathVariable Long exerciseId) {
         var programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, null);
-        programmingExerciseService.lockAllRepositories(exerciseId);
+        programmingExerciseRepositoryService.lockAllRepositories(exerciseId);
         log.info("Locked all repositories of programming exercise {} upon manual request", exerciseId);
         return ResponseEntity.ok().build();
     }

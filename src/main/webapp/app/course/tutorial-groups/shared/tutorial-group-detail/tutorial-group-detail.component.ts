@@ -1,10 +1,11 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ContentChild, Input, OnChanges, SimpleChanges, TemplateRef } from '@angular/core';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
-import { Course, Language } from 'app/entities/course.model';
+import { Course, isMessagingEnabled } from 'app/entities/course.model';
 import { SafeHtml } from '@angular/platform-browser';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { getDayTranslationKey } from '../weekdays';
 import { TutorialGroupSession } from 'app/entities/tutorial-group/tutorial-group-session.model';
+import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-tutorial-group-detail',
@@ -29,12 +30,15 @@ export class TutorialGroupDetailComponent implements OnChanges {
 
     @Input()
     course: Course;
-    GERMAN = Language.GERMAN;
-    ENGLISH = Language.ENGLISH;
     formattedAdditionalInformation?: SafeHtml;
     getDayTranslationKey = getDayTranslationKey;
 
+    faQuestionCircle = faQuestionCircle;
+    readonly Math = Math;
+
     sessions: TutorialGroupSession[] = [];
+
+    readonly isMessagingEnabled = isMessagingEnabled;
 
     constructor(private artemisMarkdownService: ArtemisMarkdownService, private changeDetectorRef: ChangeDetectorRef) {}
 

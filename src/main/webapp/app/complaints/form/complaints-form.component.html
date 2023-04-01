@@ -1,10 +1,10 @@
 <div class="col-12 mt-4" *ngIf="isCurrentUserSubmissionAuthor">
     <div class="row">
-        <div class="col-12">
+        <div class="col-12 col-md-6">
             <h3>{{ complaintType === ComplaintType.COMPLAINT ? ('artemisApp.complaint.title' | artemisTranslate) : ('artemisApp.moreFeedback.title' | artemisTranslate) }}</h3>
             <p *ngIf="complaintType !== ComplaintType.COMPLAINT">
-                {{ 'artemisApp.moreFeedback.' + (exercise.teamMode ? 'descriptionTeam' : 'description') | artemisTranslate }}
-                <fa-icon [icon]="faInfoCircle" title="{{ 'artemisApp.moreFeedback.info' | artemisTranslate }}" class="info-icon"></fa-icon>
+                {{ (exercise.teamMode ? 'artemisApp.moreFeedback.descriptionTeam' : 'artemisApp.moreFeedback.description') | artemisTranslate }}
+                {{ 'artemisApp.moreFeedback.info' | artemisTranslate }}
             </p>
         </div>
     </div>

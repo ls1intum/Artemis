@@ -3,8 +3,7 @@
         "multipleChoiceQuestion": {
             "home": {
                 "title": "Multiple Choice Questions",
-                "createLabel": "Create a new Multiple Choice Question",
-                "createOrEditLabel": "Create or edit a Multiple Choice Question"
+                "createLabel": "Create a new Multiple Choice Question"
             },
             "created": "Created new Multiple Choice Question with identifier {{ param }}",
             "updated": "Updated Multiple Choice Question with identifier {{ param }}",
@@ -46,6 +45,16 @@
                 "code": "Code",
                 "color": "Color",
                 "style": "Style"
+            },
+            "visualEditor": {
+                "hintTooltip": "Add a hint here (visible during the quiz via ?-Button)",
+                "explanationTooltip": "Add an explanation here (only visible in feedback after quiz has ended)",
+                "hintPlaceholder": "Hint ...",
+                "explanationPlaceholder": "Explanation ...",
+                "textPlaceholder": "Text ...",
+                "questionTitle": "Question",
+                "answersTitle": "Answer Options",
+                "newAnswerTitle": "Add New Answer Option"
             }
         }
     }

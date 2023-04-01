@@ -140,7 +140,12 @@ abstract class AbstractTutorialGroupIntegrationTest extends AbstractSpringIntegr
 
     // === UTILS ===
     TutorialGroupSession buildAndSaveExampleIndividualTutorialGroupSession(Long tutorialGroupId, LocalDate localDate) {
-        return databaseUtilService.createIndividualTutorialGroupSession(tutorialGroupId, getExampleSessionStartOnDate(localDate), getExampleSessionEndOnDate(localDate));
+        return databaseUtilService.createIndividualTutorialGroupSession(tutorialGroupId, getExampleSessionStartOnDate(localDate), getExampleSessionEndOnDate(localDate), null);
+    }
+
+    TutorialGroupSession buildAndSaveExampleIndividualTutorialGroupSession(Long tutorialGroupId, LocalDate localDate, Integer attendanceCount) {
+        return databaseUtilService.createIndividualTutorialGroupSession(tutorialGroupId, getExampleSessionStartOnDate(localDate), getExampleSessionEndOnDate(localDate),
+                attendanceCount);
     }
 
     TutorialGroupsConfiguration buildExampleConfiguration(Long courseId) {
@@ -170,7 +175,7 @@ abstract class AbstractTutorialGroupIntegrationTest extends AbstractSpringIntegr
         if (studentLogins != null) {
             students = Arrays.stream(studentLogins).map(login -> userRepository.findOneByLogin(login).get()).collect(Collectors.toSet());
         }
-        return databaseUtilService.createTutorialGroup(exampleCourseId, generateRandomTitle(), "LoremIpsum", 10, false, "Garching", Language.ENGLISH,
+        return databaseUtilService.createTutorialGroup(exampleCourseId, generateRandomTitle(), "LoremIpsum", 10, false, "Garching", Language.ENGLISH.name(),
                 userRepository.findOneByLogin(testPrefix + tutorLogin).get(), students);
     }
 

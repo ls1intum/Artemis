@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.*;
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
+import static org.springframework.http.HttpStatus.CREATED;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -351,7 +352,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         request.postWithoutLocation("/api/courses/" + course1.getId() + "/exams/" + savedExam.getId() + "/students/nonExistingStudent", null, HttpStatus.NOT_FOUND, null);
 
         Exam storedExam = examRepository.findWithExamUsersById(savedExam.getId()).get();
-        ExamUser examUserStudent1 = examUserRepository.findByExamIdAndUserId(storedExam.getId(), student1.getId());
+        ExamUser examUserStudent1 = examUserRepository.findByExamIdAndUserId(storedExam.getId(), student1.getId()).get();
         assertThat(storedExam.getExamUsers()).containsExactly(examUserStudent1);
 
         request.delete("/api/courses/" + course1.getId() + "/exams/" + savedExam.getId() + "/students/" + TEST_PREFIX + "student1", HttpStatus.OK);
@@ -400,15 +401,15 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         // now a new user student101 should exist
         var student101 = database.getUserByLogin(STUDENT_111);
 
-        var examUser1 = examUserRepository.findByExamIdAndUserId(storedExam.getId(), student1.getId());
-        var examUser2 = examUserRepository.findByExamIdAndUserId(storedExam.getId(), student2.getId());
-        var examUser5 = examUserRepository.findByExamIdAndUserId(storedExam.getId(), student5.getId());
-        var examUser99 = examUserRepository.findByExamIdAndUserId(storedExam.getId(), student99.getId());
-        var examUser101 = examUserRepository.findByExamIdAndUserId(storedExam.getId(), student101.getId());
-        var examUser6 = examUserRepository.findByExamIdAndUserId(storedExam.getId(), student6.getId());
-        var examUser7 = examUserRepository.findByExamIdAndUserId(storedExam.getId(), student7.getId());
-        var examUser8 = examUserRepository.findByExamIdAndUserId(storedExam.getId(), student8.getId());
-        var examUser9 = examUserRepository.findByExamIdAndUserId(storedExam.getId(), student9.getId());
+        var examUser1 = examUserRepository.findByExamIdAndUserId(storedExam.getId(), student1.getId()).get();
+        var examUser2 = examUserRepository.findByExamIdAndUserId(storedExam.getId(), student2.getId()).get();
+        var examUser5 = examUserRepository.findByExamIdAndUserId(storedExam.getId(), student5.getId()).get();
+        var examUser99 = examUserRepository.findByExamIdAndUserId(storedExam.getId(), student99.getId()).get();
+        var examUser101 = examUserRepository.findByExamIdAndUserId(storedExam.getId(), student101.getId()).get();
+        var examUser6 = examUserRepository.findByExamIdAndUserId(storedExam.getId(), student6.getId()).get();
+        var examUser7 = examUserRepository.findByExamIdAndUserId(storedExam.getId(), student7.getId()).get();
+        var examUser8 = examUserRepository.findByExamIdAndUserId(storedExam.getId(), student8.getId()).get();
+        var examUser9 = examUserRepository.findByExamIdAndUserId(storedExam.getId(), student9.getId()).get();
 
         assertThat(storedExam.getExamUsers()).containsExactlyInAnyOrder(examUser1, examUser2, examUser5, examUser99, examUser101, examUser6, examUser7, examUser8, examUser9);
 
@@ -1320,7 +1321,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         // Ensure that student1 was removed from the exam
         var examUser = examUserRepository.findByExamIdAndUserId(storedExam.getId(), student1.getId());
-        assertThat(storedExam.getExamUsers()).doesNotContain(examUser);
+        assertThat(examUser).isEmpty();
         assertThat(storedExam.getExamUsers()).hasSize(3);
 
         // Create individual student exams
@@ -1349,7 +1350,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         // Ensure that student2 was removed from the exam
         var examUser2 = examUserRepository.findByExamIdAndUserId(storedExam.getId(), student2.getId());
-        assertThat(storedExam.getExamUsers()).doesNotContain(examUser2);
+        assertThat(examUser2).isEmpty();
         assertThat(storedExam.getExamUsers()).hasSize(2);
 
         // Ensure that the student exam of student2 was deleted
@@ -1459,7 +1460,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         // Ensure that student1 was removed from the exam
         var examUser1 = examUserRepository.findByExamIdAndUserId(storedExam.getId(), student1.getId());
-        assertThat(storedExam.getExamUsers()).doesNotContain(examUser1);
+        assertThat(examUser1).isEmpty();
         assertThat(storedExam.getExamUsers()).hasSize(3);
 
         // Ensure that the student exam of student1 was deleted
@@ -1579,7 +1580,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         userRepo.save(student99);
         assertThat(student99.getGroups()).contains(course.getStudentGroupName());
         var examUser99 = examUserRepository.findByExamIdAndUserId(exam.getId(), student99.getId());
-        assertThat(exam.getExamUsers()).doesNotContain(examUser99);
+        assertThat(examUser99).isEmpty();
 
         request.postWithoutLocation("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/register-course-students", null, HttpStatus.OK, null);
 
@@ -1588,7 +1589,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         // the course students + our custom student99
         assertThat(exam.getExamUsers()).hasSize(numberOfStudentsInCourse + 1);
-        assertThat(exam.getExamUsers()).contains(examUser99);
+        assertThat(exam.getExamUsers()).contains(examUser99.get());
         verify(examAccessService, times(1)).checkCourseAndExamAccessForInstructorElseThrow(course.getId(), exam.getId());
     }
 
@@ -2157,7 +2158,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         // Ensure that all registered students have a StudentResult
         Set<Long> studentIdsWithStudentResults = examScores.studentResults().stream().map(ExamScoresDTO.StudentResult::userId).collect(Collectors.toSet());
-        Set<User> registeredUsers = exam.getExamUsers().stream().map(ExamUser::getUser).collect(Collectors.toSet());
+        Set<User> registeredUsers = exam.getRegisteredUsers();
         Set<Long> registeredUsersIds = registeredUsers.stream().map(User::getId).collect(Collectors.toSet());
         assertThat(studentIdsWithStudentResults).isEqualTo(registeredUsersIds);
 
@@ -2285,7 +2286,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         final ProgrammingExercise programmingExercise = (ProgrammingExercise) exam.getExerciseGroups().get(6).getExercises().iterator().next();
 
-        var usersOfExam = exam.getExamUsers().stream().map(ExamUser::getUser).collect(Collectors.toSet());
+        var usersOfExam = exam.getRegisteredUsers();
         mockDeleteProgrammingExercise(programmingExercise, usersOfExam);
 
         await().until(() -> participantScoreScheduleService.isIdle());
@@ -2293,6 +2294,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         // change back to instructor user
         database.changeUser(TEST_PREFIX + "instructor1");
         // Make sure delete also works if so many objects have been created before
+        await().until(() -> participantScoreScheduleService.isIdle());
         request.delete("/api/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.OK);
         assertThat(examRepository.findById(exam.getId())).isEmpty();
     }
@@ -3286,12 +3288,12 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         Exam exam = database.addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(course1);
         exam.setId(null);
 
-        final Exam received = request.postWithResponseBody("/api/courses/" + course1.getId() + "/exam-import", exam, Exam.class, HttpStatus.CREATED);
+        final Exam received = request.postWithResponseBody("/api/courses/" + course1.getId() + "/exam-import", exam, Exam.class, CREATED);
         assertThat(received.getId()).isNotNull();
         assertThat(received.getTitle()).isEqualTo(exam.getTitle());
         assertThat(received.getCourse()).isEqualTo(course1);
         assertThat(received.getCourse()).isEqualTo(exam.getCourse());
-        assertThat(received.getExerciseGroups().size()).isEqualTo(4);
+        assertThat(received.getExerciseGroups()).hasSize(4);
     }
 
     @Test
@@ -3301,8 +3303,8 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         exam.setCourse(course1);
         exam.setId(null);
 
-        final Exam received = request.postWithResponseBody("/api/courses/" + course1.getId() + "/exam-import", exam, Exam.class, HttpStatus.CREATED);
-        assertThat(received.getExerciseGroups().size()).isEqualTo(4);
+        final Exam received = request.postWithResponseBody("/api/courses/" + course1.getId() + "/exam-import", exam, Exam.class, CREATED);
+        assertThat(received.getExerciseGroups()).hasSize(4);
 
         for (int i = 0; i <= 3; i++) {
             Exercise expected = exam.getExerciseGroups().get(i).getExercises().stream().findFirst().get();

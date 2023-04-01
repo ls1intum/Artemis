@@ -8,13 +8,33 @@ export class SortService {
     constructor() {}
 
     /**
-     * Sorts the given array based on the defined key
+     * Sorts the given array based on the defined keys
      * @param array The array that should be sorted
      * @param key The attribute of the elements that should be used for determining the order
      * @param ascending Decides if the biggest value comes last (ascending) or first (descending)
      */
     sortByProperty<T>(array: T[], key: string, ascending: boolean): T[] {
         return this.sortByFunction(array, (element) => SortService.customGet(element, key, undefined), ascending);
+    }
+
+    /**
+     * Sorts the given array based on the defined key
+     * @param array The array that should be sorted
+     * @param keys The attributes of the elements that should be used for determining the order. Will first sort by the first key, then those with the same value of the first key will be sorted by the second key, etc.
+     * @param ascending Decides if the biggest value comes last (ascending) or first (descending)
+     */
+    sortByMultipleProperties<T>(array: T[], keys: string[], ascending: boolean): T[] {
+        return array.sort((a: T, b: T) => {
+            let compareValue = 0;
+            for (const key of keys) {
+                if (compareValue === 0) {
+                    const keyValueA = SortService.customGet(a, key, undefined);
+                    const keyValueB = SortService.customGet(b, key, undefined);
+                    compareValue = this.compareValues(keyValueA, keyValueB, ascending);
+                }
+            }
+            return compareValue;
+        });
     }
 
     /**
@@ -27,26 +47,28 @@ export class SortService {
         return array.sort((a: T, b: T) => {
             const valueA = func(a);
             const valueB = func(b);
-
-            let compareValue;
-
-            if (valueA == undefined || valueB == undefined) {
-                compareValue = SortService.compareWithUndefinedNull(valueA, valueB);
-            } else if (dayjs.isDayjs(valueA) && dayjs.isDayjs(valueB)) {
-                compareValue = SortService.compareDayjs(valueA, valueB);
-            } else {
-                compareValue = SortService.compareBasic(valueA, valueB);
-            }
-
-            if (!ascending) {
-                compareValue = -compareValue;
-            }
-
-            return compareValue;
+            return this.compareValues(valueA, valueB, ascending);
         });
     }
 
-    private static compareWithUndefinedNull(valueA: any, valueB: any) {
+    private compareValues(valueA: any, valueB: any, ascending: boolean) {
+        let compareValue;
+
+        if (valueA == undefined || valueB == undefined) {
+            compareValue = SortService.compareWithUndefinedNull(valueA, valueB);
+        } else if (dayjs.isDayjs(valueA) && dayjs.isDayjs(valueB)) {
+            compareValue = SortService.compareDayjs(valueA, valueB);
+        } else {
+            compareValue = SortService.compareBasic(valueA, valueB);
+        }
+
+        if (!ascending) {
+            compareValue = -compareValue;
+        }
+        return compareValue;
+    }
+
+    public static compareWithUndefinedNull(valueA: any, valueB: any) {
         if ((valueA === null || valueA === undefined) && (valueB === null || valueB === undefined)) {
             return 0;
         } else if (valueA === null || valueA === undefined) {

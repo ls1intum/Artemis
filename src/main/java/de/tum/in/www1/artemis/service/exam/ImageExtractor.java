@@ -115,8 +115,9 @@ public class ImageExtractor extends PDFStreamEngine {
      * Converts BufferedImage to byte[]
      */
     private byte[] toByteArray(BufferedImage bufferedImage, String format) throws IOException {
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        ImageIO.write(bufferedImage, format, outputStream);
-        return outputStream.toByteArray();
+        try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
+            ImageIO.write(bufferedImage, format, outputStream);
+            return outputStream.toByteArray();
+        }
     }
 }

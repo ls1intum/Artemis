@@ -45,6 +45,7 @@ export class MultipleChoiceQuestionEditComponent implements OnInit, QuizQuestion
         return this.markdownEditor && this.markdownEditor.previewMode;
     }
     showMultipleChoiceQuestionPreview = true;
+    showMultipleChoiceQuestionVisual = true;
 
     hintCommand = new HintCommand();
     correctCommand = new CorrectOptionCommand();
@@ -111,10 +112,24 @@ export class MultipleChoiceQuestionEditComponent implements OnInit, QuizQuestion
     }
 
     /**
+     * Detect of changes in the visual editor
+     * 1. Parse the text in the editor to get the newest values
+     * 2. Notify the parent component to check the validity of the text
+     */
+    changesInVisualMode(): void {
+        this.questionUpdated.emit();
+        this.changeDetector.detectChanges();
+    }
+
+    /**
      * Triggers the saving process by cleaning up the question and calling the markdown parse function
      * to get the newest values in the editor to update the question attributes
      */
     prepareForSave(): void {
+        if (this.markdownEditor.visualMode) {
+            this.markdownEditor.markdown = this.markdownEditor.visualChild.parseQuestion();
+        }
+
         this.cleanupQuestion();
         this.markdownEditor.parse();
     }
@@ -169,6 +184,7 @@ export class MultipleChoiceQuestionEditComponent implements OnInit, QuizQuestion
             }
         }
         this.resetMultipleChoicePreview();
+        this.resetMultipleChoiceVisual();
     }
 
     /**
@@ -181,6 +197,13 @@ export class MultipleChoiceQuestionEditComponent implements OnInit, QuizQuestion
         this.showMultipleChoiceQuestionPreview = false;
         this.changeDetector.detectChanges();
         this.showMultipleChoiceQuestionPreview = true;
+        this.changeDetector.detectChanges();
+    }
+
+    private resetMultipleChoiceVisual() {
+        this.showMultipleChoiceQuestionVisual = false;
+        this.changeDetector.detectChanges();
+        this.showMultipleChoiceQuestionVisual = true;
         this.changeDetector.detectChanges();
     }
 

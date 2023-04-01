@@ -14,7 +14,7 @@
                 <fa-icon [icon]="faFilePdf"></fa-icon>
                 <span jhiTranslate="artemisApp.courseOverview.menu.lectures">Lectures</span>
             </a>
-            <a *ngIf="course.postsEnabled && course.isAtLeastTutor" [routerLink]="['/courses', course.id, 'discussion']" class="tab-item btn btn-primary btn-md ms-1">
+            <a *ngIf="isCommunicationEnabled(course) && course.isAtLeastTutor" [routerLink]="['/courses', course.id, 'discussion']" class="tab-item btn btn-primary btn-md ms-1">
                 <fa-icon [icon]="faComments"></fa-icon>
                 <span jhiTranslate="artemisApp.metis.communication.label">Communication</span>
             </a>
@@ -31,28 +31,31 @@
                 <fa-icon [icon]="faPersonChalkboard"></fa-icon>
                 <span jhiTranslate="artemisApp.entities.tutorialGroup.plural"></span>
             </a>
-            <a [routerLink]="['/course-management', course.id, 'assessment-dashboard']" class="tab-item btn btn-info btn-md ms-1">
-                <fa-icon [icon]="faUserCheck"></fa-icon>
-                <span jhiTranslate="entity.action.assessmentDashboard">Assessment Dashboard</span>
-            </a>
-            <a *ngIf="course.isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'scores']" class="tab-item btn btn-info btn-md ms-1">
-                <fa-icon [icon]="faTable"></fa-icon>
-                <span jhiTranslate="entity.action.scores">Scores</span>
-            </a>
-            <a *ngIf="course.isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'grading-system']" class="tab-item btn btn-info btn-md ms-1">
-                <fa-icon [icon]="faClipboard"></fa-icon> <span jhitranslate="artemisApp.course.gradingSystem">Grading Key</span>
-            </a>
-            <a *ngIf="course.isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'participant-scores']" class="tab-item btn btn-info btn-md ms-1">
-                <fa-icon [icon]="faEye"></fa-icon>
-                <span jhiTranslate="artemisApp.participantScores.pageTitle">Participant Score</span>
-            </a>
+            <div class="btn-group tab-item">
+                <a [routerLink]="['/course-management', course.id, 'assessment-dashboard']" class="tab-item btn btn-info btn-md ms-1 my-0">
+                    <fa-icon [icon]="faUserCheck"></fa-icon>
+                    <span jhiTranslate="entity.action.assessmentDashboard">Assessment Dashboard</span>
+                </a>
+                <div ngbDropdown *ngIf="course.isAtLeastInstructor" class="btn-group" role="group" aria-label="Button group with nested dropdown">
+                    <button type="button" class="btn btn-info btn-md dropdown-toggle-split" ngbDropdownToggle></button>
+                    <div class="dropdown-menu" ngbDropdownMenu>
+                        <a ngbDropdownItem [routerLink]="['/course-management', course.id, 'scores']" class="tab-item btn my-0">
+                            <fa-icon [icon]="faTable"></fa-icon>
+                            <span jhiTranslate="entity.action.scores">Scores</span>
+                        </a>
+                        <a ngbDropdownItem [routerLink]="['/course-management', course.id, 'grading-system']" class="tab-item btn my-0">
+                            <fa-icon [icon]="faClipboard"></fa-icon> <span jhitranslate="artemisApp.course.gradingSystem">Grading Key</span>
+                        </a>
+                        <a ngbDropdownItem [routerLink]="['/course-management', course.id, 'plagiarism-cases']" class="tab-item btn my-0">
+                            <fa-icon [icon]="faHeartBroken"></fa-icon>
+                            <span jhiTranslate="artemisApp.plagiarism.cases.plagiarismCases">Plagiarism Cases</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
             <a *ngIf="course.isAtLeastTutor" [routerLink]="['/course-management', course.id, 'course-statistics']" class="tab-item btn btn-info btn-md ms-1">
                 <fa-icon [icon]="faChartBar"></fa-icon>
                 <span jhiTranslate="artemisApp.courseOverview.menu.statistics">Statistics</span>
-            </a>
-            <a *ngIf="course.isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'plagiarism-cases']" class="tab-item btn btn-info btn-md ms-1">
-                <fa-icon [icon]="faHeartBroken"></fa-icon>
-                <span jhiTranslate="artemisApp.plagiarism.cases.plagiarismCases">Plagiarism Cases</span>
             </a>
             <div class="ms-auto">
                 <a *ngIf="course.isAtLeastInstructor" id="edit-course" [routerLink]="['/course-management', course.id, 'edit']" class="tab-item btn btn-warning btn-md">
@@ -142,7 +145,7 @@
             </dd>
             <!--
                 For users which are at least instructor we show the group name including a link to the course user group management,
-                where new users can be added to the group, since they have the permission to add/remove users to/from the group  
+                where new users can be added to the group, since they have the permission to add/remove users to/from the group
             -->
             <div *ngIf="course.isAtLeastInstructor; else groupsWithoutLink">
                 <dt><span jhiTranslate="artemisApp.course.studentGroupName">Student Group Name</span></dt>
@@ -166,8 +169,8 @@
                     >
                 </dd>
             </div>
-            <!-- 
-                For users which are not at least instructor we just show the group names without the link to the course user management page, 
+            <!--
+                For users which are not at least instructor we just show the group names without the link to the course user management page,
                 since they don't have the permission to add/remove users to/from the group
             -->
             <ng-template #groupsWithoutLink>
