@@ -62,8 +62,6 @@ public class ProgrammingExerciseGradingService {
 
     private final AuditEventRepository auditEventRepository;
 
-    private final ProgrammingTriggerService programmingTriggerService;
-
     private final GroupNotificationService groupNotificationService;
 
     private final ResultService resultService;
@@ -80,7 +78,6 @@ public class ProgrammingExerciseGradingService {
 
     public ProgrammingExerciseGradingService(StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository,
             Optional<ContinuousIntegrationResultService> continuousIntegrationResultService, Optional<VersionControlService> versionControlService,
-            ProgrammingTriggerService programmingTriggerService, StaticCodeAnalysisService staticCodeAnalysisService,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
             AuditEventRepository auditEventRepository, GroupNotificationService groupNotificationService, ResultService resultService, ExerciseDateService exerciseDateService,
@@ -90,7 +87,6 @@ public class ProgrammingExerciseGradingService {
         this.continuousIntegrationResultService = continuousIntegrationResultService;
         this.resultRepository = resultRepository;
         this.versionControlService = versionControlService;
-        this.programmingTriggerService = programmingTriggerService;
         this.testCaseRepository = testCaseRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;

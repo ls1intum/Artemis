@@ -226,7 +226,7 @@ class ProgrammingExerciseFeedbackCreationServiceTest extends AbstractSpringInteg
 
         Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(programmingExercise.getId());
         assertThat(testCases).hasSize(5).allMatch(testCase -> {
-            if (testCase.getTestName().equals("test3")) {
+            if ("test3".equals(testCase.getTestName())) {
                 return !testCase.isActive();
             }
             else {
