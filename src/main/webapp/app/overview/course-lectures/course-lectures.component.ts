@@ -73,8 +73,7 @@ export class CourseLecturesComponent implements OnInit, OnDestroy, AfterViewInit
         this.onCourseLoad();
 
         this.courseUpdatesSubscription = this.courseStorageService.subscribeToCourseUpdates(this.courseId).subscribe((course: Course) => {
-            this.courseStorageService.updateCourse(course);
-            this.course = this.courseStorageService.getCourse(this.courseId);
+            this.course = course;
             this.onCourseLoad();
         });
 
