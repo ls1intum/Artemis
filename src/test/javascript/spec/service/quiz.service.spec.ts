@@ -189,9 +189,9 @@ describe('Quiz Service', () => {
     });
 
     it('switches order of Quiz Questions', () => {
-        const quizQuestions = [shortAnswer, multipleChoice];
-        const expected = [multipleChoice, shortAnswer];
-        service.randomizeOrder(quizQuestions, false);
-        expect(quizQuestions).toStrictEqual(expected);
+        const quizExercise: any = Object.assign({}, quiz, { quizQuestions: [shortAnswer, multipleChoice] });
+        const expected = Object.assign({}, quiz, { quizQuestions: [multipleChoice, shortAnswer] });
+        service.randomizeOrder(quizExercise.quizQuestions, quizExercise.randomizeQuestionOrder);
+        expect(quizExercise).toStrictEqual(expected);
     });
 });

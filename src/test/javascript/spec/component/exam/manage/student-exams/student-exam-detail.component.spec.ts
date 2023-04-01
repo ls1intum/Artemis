@@ -76,6 +76,8 @@ describe('StudentExamDetailComponent', () => {
         studentParticipation.results = [result];
 
         exercise = new ModelingExercise(UMLDiagramType.ActivityDiagram, course, new ExerciseGroup());
+        exercise.id = 1;
+        exercise.title = 'title';
         exercise.maxPoints = 100;
         exercise.studentParticipations = [studentParticipation];
 
@@ -98,6 +100,9 @@ describe('StudentExamDetailComponent', () => {
             numberOfExamSessions: 0,
         };
 
+        const achievedPointsPerExercise: { [exerciseId: number]: number } = {
+            1: 100,
+        };
         studentExamWithGrade = {
             studentExam,
             maxPoints: 100,
@@ -114,6 +119,7 @@ describe('StudentExamDetailComponent', () => {
                 submitted: true,
                 hasPassed: true,
             },
+            achievedPointsPerExercise,
         } as StudentExamWithGradeDTO;
 
         return TestBed.configureTestingModule({
