@@ -669,7 +669,7 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooB
         exercise = fileUploadExerciseRepository.save(exercise);
         final var searchTerm = database.configureSearch(exercise.getTitle());
         SearchResultPageDTO<Exercise> result = request.get("/api/file-upload-exercises", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(searchTerm));
-        assertThat(result.getResultsOnPage().size()).isEqualTo(1);
+        assertThat(result.getResultsOnPage()).hasSize(1);
         assertThat(result.getNumberOfPages()).isEqualTo(1);
 
     }

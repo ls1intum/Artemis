@@ -62,7 +62,7 @@ class LectureImportServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
 
         lectureImportService.importLecture(this.lecture1, this.course2);
 
-        assertThat(this.course2.getLectures().size()).isEqualTo(lectureCount + 1);
+        assertThat(this.course2.getLectures()).hasSize(lectureCount + 1);
 
         // Find the imported lecture and fetch it with lecture units
         Long lecture2Id = this.course2.getLectures().stream().skip(lectureCount).findFirst().get().getId();

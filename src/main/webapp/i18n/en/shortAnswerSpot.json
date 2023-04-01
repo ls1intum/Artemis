@@ -3,8 +3,7 @@
         "shortAnswerSpot": {
             "home": {
                 "title": "Short Answer Spots",
-                "createLabel": "Create a new Short Answer Spot",
-                "createOrEditLabel": "Create or edit a Short Answer Spot"
+                "createLabel": "Create a new Short Answer Spot"
             },
             "created": "Created new Short Answer Spot with identifier {{ param }}",
             "updated": "Updated Short Answer Spot with identifier {{ param }}",
