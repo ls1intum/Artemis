@@ -59,13 +59,15 @@ public class QuizPoolService extends QuizService<QuizPool> {
         }
 
         List<QuizGroup> savedQuizGroups = quizGroupRepository.saveAllAndFlush(quizPool.getQuizGroups());
-        quizPoolRepository.findWithQuizQuestionsByExamId(examId).ifPresent(existingQuizPool -> removeUnusedQuizGroup(existingQuizPool.getQuizGroups(), savedQuizGroups));
+        quizPoolRepository.findWithEagerQuizQuestionsByExamId(examId).ifPresent(existingQuizPool -> removeUnusedQuizGroup(existingQuizPool.getQuizGroups(), savedQuizGroups));
 
         reassignQuizQuestion(quizPool, savedQuizGroups);
         quizPool.reconnectJSONIgnoreAttributes();
 
         log.debug("Save quiz pool to database: {}", quizPool);
-        return (QuizPool) super.saveConfiguration(quizPool);
+        super.saveConfiguration(quizPool);
+
+        return findByExamId(examId);
     }
 
     /**
@@ -75,7 +77,7 @@ public class QuizPoolService extends QuizService<QuizPool> {
      * @return quiz pool that belongs to the given exam id
      */
     public QuizPool findByExamId(Long examId) {
-        return quizPoolRepository.findWithQuizQuestionsByExamId(examId).orElseThrow(() -> new EntityNotFoundException(ENTITY_NAME, "examId=" + examId));
+        return quizPoolRepository.findWithEagerQuizQuestionsByExamId(examId).orElseThrow(() -> new EntityNotFoundException(ENTITY_NAME, "examId=" + examId));
     }
 
     /**
@@ -85,7 +87,7 @@ public class QuizPoolService extends QuizService<QuizPool> {
      * @return StudentExamQuizQuestionsGenerator the generator to generate randomly quiz questions that are going to be assigned to student exam
      */
     public StudentExamQuizQuestionsGenerator getStudentExamQuizQuestionsGenerator(Long examId) {
-        Optional<QuizPool> quizPoolOptional = quizPoolRepository.findWithQuizQuestionsByExamId(examId);
+        Optional<QuizPool> quizPoolOptional = quizPoolRepository.findWithEagerQuizQuestionsByExamId(examId);
         return quizPoolOptional.map(quizPool -> new StudentExamQuizPoolQuestionsGenerator(quizPool.getQuizGroups(), quizPool.getQuizQuestions()))
                 .orElseGet(StudentExamQuizPoolQuestionsGenerator::new);
     }

@@ -22,5 +22,5 @@ public interface QuizPoolRepository extends JpaRepository<QuizPool, Long> {
                         LEFT JOIN FETCH qeq.quizQuestionStatistic
                     WHERE e.id = :examId
             """)
-    Optional<QuizPool> findWithQuizQuestionsByExamId(Long examId);
+    Optional<QuizPool> findWithEagerQuizQuestionsByExamId(Long examId);
 }

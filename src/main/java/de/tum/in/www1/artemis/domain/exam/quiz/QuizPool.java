@@ -22,7 +22,7 @@ public class QuizPool extends DomainObject implements QuizConfiguration {
     @JoinColumn(name = "exam_id", referencedColumnName = "id")
     private Exam exam;
 
-    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "quiz_pool_id", referencedColumnName = "id")
     private List<QuizQuestion> quizQuestions;
 
