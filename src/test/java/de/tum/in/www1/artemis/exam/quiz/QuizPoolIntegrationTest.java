@@ -52,7 +52,7 @@ public class QuizPoolIntegrationTest extends AbstractSpringIntegrationBambooBitb
         User instructor = database.getUserByLogin(TEST_PREFIX + "instructor1");
         instructor.setGroups(Set.of(course.getInstructorGroupName()));
         exam = database.addExam(course);
-        quizPool = exam.getQuizPool();
+        quizPool = quizPoolService.update(exam.getId(), new QuizPool());
     }
 
     @Test
