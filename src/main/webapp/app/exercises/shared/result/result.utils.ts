@@ -317,7 +317,7 @@ export function getTestCaseNamesFromResults(results: ResultWithPointsPerGradingC
         }
         result.result.feedbacks.map((f) => {
             if (Feedback.isTestCaseFeedback(f)) {
-                testCasesNames.add(f.text ?? 'Test ' + result.result.feedbacks?.indexOf(f) + 1);
+                testCasesNames.add(f.testCase?.testName ?? 'Test ' + result.result.feedbacks?.indexOf(f) + 1);
             }
         });
     });

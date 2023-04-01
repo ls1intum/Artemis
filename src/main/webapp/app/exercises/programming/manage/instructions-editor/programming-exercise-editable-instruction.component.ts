@@ -238,7 +238,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
         // Fallback for exercises that don't have test cases yet.
         return this.programmingExerciseParticipationService.getLatestResultWithFeedback(templateParticipationId).pipe(
             rxMap((result) => (!result || !result.feedbacks ? throwError(() => new Error('no result available')) : result)),
-            rxMap(({ feedbacks }: Result) => feedbacks!.map((feedback) => feedback.text).sort()),
+            rxMap(({ feedbacks }: Result) => feedbacks!.map((feedback) => feedback.text || feedback.testCase?.testName).sort()),
             catchError(() => of([])),
         );
     };

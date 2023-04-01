@@ -99,14 +99,14 @@ export class Feedback implements BaseEntity {
         if (!that.text) {
             return false;
         }
-        return that.type === FeedbackType.AUTOMATIC && that.text.includes(STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER, 0);
+        return that.type === FeedbackType.AUTOMATIC && that.text.startsWith(STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER);
     }
 
     public static isSubmissionPolicyFeedback(that: Feedback): boolean {
         if (!that.text) {
             return false;
         }
-        return that.type === FeedbackType.AUTOMATIC && that.text.includes(SUBMISSION_POLICY_FEEDBACK_IDENTIFIER, 0);
+        return that.type === FeedbackType.AUTOMATIC && that.text.startsWith(SUBMISSION_POLICY_FEEDBACK_IDENTIFIER);
     }
 
     public static hasDetailText(that: Feedback): boolean {
