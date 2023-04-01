@@ -9,12 +9,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.config.Constants;
-import de.tum.in.www1.artemis.domain.enumeration.QuizMode;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.DragAndDropMappingRepository;
 import de.tum.in.www1.artemis.repository.ShortAnswerMappingRepository;
-import de.tum.in.www1.artemis.service.scheduled.cache.quiz.QuizScheduleService;
 
 @Service
 public abstract class QuizService<T extends QuizConfiguration> {
@@ -25,20 +22,17 @@ public abstract class QuizService<T extends QuizConfiguration> {
 
     private final ShortAnswerMappingRepository shortAnswerMappingRepository;
 
-    private final QuizBatchService quizBatchService;
+    protected abstract T saveAndFlush(QuizConfiguration quiz);
 
-    private final QuizScheduleService quizScheduleService;
+    protected abstract void preReferenceFix(T quizConfiguration);
 
-    public abstract T saveAndFlush(QuizConfiguration quiz);
+    protected abstract void preReturn(T quizConfiguration);
 
-    public abstract void createQuizPointStatistic(QuizConfiguration quizConfiguration);
+    protected abstract void preSave(T quizConfiguration);
 
-    protected QuizService(DragAndDropMappingRepository dragAndDropMappingRepository, ShortAnswerMappingRepository shortAnswerMappingRepository, QuizBatchService quizBatchService,
-            QuizScheduleService quizScheduleService) {
+    protected QuizService(DragAndDropMappingRepository dragAndDropMappingRepository, ShortAnswerMappingRepository shortAnswerMappingRepository) {
         this.dragAndDropMappingRepository = dragAndDropMappingRepository;
         this.shortAnswerMappingRepository = shortAnswerMappingRepository;
-        this.quizBatchService = quizBatchService;
-        this.quizScheduleService = quizScheduleService;
     }
 
     /**
@@ -47,14 +41,8 @@ public abstract class QuizService<T extends QuizConfiguration> {
      * @param quizConfiguration the configuration of a quiz to be saved
      * @return QuizConfiguration the configuration of a quiz that has been saved
      */
-    public QuizConfiguration saveConfiguration(QuizConfiguration quizConfiguration) {
-        quizConfiguration.setMaxPoints(quizConfiguration.getOverallQuizPoints());
-
-        // create a quizPointStatistic if it does not yet exist
-        createQuizPointStatistic(quizConfiguration);
-
-        // make sure the pointers in the statistics are correct
-        quizConfiguration.recalculatePointCounters();
+    public T saveConfiguration(T quizConfiguration) {
+        preReferenceFix(quizConfiguration);
 
         // fix references in all questions (step 1/2)
         for (var quizQuestion : quizConfiguration.getQuizQuestions()) {
@@ -139,19 +127,7 @@ public abstract class QuizService<T extends QuizConfiguration> {
             }
         }
 
-        if (quizConfiguration.getQuizBatches() != null) {
-            for (QuizBatch quizBatch : quizConfiguration.getQuizBatches()) {
-                quizBatch.setQuizExercise((QuizExercise) quizConfiguration);
-                if (quizConfiguration.getQuizMode() == QuizMode.SYNCHRONIZED) {
-                    if (quizBatch.getStartTime() != null) {
-                        quizConfiguration.setDueDate(quizBatch.getStartTime().plusSeconds(quizConfiguration.getDuration() + Constants.QUIZ_GRACE_PERIOD_IN_SECONDS));
-                    }
-                }
-                else {
-                    quizBatch.setStartTime(quizBatchService.quizBatchStartDate((QuizExercise) quizConfiguration, quizBatch.getStartTime()));
-                }
-            }
-        }
+        preSave(quizConfiguration);
 
         // Note: save will automatically remove deleted questions from the exercise and deleted answer options from the questions
         // and delete the now orphaned entries from the database
@@ -170,10 +146,7 @@ public abstract class QuizService<T extends QuizConfiguration> {
             }
         }
 
-        if (quizConfiguration.isCourseExercise()) {
-            // only schedule quizzes for course exercises, not for exam exercises
-            quizScheduleService.scheduleQuizStart(quizConfiguration.getId());
-        }
+        preReturn(quizConfiguration);
         return quizConfiguration;
     }
 

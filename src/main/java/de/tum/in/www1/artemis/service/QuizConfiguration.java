@@ -1,41 +1,16 @@
 package de.tum.in.www1.artemis.service;
 
-import java.time.ZonedDateTime;
 import java.util.List;
-import java.util.Set;
 
-import de.tum.in.www1.artemis.domain.enumeration.QuizMode;
 import de.tum.in.www1.artemis.domain.quiz.*;
 
 public interface QuizConfiguration {
 
-    Long getId();
-
-    void setMaxPoints(Double maxPoints);
-
-    Double getOverallQuizPoints();
-
-    QuizPointStatistic getQuizPointStatistic();
-
-    void setQuizPointStatistic(QuizPointStatistic quizPointStatistic);
-
-    void recalculatePointCounters();
-
     List<QuizQuestion> getQuizQuestions();
-
-    Set<QuizBatch> getQuizBatches();
-
-    QuizMode getQuizMode();
-
-    void setDueDate(ZonedDateTime dueDate);
-
-    Integer getDuration();
-
-    boolean isCourseExercise();
 
     void setQuestionParent(QuizQuestion quizQuestion);
 
-    void setQuizBatchParent(QuizBatch quizBatch);
+    void postReconnectJSONIgnoreAttributes();
 
     /**
      * Recreate missing pointers from children to parents that were removed by @JSONIgnore
@@ -125,18 +100,6 @@ public interface QuizConfiguration {
                 }
             }
         }
-
-        // reconnect pointCounters
-        for (PointCounter pointCounter : getQuizPointStatistic().getPointCounters()) {
-            if (pointCounter.getId() != null) {
-                pointCounter.setQuizPointStatistic(getQuizPointStatistic());
-            }
-        }
-
-        if (getQuizBatches() != null) {
-            for (QuizBatch quizBatch : getQuizBatches()) {
-                setQuizBatchParent(quizBatch);
-            }
-        }
+        postReconnectJSONIgnoreAttributes();
     }
 }

@@ -122,16 +122,6 @@ public class QuizExercise extends Exercise implements QuizConfiguration {
         return duration;
     }
 
-    @Override
-    public void setQuestionParent(QuizQuestion quizQuestion) {
-        quizQuestion.setExercise(this);
-    }
-
-    @Override
-    public void setQuizBatchParent(QuizBatch quizBatch) {
-        quizBatch.setQuizExercise(this);
-    }
-
     public QuizExercise duration(Integer duration) {
         this.duration = duration;
         return this;
@@ -606,6 +596,28 @@ public class QuizExercise extends Exercise implements QuizConfiguration {
                 throw new BadRequestAlertException("Start time must not be before release date!", getTitle(), "noValidDates");
             }
         });
+    }
+
+    @Override
+    public void setQuestionParent(QuizQuestion quizQuestion) {
+        quizQuestion.setExercise(this);
+    }
+
+    @Override
+    public void postReconnectJSONIgnoreAttributes() {
+        // reconnect pointCounters
+        for (PointCounter pointCounter : getQuizPointStatistic().getPointCounters()) {
+            if (pointCounter.getId() != null) {
+                pointCounter.setQuizPointStatistic(getQuizPointStatistic());
+            }
+        }
+
+        // reconnect quizBatches
+        if (getQuizBatches() != null) {
+            for (QuizBatch quizBatch : getQuizBatches()) {
+                quizBatch.setQuizExercise(this);
+            }
+        }
     }
 
     @Override

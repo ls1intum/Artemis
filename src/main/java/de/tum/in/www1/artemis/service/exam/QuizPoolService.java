@@ -36,7 +36,7 @@ public class QuizPoolService extends QuizService<QuizPool> {
 
     public QuizPoolService(DragAndDropMappingRepository dragAndDropMappingRepository, ShortAnswerMappingRepository shortAnswerMappingRepository,
             QuizPoolRepository quizPoolRepository, QuizGroupRepository quizGroupRepository, ExamRepository examRepository) {
-        super(dragAndDropMappingRepository, shortAnswerMappingRepository, null, null);
+        super(dragAndDropMappingRepository, shortAnswerMappingRepository);
         this.quizPoolRepository = quizPoolRepository;
         this.quizGroupRepository = quizGroupRepository;
         this.examRepository = examRepository;
@@ -124,7 +124,15 @@ public class QuizPoolService extends QuizService<QuizPool> {
     }
 
     @Override
-    public void createQuizPointStatistic(QuizConfiguration quizConfiguration) {
+    public void preReferenceFix(QuizPool quizConfiguration) {
         // TODO: This will be implemented when implementing statistics for Quiz Pool
+    }
+
+    @Override
+    protected void preReturn(QuizPool quizConfiguration) {
+    }
+
+    @Override
+    protected void preSave(QuizPool quizConfiguration) {
     }
 }

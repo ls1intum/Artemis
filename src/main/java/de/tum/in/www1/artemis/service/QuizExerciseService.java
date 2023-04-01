@@ -10,8 +10,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.QuizMode;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.*;
@@ -42,7 +44,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
     public QuizExerciseService(QuizExerciseRepository quizExerciseRepository, DragAndDropMappingRepository dragAndDropMappingRepository, ResultRepository resultRepository,
             ShortAnswerMappingRepository shortAnswerMappingRepository, QuizSubmissionRepository quizSubmissionRepository, QuizScheduleService quizScheduleService,
             QuizStatisticService quizStatisticService, QuizBatchService quizBatchService, ExerciseSpecificationService exerciseSpecificationService) {
-        super(dragAndDropMappingRepository, shortAnswerMappingRepository, quizBatchService, quizScheduleService);
+        super(dragAndDropMappingRepository, shortAnswerMappingRepository);
         this.quizExerciseRepository = quizExerciseRepository;
         this.resultRepository = resultRepository;
         this.quizSubmissionRepository = quizSubmissionRepository;
@@ -58,8 +60,8 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
      * @param quizConfiguration the quiz exercise to save
      * @return the saved quiz exercise
      */
-    public QuizExercise saveConfiguration(QuizConfiguration quizConfiguration) {
-        return (QuizExercise) super.saveConfiguration(quizConfiguration);
+    public QuizExercise saveConfiguration(QuizExercise quizConfiguration) {
+        return super.saveConfiguration(quizConfiguration);
     }
 
     /**
@@ -211,10 +213,52 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
     }
 
     /**
+     * Create a new quiz point statistic for the given quiz configuration if the quiz point statistic does not exist
+     *
+     * @param quizConfiguration the quiz configuration for which quiz point statistic to be created
+     */
+    @Override
+    public void preReferenceFix(QuizExercise quizConfiguration) {
+        quizConfiguration.setMaxPoints(quizConfiguration.getOverallQuizPoints());
+
+        // create a quizPointStatistic if it does not yet exist
+        if (quizConfiguration.getQuizPointStatistic() == null) {
+            var quizPointStatistic = new QuizPointStatistic();
+            quizConfiguration.setQuizPointStatistic(quizPointStatistic);
+            quizPointStatistic.setQuiz(quizConfiguration);
+        }
+
+        // make sure the pointers in the statistics are correct
+        quizConfiguration.recalculatePointCounters();
+    }
+
+    /**
+     * If quiz batch exists, set the due date for synchronized quiz and set start time for other quiz types before saving
+     *
+     * @param quizConfiguration the quiz exercise of which the quiz batch belongs to
+     */
+    @Override
+    protected void preSave(QuizExercise quizConfiguration) {
+        if (quizConfiguration.getQuizBatches() != null) {
+            for (QuizBatch quizBatch : quizConfiguration.getQuizBatches()) {
+                quizBatch.setQuizExercise(quizConfiguration);
+                if (quizConfiguration.getQuizMode() == QuizMode.SYNCHRONIZED) {
+                    if (quizBatch.getStartTime() != null) {
+                        quizConfiguration.setDueDate(quizBatch.getStartTime().plusSeconds(quizConfiguration.getDuration() + Constants.QUIZ_GRACE_PERIOD_IN_SECONDS));
+                    }
+                }
+                else {
+                    quizBatch.setStartTime(quizBatchService.quizBatchStartDate(quizConfiguration, quizBatch.getStartTime()));
+                }
+            }
+        }
+    }
+
+    /**
      * Save the quiz configuration
      *
-     * @param quizConfiguration the quiz configuration to be saved
-     * @return QuizExercise the quiz configuration that is saved
+     * @param quizConfiguration the quiz exercise to be saved
+     * @return QuizExercise the quiz exercise that is saved
      */
     @Override
     public QuizExercise saveAndFlush(QuizConfiguration quizConfiguration) {
@@ -222,16 +266,15 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
     }
 
     /**
-     * Create a new quiz point statistic for the given quiz configuration if the quiz point statistic does not exist
+     * Schedule quiz start if quiz exercise if a course exercise
      *
-     * @param quizConfiguration the quiz configuration for which quiz point statistic to be created
+     * @param quizConfiguration the quiz exercise to be scheduled
      */
     @Override
-    public void createQuizPointStatistic(QuizConfiguration quizConfiguration) {
-        if (quizConfiguration.getQuizPointStatistic() == null) {
-            var quizPointStatistic = new QuizPointStatistic();
-            quizConfiguration.setQuizPointStatistic(quizPointStatistic);
-            quizPointStatistic.setQuiz((QuizExercise) quizConfiguration);
+    protected void preReturn(QuizExercise quizConfiguration) {
+        if (quizConfiguration.isCourseExercise()) {
+            // only schedule quizzes for course exercises, not for exam exercises
+            quizScheduleService.scheduleQuizStart(quizConfiguration.getId());
         }
     }
 }
