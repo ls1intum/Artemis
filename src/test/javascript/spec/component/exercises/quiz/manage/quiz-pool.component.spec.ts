@@ -115,10 +115,13 @@ describe('QuizPoolComponent', () => {
         component.hasPendingChanges = true;
         component.isValid = true;
         component.quizQuestionsEditComponent = new QuizQuestionListEditComponent();
+        component.quizPoolMappingComponent = new QuizPoolMappingComponent();
         const parseAllQuestionsSpy = jest.spyOn(component.quizQuestionsEditComponent, 'parseAllQuestions').mockImplementation();
+        const getMaxPointsSpy = jest.spyOn(component.quizPoolMappingComponent, 'getMaxPoints').mockImplementation();
         const updateQuizPoolSpy = jest.spyOn(quizPoolService, 'update').mockReturnValue(of(new HttpResponse<QuizPool>({ body: quizPool })));
         component.save();
         expect(parseAllQuestionsSpy).toHaveBeenCalledOnce();
+        expect(getMaxPointsSpy).toHaveBeenCalledOnce();
         expect(updateQuizPoolSpy).toHaveBeenCalledOnce();
     });
 
