@@ -3,8 +3,7 @@
         "quizSubmission": {
             "home": {
                 "title": "Quiz Submissions",
-                "createLabel": "Create a new Quiz Submission",
-                "createOrEditLabel": "Create or edit a Quiz Submission"
+                "createLabel": "Create a new Quiz Submission"
             },
             "created": "Created new Quiz Submission with identifier {{ param }}",
             "updated": "Updated Quiz Submission with identifier {{ param }}",

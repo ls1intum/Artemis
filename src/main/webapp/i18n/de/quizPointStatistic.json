@@ -3,8 +3,7 @@
         "quizPointStatistic": {
             "home": {
                 "title": "Quiz Point Statistics",
-                "createLabel": "Quiz Point Statistic erstellen",
-                "createOrEditLabel": "Quiz Point Statistic erstellen oder bearbeiten"
+                "createLabel": "Quiz Point Statistic erstellen"
             },
             "created": "Quiz Point Statistic erstellt mit ID {{ param }}",
             "updated": "Quiz Point Statistic aktualisiert mit ID {{ param }}",
