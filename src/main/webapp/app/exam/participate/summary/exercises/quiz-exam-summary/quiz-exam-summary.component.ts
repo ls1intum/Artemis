@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnChanges } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { QuizQuestion, QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
 import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
@@ -19,7 +19,7 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
     selector: 'jhi-quiz-exam-summary',
     templateUrl: './quiz-exam-summary.component.html',
 })
-export class QuizExamSummaryComponent implements OnInit {
+export class QuizExamSummaryComponent implements OnChanges {
     readonly DRAG_AND_DROP = QuizQuestionType.DRAG_AND_DROP;
     readonly MULTIPLE_CHOICE = QuizQuestionType.MULTIPLE_CHOICE;
     readonly SHORT_ANSWER = QuizQuestionType.SHORT_ANSWER;
@@ -46,8 +46,7 @@ export class QuizExamSummaryComponent implements OnInit {
     result?: Result;
 
     constructor(private exerciseService: QuizExerciseService, private serverDateService: ArtemisServerDateService) {}
-
-    ngOnInit(): void {
+    ngOnChanges(): void {
         this.updateViewFromSubmission();
         if (this.studentParticipations) {
             this.result =
