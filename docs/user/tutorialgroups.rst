@@ -14,7 +14,7 @@ Artemis facilitates the coordination of tutorial groups in a course. Tutorial gr
 Setting up Tutorial Group Plan as an Instructor
 -----------------------------------------------
 
-Tutorial groups can be managed by instructors by navigating to the course's  ``Tutorial Groups`` page.
+Tutorial groups can be managed by instructors by navigating to the course's  ``Tutorial Groups`` page in the course administration section.
 
 |instructors-button|
 
@@ -35,7 +35,7 @@ Before the tutorial group feature can be used, three configurations need to be s
 
   * Deleting the channel when the tutorial group is deleted
 
-The three settings can be changed later in the ``Global Configuration`` section of the tutorial group page. This setting is hidden behind the ``More...`` button.
+If not all of these configurations are done, the instructor will see a checklist page with the missing configurations. These configurations can also be changed later in the ``Global Configuration`` section of the tutorial group page. A link to this section is hidden behind the ``More...`` button.
 
 |instructors-checklist|
 
@@ -43,7 +43,7 @@ The three settings can be changed later in the ``Global Configuration`` section 
 Creating Tutorial Groups
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-Tutorial groups can be created manually or by importing a CSV file. Importing a CSV file is a convenient option if the tutorial groups and student assignments already exist in a campus management system (e.g. TUM-Online). This way, both the groups and the assignments can be created at once.
+Tutorial groups can be created manually or by importing a CSV file. Importing a CSV file is a convenient option if the tutorial groups and student assignments already exist in a campus management system (e.g. TUM-Online). This way, both the groups and the assignments (student to tutorial group) can be created at once.
 
 
 |instructors-create-groups|
@@ -58,7 +58,7 @@ The assigned tutor and the session schedule are the most important settings of a
 Defining Tutorial Group Free Days
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-By clicking on the ``Holidays`` button, the instructor can define days where no tutorial group sessions are held. If such a day overlaps with a tutorial group session, the session is automatically cancelled and the holiday given as the reason.
+By clicking on the ``Holidays`` button, the instructor can define course-wide days where no tutorial group sessions are held (no matter which tutorial group). If such a day overlaps with a tutorial group session, the session is automatically cancelled and the holiday given as the reason.
 
 |instructors-holidays|
 
@@ -66,7 +66,7 @@ By clicking on the ``Holidays`` button, the instructor can define days where no 
 Managing Tutorial Groups as a Tutor
 -----------------------------------
 
-Assigned tutors can manage their tutorial groups by navigating to the course's ``Tutorial Groups`` page. The tutor can view the group's details, register or unregister students, and edit the sessions by cancelling or rescheduling them. The tutor also has moderation rights in the tutorial group's channel in the ``Messages`` section of the course if the ``Artemis managed tutorial group channels`` feature is enabled in the tutorial group settings.
+Assigned tutors can manage their tutorial groups by navigating to the course's ``Tutorial Groups`` page in the course administration section. The tutor can view the group's details, register or unregister students, and edit the sessions by cancelling or rescheduling them. The tutor also has moderation rights in the tutorial group's channel in the ``Messages`` section of the course if the ``Artemis managed tutorial group channels`` feature is enabled in the tutorial group settings.
 
 The groups for which the tutor is responsible have a blue background. 
 
@@ -98,7 +98,19 @@ By clicking on the ``Sessions`` button, the tutor can view the list of sessions 
 
 Viewing Tutorial Groups as a Student
 ------------------------------------
-..ToDo
+Students can access their tutorial grouos for a specific course by navigating to the course's ``Tutorial Group`` page.
+
+The view is split into two tabs that can be changed via the toolbar. In the ``Show my tutorial groups`` tab, students can see the groups for which they are registered. Each group is displayed as a card with the date of the next session in the center. At the bottom of the card, a link to the tutorial groups communication channel is shown (if this feature is activated). On the right side of the page, all course-wide holidays are displayed where no tutorial groups meet.
+
+|student-own-groups|
+
+In the ``Show All Tutorial Groups`` tab, students can see the main information for all tutorial groups of the course. This includes the name, utilization and responsible tutor. This page is useful if they want to switch to a less crowded group. Then they can pick one via low utilization and contact the tutor so that they get registered.
+
+|student-all-groups|
+
+To see more details about a tutorial group (including an overview of all sessions), the student can click on the name of the tutorial group. This will open the detail page of the respective group. The session table is shown at the bottom of the page. By default, only the top row is displayed which is the next session. The student can expand the whole table by clicking on the ``Show All Sessions`` button at the bottom.
+
+|student-detail|
 
 .. |instructors-button| image:: tutorialgroups/instructors-tutorial-group-button.png
     :width: 1000
@@ -107,9 +119,9 @@ Viewing Tutorial Groups as a Student
 .. |instructors-create-groups| image:: tutorialgroups/instructors-create-groups.png
     :width: 1000
 .. |instructors-tutorial-group-form| image:: tutorialgroups/instructors-tutorial-group-form.png
-    :width: 500
+    :width: 1000
 .. |instructors-csv-import| image:: tutorialgroups/instructors-csv-import.png
-    :width: 500
+    :width: 1000
 .. |instructors-holidays| image:: tutorialgroups/instructors-holidays.png
     :width: 1000    
 
@@ -119,3 +131,10 @@ Viewing Tutorial Groups as a Student
     :width: 1000    
 .. |tutor-sessions| image:: tutorialgroups/tutor-sessions.png
     :width: 1000        
+
+.. |student-own-groups| image:: tutorialgroups/students-own-groups.png
+    :width: 1000
+.. |student-all-groups| image:: tutorialgroups/students-all-groups.png
+    :width: 1000
+.. |student-detail| image:: tutorialgroups/students-detail.png
+    :width: 1000    
