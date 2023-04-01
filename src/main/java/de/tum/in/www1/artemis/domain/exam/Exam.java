@@ -146,7 +146,7 @@ public class Exam extends DomainObject {
     @JsonIgnoreProperties("exam")
     private Set<ExamUser> examUsers = new HashSet<>();
 
-    @OneToOne(mappedBy = "exam", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @OneToOne(mappedBy = "exam")
     @JsonIgnore
     private QuizPool quizPool;
 

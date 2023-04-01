@@ -28,6 +28,9 @@ public class QuizPool extends DomainObject implements QuizConfiguration {
     @JoinColumn(name = "quiz_pool_id", referencedColumnName = "id")
     private List<QuizQuestion> quizQuestions;
 
+    @Column(name = "max_points")
+    private int maxPoints;
+
     public QuizPool() {
         this.quizQuestions = new ArrayList<>();
     }
@@ -38,6 +41,14 @@ public class QuizPool extends DomainObject implements QuizConfiguration {
 
     public Exam getExam() {
         return exam;
+    }
+
+    public int getMaxPoints() {
+        return maxPoints;
+    }
+
+    public void setMaxPoints(int maxPoints) {
+        this.maxPoints = maxPoints;
     }
 
     @Override

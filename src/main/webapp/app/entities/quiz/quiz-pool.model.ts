@@ -7,4 +7,5 @@ export class QuizPool {
     public exam: Exam;
     public quizGroups: QuizGroup[] = [];
     public quizQuestions: QuizQuestion[] = [];
+    public maxPoints: number;
 }

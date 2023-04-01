@@ -108,6 +108,17 @@ export class QuizPoolMappingComponent implements OnInit, OnChanges, OnDestroy {
         return this.getGroupNamesWithDifferentQuestionPoints().length > 0;
     }
 
+    getMaxPoints(): number {
+        let maxPoints = 0;
+        for (const quizQuestions of this.quizGroupNameQuestionsMap.values()) {
+            if (quizQuestions.length > 0) {
+                maxPoints += quizQuestions[0].points ?? 0;
+            }
+        }
+        maxPoints += this.unmappedQuizQuestions.reduce((sum: number, quizQuestion: QuizQuestion) => sum + (quizQuestion.points ?? 0), 0);
+        return maxPoints;
+    }
+
     handleUpdate() {
         this.quizGroupNameQuestionsMap = new Map<string, Array<QuizQuestion>>();
         for (const quizGroup of this.quizGroups) {

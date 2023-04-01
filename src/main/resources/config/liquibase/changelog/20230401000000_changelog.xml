@@ -8,6 +8,7 @@
                 <constraints nullable="false" primaryKey="true"/>
             </column>
             <column name="exam_id" type="bigint" />
+            <column name="max_points" type="int" />
         </createTable>
         <createTable tableName="quiz_group">
             <column autoIncrement="true" name="id" type="bigint">

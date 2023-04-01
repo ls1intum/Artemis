@@ -81,6 +81,7 @@ export class QuizPoolComponent implements OnInit {
         this.isSaving = true;
         this.quizQuestionsEditComponent.parseAllQuestions();
         const requestOptions = {} as any;
+        this.quizPool.maxPoints = this.quizPoolMappingComponent.getMaxPoints();
         this.quizPoolService.update(this.courseId, this.examId, this.quizPool, requestOptions).subscribe({
             next: (quizPoolResponse: HttpResponse<QuizPool>) => {
                 if (quizPoolResponse.body) {
@@ -145,7 +146,11 @@ export class QuizPoolComponent implements OnInit {
     private isConfigurationValid(): boolean {
         const quizQuestionsValid = this.quizPool.quizQuestions.every((question) => isQuizQuestionValid(question, this.dragAndDropQuestionUtil, this.shortAnswerQuestionUtil));
         const totalPoints = this.quizPool.quizQuestions?.map((quizQuestion) => quizQuestion.points ?? 0).reduce((accumulator, points) => accumulator + points, 0);
-        return (this.quizPool.quizQuestions.length === 0 || (quizQuestionsValid && totalPoints > 0)) && !this.quizPoolMappingComponent.hasGroupsWithNoQuestion();
+        return (
+            (this.quizPool.quizQuestions.length === 0 || (quizQuestionsValid && totalPoints > 0)) &&
+            !this.quizPoolMappingComponent.hasGroupsWithNoQuestion() &&
+            !this.quizPoolMappingComponent.hasGroupsWithDifferentQuestionPoints()
+        );
     }
 
     private getInvalidReasons(): Array<ValidationReason> {
@@ -166,6 +171,18 @@ export class QuizPoolComponent implements OnInit {
             }
         }
 
+        if (this.quizPoolMappingComponent.hasGroupsWithDifferentQuestionPoints()) {
+            const names = this.quizPoolMappingComponent.getGroupNamesWithDifferentQuestionPoints();
+            for (const name of names) {
+                invalidReasons.push({
+                    translateKey: 'artemisApp.quizPool.invalidReasons.groupHasDifferentQuestionPoints',
+                    translateValues: {
+                        name,
+                    },
+                });
+            }
+        }
+
         return invalidReasons;
     }
 
@@ -179,19 +196,6 @@ export class QuizPoolComponent implements OnInit {
                 });
             }
         });
-
-        if (this.quizPoolMappingComponent.hasGroupsWithDifferentQuestionPoints()) {
-            const names = this.quizPoolMappingComponent.getGroupNamesWithDifferentQuestionPoints();
-            for (const name of names) {
-                warningReasons.push({
-                    translateKey: 'artemisApp.quizPool.invalidReasons.groupHasDifferentQuestionPoints',
-                    translateValues: {
-                        name,
-                    },
-                });
-            }
-        }
-
         return warningReasons;
     }
 
