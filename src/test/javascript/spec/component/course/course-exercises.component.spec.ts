@@ -99,9 +99,8 @@ describe('CourseExercisesComponent', () => {
 
     it('should initialize', () => {
         expect(component.course).toEqual(course);
-        expect(courseStorageSpy.mock.calls).toHaveLength(2);
+        expect(courseStorageSpy.mock.calls).toHaveLength(1);
         expect(courseStorageSpy.mock.calls[0][0]).toBe(course.id);
-        expect(courseStorageSpy.mock.calls[1][0]).toBe(course.id);
     });
 
     it('should react to changes', () => {
