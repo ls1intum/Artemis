@@ -60,7 +60,7 @@ describe('Course communication', () => {
                     .getNotifications()
                     .first()
                     .find('.notification-text')
-                    .contains(`The course "` + courseName + `" got a new announcement: "` + text + `"`.substring(0, 300 - 1) + '...');
+                    .contains((`The course "` + courseName + `" got a new announcement: "` + text + `"`).substring(0, 300 - 1) + '...');
             });
         });
 
