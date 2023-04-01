@@ -229,6 +229,7 @@ public class ExamService {
 
         var studentResults = new ArrayList<ExamScoresDTO.StudentResult>();
 
+        studentExamRepository.fetchAllQuizQuestions(studentExams.stream().toList());
         for (StudentExam studentExam : studentExams) {
             // Adding student results information to DTO
             List<StudentParticipation> participationsOfStudent = studentParticipations.stream()
@@ -885,7 +886,7 @@ public class ExamService {
                 pointsReachable += groupRepresentativeExercise.getMaxPoints();
             }
         }
-        if (pointsReachable < exam.getExamMaxPoints()) {
+        if (pointsReachable < exam.getExamMaxPoints() - exam.getQuizPoolMaxPoints()) {
             throw new BadRequestAlertException("Check that you set the exam max points correctly! The max points a student can earn in the exercise groups is too low", "Exam",
                     "artemisApp.exam.validation.tooFewMaxPoints");
         }

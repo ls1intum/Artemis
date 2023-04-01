@@ -487,6 +487,19 @@ public class Exam extends DomainObject {
     }
 
     /**
+     * Calculate max points of the quiz pool
+     *
+     * @return max points
+     */
+    public int getQuizPoolMaxPoints() {
+        int maxPoints = 0;
+        if (getQuizPool() != null) {
+            maxPoints = getQuizPool().getMaxPoints();
+        }
+        return maxPoints;
+    }
+
+    /**
      * Columns for which we allow a pageable search. For example see {@see de.tum.in.www1.artemis.service.TextExerciseService#getAllOnPageWithSize(PageableSearchDTO, User)}}
      * method. This ensures, that we can't search in columns that don't exist, or we do not want to be searchable.
      */
