@@ -147,20 +147,20 @@ describe('ResultService', () => {
         });
 
         it('should return correct string for non programming exercise long format', () => {
-            expect(resultService.getResultString(modelingResult, modelingExercise)).toBe('artemisApp.result.resultString.nonProgramming');
+            expect(resultService.getResultString(modelingResult, undefined, modelingExercise.maxPoints!, modelingExercise)).toBe('artemisApp.result.resultString.nonProgramming');
             expect(translateServiceSpy).toHaveBeenCalledOnce();
             expect(translateServiceSpy).toHaveBeenCalledWith('artemisApp.result.resultString.nonProgramming', { relativeScore: 42, points: 21 });
         });
 
         it('should return correct string for non programming exercise short format', () => {
-            expect(resultService.getResultString(modelingResult, modelingExercise, true)).toBe('artemisApp.result.resultString.short');
+            expect(resultService.getResultString(modelingResult, undefined, modelingExercise.maxPoints!, modelingExercise, true)).toBe('artemisApp.result.resultString.short');
             expect(translateServiceSpy).toHaveBeenCalledOnce();
             expect(translateServiceSpy).toHaveBeenCalledWith('artemisApp.result.resultString.short', { relativeScore: 42 });
         });
 
         it.each([true, false])('should return correct string for programming exercise with build failure', (short: boolean) => {
             const expectedProgrammingString = short ? 'artemisApp.result.resultString.programmingShort' : 'artemisApp.result.resultString.programming';
-            expect(resultService.getResultString(result1, programmingExercise, short)).toBe(expectedProgrammingString);
+            expect(resultService.getResultString(result1, undefined, programmingExercise.maxPoints!, programmingExercise, short)).toBe(expectedProgrammingString);
             expect(translateServiceSpy).toHaveBeenCalledTimes(2);
             expect(translateServiceSpy).toHaveBeenCalledWith('artemisApp.result.resultString.buildFailed');
             if (short) {
@@ -179,7 +179,7 @@ describe('ResultService', () => {
 
         it.each([true, false])('should return correct string for programming exercise with no tests', (short: boolean) => {
             const expectedProgrammingString = short ? 'artemisApp.result.resultString.programmingShort' : 'artemisApp.result.resultString.programming';
-            expect(resultService.getResultString(result2, programmingExercise, short)).toBe(expectedProgrammingString);
+            expect(resultService.getResultString(result2, undefined, programmingExercise.maxPoints!, programmingExercise, short)).toBe(expectedProgrammingString);
             expect(translateServiceSpy).toHaveBeenCalledTimes(2);
             expect(translateServiceSpy).toHaveBeenCalledWith('artemisApp.result.resultString.buildSuccessfulNoTests');
             if (short) {
@@ -198,7 +198,7 @@ describe('ResultService', () => {
 
         it.each([true, false])('should return correct string for programming exercise with tests', (short: boolean) => {
             const expectedProgrammingString = short ? 'artemisApp.result.resultString.short' : 'artemisApp.result.resultString.programming';
-            expect(resultService.getResultString(result3, programmingExercise, short)).toBe(expectedProgrammingString);
+            expect(resultService.getResultString(result3, undefined, programmingExercise.maxPoints!, programmingExercise, short)).toBe(expectedProgrammingString);
             expect(translateServiceSpy).toHaveBeenCalledTimes(2);
             expect(translateServiceSpy).toHaveBeenCalledWith('artemisApp.result.resultString.buildSuccessfulTests', { numberOfTestsPassed: 1, numberOfTestsTotal: 2 });
             if (short) {
@@ -215,7 +215,9 @@ describe('ResultService', () => {
         });
 
         it('should return correct string for programming exercise with code issues', () => {
-            expect(resultService.getResultString(result4, programmingExercise)).toBe('artemisApp.result.resultString.programmingCodeIssues');
+            expect(resultService.getResultString(result4, undefined, programmingExercise.maxPoints!, programmingExercise)).toBe(
+                'artemisApp.result.resultString.programmingCodeIssues',
+            );
             expect(translateServiceSpy).toHaveBeenCalledTimes(2);
             expect(translateServiceSpy).toHaveBeenCalledWith('artemisApp.result.resultString.buildSuccessfulTests', { numberOfTestsPassed: 1, numberOfTestsTotal: 2 });
             expect(translateServiceSpy).toHaveBeenCalledWith(`artemisApp.result.resultString.programmingCodeIssues`, {
@@ -229,7 +231,9 @@ describe('ResultService', () => {
         it('should return correct string for programming exercise preliminary', () => {
             programmingExercise.assessmentDueDate = dayjs().add(5, 'minutes');
 
-            expect(resultService.getResultString(result5, programmingExercise)).toBe('artemisApp.result.resultString.programming (artemisApp.result.preliminary)');
+            expect(resultService.getResultString(result5, undefined, programmingExercise.maxPoints!, programmingExercise)).toBe(
+                'artemisApp.result.resultString.programming (artemisApp.result.preliminary)',
+            );
             expect(translateServiceSpy).toHaveBeenCalledTimes(3);
             expect(translateServiceSpy).toHaveBeenCalledWith('artemisApp.result.resultString.buildSuccessfulNoTests');
             expect(translateServiceSpy).toHaveBeenCalledWith(`artemisApp.result.resultString.programming`, {
@@ -242,7 +246,7 @@ describe('ResultService', () => {
 
         it('reports to Sentry if result or exercise is undefined', () => {
             const captureExceptionSpy = jest.spyOn(Sentry, 'captureException');
-            expect(resultService.getResultString(undefined, undefined)).toBe('');
+            expect(resultService.getResultString(undefined, undefined, 0, undefined)).toBe('');
             expect(captureExceptionSpy).toHaveBeenCalledOnce();
             expect(captureExceptionSpy).toHaveBeenCalledWith('Tried to generate a result string, but either the result or exercise was undefined');
         });

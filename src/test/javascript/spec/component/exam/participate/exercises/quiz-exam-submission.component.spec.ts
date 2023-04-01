@@ -1,7 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
-import { Course } from 'app/entities/course.model';
-import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { AnswerOption } from 'app/entities/quiz/answer-option.model';
 import { DragAndDropMapping } from 'app/entities/quiz/drag-and-drop-mapping.model';
 import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
@@ -10,7 +8,6 @@ import { DragItem } from 'app/entities/quiz/drag-item.model';
 import { DropLocation } from 'app/entities/quiz/drop-location.model';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
 import { MultipleChoiceSubmittedAnswer } from 'app/entities/quiz/multiple-choice-submitted-answer.model';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
 import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
 import { ShortAnswerSubmittedAnswer } from 'app/entities/quiz/short-answer-submitted-answer.model';
@@ -30,7 +27,6 @@ describe('QuizExamSubmissionComponent', () => {
     let component: QuizExamSubmissionComponent;
 
     let quizSubmission: QuizSubmission;
-    let exercise: QuizExercise;
     let multipleChoiceQuestion: MultipleChoiceQuestion;
     let dragAndDropQuestion: DragAndDropQuestion;
     let shortAnswerQuestion: ShortAnswerQuestion;
@@ -39,7 +35,6 @@ describe('QuizExamSubmissionComponent', () => {
 
     beforeEach(() => {
         quizSubmission = new QuizSubmission();
-        exercise = new QuizExercise(new Course(), new ExerciseGroup());
         multipleChoiceQuestion = new MultipleChoiceQuestion();
         multipleChoiceQuestion.id = 1;
         dragAndDropQuestion = new DragAndDropQuestion();
@@ -73,8 +68,7 @@ describe('QuizExamSubmissionComponent', () => {
     it('should initialize', () => {
         const quizServiceSpy = jest.spyOn(quizService, 'randomizeOrder');
 
-        exercise.quizQuestions = [multipleChoiceQuestion, dragAndDropQuestion];
-        component.exercise = exercise;
+        component.quizQuestions = [multipleChoiceQuestion, dragAndDropQuestion];
         fixture.detectChanges();
 
         expect(fixture).toBeDefined();
@@ -87,8 +81,7 @@ describe('QuizExamSubmissionComponent', () => {
     });
 
     it('should update view from submission and fill the dictionary accordingly when submitted answer', () => {
-        exercise.quizQuestions = [multipleChoiceQuestion, dragAndDropQuestion];
-        component.exercise = exercise;
+        component.quizQuestions = [multipleChoiceQuestion, dragAndDropQuestion];
 
         const multipleChoiceSubmittedAnswer = new MultipleChoiceSubmittedAnswer();
         const multipleChoiceSelectedOptions = new AnswerOption();
@@ -117,7 +110,6 @@ describe('QuizExamSubmissionComponent', () => {
          * Test the return value of the getSubmission and getExercise
          */
         expect(component.getSubmission()).toEqual(quizSubmission);
-        expect(component.getExercise()).toEqual(exercise);
 
         /**
          * Change the isSynced value of studentSubmission to false when selection changed
@@ -131,8 +123,7 @@ describe('QuizExamSubmissionComponent', () => {
     });
 
     it('should set answerOptions/mappings/submitted texts to empty array when not submitted answer', () => {
-        exercise.quizQuestions = [multipleChoiceQuestion, dragAndDropQuestion, shortAnswerQuestion];
-        component.exercise = exercise;
+        component.quizQuestions = [multipleChoiceQuestion, dragAndDropQuestion, shortAnswerQuestion];
 
         component.updateViewFromSubmission();
         fixture.detectChanges();
@@ -156,7 +147,6 @@ describe('QuizExamSubmissionComponent', () => {
         const windowSpy = jest.spyOn(window, 'scrollTo');
 
         component.navigateToQuestion(1);
-        component.exercise = exercise;
         fixture.detectChanges();
         expect(getNavigationStub).toHaveBeenCalledTimes(2);
         expect(yOffsetStub).toHaveBeenCalledOnce();
@@ -164,9 +154,8 @@ describe('QuizExamSubmissionComponent', () => {
     });
 
     it('should create multiple choice submission from users selection', () => {
-        exercise.quizQuestions = [multipleChoiceQuestion, dragAndDropQuestion, shortAnswerQuestion];
+        component.quizQuestions = [multipleChoiceQuestion, dragAndDropQuestion, shortAnswerQuestion];
         component.studentSubmission = new QuizSubmission();
-        component.exercise = exercise;
 
         const multipleChoiceSelectedOptions = new AnswerOption();
         multipleChoiceSelectedOptions.id = 1;

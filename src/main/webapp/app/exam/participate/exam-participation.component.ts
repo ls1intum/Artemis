@@ -806,7 +806,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             const timestamp = this.serverDateService.now();
 
             const quizExamSubmission = this.studentExam.quizExamSubmission!;
-            if (!quizExamSubmission.isSynced) {
+            if (quizExamSubmission && !quizExamSubmission.isSynced) {
                 this.examParticipationService.updateQuizSubmission(0, quizExamSubmission).subscribe({
                     next: (updatedSubmission) => {
                         this.examParticipationService.setLastSaveFailed(false, this.courseId, this.examId);

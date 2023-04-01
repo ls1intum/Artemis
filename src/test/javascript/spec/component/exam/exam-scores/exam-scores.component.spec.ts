@@ -182,6 +182,7 @@ describe('ExamScoresComponent', () => {
         overallPointsAchievedInFirstCorrection: 90,
         submitted: true,
         exerciseGroupIdToExerciseResult: { [exGroup1Id]: exResult1ForGroup1 },
+        quizExamOverallPointsAchieved: 0,
     } as StudentResult;
 
     const studentResult2 = {
@@ -195,6 +196,7 @@ describe('ExamScoresComponent', () => {
         overallPointsAchievedInFirstCorrection: 20,
         submitted: true,
         exerciseGroupIdToExerciseResult: { [exGroup1Id]: exResult2ForGroup1 },
+        quizExamOverallPointsAchieved: 0,
     } as StudentResult;
 
     const studentResult3 = {
@@ -208,6 +210,7 @@ describe('ExamScoresComponent', () => {
         overallPointsAchievedInFirstCorrection: 40,
         submitted: false,
         exerciseGroupIdToExerciseResult: { [exGroup1Id]: exResult3ForGroup1 },
+        quizExamOverallPointsAchieved: 0,
     } as StudentResult;
 
     const studentResultsWithBonusAndPlagiarism = [

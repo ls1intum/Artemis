@@ -86,8 +86,11 @@ describe('StudentExamDetailTableRowComponent', () => {
             type: ExerciseType.MODELING,
             exerciseGroup: { id: 12 },
         };
-        const submission = { id: 14 };
-        const route = studentExamDetailTableRowComponent.getAssessmentLink(modelingExercise, submission);
+        studentExamDetailTableRowComponent.submission = { id: 14 };
+        studentExamDetailTableRowComponent.exerciseId = modelingExercise.id;
+        studentExamDetailTableRowComponent.exerciseType = modelingExercise.type;
+        studentExamDetailTableRowComponent.exerciseGroupId = modelingExercise.exerciseGroup.id;
+        const route = studentExamDetailTableRowComponent.getAssessmentLink();
         expect(getAssessmentLinkSpy).toHaveBeenCalledOnce();
         expect(route).toEqual(['/course-management', '23', 'exams', '1', 'exercise-groups', '12', 'modeling-exercises', '12', 'submissions', '14', 'assessment']);
     });

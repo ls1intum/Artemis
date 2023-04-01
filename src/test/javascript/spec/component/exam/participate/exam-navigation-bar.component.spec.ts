@@ -104,7 +104,7 @@ describe('Exam Navigation Bar Component', () => {
         const exerciseIndex = 1;
         const force = false;
 
-        comp.changePage(false, exerciseIndex, force);
+        comp.changePage(false, false, exerciseIndex, force);
 
         expect(comp.exerciseIndex).toEqual(exerciseIndex);
         expect(comp.onPageChanged.emit).toHaveBeenCalledOnce();
@@ -120,7 +120,7 @@ describe('Exam Navigation Bar Component', () => {
         const exerciseIndex = 5;
         const force = false;
 
-        comp.changePage(false, exerciseIndex, force);
+        comp.changePage(false, false, exerciseIndex, force);
 
         expect(comp.exerciseIndex).toBe(0);
         expect(comp.onPageChanged.emit).not.toHaveBeenCalled();
