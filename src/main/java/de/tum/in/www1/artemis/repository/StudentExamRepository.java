@@ -462,14 +462,18 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
         for (StudentExam studentExam : studentExams) {
             Optional<StudentExam> studentExamOptional = findWithEagerQuizQuestionsById(studentExam.getId());
             studentExamOptional.ifPresent(exam -> studentExam.setQuizQuestions(exam.getQuizQuestions()));
-            if (!studentExam.getQuizQuestions().isEmpty()) {
-                studentExam.setHasQuizExam(true);
-                double totalPoints = 0.0;
-                for (QuizQuestion quizQuestion : studentExam.getQuizQuestions()) {
-                    totalPoints += quizQuestion.getPoints();
-                }
-                studentExam.setQuizQuestionTotalPoints(totalPoints);
+            setQuizExamProperties(studentExam);
+        }
+    }
+
+    default void setQuizExamProperties(StudentExam studentExam) {
+        if (!studentExam.getQuizQuestions().isEmpty()) {
+            studentExam.setHasQuizExam(true);
+            double totalPoints = 0.0;
+            for (QuizQuestion quizQuestion : studentExam.getQuizQuestions()) {
+                totalPoints += quizQuestion.getPoints();
             }
+            studentExam.setQuizQuestionTotalPoints(totalPoints);
         }
     }
 }

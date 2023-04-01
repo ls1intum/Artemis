@@ -169,6 +169,7 @@ public class StudentExamService {
                 scheduler.schedule(() -> programmingTriggerService.triggerBuildForParticipations(currentStudentParticipations), Instant.now().plus(3, ChronoUnit.SECONDS));
             }
         }
+        studentExamRepository.setQuizExamProperties(studentExam);
 
         return ResponseEntity.ok(studentExam);
     }
