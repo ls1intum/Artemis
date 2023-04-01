@@ -3,8 +3,7 @@
         "shortAnswerSolution": {
             "home": {
                 "title": "Short Answer Solutions",
-                "createLabel": "Short Answer Solution erstellen",
-                "createOrEditLabel": "Short Answer Solution erstellen oder bearbeiten"
+                "createLabel": "Short Answer Solution erstellen"
             },
             "created": "Short Answer Solution erstellt mit ID {{ param }}",
             "updated": "Short Answer Solution aktualisiert mit ID {{ param }}",

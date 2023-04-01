@@ -3,8 +3,7 @@
         "dragAndDropQuestion": {
             "home": {
                 "title": "Drag-And-Drop Questions",
-                "createLabel": "Drag-And-Drop Question erstellen",
-                "createOrEditLabel": "Drag-And-Drop Question erstellen oder bearbeiten"
+                "createLabel": "Drag-And-Drop Question erstellen"
             },
             "created": "Drag-And-Drop Question erstellt mit ID {{ param }}",
             "updated": "Drag-And-Drop Question aktualisiert mit ID {{ param }}",

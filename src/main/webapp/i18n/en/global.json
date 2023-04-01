@@ -249,7 +249,7 @@
             "exercise": "Exercises",
             "scores": "Scores",
             "exams": "Exams",
-            "manageHints": "Manage Hints",
+            "hints": "Hints",
             "addExternalSubmission": "Add External Submission",
             "addAuxiliaryRepository": "Add Auxiliary Repository",
             "toggleToUnsubmitted": "Change Student Exam to Unsubmitted",

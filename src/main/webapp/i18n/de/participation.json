@@ -3,8 +3,7 @@
         "participation": {
             "home": {
                 "title": "Teilnahmen",
-                "createLabel": "Teilnahme erstellen",
-                "createOrEditLabel": "Teilnahme erstellen oder bearbeiten"
+                "createLabel": "Teilnahme erstellen"
             },
             "created": "Teilnahme erstellt mit ID {{ param }}",
             "updated": "Teilnahme von {{ param }} aktualisiert",
@@ -41,7 +40,7 @@
             "student": "Student",
             "team": "Team",
             "students": "Studierende",
-            "practiceMode": "Übungsmodus",
+            "practice": "Übungsmodus",
             "templateParticipation": "Template-Teilname",
             "solutionParticipation": "Lösungsteilname",
             "noParticipation": "Die Teilnahme konnte nicht gefunden werden!",
