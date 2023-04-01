@@ -275,6 +275,7 @@
                         [submission]="studentExam.quizExamSubmission"
                         [result]="getQuizExamResult(studentExam)"
                         [achievedPoints]="quizExamAchievedPoints"
+                        [exerciseBonusPoints]="0"
                     ></tr>
                     <ng-template ngFor let-exercise [ngForOf]="studentExam.exercises">
                         <tr
