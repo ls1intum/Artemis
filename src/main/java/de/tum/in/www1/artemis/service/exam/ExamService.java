@@ -235,7 +235,7 @@ public class ExamService {
                     .filter(studentParticipation -> studentParticipation.getStudent().get().getId().equals(studentExam.getUser().getId()))
                     .collect(Collectors.toCollection(ArrayList::new));
             var studentResult = calculateStudentResultWithGrade(studentExam, participationsOfStudent, exam, gradingScale, true, submittedAnswerCounts, plagiarismMapping,
-                    examBonusCalculator, studentExam.getQuizQuestionTotalPoints(), studentExam.getQuizExamSubmission(), studentExam.getQuizExamSubmission().getQuizExamResult());
+                    examBonusCalculator, studentExam.getQuizQuestionTotalPoints(), studentExam.getQuizExamSubmission().getQuizExamResult());
             studentResults.add(studentResult);
         }
 
@@ -271,7 +271,7 @@ public class ExamService {
         var plagiarismMapping = PlagiarismMapping.createFromPlagiarismCases(plagiarismCasesForStudent);
         ExamBonusCalculator examBonusCalculator = createExamBonusCalculator(gradingScale, List.of(studentId));
         var studentResult = calculateStudentResultWithGrade(studentExam, participationsOfStudent, exam, gradingScale, false, null, plagiarismMapping, examBonusCalculator,
-                studentExam.getQuizQuestionTotalPoints(), studentExam.getQuizExamSubmission(), studentExam.getQuizExamSubmission().getQuizExamResult());
+                studentExam.getQuizQuestionTotalPoints(), studentExam.getQuizExamSubmission().getQuizExamResult());
         var exercises = studentExam.getExercises();
         var maxPoints = calculateMaxPointsSum(exercises, exam.getCourse(), studentExam.getQuizQuestionTotalPoints());
         var maxBonusPoints = calculateMaxBonusPointsSum(exercises, exam.getCourse());
@@ -558,13 +558,11 @@ public class ExamService {
      * @param exam                           the relevant exam
      * @param gradingScale                   optional GradingScale that will be used to set the grade type and the achieved grade if present
      * @param calculateFirstCorrectionPoints flag to determine whether to calculate the first correction results or not
-     * @param quizExamSubmission
      * @return exam result for a student who participated in the exam
      */
     private ExamScoresDTO.StudentResult calculateStudentResultWithGrade(StudentExam studentExam, List<StudentParticipation> participationsOfStudent, Exam exam,
             Optional<GradingScale> gradingScale, boolean calculateFirstCorrectionPoints, List<QuizSubmittedAnswerCount> quizSubmittedAnswerCounts,
-            PlagiarismMapping plagiarismMapping, ExamBonusCalculator examBonusCalculator, Double quizExamMaxPoints, QuizExamSubmission quizExamSubmission,
-            QuizExamResult quizExamResult) {
+            PlagiarismMapping plagiarismMapping, ExamBonusCalculator examBonusCalculator, Double quizExamMaxPoints, QuizExamResult quizExamResult) {
         User user = studentExam.getUser();
 
         if (!Boolean.TRUE.equals(studentExam.isSubmitted())) {
@@ -628,11 +626,8 @@ public class ExamService {
             }
         }
 
-        double quizExamOverallPointsAchieved = 0.0;
-        if (quizExamSubmission != null) {
-            quizExamOverallPointsAchieved = calculateAchievedPoints(quizExamMaxPoints, quizExamResult, exam.getCourse(), 0.0);
-            overallPointsAchieved += quizExamOverallPointsAchieved;
-        }
+        double quizExamOverallPointsAchieved = calculateAchievedPoints(quizExamMaxPoints, quizExamResult, exam.getCourse(), 0.0);
+        overallPointsAchieved += quizExamOverallPointsAchieved;
 
         // Round the points again to prevent floating point issues that might occur when summing up the exercise points (e.g. 0.3 + 0.3 + 0.3 = 0.8999999999999999)
         overallPointsAchieved = roundScoreSpecifiedByCourseSettings(overallPointsAchieved, exam.getCourse());
