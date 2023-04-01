@@ -343,8 +343,9 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
     /**
      * Generates random exams for each user in the given users set and saves them.
      *
-     * @param exam  exam for which the individual student exams will be generated
-     * @param users users for which the individual exams will be generated
+     * @param exam                   exam for which the individual student exams will be generated
+     * @param users                  users for which the individual exams will be generated
+     * @param quizQuestionsGenerator the generator to generate quiz questions for the student exam
      * @return List of StudentExams generated for the given users
      */
     default List<StudentExam> createRandomStudentExams(Exam exam, Set<User> users, StudentExamQuizQuestionsGenerator quizQuestionsGenerator) {
@@ -422,7 +423,8 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
      * Generates the student exams randomly based on the exam configuration and the exercise groups
      * Important: the passed exams needs to include the registered users, exercise groups and exercises (eagerly loaded)
      *
-     * @param exam with eagerly loaded registered users, exerciseGroups and exercises loaded
+     * @param exam                   with eagerly loaded registered users, exerciseGroups and exercises loaded
+     * @param quizQuestionsGenerator the generator to generate quiz questions for the student exam
      * @return the list of student exams with their corresponding users
      */
     default List<StudentExam> generateStudentExams(final Exam exam, final StudentExamQuizQuestionsGenerator quizQuestionsGenerator) {
@@ -442,7 +444,8 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
      * <p>
      * Important: the passed exams needs to include the registered users, exercise groups and exercises (eagerly loaded)
      *
-     * @param exam with eagerly loaded registered users, exerciseGroups and exercises loaded
+     * @param exam                   with eagerly loaded registered users, exerciseGroups and exercises loaded
+     * @param quizQuestionsGenerator the generator to generate quiz questions for the student exam
      * @return the list of student exams with their corresponding users
      */
     default List<StudentExam> generateMissingStudentExams(Exam exam, StudentExamQuizQuestionsGenerator quizQuestionsGenerator) {
@@ -458,6 +461,11 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
         return createRandomStudentExams(exam, missingUsers, quizQuestionsGenerator);
     }
 
+    /**
+     * Fetch eagerly all quiz questions that belong to the individual student exam, then set the quiz exam related properties of the student exam
+     *
+     * @param studentExams the list of student exams of which the quiz questions to be fetched
+     */
     default void fetchAllQuizQuestions(List<StudentExam> studentExams) {
         for (StudentExam studentExam : studentExams) {
             Optional<StudentExam> studentExamOptional = findWithEagerQuizQuestionsById(studentExam.getId());
@@ -466,6 +474,11 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
         }
     }
 
+    /**
+     * Set the quiz exam related properties of the student exam
+     *
+     * @param studentExam the student exam of which the quiz exam properties to be set
+     */
     default void setQuizExamProperties(StudentExam studentExam) {
         if (!studentExam.getQuizQuestions().isEmpty()) {
             studentExam.setHasQuizExam(true);

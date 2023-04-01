@@ -749,7 +749,8 @@ public class ExamResource {
         // Reset existing student exams & participations in case they already exist
         examDeletionService.deleteStudentExamsAndExistingParticipationsForExam(exam.getId());
 
-        List<StudentExam> studentExams = studentExamRepository.generateStudentExams(exam, quizPoolService.getStudentExamQuizQuestionsGenerator(examId));
+        StudentExamQuizQuestionsGenerator quizPoolQuizQuestionsGenerator = quizPoolService.getStudentExamQuizQuestionsGenerator(examId);
+        List<StudentExam> studentExams = studentExamRepository.generateStudentExams(exam, quizPoolQuizQuestionsGenerator);
 
         // we need to break a cycle for the serialization
         breakCyclesForSerialization(studentExams);

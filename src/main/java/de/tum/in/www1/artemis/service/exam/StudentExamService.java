@@ -606,8 +606,9 @@ public class StudentExamService {
     /**
      * Generates a new test exam for the student and stores it in the database
      *
-     * @param exam    the exam with loaded exercise groups and exercises for which the StudentExam should be created
-     * @param student the corresponding student
+     * @param exam                   the exam with loaded exercise groups and exercises for which the StudentExam should be created
+     * @param student                the corresponding student
+     * @param quizQuestionsGenerator the generator to generate quiz questions for the student exam
      * @return a StudentExam for the student and exam
      */
     public StudentExam generateTestExam(Exam exam, User student, StudentExamQuizQuestionsGenerator quizQuestionsGenerator) {
@@ -626,8 +627,9 @@ public class StudentExamService {
     /**
      * Generates an individual StudentExam
      *
-     * @param exam    with eagerly loaded users, exerciseGroups and exercises loaded
-     * @param student the student for which the StudentExam should be created
+     * @param exam                   with eagerly loaded users, exerciseGroups and exercises loaded
+     * @param student                the student for which the StudentExam should be created
+     * @param quizQuestionsGenerator the generator to generate quiz questions for the student exam
      * @return the generated StudentExam
      */
     private StudentExam generateIndividualStudentExam(Exam exam, User student, StudentExamQuizQuestionsGenerator quizQuestionsGenerator) {
