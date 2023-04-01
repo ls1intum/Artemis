@@ -165,37 +165,13 @@ public interface ContinuousIntegrationService {
             List<String> triggeredByRepositories);
 
     /**
-     * Returns a list of all notification ids for the given build plan for this server
-     *
-     * @param buildPlanKey The key of the build plan, which is usually the name combined with the project, e.g. 'EIST16W1-GA56HUR'.
-     * @return a list of all notification ids
-     */
-    List<Long> getAllArtemisBuildPlanServerNotificationIds(String buildPlanKey);
-
-    /**
-     * Deletes the given notification id for the given build plan
-     *
-     * @param buildPlanKey         The key of the build plan, which is usually the name combined with the project, e.g. 'EIST16W1-GA56HUR'.
-     * @param serverNotificationId the id of the notification to delete
-     */
-    void deleteBuildPlanServerNotificationId(String buildPlanKey, Long serverNotificationId);
-
-    /**
-     * Creates a new notification for the given build plan
-     *
-     * @param buildPlanKey          The key of the build plan, which is usually the name combined with the project, e.g. 'EIST16W1-GA56HUR'.
-     * @param serverNotificationUrl the url of the endpoint to notify
-     */
-    void createBuildPlanServerNotification(String buildPlanKey, String serverNotificationUrl);
-
-    /**
      * Reads all notifications on the current build plan and updates old notifications to the current endpoint
      *
      * @param projectKey    The key of the project, e.g. 'EIST16W1', which is normally the programming exercise project key.
      * @param buildPlanKey  The key of the build plan, which is usually the name combined with the project, e.g. 'EIST16W1-GA56HUR'.
      * @param repositoryUrl the URL of the assignment repository
      */
-    void fixBuildPlanNotification(String projectKey, String buildPlanKey, VcsRepositoryUrl repositoryUrl);
+    void overrideBuildPlanNotification(String projectKey, String buildPlanKey, VcsRepositoryUrl repositoryUrl);
 
     /**
      * Gives overall roles permissions for the defined project. A role can e.g. be all logged-in users

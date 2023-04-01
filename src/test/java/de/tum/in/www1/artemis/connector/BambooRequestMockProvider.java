@@ -45,6 +45,9 @@ import de.tum.in.www1.artemis.util.TestConstants;
 @Profile("bamboo")
 public class BambooRequestMockProvider {
 
+    @Value("${server.url}")
+    private String artemisServerUrl;
+
     @Value("${artemis.continuous-integration.url}")
     private URL bambooServerUrl;
 
@@ -142,6 +145,55 @@ public class BambooRequestMockProvider {
             mockServer.expect(requestTo(projectSearchPath.build().toUri())).andExpect(method(HttpMethod.GET))
                     .andRespond(withStatus(HttpStatus.OK).body(mapper.writeValueAsString(bambooSearchDTO)).contentType(MediaType.APPLICATION_JSON));
         }
+    }
+
+    public void mockGetNotificationsForJob(String buildPlanId) {
+        String body = """
+                <html>
+                <body>
+                    <table id='notificationTable'>
+                    <thead>
+                    <tr>
+                        <th>Event</th>
+                        <th>Notification recipient</th>
+                        <th>Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr>
+                        <td>All Builds Completed</td>
+                        <td>$artemisUrl/api/programming-exercises/new-result</td>
+                        <td>
+                            <a id="editNotification:123456789" href="/chain/admin/config/editChainNotification.action?buildKey=$buildPlanId&amp;notificationId=123456789&amp;edit=true" class="edit-notification"><span class="aui-icon aui-icon-small aui-iconfont-edit-filled"></span></a>
+                            <a id="deleteNotification:123456789" class="mutative" href="/chain/admin/config/deleteChainNotification.action?buildKey=$buildPlanId&amp;notificationId=123456789"><span class="aui-icon aui-icon-small aui-iconfont-cross-circle"></span></a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>All Builds Completed</td>
+                        <td>https://external.system/api/programming-exercises/new-result</td>
+                        <td>
+                            <a id="editNotification:987654321" href="/chain/admin/config/editChainNotification.action?buildKey=$buildPlanId&amp;notificationId=987654321&amp;edit=true" class="edit-notification"><span class="aui-icon aui-icon-small aui-iconfont-edit-filled"></span></a>
+                            <a id="deleteNotification:987654321" class="mutative" href="/chain/admin/config/deleteChainNotification.action?buildKey=$buildPlanId&amp;notificationId=987654321"><span class="aui-icon aui-icon-small aui-iconfont-cross-circle"></span></a>
+                        </td>
+                    </tr>
+                    </tbody>
+                    </table>
+                </body>
+                </html>
+                """
+                .replace("$artemisUrl", artemisServerUrl).replace("$buildPlanId", buildPlanId);
+        mockServer.expect(requestTo(bambooServerUrl + "/chain/admin/config/defaultChainNotification.action?buildKey=" + buildPlanId)).andExpect(method(HttpMethod.GET))
+                .andRespond(withStatus(HttpStatus.OK).body(body).contentType(MediaType.TEXT_HTML));
+    }
+
+    public void mockDeleteNotificationsForJob(String buildPlanId, String notificationId) {
+        mockServer.expect(requestTo(bambooServerUrl + "/chain/admin/config/deleteChainNotification.action?buildKey=" + buildPlanId + "&notificationId=" + notificationId))
+                .andExpect(method(HttpMethod.POST)).andRespond(withStatus(HttpStatus.OK).body("<html></html>").contentType(MediaType.TEXT_HTML));
+    }
+
+    public void mockCreateNotificationForJob() {
+        mockServer.expect(requestTo(bambooServerUrl + "/chain/admin/config/configureChainNotification.action")).andExpect(method(HttpMethod.POST))
+                .andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON));
     }
 
     public void mockRemoveAllDefaultProjectPermissions(ProgrammingExercise exercise) {

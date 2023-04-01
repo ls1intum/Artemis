@@ -295,29 +295,14 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
     }
 
     @Override
-    public List<Long> getAllArtemisBuildPlanServerNotificationIds(String buildPlanKey) {
-        return null;
-    }
-
-    @Override
-    public void deleteBuildPlanServerNotificationId(String buildPlanKey, Long serverNotificationId) {
-
-    }
-
-    @Override
-    public void createBuildPlanServerNotification(String buildPlanKey, String serverNotificationUrl) {
-
-    }
-
-    @Override
-    public void fixBuildPlanNotification(String projectKey, String buildPlanKey, VcsRepositoryUrl repositoryUrl) {
+    public void overrideBuildPlanNotification(String projectKey, String buildPlanKey, VcsRepositoryUrl repositoryUrl) {
         try {
             updateVariable(urlService.getRepositoryPathFromRepositoryUrl(repositoryUrl), VARIABLE_NOTIFICATION_URL_NAME,
                     artemisServerUrl.toExternalForm() + NEW_RESULT_RESOURCE_API_PATH);
         }
         catch (GitLabApiException e) {
             log.error("Error while updating the notification url for the build plan " + buildPlanKey, e);
-            throw new RuntimeException(e);
+            throw new GitLabCIException(e);
         }
     }
 

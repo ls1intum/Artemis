@@ -492,8 +492,13 @@ public class BambooService extends AbstractContinuousIntegrationService {
         continuousIntegrationUpdateService.get().updatePlanRepository(buildProjectKey, buildPlanKey, ciRepoName, repoProjectKey, vcsRepoName, newBranch, triggeredByRepositories);
     }
 
-    @Override
-    public List<Long> getAllArtemisBuildPlanServerNotificationIds(String buildPlanKey) {
+    /**
+     * Returns a list of all notification ids for the given build plan for this server
+     *
+     * @param buildPlanKey The key of the build plan, which is usually the name combined with the project, e.g. 'EIST16W1-GA56HUR'.
+     * @return a list of all notification ids
+     */
+    private List<Long> getAllArtemisBuildPlanServerNotificationIds(String buildPlanKey) {
         MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
         parameters.add("buildKey", buildPlanKey);
         String requestUrl = serverUrl + "/chain/admin/config/defaultChainNotification.action";
@@ -531,8 +536,13 @@ public class BambooService extends AbstractContinuousIntegrationService {
         return notificationIds;
     }
 
-    @Override
-    public void deleteBuildPlanServerNotificationId(String buildPlanKey, Long serverNotificationId) {
+    /**
+     * Deletes the given notification id for the given build plan
+     *
+     * @param buildPlanKey         The key of the build plan, which is usually the name combined with the project, e.g. 'EIST16W1-GA56HUR'.
+     * @param serverNotificationId the id of the notification to delete
+     */
+    private void deleteBuildPlanServerNotificationId(String buildPlanKey, Long serverNotificationId) {
         MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
         parameters.add("buildKey", buildPlanKey);
         parameters.add("notificationId", serverNotificationId.toString());
@@ -543,9 +553,13 @@ public class BambooService extends AbstractContinuousIntegrationService {
         restTemplate.exchange(builder.build().toUri(), HttpMethod.POST, null, String.class);
     }
 
-    @Override
-    public void createBuildPlanServerNotification(String buildPlanKey, String serverNotificationUrl) {
-        MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
+    /**
+     * Creates a new notification for the given build plan
+     *
+     * @param buildPlanKey          The key of the build plan, which is usually the name combined with the project, e.g. 'EIST16W1-GA56HUR'.
+     * @param serverNotificationUrl the url of the endpoint to notify
+     */
+    private void createBuildPlanServerNotification(String buildPlanKey, String serverNotificationUrl) {
         MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
         body.add("conditionKey", "com.atlassian.bamboo.plugin.system.notifications:chainCompleted.allBuilds");
         body.add("selectFields", "conditionKey");
@@ -557,7 +571,7 @@ public class BambooService extends AbstractContinuousIntegrationService {
         headers.add("Content-Type", "application/x-www-form-urlencoded");
 
         String requestUrl = serverUrl + "/chain/admin/config/configureChainNotification.action";
-        UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(requestUrl).queryParams(parameters);
+        UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(requestUrl);
 
         HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(body, headers);
 
@@ -565,7 +579,7 @@ public class BambooService extends AbstractContinuousIntegrationService {
     }
 
     @Override
-    public void fixBuildPlanNotification(String projectKey, String buildPlanKey, VcsRepositoryUrl vcsRepositoryUrl) {
+    public void overrideBuildPlanNotification(String projectKey, String buildPlanKey, VcsRepositoryUrl vcsRepositoryUrl) {
         List<Long> notificationIds = getAllArtemisBuildPlanServerNotificationIds(buildPlanKey);
 
         for (var id : notificationIds) {

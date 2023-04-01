@@ -129,34 +129,32 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
         jenkinsBuildPlanService.updateBuildPlanRepositories(buildProjectKey, buildPlanKey, newRepoUrl, existingRepoUrl);
     }
 
-    @Override
-    public List<Long> getAllArtemisBuildPlanServerNotificationIds(String buildPlanKey) {
-        return null;
+    /**
+     * Replaces the current notification URL of the given config with the current one in use
+     *
+     * @param config
+     * @return
+     * @throws TransformerException
+     */
+    private Document replaceNotificationUrlInJobConfig(Document config) throws TransformerException {
+        String stringConfig = XmlFileUtils.writeToString(config);
+        // Pattern captures the current notification URL and additionally everything around in order to replace the URL
+        Pattern pattern = Pattern.compile("(.*?notificationUrl: ')(.+?)('.*?)");
+        Matcher matcher = pattern.matcher(stringConfig);
+        String newStringConfig = matcher.replaceAll("$1" + artemisServerUrl + NEW_RESULT_RESOURCE_API_PATH + "$3");
+        return XmlFileUtils.readFromString(newStringConfig);
     }
 
     @Override
-    public void deleteBuildPlanServerNotificationId(String buildPlanKey, Long serverNotificationId) {
-        throw new RuntimeException("Not implemented");
-    }
-
-    @Override
-    public void createBuildPlanServerNotification(String buildPlanKey, String serverNotificationUrl) {
-        throw new RuntimeException("Not implemented");
-    }
-
-    @Override
-    public void fixBuildPlanNotification(String projectKey, String buildPlanKey, VcsRepositoryUrl repositoryUrl) {
-        Document config;
+    public void overrideBuildPlanNotification(String projectKey, String buildPlanKey, VcsRepositoryUrl repositoryUrl) {
         try {
-            config = jenkinsJobService.getJobConfig(projectKey, buildPlanKey);
-            String stringConfig = XmlFileUtils.writeToString(config);
-            Pattern pattern = Pattern.compile("(.*?notificationUrl: ')(.+?)('.*?)");
-            Matcher matcher = pattern.matcher(stringConfig);
-            String newStringConfig = matcher.replaceAll("$1" + artemisServerUrl + NEW_RESULT_RESOURCE_API_PATH + "$3");
-            jenkinsJobService.updateJob(projectKey, buildPlanKey, XmlFileUtils.readFromString(newStringConfig));
+            Document currentConfig = jenkinsJobService.getJobConfig(projectKey, buildPlanKey);
+            Document newConfig = replaceNotificationUrlInJobConfig(currentConfig);
+            jenkinsJobService.updateJob(projectKey, buildPlanKey, newConfig);
         }
         catch (IOException | TransformerException e) {
             log.error("Could not fix build plan notification for build plan " + buildPlanKey + " in project " + projectKey, e);
+            throw new JenkinsException(e);
         }
     }
 
