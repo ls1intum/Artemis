@@ -91,7 +91,6 @@
                                         <button class="btn-sm" type="button" (click)="command.execute(item.id, item.type)" ngbDropdownItem>
                                             {{ item.value }}
                                         </button>
-
                                         <div ngbDropdown container="body" *ngIf="item.type === 'LECTURE'">
                                             <button
                                                 *ngIf="item.attachmentUnits?.length > 0"
@@ -99,35 +98,33 @@
                                                 type="button"
                                                 ngbDropdownToggle
                                             ></button>
-                                            <div ngbDropdownMenu>
-                                                <ng-container *ngFor="let unit of item.attachmentUnits">
-                                                    <div class="d-flex flex-row mb-2">
-                                                        <button class="btn-sm" type="button" (click)="command.execute(item.id, unit.type, undefined, unit.id)" ngbDropdownItem>
-                                                            {{ unit.value }}
-                                                        </button>
-                                                        <div ngbDropdown container="body" *ngIf="item.type === 'LECTURE'">
-                                                            <button
-                                                                *ngIf="unit.slides?.length > 0"
-                                                                class="btn btn-sm btn-outline-secondary dropdown-toggle sidebar-button border-0"
-                                                                type="button"
-                                                                ngbDropdownToggle
-                                                            ></button>
-                                                            <div ngbDropdownMenu>
-                                                                <ng-container *ngFor="let slide of unit.slides">
-                                                                    <button
-                                                                        class="btn-sm nested"
-                                                                        type="button"
-                                                                        (click)="command.execute(item.id, unit.type, undefined, unit.id, slide.id)"
-                                                                        ngbDropdownItem
-                                                                    >
-                                                                        Slide {{ slide.slideNumber }}
-                                                                    </button>
-                                                                </ng-container>
-                                                            </div>
-                                                        </div>
+                                            <ul class="dropdown-menu" ngbDropdownMenu>
+                                                <li class="d-flex flex-row mb-2" *ngFor="let unit of item.attachmentUnits">
+                                                    <button class="btn-sm" type="button" (click)="command.execute(item.id, unit.type, undefined, unit.id)" ngbDropdownItem>
+                                                        {{ unit.value }}
+                                                    </button>
+                                                    <div ngbDropdown container="body" *ngIf="item.type === 'LECTURE'">
+                                                        <button
+                                                            *ngIf="unit.slides?.length > 0"
+                                                            class="btn btn-sm btn-outline-secondary dropdown-toggle sidebar-button border-0"
+                                                            type="button"
+                                                            ngbDropdownToggle
+                                                        ></button>
+                                                        <ul class="dropdown-menu" ngbDropdownMenu>
+                                                            <li *ngFor="let slide of unit.slides">
+                                                                <button
+                                                                    class="btn-sm nested"
+                                                                    type="button"
+                                                                    (click)="command.execute(item.id, unit.type, undefined, unit.id, slide.id)"
+                                                                    ngbDropdownItem
+                                                                >
+                                                                    Slide {{ slide.slideNumber }}
+                                                                </button>
+                                                            </li>
+                                                        </ul>
                                                     </div>
-                                                </ng-container>
-                                            </div>
+                                                </li>
+                                            </ul>
                                         </div>
                                     </div>
                                     <ng-container *ngFor="let nestedElement of item.elements">
