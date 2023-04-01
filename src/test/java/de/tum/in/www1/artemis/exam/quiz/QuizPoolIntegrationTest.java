@@ -26,7 +26,7 @@ import de.tum.in.www1.artemis.service.exam.QuizPoolService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 
-public class QuizPoolIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class QuizPoolIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     private static final String TEST_PREFIX = "quizpoolintegration";
 
