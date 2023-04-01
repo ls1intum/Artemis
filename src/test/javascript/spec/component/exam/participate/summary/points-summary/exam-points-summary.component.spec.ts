@@ -142,6 +142,7 @@ describe('ExamPointsSummaryComponent', () => {
                         hasPassed: true,
                         submitted: true,
                         exerciseGroupIdToExerciseResult: {},
+                        quizExamOverallPointsAchieved: 0.0,
                     },
                     achievedPointsPerExercise: {
                         [textExercise.id!]: 20,
