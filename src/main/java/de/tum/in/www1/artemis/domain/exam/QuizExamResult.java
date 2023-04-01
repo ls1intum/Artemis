@@ -8,7 +8,7 @@ import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.quiz.QuizExamSubmission;
 
 @Entity
-@DiscriminatorValue(value = "QE")
+@DiscriminatorValue("QE")
 public class QuizExamResult extends Result {
 
     @Transient

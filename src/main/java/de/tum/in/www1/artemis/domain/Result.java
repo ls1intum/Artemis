@@ -40,7 +40,7 @@ import de.tum.in.www1.artemis.service.listeners.ResultListener;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "discriminator", discriminatorType = DiscriminatorType.STRING)
-@DiscriminatorValue(value = "E")
+@DiscriminatorValue("E")
 @DiscriminatorOptions(force = true)
 public class Result extends DomainObject implements Comparable<Result> {
 
