@@ -32,14 +32,14 @@
                 <jhi-exam-exercise-overview-page
                     [exercises]="studentExam.exercises!"
                     (onPageChanged)="onPageChange($event)"
-                    [hasQuizExam]="hasQuizExam"
+                    [hasQuizExam]="studentExam.hasQuizExam"
                     [quizExamSubmission]="studentExam.quizExamSubmission!"
                     [quizExamTotalPoints]="studentExam.quizQuestionTotalPoints!"
                 >
                 </jhi-exam-exercise-overview-page>
             </div>
             <jhi-quiz-submission-exam
-                *ngIf="hasQuizExam && activeExamPage.isQuizExamPage"
+                *ngIf="studentExam.hasQuizExam && activeExamPage.isQuizExamPage"
                 [quizQuestions]="studentExam.quizQuestions"
                 [randomizeQuizQuestions]="false"
                 [title]="'Quiz Exam'"

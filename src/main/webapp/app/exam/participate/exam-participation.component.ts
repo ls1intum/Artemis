@@ -102,7 +102,6 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     handInEarly = false;
     handInPossible = true;
     submitInProgress = false;
-    hasQuizExam = false;
 
     exerciseIndex = 0;
 
@@ -303,7 +302,6 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         if (studentExam) {
             // init studentExam
             this.studentExam = studentExam;
-            this.hasQuizExam = (studentExam.quizQuestions?.length ?? 0) > 0;
             let quizExamSubmission = this.studentExam.quizExamSubmission;
             if (!quizExamSubmission) {
                 quizExamSubmission = new QuizExamSubmission();

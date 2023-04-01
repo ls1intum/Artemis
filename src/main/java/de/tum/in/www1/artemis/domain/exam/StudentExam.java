@@ -12,6 +12,7 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.quiz.QuizExamSubmission;
@@ -70,6 +71,12 @@ public class StudentExam extends AbstractAuditingEntity {
 
     @OneToOne(mappedBy = "studentExam", orphanRemoval = true)
     private QuizExamSubmission quizExamSubmission;
+
+    @Transient
+    private Boolean hasQuizExam;
+
+    @Transient
+    private Double quizQuestionTotalPoints;
 
     public Boolean isSubmitted() {
         return submitted;
@@ -185,6 +192,24 @@ public class StudentExam extends AbstractAuditingEntity {
         this.quizExamSubmission = quizExamSubmission;
     }
 
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    public Boolean getHasQuizExam() {
+        return this.hasQuizExam;
+    }
+
+    public void setHasQuizExam(Boolean hasQuizExam) {
+        this.hasQuizExam = hasQuizExam;
+    }
+
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    public Double getQuizQuestionTotalPoints() {
+        return this.quizQuestionTotalPoints;
+    }
+
+    public void setQuizQuestionTotalPoints(Double quizQuestionTotalPoints) {
+        this.quizQuestionTotalPoints = quizQuestionTotalPoints;
+    }
+
     /**
      * check if the individual student exam has ended (based on the working time)
      * For test exams, we cannot use exam.startTime, but need to use the student.startedDate. If this is not yet set,
@@ -254,21 +279,5 @@ public class StudentExam extends AbstractAuditingEntity {
         else {
             return exam.resultsPublished();
         }
-    }
-
-    /**
-     * Calculate the total points of quiz questions that were assigned to the student exam
-     *
-     * @return the total points
-     */
-    public Double getQuizQuestionTotalPoints() {
-        double maxPoints = 0.0;
-        // iterate through all quizQuestions of this quiz and add up the score
-        if (quizQuestions != null && Hibernate.isInitialized(quizQuestions)) {
-            for (QuizQuestion quizQuestion : getQuizQuestions()) {
-                maxPoints += quizQuestion.getPoints();
-            }
-        }
-        return maxPoints;
     }
 }

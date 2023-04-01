@@ -21,6 +21,7 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.quiz.QuizQuestion;
 import de.tum.in.www1.artemis.service.ExerciseDateService;
 import de.tum.in.www1.artemis.service.exam.StudentExamQuizQuestionsGenerator;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -461,6 +462,14 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
         for (StudentExam studentExam : studentExams) {
             Optional<StudentExam> studentExamOptional = findWithEagerQuizQuestionsById(studentExam.getId());
             studentExamOptional.ifPresent(exam -> studentExam.setQuizQuestions(exam.getQuizQuestions()));
+            if (!studentExam.getQuizQuestions().isEmpty()) {
+                studentExam.setHasQuizExam(true);
+                double totalPoints = 0.0;
+                for (QuizQuestion quizQuestion : studentExam.getQuizQuestions()) {
+                    totalPoints += quizQuestion.getPoints();
+                }
+                studentExam.setQuizQuestionTotalPoints(totalPoints);
+            }
         }
     }
 }

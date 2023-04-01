@@ -44,6 +44,6 @@ export class ExamInformationComponent implements OnInit, OnChanges {
     }
 
     private getTotalExercises(): number {
-        return (this.exam?.numberOfExercisesInExam ?? 0) + (this.studentExam?.quizQuestionTotalPoints ?? 0 > 0 ? 1 : 0);
+        return (this.exam?.numberOfExercisesInExam ?? 0) + (this.studentExam?.hasQuizExam ? 1 : 0);
     }
 }

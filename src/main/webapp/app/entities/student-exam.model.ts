@@ -22,6 +22,7 @@ export class StudentExam implements BaseEntity {
     public startedDate?: dayjs.Dayjs;
     public examActivity?: ExamActivity;
     public quizQuestions?: QuizQuestion[];
+    public hasQuizExam?: boolean;
 
     // helper attribute
     public ended?: boolean;

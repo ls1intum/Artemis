@@ -24,7 +24,7 @@
     <jhi-exam-points-summary
         [studentExamWithGrade]="studentExamGradeInfoDTO"
         [exercises]="studentExam.exercises"
-        [hasQuizExam]="hasQuizExam"
+        [hasQuizExam]="studentExam.hasQuizExam"
         [quizExamMaxPoints]="studentExam.quizQuestionTotalPoints"
     ></jhi-exam-points-summary>
 </div>
@@ -32,7 +32,7 @@
     <fa-icon [icon]="faInfoCircle" class="info-icon"></fa-icon>
     {{ 'artemisApp.exam.resultInformation' | artemisTranslate }}
 </div>
-<ng-container *ngIf="hasQuizExam">
+<ng-container *ngIf="studentExam.hasQuizExam">
     <div [id]="'exercise-quiz-exam'">
         <div class="question card">
             <div class="question-options card-header question-card-header">

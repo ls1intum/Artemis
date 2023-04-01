@@ -18,7 +18,7 @@ export class ExamPointsSummaryComponent implements OnInit {
     readonly BonusStrategy = BonusStrategy;
     @Input() studentExamWithGrade: StudentExamWithGradeDTO;
     @Input() exercises: Exercise[];
-    @Input() hasQuizExam: boolean;
+    @Input() hasQuizExam?: boolean;
     @Input() quizExamMaxPoints: number | undefined;
 
     gradingScaleExists = false;

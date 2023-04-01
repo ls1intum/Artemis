@@ -1,6 +1,8 @@
 package de.tum.in.www1.artemis.service.exam;
 
 import java.time.ZonedDateTime;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.stereotype.Service;
@@ -115,8 +117,14 @@ public class ExamAccessService {
                 throw new AccessForbiddenException(ENTITY_NAME, examId);
             }
         }
+        setQuizExamProperties(studentExam);
 
         return studentExam;
+    }
+
+    private void setQuizExamProperties(StudentExam studentExam) {
+        studentExamRepository.fetchAllQuizQuestions(List.of(studentExam));
+        studentExam.setQuizQuestions(Collections.emptyList());
     }
 
     /**

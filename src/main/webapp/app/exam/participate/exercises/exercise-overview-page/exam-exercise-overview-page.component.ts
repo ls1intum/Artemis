@@ -14,7 +14,7 @@ import { QuizExamSubmission } from 'app/entities/quiz/quiz-exam-submission.model
 })
 export class ExamExerciseOverviewPageComponent extends ExamPageComponent implements OnInit, OnChanges {
     @Input() exercises: Exercise[];
-    @Input() hasQuizExam: boolean;
+    @Input() hasQuizExam?: boolean;
     @Input() quizExamTotalPoints: number;
     @Input() quizExamSubmission?: QuizExamSubmission;
     @Output() onPageChanged = new EventEmitter<{ overViewChange: boolean; quizExamChange: boolean; exercise: Exercise | undefined; forceSave: boolean }>();

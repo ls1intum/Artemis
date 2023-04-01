@@ -48,8 +48,7 @@ export class ExamParticipationSummaryComponent implements OnInit {
     @Input()
     set studentExam(studentExam: StudentExam) {
         this._studentExam = studentExam;
-        this.hasQuizExam = (studentExam.quizQuestions?.length ?? 0) > 0;
-        if (this.hasQuizExam) {
+        if (studentExam.hasQuizExam) {
             if (studentExam.quizExamSubmission?.results && studentExam.quizExamSubmission?.results.length > 0) {
                 this.quizExamResult = studentExam.quizExamSubmission.results[0];
             }
@@ -78,7 +77,6 @@ export class ExamParticipationSummaryComponent implements OnInit {
     testRunConduction = false;
     testExamConduction = false;
 
-    hasQuizExam = false;
     collapseQuizExam = false;
     quizExamResult: Result | undefined;
 
