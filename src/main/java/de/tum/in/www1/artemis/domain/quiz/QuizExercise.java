@@ -296,7 +296,7 @@ public class QuizExercise extends Exercise implements QuizConfiguration {
      * @return the resulting score
      */
     public Double getScoreForSubmission(QuizSubmission quizSubmission) {
-        double score = quizSubmission.getScoreInPointsForSubmission(quizQuestions);
+        double score = quizSubmission.getScoreInPoints(quizQuestions);
         double maxPoints = getOverallQuizPoints();
         // map the resulting score to the 0 to 100 scale
         return 100.0 * score / maxPoints;

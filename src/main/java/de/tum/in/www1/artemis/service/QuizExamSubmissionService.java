@@ -7,8 +7,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.domain.quiz.AbstractQuizSubmission;
 import de.tum.in.www1.artemis.domain.quiz.QuizExamSubmission;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.QuizExamSubmissionRepository;
@@ -20,16 +18,13 @@ public class QuizExamSubmissionService extends QuizSubmissionService<QuizExamSub
 
     private final QuizExamSubmissionRepository quizExamSubmissionRepository;
 
-    public QuizExamSubmissionService(QuizExamSubmissionRepository quizExamSubmissionRepository) {
+    public QuizExamSubmissionService(QuizExamSubmissionRepository quizExamSubmissionRepository, SubmissionVersionService submissionVersionService) {
+        super(submissionVersionService);
         this.quizExamSubmissionRepository = quizExamSubmissionRepository;
     }
 
-    /**
-     * Do nothing as quiz exam submission does not have student participation
-     */
     @Override
-    protected StudentParticipation getParticipation(QuizExercise quizExercise, AbstractQuizSubmission quizSubmission, User user) {
-        return null;
+    protected void preSave(QuizExercise quizExercise, QuizExamSubmission abstractQuizSubmission, User user) {
     }
 
     /**
@@ -40,8 +35,8 @@ public class QuizExamSubmissionService extends QuizSubmissionService<QuizExamSub
      * @return QuizExamSubmission the quiz submission that is saved
      */
     @Override
-    protected QuizExamSubmission save(AbstractQuizSubmission quizExamSubmission, User user) {
-        QuizExamSubmission savedQuizSubmission = quizExamSubmissionRepository.save((QuizExamSubmission) quizExamSubmission);
+    protected QuizExamSubmission save(QuizExamSubmission quizExamSubmission, User user) {
+        QuizExamSubmission savedQuizSubmission = quizExamSubmissionRepository.save(quizExamSubmission);
         log.debug("submit exam quiz finished: {}", savedQuizSubmission);
         return savedQuizSubmission;
     }

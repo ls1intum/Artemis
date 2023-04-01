@@ -38,17 +38,15 @@ public class QuizExerciseSubmissionService extends QuizSubmissionService<QuizSub
 
     private final ParticipationService participationService;
 
-    private final SubmissionVersionService submissionVersionService;
-
     private final QuizBatchService quizBatchService;
 
     public QuizExerciseSubmissionService(QuizSubmissionRepository quizSubmissionRepository, QuizScheduleService quizScheduleService, ResultRepository resultRepository,
             SubmissionVersionService submissionVersionService, QuizExerciseRepository quizExerciseRepository, ParticipationService participationService,
             QuizBatchService quizBatchService) {
+        super(submissionVersionService);
         this.quizSubmissionRepository = quizSubmissionRepository;
         this.resultRepository = resultRepository;
         this.quizScheduleService = quizScheduleService;
-        this.submissionVersionService = submissionVersionService;
         this.quizExerciseRepository = quizExerciseRepository;
         this.participationService = participationService;
         this.quizBatchService = quizBatchService;
@@ -210,7 +208,6 @@ public class QuizExerciseSubmissionService extends QuizSubmissionService<QuizSub
      * @param user           the user that did the participation
      * @return StudentParticipation the participation if exists, otherwise throw entity not found exception
      */
-    @Override
     protected StudentParticipation getParticipation(QuizExercise quizExercise, AbstractQuizSubmission quizSubmission, User user) {
         Optional<StudentParticipation> optionalParticipation = participationService.findOneByExerciseAndStudentLoginAnyState(quizExercise, user.getLogin());
 
@@ -223,6 +220,11 @@ public class QuizExerciseSubmissionService extends QuizSubmissionService<QuizSub
         return optionalParticipation.get();
     }
 
+    @Override
+    protected void preSave(QuizExercise quizExercise, QuizSubmission quizSubmission, User user) {
+        quizSubmission.setParticipation(this.getParticipation(quizExercise, quizSubmission, user));
+    }
+
     /**
      * Save the quiz submission to the database and also save the submission version
      *
@@ -231,18 +233,7 @@ public class QuizExerciseSubmissionService extends QuizSubmissionService<QuizSub
      * @return QuizExamSubmission the quiz submission that is saved
      */
     @Override
-    protected QuizSubmission save(AbstractQuizSubmission quizSubmission, User user) {
-        QuizSubmission savedQuizSubmission = quizSubmissionRepository.save((QuizSubmission) quizSubmission);
-
-        // versioning of submission
-        try {
-            submissionVersionService.saveVersionForIndividual(quizSubmission, user);
-        }
-        catch (Exception ex) {
-            log.error("Quiz submission version could not be saved", ex);
-        }
-
-        log.debug("submit exam quiz finished: {}", savedQuizSubmission);
-        return savedQuizSubmission;
+    protected QuizSubmission save(QuizSubmission quizSubmission, User user) {
+        return quizSubmissionRepository.save(quizSubmission);
     }
 }

@@ -203,24 +203,24 @@ public class QuizSubmissionResource {
     /**
      * PUT /exercises/:exerciseId/submissions/exam : Update a QuizSubmission for exam mode
      *
-     * @param exerciseId     the id of the exercise for which to update the submission
-     * @param quizSubmission the quizSubmission to update
+     * @param exerciseId             the id of the exercise for which to update the submission
+     * @param abstractQuizSubmission the quizSubmission to update
      * @return the ResponseEntity with status 200 and body the result or the appropriate error code.
      */
     @PutMapping("exercises/{exerciseId}/submissions/exam")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<AbstractQuizSubmission> submitQuizForExam(@PathVariable Long exerciseId, @Valid @RequestBody AbstractQuizSubmission quizSubmission) {
+    public ResponseEntity<AbstractQuizSubmission> submitQuizForExam(@PathVariable Long exerciseId, @Valid @RequestBody AbstractQuizSubmission abstractQuizSubmission) {
         long start = System.currentTimeMillis();
-        log.debug("REST request to submit QuizSubmission for exam : {}", quizSubmission);
+        log.debug("REST request to submit QuizSubmission for exam : {}", abstractQuizSubmission);
 
         // recreate pointers back to submission in each submitted answer
-        for (SubmittedAnswer submittedAnswer : quizSubmission.getSubmittedAnswers()) {
-            submittedAnswer.setSubmission(quizSubmission);
+        for (SubmittedAnswer submittedAnswer : abstractQuizSubmission.getSubmittedAnswers()) {
+            submittedAnswer.setSubmission(abstractQuizSubmission);
         }
 
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        AbstractQuizSubmission updatedQuizSubmission;
-        if (quizSubmission instanceof QuizSubmission) {
+        AbstractQuizSubmission updatedQuizSubmission = null;
+        if (abstractQuizSubmission instanceof QuizSubmission quizSubmission) {
             QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(exerciseId);
 
             // Apply further checks if it is an exam submission
@@ -230,8 +230,8 @@ public class QuizSubmissionResource {
             quizSubmission = (QuizSubmission) examSubmissionService.preventMultipleSubmissions(quizExercise, quizSubmission, user);
             updatedQuizSubmission = quizSubmissionService.saveSubmissionForExamMode(quizExercise, quizSubmission, user);
         }
-        else {
-            updatedQuizSubmission = quizExamSubmissionService.saveSubmissionForExamMode(null, quizSubmission, user);
+        else if (abstractQuizSubmission instanceof QuizExamSubmission quizExamSubmission) {
+            updatedQuizSubmission = quizExamSubmissionService.saveSubmissionForExamMode(null, quizExamSubmission, user);
         }
         long end = System.currentTimeMillis();
         log.info("submitQuizForExam took {}ms for exercise {} and user {}", end - start, exerciseId, user.getLogin());

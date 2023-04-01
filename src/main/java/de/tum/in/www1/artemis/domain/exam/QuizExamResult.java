@@ -25,7 +25,7 @@ public class QuizExamResult extends Result {
     @Override
     public void evaluateQuizSubmission() {
         QuizExamSubmission quizExamSubmission = (QuizExamSubmission) getSubmission();
-        double score = quizExamSubmission.getScoreInPointsForSubmission(studentExam.getQuizQuestions());
+        double score = quizExamSubmission.getScoreInPoints(studentExam.getQuizQuestions());
         double maxPoints = quizExamSubmission.getStudentExam().getQuizQuestionTotalPoints();
         score = 100.0 * score / maxPoints;
         setScore(score, studentExam.getExam().getCourse());

@@ -102,7 +102,7 @@ public abstract class AbstractQuizSubmission extends Submission {
     /**
      * calculates the scores for this submission and all its submitted answers and saves them in scoreInPoints
      *
-     * @param quizExercise the quiz this submission belongs to (is needed to have values for isCorrect in answer options)
+     * @param quizQuestions the quiz questions this submission belongs to (is needed to have values for isCorrect in answer options)
      */
     public void calculateAndUpdateScores(List<QuizQuestion> quizQuestions) {
         // set scores for all questions
@@ -114,16 +114,16 @@ public abstract class AbstractQuizSubmission extends Submission {
             }
         }
         // set total score
-        setScoreInPoints(getScoreInPointsForSubmission(quizQuestions));
+        setScoreInPoints(getScoreInPoints(quizQuestions));
     }
 
     /**
      * Get the score for this submission as the number of points
      *
-     * @param quizSubmission the submission that should be evaluated
+     * @param quizQuestions the quiz questions of the submission
      * @return the resulting score
      */
-    public Double getScoreInPointsForSubmission(List<QuizQuestion> quizQuestions) {
+    public Double getScoreInPoints(List<QuizQuestion> quizQuestions) {
         double score = 0.0;
         // iterate through all quizQuestions of this quiz
         for (QuizQuestion quizQuestion : quizQuestions) {
