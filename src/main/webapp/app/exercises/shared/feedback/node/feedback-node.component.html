@@ -19,7 +19,9 @@
     <div class="feedback-group" [ngClass]="'bg-' + feedbackItemGroup.color" (click)="feedbackItemGroup.open = !feedbackItemGroup.open">
         <div class="feedback-group__left">
             <fa-icon class="me-2" [icon]="feedbackItemGroup.open ? faAngleUp : faAngleDown"></fa-icon>
-            <h4 class="feedback-item__category">{{ feedbackItemGroup.name | titlecase }} ({{ feedbackItemGroup.members.length }})</h4>
+            <h4 class="feedback-item__category">
+                {{ 'artemisApp.feedback.group.' + feedbackItemGroup.name | artemisTranslate | titlecase }} ({{ feedbackItemGroup.members.length }})
+            </h4>
         </div>
 
         <span *ngIf="feedbackItemGroup.credits !== 0" class="fw-bold">{{ roundValueSpecifiedByCourseSettings(feedbackItemGroup.credits, course) }}P </span>
