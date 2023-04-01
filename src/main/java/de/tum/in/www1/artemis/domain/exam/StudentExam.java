@@ -76,7 +76,7 @@ public class StudentExam extends AbstractAuditingEntity {
     private Boolean hasQuizExam;
 
     @Transient
-    private Double quizQuestionTotalPoints;
+    private double quizQuestionTotalPoints;
 
     public Boolean isSubmitted() {
         return submitted;
@@ -202,11 +202,11 @@ public class StudentExam extends AbstractAuditingEntity {
     }
 
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
-    public Double getQuizQuestionTotalPoints() {
+    public double getQuizQuestionTotalPoints() {
         return this.quizQuestionTotalPoints;
     }
 
-    public void setQuizQuestionTotalPoints(Double quizQuestionTotalPoints) {
+    public void setQuizQuestionTotalPoints(double quizQuestionTotalPoints) {
         this.quizQuestionTotalPoints = quizQuestionTotalPoints;
     }
 

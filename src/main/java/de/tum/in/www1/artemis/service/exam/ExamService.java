@@ -234,8 +234,12 @@ public class ExamService {
             List<StudentParticipation> participationsOfStudent = studentParticipations.stream()
                     .filter(studentParticipation -> studentParticipation.getStudent().get().getId().equals(studentExam.getUser().getId()))
                     .collect(Collectors.toCollection(ArrayList::new));
+            QuizExamResult quizExamResult = null;
+            if (studentExam.getQuizExamSubmission() != null) {
+                quizExamResult = studentExam.getQuizExamSubmission().getQuizExamResult();
+            }
             var studentResult = calculateStudentResultWithGrade(studentExam, participationsOfStudent, exam, gradingScale, true, submittedAnswerCounts, plagiarismMapping,
-                    examBonusCalculator, studentExam.getQuizQuestionTotalPoints(), studentExam.getQuizExamSubmission().getQuizExamResult());
+                    examBonusCalculator, studentExam.getQuizQuestionTotalPoints(), quizExamResult);
             studentResults.add(studentResult);
         }
 
@@ -270,8 +274,12 @@ public class ExamService {
         List<PlagiarismCase> plagiarismCasesForStudent = plagiarismCaseRepository.findByExamIdAndStudentId(exam.getId(), studentId);
         var plagiarismMapping = PlagiarismMapping.createFromPlagiarismCases(plagiarismCasesForStudent);
         ExamBonusCalculator examBonusCalculator = createExamBonusCalculator(gradingScale, List.of(studentId));
+        QuizExamResult quizExamResult = null;
+        if (studentExam.getQuizExamSubmission() != null) {
+            quizExamResult = studentExam.getQuizExamSubmission().getQuizExamResult();
+        }
         var studentResult = calculateStudentResultWithGrade(studentExam, participationsOfStudent, exam, gradingScale, false, null, plagiarismMapping, examBonusCalculator,
-                studentExam.getQuizQuestionTotalPoints(), studentExam.getQuizExamSubmission().getQuizExamResult());
+                studentExam.getQuizQuestionTotalPoints(), quizExamResult);
         var exercises = studentExam.getExercises();
         var maxPoints = calculateMaxPointsSum(exercises, exam.getCourse(), studentExam.getQuizQuestionTotalPoints());
         var maxBonusPoints = calculateMaxBonusPointsSum(exercises, exam.getCourse());
@@ -681,7 +689,7 @@ public class ExamService {
      * @param course    supplies the rounding accuracy of scores
      * @return sum of rounded max points if exercises are given, else 0.0
      */
-    private double calculateMaxPointsSum(List<Exercise> exercises, Course course, Double quizExamMaxPoints) {
+    private double calculateMaxPointsSum(List<Exercise> exercises, Course course, double quizExamMaxPoints) {
         double maxPoints = 0.0 + quizExamMaxPoints;
         if (exercises != null) {
             var exercisesIncluded = exercises.stream().filter(exercise -> exercise.getIncludedInOverallScore() == IncludedInOverallScore.INCLUDED_COMPLETELY);
