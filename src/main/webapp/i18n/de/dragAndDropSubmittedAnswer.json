@@ -3,8 +3,7 @@
         "dragAndDropSubmittedAnswer": {
             "home": {
                 "title": "Drag-And-Drop Submitted Answers",
-                "createLabel": "Drag-And-Drop Submitted Answer erstellen",
-                "createOrEditLabel": "Drag-And-Drop Submitted Answer erstellen oder bearbeiten"
+                "createLabel": "Drag-And-Drop Submitted Answer erstellen"
             },
             "created": "Drag-And-Drop Submitted Answer erstellt mit ID {{ param }}",
             "updated": "Drag-And-Drop Submitted Answer aktualisiert mit ID {{ param }}",

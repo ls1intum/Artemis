@@ -3,7 +3,7 @@
         "modelingExercise": {
             "home": {
                 "title": "Modellierungsaufgaben",
-                "createLabel": "Neue Modellierungsaufgabe erstellen",
+                "createLabel": "Modellierungsaufgabe erstellen",
                 "editLabel": "Modellierungsaufgabe bearbeiten",
                 "importLabel": "Modellierungsaufgabe importieren"
             },

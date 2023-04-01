@@ -25,6 +25,7 @@ import { ImageCroppedEvent } from 'app/shared/image-cropper/interfaces/image-cro
 import { ProgrammingLanguage } from 'app/entities/programming-exercise.model';
 import { CourseAdminService } from 'app/course/manage/course-admin.service';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
+import { AccountService } from 'app/core/auth/account.service';
 
 @Component({
     selector: 'jhi-course-update',
@@ -55,6 +56,7 @@ export class CourseUpdateComponent implements OnInit {
     customizeGroupNames = false; // default value
     presentationScorePattern = /^[0-9]{0,4}$/; // makes sure that the presentation score is a positive natural integer greater than 0 and not too large
     courseOrganizations: Organization[];
+    isAdmin = false;
     // Icons
     faSave = faSave;
     faBan = faBan;
@@ -84,6 +86,7 @@ export class CourseUpdateComponent implements OnInit {
         private navigationUtilService: ArtemisNavigationUtilService,
         private router: Router,
         private featureToggleService: FeatureToggleService,
+        private accountService: AccountService,
         private fb: FormBuilder,
     ) {}
 
@@ -214,6 +217,8 @@ export class CourseUpdateComponent implements OnInit {
                     this.courseForm.addControl('timeZone', new FormControl(this.course?.timeZone));
                 }
             });
+
+        this.isAdmin = this.accountService.isAdmin();
     }
     tzResultFormatter = (timeZone: string) => timeZone;
     tzInputFormatter = (timeZone: string) => timeZone;

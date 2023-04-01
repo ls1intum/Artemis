@@ -1,5 +1,5 @@
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
-import { Course, Language } from 'app/entities/course.model';
+import { Course } from 'app/entities/course.model';
 import { User } from 'app/core/user/user.model';
 import { TutorialGroupFormData } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups/crud/tutorial-group-form/tutorial-group-form.component';
 import dayjs from 'dayjs/esm';
@@ -9,7 +9,7 @@ export const generateExampleTutorialGroup = ({
     title = 'Example',
     capacity = 10,
     campus = 'Example Campus',
-    language = Language.ENGLISH,
+    language = 'ENGLISH',
     additionalInformation = 'Example Additional Information',
     isOnline = false,
     teachingAssistant = { id: 1, login: 'Example TA' } as User,
