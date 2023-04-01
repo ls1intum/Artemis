@@ -9,6 +9,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
+import de.tum.in.www1.artemis.domain.quiz.QuizExamSubmission;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.repository.SubmissionVersionRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
@@ -83,6 +84,16 @@ public class SubmissionVersionService {
                 // TODO: it might be nice to remove some question parameters to reduce the json size as those are not really necessary, however directly manipulating the
                 // object is dangerous because it will be returned to the client.
                 return objectMapper.writeValueAsString(((QuizSubmission) submission).getSubmittedAnswers());
+            }
+            catch (JsonProcessingException e) {
+                log.error("Error when writing quiz submission {} to json value. Will fall back to string representation", submission, e);
+                return submission.toString();
+            }
+        }
+        else if (submission instanceof QuizExamSubmission quizExamSubmission) {
+            try {
+                // object is dangerous because it will be returned to the client.
+                return objectMapper.writeValueAsString(quizExamSubmission.getSubmittedAnswers());
             }
             catch (JsonProcessingException e) {
                 log.error("Error when writing quiz submission {} to json value. Will fall back to string representation", submission, e);

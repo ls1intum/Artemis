@@ -146,7 +146,7 @@ public class Exam extends DomainObject {
     @JsonIgnoreProperties("exam")
     private Set<ExamUser> examUsers = new HashSet<>();
 
-    @OneToOne(mappedBy = "exam")
+    @OneToOne(mappedBy = "exam", cascade = CascadeType.REMOVE)
     @JsonIgnore
     private QuizPool quizPool;
 
