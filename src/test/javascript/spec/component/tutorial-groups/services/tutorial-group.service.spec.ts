@@ -115,17 +115,6 @@ describe('TutorialGroupService', () => {
         tick();
     }));
 
-    it('getUniqueLanguageValues', fakeAsync(() => {
-        service
-            .getUniqueCampusValues(1)
-            .pipe(take(1))
-            .subscribe((res) => expect(res.body).toEqual([]));
-
-        const req = httpMock.expectOne({ method: 'GET' });
-        req.flush([]);
-        tick();
-    }));
-
     it('registerMultipleStudents', fakeAsync(() => {
         const returnedFromService = new StudentDTO();
         returnedFromService.login = 'login';

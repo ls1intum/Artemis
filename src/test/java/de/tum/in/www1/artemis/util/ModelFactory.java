@@ -1356,7 +1356,7 @@ public class ModelFactory {
      * @param campus                of tutorial group
      * @return example tutorial gorup
      */
-    public static TutorialGroup generateTutorialGroup(String title, String additionalInformation, Integer capacity, Boolean isOnline, String language, String campus) {
+    public static TutorialGroup generateTutorialGroup(String title, String additionalInformation, Integer capacity, Boolean isOnline, Language language, String campus) {
         TutorialGroup tutorialGroup = new TutorialGroup();
         tutorialGroup.setTitle(title);
         tutorialGroup.setAdditionalInformation(additionalInformation);

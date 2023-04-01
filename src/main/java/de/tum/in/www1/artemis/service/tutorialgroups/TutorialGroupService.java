@@ -400,7 +400,7 @@ public class TutorialGroupService {
                     tutorialGroup.setTitle(title);
                     tutorialGroup.setCourse(course);
                     // default values for the tutorial group
-                    tutorialGroup.setLanguage(Language.GERMAN.name());
+                    tutorialGroup.setLanguage(Language.GERMAN);
                     tutorialGroup.setCapacity(1);
                     tutorialGroup.setTeachingAssistant(requestingUser);
                     tutorialGroup.setIsOnline(false);

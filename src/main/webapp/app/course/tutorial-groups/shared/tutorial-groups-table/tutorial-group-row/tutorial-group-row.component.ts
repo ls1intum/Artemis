@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, HostBinding, Input, TemplateRef, ViewEncapsulation } from '@angular/core';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
-import { Course } from 'app/entities/course.model';
+import { Course, Language } from 'app/entities/course.model';
 
 @Component({
     // eslint-disable-next-line @angular-eslint/component-selector
@@ -47,4 +47,7 @@ export class TutorialGroupRowComponent {
 
     @Input()
     tutorialGroupClickHandler: (tutorialGroup: TutorialGroup) => void;
+
+    GERMAN = Language.GERMAN;
+    ENGLISH = Language.ENGLISH;
 }

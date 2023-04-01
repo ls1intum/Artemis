@@ -16,6 +16,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.ChannelDTO;
 
@@ -49,13 +50,9 @@ public class TutorialGroup extends DomainObject {
     @Size(min = 1, max = 256)
     private String campus;
 
-    /**
-     * The language of the tutorial group
-     * Defined as a string to allow more languages than english and german
-     */
+    @Enumerated(EnumType.STRING)
     @Column(name = "language")
-    @Size(min = 1, max = 256)
-    private String language;
+    private Language language;
 
     @ManyToOne
     @JoinColumn(name = "teaching_assistant_id")
@@ -155,7 +152,7 @@ public class TutorialGroup extends DomainObject {
         this.title = title;
     }
 
-    public TutorialGroup(Course course, String title, String additionalInformation, Integer capacity, Boolean isOnline, String campus, String language, User teachingAssistant,
+    public TutorialGroup(Course course, String title, String additionalInformation, Integer capacity, Boolean isOnline, String campus, Language language, User teachingAssistant,
             Set<TutorialGroupRegistration> registrations) {
         this.course = course;
         this.title = title;
@@ -208,11 +205,11 @@ public class TutorialGroup extends DomainObject {
         isOnline = online;
     }
 
-    public String getLanguage() {
+    public Language getLanguage() {
         return language;
     }
 
-    public void setLanguage(String language) {
+    public void setLanguage(Language language) {
         this.language = language;
     }
 

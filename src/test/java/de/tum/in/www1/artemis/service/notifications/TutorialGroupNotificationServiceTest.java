@@ -131,7 +131,7 @@ class TutorialGroupNotificationServiceTest extends AbstractSpringIntegrationBamb
         var course = courseRepository.findByIdElseThrow(courseId);
 
         var tutorialGroup = tutorialGroupRepository
-                .saveAndFlush(new TutorialGroup(course, title, additionalInformation, capacity, isOnline, campus, language.name(), teachingAssistant, new HashSet<>()));
+                .saveAndFlush(new TutorialGroup(course, title, additionalInformation, capacity, isOnline, campus, language, teachingAssistant, new HashSet<>()));
 
         var registrations = new HashSet<TutorialGroupRegistration>();
         for (var student : registeredStudents) {
