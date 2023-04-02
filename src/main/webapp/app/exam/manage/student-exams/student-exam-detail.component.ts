@@ -298,7 +298,7 @@ export class StudentExamDetailComponent implements OnInit {
     getSubmission(exercise: Exercise): Submission | undefined {
         if (exercise.studentParticipations && exercise.studentParticipations.length > 0) {
             if (exercise.studentParticipations[0].submissions && exercise.studentParticipations[0].submissions.length > 0) {
-                return exercise.studentParticipations[0].submissions[0] ?? undefined;
+                return exercise.studentParticipations[0].submissions[0];
             }
         }
         return undefined;
@@ -306,8 +306,8 @@ export class StudentExamDetailComponent implements OnInit {
 
     getResult(exercise: Exercise): Result | undefined {
         if (exercise.studentParticipations && exercise.studentParticipations.length > 0) {
-            if (exercise.studentParticipations[0].results && exercise.studentParticipations[0].results.length! > 0) {
-                return exercise.studentParticipations[0].results[0] ?? undefined;
+            if (exercise.studentParticipations[0].results && exercise.studentParticipations[0].results.length > 0) {
+                return exercise.studentParticipations[0].results[0];
             }
         }
         return undefined;

@@ -34,6 +34,8 @@ import { StudentExamWorkingTimeComponent } from 'app/exam/shared/student-exam-wo
 import { GradeType } from 'app/entities/grading-scale.model';
 import { StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
 import { MockNgbModalService } from '../../../../helpers/mocks/service/mock-ngb-modal.service';
+import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { QuizExamSubmission } from 'app/entities/quiz/quiz-exam-submission.model';
 
 describe('StudentExamDetailComponent', () => {
     let studentExamDetailComponentFixture: ComponentFixture<StudentExamDetailComponent>;
@@ -378,5 +380,61 @@ describe('StudentExamDetailComponent', () => {
         expect(studentExamDetailComponent.isBonus).toBeFalse();
         expect(studentExamDetailComponent.grade).toBe(studentExamWithGradeFromServer.studentResult.overallGrade);
         expect(studentExamDetailComponent.gradeAfterBonus).toBe(studentExamWithGradeFromServer.studentResult.gradeWithBonus.finalGrade.toString());
+    });
+
+    it('should return submission', () => {
+        const exercise = new QuizExercise(course, undefined);
+        const studentParticipation = new StudentParticipation();
+        const submission = new QuizExamSubmission();
+        studentParticipation.submissions = [submission];
+        exercise.studentParticipations = [studentParticipation];
+        expect(studentExamDetailComponent.getSubmission(exercise)).toEqual(submission);
+    });
+
+    it('should return undefined if submission does not exist', () => {
+        const exercise = new QuizExercise(course, undefined);
+        const studentParticipation = new StudentParticipation();
+        studentParticipation.submissions = [];
+        exercise.studentParticipations = [studentParticipation];
+        expect(studentExamDetailComponent.getSubmission(exercise)).toBeUndefined();
+    });
+
+    it('should return result', () => {
+        const exercise = new QuizExercise(course, undefined);
+        const studentParticipation = new StudentParticipation();
+        const result = new Result();
+        studentParticipation.results = [result];
+        exercise.studentParticipations = [studentParticipation];
+        expect(studentExamDetailComponent.getResult(exercise)).toEqual(result);
+    });
+
+    it('should return undefined if result does not exist', () => {
+        const exercise = new QuizExercise(course, undefined);
+        const studentParticipation = new StudentParticipation();
+        studentParticipation.results = [];
+        exercise.studentParticipations = [studentParticipation];
+        expect(studentExamDetailComponent.getResult(exercise)).toBeUndefined();
+    });
+
+    it('should return student participation', () => {
+        const exercise = new QuizExercise(course, undefined);
+        const studentParticipation = new StudentParticipation();
+        exercise.studentParticipations = [studentParticipation];
+        expect(studentExamDetailComponent.getStudentParticipation(exercise)).toEqual(studentParticipation);
+    });
+
+    it('should return undefined if participation does not exist', () => {
+        const exercise = new QuizExercise(course, undefined);
+        const studentParticipation = new StudentParticipation();
+        exercise.studentParticipations = [];
+        expect(studentExamDetailComponent.getStudentParticipation(exercise)).toBeUndefined();
+    });
+
+    it('should return quiz exam result', () => {
+        const studentExam = new StudentExam();
+        studentExam.quizExamSubmission = new QuizExamSubmission();
+        const result = new Result();
+        studentExam.quizExamSubmission.results = [result];
+        expect(studentExamDetailComponent.getQuizExamResult(studentExam)).toEqual(result);
     });
 });
