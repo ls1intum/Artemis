@@ -39,6 +39,9 @@
 }
 
 .cdk-drop-list-dragging {
+    /* change highlight color to light green when dragging the item above a drop location */
+    background: var(--dnd-question-drop-list-dragging-background) !important;
+    cursor: pointer;
     .cdk-drag {
         transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
     }
@@ -50,8 +53,4 @@
 
 .cdk-drop-list-receiving {
     background: var(--dnd-question-drop-list-receiving-background) !important;
-}
-.cdk-drop-list-dragging {
-    background: var(--dnd-question-drop-list-dragging-background) !important;
-    cursor: pointer;
 }

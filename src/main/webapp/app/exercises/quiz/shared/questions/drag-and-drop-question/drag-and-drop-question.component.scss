@@ -179,11 +179,6 @@
     .cdk-drop-list-receiving {
         background: var(--dnd-question-drop-list-receiving-background) !important;
     }
-    /* change highlight color to light green when dragging the item above a drop location */
-    .cdk-drop-list-dragging {
-        background: var(--dnd-question-drop-list-dragging-background) !important;
-        cursor: pointer;
-    }
 
     .cdk-drag {
         cursor: pointer;

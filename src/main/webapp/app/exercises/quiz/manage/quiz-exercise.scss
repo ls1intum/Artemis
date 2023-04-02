@@ -187,12 +187,6 @@
     background: rgba(173, 216, 230, 0.8) !important;
 }
 
-/* change highlight color to light green when dragging the item above a drop location */
-.cdk-drop-list-dragging {
-    background: rgb(144, 238, 144) !important;
-    cursor: pointer !important;
-}
-
 .cdk-drag {
     cursor: pointer;
 }
