@@ -3,8 +3,7 @@
         "fileUploadSubmission": {
             "home": {
                 "title": "File Upload Submissions",
-                "createLabel": "Create a new File Upload Submission",
-                "createOrEditLabel": "Create or edit a File Upload Submission"
+                "createLabel": "Create a new File Upload Submission"
             },
             "created": "Created new File Upload Submission with identifier {{ param }}",
             "updated": "Updated File Upload Submission with identifier {{ param }}",

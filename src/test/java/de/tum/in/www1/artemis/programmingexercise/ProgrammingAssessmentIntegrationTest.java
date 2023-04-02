@@ -433,7 +433,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
                 Result.class, HttpStatus.OK);
 
         assertThat(response.getScore()).isEqualTo(4);
-        assertThat(response.getFeedbacks().stream().anyMatch(feedback -> feedback.getType().equals(FeedbackType.AUTOMATIC))).isTrue();
+        assertThat(response.getFeedbacks()).anyMatch(feedback -> feedback.getType().equals(FeedbackType.AUTOMATIC));
     }
 
     @Test

@@ -3,8 +3,7 @@
         "quizPointStatistic": {
             "home": {
                 "title": "Quiz Point Statistics",
-                "createLabel": "Create a new Quiz Point Statistic",
-                "createOrEditLabel": "Create or edit a Quiz Point Statistic"
+                "createLabel": "Create a new Quiz Point Statistic"
             },
             "created": "Created new Quiz Point Statistic with identifier {{ param }}",
             "updated": "Updated Quiz Point Statistic with identifier {{ param }}",
