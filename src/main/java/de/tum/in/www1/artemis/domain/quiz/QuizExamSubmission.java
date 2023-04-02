@@ -2,11 +2,9 @@ package de.tum.in.www1.artemis.domain.quiz;
 
 import javax.persistence.*;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import de.tum.in.www1.artemis.domain.exam.QuizExamResult;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 
 @Entity
@@ -25,11 +23,6 @@ public class QuizExamSubmission extends AbstractQuizSubmission {
 
     public void setStudentExam(StudentExam studentExam) {
         this.studentExam = studentExam;
-    }
-
-    @JsonIgnore
-    public QuizExamResult getQuizExamResult() {
-        return (QuizExamResult) getLatestResult();
     }
 
     @Override

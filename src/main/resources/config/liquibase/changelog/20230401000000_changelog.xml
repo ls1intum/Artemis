@@ -39,11 +39,6 @@
                 <constraints nullable="true"/>
             </column>
         </addColumn>
-        <addColumn tableName="result">
-            <column name="discriminator" type="varchar(31)" defaultValue="E">
-                <constraints nullable="false"/>
-            </column>
-        </addColumn>
         <addForeignKeyConstraint baseColumnNames="exam_id" baseTableName="quiz_pool" constraintName="FKtyzazcKwI6xRpuhH0DoNiZeWH"
                                  deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id"
                                  referencedTableName="exam" validate="true"/>

@@ -235,10 +235,11 @@ public class ExamService {
             List<StudentParticipation> participationsOfStudent = studentParticipations.stream()
                     .filter(studentParticipation -> studentParticipation.getStudent().get().getId().equals(studentExam.getUser().getId()))
                     .collect(Collectors.toCollection(ArrayList::new));
-            QuizExamResult quizExamResult = null;
+            Result result = null;
             if (studentExam.getQuizExamSubmission() != null) {
-                quizExamResult = studentExam.getQuizExamSubmission().getQuizExamResult();
+                result = studentExam.getQuizExamSubmission().getLatestResult();
             }
+            QuizExamResult quizExamResult = new QuizExamResult(studentExam, result);
             var studentResult = calculateStudentResultWithGrade(studentExam, participationsOfStudent, exam, gradingScale, true, submittedAnswerCounts, plagiarismMapping,
                     examBonusCalculator, studentExam.getQuizQuestionTotalPoints(), quizExamResult);
             studentResults.add(studentResult);
@@ -275,10 +276,11 @@ public class ExamService {
         List<PlagiarismCase> plagiarismCasesForStudent = plagiarismCaseRepository.findByExamIdAndStudentId(exam.getId(), studentId);
         var plagiarismMapping = PlagiarismMapping.createFromPlagiarismCases(plagiarismCasesForStudent);
         ExamBonusCalculator examBonusCalculator = createExamBonusCalculator(gradingScale, List.of(studentId));
-        QuizExamResult quizExamResult = null;
+        Result result = null;
         if (studentExam.getQuizExamSubmission() != null) {
-            quizExamResult = studentExam.getQuizExamSubmission().getQuizExamResult();
+            result = studentExam.getQuizExamSubmission().getLatestResult();
         }
+        QuizExamResult quizExamResult = new QuizExamResult(studentExam, result);
         var studentResult = calculateStudentResultWithGrade(studentExam, participationsOfStudent, exam, gradingScale, false, null, plagiarismMapping, examBonusCalculator,
                 studentExam.getQuizQuestionTotalPoints(), quizExamResult);
         var exercises = studentExam.getExercises();
@@ -571,7 +573,7 @@ public class ExamService {
      */
     private ExamScoresDTO.StudentResult calculateStudentResultWithGrade(StudentExam studentExam, List<StudentParticipation> participationsOfStudent, Exam exam,
             Optional<GradingScale> gradingScale, boolean calculateFirstCorrectionPoints, List<QuizSubmittedAnswerCount> quizSubmittedAnswerCounts,
-            PlagiarismMapping plagiarismMapping, ExamBonusCalculator examBonusCalculator, Double quizExamMaxPoints, QuizExamResult quizExamResult) {
+            PlagiarismMapping plagiarismMapping, ExamBonusCalculator examBonusCalculator, Double quizExamMaxPoints, QuizResult quizExamResult) {
         User user = studentExam.getUser();
 
         if (!Boolean.TRUE.equals(studentExam.isSubmitted())) {
@@ -635,7 +637,7 @@ public class ExamService {
             }
         }
 
-        double quizExamOverallPointsAchieved = calculateAchievedPoints(quizExamMaxPoints, quizExamResult, exam.getCourse(), 0.0);
+        double quizExamOverallPointsAchieved = calculateAchievedPoints(quizExamMaxPoints, quizExamResult.getResult(), exam.getCourse(), 0.0);
         overallPointsAchieved += quizExamOverallPointsAchieved;
 
         // Round the points again to prevent floating point issues that might occur when summing up the exercise points (e.g. 0.3 + 0.3 + 0.3 = 0.8999999999999999)
@@ -1076,11 +1078,13 @@ public class ExamService {
         List<StudentExam> studentExams = quizExamSubmissions.stream().map(QuizExamSubmission::getStudentExam).toList();
         studentExamRepository.fetchAllQuizQuestions(studentExams);
         quizExamSubmissions.forEach(quizExamSubmission -> {
-            List<QuizQuestion> quizQuestions = quizExamSubmission.getStudentExam().getQuizQuestions();
+            StudentExam studentExam = quizExamSubmission.getStudentExam();
+            List<QuizQuestion> quizQuestions = studentExam.getQuizQuestions();
             Result result = quizExamSubmission.getLatestResult();
             if (result == null) {
-                result = new QuizExamResult(quizExamSubmission.getStudentExam());
-                examQuizService.evaluateQuizSubmission(result, quizExamSubmission, quizQuestions, null);
+                result = new Result();
+                QuizExamResult quizExamResult = new QuizExamResult(studentExam, result);
+                examQuizService.evaluateQuizSubmission(quizExamResult, quizExamSubmission, quizQuestions, null);
             }
         });
 

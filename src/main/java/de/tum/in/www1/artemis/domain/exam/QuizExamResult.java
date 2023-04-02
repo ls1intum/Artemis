@@ -1,33 +1,53 @@
 package de.tum.in.www1.artemis.domain.exam;
 
-import javax.persistence.DiscriminatorValue;
-import javax.persistence.Entity;
-import javax.persistence.Transient;
+import java.time.ZonedDateTime;
 
 import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.quiz.QuizExamSubmission;
 
-@Entity
-@DiscriminatorValue("QE")
-public class QuizExamResult extends Result {
+public class QuizExamResult implements QuizResult {
 
-    @Transient
-    private StudentExam studentExam;
+    private final StudentExam studentExam;
 
-    public QuizExamResult() {
+    private final Result result;
 
-    }
-
-    public QuizExamResult(StudentExam studentExam) {
+    public QuizExamResult(StudentExam studentExam, Result result) {
         this.studentExam = studentExam;
+        this.result = result;
     }
 
-    @Override
     public void evaluateQuizSubmission() {
-        QuizExamSubmission quizExamSubmission = (QuizExamSubmission) getSubmission();
+        QuizExamSubmission quizExamSubmission = studentExam.getQuizExamSubmission();
         double score = quizExamSubmission.getScoreInPoints(studentExam.getQuizQuestions());
         double maxPoints = quizExamSubmission.getStudentExam().getQuizQuestionTotalPoints();
         score = 100.0 * score / maxPoints;
-        setScore(score, studentExam.getExam().getCourse());
+        this.result.setScore(score, studentExam.getExam().getCourse());
+    }
+
+    @Override
+    public Result getResult() {
+        return this.result;
+    }
+
+    @Override
+    public void setRated(Boolean rated) {
+        this.result.setRated(rated);
+    }
+
+    @Override
+    public void setAssessmentType(AssessmentType assessmentType) {
+        this.result.setAssessmentType(assessmentType);
+    }
+
+    @Override
+    public void setCompletionDate(ZonedDateTime completionDate) {
+        this.result.setCompletionDate(completionDate);
+    }
+
+    @Override
+    public void setSubmission(Submission submission) {
+        this.result.setSubmission(submission);
     }
 }

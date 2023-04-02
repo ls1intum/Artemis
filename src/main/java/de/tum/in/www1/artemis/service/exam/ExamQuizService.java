@@ -14,7 +14,7 @@ import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
-import de.tum.in.www1.artemis.domain.exam.QuizExamResult;
+import de.tum.in.www1.artemis.domain.exam.QuizResult;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.*;
@@ -39,8 +39,6 @@ public class ExamQuizService {
 
     private final ResultRepository resultRepository;
 
-    private final QuizExamResultRepository quizExamResultRepository;
-
     private final SubmissionRepository submissionRepository;
 
     private final QuizSubmissionRepository quizSubmissionRepository;
@@ -49,14 +47,13 @@ public class ExamQuizService {
 
     public ExamQuizService(StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository, SubmissionRepository submissionRepository,
             QuizExerciseRepository quizExerciseRepository, QuizStatisticService quizStatisticService, ResultService resultService,
-            QuizExamResultRepository quizExamResultRepository, QuizSubmissionRepository quizSubmissionRepository, SubmittedAnswerRepository submittedAnswerRepository) {
+            QuizSubmissionRepository quizSubmissionRepository, SubmittedAnswerRepository submittedAnswerRepository) {
         this.studentParticipationRepository = studentParticipationRepository;
         this.resultRepository = resultRepository;
         this.submissionRepository = submissionRepository;
         this.quizExerciseRepository = quizExerciseRepository;
         this.quizStatisticService = quizStatisticService;
         this.resultService = resultService;
-        this.quizExamResultRepository = quizExamResultRepository;
         this.quizSubmissionRepository = quizSubmissionRepository;
         this.submittedAnswerRepository = submittedAnswerRepository;
     }
@@ -233,7 +230,7 @@ public class ExamQuizService {
      * @param participation The participation of which the result belongs to
      *
      */
-    public void evaluateQuizSubmission(Result result, AbstractQuizSubmission submission, List<QuizQuestion> quizQuestions, StudentParticipation participation) {
+    public void evaluateQuizSubmission(QuizResult result, AbstractQuizSubmission submission, List<QuizQuestion> quizQuestions, StudentParticipation participation) {
         result.setRated(true);
         result.setAssessmentType(AssessmentType.AUTOMATIC);
         result.setCompletionDate(ZonedDateTime.now());
@@ -249,22 +246,17 @@ public class ExamQuizService {
         // NOTE: we save participation, submission and result here individually so that one exception (e.g. duplicated key) cannot destroy multiple student answers
         submissionRepository.save(submission);
 
-        if (result instanceof QuizExamResult quizExamResult) {
-            result = quizExamResultRepository.save(quizExamResult);
-        }
-        else {
-            result = resultRepository.save(result);
-        }
+        result = resultRepository.save(result.getResult());
 
         if (participation != null) {
             // add result to participation
-            participation.addResult(result);
+            participation.addResult(result.getResult());
             studentParticipationRepository.save(participation);
         }
 
         // add result to submission
         result.setSubmission(submission);
-        submission.addResult(result);
+        submission.addResult(result.getResult());
         submissionRepository.save(submission);
     }
 }
