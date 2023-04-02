@@ -650,7 +650,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     }
 
     /**
-     * @param exercise to initialize
+     * Set activeExamPage to quiz exam
      */
     private initializeQuizExamPage() {
         this.activeExamPage.isOverviewPage = false;
