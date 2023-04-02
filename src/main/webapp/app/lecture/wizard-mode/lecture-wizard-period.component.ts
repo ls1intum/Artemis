@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { Lecture } from 'app/entities/lecture.model';
 
 @Component({
@@ -10,6 +10,10 @@ export class LectureUpdateWizardPeriodComponent {
     @Input() lecture: Lecture;
     @Input() validateDatesFunction: () => void;
     @Input() isInvalidDate: boolean;
+    @Output() invalidChange = new EventEmitter();
 
     constructor() {}
+    update() {
+        this.invalidChange.emit();
+    }
 }

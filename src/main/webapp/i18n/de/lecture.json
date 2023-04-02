@@ -34,10 +34,10 @@
             },
             "form": {
                 "startDate": {
-                    "invalid": "Muss vor dem Enddatum der Vorlesung liegen"
+                    "invalid": "Muss vor dem Enddatum der Vorlesung liegen."
                 },
                 "endDate": {
-                    "invalid": "Muss nach dem Startdatum der Vorlesung liegen"
+                    "invalid": "Muss nach dem Startdatum der Vorlesung liegen."
                 }
             },
             "attachments": {
