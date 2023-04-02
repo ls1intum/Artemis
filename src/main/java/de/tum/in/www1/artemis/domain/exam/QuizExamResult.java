@@ -18,11 +18,14 @@ public class QuizExamResult implements QuizResult {
         this.result = result;
     }
 
+    /**
+     * Calculate score from score in points and max points of the quiz exam and set the result to result
+     */
     public void evaluateQuizSubmission() {
         QuizExamSubmission quizExamSubmission = studentExam.getQuizExamSubmission();
-        double score = quizExamSubmission.getScoreInPoints(studentExam.getQuizQuestions());
+        double scoreInPoints = quizExamSubmission.getScoreInPoints(studentExam.getQuizQuestions());
         double maxPoints = quizExamSubmission.getStudentExam().getQuizQuestionTotalPoints();
-        score = 100.0 * score / maxPoints;
+        double score = 100.0 * scoreInPoints / maxPoints;
         this.result.setScore(score, studentExam.getExam().getCourse());
     }
 
