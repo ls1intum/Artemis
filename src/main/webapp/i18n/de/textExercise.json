@@ -3,7 +3,7 @@
         "textExercise": {
             "home": {
                 "title": "Textaufgaben",
-                "createLabel": "Neue Textaufgabe erstellen",
+                "createLabel": "Textaufgabe erstellen",
                 "editLabel": "Textaufgabe bearbeiten",
                 "importLabel": "Textaufgabe importieren"
             },

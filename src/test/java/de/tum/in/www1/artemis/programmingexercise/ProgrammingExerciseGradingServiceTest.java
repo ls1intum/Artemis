@@ -530,7 +530,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
         assertThat(result.getScore()).isEqualTo(expectedScore);
         assertThat(result.isSuccessful()).isFalse();
         // The feedback of the after due date test case must be kept.
-        assertThat(result.getFeedbacks().stream().noneMatch(feedback -> "test3".equals(feedback.getText()))).isFalse();
+        assertThat(result.getFeedbacks()).anyMatch(feedback -> "test3".equals(feedback.getText()));
     }
 
     @Test

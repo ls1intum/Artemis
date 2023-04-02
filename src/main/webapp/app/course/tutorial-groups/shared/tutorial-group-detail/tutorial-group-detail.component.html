@@ -121,8 +121,8 @@
             <span>{{ 'artemisApp.entities.tutorialGroup.language' | artemisTranslate }}</span>
         </dt>
         <dd>
-            <span *ngIf="tutorialGroup.language">
-                {{ (tutorialGroup.language === GERMAN ? 'artemisApp.generic.german' : 'artemisApp.generic.english') | artemisTranslate }}
+            <span>
+                {{ tutorialGroup.language ? tutorialGroup.language : '' }}
             </span>
         </dd>
         <!-- Campus -->

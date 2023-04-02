@@ -3,8 +3,7 @@
         "exercise": {
             "home": {
                 "title": "Übungen",
-                "createLabel": "Übung erstellen",
-                "createOrEditLabel": "Übung erstellen oder bearbeiten"
+                "createLabel": "Übung erstellen"
             },
             "details": "Aufgabendetails",
             "addCriterion": "Bewertungskriterium hinzufügen",
@@ -155,9 +154,8 @@
             "feedbackRequestAlreadySent": "Deine Feedbackanfrage wurde bereits gesendet.",
             "lockRepositoryWarning": "Dein Repository wird gesperrt. Du kannst erst weiterarbeiten wenn ein Tutor die Feedbackanfrage beantwortet hat.",
             "startError": "<strong>Uh oh! Etwas ist schief gelaufen... Bitte versuch es in wenigen Minuten noch einmal die Aufgabe zu starten.</strong>",
-            "studentName": "Name Studierende:r",
+            "name": "Name",
             "studentId": "Login",
-            "teamName": "Team Name",
             "teamShortName": "Kurzname",
             "completionDate": "Abgabedatum",
             "lastResult": "Letztes Ergebnis",
