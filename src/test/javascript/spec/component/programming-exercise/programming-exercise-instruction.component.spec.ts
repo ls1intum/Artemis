@@ -322,7 +322,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         const result: Result = {
             id: 1,
             completionDate: dayjs('2019-06-06T22:15:29.203+02:00'),
-            feedbacks: [{ text: 'testMergeSort', detailText: 'lorem ipsum', positive: true }],
+            feedbacks: [{ testCase: { testName: 'testMergeSort', id: 2 }, detailText: 'lorem ipsum', positive: true }],
         };
         const exercise: ProgrammingExercise = {
             id: 3,
@@ -345,15 +345,15 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         expect(comp.tasks).toHaveLength(2);
         expect(comp.tasks[0]).toEqual({
             id: 0,
-            completeString: '[task][Implement Bubble Sort](testBubbleSort)',
+            completeString: '[task][Implement Bubble Sort](1)',
             taskName: 'Implement Bubble Sort',
-            tests: ['testBubbleSort'],
+            tests: [1],
         });
         expect(comp.tasks[1]).toEqual({
             id: 1,
-            completeString: '[task][Implement Merge Sort](testMergeSort)',
+            completeString: '[task][Implement Merge Sort](2)',
             taskName: 'Implement Merge Sort',
-            tests: ['testMergeSort'],
+            tests: [2],
         });
         fixture.detectChanges();
 
@@ -375,7 +375,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
             componentInstance: {
                 exercise,
                 exerciseType: ExerciseType.PROGRAMMING,
-                feedbackFilter: ['testBubbleSort'],
+                feedbackFilter: [1],
                 result,
                 taskName: 'Implement Bubble Sort',
                 numberOfNotExecutedTests: 1,
@@ -387,7 +387,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
             componentInstance: {
                 exercise,
                 exerciseType: ExerciseType.PROGRAMMING,
-                feedbackFilter: ['testMergeSort'],
+                feedbackFilter: [2],
                 result,
                 taskName: 'Implement Merge Sort',
                 numberOfNotExecutedTests: 0,
@@ -399,7 +399,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         const result: Result = {
             id: 1,
             completionDate: dayjs('2019-01-06T22:15:29.203+02:00'),
-            feedbacks: [{ text: 'testBubbleSort', detailText: 'lorem ipsum' }],
+            feedbacks: [{ testCase: { testName: 'testBubbleSort', id: 1 }, detailText: 'lorem ipsum' }],
         };
         const exercise: ProgrammingExercise = {
             id: 3,
@@ -421,15 +421,15 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         expect(comp.tasks).toHaveLength(2);
         expect(comp.tasks[0]).toEqual({
             id: 0,
-            completeString: '[task][Implement Bubble Sort](testBubbleSort)',
+            completeString: '[task][Implement Bubble Sort](1)',
             taskName: 'Implement Bubble Sort',
-            tests: ['testBubbleSort'],
+            tests: [1],
         });
         expect(comp.tasks[1]).toEqual({
             id: 1,
-            completeString: '[task][Implement Merge Sort](testMergeSort)',
+            completeString: '[task][Implement Merge Sort](2)',
             taskName: 'Implement Merge Sort',
-            tests: ['testMergeSort'],
+            tests: [2],
         });
         fixture.detectChanges();
 
@@ -451,7 +451,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
             componentInstance: {
                 exercise,
                 exerciseType: ExerciseType.PROGRAMMING,
-                feedbackFilter: ['testBubbleSort'],
+                feedbackFilter: [1],
                 result,
                 taskName: 'Implement Bubble Sort',
                 numberOfNotExecutedTests: 0,
@@ -463,7 +463,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
             componentInstance: {
                 exercise,
                 exerciseType: ExerciseType.PROGRAMMING,
-                feedbackFilter: ['testMergeSort'],
+                feedbackFilter: [2],
                 result,
                 taskName: 'Implement Merge Sort',
                 numberOfNotExecutedTests: 0,
@@ -475,7 +475,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         const result: Result = {
             id: 1,
             completionDate: dayjs('2019-06-06T22:15:29.203+02:00'),
-            feedbacks: [{ text: 'testBubbleSort', detailText: 'lorem ipsum', positive: true }],
+            feedbacks: [{ testCase: { testName: 'testBubbleSort', id: 1 }, detailText: 'lorem ipsum', positive: true }],
         };
         const exercise: ProgrammingExercise = {
             id: 3,
@@ -498,9 +498,9 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         expect(comp.tasks).toHaveLength(2);
         expect(comp.tasks[0]).toEqual({
             id: 0,
-            completeString: '[task][Bubble Sort](testBubbleSort)',
+            completeString: '[task][Bubble Sort](1)',
             taskName: 'Bubble Sort',
-            tests: ['testBubbleSort'],
+            tests: [1],
         });
         expect(comp.tasks[1]).toEqual({
             id: 1,
@@ -528,7 +528,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
             componentInstance: {
                 exercise,
                 exerciseType: ExerciseType.PROGRAMMING,
-                feedbackFilter: ['testBubbleSort'],
+                feedbackFilter: [1],
                 result,
                 taskName: 'Bubble Sort',
                 numberOfNotExecutedTests: 0,

@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { DebugElement } from '@angular/core';
+import { Result } from 'app/entities/result.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import dayjs from 'dayjs/esm';
 import { ArtemisTestModule } from '../../test.module';
@@ -38,11 +39,11 @@ describe('ProgrammingExerciseInstructionStepWizardComponent', () => {
         const result = {
             id: 1,
             completionDate: dayjs('2019-01-06T22:15:29.203+02:00'),
-            feedbacks: [{ text: 'testBubbleSort', detailText: 'lorem ipsum' }],
-        } as any;
+            feedbacks: [{ testCase: { testName: 'testBubbleSort', id: 1 }, detailText: 'lorem ipsum' }],
+        } as Result;
         const tasks = [
-            { completeString: '[task][Implement BubbleSort](testBubbleSort)', taskName: 'Implement BubbleSort', tests: ['testBubbleSort'] } as Task,
-            { completeString: '[task][Implement MergeSort](testMergeSort)', taskName: 'Implement MergeSort', tests: ['testMergeSort'] } as Task,
+            { completeString: '[task][Implement BubbleSort](1)', taskName: 'Implement BubbleSort', tests: [1] } as Task,
+            { completeString: '[task][Implement MergeSort](2)', taskName: 'Implement MergeSort', tests: [2] } as Task,
         ];
         comp.latestResult = result;
         comp.tasks = tasks;
