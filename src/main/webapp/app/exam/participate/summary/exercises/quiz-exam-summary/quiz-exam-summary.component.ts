@@ -131,7 +131,7 @@ export class QuizExamSummaryComponent implements OnChanges {
      * We only show the notice when there is a publishResultsDate that has already passed by now and the result is missing
      */
     get showMissingResultsNotice(): boolean {
-        if (this.exam && this.exam.publishResultsDate) {
+        if (this.exam && this.exam.publishResultsDate && this.studentParticipations && this.studentParticipations.length > 0) {
             return dayjs(this.exam.publishResultsDate).isBefore(this.serverDateService.now()) && !this.result;
         }
         return false;
