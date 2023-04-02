@@ -153,7 +153,6 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationBambooB
     }
 
     @Test
-    @WithMockUser()
     void getScoresAndParticipationResultsWithNotIncludedExercise() {
         var exerciseList = new ArrayList<>(course.getExercises());
         exerciseList.sort(Comparator.comparing(Exercise::getId));
@@ -179,7 +178,6 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationBambooB
     }
 
     @Test
-    @WithMockUser()
     void getScoresAndParticipationResultsForPastCourse() {
         // Create course with assessment due date passed.
         Course pastCourse = database.createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(TEST_PREFIX, true);

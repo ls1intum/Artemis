@@ -183,7 +183,7 @@ describe('GradeKeyOverviewComponent', () => {
         const reachablePoints = 200;
 
         const scoresStorageService = fixture.debugElement.injector.get(ScoresStorageService);
-        const getStoredScoresSpy = jest.spyOn(scoresStorageService, 'getStoredTotalScores').mockReturnValue(new CourseScores(250, 200, new StudentScores()));
+        const getStoredScoresStub = jest.spyOn(scoresStorageService, 'getStoredTotalScores').mockReturnValue(new CourseScores(250, 200, new StudentScores()));
         const gradingSystemServiceSpy = jest.spyOn(gradingSystemService, 'setGradePoints');
 
         jest.spyOn(gradingSystemService, 'findGradeSteps').mockReturnValue(of(gradeStepsDto));
@@ -200,8 +200,8 @@ describe('GradeKeyOverviewComponent', () => {
         expect(comp.isBonus).toBeTrue();
         expect(comp.isExam).toBeFalse();
 
-        expect(getStoredScoresSpy).toHaveBeenCalledOnce();
-        expect(getStoredScoresSpy).toHaveBeenCalledWith(courseId);
+        expect(getStoredScoresStub).toHaveBeenCalledOnce();
+        expect(getStoredScoresStub).toHaveBeenCalledWith(courseId);
 
         expect(gradingSystemServiceSpy).toHaveBeenCalledOnce();
         expect(gradingSystemServiceSpy).toHaveBeenCalledWith([gradeStep1, gradeStep2], reachablePoints);

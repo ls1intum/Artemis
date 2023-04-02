@@ -40,7 +40,7 @@ describe('CourseExercisesComponent', () => {
 
     let course: Course;
     let exercise: Exercise;
-    let courseStorageSpy: jest.SpyInstance;
+    let courseStorageStub: jest.SpyInstance;
 
     const parentRoute = { params: of({ courseId: '123' }) } as any as ActivatedRoute;
     const route = { parent: parentRoute } as any as ActivatedRoute;
@@ -87,7 +87,7 @@ describe('CourseExercisesComponent', () => {
                 course.exercises = [exercise];
                 jest.spyOn(courseStorageService, 'subscribeToCourseUpdates').mockReturnValue(of(course));
                 jest.spyOn(localStorageService, 'retrieve').mockReturnValue('OVERDUE,NEEDS_WORK');
-                courseStorageSpy = jest.spyOn(courseStorageService, 'getCourse').mockReturnValue(course);
+                courseStorageStub = jest.spyOn(courseStorageService, 'getCourse').mockReturnValue(course);
 
                 fixture.detectChanges();
             });
@@ -99,8 +99,8 @@ describe('CourseExercisesComponent', () => {
 
     it('should initialize', () => {
         expect(component.course).toEqual(course);
-        expect(courseStorageSpy.mock.calls).toHaveLength(1);
-        expect(courseStorageSpy.mock.calls[0][0]).toBe(course.id);
+        expect(courseStorageStub.mock.calls).toHaveLength(1);
+        expect(courseStorageStub.mock.calls[0][0]).toBe(course.id);
     });
 
     it('should react to changes', () => {

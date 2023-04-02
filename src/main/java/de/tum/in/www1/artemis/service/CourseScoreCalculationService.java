@@ -51,10 +51,12 @@ public class CourseScoreCalculationService {
 
     /**
      * Calculates max and reachable max points for the given exercises.
-     * Max points are the sum of all included (see {@link #includeIntoScoreCalculation(Exercise)}) exercises, whose due date is over or unset or who are automatically assessed and
-     * assessment is done (see {@link #isAssessmentDone(Exercise)}).
-     * Reachable max points are the sum of all included and already assessed exercises.
-     * Example: An automatically assessed programming exercise that has the buildAndTestStudentSubmissionsAfterDueDate set in the future is included in the max points calculation,
+     * Max points are the sum of the points for all included (see {@link #includeIntoScoreCalculation(Exercise)}) exercises, whose due date is over or unset or who are
+     * automatically assessed and
+     * the buildAndTestStudentSubmissionsAfterDueDate is in the past.
+     * Reachable max points contain only those points where the exercise's assessmentDueDate is in the past. (see {@link #isAssessmentDone(Exercise)}).
+     * Example: An exercise that is is not automatically assessed (e.g. text exercise), that has the dueDate in the past but the assessmentDueDate set in the future is included in
+     * the max points calculation,
      * but not in the reachable max points calculation.
      *
      * @param exercises the exercises which are included into max points calculation
@@ -119,7 +121,7 @@ public class CourseScoreCalculationService {
         else {
             // Get all participations for the course.
             var participations = studentParticipationRepository.findByCourseIdWithRelevantResult(courseId);
-            // These participations also contain participations for students that are not handed to this method in the 'studentIds' Collection.
+            // These participations also contain participations for students with ids not included in 'studentIds'.
             // Filter out those participations that belong to the students in 'studentIds'.
             // For the single student case, this is done in the db query.
             var studentIdSet = new HashSet<>(studentIds);

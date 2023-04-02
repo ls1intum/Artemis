@@ -98,14 +98,14 @@ describe('CourseLearningGoals', () => {
         course.learningGoals = [learningGoal];
         course.prerequisites = [learningGoal];
         courseStorageService.setCourses([course]);
-        const getCourseSpy = jest.spyOn(courseStorageService, 'getCourse').mockReturnValue(course);
+        const getCourseStub = jest.spyOn(courseStorageService, 'getCourse').mockReturnValue(course);
 
         const getAllForCourseSpy = jest.spyOn(learningGoalService, 'getAllForCourse');
 
         courseLearningGoalsComponentFixture.detectChanges();
 
-        expect(getCourseSpy).toHaveBeenCalledOnce();
-        expect(getCourseSpy).toHaveBeenCalledWith(1);
+        expect(getCourseStub).toHaveBeenCalledOnce();
+        expect(getCourseStub).toHaveBeenCalledWith(1);
         expect(courseLearningGoalsComponent.course).toEqual(course);
         expect(courseLearningGoalsComponent.learningGoals).toEqual([learningGoal]);
         expect(getAllForCourseSpy).not.toHaveBeenCalled(); // do not load learning goals again as already fetched
