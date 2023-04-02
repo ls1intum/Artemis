@@ -189,4 +189,20 @@ describe('QuizPoolMappingComponent', () => {
         component.handleOnQuizQuestionDropped(question, quizGroup);
         expect(question.quizGroup).toEqual(quizGroup);
     });
+
+    it('should return max points', () => {
+        const question0 = new MultipleChoiceQuestion();
+        question0.points = 1;
+        const question1 = new MultipleChoiceQuestion();
+        question1.points = undefined;
+        const question2 = new MultipleChoiceQuestion();
+        question2.points = 1;
+        const question3 = new MultipleChoiceQuestion();
+        question3.points = undefined;
+        component.quizGroupNameQuestionsMap = new Map();
+        component.quizGroupNameQuestionsMap.set('Group 1', [question0, question1]);
+        component.quizGroupNameQuestionsMap.set('Group 2', []);
+        component.unmappedQuizQuestions = [question2, question3];
+        expect(component.getMaxPoints()).toBe(2);
+    });
 });
