@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
@@ -12,7 +12,7 @@ import { ProblemStatementComponent } from 'app/overview/exercise-details/problem
 import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { ProgrammingExerciseInstructionComponent } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instruction.component';
-import { MockComponent } from 'ng-mocks';
+import { MockComponent, MockProvider } from 'ng-mocks';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 
 describe('ProblemStatementComponent', () => {
@@ -20,35 +20,41 @@ describe('ProblemStatementComponent', () => {
     let fixture: ComponentFixture<ProblemStatementComponent>;
     let mockActivatedRoute: any;
 
-    let mockExerciseService: Partial<ExerciseService>;
-    let mockParticipationService: Partial<ParticipationService>;
+    let exerciseService: ExerciseService;
+    let participationService: ParticipationService;
+
+    let getExerciseDetailsMock: jest.SpyInstance;
+    let getParticipationDetailMock: jest.SpyInstance;
+
+    const course = { id: 1 } as unknown as Course;
+    const exercise = new ProgrammingExercise(course, undefined);
+    const participation = { id: 2 } as unknown as StudentParticipation;
 
     beforeEach(() => {
         mockActivatedRoute = {
             params: of({ exerciseId: '1', participationId: '2' }),
         };
 
-        mockExerciseService = {
-            getExerciseDetails: jest.fn(),
-        };
-        mockParticipationService = {
-            find: jest.fn(),
-        };
-
         TestBed.configureTestingModule({
             declarations: [ProblemStatementComponent, TranslatePipeMock, HtmlForMarkdownPipe, MockComponent(ProgrammingExerciseInstructionComponent)],
-            providers: [
-                { provide: ActivatedRoute, useValue: mockActivatedRoute },
-                { provide: ExerciseService, useValue: mockExerciseService },
-                { provide: ParticipationService, useValue: mockParticipationService },
-            ],
+            providers: [{ provide: ActivatedRoute, useValue: mockActivatedRoute }, MockProvider(ParticipationService), MockProvider(ExerciseService)],
         })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(ProblemStatementComponent);
                 component = fixture.componentInstance;
 
-                fixture.detectChanges();
+                // mock exerciseService
+                exerciseService = fixture.debugElement.injector.get(ExerciseService);
+                getExerciseDetailsMock = jest.spyOn(exerciseService, 'getExerciseDetails');
+                exercise.problemStatement = 'Test problem statement';
+                course.exercises = [exercise];
+                getExerciseDetailsMock.mockReturnValue(of({ body: exercise }));
+
+                // mock participationService
+                participationService = fixture.debugElement.injector.get(ParticipationService);
+                getParticipationDetailMock = jest.spyOn(participationService, 'find');
+                getParticipationDetailMock.mockReturnValue(of(new HttpResponse({ body: participation })));
             });
     });
 
@@ -57,74 +63,27 @@ describe('ProblemStatementComponent', () => {
     });
 
     it('should render problem statement when exercise is available', () => {
-        const course = new Course();
-        course.id = 123;
         const exercise = new TextExercise(course, undefined);
         exercise.problemStatement = 'Test problem statement';
-        course.exercises = [exercise];
+
         component.exercise = exercise;
         fixture.detectChanges();
+
         const compiled = fixture.debugElement.nativeElement;
         expect(compiled.querySelector('#problem-statement')).toBeTruthy();
         expect(compiled.querySelector('#problem-statement p').innerHTML).toContain('Test problem statement');
     });
 
-    it('should render problem statement when exercise is available by getting from services', () => {
-        const course = new Course();
-        course.id = 123;
-        const exercise = new ProgrammingExercise(course, undefined);
-        exercise.problemStatement = 'Test problem statement';
-        course.exercises = [exercise];
+    it('should render problem statement when exercise is available by getting from services', fakeAsync(() => {
+        fixture.detectChanges();
+        tick(500);
 
-        const participation: StudentParticipation = {} as StudentParticipation;
-        participation.id = 2;
-
-        const getParticipationsMock = jest.spyOn(mockParticipationService, 'find');
-        getParticipationsMock.mockReturnValue(of(new HttpResponse({ body: participation })));
-        const getExerciseDetailsMock = jest.spyOn(mockExerciseService, 'getExerciseDetails');
-        getExerciseDetailsMock.mockReturnValue(of(new HttpResponse({ body: exercise })));
-
-        expect(getParticipationsMock).toHaveBeenCalledOnce();
+        expect(getParticipationDetailMock).toHaveBeenCalledOnce();
         expect(getExerciseDetailsMock).toHaveBeenCalledOnce();
 
-        fixture.detectChanges();
-        const compiled = fixture.debugElement.nativeElement;
-        expect(compiled.querySelector('#problem-statement')).toBeTruthy();
-        expect(compiled.querySelector('#problem-statement p').innerHTML).toContain('Test problem statement');
-    });
-
-    describe('when exercise is not provided', () => {
-        const course = new Course();
-        course.id = 123;
-        const mockExercise = new ProgrammingExercise(course, undefined);
-        mockExercise.problemStatement = 'Test problem statement';
-
-        beforeEach(() => {
-            (mockExerciseService.getExerciseDetails as jest.Mock).mockReturnValueOnce(of({ body: mockExercise }));
-            component.exercise = undefined;
-            fixture.detectChanges();
-        });
-
-        it('should fetch exercise details from the service', () => {
-            expect(mockExerciseService.getExerciseDetails).toHaveBeenCalledWith(1);
-            expect(component.exercise).toEqual(mockExercise);
-        });
-    });
-
-    describe('when participation is not provided', () => {
-        const mockParticipation: StudentParticipation = { id: 2 };
-
-        beforeEach(() => {
-            (mockParticipationService.find as jest.Mock).mockReturnValueOnce(of({ body: mockParticipation }));
-            component.participation = undefined;
-            fixture.detectChanges();
-        });
-
-        it('should fetch participation details from the service', () => {
-            expect(mockParticipationService.find).toHaveBeenCalledWith(2);
-            expect(component.participation).toEqual(mockParticipation);
-        });
-    });
+        expect(component.exercise).toEqual(exercise);
+        expect(component.participation).toEqual(participation);
+    }));
 
     describe('isProgrammingExercise', () => {
         it('should return true if exercise type is PROGRAMMING', () => {
@@ -144,13 +103,6 @@ describe('ProblemStatementComponent', () => {
     });
 
     it('should render programming exercise instructions when exercise is a programming exercise and participation and exercise are available', () => {
-        const course = new Course();
-        course.id = 123;
-        const exercise = new ProgrammingExercise(course, undefined);
-        exercise.problemStatement = 'Test problem statement';
-        course.exercises = [exercise];
-
-        const participation: StudentParticipation = {} as StudentParticipation;
         component.exercise = exercise;
         component.participation = participation;
         fixture.detectChanges();
@@ -159,13 +111,9 @@ describe('ProblemStatementComponent', () => {
     });
 
     it('should not render programming exercise instructions when exercise is not a programming exercise', () => {
-        const course = new Course();
-        course.id = 123;
         const exercise = new TextExercise(course, undefined);
         exercise.problemStatement = 'Test problem statement';
-        course.exercises = [exercise];
 
-        const participation: StudentParticipation = {} as StudentParticipation;
         component.exercise = exercise;
         component.participation = participation;
         fixture.detectChanges();
