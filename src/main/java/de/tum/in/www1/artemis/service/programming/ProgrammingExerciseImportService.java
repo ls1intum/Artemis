@@ -276,6 +276,8 @@ public class ProgrammingExerciseImportService {
      */
     public ProgrammingExercise importProgrammingExercise(ProgrammingExercise originalProgrammingExercise, ProgrammingExercise newExercise, boolean updateTemplate,
             boolean recreateBuildPlans) {
+        // remove all non-alphanumeric characters from the short name. This gets already done in the client, but we do it again here to be sure
+        newExercise.setShortName(newExercise.getShortName().replaceAll("[a-zA-Z0-9]", ""));
         newExercise.generateAndSetProjectKey();
         programmingExerciseService.checkIfProjectExists(newExercise);
 
