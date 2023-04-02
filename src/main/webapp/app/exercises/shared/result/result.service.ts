@@ -20,6 +20,7 @@ import { captureException } from '@sentry/browser';
 import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
 import { Course } from 'app/entities/course.model';
+import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 
 export type EntityResponseType = HttpResponse<Result>;
 export type EntityArrayResponseType = HttpResponse<Result[]>;
@@ -55,6 +56,21 @@ export class ResultService implements IResultService {
     }
 
     /**
+     * Generates the result string for the quiz exam.
+     * If either of the arguments is undefined the error is forwarded to sentry and an empty string is returned
+     * @param result the result containing all necessary information like the achieved points
+     * @param course the course of which the quiz exam belongs to
+     * @param maxPoints the max points of the quiz exam
+     * @param short flag that indicates if the resultString should use the short format
+     */
+    getQuizExamResultString(result: Result | undefined, course: Course | undefined, maxPoints: number, short?: boolean): string {
+        const exercise = new QuizExercise(course, undefined);
+        exercise.course = course;
+        exercise.maxPoints = maxPoints;
+        return this.getResultString(result, exercise, short);
+    }
+
+    /**
      * Generates the result string for the given exercise and result.
      * Contains the score, achieved points and if it's a programming exercise the tests and code issues as well
      * If either of the arguments is undefined the error is forwarded to sentry and an empty string is returned
@@ -62,9 +78,9 @@ export class ResultService implements IResultService {
      * @param exercise the exercise where the result belongs to
      * @param short flag that indicates if the resultString should use the short format
      */
-    getResultString(result: Result | undefined, course: Course | undefined, maxPoints: number, exercise: Exercise | undefined, short?: boolean): string {
-        if (result && (exercise || course)) {
-            return this.getResultStringDefinedParameters(result, course, maxPoints, exercise, short);
+    getResultString(result: Result | undefined, exercise: Exercise | undefined, short?: boolean): string {
+        if (result && exercise) {
+            return this.getResultStringDefinedParameters(result, exercise, short);
         } else {
             captureException('Tried to generate a result string, but either the result or exercise was undefined');
             return '';
@@ -78,13 +94,13 @@ export class ResultService implements IResultService {
      * @param exercise the exercise where the result belongs to
      * @param short flag that indicates if the resultString should use the short format
      */
-    private getResultStringDefinedParameters(result: Result, course: Course | undefined, maxPoints: number, exercise: Exercise | undefined, short: boolean | undefined): string {
-        const relativeScore = roundValueSpecifiedByCourseSettings(result.score!, course ?? getCourseFromExercise(exercise!));
-        const points = roundValueSpecifiedByCourseSettings((result.score! * maxPoints) / 100, course ?? getCourseFromExercise(exercise!));
-        if (exercise?.type === ExerciseType.PROGRAMMING) {
-            return this.getResultStringProgrammingExercise(result, exercise as ProgrammingExercise, relativeScore, points, short);
-        } else {
+    private getResultStringDefinedParameters(result: Result, exercise: Exercise, short: boolean | undefined): string {
+        const relativeScore = roundValueSpecifiedByCourseSettings(result.score!, getCourseFromExercise(exercise));
+        const points = roundValueSpecifiedByCourseSettings((result.score! * exercise.maxPoints!) / 100, getCourseFromExercise(exercise));
+        if (exercise.type !== ExerciseType.PROGRAMMING) {
             return this.getResultStringNonProgrammingExercise(relativeScore, points, short);
+        } else {
+            return this.getResultStringProgrammingExercise(result, exercise as ProgrammingExercise, relativeScore, points, short);
         }
     }
 
@@ -94,7 +110,7 @@ export class ResultService implements IResultService {
      * @param points the amount of achieved points
      * @param short flag that indicates if the resultString should use the short format
      */
-    public getResultStringNonProgrammingExercise(relativeScore: number, points: number, short: boolean | undefined): string {
+    private getResultStringNonProgrammingExercise(relativeScore: number, points: number, short: boolean | undefined): string {
         if (short) {
             return this.translateService.instant(`artemisApp.result.resultString.short`, {
                 relativeScore,

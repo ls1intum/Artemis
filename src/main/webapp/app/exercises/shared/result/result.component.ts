@@ -103,7 +103,7 @@ export class ResultComponent implements OnInit, OnChanges {
                 this.templateStatus = ResultTemplateStatus.HAS_RESULT;
                 this.textColorClass = getTextColorClass(this.result, this.templateStatus);
                 this.resultIconClass = getResultIconClass(this.result, this.templateStatus);
-                this.resultString = this.resultService.getResultString(this.result, this.course, this.quizExamMaxPoints!, undefined, this.short);
+                this.resultString = this.resultService.getQuizExamResultString(this.result, this.course!, this.quizExamMaxPoints!, this.short);
                 this.resultTooltip = this.buildResultTooltip();
             }
         } else {
@@ -155,9 +155,9 @@ export class ResultComponent implements OnInit, OnChanges {
         this.translate.onLangChange.subscribe(() => {
             if (this.resultString) {
                 if (this.isQuizExam) {
-                    this.resultString = this.resultService.getResultString(this.result, this.course, this.quizExamMaxPoints!, undefined, this.short);
+                    this.resultString = this.resultService.getQuizExamResultString(this.result, this.course!, this.quizExamMaxPoints!, this.short);
                 } else {
-                    this.resultString = this.resultService.getResultString(this.result, this.course, this.exercise!.maxPoints!, this.exercise, this.short);
+                    this.resultString = this.resultService.getResultString(this.result, this.exercise, this.short);
                 }
             }
         });
@@ -190,11 +190,11 @@ export class ResultComponent implements OnInit, OnChanges {
         if (this.templateStatus === ResultTemplateStatus.LATE) {
             this.textColorClass = getTextColorClass(this.result, this.templateStatus);
             this.resultIconClass = getResultIconClass(this.result, this.templateStatus);
-            this.resultString = this.resultService.getResultString(this.result, this.course, this.exercise!.maxPoints!, this.exercise, this.short);
+            this.resultString = this.resultService.getResultString(this.result, this.exercise, this.short);
         } else if (this.result && this.result.score !== undefined && (this.result.rated || this.result.rated == undefined || this.showUngradedResults)) {
             this.textColorClass = getTextColorClass(this.result, this.templateStatus);
             this.resultIconClass = getResultIconClass(this.result, this.templateStatus);
-            this.resultString = this.resultService.getResultString(this.result, this.course, this.exercise!.maxPoints!, this.exercise, this.short);
+            this.resultString = this.resultService.getResultString(this.result, this.exercise, this.short);
             this.resultTooltip = this.buildResultTooltip();
         } else if (this.templateStatus !== ResultTemplateStatus.MISSING) {
             // make sure that we do not display results that are 'rated=false' or that do not have a score
