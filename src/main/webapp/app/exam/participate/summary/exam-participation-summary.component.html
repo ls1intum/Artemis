@@ -161,12 +161,12 @@
                         [includedInOverallScore]="exercise.includedInOverallScore"></jhi-included-in-score-badge>
                 </h5>
             </div>
-            <h6 right-body class="markdown-preview" *ngIf="asProgrammingExercise(exercise).problemStatement && exercise.type !== PROGRAMMING">
-                <span [innerHTML]="asProgrammingExercise(exercise).problemStatement! | htmlForMarkdown"></span>
+            <h6 right-body class="markdown-preview" *ngIf="exercise.problemStatement && exercise.type !== PROGRAMMING">
+                <span [innerHTML]="exercise.problemStatement! | htmlForMarkdown"></span>
             </h6>
             <jhi-programming-exercise-instructions
-                *ngIf="asProgrammingExercise(exercise).problemStatement && exercise.type === PROGRAMMING"
-                [exercise]="asProgrammingExercise(exercise)"
+                *ngIf="exercise.problemStatement && exercise.type === PROGRAMMING"
+                [exercise]="exercise"
                 [participation]="asProgrammingExercise(exercise).templateParticipation!"
             ></jhi-programming-exercise-instructions>
             <ng-container *ngIf="exercise.type !== PROGRAMMING">
@@ -213,20 +213,19 @@
                 <ng-container *ngIf="getParticipationForExercise(exercise) && getSubmissionForExercise(exercise); else noSubmission">
                     <!-- Programming Exercise -->
                     <jhi-programming-exam-summary
-                        [exercise]="asProgrammingExercise(exercise)"
+                        [exercise]="exercise"
                         [participation]="getParticipationForExercise(exercise)!"
                         [submission]="getSubmissionForExercise(exercise)!"
                     ></jhi-programming-exam-summary>
                 </ng-container>
                 <jhi-complaint-student-view
                     *ngIf="
-                        (asProgrammingExercise(exercise).assessmentType === AssessmentType.SEMI_AUTOMATIC ||
-                            asProgrammingExercise(exercise).allowComplaintsForAutomaticAssessments) &&
+                        (exercise.assessmentType === AssessmentType.SEMI_AUTOMATIC || exercise.allowComplaintsForAutomaticAssessments) &&
                         getSubmissionForExercise(exercise) &&
                         isAfterStudentReviewStart()
                     "
                     class="mb-2 mt-2 ms-3"
-                    [exercise]="asProgrammingExercise(exercise)"
+                    [exercise]="exercise"
                     [participation]="getParticipationForExercise(exercise)!"
                     [result]="getParticipationForExercise(exercise)!.results?.[0]"
                     [exam]="examWithOnlyIdAndStudentReviewPeriod"
