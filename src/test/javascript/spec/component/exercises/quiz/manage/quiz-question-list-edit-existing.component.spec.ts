@@ -26,7 +26,10 @@ import { ShortAnswerSolution } from 'app/entities/quiz/short-answer-solution.mod
 import { ShortAnswerSpot } from 'app/entities/quiz/short-answer-spot.model';
 import { ShortAnswerMapping } from 'app/entities/quiz/short-answer-mapping.model';
 import { AnswerOption } from 'app/entities/quiz/answer-option.model';
-import { ChangeDetectorRef } from '@angular/core';
+import { ChangeDetectorRef, EventEmitter } from '@angular/core';
+import { QuizQuestion } from 'app/entities/quiz/quiz-question.model';
+import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 
 const createValidMCQuestion = () => {
     const question = new MultipleChoiceQuestion();
@@ -96,13 +99,15 @@ describe('QuizQuestionListEditExistingComponent', () => {
     let courseService: CourseManagementService;
     let examService: ExamManagementService;
     let quizExerciseService: QuizExerciseService;
+    let fileUploaderService: FileUploaderService;
     let changeDetector: ChangeDetectorRef;
+    let modalService: NgbModal;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [CommonModule, ArtemisTestModule, HttpClientTestingModule, FormsModule],
             declarations: [QuizQuestionListEditExistingComponent, MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDatePipe), MockDirective(TranslateDirective)],
-            providers: [MockProvider(ChangeDetectorRef)],
+            providers: [MockProvider(NgbModal), MockProvider(ChangeDetectorRef)],
         })
             .compileComponents()
             .then(() => {
@@ -110,7 +115,9 @@ describe('QuizQuestionListEditExistingComponent', () => {
                 examService = fixture.debugElement.injector.get(ExamManagementService);
                 courseService = fixture.debugElement.injector.get(CourseManagementService);
                 quizExerciseService = fixture.debugElement.injector.get(QuizExerciseService);
+                fileUploaderService = TestBed.inject(FileUploaderService);
                 changeDetector = fixture.debugElement.injector.get(ChangeDetectorRef);
+                modalService = fixture.debugElement.injector.get(NgbModal);
                 component = fixture.componentInstance;
                 fixture.detectChanges();
             });
@@ -264,18 +271,6 @@ describe('QuizQuestionListEditExistingComponent', () => {
     });
 
     describe('import questions', () => {
-        // const importQuestionAndExpectOneMoreQuestionInQuestions = async (question: QuizQuestion) => {
-        //     const amountQuizQuestions = component.quizExercise.quizQuestions?.length || 0;
-        //     await component.verifyAndImportQuestions([question]);
-        //
-        //     expect(component.quizExercise.quizQuestions).toHaveLength(amountQuizQuestions + 1);
-        // };
-        // // setup
-        // beforeEach(() => {
-        //     resetQuizExercise();
-        //     component.quizExercise = quizExercise;
-        // });
-
         it('should set import file correctly', () => {
             const file = new File(['content'], 'testFileName', { type: 'text/plain' });
             const ev = { target: { files: [file] } };
@@ -289,6 +284,7 @@ describe('QuizQuestionListEditExistingComponent', () => {
 
     describe('importing quiz', () => {
         let generateFileReaderStub: jest.SpyInstance;
+        let getElementStub: jest.SpyInstance;
         let readAsText: jest.Mock;
         let reader: FileReader;
         const jsonContent = `[{
@@ -319,6 +315,7 @@ describe('QuizQuestionListEditExistingComponent', () => {
                 ]
               }]`;
         const fakeFile = new File([jsonContent], 'file.txt', { type: 'text/plain' });
+        const questions = JSON.parse(jsonContent) as QuizQuestion[];
         const element = document.createElement('input');
         const control = { ...element, value: 'test' };
         beforeEach(() => {
@@ -337,12 +334,101 @@ describe('QuizQuestionListEditExistingComponent', () => {
             jest.clearAllMocks();
         });
 
+        it('should call verify and import questions with right json', async () => {
+            expect(control.value).toBe('test');
+            await component.importQuiz();
+            expect(readAsText).toHaveBeenCalledWith(fakeFile);
+            expect(generateFileReaderStub).toHaveBeenCalledOnce();
+            const addQuestionSpy = jest.spyOn(component, 'addQuestions').mockImplementation();
+            await component.onFileLoadImport(reader);
+            expect(addQuestionSpy).toHaveBeenCalledWith(questions);
+            expect(component.importFile).toBeUndefined();
+            expect(component.importFileName).toBe('');
+            expect(getElementStub).toHaveBeenCalledOnce();
+            expect(control.value).toBe('');
+        });
+
         it('should not call any functions without import file', async () => {
             component.importFile = undefined;
             await component.importQuiz();
             expect(readAsText).not.toHaveBeenCalled();
             expect(generateFileReaderStub).not.toHaveBeenCalled();
             expect(component.importFile).toBeUndefined();
+        });
+
+        it('should alert user when onload throws error', async () => {
+            const alert = window.alert;
+            const alertFunction = jest.fn();
+            window.alert = alertFunction;
+            const addQuestionSpy = jest.spyOn(component, 'addQuestions');
+            addQuestionSpy.mockImplementation(() => {
+                throw '';
+            });
+            await component.importQuiz();
+            await component.onFileLoadImport(reader);
+            expect(alertFunction).toHaveBeenCalledOnce();
+            window.alert = alert;
+        });
+    });
+
+    describe('generating file reader', () => {
+        it('should return file reader when called', () => {
+            expect(component.generateFileReader()).toEqual(new FileReader());
+        });
+    });
+
+    describe('add existing questions', () => {
+        it('should call addQuestions', () => {
+            const question0 = new MultipleChoiceQuestion();
+            question0.exportQuiz = true;
+            const question1 = new MultipleChoiceQuestion();
+            question1.exportQuiz = false;
+            component.existingQuestions = [question0, question1];
+            const addQuestionsSpy = jest.spyOn(component, 'addQuestions').mockImplementation();
+            component.addExistingQuestions();
+            expect(addQuestionsSpy).toHaveBeenCalledOnceWith([question0]);
+        });
+    });
+
+    describe('add questions', () => {
+        it('should open modal', async () => {
+            const question0 = new MultipleChoiceQuestion();
+            const question1 = new MultipleChoiceQuestion();
+            question0.answerOptions = [];
+            question1.answerOptions = [];
+            question0.invalid = false;
+            question1.invalid = true;
+            const shouldImportEmitter = new EventEmitter<void>();
+            const componentInstance = { questions: [], shouldImport: shouldImportEmitter };
+            const modalServiceSpy = jest.spyOn(modalService, 'open').mockReturnValue(<NgbModalRef>{ componentInstance });
+            const questions = [question0, question1];
+            await component.addQuestions(questions);
+            expect(modalServiceSpy).toHaveBeenCalledOnce();
+            shouldImportEmitter.emit();
+        });
+
+        it('should emit onQuestionsAdded', async () => {
+            const question0 = new MultipleChoiceQuestion();
+            question0.answerOptions = [new AnswerOption()];
+            question0.invalid = false;
+            const question1 = new ShortAnswerQuestion();
+            const spot = new ShortAnswerSpot();
+            question1.spots = [spot];
+            const solution = new ShortAnswerSolution();
+            question1.solutions = [solution];
+            question1.correctMappings = [new ShortAnswerMapping(spot, solution)];
+            question1.invalid = false;
+            const question2 = new DragAndDropQuestion();
+            const dropLocation = new DropLocation();
+            question2.dropLocations = [dropLocation];
+            const dragItem = new DragItem();
+            question2.dragItems = [dragItem];
+            question2.correctMappings = [new DragAndDropMapping(dragItem, dropLocation)];
+            const onQuestionsAddedSpy = jest.spyOn(component.onQuestionsAdded, 'emit').mockImplementation();
+            const questions = [question0, question1, question2];
+            jest.spyOn(fileUploaderService, 'duplicateFile').mockReturnValue(Promise.resolve({ path: 'test' }));
+            await component.addQuestions(questions);
+            expect(onQuestionsAddedSpy).toHaveBeenCalledOnce();
         });
     });
 });
