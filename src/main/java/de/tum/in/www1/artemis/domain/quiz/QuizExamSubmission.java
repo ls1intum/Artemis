@@ -8,7 +8,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 
 @Entity
-@DiscriminatorValue(value = "QE")
+@DiscriminatorValue("QE")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class QuizExamSubmission extends AbstractQuizSubmission {
 
