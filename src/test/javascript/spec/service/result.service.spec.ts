@@ -23,6 +23,8 @@ import { ProgrammingSubmission } from 'app/entities/programming-submission.model
 import { FeedbackType, STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER, SUBMISSION_POLICY_FEEDBACK_IDENTIFIER } from 'app/entities/feedback.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import * as Sentry from '@sentry/browser';
+import { Course } from 'app/entities/course.model';
+import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 
 describe('ResultService', () => {
     let resultService: ResultService;
@@ -278,5 +280,13 @@ describe('ResultService', () => {
                 tooltip: 'artemisApp.result.notGradedTooltip',
             });
         });
+    });
+
+    it('should call getResultString', () => {
+        const course = new Course();
+        const result = new Result();
+        const getResultStringSpy = jest.spyOn(resultService, 'getResultString').mockImplementation();
+        resultService.getQuizExamResultString(result, course, 100, true);
+        expect(getResultStringSpy).toHaveBeenCalledOnce();
     });
 });
