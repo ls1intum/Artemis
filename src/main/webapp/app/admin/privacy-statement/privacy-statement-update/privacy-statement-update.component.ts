@@ -25,7 +25,6 @@ export class PrivacyStatementUpdateComponent implements OnInit {
     readonly minHeight = MarkdownEditorHeight.MEDIUM;
     currentLanguage = this.defaultLanguage;
     unsavedChanges = false;
-    submitButtonTitle: string;
     faBan = faBan;
     faSave = faSave;
     isSaving = false;
@@ -34,7 +33,6 @@ export class PrivacyStatementUpdateComponent implements OnInit {
     constructor(private privacyStatementService: PrivacyStatementService, private modalService: NgbModal, private languageHelper: JhiLanguageHelper) {}
 
     ngOnInit() {
-        this.submitButtonTitle = 'entity.action.save';
         this.privacyStatement = new PrivacyStatement(this.defaultLanguage);
         this.languageHelper.updateTitle('artemisApp.privacyStatement.title');
         this.privacyStatementService.getPrivacyStatementForUpdate(this.defaultLanguage).subscribe((statement) => {

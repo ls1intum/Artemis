@@ -15,11 +15,15 @@
             [minHeightEditor]="600"
         ></jhi-markdown-editor>
         <div class="btn-below-editor">
-            <div class="privacy-statement-buttons">
-                <jhi-button (click)="updatePrivacyStatement()" [isLoading]="isSaving" [title]="submitButtonTitle" [icon]="faSave" [ngStyle]="{ 'marginRight.px': 10 }"
-                    >Save
-                </jhi-button>
-            </div>
+            <jhi-button
+                id="update-privacy-statement-btn"
+                (click)="updatePrivacyStatement()"
+                [isLoading]="isSaving"
+                [title]="'entity.action.save'"
+                [icon]="faSave"
+                [ngStyle]="{ 'marginRight.px': 10 }"
+                >Save
+            </jhi-button>
             <jhi-mode-picker [options]="languageOptions" [value]="currentLanguage" (valueChange)="onLanguageChange($event!)"></jhi-mode-picker>
         </div>
     </div>
