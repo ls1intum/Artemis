@@ -28,18 +28,18 @@ public class AttachmentUnitService {
 
     private final LectureRepository lectureRepository;
 
-    private final AsyncSlideSplitterService asyncSlideSplitterService;
+    private final SlideSplitterService slideSplitterService;
 
     private final SlideRepository slideRepository;
 
-    public AttachmentUnitService(SlideRepository slideRepository, AsyncSlideSplitterService asyncSlideSplitterService, AttachmentUnitRepository attachmentUnitRepository,
+    public AttachmentUnitService(SlideRepository slideRepository, SlideSplitterService slideSplitterService, AttachmentUnitRepository attachmentUnitRepository,
             AttachmentRepository attachmentRepository, FileService fileService, CacheManager cacheManager, LectureRepository lectureRepository) {
         this.attachmentUnitRepository = attachmentUnitRepository;
         this.attachmentRepository = attachmentRepository;
         this.fileService = fileService;
         this.cacheManager = cacheManager;
         this.lectureRepository = lectureRepository;
-        this.asyncSlideSplitterService = asyncSlideSplitterService;
+        this.slideSplitterService = slideSplitterService;
         this.slideRepository = slideRepository;
     }
 
@@ -70,7 +70,7 @@ public class AttachmentUnitService {
         prepareAttachmentUnitForClient(savedAttachmentUnit, savedAttachment);
         evictCache(file, savedAttachmentUnit);
 
-        asyncSlideSplitterService.splitAttachmentUnitIntoSingleSlides(savedAttachmentUnit);
+        slideSplitterService.splitAttachmentUnitIntoSingleSlides(savedAttachmentUnit);
 
         return savedAttachmentUnit;
     }
@@ -107,7 +107,7 @@ public class AttachmentUnitService {
         evictCache(updateFile, savedAttachmentUnit);
 
         slideRepository.deleteAll(existingAttachmentUnit.getSlides());
-        asyncSlideSplitterService.splitAttachmentUnitIntoSingleSlides(savedAttachmentUnit);
+        slideSplitterService.splitAttachmentUnitIntoSingleSlides(savedAttachmentUnit);
 
         return savedAttachmentUnit;
     }

@@ -34,7 +34,7 @@ public class LectureUnitProcessingService {
 
     private final FileService fileService;
 
-    private final AsyncSlideSplitterService asyncSlideSplitterService;
+    private final SlideSplitterService slideSplitterService;
 
     private final AttachmentUnitRepository attachmentUnitRepository;
 
@@ -44,10 +44,10 @@ public class LectureUnitProcessingService {
 
     private final LectureRepository lectureRepository;
 
-    public LectureUnitProcessingService(AsyncSlideSplitterService asyncSlideSplitterService, FileService fileService, AttachmentUnitRepository attachmentUnitRepository,
+    public LectureUnitProcessingService(SlideSplitterService slideSplitterService, FileService fileService, AttachmentUnitRepository attachmentUnitRepository,
             AttachmentRepository attachmentRepository, CacheManager cacheManager, LectureRepository lectureRepository) {
         this.fileService = fileService;
-        this.asyncSlideSplitterService = asyncSlideSplitterService;
+        this.slideSplitterService = slideSplitterService;
         this.attachmentUnitRepository = attachmentUnitRepository;
         this.attachmentRepository = attachmentRepository;
         this.cacheManager = cacheManager;
@@ -93,7 +93,7 @@ public class LectureUnitProcessingService {
 
                 MultipartFile multipartFile = fileService.convertByteArrayToMultipart(lectureUnit.unitName(), ".pdf", outputStream.toByteArray());
                 AttachmentUnit savedAttachmentUnit = saveAttachmentUnit(attachmentUnit, attachment, multipartFile, lecture);
-                asyncSlideSplitterService.splitAttachmentUnitIntoSingleSlides(documentUnits.get(0), savedAttachmentUnit);
+                slideSplitterService.splitAttachmentUnitIntoSingleSlides(documentUnits.get(0), savedAttachmentUnit);
 
                 units.add(savedAttachmentUnit);
             }

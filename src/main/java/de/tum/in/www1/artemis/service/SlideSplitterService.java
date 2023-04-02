@@ -24,21 +24,21 @@ import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
  * Service Implementation for managing the split of AttachmentUnit into single slides and save them as PNG.
  */
 @Service
-public class AsyncSlideSplitterService {
+public class SlideSplitterService {
 
-    private final Logger log = LoggerFactory.getLogger(AsyncSlideSplitterService.class);
+    private final Logger log = LoggerFactory.getLogger(SlideSplitterService.class);
 
     private final FileService fileService;
 
     private final SlideRepository slideRepository;
 
-    public AsyncSlideSplitterService(FileService fileService, SlideRepository slideRepository) {
+    public SlideSplitterService(FileService fileService, SlideRepository slideRepository) {
         this.fileService = fileService;
         this.slideRepository = slideRepository;
     }
 
     /**
-     * Splits an Attachment Unit file into single slides and saves them as PNG files.
+     * Splits an Attachment Unit file into single slides and saves them as PNG files asynchronously.
      *
      * @param attachmentUnit The attachment unit to which the slides belong.
      */

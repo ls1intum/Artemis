@@ -60,7 +60,7 @@ public class Slide extends DomainObject {
     }
 
     /**
-     * Initialisation of the ExamUser on Server start
+     * Initialisation of the Slide on Server start
      */
     @PostLoad
     public void onLoad() {
