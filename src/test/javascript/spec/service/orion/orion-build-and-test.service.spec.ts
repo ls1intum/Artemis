@@ -29,11 +29,14 @@ describe('OrionBuildAndTestService', () => {
     let buildLogsStub: jest.SpyInstance;
     let participationSubscriptionStub: jest.SpyInstance;
 
-    const feedbacks = [{ id: 2, positive: false, detailText: 'abc' } as Feedback, { id: 3, positive: true, detailText: 'cde' } as Feedback];
-    const feedbacksWithStaticCodeAnalysis = [
+    const feedbacks: Feedback[] = [
+        { id: 2, positive: false, detailText: 'abc', type: FeedbackType.AUTOMATIC, testCase: { testName: 'testBubbleSort', id: 1 } },
+        { id: 3, positive: true, detailText: 'cde', type: FeedbackType.AUTOMATIC, testCase: { testName: 'testMergeSort', id: 2 } },
+    ];
+    const feedbacksWithStaticCodeAnalysis: Feedback[] = [
         ...feedbacks,
-        { id: 3, positive: false, detailText: 'fgh', type: FeedbackType.AUTOMATIC, text: STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER + 'a' } as Feedback,
-        { id: 4, positive: false, detailText: 'ijk', type: FeedbackType.AUTOMATIC, text: STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER + 'b' } as Feedback,
+        { id: 3, positive: false, detailText: 'fgh', type: FeedbackType.AUTOMATIC, text: STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER + 'a' },
+        { id: 4, positive: false, detailText: 'ijk', type: FeedbackType.AUTOMATIC, text: STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER + 'b' },
     ];
     const result = { id: 1 } as Result;
     const submissionFailed = { id: 1, buildFailed: true } as ProgrammingSubmission;
@@ -143,7 +146,7 @@ describe('OrionBuildAndTestService', () => {
         expect(onBuildStartedSpy).toHaveBeenCalledOnce();
         expect(onTestResultSpy).toHaveBeenCalledTimes(2);
         feedbacks.forEach((feedback, index) => {
-            expect(onTestResultSpy).toHaveBeenNthCalledWith(index + 1, feedback.positive, feedback.text, feedback.detailText);
+            expect(onTestResultSpy).toHaveBeenNthCalledWith(index + 1, feedback.positive, feedback.testCase?.testName, feedback.detailText);
         });
         expect(onBuildFinishedSpy).toHaveBeenCalledOnce();
         expect(onBuildFailedSpy).not.toHaveBeenCalled();
