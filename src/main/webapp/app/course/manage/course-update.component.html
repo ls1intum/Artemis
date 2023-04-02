@@ -424,7 +424,7 @@
             </div>
             <div class="mt-3 d-flex">
                 <button type="button" class="btn btn-secondary" id="cancel-save" (click)="previousState()">
-                    <fa-icon [icon]="faBan"></fa-icon>&nbsp;
+                    <fa-icon [icon]="faBan"></fa-icon>
                     <span jhiTranslate="entity.action.cancel">Cancel</span>
                 </button>
                 <span *ngIf="courseForm.invalid; else saveButtonTpl" [ngbTooltip]="'artemisApp.course.form.invalidForm' | artemisTranslate">
@@ -432,7 +432,7 @@
                 </span>
                 <ng-template #saveButtonTpl>
                     <button type="submit" class="btn btn-primary ms-2" id="save-entity" [disabled]="courseForm.invalid || isSaving || !isValidConfiguration">
-                        <fa-icon [icon]="faSave"></fa-icon>&nbsp;
+                        <fa-icon [icon]="faSave"></fa-icon>
                         <span jhiTranslate="entity.action.save">Save</span>
                     </button>
                 </ng-template>

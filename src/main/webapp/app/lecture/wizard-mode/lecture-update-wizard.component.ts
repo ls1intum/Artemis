@@ -21,7 +21,7 @@ export class LectureUpdateWizardComponent implements OnInit {
     @Input() isSaving: boolean;
     @Input() startDate: string;
     @Input() endDate: string;
-    @Input() isInvalidDate: boolean;
+    @Input() isEndDateBeforeStartDate: boolean;
 
     @ViewChild(LectureUpdateWizardUnitsComponent, { static: false }) unitsComponent: LectureUpdateWizardUnitsComponent;
     @ViewChild(LectureUpdateWizardLearningGoalsComponent, { static: false }) learningGoalsComponent: LectureUpdateWizardLearningGoalsComponent;

@@ -6,7 +6,7 @@
         [currentStep]="currentStep"
         [lecture]="lecture"
         [validateDatesFunction]="validateDatesFunction"
-        [isInvalidDate]="isInvalidDate"
+        [isEndDateBeforeStartDate]="isEndDateBeforeStartDate"
         (invalidChange)="validateDatesFunction()"
     ></jhi-lecture-update-wizard-period>
     <jhi-lecture-update-wizard-attachments class="form-step" *ngIf="currentStep >= 3" [currentStep]="currentStep" [lecture]="lecture"></jhi-lecture-update-wizard-attachments>
@@ -22,7 +22,7 @@
     <!-- Bottom Navigation Bar -->
     <div class="d-flex align-items-center">
         <div class="me-3">
-            <button type="button" id="back" [disabled]="isSaving || isInvalidDate" class="btn btn-secondary" (click)="toggleWizardMode()">
+            <button type="button" id="back" [disabled]="isSaving || isEndDateBeforeStartDate" class="btn btn-secondary" (click)="toggleWizardMode()">
                 <fa-icon [icon]="faHandShakeAngle"></fa-icon>&nbsp;<span jhiTranslate="artemisApp.lecture.home.switchToTraditionalModeLabel">Switch to normal mode</span>
             </button>
         </div>
@@ -60,7 +60,7 @@
             </div>
         </div>
         <div class="ms-3">
-            <button type="button" id="next" [disabled]="(currentStep === 2 && !lecture.title) || isSaving || isInvalidDate" class="btn btn-primary" (click)="next()">
+            <button type="button" id="next" [disabled]="(currentStep === 2 && !lecture.title) || isSaving || isEndDateBeforeStartDate" class="btn btn-primary" (click)="next()">
                 <fa-icon [icon]="getNextIcon()"></fa-icon>&nbsp;<span [jhiTranslate]="getNextText()">Next</span>
             </button>
         </div>

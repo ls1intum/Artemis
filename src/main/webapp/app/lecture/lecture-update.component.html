@@ -5,7 +5,7 @@
             [toggleModeFunction]="toggleModeFunction"
             [saveLectureFunction]="saveLectureFunction"
             [validateDatesFunction]="validateDate"
-            [isInvalidDate]="isInvalidDate"
+            [isEndDateBeforeStartDate]="isEndDateBeforeStartDate"
             [lecture]="lecture"
             [isSaving]="isSaving"
             [startDate]="startDate"
@@ -21,7 +21,7 @@
                 </div>
                 <div class="flex-grow-1 ms-3">
                     <div class="guided-mode-button">
-                        <button type="button" id="guided.mode" class="btn btn-primary" [disabled]="isSaving || isInvalidDate" (click)="toggleWizardMode()">
+                        <button type="button" id="guided.mode" class="btn btn-primary" [disabled]="isSaving || isEndDateBeforeStartDate" (click)="toggleWizardMode()">
                             <fa-icon [icon]="faHandShakeAngle"></fa-icon>&nbsp;<span jhiTranslate="artemisApp.lecture.home.switchToGuidedModeLabel">Switch to guided mode</span>
                         </button>
                     </div>
@@ -51,22 +51,22 @@
                             labelName="{{ 'artemisApp.lecture.startDate' | artemisTranslate }}"
                             [(ngModel)]="lecture.startDate"
                             (valueChange)="validateDate()"
-                            [error]="isInvalidDate"
+                            [error]="isEndDateBeforeStartDate"
                             name="startDate"
                             id="start-date"
                         ></jhi-date-time-picker>
-                        <span *ngIf="isInvalidDate" class="invalid-feedback"> {{ 'artemisApp.lecture.form.startDate.invalid' | artemisTranslate }}</span>
+                        <span *ngIf="isEndDateBeforeStartDate" class="invalid-feedback"> {{ 'artemisApp.lecture.form.startDate.invalid' | artemisTranslate }}</span>
                     </div>
                     <div class="form-group flex-grow-1 ms-3">
                         <jhi-date-time-picker
                             labelName="{{ 'artemisApp.lecture.endDate' | artemisTranslate }}"
                             [(ngModel)]="lecture.endDate"
                             (valueChange)="validateDate()"
-                            [error]="isInvalidDate"
+                            [error]="isEndDateBeforeStartDate"
                             name="endDate"
                             id="end-date"
                         ></jhi-date-time-picker>
-                        <span *ngIf="isInvalidDate" class="invalid-feedback"> {{ 'artemisApp.lecture.form.endDate.invalid' | artemisTranslate }}</span>
+                        <span *ngIf="isEndDateBeforeStartDate" class="invalid-feedback"> {{ 'artemisApp.lecture.form.endDate.invalid' | artemisTranslate }}</span>
                     </div>
                 </div>
                 <div class="form-group" *ngIf="lecture.course">
@@ -121,7 +121,7 @@
                     <button type="button" id="cancel-save" class="btn btn-secondary" (click)="previousState()">
                         <fa-icon [icon]="faBan"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
                     </button>
-                    <button type="submit" id="save-entity" [disabled]="editForm.form.invalid || isSaving || processUnitMode || isInvalidDate" class="btn btn-primary">
+                    <button type="submit" id="save-entity" [disabled]="editForm.form.invalid || isSaving || processUnitMode || isEndDateBeforeStartDate" class="btn btn-primary">
                         <fa-icon [icon]="faSave"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>
                     </button>
                 </div>
@@ -130,7 +130,7 @@
                         <button
                             type="button"
                             id="process-units-entity"
-                            [disabled]="editForm.form.invalid || isSaving || !processUnitMode || isProcessing || !fileName || isInvalidDate"
+                            [disabled]="editForm.form.invalid || isSaving || !processUnitMode || isProcessing || !fileName || isEndDateBeforeStartDate"
                             class="btn btn-success"
                             (click)="proceedToUnitSplit()"
                         >
