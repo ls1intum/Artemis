@@ -48,8 +48,6 @@ class ProgrammingExerciseFeedbackCreationServiceTest extends AbstractSpringInteg
         programmingExercise.setProjectType(ProjectType.PLAIN_MAVEN);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
         database.addTestCasesToProgrammingExercise(programmingExercise);
-        // programmingExercise = programmingExerciseRepository
-        // .findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipationsAndAuxRepos(programmingExercise.getId()).orElseThrow();
     }
 
     @Test

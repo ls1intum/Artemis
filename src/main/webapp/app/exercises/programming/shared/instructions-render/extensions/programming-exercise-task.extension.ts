@@ -68,7 +68,7 @@ export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownE
      * @param tasks to inject into the html.
      */
     private injectTasks = (tasks: TaskArray) => {
-        tasks.forEach(({ id, taskName, tests }) => {
+        tasks.forEach(({ id, taskName, testIds }) => {
             const taskHtmlContainers = document.getElementsByClassName(`pe-task-${id}`);
 
             // The same task could appear multiple times in the instructions (edge case).
@@ -79,7 +79,7 @@ export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownE
                 componentRef.instance.exercise = this.exercise;
                 componentRef.instance.taskName = taskName;
                 componentRef.instance.latestResult = this.latestResult;
-                componentRef.instance.tests = tests;
+                componentRef.instance.tests = testIds;
 
                 const domElem = (componentRef.hostView as EmbeddedViewRef<any>).rootNodes[0] as HTMLElement;
                 const taskHtmlContainer = taskHtmlContainers[i];
@@ -118,7 +118,7 @@ export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownE
                     id: nextIndex,
                     completeString: testMatch[0],
                     taskName: testMatch[1],
-                    tests: testMatch[2] ? this.programmingExerciseInstructionService.convertTestListToIds(testMatch[2]) : [],
+                    testIds: testMatch[2] ? this.programmingExerciseInstructionService.convertTestListToIds(testMatch[2]) : [],
                 };
             });
         const tasksWithParticipationId: TaskArrayWithExercise = {

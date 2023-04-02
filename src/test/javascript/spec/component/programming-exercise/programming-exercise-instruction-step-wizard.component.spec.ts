@@ -42,8 +42,8 @@ describe('ProgrammingExerciseInstructionStepWizardComponent', () => {
             feedbacks: [{ testCase: { testName: 'testBubbleSort', id: 1 }, detailText: 'lorem ipsum' }],
         } as Result;
         const tasks = [
-            { completeString: '[task][Implement BubbleSort](1)', taskName: 'Implement BubbleSort', tests: [1] } as Task,
-            { completeString: '[task][Implement MergeSort](2)', taskName: 'Implement MergeSort', tests: [2] } as Task,
+            { completeString: '[task][Implement BubbleSort](1)', taskName: 'Implement BubbleSort', testIds: [1] } as Task,
+            { completeString: '[task][Implement MergeSort](2)', taskName: 'Implement MergeSort', testIds: [2] } as Task,
         ];
         comp.latestResult = result;
         comp.tasks = tasks;

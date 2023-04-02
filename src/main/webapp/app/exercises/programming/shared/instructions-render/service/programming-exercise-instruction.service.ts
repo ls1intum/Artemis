@@ -25,24 +25,24 @@ export type TaskResult = {
 export class ProgrammingExerciseInstructionService {
     /**
      * @function testStatusForTask
-     * @desc Callback function for renderers to set the appropriate test status
-     * @param tests
-     * @param latestResult
+     * @desc Callback function for renderers to set the appropriate test status.
+     * @param testIds all test case ids that are included into the task.
+     * @param latestResult the result to check for if the tests were successful.
      */
-    public testStatusForTask = (tests: number[], latestResult?: Result): TaskResult => {
-        if (latestResult && latestResult.successful && (!latestResult.feedbacks || !latestResult.feedbacks.length) && tests) {
+    public testStatusForTask = (testIds: number[], latestResult?: Result): TaskResult => {
+        if (latestResult && latestResult.successful && (!latestResult.feedbacks || !latestResult.feedbacks.length) && testIds) {
             // Case 1: Submission fulfills all test cases and there are no feedbacks (legacy case), no further checking needed.
-            return { testCaseState: TestCaseState.SUCCESS, detailed: { successfulTests: tests, failedTests: [], notExecutedTests: [] } };
+            return { testCaseState: TestCaseState.SUCCESS, detailed: { successfulTests: testIds, failedTests: [], notExecutedTests: [] } };
         }
 
         if (latestResult && latestResult.feedbacks && latestResult.feedbacks.length) {
             // Case 2: At least one test case is not successful, tests need to checked to find out if they were not fulfilled
-            const { failed, notExecuted, successful } = this.separateTests(tests, latestResult);
+            const { failed, notExecuted, successful } = this.separateTests(testIds, latestResult);
 
             let testCaseState;
             if (failed.length > 0) {
                 testCaseState = TestCaseState.FAIL;
-            } else if (notExecuted.length > 0 || tests.length === 0) {
+            } else if (notExecuted.length > 0 || testIds.length === 0) {
                 testCaseState = TestCaseState.NOT_EXECUTED;
             } else {
                 testCaseState = TestCaseState.SUCCESS;
@@ -50,7 +50,7 @@ export class ProgrammingExerciseInstructionService {
             return { testCaseState, detailed: { successfulTests: successful, failedTests: failed, notExecutedTests: notExecuted } };
         } else {
             // Case 3: There are no results
-            return { testCaseState: TestCaseState.NO_RESULT, detailed: { successfulTests: [], failedTests: [], notExecutedTests: tests } };
+            return { testCaseState: TestCaseState.NO_RESULT, detailed: { successfulTests: [], failedTests: [], notExecutedTests: testIds } };
         }
     };
 
