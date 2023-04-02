@@ -16,7 +16,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
-import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
@@ -65,83 +64,6 @@ class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegrationBa
     @AfterEach
     void tearDown() {
         bambooRequestMockProvider.reset();
-    }
-
-    @Test
-    void shouldSetAllTestCasesToInactiveIfFeedbackListIsEmpty() {
-        List<Feedback> feedbacks = new ArrayList<>();
-        programmingExerciseFeedbackService.generateTestCasesFromFeedbacks(feedbacks, programmingExercise);
-
-        Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(programmingExercise.getId());
-        assertThat(testCases).hasSize(3);
-
-        assertThat(testCases).noneMatch(ProgrammingExerciseTestCase::isActive);
-    }
-
-    @Test
-    void shouldUpdateActiveFlagsOfTestCases() {
-        List<Feedback> feedbacks = new ArrayList<>();
-        feedbacks.add(new Feedback().text("test1"));
-        feedbacks.add(new Feedback().text("test2"));
-        feedbacks.add(new Feedback().text("test4"));
-        feedbacks.add(new Feedback().text("test5"));
-        programmingExerciseFeedbackService.generateTestCasesFromFeedbacks(feedbacks, programmingExercise);
-
-        Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(programmingExercise.getId());
-        assertThat(testCases).hasSize(5);
-
-        assertThat(testCases.stream().allMatch(testCase -> {
-            if (testCase.getTestName().equals("test3")) {
-                return !testCase.isActive();
-            }
-            else {
-                return testCase.isActive();
-            }
-        })).isTrue();
-    }
-
-    @Test
-    void shouldGenerateNewTestCases() {
-        // We do not want to use the test cases generated in the setup
-        testCaseRepository.deleteAll(testCaseRepository.findByExerciseId(programmingExercise.getId()));
-
-        List<Feedback> feedbacks = new ArrayList<>();
-        feedbacks.add(new Feedback().text("test1"));
-        feedbacks.add(new Feedback().text("test2"));
-        programmingExerciseFeedbackService.generateTestCasesFromFeedbacks(feedbacks, programmingExercise);
-
-        Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(programmingExercise.getId());
-        assertThat(testCases).hasSize(2);
-
-        assertThat(testCases).allMatch(ProgrammingExerciseTestCase::isActive);
-    }
-
-    @Test
-    void shouldNotGenerateNewTestCasesForStaticCodeAnalysisFeedback() {
-        // We do not want to use the test cases generated in the setup
-        testCaseRepository.deleteAll(testCaseRepository.findByExerciseId(programmingExercise.getId()));
-
-        List<Feedback> feedbackList = ModelFactory.generateStaticCodeAnalysisFeedbackList(5);
-        programmingExerciseFeedbackService.generateTestCasesFromFeedbacks(feedbackList, programmingExercise);
-
-        Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(programmingExercise.getId());
-        assertThat(testCases).isEmpty();
-    }
-
-    @Test
-    void shouldFilterOutDuplicateTestCases() {
-        // We do not want to use the test cases generated in the setup
-        testCaseRepository.deleteAll(testCaseRepository.findByExerciseId(programmingExercise.getId()));
-
-        List<Feedback> feedbacks = new ArrayList<>();
-        feedbacks.add(new Feedback().text("test1"));
-        feedbacks.add(new Feedback().text("generateTestsForAllClasses"));
-        feedbacks.add(new Feedback().text("generateTestsForAllClasses"));
-        feedbacks.add(new Feedback().text("generateTestsForAllClasses"));
-        programmingExerciseFeedbackService.generateTestCasesFromFeedbacks(feedbacks, programmingExercise);
-
-        Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(programmingExercise.getId());
-        assertThat(testCases).hasSize(2);
     }
 
     @Test

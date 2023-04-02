@@ -1,5 +1,6 @@
 import { EmbeddedViewRef, Injectable, Injector, ViewContainerRef } from '@angular/core';
 import { Exercise } from 'app/entities/exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { Result } from 'app/entities/result.model';
 import { ProgrammingExerciseInstructionService } from 'app/exercises/programming/shared/instructions-render/service/programming-exercise-instruction.service';
 // eslint-disable-next-line max-len
@@ -12,11 +13,16 @@ import { ShowdownExtension } from 'showdown';
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownExtensionWrapper {
+    // E.g. [task][Implement BubbleSort](testBubbleSort)
+    private readonly taskRegex = /\[task\]\[.*\]\(.*\)({.*})?/g;
+    // E.g. Implement BubbleSort, testBubbleSort
+    private readonly innerTaskRegex = /\[task\]\[(.*)\]\((.*)\)({(.*)})?/;
+
     // We don't have a provider for ViewContainerRef, so we pass it from ProgrammingExerciseInstructionComponent
     viewContainerRef: ViewContainerRef;
 
     private latestResult?: Result;
-    private exercise: Exercise;
+    private exercise: ProgrammingExercise;
 
     private testsForTaskSubject = new Subject<TaskArrayWithExercise>();
     private injectableElementsFoundSubject = new Subject<() => void>();
@@ -91,47 +97,46 @@ export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownE
     getExtension() {
         const extension: ShowdownExtension = {
             type: 'lang',
-            filter: (text: string) => {
-                // E.g. [task][Implement BubbleSort](testBubbleSort)
-                const taskRegex = /\[task\]\[.*\]\(.*\)({.*})?/g;
-                // E.g. Implement BubbleSort, testBubbleSort
-                const innerTaskRegex = /\[task\]\[(.*)\]\((.*)\)({(.*)})?/;
-                const tasks = text.match(taskRegex) || [];
-                const testsForTask: TaskArray = tasks
-                    .map((task) => {
-                        return task.match(innerTaskRegex);
-                    })
-                    .filter((testMatch) => !!testMatch && (testMatch.length === 3 || testMatch.length === 5))
-                    .map((testMatch: RegExpMatchArray) => {
-                        const nextIndex = this.taskIndex;
-                        this.taskIndex++;
-                        return {
-                            id: nextIndex,
-                            completeString: testMatch[0],
-                            taskName: testMatch[1],
-                            // split the names by "," only when there is not a closing bracket without a previous opening bracket
-                            tests: testMatch[2] ? testMatch[2].split(/,(?![^(]*?\))/).map((s) => s.trim()) : [],
-                        };
-                    });
-                const tasksWithParticipationId: TaskArrayWithExercise = {
-                    exerciseId: this.exercise.id!,
-                    tasks: testsForTask,
-                };
-                this.testsForTaskSubject.next(tasksWithParticipationId);
-                // Emit new found elements that need to be injected into html after it is rendered.
-                this.injectableElementsFoundSubject.next(() => {
-                    this.injectTasks(testsForTask);
-                });
-                return testsForTask.reduce(
-                    (acc: string, { completeString: task, id }): string =>
-                        // Insert anchor divs into the text so that injectable elements can be inserted into them.
-                        // Without class="d-flex" the injected components height would be 0.
-                        // Added zero-width space as content so the div actually consumes a line to prevent a <ol> display bug in Safari
-                        acc.replace(new RegExp(escapeStringForUseInRegex(task), 'g'), `<div class="pe-task-${id.toString()} d-flex">&#8203;</div>`),
-                    text,
-                );
+            filter: (problemStatement: string) => {
+                const tasks = problemStatement.match(this.taskRegex) || [];
+                return this.createTasks(problemStatement, tasks);
             },
         };
         return extension;
+    }
+
+    private createTasks(problemStatement: string, tasks: RegExpMatchArray | []): string {
+        const testsForTask: TaskArray = tasks
+            .map((task) => {
+                return task.match(this.innerTaskRegex);
+            })
+            .filter((testMatch) => !!testMatch && (testMatch.length === 3 || testMatch.length === 5))
+            .map((testMatch: RegExpMatchArray) => {
+                const nextIndex = this.taskIndex;
+                this.taskIndex++;
+                return {
+                    id: nextIndex,
+                    completeString: testMatch[0],
+                    taskName: testMatch[1],
+                    tests: testMatch[2] ? this.programmingExerciseInstructionService.convertTestListToIds(testMatch[2]) : [],
+                };
+            });
+        const tasksWithParticipationId: TaskArrayWithExercise = {
+            exerciseId: this.exercise.id!,
+            tasks: testsForTask,
+        };
+        this.testsForTaskSubject.next(tasksWithParticipationId);
+        // Emit new found elements that need to be injected into html after it is rendered.
+        this.injectableElementsFoundSubject.next(() => {
+            this.injectTasks(testsForTask);
+        });
+        return testsForTask.reduce(
+            (acc: string, { completeString: task, id }): string =>
+                // Insert anchor divs into the text so that injectable elements can be inserted into them.
+                // Without class="d-flex" the injected components height would be 0.
+                // Added zero-width space as content so the div actually consumes a line to prevent a <ol> display bug in Safari
+                acc.replace(new RegExp(escapeStringForUseInRegex(task), 'g'), `<div class="pe-task-${id.toString()} d-flex">&#8203;</div>`),
+            problemStatement,
+        );
     }
 }

@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.service.util.TimeLogUtil.formatDurationFrom;
+
 import java.io.IOException;
 
 import org.slf4j.Logger;
@@ -59,7 +61,9 @@ public class PlantUmlResource {
             throws IOException {
         long start = System.currentTimeMillis();
         final var svg = plantUmlService.generateSvg(plantuml, useDarkTheme);
-        log.info("PlantUml.generateSvg took {}ms", System.currentTimeMillis() - start);
+        if (log.isInfoEnabled()) {
+            log.info("PlantUml.generateSvg took {}", formatDurationFrom(start));
+        }
         return new ResponseEntity<>(svg, HttpStatus.OK);
     }
 

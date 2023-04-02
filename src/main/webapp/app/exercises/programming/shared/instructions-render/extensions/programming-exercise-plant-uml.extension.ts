@@ -90,12 +90,18 @@ export class ProgrammingExercisePlantUmlExtensionWrapper implements ArtemisShowd
                 // (green == implemented, red == not yet implemented, grey == unknown)
                 const plantUmlsValidated = plantUmlsIndexed.map((plantUmlIndexed: { plantUmlId: number; plantUml: string }) => {
                     plantUmlIndexed.plantUml = plantUmlIndexed.plantUml.replace(/testsColor\(((?:[^()]+\([^()]+\))*[^()]*)\)/g, (match: any, capture: string) => {
-                        // split the names by "," only when there is not a closing bracket without a previous opening bracket
-                        const tests = capture.split(/,(?![^(]*?\))/);
+                        const tests = this.programmingExerciseInstructionService.convertTestListToIds(capture);
                         const { testCaseState } = this.programmingExerciseInstructionService.testStatusForTask(tests, this.latestResult);
-                        return testCaseState === TestCaseState.SUCCESS ? 'green' : testCaseState === TestCaseState.FAIL ? 'red' : 'grey';
+                        if (testCaseState === TestCaseState.SUCCESS) {
+                            return 'green';
+                        } else if (testCaseState === TestCaseState.FAIL) {
+                            return 'red';
+                        } else {
+                            return 'grey';
+                        }
                     });
                     return plantUmlIndexed;
+                    // TODO cases create and import (change to new ids)
                 });
                 // send the adapted plantUml to the server for rendering and inject the result into the html DOM based on the unique plantUml id
                 this.injectableElementsFoundSubject.next(() => {

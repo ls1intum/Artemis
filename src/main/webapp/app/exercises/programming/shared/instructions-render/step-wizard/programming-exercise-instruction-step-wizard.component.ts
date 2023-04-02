@@ -19,7 +19,7 @@ export class ProgrammingExerciseInstructionStepWizardComponent implements OnChan
     @Input() latestResult?: Result;
     @Input() tasks: TaskArray;
 
-    steps: Array<{ done: TestCaseState; title: string; tests: string[] }>;
+    steps: Array<{ done: TestCaseState; title: string; tests: number[] }>;
 
     // Icons
     faTimes = faTimes;
@@ -47,7 +47,7 @@ export class ProgrammingExerciseInstructionStepWizardComponent implements OnChan
      * @param {string[]} tests - Identifies the testcase
      * @param taskName - the name of the selected task
      */
-    public showDetailsForTests(tests: string[], taskName: string) {
+    public showDetailsForTests(tests: number[], taskName: string) {
         if (!this.latestResult || !tests.length) {
             return;
         }

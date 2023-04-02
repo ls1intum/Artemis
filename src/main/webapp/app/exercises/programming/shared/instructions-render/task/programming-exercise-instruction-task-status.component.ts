@@ -24,12 +24,15 @@ export class ProgrammingExerciseInstructionTaskStatusComponent {
     @Input() exercise: Exercise;
     @Input() latestResult?: Result;
 
-    testsValue: string[];
+    /**
+     * array of test ids
+     */
+    testsValue: number[];
     testCaseState: TestCaseState;
 
-    successfulTests: string[];
-    notExecutedTests: string[];
-    failedTests: string[];
+    successfulTests: number[];
+    notExecutedTests: number[];
+    failedTests: number[];
 
     hasMessage: boolean;
 
@@ -41,7 +44,7 @@ export class ProgrammingExerciseInstructionTaskStatusComponent {
     constructor(private programmingExerciseInstructionService: ProgrammingExerciseInstructionService, private appRef: ApplicationRef, private modalService: NgbModal) {}
 
     // eslint-disable-next-line @typescript-eslint/adjacent-overload-signatures
-    set tests(tests: string[]) {
+    set tests(tests: number[]) {
         this.testsValue = tests;
         const {
             testCaseState,
@@ -59,12 +62,12 @@ export class ProgrammingExerciseInstructionTaskStatusComponent {
      * @param tests the feedback names this should be checked for
      * @private
      */
-    private hasTestMessage(tests: string[]): boolean {
+    private hasTestMessage(tests: number[]): boolean {
         if (!this.latestResult || !this.latestResult.feedbacks) {
             return false;
         }
         const feedbacks = this.latestResult.feedbacks;
-        return tests.some((test) => feedbacks.find((feedback) => feedback.text === test && feedback.detailText));
+        return tests.some((test) => feedbacks.find((feedback) => feedback.testCase?.id === test && feedback.detailText));
     }
 
     /**

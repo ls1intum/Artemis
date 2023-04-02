@@ -1,11 +1,14 @@
 package de.tum.in.www1.artemis.service.hestia;
 
 import java.util.*;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.repository.hestia.ExerciseHintRepository;
@@ -30,6 +33,10 @@ public class ProgrammingExerciseTaskService {
      * If you change the regex, make sure to change it in all places!
      */
     private final Pattern taskPatternForProblemStatementMarkdown = Pattern.compile("\\[task]\\[(?<name>[^\\[\\]]+)]\\((?<tests>.*)\\)");
+
+    private final Pattern plantUMLPattern = Pattern.compile("@startuml([^@]*)@enduml");
+
+    private final Pattern testsColorPattern = Pattern.compile("testsColor\\(((?:[^()]+\\([^()]+\\))*[^()]*)\\)");
 
     public ProgrammingExerciseTaskService(ProgrammingExerciseTaskRepository programmingExerciseTaskRepository,
             ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository, ExerciseHintRepository exerciseHintRepository) {
@@ -120,7 +127,7 @@ public class ProgrammingExerciseTaskService {
 
     /**
      * Returns the extracted tasks and test cases from the problem statement markdown and
-     * maps the tasks to the corresponding test cases for a programming exercise
+     * maps the tasks to the corresponding test cases for a programming exercise.
      *
      * @param exercise the exercise for which the tasks and test cases should be extracted
      * @return the extracted tasks with the corresponding test cases
@@ -148,6 +155,18 @@ public class ProgrammingExerciseTaskService {
             tasks.add(task);
         }
         return tasks;
+    }
+
+    /**
+     * Replaces a comma seperated list of test case names with their corresponding ids.
+     * If no matching test case exists (e.g. due to a typo) the test name get kept.
+     */
+    private String extractTestCaseIdsFromNames(String capturedTestCaseNames, Set<ProgrammingExerciseTestCase> testCases) {
+        var testCaseNames = extractTestCaseNames(capturedTestCaseNames);
+
+        return testCaseNames.stream()
+                .map(testName -> testCases.stream().filter(tc -> testName.equals(tc.getTestName())).findFirst().map(tc -> tc.getId().toString()).orElse(testName))
+                .collect(Collectors.joining(","));
     }
 
     /**
@@ -191,5 +210,71 @@ public class ProgrammingExerciseTaskService {
         testCaseNames.add(currentTestCaseName.toString().trim());
 
         return testCaseNames;
+    }
+
+    public void replaceTestNamesWithIds(ProgrammingExercise exercise) {
+        var problemStatement = exercise.getProblemStatement();
+        if (problemStatement == null || problemStatement.isEmpty()) {
+            return;
+        }
+        // check the logic for activating test cases again (just to be sure)
+        // only load active test cases and use them to link the feedback (?)
+        Set<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseRepository.findByExerciseIdAndActive(exercise.getId(), true);
+
+        if (testCases.isEmpty()) {
+            return;
+        }
+
+        problemStatement = replaceTaskTestsWithIds(problemStatement, testCases);
+        problemStatement = replacePlantUMLTestCasesWithIds(problemStatement, testCases);
+
+        exercise.setProblemStatement(problemStatement);
+    }
+
+    private String replaceTaskTestsWithIds(String problemStatement, Set<ProgrammingExerciseTestCase> testCases) {
+        Matcher matcher = taskPatternForProblemStatementMarkdown.matcher(problemStatement);
+
+        return matcher.replaceAll(matchResult -> {
+            String fullMatch = matchResult.group();
+            String testNames = matchResult.group(2);
+
+            String testIds = extractTestCaseIdsFromNames(testNames, testCases);
+
+            return fullMatch.replace(testNames, testIds);
+        });
+    }
+
+    private String replacePlantUMLTestCasesWithIds(String problemStatement, Set<ProgrammingExerciseTestCase> testCases) {
+        Matcher matcher = plantUMLPattern.matcher(problemStatement);
+
+        return matcher.replaceAll(matchResult -> {
+            String diagram = matchResult.group();
+            Matcher tests = testsColorPattern.matcher(diagram);
+            return tests.replaceAll(testsMatchResult -> {
+                String fullMatch = testsMatchResult.group();
+                String testNames = testsMatchResult.group(1);
+                String testIds = extractTestCaseIdsFromNames(testNames, testCases);
+                return fullMatch.replace(testNames, testIds);
+            });
+        });
+    }
+
+    public static void main(String[] args) {
+        String test = """
+                [task][Task](test1)
+                [task][Task](test2)
+                """;
+
+        var pattern = Pattern.compile("\\[task]\\[(?<name>[^\\[\\]]+)]\\((?<tests>.*)\\)");
+        var matcher = pattern.matcher(test);
+
+        System.out.println(matcher.replaceAll(matchResult -> {
+            System.out.println(matchResult.group());
+            System.out.println(matchResult.group(0));
+            System.out.println(matchResult.group(1));
+            System.out.println(matchResult.group(2));
+            return "rep" + Math.random();
+        }));
+
     }
 }
