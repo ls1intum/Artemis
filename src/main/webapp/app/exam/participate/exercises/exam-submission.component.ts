@@ -1,6 +1,6 @@
 import { Submission } from 'app/entities/submission.model';
-import { ExamPageComponent } from 'app/exam/participate/exercises/exam-page.component';
 import { Exercise } from 'app/entities/exercise.model';
+import { ExamPageComponent } from 'app/exam/participate/exercises/exam-page.component';
 
 export abstract class ExamSubmissionComponent extends ExamPageComponent {
     /**
