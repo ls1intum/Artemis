@@ -2,7 +2,7 @@ package de.tum.in.www1.artemis.domain;
 
 public class PrivacyStatement {
 
-    private String privacyStatementText;
+    private String text;
 
     private final PrivacyStatementLanguage language;
 
@@ -11,16 +11,16 @@ public class PrivacyStatement {
     }
 
     public PrivacyStatement(String privacyStatement, PrivacyStatementLanguage language) {
-        this.privacyStatementText = privacyStatement;
+        this.text = privacyStatement;
         this.language = language;
     }
 
-    public void setPrivacyStatementText(String privacyStatementText) {
-        this.privacyStatementText = privacyStatementText;
+    public void setText(String text) {
+        this.text = text;
     }
 
-    public String getPrivacyStatementText() {
-        return privacyStatementText;
+    public String getText() {
+        return text;
     }
 
     public PrivacyStatementLanguage getLanguage() {

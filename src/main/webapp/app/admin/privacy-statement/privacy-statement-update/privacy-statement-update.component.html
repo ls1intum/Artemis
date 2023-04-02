@@ -1,27 +1,26 @@
-<div>
-    <h2>
-        <span id="privacy-statement-update-heading" jhiTranslate="artemisApp.privacyStatement.createOrEditLabel" data-cy="privacyStatementPageHeading"
-            >Create or edit privacy statement</span
-        >
-    </h2>
-    <jhi-markdown-editor
-        [markdown]="privacyStatement.text"
-        (markdownChange)="checkUnsavedChanges($event)"
-        [resizableMinHeight]="minHeight"
-        [resizableMaxHeight]="maxHeight"
-        [enableResize]="true"
-        minHeightEditor="500px"
-    ></jhi-markdown-editor>
-    <!--<div>-->
-    <!--    <jhi-button (click)="navigateBack()" [icon]="faBan" [title]="'entity.action.cancel'">Cancel</jhi-button>-->
-    <!--    <jhi-button (click)="updatePrivacyStatement()" [title]="submitButtonTitle" [icon]="faSave">Save</jhi-button>-->
-    <!--    <div ngbDropdown class="d-inline-block">-->
-    <!--        <button type="button" class="btn btn-outline-primary" id="dropdownBasic1" ngbDropdownToggle>-->
-    <!--            {{ 'artemisApp.generic.more' | artemisTranslate }}-->
-    <!--        </button>-->
-    <!--        <div ngbDropdownMenu>-->
-    <!--            <a ngbDropDownItem class="btn"> </a>-->
-    <!--        </div>-->
-    <!--    </div>-->
-    <!--</div>-->
+<div class="privacy-statement-container">
+    <div>
+        <h2>
+            <span id="privacy-statement-update-heading" jhiTranslate="artemisApp.privacyStatement.createOrEditLabel" data-cy="privacyStatementPageHeading"
+                >Create or edit privacy statement</span
+            >
+        </h2>
+
+        <jhi-markdown-editor
+            [markdown]="privacyStatement.text"
+            (markdownChange)="checkUnsavedChanges($event)"
+            [resizableMinHeight]="minHeight"
+            [resizableMaxHeight]="maxHeight"
+            [enableResize]="true"
+            [minHeightEditor]="600"
+        ></jhi-markdown-editor>
+        <div class="btn-below-editor">
+            <div class="privacy-statement-buttons">
+                <jhi-button (click)="updatePrivacyStatement()" [isLoading]="isSaving" [title]="submitButtonTitle" [icon]="faSave" [ngStyle]="{ 'marginRight.px': 10 }"
+                    >Save
+                </jhi-button>
+            </div>
+            <jhi-mode-picker [options]="languageOptions" [value]="currentLanguage" (valueChange)="onLanguageChange($event!)"></jhi-mode-picker>
+        </div>
+    </div>
 </div>

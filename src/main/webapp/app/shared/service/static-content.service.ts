@@ -2,7 +2,6 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { SafeHtml } from '@angular/platform-browser';
-import { PrivacyStatement, PrivacyStatementLanguage } from 'app/entities/privacy-statement.model';
 
 @Injectable({ providedIn: 'root' })
 export class StaticContentService {
@@ -24,13 +23,5 @@ export class StaticContentService {
      */
     getStaticJsonFromArtemisServer(filename: string): Observable<any> {
         return this.http.get(`${this.staticContentUrl}${filename}`);
-    }
-
-    getPrivacyStatement(language: PrivacyStatementLanguage): Observable<string> {
-        return this.http.get(`${this.staticContentUrl}privacy_statement_${language}.html`, { responseType: 'text' });
-    }
-
-    setPrivacyStatement(privacyStatement: PrivacyStatement) {
-        // return this.http.post(`${this.staticContentUrl}privacy_statement_${privacyStatement.language}.html`);
     }
 }

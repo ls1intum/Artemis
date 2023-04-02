@@ -4,8 +4,13 @@
             "title": "Privacy Statement",
             "updatePrivacyStatement": "Update Privacy Statement",
             "createOrEditLabel": "Create or edit privacy statement",
+            "unsavedChangesWarning": "Your privacy statement contains unsaved changes. Do you really want to change the language and discard all unsaved changes?",
             "save": "Save",
-            "cancel": "Cancel"
+            "cancel": "Cancel",
+            "language": {
+                "de": "German",
+                "en": "English"
+            }
         }
     }
 }

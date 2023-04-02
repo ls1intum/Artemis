@@ -4,6 +4,10 @@ export enum PrivacyStatementLanguage {
 }
 
 export class PrivacyStatement {
+    constructor(defaultLanguage: PrivacyStatementLanguage) {
+        this.language = defaultLanguage;
+    }
+
     language: PrivacyStatementLanguage;
     text: string;
 }

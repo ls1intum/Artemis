@@ -2,8 +2,10 @@ import { AfterViewInit, Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { SafeHtml } from '@angular/platform-browser';
 import { StaticContentService } from 'app/shared/service/static-content.service';
-
-const privacyStatementFile = 'privacy_statement_de.html';
+import { PrivacyStatementService } from 'app/admin/privacy-statement/privacy-statement.service';
+import { PrivacyStatementLanguage } from 'app/entities/privacy-statement.model';
+import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
+import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
 
 @Component({
     selector: 'jhi-privacy',
@@ -15,13 +17,20 @@ const privacyStatementFile = 'privacy_statement_de.html';
 export class PrivacyComponent implements AfterViewInit, OnInit {
     privacyStatement: SafeHtml;
 
-    constructor(private route: ActivatedRoute, private staticContentService: StaticContentService) {}
+    constructor(
+        private route: ActivatedRoute,
+        private staticContentService: StaticContentService,
+        private privacyStatementService: PrivacyStatementService,
+        private localConversionService: LocaleConversionService,
+    ) {}
 
     /**
      * On init get the privacy statement file from the Artemis server and save it.
      */
     ngOnInit(): void {
-        this.staticContentService.getStaticHtmlFromArtemisServer(privacyStatementFile).subscribe((statement) => (this.privacyStatement = statement));
+        this.privacyStatementService
+            .getPrivacyStatement(this.localConversionService.locale as PrivacyStatementLanguage)
+            .subscribe((statement) => (this.privacyStatement = htmlForMarkdown(statement.text)));
     }
 
     /**

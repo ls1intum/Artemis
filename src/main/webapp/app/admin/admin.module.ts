@@ -33,6 +33,8 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
 import { ReactiveFormsModule } from '@angular/forms';
 import { PrivacyStatementUpdateComponent } from 'app/admin/privacy-statement/privacy-statement-update/privacy-statement-update.component';
 import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
+import { ArtemisModePickerModule } from 'app/exercises/shared/mode-picker/mode-picker.module';
+import { PrivacyStatementUnsavedChangesWarningComponent } from './privacy-statement/unsaved-changes-warning/privacy-statement-unsaved-changes-warning.component';
 
 const ENTITY_STATES = [...adminState];
 
@@ -52,6 +54,7 @@ const ENTITY_STATES = [...adminState];
         ArtemisSharedComponentModule,
         ReactiveFormsModule,
         ArtemisMarkdownEditorModule,
+        ArtemisModePickerModule,
     ],
     declarations: [
         AuditsComponent,
@@ -73,6 +76,7 @@ const ENTITY_STATES = [...adminState];
         OrganizationManagementDetailComponent,
         OrganizationManagementUpdateComponent,
         PrivacyStatementUpdateComponent,
+        PrivacyStatementUnsavedChangesWarningComponent,
     ],
 })
 export class ArtemisAdminModule {}

@@ -16,7 +16,7 @@
                         (dragover)="enableFileUpload ? $event.preventDefault() : ''"
                         (drop)="enableFileUpload ? onFileDrop($event) : ''"
                         (paste)="enableFileUpload ? onFilePaste($event) : ''"
-                        style="min-height: minHeight"
+                        [ngStyle]="{ 'minHeight.px': minHeightEditor }"
                     ></jhi-ace-editor>
                     <!-- manual input for file upload -->
                     <ng-container *ngIf="enableFileUpload">
