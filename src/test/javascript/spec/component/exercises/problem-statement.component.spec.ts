@@ -3,9 +3,8 @@ import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
+import { HttpResponse } from '@angular/common/http';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { MockParticipationService } from '../../helpers/mocks/service/mock-participation.service';
-import { MockExerciseService } from '../../helpers/mocks/service/mock-exercise.service';
 import { Course } from 'app/entities/course.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
@@ -14,29 +13,41 @@ import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.se
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { ProgrammingExerciseInstructionComponent } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { MockComponent } from 'ng-mocks';
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 
 describe('ProblemStatementComponent', () => {
     let component: ProblemStatementComponent;
     let fixture: ComponentFixture<ProblemStatementComponent>;
     let mockActivatedRoute: any;
 
+    let mockExerciseService: Partial<ExerciseService>;
+    let mockParticipationService: Partial<ParticipationService>;
+
     beforeEach(() => {
         mockActivatedRoute = {
             params: of({ exerciseId: '1', participationId: '2' }),
+        };
+
+        mockExerciseService = {
+            getExerciseDetails: jest.fn(),
+        };
+        mockParticipationService = {
+            find: jest.fn(),
         };
 
         TestBed.configureTestingModule({
             declarations: [ProblemStatementComponent, TranslatePipeMock, HtmlForMarkdownPipe, MockComponent(ProgrammingExerciseInstructionComponent)],
             providers: [
                 { provide: ActivatedRoute, useValue: mockActivatedRoute },
-                { provide: ExerciseService, useValue: MockExerciseService },
-                { provide: ParticipationService, useValue: MockParticipationService },
+                { provide: ExerciseService, useValue: mockExerciseService },
+                { provide: ParticipationService, useValue: mockParticipationService },
             ],
         })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(ProblemStatementComponent);
                 component = fixture.componentInstance;
+
                 fixture.detectChanges();
             });
     });
@@ -56,6 +67,80 @@ describe('ProblemStatementComponent', () => {
         const compiled = fixture.debugElement.nativeElement;
         expect(compiled.querySelector('#problem-statement')).toBeTruthy();
         expect(compiled.querySelector('#problem-statement p').innerHTML).toContain('Test problem statement');
+    });
+
+    it('should render problem statement when exercise is available by getting from services', () => {
+        const course = new Course();
+        course.id = 123;
+        const exercise = new ProgrammingExercise(course, undefined);
+        exercise.problemStatement = 'Test problem statement';
+        course.exercises = [exercise];
+
+        const participation: StudentParticipation = {} as StudentParticipation;
+        participation.id = 2;
+
+        const getParticipationsMock = jest.spyOn(mockParticipationService, 'find');
+        getParticipationsMock.mockReturnValue(of(new HttpResponse({ body: participation })));
+        const getExerciseDetailsMock = jest.spyOn(mockExerciseService, 'getExerciseDetails');
+        getExerciseDetailsMock.mockReturnValue(of(new HttpResponse({ body: exercise })));
+
+        expect(getParticipationsMock).toHaveBeenCalledOnce();
+        expect(getExerciseDetailsMock).toHaveBeenCalledOnce();
+
+        fixture.detectChanges();
+        const compiled = fixture.debugElement.nativeElement;
+        expect(compiled.querySelector('#problem-statement')).toBeTruthy();
+        expect(compiled.querySelector('#problem-statement p').innerHTML).toContain('Test problem statement');
+    });
+
+    describe('when exercise is not provided', () => {
+        const course = new Course();
+        course.id = 123;
+        const mockExercise = new ProgrammingExercise(course, undefined);
+        mockExercise.problemStatement = 'Test problem statement';
+
+        beforeEach(() => {
+            (mockExerciseService.getExerciseDetails as jest.Mock).mockReturnValueOnce(of({ body: mockExercise }));
+            component.exercise = undefined;
+            fixture.detectChanges();
+        });
+
+        it('should fetch exercise details from the service', () => {
+            expect(mockExerciseService.getExerciseDetails).toHaveBeenCalledWith(1);
+            expect(component.exercise).toEqual(mockExercise);
+        });
+    });
+
+    describe('when participation is not provided', () => {
+        const mockParticipation: StudentParticipation = { id: 2 };
+
+        beforeEach(() => {
+            (mockParticipationService.find as jest.Mock).mockReturnValueOnce(of({ body: mockParticipation }));
+            component.participation = undefined;
+            fixture.detectChanges();
+        });
+
+        it('should fetch participation details from the service', () => {
+            expect(mockParticipationService.find).toHaveBeenCalledWith(2);
+            expect(component.participation).toEqual(mockParticipation);
+        });
+    });
+
+    describe('isProgrammingExercise', () => {
+        it('should return true if exercise type is PROGRAMMING', () => {
+            component.exercise = { id: 1, type: ExerciseType.PROGRAMMING } as Exercise;
+            expect(component.isProgrammingExercise).toBeTrue();
+        });
+
+        it('should return false if exercise type is not PROGRAMMING', () => {
+            component.exercise = { id: 1, type: ExerciseType.QUIZ } as Exercise;
+            expect(component.isProgrammingExercise).toBeFalse();
+        });
+
+        it('should return false if exercise is not defined', () => {
+            component.exercise = undefined;
+            expect(component.isProgrammingExercise).toBeFalse();
+        });
     });
 
     it('should render programming exercise instructions when exercise is a programming exercise and participation and exercise are available', () => {
