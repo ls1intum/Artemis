@@ -1,6 +1,7 @@
 import { ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
 import { Exercise, ExerciseType, getIcon, getIconTooltip } from 'app/entities/exercise.model';
 import { ExamPageComponent } from 'app/exam/participate/exercises/exam-page.component';
+import { StudentExam } from 'app/entities/student-exam.model';
 import { ExamExerciseOverviewItem } from 'app/entities/exam-exercise-overview-item.model';
 import { ButtonTooltipType, ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 import { faCheck, faEdit } from '@fortawesome/free-solid-svg-icons';
@@ -13,7 +14,7 @@ import { QuizExamSubmission } from 'app/entities/quiz/quiz-exam-submission.model
     styleUrls: ['./exam-exercise-overview-page.scss'],
 })
 export class ExamExerciseOverviewPageComponent extends ExamPageComponent implements OnInit, OnChanges {
-    @Input() exercises: Exercise[];
+    @Input() studentExam: StudentExam;
     @Input() hasQuizExam?: boolean;
     @Input() quizExamTotalPoints: number;
     @Input() quizExamSubmission?: QuizExamSubmission;
@@ -31,7 +32,7 @@ export class ExamExerciseOverviewPageComponent extends ExamPageComponent impleme
     }
 
     ngOnInit() {
-        this.exercises?.forEach((exercise) => {
+        this.studentExam.exercises?.forEach((exercise) => {
             const item = new ExamExerciseOverviewItem();
             item.exercise = exercise;
             item.icon = faEdit;

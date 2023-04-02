@@ -30,7 +30,7 @@
             <!-- exercises -->
             <div [hidden]="!activeExamPage.isOverviewPage">
                 <jhi-exam-exercise-overview-page
-                    [exercises]="studentExam.exercises!"
+                    [studentExam]="studentExam"
                     (onPageChanged)="onPageChange($event)"
                     [hasQuizExam]="studentExam.hasQuizExam"
                     [quizExamSubmission]="studentExam.quizExamSubmission!"
