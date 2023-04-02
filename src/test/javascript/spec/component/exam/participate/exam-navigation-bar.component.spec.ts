@@ -246,4 +246,10 @@ describe('Exam Navigation Bar Component', () => {
         examExerciseIdForNavigationSourceMock.next(updatedExerciseId);
         expect(comp.changeExerciseById).toHaveBeenCalledOnce();
     });
+
+    it('should emit change to quiz exam page', () => {
+        const onPageChangedSpy = jest.spyOn(comp.onPageChanged, 'emit');
+        comp.changePage(false, true, -1);
+        expect(onPageChangedSpy).toHaveBeenCalledOnceWith({ overViewChange: false, quizExamChange: true, exercise: undefined, forceSave: false });
+    });
 });
