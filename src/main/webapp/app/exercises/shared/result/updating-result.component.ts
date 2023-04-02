@@ -78,7 +78,7 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
      */
     ngOnDestroy() {
         if (this.resultSubscription) {
-            this.participationWebsocketService.unsubscribeForLatestResultOfParticipation(this.participation.id!, this.exercise as Exercise);
+            this.participationWebsocketService.unsubscribeForLatestResultOfParticipation(this.participation.id!, this.exercise);
             this.resultSubscription.unsubscribe();
         }
         if (this.submissionSubscription) {
@@ -147,10 +147,10 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
         return (
             this.showUngradedResults ||
             !submission ||
-            !(this.exercise as Exercise).dueDate ||
+            !this.exercise.dueDate ||
             submission.type === SubmissionType.INSTRUCTOR ||
             submission.type === SubmissionType.TEST ||
-            dayjs(submission.submissionDate).isBefore(getExerciseDueDate(this.exercise as Exercise, this.participation))
+            dayjs(submission.submissionDate).isBefore(getExerciseDueDate(this.exercise, this.participation))
         );
     }
 
