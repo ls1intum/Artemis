@@ -134,6 +134,7 @@ public class UserTestService {
 
         // Creating conversation-related objects
         var post = new Post();
+        var post2 = new Post();
         var oneToOneChatPost = new Post();
         var conversationParticipant = new ConversationParticipant();
         var conversationParticipant2 = new ConversationParticipant();
@@ -158,12 +159,15 @@ public class UserTestService {
 
         post.setAuthor(student);
         post.setConversation(conversation);
+        post2.setAuthor(student2);
+        post2.setConversation(conversation);
         oneToOneChatPost.setAuthor(student2);
         oneToOneChatPost.setConversation(oneToOneChat);
 
         conversationRepository.save(conversation);
         oneToOneChatRepository.save(oneToOneChat);
         postRepository.save(post);
+        postRepository.save(post2);
         postRepository.save(oneToOneChatPost);
         conversationParticipantRepository.save(conversationParticipant);
         conversationParticipantRepository.save(conversationParticipant2);
@@ -177,6 +181,7 @@ public class UserTestService {
         assertThat(deletedUser).isEmpty();
         assertThat(singleUserNotificationRepository.findById(notification.getId())).isEmpty();
         assertThat(postRepository.findById(post.getId())).isEmpty();
+        assertThat(postRepository.findById(post2.getId())).isEmpty();
         assertThat(conversationParticipantRepository.findById(conversationParticipant.getId())).isEmpty();
         assertThat(conversationParticipantRepository.findById(conversationParticipant3.getId())).isEmpty();
         assertThat(postRepository.findById(post.getId())).isEmpty();

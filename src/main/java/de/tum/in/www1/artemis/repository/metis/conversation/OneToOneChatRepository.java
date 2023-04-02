@@ -12,6 +12,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
 import de.tum.in.www1.artemis.domain.metis.conversation.OneToOneChat;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -56,6 +57,14 @@ public interface OneToOneChatRepository extends JpaRepository<OneToOneChat, Long
             """)
     Optional<OneToOneChat> findByIdWithConversationParticipantsAndUserGroups(@Param("oneToOneChatId") Long oneToOneChatId) throws EntityNotFoundException;
 
-    Integer countByCreatorIdAndCourseId(Long creatorId, Long courseId);
+    @Query("""
+            SELECT chat
+            FROM OneToOneChat chat
+                LEFT JOIN chat.conversationParticipants participants
+                LEFT JOIN participants.user user
+            WHERE user = :user
+            """)
+    Set<OneToOneChat> findAllByParticipatingUser(User user);
 
+    Integer countByCreatorIdAndCourseId(Long creatorId, Long courseId);
 }

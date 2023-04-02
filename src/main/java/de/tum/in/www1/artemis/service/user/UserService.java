@@ -493,23 +493,7 @@ public class UserService {
         learningGoalProgressRepository.deleteAllByUserId(user.getId());
         exerciseHintActivationRepository.deleteAllByUser(user);
 
-        // deleting Posts belonging to the user and belonging to the conversations created by the user
-        var conversationsByUser = conversationRepository.findAllByCreator(user);
-        conversationsByUser.forEach(conversation -> postRepository.deleteAllByConversationId(conversation.getId()));
-        postRepository.deleteAllByAuthor(user);
-
-        // deleting Posts belonging to all OneToOneChats where the user is a participant
-        var conversationParticipantEntities = conversationParticipantRepository.findConversationParticipantsByUser(user);
-        var oneToOneChatsToDelete = new HashSet<OneToOneChat>();
-        conversationParticipantEntities.forEach(participant -> oneToOneChatsToDelete.addAll(oneToOneChatRepository.findAllByConversationParticipantsContaining(participant)));
-        oneToOneChatsToDelete.forEach(oneToOneChat -> postRepository.deleteAllByConversationId(oneToOneChat.getId()));
-
-        // deleting Conversations and ConversationParticipants created by the user
-        conversationRepository.deleteAllByCreator(user);
-        conversationParticipantRepository.deleteAllByUser(user);
-
-        // deleting OneToOneChats where the user is a participant
-        oneToOneChatRepository.deleteAll(oneToOneChatsToDelete);
+        deletePostsAndConversationRelatedObjects(user);
 
         // deleting tutorial group registrations
         tutorialGroupRegistrationRepository.deleteAllByStudent(user);
@@ -522,6 +506,33 @@ public class UserService {
         userRepository.delete(user);
         clearUserCaches(user);
         userRepository.flush();
+    }
+
+    /**
+     * Deletes the following objects:
+     * <ul>
+     * <li>Posts - belonging to the user, to Conversations created by the user, to OneToOneChats where the user
+     * is a participant</li>
+     * <li>OneToOneChats - where the user is a participant</li>
+     * <li>Conversations - created by the user</li>
+     * <li>ConversationParticipants - created by the user</li>
+     * </ul>
+     *
+     * @param user the User instance for which the relevant objects should be deleted
+     */
+    private void deletePostsAndConversationRelatedObjects(User user) {
+        // deleting Posts belonging to the conversations created by the user and belonging to the user
+        postRepository.deleteAllByConversationCreator(user);
+        postRepository.deleteAllByAuthor(user);
+
+        // deleting OneToOneChats where the user is a participant and Posts belonging to them
+        final Set<OneToOneChat> oneToOneChats = oneToOneChatRepository.findAllByParticipatingUser(user);
+        postRepository.deleteAllByConversationIn(oneToOneChats);
+        oneToOneChatRepository.deleteAll(oneToOneChats);
+
+        // deleting Conversations and ConversationParticipants created by the user
+        conversationRepository.deleteAllByCreator(user);
+        conversationParticipantRepository.deleteAllByUser(user);
     }
 
     /**
