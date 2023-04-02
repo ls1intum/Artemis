@@ -130,7 +130,7 @@ class ExamActivityIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         var examActivity = examMonitoringScheduleService.getExamActivityFromCache(exam.getId(), studentExam.getId());
         assertThat(examActivity).isNotNull();
-        assertThat(examActivity.getExamActions().size()).isEqualTo(1);
+        assertThat(examActivity.getExamActions()).hasSize(1);
         assertThat(new ArrayList<>(examActivity.getExamActions()).get(0).getType()).isEqualTo(examActionType);
     }
 
@@ -162,7 +162,7 @@ class ExamActivityIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         var examActivity = examMonitoringScheduleService.getExamActivityFromCache(exam.getId(), studentExam.getId());
 
         assertThat(examActivity).isNotNull();
-        assertThat(examActivity.getExamActions().size()).isEqualTo(examActions.size());
+        assertThat(examActivity.getExamActions()).hasSameSizeAs(examActions);
 
         examMonitoringScheduleService.executeExamActivitySaveTask(exam.getId());
     }
@@ -183,7 +183,7 @@ class ExamActivityIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         // Currently, we don't apply any filtering - so there should be an activity and action in the cache
         var examActivity = examMonitoringScheduleService.getExamActivityFromCache(exam.getId(), studentExam.getId());
         assertThat(examActivity).isNotNull();
-        assertThat(examActivity.getExamActions().size()).isEqualTo(1);
+        assertThat(examActivity.getExamActions()).hasSize(1);
         assertThat(new ArrayList<>(examActivity.getExamActions()).get(0).getType()).isEqualTo(examActionType);
     }
 

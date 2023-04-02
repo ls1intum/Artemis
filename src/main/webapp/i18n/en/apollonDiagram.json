@@ -4,7 +4,6 @@
             "home": {
                 "title": "Apollon Diagrams",
                 "createLabel": "Create a new Apollon Diagram",
-                "createOrEditLabel": "Create or edit an Apollon Diagram",
                 "error": {
                     "loading": "Error while loading Apollon Diagrams"
                 }

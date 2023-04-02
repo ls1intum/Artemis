@@ -3,7 +3,7 @@
         "textExercise": {
             "home": {
                 "title": "Text Exercises",
-                "createLabel": "Create new Text Exercise",
+                "createLabel": "Create Text Exercise",
                 "editLabel": "Edit Text Exercise",
                 "importLabel": "Import Text Exercise"
             },

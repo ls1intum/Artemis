@@ -3,8 +3,7 @@
         "quizQuestion": {
             "home": {
                 "title": "Fragen",
-                "createLabel": "Frage erstellen",
-                "createOrEditLabel": "Frage erstellen oder bearbeiten"
+                "createLabel": "Frage erstellen"
             },
             "created": "Frage erstellt mit ID {{ param }}",
             "updated": "Frage aktualisiert mit ID {{ param }}",
