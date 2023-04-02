@@ -10,7 +10,7 @@ import { ExerciseCacheService } from 'app/exercises/shared/exercise/exercise-cac
 @Component({
     selector: 'jhi-standalone-feedback',
     templateUrl: './standalone-feedback.component.html',
-    styleUrls: ['./feedback.scss'],
+    styleUrls: ['./../feedback.scss'],
 })
 export class StandaloneFeedbackComponent implements OnInit {
     public exercise?: Exercise;
