@@ -68,7 +68,7 @@ public class QuizExerciseSubmissionService extends QuizSubmissionService<QuizSub
         // calculate scores
         quizSubmission.calculateAndUpdateScores(quizExercise.getQuizQuestions());
         // save parent submission object
-        quizSubmission = quizSubmissionRepository.save(quizSubmission);
+        QuizSubmission savedQuizSubmission = quizSubmissionRepository.save(quizSubmission);
 
         // create result
         Result result = new Result().participation(participation);
@@ -79,14 +79,14 @@ public class QuizExerciseSubmissionService extends QuizSubmissionService<QuizSub
         result = resultRepository.save(result);
 
         // setup result - submission relation
-        result.setSubmission(quizSubmission);
+        result.setSubmission(savedQuizSubmission);
         // calculate score and update result accordingly
         result.evaluateQuizSubmission();
-        quizSubmission.addResult(result);
-        quizSubmission.setParticipation(participation);
+        savedQuizSubmission.addResult(result);
+        savedQuizSubmission.setParticipation(participation);
 
         // save submission to set result index column
-        quizSubmissionRepository.save(quizSubmission);
+        quizSubmissionRepository.save(savedQuizSubmission);
 
         // save result to store score
         resultRepository.save(result);
@@ -96,7 +96,7 @@ public class QuizExerciseSubmissionService extends QuizSubmissionService<QuizSub
 
         // add result to statistics
         quizScheduleService.addResultForStatisticUpdate(quizExercise.getId(), result);
-        log.debug("submit practice quiz finished: {}", quizSubmission);
+        log.debug("submit practice quiz finished: {}", savedQuizSubmission);
         return result;
     }
 

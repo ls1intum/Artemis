@@ -55,9 +55,9 @@ public class QuizPoolResource {
         log.info("REST request to update QuizPool : {}", quizPool);
 
         validateCourseRole(courseId);
-        quizPool = quizPoolService.update(examId, quizPool);
+        QuizPool updatedQuizPool = quizPoolService.update(examId, quizPool);
 
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, quizPool.getId().toString())).body(quizPool);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, updatedQuizPool.getId().toString())).body(updatedQuizPool);
     }
 
     /**

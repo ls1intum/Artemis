@@ -132,10 +132,10 @@ public abstract class QuizService<T extends QuizConfiguration> {
         // Note: save will automatically remove deleted questions from the exercise and deleted answer options from the questions
         // and delete the now orphaned entries from the database
         log.debug("Save quiz to database: {}", quizConfiguration);
-        quizConfiguration = saveAndFlush(quizConfiguration);
+        T savedQuizConfiguration = saveAndFlush(quizConfiguration);
 
         // fix references in all drag and drop questions and short answer questions (step 2/2)
-        for (QuizQuestion quizQuestion : quizConfiguration.getQuizQuestions()) {
+        for (QuizQuestion quizQuestion : savedQuizConfiguration.getQuizQuestions()) {
             if (quizQuestion instanceof DragAndDropQuestion dragAndDropQuestion) {
                 // restore references from index after save
                 restoreCorrectMappingsFromIndices(dragAndDropQuestion);
@@ -146,8 +146,9 @@ public abstract class QuizService<T extends QuizConfiguration> {
             }
         }
 
-        preReturn(quizConfiguration);
-        return quizConfiguration;
+        preReturn(savedQuizConfiguration);
+
+        return savedQuizConfiguration;
     }
 
     /**

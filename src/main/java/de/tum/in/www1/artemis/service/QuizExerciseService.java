@@ -121,15 +121,15 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         // adjust existing results if an answer or a question was deleted and recalculate them
         updateResultsOnQuizChanges(quizExercise);
 
-        quizExercise = saveConfiguration(quizExercise);
+        QuizExercise savedQuizExercise = saveConfiguration(quizExercise);
 
         if (updateOfResultsAndStatisticsNecessary) {
             // make sure we have all objects available before updating the statistics to avoid lazy / proxy issues
-            quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExercise.getId());
-            quizStatisticService.recalculateStatistics(quizExercise);
+            savedQuizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(savedQuizExercise.getId());
+            quizStatisticService.recalculateStatistics(savedQuizExercise);
         }
         // fetch the quiz exercise again to make sure the latest changes are included
-        return quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExercise.getId());
+        return quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(savedQuizExercise.getId());
     }
 
     /**
