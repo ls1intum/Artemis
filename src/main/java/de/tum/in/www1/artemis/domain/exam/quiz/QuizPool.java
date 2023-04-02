@@ -67,6 +67,11 @@ public class QuizPool extends DomainObject implements QuizConfiguration {
         this.quizQuestions = quizQuestions;
     }
 
+    /**
+     * Returns list of quiz groups of all quiz questions belong to the quiz pool
+     *
+     * @return list of quiz groups
+     */
     @JsonProperty(value = "quizGroups", access = JsonProperty.Access.READ_ONLY)
     public List<QuizGroup> getQuizGroups() {
         Map<String, QuizGroup> quizGroupMap = new HashMap<>();
@@ -79,6 +84,11 @@ public class QuizPool extends DomainObject implements QuizConfiguration {
         return new ArrayList<>(quizGroupMap.values());
     }
 
+    /**
+     * Check if all quiz questions are valid
+     *
+     * @return true if all quiz questions are valid
+     */
     @JsonIgnore
     public boolean isValid() {
         for (QuizQuestion quizQuestion : getQuizQuestions()) {
