@@ -1,12 +1,12 @@
 <form>
     <div class="modal-header">
-        <button type="button" class="btn-close" data-dismiss="modal" aria-hidden="true" (click)="continueEditing()"></button>
+        <button id="close-modal-btn" type="button" class="btn-close" data-dismiss="modal" aria-hidden="true" (click)="continueEditing()"></button>
     </div>
     <div class="modal-body">
         <h5 jhiTranslate="artemisApp.privacyStatement.unsavedChangesWarning"></h5>
         <div>
-            <jhi-button (click)="discardContent()" [title]="'global.generic.yes'" [ngStyle]="{ 'marginRight.px': 10 }">Yes</jhi-button>
-            <jhi-button (click)="continueEditing()" [title]="'global.generic.no'">No</jhi-button>
+            <jhi-button id="discard-content-btn" (click)="discardContent()" [title]="'global.generic.yes'" [ngStyle]="{ 'marginRight.px': 10 }">Yes</jhi-button>
+            <jhi-button id="continue-editing-btn" (click)="continueEditing()" [title]="'global.generic.no'">No</jhi-button>
         </div>
     </div>
 </form>

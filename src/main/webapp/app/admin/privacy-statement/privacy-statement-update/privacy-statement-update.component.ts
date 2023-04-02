@@ -15,6 +15,11 @@ import { JhiLanguageHelper } from 'app/core/language/language.helper';
 export class PrivacyStatementUpdateComponent implements OnInit {
     privacyStatement: PrivacyStatement;
     supportedLanguages: PrivacyStatementLanguage[] = [PrivacyStatementLanguage.GERMAN, PrivacyStatementLanguage.ENGLISH];
+    unsavedChanges = false;
+    faBan = faBan;
+    faSave = faSave;
+    isSaving = false;
+    @ViewChild(MarkdownEditorComponent, { static: false }) markdownEditor: MarkdownEditorComponent;
     readonly languageOptions = this.supportedLanguages.map((language) => ({
         value: language,
         labelKey: 'artemisApp.privacyStatement.language.' + language,
@@ -24,11 +29,7 @@ export class PrivacyStatementUpdateComponent implements OnInit {
     readonly maxHeight = MarkdownEditorHeight.EXTRA_LARGE;
     readonly minHeight = MarkdownEditorHeight.MEDIUM;
     currentLanguage = this.defaultLanguage;
-    unsavedChanges = false;
-    faBan = faBan;
-    faSave = faSave;
-    isSaving = false;
-    @ViewChild(MarkdownEditorComponent, { static: false }) markdownEditor: MarkdownEditorComponent;
+    unsavedChangesWarning: NgbModalRef;
 
     constructor(private privacyStatementService: PrivacyStatementService, private modalService: NgbModal, private languageHelper: JhiLanguageHelper) {}
 
@@ -68,9 +69,9 @@ export class PrivacyStatementUpdateComponent implements OnInit {
         }
     }
 
-    private showWarning(privacyStatementLanguage: any) {
-        const modalRef: NgbModalRef = this.modalService.open(PrivacyStatementUnsavedChangesWarningComponent, { size: 'lg', backdrop: 'static' });
-        modalRef.result.then(() => {
+    showWarning(privacyStatementLanguage: any) {
+        this.unsavedChangesWarning = this.modalService.open(PrivacyStatementUnsavedChangesWarningComponent, { size: 'lg', backdrop: 'static' });
+        this.unsavedChangesWarning.result.then(() => {
             this.unsavedChanges = false;
             this.onLanguageChange(privacyStatementLanguage);
         });

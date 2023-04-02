@@ -67,6 +67,7 @@ describe('PrivacyStatementUpdateComponent', () => {
         fixture.detectChanges();
         expect(loadFile).toHaveBeenCalledOnce();
         expect(loadFile).toHaveBeenCalledWith(PrivacyStatementLanguage.ENGLISH);
+        expect(component.currentLanguage).toEqual(PrivacyStatementLanguage.ENGLISH);
     });
     it('should correctly determine unsaved changes', () => {
         component.unsavedChanges = false;
@@ -82,14 +83,6 @@ describe('PrivacyStatementUpdateComponent', () => {
         fixture.nativeElement.querySelector('#update-privacy-statement-btn').click();
         expect(updateFile).toHaveBeenCalledOnce();
         expect(updateFile).toHaveBeenCalledWith(component.privacyStatement);
-    });
-    it('should set unsaved changes to false and  trigger language change when modal is closed', () => {
-        const updateFile = jest.spyOn(privacyStatementService, 'updatePrivacyStatement');
-        component.privacyStatement.text = 'Datenschutzerklärung';
-        component.privacyStatement.language = PrivacyStatementLanguage.GERMAN;
-        component.privacyStatement.text = 'text';
-        fixture.nativeElement.querySelector('#update-privacy-statement-btn').click();
-        expect(updateFile).toHaveBeenCalledOnce();
-        expect(updateFile).toHaveBeenCalledWith(component.privacyStatement);
+        expect(component.unsavedChanges).toBeFalse();
     });
 });

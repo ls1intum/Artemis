@@ -22,8 +22,19 @@ describe('UnsavedChangesWarningComponent', () => {
         activeModal = TestBed.inject(NgbActiveModal);
         fixture.detectChanges();
     });
-
-    it('should create', () => {
-        expect(component).toBeTruthy();
+    it('should close modal on clicking yes', () => {
+        jest.spyOn(activeModal, 'close');
+        fixture.nativeElement.querySelector('#discard-content-btn').click();
+        expect(activeModal.close).toHaveBeenCalledOnce();
+    });
+    it('should dismiss modal on clicking no', () => {
+        jest.spyOn(activeModal, 'dismiss');
+        fixture.nativeElement.querySelector('#continue-editing-btn').click();
+        expect(activeModal.dismiss).toHaveBeenCalledOnce();
+    });
+    it('should dismiss modal on clicking close', () => {
+        jest.spyOn(activeModal, 'dismiss');
+        fixture.nativeElement.querySelector('#close-modal-btn').click();
+        expect(activeModal.dismiss).toHaveBeenCalledOnce();
     });
 });
