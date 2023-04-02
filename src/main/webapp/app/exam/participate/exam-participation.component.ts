@@ -394,7 +394,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         this.autoSaveInterval = window.setInterval(() => {
             this.autoSaveTimer++;
             if (this.autoSaveTimer >= AUTOSAVE_EXERCISE_INTERVAL && !this.isOver()) {
-                // this.triggerSave(false, true);
+                this.triggerSave(false, true);
             }
         }, AUTOSAVE_CHECK_INTERVAL);
     }
@@ -652,7 +652,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     /**
      * Set activeExamPage to quiz exam
      */
-    private initializeQuizExamPage() {
+    initializeQuizExamPage() {
         this.activeExamPage.isOverviewPage = false;
         this.activeExamPage.isQuizExamPage = true;
         this.activeExamPage.exercise = undefined;

@@ -47,6 +47,7 @@ import { MockWebsocketService } from '../../../helpers/mocks/service/mock-websoc
 import { MockLocalStorageService } from '../../../helpers/mocks/service/mock-local-storage.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { LocalStorageService } from 'ngx-webstorage';
+import { QuizExamSubmission } from 'app/entities/quiz/quiz-exam-submission.model';
 
 describe('ExamParticipationComponent', () => {
     let fixture: ComponentFixture<ExamParticipationComponent>;
@@ -551,24 +552,16 @@ describe('ExamParticipationComponent', () => {
             expectSyncedSubmissions(submission, syncedSubmission);
         }));
 
-        // it('should sync quiz exam submissions', fakeAsync(() => {
-        //     const quizExercise = { quizExam: true, type: ExerciseType.QUIZ } as QuizExamExercise;
-        //     quizExercise.id = 5;
-        //     const participation = new StudentParticipation();
-        //     const submission = new QuizExamSubmission();
-        //     const syncedSubmission = new QuizExamSubmission();
-        //     syncedSubmission.isSynced = true;
-        //     participation.submissions = [submission, syncedSubmission];
-        //     quizExercise.studentParticipations = [participation];
-        //     comp.studentExam.exercises = [quizExercise];
-        //     comp.examExercises = comp.studentExam.exercises;
-        //     quizSubmissionUpdateSpy = jest.spyOn(examParticipationService, 'updateQuizSubmission').mockReturnValue(of(submission));
-        //     comp.triggerSave(false, false);
-        //     tick(500);
-        //     expect(quizSubmissionUpdateSpy).toHaveBeenCalledWith(5, submission);
-        //     expect(quizSubmissionUpdateSpy).not.toHaveBeenCalledWith(5, syncedSubmission);
-        //     expectSyncedSubmissions(submission, syncedSubmission);
-        // }));
+        it('should sync quiz exam submissions', fakeAsync(() => {
+            const submission = new QuizExamSubmission();
+            submission.isSynced = false;
+            comp.studentExam.exercises = [];
+            comp.studentExam.quizExamSubmission = submission;
+            quizSubmissionUpdateSpy = jest.spyOn(examParticipationService, 'updateQuizSubmission').mockReturnValue(of(submission));
+            comp.triggerSave(false, false);
+            tick(500);
+            expect(quizSubmissionUpdateSpy).toHaveBeenCalledWith(0, submission);
+        }));
     });
 
     it('should submit exam when end confirmed', () => {
@@ -752,5 +745,13 @@ describe('ExamParticipationComponent', () => {
             expect(comp.pageComponentVisited).toEqual([false, true, false]);
             expect(comp.exerciseIndex).toBe(1);
         });
+    });
+
+    it('should initialize quiz exam page', () => {
+        comp.initializeQuizExamPage();
+        expect(comp.activeExamPage.isOverviewPage).toBeFalse();
+        expect(comp.activeExamPage.isQuizExamPage).toBeTrue();
+        expect(comp.activeExamPage.exercise).toBeUndefined();
+        expect(comp.exerciseIndex).toBe(-1);
     });
 });
