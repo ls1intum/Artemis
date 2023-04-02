@@ -907,7 +907,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                 distinctUntilChanged(),
             )
             .subscribe((programmingSubmissionObj) => {
-                const exerciseForSubmission = this.studentExam.exercises!.find((programmingExercise) =>
+                const exerciseForSubmission = this.studentExam.exercises?.find((programmingExercise) =>
                     programmingExercise.studentParticipations?.some((exerciseParticipation) => exerciseParticipation.id === programmingSubmissionObj.participationId),
                 );
                 if (
