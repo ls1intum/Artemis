@@ -15,16 +15,16 @@
     [innerHTML]="postingContentPart.contentAfterReference | htmlForPostingMarkdown : false : allowedHtmlTags : allowedHtmlAttributes"
 ></span>
 
-<div>
-    <a class="reference" *ngIf="postingContentPart.slideToReference" (click)="openAttachment(postingContentPart.slideToReference)">
+<div style="max-width: 400px">
+    <a class="reference" *ngIf="postingContentPart.slideToReference" (click)="enlargeImage(postingContentPart.slideToReference)">
         <img
-            class="object-fit-contain"
+            class="img-fluid"
             *ngIf="postingContentPart.slideToReference"
             [src]="postingContentPart.slideToReference"
             [alt]="postingContentPart.referenceStr"
             [title]="postingContentPart.referenceStr"
             height="auto"
-            width="500"
+            width="100%"
         />
     </a>
 </div>

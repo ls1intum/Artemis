@@ -3,6 +3,8 @@ import { PostingContentPart, ReferenceType } from '../../metis.util';
 import { FileService } from 'app/shared/http/file.service';
 import { faChalkboardUser, faCheckDouble, faFile, faFileUpload, faFont, faKeyboard, faMessage, faPaperclip, faProjectDiagram } from '@fortawesome/free-solid-svg-icons';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
+import { EnlargeSlideImageComponent } from 'app/shared/metis/posting-content/enlarge-slide-image/enlarge-slide-image-component';
+import { MatDialog } from '@angular/material/dialog';
 
 @Component({
     selector: 'jhi-posting-content-part',
@@ -19,7 +21,7 @@ export class PostingContentPartComponent {
     // icons
     faFile = faFile;
 
-    constructor(private fileService: FileService) {}
+    constructor(private fileService: FileService, private dialog: MatDialog) {}
 
     /**
      * Opens an attachment with the given URL in a new window
@@ -28,6 +30,17 @@ export class PostingContentPartComponent {
      */
     openAttachment(attachmentUrl: string): void {
         this.fileService.downloadFile(attachmentUrl);
+    }
+
+    /**
+     * Opens a dialog to display the image in full size
+     *
+     * @param slideToReference {string} the reference to the slide
+     */
+    enlargeImage(slideToReference: string) {
+        this.dialog.open(EnlargeSlideImageComponent, {
+            data: { slideToReference },
+        });
     }
 
     /**
