@@ -2,7 +2,7 @@ import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisTestModule } from '../../../../test.module';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { QuizPoolComponent } from 'app/exercises/quiz/manage/quiz-pool.component';
@@ -19,12 +19,15 @@ import { Exam } from 'app/entities/exam.model';
 import dayjs from 'dayjs/esm';
 import { QuizPoolMappingComponent } from 'app/exercises/quiz/manage/quiz-pool-mapping.component';
 import { QuizQuestionListEditComponent } from 'app/exercises/quiz/manage/quiz-question-list-edit.component';
+import { AnswerOption } from 'app/entities/quiz/answer-option.model';
+import { ChangeDetectorRef } from '@angular/core';
 
 describe('QuizPoolComponent', () => {
     let fixture: ComponentFixture<QuizPoolComponent>;
     let component: QuizPoolComponent;
     let quizPoolService: QuizPoolService;
     let examService: ExamManagementService;
+    let changeDetectorRef: ChangeDetectorRef;
 
     const courseId = 1;
     const examId = 2;
@@ -41,7 +44,7 @@ describe('QuizPoolComponent', () => {
                 MockPipe(ArtemisDatePipe),
                 MockDirective(TranslateDirective),
             ],
-            providers: [{ provide: ActivatedRoute, useValue: route }],
+            providers: [{ provide: ActivatedRoute, useValue: route }, MockProvider(ChangeDetectorRef)],
         })
             .compileComponents()
             .then(() => {
@@ -49,6 +52,7 @@ describe('QuizPoolComponent', () => {
                 component = fixture.componentInstance;
                 quizPoolService = fixture.debugElement.injector.get(QuizPoolService);
                 examService = fixture.debugElement.injector.get(ExamManagementService);
+                changeDetectorRef = fixture.debugElement.injector.get(ChangeDetectorRef);
                 fixture.detectChanges();
             });
     });
@@ -136,5 +140,67 @@ describe('QuizPoolComponent', () => {
         const updateQuizPoolSpy = jest.spyOn(quizPoolService, 'update').mockImplementation();
         component.save();
         expect(updateQuizPoolSpy).toHaveBeenCalledTimes(0);
+    });
+
+    it('should set isValid to true if all questions and groups are valid', () => {
+        const answerOption0 = new AnswerOption();
+        answerOption0.isCorrect = true;
+        const answerOption1 = new AnswerOption();
+        answerOption1.isCorrect = false;
+        const question = new MultipleChoiceQuestion();
+        question.points = 1;
+        question.answerOptions = [answerOption0, answerOption1];
+        component.quizPool = new QuizPool();
+        component.quizPool.quizQuestions = [question];
+        component.quizPoolMappingComponent = new QuizPoolMappingComponent();
+        component.isValid = false;
+        component.handleUpdate();
+        component.isValid = true;
+    });
+
+    it('should set isValid to false if at least 1 question is invalid', () => {
+        const question = new MultipleChoiceQuestion();
+        question.points = -1;
+        question.answerOptions = [];
+        component.quizPool = new QuizPool();
+        component.quizPool.quizQuestions = [question];
+        component.quizPoolMappingComponent = new QuizPoolMappingComponent();
+        component.isValid = true;
+        component.handleUpdate();
+        component.isValid = false;
+    });
+
+    it('should set invalid reasons when there is a group that does not have any question', () => {
+        component.quizPool = new QuizPool();
+        component.quizPoolMappingComponent = new QuizPoolMappingComponent();
+        jest.spyOn(changeDetectorRef.constructor.prototype, 'detectChanges').mockImplementation();
+        jest.spyOn(component.quizPoolMappingComponent, 'hasGroupsWithNoQuestion').mockReturnValue(true);
+        jest.spyOn(component.quizPoolMappingComponent, 'getGroupNamesWithNoQuestion').mockReturnValue(['Test Group']);
+        jest.spyOn(component.quizPoolMappingComponent, 'hasGroupsWithDifferentQuestionPoints').mockReturnValue(false);
+        component.handleUpdate();
+        expect(component.invalidReasons).toBeArrayOfSize(1);
+        expect(component.invalidReasons[0]).toEqual({
+            translateKey: 'artemisApp.quizPool.invalidReasons.groupNoQuestion',
+            translateValues: {
+                name: 'Test Group',
+            },
+        });
+    });
+
+    it('should set invalid reasons when there is a group whose questions do not have the same points', () => {
+        component.quizPool = new QuizPool();
+        component.quizPoolMappingComponent = new QuizPoolMappingComponent();
+        jest.spyOn(changeDetectorRef.constructor.prototype, 'detectChanges').mockImplementation();
+        jest.spyOn(component.quizPoolMappingComponent, 'hasGroupsWithNoQuestion').mockReturnValue(false);
+        jest.spyOn(component.quizPoolMappingComponent, 'hasGroupsWithDifferentQuestionPoints').mockReturnValue(true);
+        jest.spyOn(component.quizPoolMappingComponent, 'getGroupNamesWithDifferentQuestionPoints').mockReturnValue(['Test Group']);
+        component.handleUpdate();
+        expect(component.invalidReasons).toBeArrayOfSize(1);
+        expect(component.invalidReasons[0]).toEqual({
+            translateKey: 'artemisApp.quizPool.invalidReasons.groupHasDifferentQuestionPoints',
+            translateValues: {
+                name: 'Test Group',
+            },
+        });
     });
 });
