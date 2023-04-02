@@ -12,7 +12,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { cloneDeep } from 'lodash-es';
 import { Submission } from 'app/entities/submission.model';
 import { ExerciseType } from 'app/entities/exercise.model';
-import { faQuestionCircle, faTimesCircle } from '@fortawesome/free-regular-svg-icons';
+import { faCheckCircle, faQuestionCircle, faTimesCircle } from '@fortawesome/free-regular-svg-icons';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
@@ -107,5 +107,16 @@ describe('ResultComponent', () => {
         expect(component.resultIconClass).toEqual(faTimesCircle);
         expect(component.resultString).toBe('artemisApp.result.resultString.nonProgramming');
         expect(component.templateStatus).toBe(ResultTemplateStatus.HAS_RESULT);
+    });
+
+    it('should set results for quiz exam exercise', () => {
+        component.participation = undefined;
+        component.isQuizExam = true;
+        component.result = { id: 1, score: 100 } as Result;
+        fixture.detectChanges();
+        expect(component.templateStatus).toEqual(ResultTemplateStatus.HAS_RESULT);
+        expect(component.textColorClass).toBe('text-success');
+        expect(component.resultIconClass).toBe(faCheckCircle);
+        expect(component.resultString).toBe('artemisApp.result.resultString.nonProgramming');
     });
 });
