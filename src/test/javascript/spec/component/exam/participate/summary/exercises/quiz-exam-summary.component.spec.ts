@@ -28,6 +28,8 @@ import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import dayjs from 'dayjs/esm';
 import { MockModule, MockProvider } from 'ng-mocks';
 import { MockPipe } from 'ng-mocks';
+import { QuizExamSubmission } from 'app/entities/quiz/quiz-exam-submission.model';
+import { Result } from 'app/entities/result.model';
 
 const multipleChoiceQuestion = { id: 1, type: QuizQuestionType.MULTIPLE_CHOICE } as MultipleChoiceQuestion;
 const wrongAnswerOption = { id: 1, isCorrect: false, question: multipleChoiceQuestion } as AnswerOption;
@@ -111,5 +113,30 @@ describe('QuizExamSummaryComponent', () => {
         expect(component.getScoreForQuizQuestion(2)).toBe(1);
         expect(component.shortAnswerSubmittedTexts.get(3)![0]).toEqual(shortAnswerSubmittedText);
         expect(component.getScoreForQuizQuestion(3)).toBe(1);
+    });
+
+    it('should set the result from submission if student participations is undefined', () => {
+        component.submission = new QuizExamSubmission();
+        component.studentParticipations = undefined;
+        const result = new Result();
+        component.submission.results = [result];
+        component.ngOnChanges();
+        expect(component.result).toEqual(result);
+    });
+
+    it('should set the result to undefined if student participations is undefined and results is undefined', () => {
+        component.submission = new QuizExamSubmission();
+        component.studentParticipations = undefined;
+        component.submission.results = undefined;
+        component.ngOnChanges();
+        expect(component.result).toBeUndefined();
+    });
+
+    it('should set the result to undefined if student participations is undefined and results is empty', () => {
+        component.submission = new QuizExamSubmission();
+        component.studentParticipations = undefined;
+        component.submission.results = [];
+        component.ngOnChanges();
+        expect(component.result).toBeUndefined();
     });
 });
