@@ -77,7 +77,8 @@ class CodeHintIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
         database.addTasksToProgrammingExercise(exercise);
         database.addSolutionEntriesToProgrammingExercise(exercise);
         var hints = database.addCodeHintsToProgrammingExercise(exercise);
-        codeHint = codeHintRepository.findByIdWithSolutionEntriesElseThrow(hints.get(0).getId());
+        var task1Hint = hints.stream().filter(hint -> "Task for test1".equals(hint.getProgrammingExerciseTask().getTaskName())).findFirst().orElseThrow();
+        codeHint = codeHintRepository.findByIdWithSolutionEntriesElseThrow(task1Hint.getId());
         solutionEntry = codeHint.getSolutionEntries().stream().findFirst().orElseThrow();
     }
 
