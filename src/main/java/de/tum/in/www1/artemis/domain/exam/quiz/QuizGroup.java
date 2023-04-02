@@ -22,13 +22,6 @@ public class QuizGroup extends DomainObject {
     @JsonIgnore
     private Set<QuizQuestion> quizQuestions;
 
-    public QuizGroup() {
-    }
-
-    public QuizGroup(String name) {
-        setName(name);
-    }
-
     public void setName(String name) {
         this.name = name;
     }

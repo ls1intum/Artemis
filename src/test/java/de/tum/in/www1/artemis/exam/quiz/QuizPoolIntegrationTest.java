@@ -58,9 +58,12 @@ class QuizPoolIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateQuizPoolSuccessful() throws Exception {
-        QuizGroup quizGroup0 = new QuizGroup("Encapsulation");
-        QuizGroup quizGroup1 = new QuizGroup("Inheritance");
-        QuizGroup quizGroup2 = new QuizGroup("Polymorphism");
+        QuizGroup quizGroup0 = new QuizGroup();
+        quizGroup0.setName("Encapsulaltion");
+        QuizGroup quizGroup1 = new QuizGroup();
+        quizGroup1.setName("Inheritance");
+        QuizGroup quizGroup2 = new QuizGroup();
+        quizGroup2.setName("Polymorphism");
         QuizQuestion mcQuizQuestion0 = database.createMultipleChoiceQuestion();
         QuizQuestion mcQuizQuestion1 = database.createMultipleChoiceQuestion();
         QuizQuestion dndQuizQuestion0 = database.createDragAndDropQuestion();
@@ -88,7 +91,8 @@ class QuizPoolIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
                 tuple(quizPool.getQuizQuestions().get(2).getTitle(), quizGroup1.getName()), tuple(quizPool.getQuizQuestions().get(3).getTitle(), quizGroup2.getName()),
                 tuple(quizPool.getQuizQuestions().get(4).getTitle(), null));
 
-        QuizGroup quizGroup3 = new QuizGroup("Exception Handling");
+        QuizGroup quizGroup3 = new QuizGroup();
+        quizGroup3.setName("Exception Handling");
         QuizQuestion saQuizQuestion1 = database.createShortAnswerQuestion();
         QuizQuestion saQuizQuestion2 = database.createShortAnswerQuestion();
         QuizQuestion saQuizQuestion3 = database.createShortAnswerQuestion();
@@ -170,8 +174,10 @@ class QuizPoolIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetQuizPoolSuccessful() throws Exception {
-        QuizGroup quizGroup0 = new QuizGroup("Encapsulation");
-        QuizGroup quizGroup1 = new QuizGroup("Inheritance");
+        QuizGroup quizGroup0 = new QuizGroup();
+        quizGroup0.setName("Encapsulation");
+        QuizGroup quizGroup1 = new QuizGroup();
+        quizGroup1.setName("Inheritance");
         QuizQuestion mcQuizQuestion = database.createMultipleChoiceQuestion();
         QuizQuestion dndQuizQuestion = database.createDragAndDropQuestion();
         QuizQuestion saQuizQuestion = database.createShortAnswerQuestion();

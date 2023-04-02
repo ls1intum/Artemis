@@ -172,7 +172,8 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         quizExercise = quizExerciseService.saveConfiguration(quizExercise);
         exerciseGroup.setExercises(Set.of(quizExercise));
         QuizPool quizPool = new QuizPool();
-        QuizGroup mcQuizGroup = new QuizGroup("Multiple Choice");
+        QuizGroup mcQuizGroup = new QuizGroup();
+        mcQuizGroup.setName("Multiple Choice");
         QuizQuestion mcQuizQuestion = database.createMultipleChoiceQuestion();
         mcQuizQuestion.setQuizGroup(mcQuizGroup);
         quizPool.setQuizQuestions(List.of(mcQuizQuestion));
@@ -432,8 +433,10 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         exerciseGroup.setExercises(Set.of(quizExercise));
 
         QuizPool quizPool = new QuizPool();
-        QuizGroup mcQuizGroup = new QuizGroup("Multiple Choice");
-        QuizGroup dndQuizGroup = new QuizGroup("DnD");
+        QuizGroup mcQuizGroup = new QuizGroup();
+        mcQuizGroup.setName("Multiple Choice");
+        QuizGroup dndQuizGroup = new QuizGroup();
+        dndQuizGroup.setName("DnD");
         QuizQuestion mcQuizQuestion0 = database.createMultipleChoiceQuestion();
         QuizQuestion mcQuizQuestion1 = database.createMultipleChoiceQuestion();
         QuizQuestion dndQuizQuestion0 = database.createDragAndDropQuestion();
