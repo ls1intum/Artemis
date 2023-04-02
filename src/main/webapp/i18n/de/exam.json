@@ -504,11 +504,6 @@
                     "question": "Soll die Aufgabengruppe <strong>{{ title }}</strong> wirklich gelöscht werden? Alle zugehörigen Aufgaben werden ebenfalls gelöscht.",
                     "typeNameToConfirm": "Bitte gib den Namen der Aufgabengruppe zur Bestätigung ein."
                 },
-                "addTextExercise": "Textaufgabe hinzufügen",
-                "addQuizExercise": "Quiz hinzufügen",
-                "addFileUploadExercise": "Datei-Upload-Aufgabe hinzufügen",
-                "addModelingExercise": "Modellierungsaufgabe hinzufügen",
-                "addProgrammingExercise": "Programmieraufgabe hinzufügen",
                 "orderCouldNotBeSaved": "Die Reihenfolge konnte nicht gespeichert werden.",
                 "importModal": {
                     "title": "Import von Klausuraufgaben",
