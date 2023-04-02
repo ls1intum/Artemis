@@ -355,7 +355,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                             }
                         }
                         // reconnect the participation with the exercise, in case this relationship was deleted before (e.g. due to breaking circular dependencies)
-                        participation.exercise = exercise as Exercise;
+                        participation.exercise = exercise;
 
                         // setup subscription for programming exercises
                         if (exercise.type === ExerciseType.PROGRAMMING) {
@@ -674,7 +674,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         // if we do not have a valid participation for the exercise -> initialize it
         if (!ExamParticipationComponent.isExerciseParticipationValid(exercise)) {
             // TODO: after client is online again, subscribe is not executed, might be a problem of the Observable in createParticipationForExercise
-            this.createParticipationForExercise(exercise as Exercise).subscribe((participation) => {
+            this.createParticipationForExercise(exercise).subscribe((participation) => {
                 if (participation) {
                     // for programming exercises -> wait for latest submission before showing exercise
                     if (exercise.type === ExerciseType.PROGRAMMING) {

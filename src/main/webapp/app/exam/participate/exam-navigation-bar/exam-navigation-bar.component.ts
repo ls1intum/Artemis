@@ -135,7 +135,7 @@ export class ExamNavigationBarComponent implements OnInit {
             }
             // set index and emit event
             this.exerciseIndex = exerciseIndex;
-            this.onPageChanged.emit({ overViewChange: false, quizExamChange: false, exercise: this.exercises[this.exerciseIndex] as Exercise, forceSave: !!forceSave });
+            this.onPageChanged.emit({ overViewChange: false, quizExamChange: false, exercise: this.exercises[this.exerciseIndex], forceSave: !!forceSave });
         }
         this.setExerciseButtonStatus(this.exerciseIndex);
     }
@@ -155,7 +155,7 @@ export class ExamNavigationBarComponent implements OnInit {
      */
     saveExercise(changeExercise = true) {
         const newIndex = this.exerciseIndex + 1;
-        const submission = ExamParticipationService.getSubmissionForExercise(this.exercises[this.exerciseIndex] as Exercise);
+        const submission = ExamParticipationService.getSubmissionForExercise(this.exercises[this.exerciseIndex]);
         // we do not submit programming exercises on a save
         if (submission && this.exercises[this.exerciseIndex].type !== ExerciseType.PROGRAMMING) {
             submission.submitted = true;
@@ -203,7 +203,7 @@ export class ExamNavigationBarComponent implements OnInit {
         let submission;
         let exercise;
         if (itemIndex !== undefined) {
-            exercise = this.exercises[itemIndex] as Exercise;
+            exercise = this.exercises[itemIndex];
             submission = ExamParticipationService.getSubmissionForExercise(exercise);
         } else {
             submission = this.quizExamSubmission;
