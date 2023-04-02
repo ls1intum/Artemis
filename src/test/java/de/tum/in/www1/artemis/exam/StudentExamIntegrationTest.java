@@ -74,6 +74,9 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     private ExamRepository examRepository;
 
     @Autowired
+    private ExerciseRepository exerciseRepository;
+
+    @Autowired
     private ExamUserRepository examUserRepository;
 
     @Autowired
