@@ -65,7 +65,7 @@
             </ng-container>
             <tr *ngFor="let item of examExerciseOverviewItems; let i = index">
                 <td style="max-width: 30px">
-                    {{ hasQuizExam ? i + 2 : i + 1 }}
+                    {{ i + (hasQuizExam ? 2 : 1) }}
                 </td>
                 <td style="max-width: 30px">
                     <div [ngbTooltip]="getIconTooltip(item.exercise.type) | artemisTranslate">
