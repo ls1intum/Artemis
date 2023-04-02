@@ -16,6 +16,12 @@ Artemis facilitates the coordination of tutorial groups in a course. Tutorial gr
 Setting up Tutorial Group Plan as an Instructor
 -----------------------------------------------
 
+.. raw:: html
+
+    <iframe src="https://live.rbg.tum.de/w/artemisintro/27045?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
+        Watch this video on TUM-Live.
+    </iframe>
+
 Tutorial groups can be managed by instructors by navigating to the course's  ``Tutorial Groups`` page in the course administration section.
 
 |instructors-button|
@@ -68,6 +74,12 @@ By clicking on the ``Holidays`` button, the instructor can define course-wide da
 Managing Tutorial Groups as a Tutor
 -----------------------------------
 
+.. raw:: html
+
+    <iframe src="https://live.rbg.tum.de/w/artemisintro/27044?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
+        Watch this video on TUM-Live.
+    </iframe>
+
 Assigned tutors can manage their tutorial groups by navigating to the course's ``Tutorial Groups`` page in the course administration section. The tutor can view the group's details, register or unregister students, and edit the sessions by cancelling or rescheduling them. The tutor also has moderation rights in the tutorial group's channel in the ``Messages`` section of the course if the ``Artemis managed tutorial group channels`` feature is enabled in the tutorial group settings.
 
 The groups for which the tutor is responsible have a blue background. 
@@ -100,6 +112,13 @@ By clicking on the ``Sessions`` button, the tutor can view the list of sessions 
 
 Viewing Tutorial Groups as a Student
 ------------------------------------
+
+.. raw:: html
+
+    <iframe src="https://live.rbg.tum.de/w/artemisintro/27043?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
+        Watch this video on TUM-Live.
+    </iframe>
+
 Students can access their tutorial grouos for a specific course by navigating to the course's ``Tutorial Group`` page.
 
 The view is split into two tabs that can be changed via the toolbar. In the ``Show my tutorial groups`` tab, students can see the groups for which they are registered. Each group is displayed as a card with the date of the next session in the center. At the bottom of the card, a link to the tutorial groups communication channel is shown (if this feature is activated). On the right side of the page, all course-wide holidays are displayed where no tutorial groups meet.
