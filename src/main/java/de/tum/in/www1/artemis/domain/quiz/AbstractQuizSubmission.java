@@ -24,6 +24,12 @@ public abstract class AbstractQuizSubmission extends Submission {
     @JsonView(QuizView.After.class)
     private Double scoreInPoints;
 
+    @OneToMany(mappedBy = "submission", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
+    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    @JsonView(QuizView.Before.class)
+    @Valid
+    private Set<SubmittedAnswer> submittedAnswers = new HashSet<>();
+
     public Double getScoreInPoints() {
         return scoreInPoints;
     }
@@ -36,12 +42,6 @@ public abstract class AbstractQuizSubmission extends Submission {
     public void setScoreInPoints(Double scoreInPoints) {
         this.scoreInPoints = scoreInPoints;
     }
-
-    @OneToMany(mappedBy = "submission", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    @JsonView(QuizView.Before.class)
-    @Valid
-    private Set<SubmittedAnswer> submittedAnswers = new HashSet<>();
 
     public Set<SubmittedAnswer> getSubmittedAnswers() {
         return submittedAnswers;
