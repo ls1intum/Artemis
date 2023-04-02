@@ -3688,6 +3688,7 @@ public class DatabaseUtilService {
         programmingExerciseRepository.save(exercise);
     }
 
+    // TODO verify usage, should this be with ids or names?
     public void addTasksToProgrammingExercise(ProgrammingExercise programmingExercise) {
         StringBuilder problemStatement = new StringBuilder(programmingExercise.getProblemStatement());
         problemStatement.append('\n');
@@ -3721,7 +3722,8 @@ public class DatabaseUtilService {
         }
     }
 
-    public void addCodeHintsToProgrammingExercise(ProgrammingExercise programmingExercise) {
+    public List<CodeHint> addCodeHintsToProgrammingExercise(ProgrammingExercise programmingExercise) {
+        List<CodeHint> codeHints = new ArrayList<>();
         for (ProgrammingExerciseTask task : programmingExercise.getTasks()) {
             var solutionEntries = task.getTestCases().stream().flatMap(testCase -> testCase.getSolutionEntries().stream()).collect(Collectors.toSet());
             var codeHint = new CodeHint();
@@ -3732,12 +3734,14 @@ public class DatabaseUtilService {
             codeHint.setProgrammingExerciseTask(task);
 
             programmingExercise.getExerciseHints().add(codeHint);
-            codeHintRepository.save(codeHint);
+            codeHint = codeHintRepository.save(codeHint);
             for (ProgrammingExerciseSolutionEntry solutionEntry : solutionEntries) {
                 solutionEntry.setCodeHint(codeHint);
                 solutionEntryRepository.save(solutionEntry);
             }
+            codeHints.add(codeHint);
         }
+        return codeHints;
     }
 
     public ProgrammingExercise loadProgrammingExerciseWithEagerReferences(ProgrammingExercise lazyExercise) {
