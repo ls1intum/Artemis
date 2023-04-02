@@ -839,9 +839,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                         // nothing to do here, because programming exercises are submitted differently
                         break;
                     case ExerciseType.QUIZ:
-                        const quizSubmission = submissionToSync.submission as QuizSubmission;
-                        this.examParticipationService.updateQuizSubmission(submissionToSync.exercise.id!, quizSubmission).subscribe({
-                            next: () => this.onSaveSubmissionSuccess(quizSubmission, submissionToSync.exercise.id!, forceSave, automatically, timestamp),
+                        this.examParticipationService.updateQuizSubmission(submissionToSync.exercise.id!, submissionToSync.submission as QuizSubmission).subscribe({
+                            next: () => this.onSaveSubmissionSuccess(submissionToSync.submission, submissionToSync.exercise.id!, forceSave, automatically, timestamp),
                             error: (error: HttpErrorResponse) => this.onSaveSubmissionError(error, submissionToSync.exercise.id!, forceSave, automatically, timestamp),
                         });
                         break;
