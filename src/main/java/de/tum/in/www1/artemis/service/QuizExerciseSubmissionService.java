@@ -76,28 +76,28 @@ public class QuizExerciseSubmissionService extends QuizSubmissionService<QuizSub
         result.setAssessmentType(AssessmentType.AUTOMATIC);
         result.setCompletionDate(ZonedDateTime.now());
         // save result
-        result = resultRepository.save(result);
+        Result savedResult = resultRepository.save(result);
 
         // setup result - submission relation
-        result.setSubmission(savedQuizSubmission);
+        savedResult.setSubmission(savedQuizSubmission);
         // calculate score and update result accordingly
-        result.evaluateQuizSubmission();
-        savedQuizSubmission.addResult(result);
+        savedResult.evaluateQuizSubmission();
+        savedQuizSubmission.addResult(savedResult);
         savedQuizSubmission.setParticipation(participation);
 
         // save submission to set result index column
         quizSubmissionRepository.save(savedQuizSubmission);
 
         // save result to store score
-        resultRepository.save(result);
+        resultRepository.save(savedResult);
 
         // result.participation.exercise.quizQuestions turn into proxy objects after saving, so we need to set it again to prevent problems later on
-        result.setParticipation(participation);
+        savedResult.setParticipation(participation);
 
         // add result to statistics
-        quizScheduleService.addResultForStatisticUpdate(quizExercise.getId(), result);
+        quizScheduleService.addResultForStatisticUpdate(quizExercise.getId(), savedResult);
         log.debug("submit practice quiz finished: {}", savedQuizSubmission);
-        return result;
+        return savedResult;
     }
 
     /**
