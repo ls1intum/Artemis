@@ -1088,7 +1088,7 @@ public class ExamService {
             }
         });
 
-        return quizExamSubmissionMap.size() > 0;
+        return !quizExamSubmissionMap.isEmpty();
     }
 
     /**
