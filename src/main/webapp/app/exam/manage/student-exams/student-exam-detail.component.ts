@@ -35,7 +35,7 @@ export class StudentExamDetailComponent implements OnInit {
     isTestExam: boolean;
     maxTotalPoints = 0;
     achievedTotalPoints = 0;
-    quizExamAchievedPoints: number;
+    quizExamAchievedPoints?: number;
     bonusTotalPoints = 0;
     busy = false;
 
