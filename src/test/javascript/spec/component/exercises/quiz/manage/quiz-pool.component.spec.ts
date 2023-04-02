@@ -55,7 +55,8 @@ describe('QuizPoolComponent', () => {
 
     it('should initialize quiz pool', () => {
         const quizPool = new QuizPool();
-        const quizGroup = new QuizGroup('Test Group');
+        const quizGroup = new QuizGroup();
+        quizGroup.name = 'Test Group';
         const quizQuestion = new MultipleChoiceQuestion();
         quizQuestion.quizGroup = quizGroup;
         quizPool.id = 1;

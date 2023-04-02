@@ -59,7 +59,8 @@ describe('QuizPoolMappingComponent', () => {
     });
 
     it('should delete group', () => {
-        const quizGroup = new QuizGroup('Group 1');
+        const quizGroup = new QuizGroup();
+        quizGroup.name = 'Group 1';
         const question = new MultipleChoiceQuestion();
         question.quizGroup = quizGroup;
         component.quizGroups = [quizGroup];
@@ -87,7 +88,8 @@ describe('QuizPoolMappingComponent', () => {
     });
 
     it('should delete mapped question', () => {
-        const quizGroup = new QuizGroup('Test Group');
+        const quizGroup = new QuizGroup();
+        quizGroup.name = 'Test Group';
         const question = new MultipleChoiceQuestion();
         question.quizGroup = quizGroup;
         component.quizGroups = [quizGroup];
@@ -164,7 +166,8 @@ describe('QuizPoolMappingComponent', () => {
     });
 
     it('should set unmappedQuizQuestions and quizGroupNameQuestionsMap when inputs are changed', () => {
-        const quizGroup = new QuizGroup('Test Group');
+        const quizGroup = new QuizGroup();
+        quizGroup.name = 'Test Group';
         const question0 = new MultipleChoiceQuestion();
         const question1 = new MultipleChoiceQuestion();
         question0.quizGroup = quizGroup;
@@ -180,7 +183,8 @@ describe('QuizPoolMappingComponent', () => {
     });
 
     it('should set quiz group to quiz question when question is dropped to the group', () => {
-        const quizGroup = new QuizGroup('Test Group');
+        const quizGroup = new QuizGroup();
+        quizGroup.name = 'Test Group';
         const question = new MultipleChoiceQuestion();
         component.handleOnQuizQuestionDropped(question, quizGroup);
         expect(question.quizGroup).toEqual(quizGroup);

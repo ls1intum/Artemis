@@ -46,7 +46,8 @@ export class QuizPoolMappingComponent implements OnInit, OnChanges, OnDestroy {
 
     addGroup(name: string) {
         if (!this.quizGroupNameQuestionsMap.has(name) && name.length > 0) {
-            const quizGroup = new QuizGroup(name);
+            const quizGroup = new QuizGroup();
+            quizGroup.name = name;
             this.quizGroups.push(quizGroup);
             this.quizGroupNameQuestionsMap.set(quizGroup.name, new Array<QuizQuestion>());
             this.onQuizGroupUpdated.emit();
