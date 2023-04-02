@@ -52,7 +52,7 @@ export class StudentResult {
     public gradeWithBonus?: BonusResult;
     public exerciseGroupIdToExerciseResult: { [key: number]: ExerciseResult };
     public mostSeverePlagiarismVerdict?: PlagiarismVerdict;
-    public quizExamOverallPointsAchieved: number;
+    public quizExamOverallPointsAchieved?: number;
 
     constructor() {}
 }

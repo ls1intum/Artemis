@@ -71,7 +71,7 @@ export class ExamPointsSummaryComponent implements OnInit {
     }
 
     getQuizExamAchievedPointsSum() {
-        return this.studentExamWithGrade?.studentResult.quizExamOverallPointsAchieved ?? 0;
+        return this.studentExamWithGrade.studentResult.quizExamOverallPointsAchieved ?? 0;
     }
 
     /**

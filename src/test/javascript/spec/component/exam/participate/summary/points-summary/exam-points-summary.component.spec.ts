@@ -19,7 +19,7 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { GradeType } from 'app/entities/grading-scale.model';
 import { Course } from 'app/entities/course.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
+import { StudentExamWithGradeDTO, StudentResult } from 'app/exam/exam-scores/exam-score-dtos.model';
 
 let fixture: ComponentFixture<ExamPointsSummaryComponent>;
 let component: ExamPointsSummaryComponent;
@@ -219,5 +219,23 @@ describe('ExamPointsSummaryComponent', () => {
         expect(component.getMaxNormalPointsSum()).toBe(0);
         expect(component.getMaxBonusPointsSum()).toBe(20);
         expect(component.getMaxNormalAndBonusPointsSum()).toBe(20);
+    });
+
+    it('should return quiz exam overall points achieved if exists', () => {
+        const studentExamWithGrade = new StudentExamWithGradeDTO();
+        const studentResult = new StudentResult();
+        studentResult.quizExamOverallPointsAchieved = 100;
+        studentExamWithGrade.studentResult = studentResult;
+        component.studentExamWithGrade = studentExamWithGrade;
+        expect(component.getQuizExamAchievedPointsSum()).toBe(studentResult.quizExamOverallPointsAchieved);
+    });
+
+    it('should return 0 if studentExamWithGrade does not exist', () => {
+        const studentExamWithGrade = new StudentExamWithGradeDTO();
+        const studentResult = new StudentResult();
+        studentResult.quizExamOverallPointsAchieved = undefined;
+        studentExamWithGrade.studentResult = studentResult;
+        component.studentExamWithGrade = studentExamWithGrade;
+        expect(component.getQuizExamAchievedPointsSum()).toBe(0);
     });
 });
