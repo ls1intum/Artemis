@@ -59,6 +59,7 @@ public class LectureUnitProcessingService {
      *
      * @param lectureUnitInformationDTO The split information
      * @param file                      The file (lecture slide) to be split
+     * @param lecture                   The lecture that the attachment unit belongs to
      * @return The prepared units to be saved
      */
     public List<AttachmentUnit> splitUnits(LectureUnitInformationDTO lectureUnitInformationDTO, MultipartFile file, Lecture lecture) throws IOException {
@@ -142,17 +143,15 @@ public class LectureUnitProcessingService {
     }
 
     /**
-     * Handles the file after upload if provided.
+     * Handles the file after upload.
      *
      * @param file       Potential file to handle
      * @param attachment Attachment linked to the file.
      */
     private void handleFile(MultipartFile file, Attachment attachment) {
-        if (file != null && !file.isEmpty()) {
-            String filePath = fileService.handleSaveFile(file, true, false);
-            attachment.setLink(filePath);
-            attachment.setUploadDate(ZonedDateTime.now());
-        }
+        String filePath = fileService.handleSaveFile(file, true, false);
+        attachment.setLink(filePath);
+        attachment.setUploadDate(ZonedDateTime.now());
     }
 
     /**
