@@ -41,23 +41,41 @@ public class BuildPlanIntegrationTest extends AbstractSpringIntegrationJenkinsGi
         programmingExercise.setReleaseDate(null);
         course.addExercises(programmingExercise);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
+
+        jenkinsPipelineScriptCreator.createBuildPlanForExercise(programmingExercise);
+
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
     void testNoAccessForStudent() throws Exception {
-        jenkinsPipelineScriptCreator.createBuildPlanForExercise(programmingExercise);
         request.get("/api/programming-exercises/" + programmingExercise.getId() + "/build-plan/for-editor", HttpStatus.FORBIDDEN, BuildPlan.class);
+        request.get("/api/programming-exercises/" + programmingExercise.getId() + "/build-plan?secret=" + programmingExercise.getBuildPlanAccessSecret(), HttpStatus.FORBIDDEN,
+                String.class);
+
         BuildPlan someOtherBuildPlan = new BuildPlan();
         request.put("/api/programming-exercises/" + programmingExercise.getId() + "/build-plan", someOtherBuildPlan, HttpStatus.FORBIDDEN);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testNoAccessForTutor() throws Exception {
-        jenkinsPipelineScriptCreator.createBuildPlanForExercise(programmingExercise);
         request.get("/api/programming-exercises/" + programmingExercise.getId() + "/build-plan/for-editor", HttpStatus.FORBIDDEN, BuildPlan.class);
+        request.get("/api/programming-exercises/" + programmingExercise.getId() + "/build-plan?secret=" + programmingExercise.getBuildPlanAccessSecret(), HttpStatus.FORBIDDEN,
+                String.class);
+
         BuildPlan someOtherBuildPlan = new BuildPlan();
         request.put("/api/programming-exercises/" + programmingExercise.getId() + "/build-plan", someOtherBuildPlan, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testAccessForEditor() throws Exception {
+        // request.get("/api/programming-exercises/" + programmingExercise.getId() + "/build-plan/for-editor", HttpStatus.OK, String.class);
+        request.get("/api/programming-exercises/" + programmingExercise.getId() + "/build-plan?secret=" + programmingExercise.getBuildPlanAccessSecret(), HttpStatus.OK,
+                String.class);
+
+        BuildPlan someOtherBuildPlan = new BuildPlan();
+        // request.put("/api/programming-exercises/" + programmingExercise.getId() + "/build-plan", someOtherBuildPlan, HttpStatus.OK);
     }
 }
