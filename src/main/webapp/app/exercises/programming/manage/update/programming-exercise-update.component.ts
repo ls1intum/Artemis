@@ -29,11 +29,13 @@ import { SubmissionPolicyType } from 'app/entities/submission-policy.model';
 import { faBan, faExclamationCircle, faHandshakeAngle, faQuestionCircle, faSave } from '@fortawesome/free-solid-svg-icons';
 import { ModePickerOption } from 'app/exercises/shared/mode-picker/mode-picker.component';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
+import { ProgrammingExerciseUpdateService } from 'app/exercises/programming/manage/update/programming-exercise-update.service';
 
 @Component({
     selector: 'jhi-programming-exercise-update',
     templateUrl: './programming-exercise-update.component.html',
     styleUrls: ['../programming-exercise-form.scss'],
+    providers: [ProgrammingExerciseUpdateService],
 })
 export class ProgrammingExerciseUpdateComponent implements OnInit {
     readonly IncludedInOverallScore = IncludedInOverallScore;
@@ -133,6 +135,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
 
     constructor(
         private programmingExerciseService: ProgrammingExerciseService,
+        private ProgrammingExerciseUpdateService: ProgrammingExerciseUpdateService,
         private modalService: NgbModal,
         private popupService: ExerciseUpdateWarningService,
         private courseService: CourseManagementService,
@@ -463,6 +466,50 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         if (this.programmingLanguageFeatureService.supportsProgrammingLanguage(ProgrammingLanguage.EMPTY)) {
             this.supportedLanguages.push(ProgrammingLanguage.EMPTY);
         }
+
+        this.ProgrammingExerciseUpdateService.configure({
+            titleNamePattern: this.titleNamePattern,
+            shortNamePattern: this.shortNamePattern,
+            invalidRepositoryNamePattern: this.invalidRepositoryNamePattern,
+            invalidDirectoryNamePattern: this.invalidDirectoryNamePattern,
+            updateRepositoryName: this.updateRepositoryName,
+            updateCheckoutDirectory: this.updateCheckoutDirectory,
+            refreshAuxiliaryRepositoryChecks: this.refreshAuxiliaryRepositoryChecks,
+            auxiliaryRepositoryDuplicateNames: this.auxiliaryRepositoryDuplicateNames,
+            auxiliaryRepositoryDuplicateDirectories: this.auxiliaryRepositoryDuplicateDirectories,
+            exerciseCategories: this.exerciseCategories,
+            existingCategories: this.existingCategories,
+            updateCategories: this.categoriesChanged,
+
+            appNamePatternForSwift: this.appNamePatternForSwift,
+            modePickerOptions: this.modePickerOptions,
+            withDependencies: this.withDependencies,
+            onWithDependenciesChanged: this.withDependenciesChanged,
+            packageNameRequired: this.packageNameRequired,
+            packageNamePattern: this.packageNamePattern,
+            supportedLanguages: this.supportedLanguages,
+            selectedProgrammingLanguage: this.selectedProgrammingLanguage,
+            onProgrammingLanguageChange: this.programmingLanguageChanged,
+            projectTypes: this.projectTypes,
+            selectedProjectType: this.selectedProjectType,
+            onProjectTypeChange: this.projectTypeChanged,
+
+            staticCodeAnalysisAllowed: this.staticCodeAnalysisAllowed,
+            onStaticCodeAnalysisChanged: this.staticCodeAnalysisChanged,
+            maxPenaltyPattern: this.maxPenaltyPattern,
+
+            problemStatementLoaded: this.problemStatementLoaded,
+            templateParticipationResultLoaded: this.templateParticipationResultLoaded,
+            hasUnsavedChanges: this.hasUnsavedChanges,
+            rerenderSubject: this.rerenderSubject.asObservable(),
+            sequentialTestRunsAllowed: this.sequentialTestRunsAllowed,
+            checkoutSolutionRepositoryAllowed: this.checkoutSolutionRepositoryAllowed,
+            validIdeSelection: this.validIdeSelection,
+            inProductionEnvironment: this.inProductionEnvironment,
+            recreateBuildPlans: this.recreateBuildPlans,
+            onRecreateBuildPlanOrUpdateTemplateChange: this.onRecreateBuildPlanOrUpdateTemplateChange,
+            updateTemplate: this.updateTemplate,
+        });
     }
 
     /**
@@ -745,7 +792,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         if (forStep >= 1) {
             this.validateExerciseTitle(validationErrorReasons);
             this.validateExerciseShortName(validationErrorReasons);
-            this.validateExerciseAuxiliryRepositories(validationErrorReasons);
+            this.validateExerciseAuxiliaryRepositories(validationErrorReasons);
         }
 
         if (forStep >= 3) {
@@ -922,7 +969,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         }
     }
 
-    private validateExerciseAuxiliryRepositories(validationErrorReasons: ValidationReason[]): void {
+    private validateExerciseAuxiliaryRepositories(validationErrorReasons: ValidationReason[]): void {
         if (!this.auxiliaryRepositoriesValid) {
             validationErrorReasons.push({
                 translateKey: 'artemisApp.programmingExercise.auxiliaryRepository.error',
@@ -938,64 +985,5 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                 translateValues: {},
             });
         }
-    }
-
-    getInfoStepInputs() {
-        return {
-            titleNamePattern: this.titleNamePattern,
-            shortNamePattern: this.shortNamePattern,
-            invalidRepositoryNamePattern: this.invalidRepositoryNamePattern,
-            invalidDirectoryNamePattern: this.invalidDirectoryNamePattern,
-            updateRepositoryName: this.updateRepositoryName,
-            updateCheckoutDirectory: this.updateCheckoutDirectory,
-            refreshAuxiliaryRepositoryChecks: this.refreshAuxiliaryRepositoryChecks,
-            auxiliaryRepositoryDuplicateNames: this.auxiliaryRepositoryDuplicateNames,
-            auxiliaryRepositoryDuplicateDirectories: this.auxiliaryRepositoryDuplicateDirectories,
-            exerciseCategories: this.exerciseCategories,
-            existingCategories: this.existingCategories,
-            updateCategories: this.categoriesChanged,
-        };
-    }
-
-    getLanguageStepInputs() {
-        return {
-            appNamePatternForSwift: this.appNamePatternForSwift,
-            modePickerOptions: this.modePickerOptions,
-            withDependencies: this.withDependencies,
-            onWithDependenciesChanged: this.withDependenciesChanged,
-            packageNameRequired: this.packageNameRequired,
-            packageNamePattern: this.packageNamePattern,
-            supportedLanguages: this.supportedLanguages,
-            selectedProgrammingLanguage: this.selectedProgrammingLanguage,
-            onProgrammingLanguageChange: this.programmingLanguageChanged,
-            projectTypes: this.projectTypes,
-            selectedProjectType: this.selectedProjectType,
-            onProjectTypeChange: this.projectTypeChanged,
-        };
-    }
-
-    getGradingStepInputs() {
-        return {
-            staticCodeAnalysisAllowed: this.staticCodeAnalysisAllowed,
-            onStaticCodeAnalysisChanged: this.staticCodeAnalysisChanged,
-            maxPenaltyPattern: this.maxPenaltyPattern,
-        };
-    }
-
-    getProblemStepInputs() {
-        return {
-            problemStatementLoaded: this.problemStatementLoaded,
-            templateParticipationResultLoaded: this.templateParticipationResultLoaded,
-            hasUnsavedChanges: this.hasUnsavedChanges,
-            rerenderSubject: this.rerenderSubject.asObservable(),
-            sequentialTestRunsAllowed: this.sequentialTestRunsAllowed,
-            checkoutSolutionRepositoryAllowed: this.checkoutSolutionRepositoryAllowed,
-            validIdeSelection: this.validIdeSelection,
-            inProductionEnvironment: this.inProductionEnvironment,
-            recreateBuildPlans: this.recreateBuildPlans,
-            onRecreateBuildPlanOrUpdateTemplateChange: this.onRecreateBuildPlanOrUpdateTemplateChange,
-            updateTemplate: this.updateTemplate,
-            selectedProjectType: this.selectedProjectType,
-        };
     }
 }

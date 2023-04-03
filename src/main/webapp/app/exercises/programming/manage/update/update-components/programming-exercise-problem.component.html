@@ -9,18 +9,18 @@
         </jhi-programming-exercise-instructions>
     </ng-container>
     <jhi-programming-exercise-editable-instructions
-        *ngIf="problemStatementLoaded && templateParticipationResultLoaded && !isImport"
+        *ngIf="programmingExerciseUpdateService.stepInputs.problemStatementLoaded && programmingExerciseUpdateService.stepInputs.templateParticipationResultLoaded && !isImport"
         [participation]="programmingExercise.templateParticipation!"
         [(exercise)]="exercise"
         [showStatus]="!!programmingExercise?.id"
         [editMode]="!!programmingExercise?.id"
-        (hasUnsavedChanges)="hasUnsavedChanges = $event"
-        [forceRender]="rerenderSubject"
+        (hasUnsavedChanges)="programmingExerciseUpdateService.stepInputs.hasUnsavedChanges = $event"
+        [forceRender]="programmingExerciseUpdateService.stepInputs.rerenderSubject"
         class="form__editable-instructions"
     ></jhi-programming-exercise-editable-instructions>
 </div>
 
-<div class="form-group" *ngIf="!isExamMode">
+<div class="form-group" *ngIf="isExamMode">
     <jhi-learning-goal-selection
         id="learning-goals"
         [labelName]="'artemisApp.learningGoal.link.title' | artemisTranslate"
@@ -31,7 +31,10 @@
 </div>
 
 <!-- Setting whether the solution repository should be checked out is only supported for Haskell exercises and is only available for new exercises -->
-<div class="form-group mb-0" *ngIf="!programmingExercise.id && programmingExercise.programmingLanguage && checkoutSolutionRepositoryAllowed">
+<div
+    class="form-group mb-0"
+    *ngIf="!programmingExercise.id && programmingExercise.programmingLanguage && programmingExerciseUpdateService.stepInputs.checkoutSolutionRepositoryAllowed"
+>
     <div class="form-check">
         <label class="form-check-label" for="field_checkoutSolutionRepository">
             <input
@@ -49,7 +52,7 @@
 <!--This checkbox is only visible in the dev environment. If the checkbox is checked and the user clicks on the generate button
      a programming exercise without a connection to the VCS and CI will be generated
      This functionality is only for testing purposes-->
-<div class="form-group mb-0" *ngIf="!inProductionEnvironment">
+<div class="form-group mb-0" *ngIf="!programmingExerciseUpdateService.stepInputs.inProductionEnvironment">
     <div class="form-check">
         <label class="form-check-label" for="field_noVersionControlAndContinuousIntegrationAvailable">
             <input
@@ -73,8 +76,8 @@
                 type="checkbox"
                 name="recreateBuildPlans"
                 id="field_recreateBuildPlans"
-                [(ngModel)]="recreateBuildPlans"
-                (change)="recreateBuildPlanOrUpdateTemplateChange()"
+                [(ngModel)]="programmingExerciseUpdateService.stepInputs.recreateBuildPlans"
+                (change)="programmingExerciseUpdateService.stepInputs.onRecreateBuildPlanOrUpdateTemplateChange()"
             />
             <span jhiTranslate="artemisApp.programmingExercise.recreateBuildPlans.title">Recreate Build Plans</span>
             <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.recreateBuildPlans.description"></jhi-help-icon>
@@ -89,8 +92,8 @@
                 type="checkbox"
                 name="updateTemplateFiles"
                 id="field_updateTemplateFiles"
-                [(ngModel)]="updateTemplate"
-                (change)="recreateBuildPlanOrUpdateTemplateChange()"
+                [(ngModel)]="programmingExerciseUpdateService.stepInputs.updateTemplate"
+                (change)="programmingExerciseUpdateService.stepInputs.onRecreateBuildPlanOrUpdateTemplateChange()"
             />
             <span jhiTranslate="artemisApp.programmingExercise.updateTemplate.title">Update template</span>
             <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.updateTemplate.description"></jhi-help-icon>

@@ -4,25 +4,30 @@
         #select
         required
         class="form-select"
-        [ngModel]="languageStepInputs.selectedProgrammingLanguage"
-        (ngModelChange)="select.value = languageStepInputs.onProgrammingLanguageChange($event)"
+        [ngModel]="programmingExerciseUpdateService.stepInputs.selectedProgrammingLanguage"
+        (ngModelChange)="select.value = programmingExerciseUpdateService.stepInputs.onProgrammingLanguageChange($event)"
         name="programmingLanguage"
         id="field_programmingLanguage"
         [disabled]="isImport || !!programmingExercise.id"
     >
-        <option *ngFor="let supportedLanguage of languageStepInputs.supportedLanguages" [value]="supportedLanguage">
+        <option *ngFor="let supportedLanguage of programmingExerciseUpdateService.stepInputs.supportedLanguages" [value]="supportedLanguage">
             {{ supportedLanguage.charAt(0).toUpperCase() + supportedLanguage.slice(1).toLowerCase() }}
         </option>
     </select>
 </div>
 
-<div class="form-group mt-2" *ngIf="programmingExercise.programmingLanguage && languageStepInputs.projectTypes && languageStepInputs.projectTypes.length > 0">
+<div
+    class="form-group mt-2"
+    *ngIf="
+        programmingExercise.programmingLanguage && programmingExerciseUpdateService.stepInputs.projectTypes && programmingExerciseUpdateService.stepInputs.projectTypes.length > 0
+    "
+>
     <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.projectType" for="field_projectType">Project Type</label>
     <jhi-mode-picker
         required
-        [options]="languageStepInputs.modePickerOptions"
-        [value]="languageStepInputs.selectedProjectType"
-        (valueChange)="languageStepInputs.onProjectTypeChange($event!)"
+        [options]="programmingExerciseUpdateService.stepInputs.modePickerOptions"
+        [value]="programmingExerciseUpdateService.stepInputs.selectedProjectType"
+        (valueChange)="programmingExerciseUpdateService.stepInputs.onProjectTypeChange($event!)"
         [disabled]="isImport || !!programmingExercise.id"
         name="projectType"
         id="field_projectType"
@@ -33,8 +38,8 @@
             type="checkbox"
             name="withDependencies"
             id="field_with_dependencies"
-            [(ngModel)]="languageStepInputs.withDependencies"
-            (ngModelChange)="languageStepInputs.onWithDependenciesChanged($event)"
+            [(ngModel)]="programmingExerciseUpdateService.stepInputs.withDependencies"
+            (ngModelChange)="programmingExerciseUpdateService.stepInputs.onWithDependenciesChanged($event)"
             checked
         />
         <span jhiTranslate="artemisApp.programmingExercise.withDependencies">With Dependencies</span>
@@ -42,12 +47,15 @@
     </div>
 </div>
 
-<div class="form-group" *ngIf="programmingExercise.programmingLanguage && languageStepInputs.packageNameRequired && programmingExercise.projectType !== ProjectType.XCODE">
+<div
+    class="form-group"
+    *ngIf="programmingExercise.programmingLanguage && programmingExerciseUpdateService.stepInputs.packageNameRequired && programmingExercise.projectType !== ProjectType.XCODE"
+>
     <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.packageName" for="field_packageName">Package Name</label>
     <input
         required
         type="text"
-        [pattern]="languageStepInputs.packageNamePattern"
+        [pattern]="programmingExerciseUpdateService.stepInputs.packageNamePattern"
         class="form-control"
         name="packageName"
         id="field_packageName"
@@ -68,7 +76,7 @@
     <input
         required
         type="text"
-        [pattern]="languageStepInputs.appNamePatternForSwift"
+        [pattern]="programmingExerciseUpdateService.stepInputs.appNamePatternForSwift"
         class="form-control"
         name="packageName"
         id="field_appName"
@@ -84,7 +92,7 @@
     </ng-container>
 </div>
 
-<div class="form-group mt-2" *ngIf="programmingExercise.programmingLanguage && gradingInputs.staticCodeAnalysisAllowed">
+<div class="form-group mt-2" *ngIf="programmingExercise.programmingLanguage && programmingExerciseUpdateService.stepInputs.staticCodeAnalysisAllowed">
     <div class="form-check custom-control custom-checkbox">
         <input
             type="checkbox"
@@ -93,7 +101,7 @@
             name="staticCodeAnalysisEnabled"
             [disabled]="!!programmingExercise.sequentialTestRuns || (!isImport && !!programmingExercise.id)"
             [(ngModel)]="programmingExercise.staticCodeAnalysisEnabled"
-            (change)="gradingInputs.onStaticCodeAnalysisChanged()"
+            (change)="programmingExerciseUpdateService.stepInputs.onStaticCodeAnalysisChanged()"
         />
         <label class="form-check-label custom-control-label" for="field_staticCodeAnalysisEnabled" jhiTranslate="artemisApp.programmingExercise.enableStaticCodeAnalysis.title">
             Enable Static Code Analysis</label
@@ -119,7 +127,7 @@
             </div>
             <input
                 type="number"
-                [pattern]="gradingInputs.maxPenaltyPattern"
+                [pattern]="programmingExerciseUpdateService.stepInputs.maxPenaltyPattern"
                 class="form-control"
                 name="maxPenalty"
                 id="field_maxPenalty"

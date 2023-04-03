@@ -3,6 +3,7 @@ import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/entit
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { Observable } from 'rxjs';
+import { ProgrammingExerciseUpdateService } from 'app/exercises/programming/manage/update/programming-exercise-update.service';
 
 @Component({
     selector: 'jhi-programming-exercise-problem',
@@ -19,19 +20,6 @@ export class ProgrammingExerciseProblemComponent {
     @Input() isImport: boolean;
     @Input() isExamMode: boolean;
 
-    @Input() problemStatementLoaded: boolean;
-    @Input() templateParticipationResultLoaded: boolean;
-    @Input() hasUnsavedChanges: boolean;
-    @Input() rerenderSubject: Observable<void>;
-    @Input() sequentialTestRunsAllowed: boolean;
-    @Input() checkoutSolutionRepositoryAllowed: boolean;
-    @Input() validIdeSelection: () => boolean | undefined;
-    @Input() selectedProjectType: ProjectType;
-    @Input() inProductionEnvironment: boolean;
-    @Input() recreateBuildPlans: boolean;
-    @Input() recreateBuildPlanOrUpdateTemplateChange: () => void;
-    @Input() updateTemplate: boolean;
-
     @Output() exerciseChange = new EventEmitter<ProgrammingExercise>();
 
     @Input()
@@ -45,4 +33,6 @@ export class ProgrammingExerciseProblemComponent {
     }
 
     faQuestionCircle = faQuestionCircle;
+
+    constructor(public programmingExerciseUpdateService: ProgrammingExerciseUpdateService) {}
 }

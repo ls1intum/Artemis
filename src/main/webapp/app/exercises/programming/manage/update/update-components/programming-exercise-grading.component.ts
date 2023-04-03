@@ -6,6 +6,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { IncludedInOverallScore } from 'app/entities/exercise.model';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { GradingStepInputs } from 'app/exercises/programming/manage/update/wizard-mode/programming-exercise-update-wizard.component';
+import { ProgrammingExerciseUpdateService } from 'app/exercises/programming/manage/update/programming-exercise-update.service';
 
 @Component({
     selector: 'jhi-programming-exercise-grading',
@@ -22,11 +23,9 @@ export class ProgrammingExerciseGradingComponent {
     @Input() programmingExercise: ProgrammingExercise;
     @Input() showSummary = false;
 
-    @Input() gradingInputs: GradingStepInputs;
-
     faQuestionCircle = faQuestionCircle;
 
-    constructor(private translateService: TranslateService) {}
+    constructor(private translateService: TranslateService, public programmingExerciseUpdateService: ProgrammingExerciseUpdateService) {}
 
     getGradingSummary() {
         const summary = [];

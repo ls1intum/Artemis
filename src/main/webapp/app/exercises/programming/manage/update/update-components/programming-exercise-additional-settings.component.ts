@@ -1,7 +1,7 @@
 import { Component, Input } from '@angular/core';
-import { InfoStepInputs } from 'app/exercises/programming/manage/update/wizard-mode/programming-exercise-update-wizard.component';
 import { ProgrammingExercise, ProjectType } from 'app/entities/programming-exercise.model';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import { ProgrammingExerciseUpdateService } from 'app/exercises/programming/manage/update/programming-exercise-update.service';
 
 @Component({
     selector: 'jhi-programming-exercise-additional-settings',
@@ -19,7 +19,8 @@ export class ProgrammingExerciseAdditionalSettingsComponent {
     @Input() programmingExercise: ProgrammingExercise;
 
     @Input() shouldHidePreview = false;
-    @Input() infoInputs: InfoStepInputs;
 
     faQuestionCircle = faQuestionCircle;
+
+    constructor(public programmingExerciseUpdateService: ProgrammingExerciseUpdateService) {}
 }

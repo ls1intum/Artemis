@@ -4,7 +4,6 @@
         *ngIf="currentStep >= 1"
         [isImport]="isImport"
         [programmingExercise]="programmingExercise"
-        [infoStepInputs]="infoStepInputs"
     ></jhi-programming-exercise-update-wizard-info>
 
     <jhi-programming-exercise-update-wizard-difficulty
@@ -19,7 +18,6 @@
         *ngIf="currentStep >= 3"
         [isImport]="isImport"
         [programmingExercise]="programmingExercise"
-        [languageStepInputs]="languageStepInputs"
     ></jhi-programming-exercise-update-wizard-language>
 
     <jhi-programming-exercise-update-wizard-grading
@@ -27,7 +25,6 @@
         *ngIf="currentStep >= 4"
         [isImport]="isImport"
         [programmingExercise]="programmingExercise"
-        [gradingStepInputs]="gradingStepInputs"
     ></jhi-programming-exercise-update-wizard-grading>
 
     <jhi-programming-exercise-update-wizard-problem
@@ -35,7 +32,6 @@
         *ngIf="currentStep >= 5"
         [isImport]="isImport"
         [(exercise)]="exercise"
-        [problemStepInputs]="problemStepInputs"
     ></jhi-programming-exercise-update-wizard-problem>
 
     <!-- Bottom Navigation Bar -->

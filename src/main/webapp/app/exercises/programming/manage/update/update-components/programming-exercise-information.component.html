@@ -9,7 +9,7 @@
         class="form-control"
         name="title"
         id="field_title"
-        [pattern]="infoInputs.titleNamePattern"
+        [pattern]="programmingExerciseUpdateService.stepInputs.titleNamePattern"
         [(ngModel)]="programmingExercise.title"
         #title="ngModel"
     />
@@ -32,7 +32,7 @@
         name="shortName"
         id="field_shortName"
         minlength="3"
-        [pattern]="infoInputs.shortNamePattern"
+        [pattern]="programmingExerciseUpdateService.stepInputs.shortNamePattern"
         [(ngModel)]="programmingExercise.shortName"
         [readonly]="!isImport && programmingExercise.id"
         #shortName="ngModel"
@@ -50,8 +50,8 @@
         <jhi-help-icon text="artemisApp.exercise.categoriesTooltip"></jhi-help-icon>
     </div>
     <jhi-category-selector
-        [categories]="infoInputs.exerciseCategories"
-        [existingCategories]="infoInputs.existingCategories"
-        (selectedCategories)="infoInputs.updateCategories($event)"
+        [categories]="programmingExerciseUpdateService.stepInputs.exerciseCategories"
+        [existingCategories]="programmingExerciseUpdateService.stepInputs.existingCategories"
+        (selectedCategories)="programmingExerciseUpdateService.stepInputs.updateCategories($event)"
     ></jhi-category-selector>
 </div>

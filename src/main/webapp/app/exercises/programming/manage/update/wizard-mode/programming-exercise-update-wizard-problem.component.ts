@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { ProblemStepInputs } from 'app/exercises/programming/manage/update/wizard-mode/programming-exercise-update-wizard.component';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExerciseUpdateService } from 'app/exercises/programming/manage/update/programming-exercise-update.service';
 
 @Component({
     selector: 'jhi-programming-exercise-update-wizard-problem',
@@ -11,8 +11,6 @@ export class ProgrammingExerciseUpdateWizardProblemComponent {
     programmingExercise: ProgrammingExercise;
 
     @Input() isImport: boolean;
-    @Input() problemStepInputs: ProblemStepInputs;
-
     @Output() exerciseChange = new EventEmitter<ProgrammingExercise>();
 
     @Input()

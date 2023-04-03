@@ -1,6 +1,5 @@
 import { Component, Input } from '@angular/core';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { GradingStepInputs } from 'app/exercises/programming/manage/update/wizard-mode/programming-exercise-update-wizard.component';
 
 @Component({
     selector: 'jhi-programming-exercise-update-wizard-grading',
@@ -10,6 +9,4 @@ import { GradingStepInputs } from 'app/exercises/programming/manage/update/wizar
 export class ProgrammingExerciseUpdateWizardGradingComponent {
     @Input() isImport: boolean;
     @Input() programmingExercise: ProgrammingExercise;
-
-    @Input() gradingStepInputs: GradingStepInputs;
 }
