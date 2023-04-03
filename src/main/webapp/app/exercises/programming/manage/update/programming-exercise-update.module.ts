@@ -32,6 +32,7 @@ import { ProgrammingExerciseLanguageComponent } from 'app/exercises/programming/
 import { ProgrammingExerciseGradingComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-grading.component';
 import { ProgrammingExerciseProblemComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-problem.component';
 import { ProgrammingExerciseAdditionalSettingsComponent } from './update-components/programming-exercise-additional-settings.component';
+import { ProgrammingExerciseUpdateWizardAdditionalSettingsComponent } from 'app/exercises/programming/manage/update/wizard-mode/programming-exercise-update-wizard.additional-settings.component';
 
 @NgModule({
     imports: [
@@ -60,6 +61,7 @@ import { ProgrammingExerciseAdditionalSettingsComponent } from './update-compone
         ProgrammingExerciseUpdateWizardLanguageComponent,
         ProgrammingExerciseUpdateWizardGradingComponent,
         ProgrammingExerciseUpdateWizardProblemComponent,
+        ProgrammingExerciseUpdateWizardAdditionalSettingsComponent,
         ProgrammingExerciseUpdateWizardBottomBarComponent,
         ProgrammingExerciseInformationComponent,
         ProgrammingExerciseDifficultyComponent,
