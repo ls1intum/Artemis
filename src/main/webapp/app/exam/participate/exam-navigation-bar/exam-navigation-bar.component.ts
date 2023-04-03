@@ -99,10 +99,21 @@ export class ExamNavigationBarComponent implements OnInit {
             });
     }
 
+    /**
+     * Determines the button tooltip type of the given exercise
+     *
+     * @param exercise the exercise for which the button tool type to be returned
+     * @return ButtonTooltipType returns the button tooltip type
+     */
     getExerciseButtonTooltip(exercise: Exercise): ButtonTooltipType {
         return this.examParticipationService.getExerciseButtonTooltip(exercise);
     }
 
+    /**
+     * Determines the button tooltip type of the quiz exam
+     *
+     * @return ButtonTooltipType returns the button tooltip type
+     */
     getQuizExamButtonTooltip(): ButtonTooltipType {
         const exercise = { type: ExerciseType.QUIZ, studentParticipations: [{ submissions: [this.quizExamSubmission] } as StudentParticipation] } as Exercise;
         return this.examParticipationService.getExerciseButtonTooltip(exercise);
@@ -192,18 +203,18 @@ export class ExamNavigationBarComponent implements OnInit {
      * TODO: we should try to extract a method for the common logic which avoids side effects (i.e. changing this.icon)
      *  this method could e.g. return the sync status and the icon
      *
-     * @param itemIndex index of the exercise
+     * @param exerciseIndex index of the exercise
      * @return the sync status of the exercise (whether the corresponding submission is saved on the server or not)
      */
-    setExerciseButtonStatus(itemIndex?: number): 'synced' | 'synced active' | 'notSynced' {
+    setExerciseButtonStatus(exerciseIndex?: number): 'synced' | 'synced active' | 'notSynced' {
         // start with a yellow status (edit icon)
         // TODO: it's a bit weired, that it works that multiple icons (one per exercise) are hold in the same instance variable of the component
         //  we should definitely refactor this and e.g. use the same ExamExerciseOverviewItem as in exam-exercise-overview-page.component.ts !
         this.icon = faEdit;
         let submission;
         let exercise;
-        if (itemIndex !== undefined) {
-            exercise = this.exercises[itemIndex];
+        if (exerciseIndex !== undefined) {
+            exercise = this.exercises[exerciseIndex];
             submission = ExamParticipationService.getSubmissionForExercise(exercise);
         } else {
             submission = this.quizExamSubmission;
@@ -218,7 +229,7 @@ export class ExamNavigationBarComponent implements OnInit {
         }
         if (submission.isSynced || (exercise && this.isOnlyOfflineIDE(exercise))) {
             // make button blue (except for the current page)
-            if (itemIndex === this.exerciseIndex && !this.overviewPageOpen) {
+            if (exerciseIndex === this.exerciseIndex && !this.overviewPageOpen) {
                 return 'synced active';
             } else {
                 return 'synced';
