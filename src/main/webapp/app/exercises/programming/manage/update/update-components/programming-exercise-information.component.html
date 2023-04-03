@@ -34,7 +34,7 @@
         minlength="3"
         [pattern]="programmingExerciseUpdateService.stepInputs.shortNamePattern"
         [(ngModel)]="programmingExercise.shortName"
-        [readonly]="!isImport && programmingExercise.id"
+        [readonly]="!programmingExerciseUpdateService.stepInputs.isImport && programmingExercise.id"
         #shortName="ngModel"
     />
     <ng-container *ngFor="let error of shortName.errors! | keyvalue | removekeys : ['required']">

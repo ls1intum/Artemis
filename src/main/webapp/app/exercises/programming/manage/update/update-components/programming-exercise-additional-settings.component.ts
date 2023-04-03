@@ -14,7 +14,6 @@ export class ProgrammingExerciseAdditionalSettingsComponent {
     @Input() selectedProjectType: ProjectType;
     @Input() validIdeSelection: () => boolean | undefined;
 
-    @Input() isImport: boolean;
     @Input() isEdit: boolean;
     @Input() programmingExercise: ProgrammingExercise;
 

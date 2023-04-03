@@ -38,19 +38,18 @@
                 <input type="text" class="form-control" id="id" name="id" [(ngModel)]="programmingExercise.id" readonly />
             </div>
 
-            <jhi-programming-exercise-info [isImport]="isImport" [isExamMode]="isExamMode" [programmingExercise]="programmingExercise"></jhi-programming-exercise-info>
+            <jhi-programming-exercise-info [isExamMode]="isExamMode" [programmingExercise]="programmingExercise"></jhi-programming-exercise-info>
 
-            <jhi-programming-exercise-difficulty [isImport]="isImport" [programmingExercise]="programmingExercise"></jhi-programming-exercise-difficulty>
+            <jhi-programming-exercise-difficulty [programmingExercise]="programmingExercise"></jhi-programming-exercise-difficulty>
 
-            <jhi-programming-exercise-language [isImport]="isImport" [programmingExercise]="programmingExercise"> </jhi-programming-exercise-language>
+            <jhi-programming-exercise-language [programmingExercise]="programmingExercise"> </jhi-programming-exercise-language>
 
-            <jhi-programming-exercise-grading class="form-step" [isImport]="isImport" [programmingExercise]="programmingExercise"></jhi-programming-exercise-grading>
+            <jhi-programming-exercise-grading class="form-step" [programmingExercise]="programmingExercise"></jhi-programming-exercise-grading>
 
-            <jhi-programming-exercise-problem [isImport]="isImport" [isExamMode]="isExamMode" [(exercise)]="programmingExercise"></jhi-programming-exercise-problem>
+            <jhi-programming-exercise-problem [isExamMode]="isExamMode" [(exercise)]="programmingExercise"></jhi-programming-exercise-problem>
 
             <jhi-programming-exercise-additional-settings
                 [validIdeSelection]="validIdeSelection"
-                [isImport]="isImport"
                 [isEdit]="isEdit"
                 [programmingExercise]="programmingExercise"
             ></jhi-programming-exercise-additional-settings>

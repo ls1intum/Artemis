@@ -8,7 +8,6 @@ import { ProgrammingExerciseUpdateService } from 'app/exercises/programming/mana
     styleUrls: ['../../programming-exercise-form.scss'],
 })
 export class ProgrammingExerciseInformationComponent {
-    @Input() isImport: boolean;
     @Input() isExamMode: boolean;
     @Input() programmingExercise: ProgrammingExercise;
 

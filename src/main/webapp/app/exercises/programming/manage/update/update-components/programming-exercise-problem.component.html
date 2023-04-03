@@ -1,6 +1,6 @@
 <div class="form-group mb-0" id="field_problemStatement" name="problemStatement">
     <label class="form-control-label" for="field_problemStatement" jhiTranslate="artemisApp.programmingExercise.problemStatement.title"></label>
-    <ng-container *ngIf="isImport">
+    <ng-container *ngIf="programmingExerciseUpdateService.stepInputs.isImport">
         <ngb-alert [dismissible]="false">
             <span class="font-weight-bold">{{ 'artemisApp.exercise.import.attention' | artemisTranslate }}</span
             ><span>{{ 'artemisApp.exercise.import.markdownWarning' | artemisTranslate }}</span>
@@ -9,7 +9,11 @@
         </jhi-programming-exercise-instructions>
     </ng-container>
     <jhi-programming-exercise-editable-instructions
-        *ngIf="programmingExerciseUpdateService.stepInputs.problemStatementLoaded && programmingExerciseUpdateService.stepInputs.templateParticipationResultLoaded && !isImport"
+        *ngIf="
+            programmingExerciseUpdateService.stepInputs.problemStatementLoaded &&
+            programmingExerciseUpdateService.stepInputs.templateParticipationResultLoaded &&
+            !programmingExerciseUpdateService.stepInputs.isImport
+        "
         [participation]="programmingExercise.templateParticipation!"
         [(exercise)]="exercise"
         [showStatus]="!!programmingExercise?.id"
@@ -68,7 +72,7 @@
     </div>
 </div>
 
-<div *ngIf="isImport" class="form-group mb-0">
+<div *ngIf="programmingExerciseUpdateService.stepInputs.isImport" class="form-group mb-0">
     <div class="form-check">
         <label class="form-check-label" for="field_recreateBuildPlans">
             <input
@@ -84,7 +88,14 @@
         </label>
     </div>
 </div>
-<div class="form-group mb-0" *ngIf="isImport && programmingExercise.projectType !== ProjectType.PLAIN_GRADLE && programmingExercise.projectType !== ProjectType.GRADLE_GRADLE">
+<div
+    class="form-group mb-0"
+    *ngIf="
+        programmingExerciseUpdateService.stepInputs.isImport &&
+        programmingExercise.projectType !== ProjectType.PLAIN_GRADLE &&
+        programmingExercise.projectType !== ProjectType.GRADLE_GRADLE
+    "
+>
     <div class="form-check">
         <label class="form-check-label" for="field_updateTemplateFiles">
             <input

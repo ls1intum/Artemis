@@ -12,7 +12,6 @@ export class ProgrammingExerciseLanguageComponent {
     readonly ProgrammingLanguage = ProgrammingLanguage;
     readonly ProjectType = ProjectType;
 
-    @Input() isImport: boolean;
     @Input() programmingExercise: ProgrammingExercise;
     @Input() sequentialTestRunsAllowed: boolean;
 

@@ -17,7 +17,6 @@ export class ProgrammingExerciseProblemComponent {
 
     programmingExercise: ProgrammingExercise;
 
-    @Input() isImport: boolean;
     @Input() isExamMode: boolean;
 
     @Output() exerciseChange = new EventEmitter<ProgrammingExercise>();

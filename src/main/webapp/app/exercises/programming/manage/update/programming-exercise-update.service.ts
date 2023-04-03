@@ -5,6 +5,7 @@ import { ModePickerOption } from 'app/exercises/shared/mode-picker/mode-picker.c
 import { Observable } from 'rxjs';
 
 interface StepInputs {
+    isImport: boolean;
     titleNamePattern: string;
     shortNamePattern: RegExp;
     invalidRepositoryNamePattern: RegExp;
