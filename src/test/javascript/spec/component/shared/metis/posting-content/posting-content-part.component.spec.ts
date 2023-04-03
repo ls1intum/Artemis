@@ -20,6 +20,7 @@ describe('PostingContentPartComponent', () => {
     let fileService: FileService;
     let openAttachmentSpy: jest.SpyInstance;
     let navigateByUrlSpy: jest.SpyInstance;
+    let enlargeImageSpy: jest.SpyInstance;
 
     let contentBeforeReference: string;
     let contentAfterReference: string;
@@ -49,6 +50,7 @@ describe('PostingContentPartComponent', () => {
 
                 navigateByUrlSpy = jest.spyOn(router, 'navigateByUrl');
                 openAttachmentSpy = jest.spyOn(fileService, 'downloadFile');
+                enlargeImageSpy = jest.spyOn(component, 'enlargeImage');
 
                 contentBeforeReference = '**Be aware**\n\n I want to reference the following Post ';
                 contentAfterReference = 'in my content,\n\n does it *actually* work?';
@@ -171,6 +173,50 @@ describe('PostingContentPartComponent', () => {
             referenceLink.click();
             expect(openAttachmentSpy).toHaveBeenCalledOnce();
             expect(openAttachmentSpy).toHaveBeenCalledWith(attachmentURL);
+        });
+
+        it('should contain a reference to lecture unit', () => {
+            const referenceStr = 'Lecture Unit 1';
+            const attachmentURL = '/api/files/attachments/attachment-unit/1/LectureUnit1.pdf';
+            component.postingContentPart = {
+                contentBeforeReference,
+                referenceStr,
+                referenceType: ReferenceType.ATTACHMENT_UNITS,
+                attachmentToReference: attachmentURL,
+                contentAfterReference,
+            } as PostingContentPart;
+            fixture.detectChanges();
+
+            // should display attachment unit file name to user
+            const referenceLink = getElement(debugElement, '.reference');
+            expect(referenceLink).not.toBeNull();
+            expect(referenceLink.innerHTML).toInclude(referenceStr);
+
+            // on click should open referenced attachment unit within new tab
+            referenceLink.click();
+            expect(openAttachmentSpy).toHaveBeenCalledOnce();
+            expect(openAttachmentSpy).toHaveBeenCalledWith(attachmentURL);
+        });
+
+        it('should contain a reference to lecture unit slide image', () => {
+            const referenceStr = 'Lecture Unit1_SLIDE_1';
+            const imageURL = '/api/files/attachments/slides/attachment-unit/1/AttachmentUnitSlide_2023-04-03T02-21-44-124_9ffe48ee.png';
+            component.postingContentPart = {
+                referenceStr,
+                referenceType: ReferenceType.SLIDE,
+                slideToReference: imageURL,
+            } as PostingContentPart;
+            fixture.detectChanges();
+
+            // should display attachment unit slide name and link to user
+            const referenceLink = getElement(debugElement, '.reference');
+            expect(referenceLink).not.toBeNull();
+            expect(referenceLink.innerHTML).toInclude(referenceStr);
+
+            // on click should open referenced attachment unit slide
+            referenceLink.click();
+            expect(enlargeImageSpy).toHaveBeenCalledOnce();
+            expect(enlargeImageSpy).toHaveBeenCalledWith(imageURL);
         });
     });
 });

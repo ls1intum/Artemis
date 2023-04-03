@@ -15,6 +15,7 @@ import { MockProvider } from 'ng-mocks';
 import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
 import { Slide } from 'app/entities/lecture-unit/slide.model';
+import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 
 describe('Exercise Lecture Attachment Reference Commands', () => {
     let comp: MarkdownEditorComponent;
@@ -160,5 +161,40 @@ describe('Exercise Lecture Attachment Reference Commands', () => {
         const referenceRouterLinkToLecture = `[attachment]${metisLecture.attachments?.first()?.name}(${metisLecture.attachments?.first()?.link})[/attachment]`;
         lectureReferenceCommand.execute(metisLecture.id!.toString(), ReferenceType.ATTACHMENT, metisLecture.attachments?.first()?.id!.toString());
         expect(comp.aceEditorContainer.getEditor().getValue()).toBe(referenceRouterLinkToLecture);
+    });
+
+    it('should insert correct reference link for attachment unit to markdown editor on execute', () => {
+        const returnValue = of(new HttpResponse({ body: metisLecture3, status: 200 }));
+        findLectureWithDetailsSpy.mockReturnValue(returnValue);
+        lectureReferenceCommand = new LectureAttachmentReferenceCommand(metisService, lectureService);
+
+        comp.defaultCommands = [lectureReferenceCommand];
+        fixture.detectChanges();
+
+        comp.aceEditorContainer.getEditor().setValue('');
+
+        // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
+        const selectedUnit: AttachmentUnit = metisLecture3.lectureUnits?.first() as AttachmentUnit;
+        const referenceRouterLinkToLectureUnit = `[lecture-unit]${metisLecture3.lectureUnits?.first()?.name}(${selectedUnit?.attachment?.link})[/lecture-unit]`;
+        lectureReferenceCommand.execute(metisLecture3.id!.toString(), ReferenceType.ATTACHMENT_UNITS, undefined, selectedUnit?.id!.toString());
+        expect(comp.aceEditorContainer.getEditor().getValue()).toBe(referenceRouterLinkToLectureUnit);
+    });
+
+    it('should insert correct reference link for attachment unit SLIDE to markdown editor on execute', () => {
+        const returnValue = of(new HttpResponse({ body: metisLecture3, status: 200 }));
+        findLectureWithDetailsSpy.mockReturnValue(returnValue);
+        lectureReferenceCommand = new LectureAttachmentReferenceCommand(metisService, lectureService);
+
+        comp.defaultCommands = [lectureReferenceCommand];
+        fixture.detectChanges();
+
+        comp.aceEditorContainer.getEditor().setValue('');
+
+        // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
+        const selectedUnit: AttachmentUnit = metisLecture3.lectureUnits?.first() as AttachmentUnit;
+        const selectedSlide: Slide = selectedUnit.slides?.first() as Slide;
+        const referenceRouterLinkToSlide = `[slide]${metisLecture3.lectureUnits?.first()?.name}_SLIDE_${selectedSlide.slideNumber}(${selectedSlide?.slideImagePath})[/slide]`;
+        lectureReferenceCommand.execute(metisLecture3.id!.toString(), ReferenceType.ATTACHMENT_UNITS, undefined, selectedUnit?.id!.toString(), selectedSlide?.id!.toString());
+        expect(comp.aceEditorContainer.getEditor().getValue()).toBe(referenceRouterLinkToSlide);
     });
 });
