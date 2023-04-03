@@ -10,6 +10,7 @@ import { MockQueryParamsDirective, MockRouterLinkDirective } from '../../../../h
 import { FileService } from 'app/shared/http/file.service';
 import { MockFileService } from '../../../../helpers/mocks/service/mock-file.service';
 import { MockRouter } from '../../../../helpers/mocks/mock-router';
+import { MatDialogModule } from '@angular/material/dialog';
 
 describe('PostingContentPartComponent', () => {
     let component: PostingContentPartComponent;
@@ -25,6 +26,7 @@ describe('PostingContentPartComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
+            imports: [MatDialogModule],
             declarations: [
                 PostingContentPartComponent,
                 HtmlForPostingMarkdownPipe, // we want to test against the rendered string, therefore we cannot mock the pipe

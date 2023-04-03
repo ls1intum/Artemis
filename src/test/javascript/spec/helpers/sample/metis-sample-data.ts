@@ -14,8 +14,9 @@ import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 
 export const metisAttachment = { id: 1, name: 'Metis Attachment', link: 'directory/Metis-Attachment.pdf' } as Attachment;
 export const metisAttachmentUnit = { id: 1, name: 'Metis Attachment Unit', attachment: metisAttachment, slides: [] } as AttachmentUnit;
-export const metisLecture = { id: 1, title: 'Metis  Lecture', attachments: [metisAttachment], lectureUnits: [metisAttachmentUnit] } as Lecture;
-export const metisLecture2 = { id: 1, title: 'Second Metis  Lecture', attachments: [], lectureUnits: [] } as Lecture;
+export const metisLecture = { id: 1, title: 'Metis  Lecture', attachments: [metisAttachment] } as Lecture;
+export const metisLecture2 = { id: 2, title: 'Second Metis  Lecture' } as Lecture;
+export const metisLecture3 = { id: 3, title: 'Metis  Lecture', attachments: [metisAttachment], lectureUnits: [metisAttachmentUnit] } as Lecture;
 
 export const metisExercise = { id: 1, title: 'Metis  Exercise', type: ExerciseType.TEXT } as Exercise;
 export const metisExercise2 = { id: 1, title: 'Second Metis  Exercise', type: ExerciseType.TEXT } as Exercise;
