@@ -315,9 +315,9 @@ public class ProgrammingTriggerService {
      * @param participation A participation. Assumes that the submissions are present.
      */
     private void triggerBuild(final ProgrammingExerciseParticipation participation) {
-        final Optional<ProgrammingSubmission> templateSubmission = participation.findLatestSubmission();
-        if (templateSubmission.isPresent()) {
-            triggerBuildAndNotifyUser(templateSubmission.get());
+        final Optional<ProgrammingSubmission> submission = participation.findLatestSubmission();
+        if (submission.isPresent()) {
+            triggerBuildAndNotifyUser(submission.get());
         }
         else {
             continuousIntegrationTriggerService.orElseThrow().triggerBuild(participation);
