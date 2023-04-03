@@ -11,6 +11,5 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
     styleUrls: ['./programming-exercise-update-wizard.component.scss'],
 })
 export class ProgrammingExerciseUpdateWizardGradingComponent {
-    @Input() isImport: boolean;
     @Input() programmingExercise: ProgrammingExercise;
 }

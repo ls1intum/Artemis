@@ -14,6 +14,5 @@ export class ProgrammingExerciseUpdateWizardLanguageComponent {
     readonly ProgrammingLanguage = ProgrammingLanguage;
     readonly ProjectType = ProjectType;
 
-    @Input() isImport: boolean;
     @Input() programmingExercise: ProgrammingExercise;
 }

@@ -15,7 +15,6 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 export class ProgrammingExerciseUpdateWizardProblemComponent {
     programmingExercise: ProgrammingExercise;
 
-    @Input() isImport: boolean;
     @Output() exerciseChange = new EventEmitter<ProgrammingExercise>();
 
     @Input()
