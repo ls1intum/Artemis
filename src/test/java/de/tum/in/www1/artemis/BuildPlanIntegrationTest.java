@@ -53,106 +53,87 @@ public class BuildPlanIntegrationTest extends AbstractSpringIntegrationJenkinsGi
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
     void testNoReadAccessForStudent() throws Exception {
-        request.get("/api/programming-exercises/" + programmingExercise.getId() + "/build-plan/for-editor", HttpStatus.FORBIDDEN, BuildPlan.class);
-
-        // students don't know the secret
-        request.get("/api/programming-exercises/" + programmingExercise.getId() + "/build-plan?secret=", HttpStatus.FORBIDDEN, String.class);
+        testNoReadAccess();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
     void testNoWriteAccessForStudent() throws Exception {
-        BuildPlan someOtherBuildPlan = new BuildPlan();
-        request.put("/api/programming-exercises/" + programmingExercise.getId() + "/build-plan", someOtherBuildPlan, HttpStatus.FORBIDDEN);
+        testNoWriteAccess();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testNoReadAccessForTutor() throws Exception {
-        request.get("/api/programming-exercises/" + programmingExercise.getId() + "/build-plan/for-editor", HttpStatus.FORBIDDEN, BuildPlan.class);
-
-        // tutors don't know the secret
-        request.get("/api/programming-exercises/" + programmingExercise.getId() + "/build-plan?secret=" + programmingExercise.getBuildPlanAccessSecret(), HttpStatus.FORBIDDEN,
-                String.class);
+        testNoReadAccess();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testNoWriteAccessForTutor() throws Exception {
-        BuildPlan someOtherBuildPlan = new BuildPlan();
-        request.put("/api/programming-exercises/" + programmingExercise.getId() + "/build-plan", someOtherBuildPlan, HttpStatus.FORBIDDEN);
+        testNoWriteAccess();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testReadAccessForEditor() throws Exception {
-        programmingExercise.generateAndSetBuildPlanAccessSecret();
-        programmingExercise = programmingExerciseRepository.save(programmingExercise);
-
-        request.get("/api/programming-exercises/" + programmingExercise.getId() + "/build-plan/for-editor", HttpStatus.OK, BuildPlan.class);
-
-        // this assumes that the secret is known to the editor
-        request.get("/api/programming-exercises/" + programmingExercise.getId() + "/build-plan?secret=" + programmingExercise.getBuildPlanAccessSecret(), HttpStatus.OK,
-                String.class);
+        testReadAccess();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testWriteAccessForEditor() throws Exception {
-        BuildPlan someOtherBuildPlan = new BuildPlan();
-        someOtherBuildPlan.setBuildPlan("Content");
-
-        final BuildPlan newBuildPlan = request.putWithResponseBody("/api/programming-exercises/" + programmingExercise.getId() + "/build-plan", someOtherBuildPlan, BuildPlan.class,
-                HttpStatus.OK);
-        final BuildPlan buildPlan = buildPlanRepository.findByProgrammingExercises_IdWithProgrammingExercisesElseThrow(programmingExercise.getId());
-
-        assertThat(newBuildPlan.getBuildPlan()).isEqualTo(someOtherBuildPlan.getBuildPlan());
-        assertThat(buildPlan.getId()).isEqualTo(newBuildPlan.getId());
+        testWriteAccess();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testReadAccessForInstructor() throws Exception {
-        programmingExercise.generateAndSetBuildPlanAccessSecret();
-        programmingExercise = programmingExerciseRepository.save(programmingExercise);
-
-        request.get("/api/programming-exercises/" + programmingExercise.getId() + "/build-plan/for-editor", HttpStatus.OK, BuildPlan.class);
-
-        // this assumes that the secret is known to the instructor
-        request.get("/api/programming-exercises/" + programmingExercise.getId() + "/build-plan?secret=" + programmingExercise.getBuildPlanAccessSecret(), HttpStatus.OK,
-                String.class);
+        testReadAccess();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testWriteAccessForInstructor() throws Exception {
-        BuildPlan someOtherBuildPlan = new BuildPlan();
-        someOtherBuildPlan.setBuildPlan("Content");
-
-        final BuildPlan newBuildPlan = request.putWithResponseBody("/api/programming-exercises/" + programmingExercise.getId() + "/build-plan", someOtherBuildPlan, BuildPlan.class,
-                HttpStatus.OK);
-        final BuildPlan buildPlan = buildPlanRepository.findByProgrammingExercises_IdWithProgrammingExercisesElseThrow(programmingExercise.getId());
-
-        assertThat(newBuildPlan.getBuildPlan()).isEqualTo(someOtherBuildPlan.getBuildPlan());
-        assertThat(buildPlan.getId()).isEqualTo(newBuildPlan.getId());
+        testWriteAccess();
     }
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testReadAccessForAdmin() throws Exception {
-        programmingExercise.generateAndSetBuildPlanAccessSecret();
-        programmingExercise = programmingExerciseRepository.save(programmingExercise);
-
-        request.get("/api/programming-exercises/" + programmingExercise.getId() + "/build-plan/for-editor", HttpStatus.OK, BuildPlan.class);
-
-        // this assumes that the secret is known to the admin
-        request.get("/api/programming-exercises/" + programmingExercise.getId() + "/build-plan?secret=" + programmingExercise.getBuildPlanAccessSecret(), HttpStatus.OK,
-                String.class);
+        testReadAccess();
     }
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testWriteAccessForAdmin() throws Exception {
+        testWriteAccess();
+    }
+
+    void testNoReadAccess() throws Exception {
+        request.get("/api/programming-exercises/" + programmingExercise.getId() + "/build-plan/for-editor", HttpStatus.FORBIDDEN, BuildPlan.class);
+
+        // students / tutors don't know the secret
+        request.get("/api/programming-exercises/" + programmingExercise.getId() + "/build-plan?secret=", HttpStatus.FORBIDDEN, String.class);
+    }
+
+    void testNoWriteAccess() throws Exception {
+        BuildPlan someOtherBuildPlan = new BuildPlan();
+        request.put("/api/programming-exercises/" + programmingExercise.getId() + "/build-plan", someOtherBuildPlan, HttpStatus.FORBIDDEN);
+    }
+
+    void testReadAccess() throws Exception {
+        programmingExercise.generateAndSetBuildPlanAccessSecret();
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+
+        request.get("/api/programming-exercises/" + programmingExercise.getId() + "/build-plan/for-editor", HttpStatus.OK, BuildPlan.class);
+
+        // this assumes that the secret is known to the editor / instructor / admin
+        request.get("/api/programming-exercises/" + programmingExercise.getId() + "/build-plan?secret=" + programmingExercise.getBuildPlanAccessSecret(), HttpStatus.OK,
+                String.class);
+    }
+
+    void testWriteAccess() throws Exception {
         BuildPlan someOtherBuildPlan = new BuildPlan();
         someOtherBuildPlan.setBuildPlan("Content");
 
