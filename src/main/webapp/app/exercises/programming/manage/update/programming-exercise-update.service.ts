@@ -37,8 +37,6 @@ interface ExerciseUpdateConfig {
     onStaticCodeAnalysisChanged: () => void;
     maxPenaltyPattern: string;
 
-    problemStatementLoaded: boolean;
-    templateParticipationResultLoaded: boolean;
     hasUnsavedChanges: boolean;
     rerenderSubject: Observable<void>;
     sequentialTestRunsAllowed: boolean;

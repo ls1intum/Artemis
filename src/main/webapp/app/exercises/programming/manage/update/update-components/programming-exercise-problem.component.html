@@ -9,11 +9,7 @@
         </jhi-programming-exercise-instructions>
     </ng-container>
     <jhi-programming-exercise-editable-instructions
-        *ngIf="
-            programmingExerciseUpdateService.config.problemStatementLoaded &&
-            programmingExerciseUpdateService.config.templateParticipationResultLoaded &&
-            !programmingExerciseUpdateService.config.isImport
-        "
+        *ngIf="!programmingExerciseUpdateService.config.isImport"
         [participation]="programmingExercise.templateParticipation!"
         [(exercise)]="exercise"
         [showStatus]="!!programmingExercise?.id"

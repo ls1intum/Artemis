@@ -67,8 +67,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     backupExercise: ProgrammingExercise;
     isSaving: boolean;
     goBackAfterSaving = false;
-    problemStatementLoaded = false;
-    templateParticipationResultLoaded = true;
     notificationText?: string;
     EditorMode = EditorMode;
     AssessmentType = AssessmentType;
@@ -421,9 +419,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
 
         // If an exercise is created, load our readme template so the problemStatement is not empty
         this.selectedProgrammingLanguage = this.programmingExercise.programmingLanguage!;
-        if (this.programmingExercise.id) {
-            this.problemStatementLoaded = true;
-        }
         // Select the correct pattern
         this.setPackageNamePattern(this.selectedProgrammingLanguage);
 
@@ -502,8 +497,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             onStaticCodeAnalysisChanged: this.staticCodeAnalysisChanged,
             maxPenaltyPattern: this.maxPenaltyPattern,
 
-            problemStatementLoaded: this.problemStatementLoaded,
-            templateParticipationResultLoaded: this.templateParticipationResultLoaded,
             hasUnsavedChanges: this.hasUnsavedChanges,
             rerenderSubject: this.rerenderSubject.asObservable(),
             sequentialTestRunsAllowed: this.sequentialTestRunsAllowed,
@@ -757,16 +750,13 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     private loadProgrammingLanguageTemplate(language: ProgrammingLanguage) {
         // Otherwise, just change the language and load the new template
         this.hasUnsavedChanges = false;
-        this.problemStatementLoaded = false;
         this.programmingExercise.programmingLanguage = language;
         this.fileService.getTemplateFile('readme', this.programmingExercise.programmingLanguage, this.programmingExercise.projectType).subscribe({
             next: (file) => {
                 this.programmingExercise.problemStatement = file;
-                this.problemStatementLoaded = true;
             },
             error: () => {
                 this.programmingExercise.problemStatement = '';
-                this.problemStatementLoaded = true;
             },
         });
     }
