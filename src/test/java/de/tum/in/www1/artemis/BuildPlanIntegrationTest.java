@@ -145,7 +145,7 @@ public class BuildPlanIntegrationTest extends AbstractSpringIntegrationJenkinsGi
 
         request.get("/api/programming-exercises/" + programmingExercise.getId() + "/build-plan/for-editor", HttpStatus.OK, BuildPlan.class);
 
-        // this assumes that the secret is known to the instructor
+        // this assumes that the secret is known to the admin
         request.get("/api/programming-exercises/" + programmingExercise.getId() + "/build-plan?secret=" + programmingExercise.getBuildPlanAccessSecret(), HttpStatus.OK,
                 String.class);
     }
