@@ -1,5 +1,4 @@
-import { Component, Input } from '@angular/core';
-import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/entities/programming-exercise.model';
+import { Component } from '@angular/core';
 
 @Component({
     selector: 'jhi-programming-exercise-update-wizard-language',
@@ -10,9 +9,4 @@ import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/entit
     `,
     styleUrls: ['./programming-exercise-update-wizard.component.scss'],
 })
-export class ProgrammingExerciseUpdateWizardLanguageComponent {
-    readonly ProgrammingLanguage = ProgrammingLanguage;
-    readonly ProjectType = ProjectType;
-
-    @Input() programmingExercise: ProgrammingExercise;
-}
+export class ProgrammingExerciseUpdateWizardLanguageComponent {}

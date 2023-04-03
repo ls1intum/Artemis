@@ -1,5 +1,4 @@
-import { Component, Input } from '@angular/core';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { Component } from '@angular/core';
 
 @Component({
     selector: 'jhi-programming-exercise-update-wizard-info',
@@ -10,6 +9,4 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
     `,
     styleUrls: ['./programming-exercise-update-wizard.component.scss'],
 })
-export class ProgrammingExerciseUpdateWizardInformationComponent {
-    @Input() programmingExercise: ProgrammingExercise;
-}
+export class ProgrammingExerciseUpdateWizardInformationComponent {}
