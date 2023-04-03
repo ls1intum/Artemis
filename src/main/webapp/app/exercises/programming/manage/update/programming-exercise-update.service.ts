@@ -48,6 +48,9 @@ interface StepInputs {
     recreateBuildPlans: boolean;
     onRecreateBuildPlanOrUpdateTemplateChange: () => void;
     updateTemplate: boolean;
+
+    isEdit: boolean;
+    shouldHidePreview: boolean;
 }
 
 export class ProgrammingExerciseUpdateService {

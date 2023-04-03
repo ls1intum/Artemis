@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component } from '@angular/core';
 import { ProjectType } from 'app/entities/programming-exercise.model';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseUpdateService } from 'app/exercises/programming/manage/update/programming-exercise-update.service';
@@ -10,13 +10,6 @@ import { ProgrammingExerciseUpdateService } from 'app/exercises/programming/mana
 })
 export class ProgrammingExerciseAdditionalSettingsComponent {
     readonly ProjectType = ProjectType;
-
-    @Input() selectedProjectType: ProjectType;
-    @Input() validIdeSelection: () => boolean | undefined;
-
-    @Input() isEdit: boolean;
-
-    @Input() shouldHidePreview = false;
 
     faQuestionCircle = faQuestionCircle;
 

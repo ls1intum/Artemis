@@ -1,6 +1,7 @@
 <div
     *ngIf="
-        !shouldHidePreview || (programmingExerciseUpdateService.stepInputs.programmingExercise.title && programmingExerciseUpdateService.stepInputs.programmingExercise.shortName)
+        !programmingExerciseUpdateService.stepInputs.shouldHidePreview ||
+        (programmingExerciseUpdateService.stepInputs.programmingExercise.title && programmingExerciseUpdateService.stepInputs.programmingExercise.shortName)
     "
 >
     <div class="form-group mt-2 mb-0">
@@ -82,7 +83,7 @@
                 'artemisApp.programmingExercise.auxiliaryRepository.duplicateDirectoryNames' | artemisTranslate
             }}</span>
         </ngb-alert>
-        <ngb-alert [dismissible]="false" [type]="'info'" *ngIf="isEdit">
+        <ngb-alert [dismissible]="false" [type]="'info'" *ngIf="programmingExerciseUpdateService.stepInputs.isEdit">
             <span>{{ 'artemisApp.programmingExercise.auxiliaryRepository.warning' | artemisTranslate }}</span>
         </ngb-alert>
         <jhi-add-auxiliary-repository-button
@@ -95,7 +96,7 @@
 
 <div class="form-group mb-0">
     <div class="form-check">
-        <label [class]="!validIdeSelection() ? 'form-check-label text-danger' : 'form-check-label'" for="field_allowOfflineIde">
+        <label [class]="!programmingExerciseUpdateService.stepInputs.validIdeSelection() ? 'form-check-label text-danger' : 'form-check-label'" for="field_allowOfflineIde">
             <input
                 class="form-check-input"
                 type="checkbox"
@@ -106,7 +107,7 @@
             />
             <span jhiTranslate="artemisApp.programmingExercise.allowOfflineIde.title">Allow Offline IDE</span>
             <fa-icon
-                *ngIf="!validIdeSelection()"
+                *ngIf="!programmingExerciseUpdateService.stepInputs.validIdeSelection()"
                 [icon]="faQuestionCircle"
                 class="text-danger"
                 [placement]="'top'"
@@ -116,9 +117,9 @@
     </div>
 </div>
 
-<div class="form-group mb-0" *ngIf="ProjectType.XCODE !== selectedProjectType">
+<div class="form-group mb-0" *ngIf="ProjectType.XCODE !== programmingExerciseUpdateService.stepInputs.selectedProjectType">
     <div class="form-check">
-        <label [class]="!validIdeSelection() ? 'form-check-label text-danger' : 'form-check-label'" for="field_allowOnlineEditor">
+        <label [class]="!programmingExerciseUpdateService.stepInputs.validIdeSelection() ? 'form-check-label text-danger' : 'form-check-label'" for="field_allowOnlineEditor">
             <input
                 class="form-check-input"
                 type="checkbox"
@@ -129,7 +130,7 @@
             />
             <span jhiTranslate="artemisApp.programmingExercise.allowOnlineEditor.title">Allow Online Editor</span>
             <fa-icon
-                *ngIf="!validIdeSelection()"
+                *ngIf="!programmingExerciseUpdateService.stepInputs.validIdeSelection()"
                 [icon]="faQuestionCircle"
                 class="text-danger"
                 [placement]="'top'"
