@@ -105,7 +105,7 @@ Managing the Sessions of a Tutorial Group
 By clicking on the ``Sessions`` button, the tutor can view the list of sessions that are scheduled for the tutorial group. From this list, the tutor can cancel or reschedule sessions. The tutor can also create new sessions by clicking on the ``Create New Tutorial Group Session`` button. Furthermore, the tutor can enter the number of attending students for each session. This information is used to calculate the utilization of the tutorial group.
 
 .. note::
-    The utilization of a tutorial group is the average attendance divided by capacity (if defined). The average attendance considers the last three sessions. If no attendance is entered, the corresponding session is ignored and the calculation is performed with two or one session.
+    The utilization of a tutorial group is the average attendance divided by capacity (if defined). The average attendance considers the last three sessions. If no attendance is entered, the corresponding session is ignored and the calculation is performed with one or two sessions.
 
 |tutor-sessions|
 
