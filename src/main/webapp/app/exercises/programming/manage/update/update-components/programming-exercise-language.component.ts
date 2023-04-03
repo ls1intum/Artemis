@@ -1,6 +1,7 @@
 import { Component, Input } from '@angular/core';
+import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/entities/programming-exercise.model';
-import { LanguageStepInputs } from 'app/exercises/programming/manage/update/wizard-mode/programming-exercise-update-wizard.component';
+import { GradingStepInputs, LanguageStepInputs } from 'app/exercises/programming/manage/update/wizard-mode/programming-exercise-update-wizard.component';
 
 @Component({
     selector: 'jhi-programming-exercise-language',
@@ -13,6 +14,9 @@ export class ProgrammingExerciseLanguageComponent {
 
     @Input() isImport: boolean;
     @Input() programmingExercise: ProgrammingExercise;
-
     @Input() languageStepInputs: LanguageStepInputs;
+    @Input() gradingInputs: GradingStepInputs;
+    @Input() sequentialTestRunsAllowed: boolean;
+
+    faQuestionCircle = faQuestionCircle;
 }

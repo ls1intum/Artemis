@@ -32,24 +32,7 @@
     <label class="form-control-label" jhiTranslate="artemisApp.exercise.assessmentInstructions" for="gradingInstructions">Assessment Instructions</label>
     <jhi-grading-instructions-details id="gradingInstructions" [exercise]="programmingExercise"></jhi-grading-instructions-details>
 </div>
-<!-- It would be very complicated to change the sequential test run feature after an exercise is created, which is why it can only be activated if the exercise was not yet created.-->
-<div class="form-group mb-0" *ngIf="sequentialTestRunsAllowed">
-    <div class="form-check">
-        <label class="form-check-label" for="field_sequentialTestRuns">
-            <input
-                class="form-check-input"
-                type="checkbox"
-                name="sequentialTestRuns"
-                id="field_sequentialTestRuns"
-                [disabled]="!!programmingExercise.id || !!programmingExercise.staticCodeAnalysisEnabled || !!programmingExercise.testwiseCoverageEnabled"
-                [(ngModel)]="programmingExercise.sequentialTestRuns"
-                checked
-            />
-            <span jhiTranslate="artemisApp.programmingExercise.sequentialTestRuns.title">Differentiate Test Case Execution</span>
-            <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.sequentialTestRuns.description"></jhi-help-icon>
-        </label>
-    </div>
-</div>
+
 <!-- Setting whether the solution repository should be checked out is only supported for Haskell exercises and is only available for new exercises -->
 <div class="form-group mb-0" *ngIf="!programmingExercise.id && programmingExercise.programmingLanguage && checkoutSolutionRepositoryAllowed">
     <div class="form-check">
@@ -85,28 +68,6 @@
     </div>
 </div>
 
-<div class="form-group mb-0" *ngIf="programmingExercise.programmingLanguage === ProgrammingLanguage.JAVA || programmingExercise.programmingLanguage === ProgrammingLanguage.KOTLIN">
-    <div class="form-check">
-        <label class="form-check-label" for="field_testwiseCoverageEnabled">
-            <input
-                class="form-check-input"
-                type="checkbox"
-                name="testwiseCoverageEnabled"
-                id="field_testwiseCoverageEnabled"
-                [disabled]="!!programmingExercise.sequentialTestRuns || !!programmingExercise.id"
-                [(ngModel)]="programmingExercise.testwiseCoverageEnabled"
-                checked
-            />
-            <span jhiTranslate="artemisApp.programmingExercise.recordTestwiseCoverage">Record Testwise Coverage</span>
-            <fa-icon
-                [icon]="faQuestionCircle"
-                class="text-secondary"
-                placement="auto"
-                ngbTooltip="{{ 'artemisApp.programmingExercise.recordTestwiseCoverageTooltip' | artemisTranslate }}"
-            ></fa-icon>
-        </label>
-    </div>
-</div>
 <div *ngIf="isImport" class="form-group mb-0">
     <div class="form-check">
         <label class="form-check-label" for="field_recreateBuildPlans">
