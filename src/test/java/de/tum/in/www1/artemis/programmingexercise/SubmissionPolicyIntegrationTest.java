@@ -431,11 +431,11 @@ class SubmissionPolicyIntegrationTest extends AbstractSpringIntegrationBambooBit
         assertThat(result).isPresent();
         if (type == EnforcePolicyTestType.POLICY_ACTIVE) {
             assertThat(result.get().getScore()).isEqualTo(15);
-            assertThat(result.get().getFeedbacks().stream().anyMatch(feedback -> feedback.getText().startsWith(SUBMISSION_POLICY_FEEDBACK_IDENTIFIER))).isTrue();
+            assertThat(result.get().getFeedbacks()).anyMatch(feedback -> feedback.getText().startsWith(SUBMISSION_POLICY_FEEDBACK_IDENTIFIER));
         }
         else {
             assertThat(result.get().getScore()).isEqualTo(25);
-            assertThat(result.get().getFeedbacks().stream().anyMatch(feedback -> feedback.getText().startsWith(SUBMISSION_POLICY_FEEDBACK_IDENTIFIER))).isFalse();
+            assertThat(result.get().getFeedbacks()).noneMatch(feedback -> feedback.getText().startsWith(SUBMISSION_POLICY_FEEDBACK_IDENTIFIER));
         }
     }
 

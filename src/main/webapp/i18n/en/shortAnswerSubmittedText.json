@@ -3,8 +3,7 @@
         "shortAnswerSubmittedText": {
             "home": {
                 "title": "Short Answer Submitted Texts",
-                "createLabel": "Create a new Short Answer Submitted Text",
-                "createOrEditLabel": "Create or edit a Short Answer Submitted Text"
+                "createLabel": "Create a new Short Answer Submitted Text"
             },
             "created": "Created new Short Answer Submitted Text with identifier {{ param }}",
             "updated": "Updated Short Answer Submitted Text with identifier {{ param }}",
