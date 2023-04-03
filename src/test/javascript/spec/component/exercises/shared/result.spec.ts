@@ -19,8 +19,9 @@ import { ProgrammingExerciseStudentParticipation } from 'app/entities/participat
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ParticipationType } from 'app/entities/participation/participation.model';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ResultTemplateStatus } from 'app/exercises/shared/result/result.utils';
+import { MissingResultInformation, ResultTemplateStatus } from 'app/exercises/shared/result/result.utils';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { SimpleChange } from '@angular/core';
 
 describe('ResultComponent', () => {
     let fixture: ComponentFixture<ResultComponent>;
@@ -118,5 +119,49 @@ describe('ResultComponent', () => {
         expect(component.textColorClass).toBe('text-success');
         expect(component.resultIconClass).toBe(faCheckCircle);
         expect(component.resultString).toBe('artemisApp.result.resultString.nonProgramming');
+    });
+
+    describe('ngOnChanges', () => {
+        it('should call ngOnInit when participation changes', () => {
+            const changes = {
+                participation: new SimpleChange(undefined, new StudentParticipation(), false),
+            };
+            const ngOnInitSpy = jest.spyOn(component, 'ngOnInit').mockImplementation();
+            component.ngOnChanges(changes);
+            expect(ngOnInitSpy).toHaveBeenCalledOnce();
+        });
+        it('should call ngOnInit when result changes', () => {
+            const changes = {
+                result: new SimpleChange(undefined, new Result(), false),
+            };
+            const ngOnInitSpy = jest.spyOn(component, 'ngOnInit').mockImplementation();
+            component.ngOnChanges(changes);
+            expect(ngOnInitSpy).toHaveBeenCalledOnce();
+        });
+        it('should call evaluate when missingResultInfo changes', () => {
+            const changes = {
+                missingResultInfo: new SimpleChange(undefined, MissingResultInformation.FAILED_PROGRAMMING_SUBMISSION_ONLINE_IDE, false),
+            };
+            const evaluateSpy = jest.spyOn(component, 'evaluate').mockImplementation();
+            component.ngOnChanges(changes);
+            expect(evaluateSpy).toHaveBeenCalledOnce();
+        });
+        it('should set templateStatus when isBuilding changes', () => {
+            component.templateStatus = ResultTemplateStatus.NO_RESULT;
+            const changes = {
+                isBuilding: new SimpleChange(undefined, true, false),
+            };
+            component.ngOnChanges(changes);
+            component.templateStatus = ResultTemplateStatus.IS_BUILDING;
+        });
+        it('should call evaluate when isBuilding changes to undefined', () => {
+            component.templateStatus = ResultTemplateStatus.NO_RESULT;
+            const changes = {
+                isBuilding: new SimpleChange(true, undefined, false),
+            };
+            const evaluateSpy = jest.spyOn(component, 'evaluate').mockImplementation();
+            component.ngOnChanges(changes);
+            expect(evaluateSpy).toHaveBeenCalledOnce();
+        });
     });
 });
