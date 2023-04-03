@@ -1,5 +1,6 @@
-# https://raw.githubusercontent.com/github/gitignore/master/OCaml.gitignore
+# Taken from https://github.com/github/gitignore
 
+### OCaml
 *.annot
 *.cmo
 *.cma
@@ -29,8 +30,6 @@ setup.log
 
 # Local OPAM switch
 _opam/
-
-# Taken from https://github.com/github/gitignore
 
 ### Eclipse
 .metadata

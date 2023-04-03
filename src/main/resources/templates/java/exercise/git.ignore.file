@@ -1,13 +1,23 @@
-### Java specific
+# Taken from https://github.com/github/gitignore
+
+### Java
+# Compiled class file
 *.class
-build
-/target/
-/target/*
+
+# Log file
+*.log
+
+# Mobile Tools for Java (J2ME)
+.mtj.tmp/
+
+# Package Files #
 *.jar
 *.war
+*.nar
 *.ear
-
-# Taken from https://github.com/github/gitignore
+*.zip
+*.tar.gz
+*.rar
 
 ### Eclipse
 .metadata
