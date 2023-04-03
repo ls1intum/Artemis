@@ -1,63 +1,7 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/entities/programming-exercise.model';
-import { AuxiliaryRepository } from 'app/entities/programming-exercise-auxiliary-repository-model';
-import { ExerciseCategory } from 'app/entities/exercise-category.model';
-import { ModePickerOption } from 'app/exercises/shared/mode-picker/mode-picker.component';
-import { Observable } from 'rxjs';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ValidationReason } from 'app/entities/exercise.model';
-import { ProgrammingExerciseUpdateService } from 'app/exercises/programming/manage/update/programming-exercise-update.service';
-
-export type InfoStepInputs = {
-    titleNamePattern: string;
-    shortNamePattern: RegExp;
-    invalidRepositoryNamePattern: RegExp;
-    invalidDirectoryNamePattern: RegExp;
-    updateRepositoryName: (auxiliaryRepository: AuxiliaryRepository) => (newValue: any) => string | undefined;
-    updateCheckoutDirectory: (editedAuxiliaryRepository: AuxiliaryRepository) => (newValue: any) => string | undefined;
-    refreshAuxiliaryRepositoryChecks: () => void;
-    auxiliaryRepositoryDuplicateNames: boolean;
-    auxiliaryRepositoryDuplicateDirectories: boolean;
-    exerciseCategories: ExerciseCategory[];
-    existingCategories: ExerciseCategory[];
-    updateCategories: (categories: ExerciseCategory[]) => void;
-};
-
-export type LanguageStepInputs = {
-    appNamePatternForSwift: string;
-    modePickerOptions: ModePickerOption<ProjectType>[];
-    withDependencies: boolean;
-    onWithDependenciesChanged: (withDependencies: boolean) => boolean;
-    packageNameRequired: boolean;
-    packageNamePattern: string;
-    supportedLanguages: string[];
-    selectedProgrammingLanguage: ProgrammingLanguage;
-    onProgrammingLanguageChange: (language: ProgrammingLanguage) => ProgrammingLanguage;
-    projectTypes: ProjectType[];
-    selectedProjectType: ProjectType;
-    onProjectTypeChange: (projectType: ProjectType) => ProjectType;
-};
-
-export type GradingStepInputs = {
-    staticCodeAnalysisAllowed: boolean;
-    onStaticCodeAnalysisChanged: () => void;
-    maxPenaltyPattern: string;
-};
-
-export type ProblemStepInputs = {
-    problemStatementLoaded: boolean;
-    templateParticipationResultLoaded: boolean;
-    hasUnsavedChanges: boolean;
-    rerenderSubject: Observable<void>;
-    sequentialTestRunsAllowed: boolean;
-    checkoutSolutionRepositoryAllowed: boolean;
-    validIdeSelection: () => boolean | undefined;
-    inProductionEnvironment: boolean;
-    recreateBuildPlans: boolean;
-    onRecreateBuildPlanOrUpdateTemplateChange: () => void;
-    updateTemplate: boolean;
-    selectedProjectType: ProjectType;
-};
 
 @Component({
     selector: 'jhi-programming-exercise-update-wizard',
@@ -86,7 +30,7 @@ export class ProgrammingExerciseUpdateWizardComponent implements OnInit {
     @Input() getInvalidReasons: () => ValidationReason[];
     @Input() isImport: boolean;
 
-    constructor(protected activatedRoute: ActivatedRoute, private programmingExerciseUpdateService: ProgrammingExerciseUpdateService) {}
+    constructor(protected activatedRoute: ActivatedRoute) {}
 
     ngOnInit() {
         this.isSaving = false;
