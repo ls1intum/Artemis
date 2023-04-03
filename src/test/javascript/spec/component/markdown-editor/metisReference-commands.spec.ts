@@ -54,23 +54,35 @@ describe('Exercise Lecture Attachment Reference Commands', () => {
     });
 
     it('should initialize lecture attachment reference command correctly', () => {
-        const returnValue = of(new HttpResponse({ body: metisLecture3, status: 200 }));
+        const returnValue = of(new HttpResponse({ body: metisLecture, status: 200 }));
         const returnValue2 = of(new HttpResponse({ body: metisLecture2, status: 200 }));
-        findLectureWithDetailsSpy.mockReturnValueOnce(returnValue).mockReturnValueOnce(returnValue2);
+        const returnValue3 = of(new HttpResponse({ body: metisLecture3, status: 200 }));
+
+        findLectureWithDetailsSpy.mockReturnValueOnce(returnValue).mockReturnValueOnce(returnValue2).mockReturnValueOnce(returnValue3);
         lectureReferenceCommand = new LectureAttachmentReferenceCommand(metisService, lectureService);
         expect(findLectureWithDetailsSpy).toHaveBeenCalledTimes(metisService.getCourse().lectures!.length);
 
         expect(lectureReferenceCommand.getValues()).toEqual([
             {
-                id: metisLecture3.id!.toString(),
-                value: metisLecture3.title!,
+                id: metisLecture.id!.toString(),
+                value: metisLecture.title!,
                 type: ReferenceType.LECTURE,
-                elements: metisLecture3.attachments?.map((attachment: any) => ({
+                elements: metisLecture.attachments?.map((attachment: any) => ({
                     id: attachment.id!.toString(),
                     value: attachment.name!,
                     courseArtifactType: ReferenceType.ATTACHMENT,
                 })),
-                attachmentUnits: metisLecture3.lectureUnits?.map((unit: any) => {
+            },
+            {
+                id: metisLecture2.id!.toString(),
+                value: metisLecture2.title!,
+                type: ReferenceType.LECTURE,
+                elements: metisLecture2.attachments?.map((attachment: any) => ({
+                    id: attachment.id!.toString(),
+                    value: attachment.name!,
+                    courseArtifactType: ReferenceType.ATTACHMENT,
+                })),
+                attachmentUnits: metisLecture2.lectureUnits?.map((unit: any) => {
                     return {
                         id: unit.id!.toString(),
                         value: unit.name!,
@@ -89,15 +101,15 @@ describe('Exercise Lecture Attachment Reference Commands', () => {
                 }),
             },
             {
-                id: metisLecture2.id!.toString(),
-                value: metisLecture2.title!,
+                id: metisLecture3.id!.toString(),
+                value: metisLecture3.title!,
                 type: ReferenceType.LECTURE,
-                elements: metisLecture2.attachments?.map((attachment: any) => ({
+                elements: metisLecture3.attachments?.map((attachment: any) => ({
                     id: attachment.id!.toString(),
                     value: attachment.name!,
                     courseArtifactType: ReferenceType.ATTACHMENT,
                 })),
-                attachmentUnits: metisLecture2.lectureUnits?.map((unit: any) => {
+                attachmentUnits: metisLecture3.lectureUnits?.map((unit: any) => {
                     return {
                         id: unit.id!.toString(),
                         value: unit.name!,
