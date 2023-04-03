@@ -110,6 +110,8 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
         assertThat(attachmentUnitList).hasSize(2);
         assertThat(attachmentUnitList).isEqualTo(attachmentUnits);
+
+        slideRepository.deleteAll();
     }
 
     @Test
@@ -140,6 +142,8 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationBambooBitb
         }
         assertThat(attachmentUnitList).hasSize(2);
         assertThat(attachmentUnitList).isEqualTo(attachmentUnits);
+
+        slideRepository.deleteAll();
     }
 
     private void testAllPreAuthorize() throws Exception {
