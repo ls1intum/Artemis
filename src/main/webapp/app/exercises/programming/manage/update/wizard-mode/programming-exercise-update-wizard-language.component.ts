@@ -3,7 +3,11 @@ import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/entit
 
 @Component({
     selector: 'jhi-programming-exercise-update-wizard-language',
-    templateUrl: './programming-exercise-update-wizard-language.component.html',
+    template: `
+        <h1><span jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.languageStepTitle">Language</span></h1>
+        <p><span jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.languageStepMessage">Set language.</span></p>
+        <jhi-programming-exercise-language [programmingExercise]="programmingExercise"> </jhi-programming-exercise-language>
+    `,
     styleUrls: ['./programming-exercise-update-wizard.component.scss'],
 })
 export class ProgrammingExerciseUpdateWizardLanguageComponent {

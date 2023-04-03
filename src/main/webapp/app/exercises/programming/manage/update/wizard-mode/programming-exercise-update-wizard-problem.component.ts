@@ -1,10 +1,15 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { ProgrammingExerciseUpdateService } from 'app/exercises/programming/manage/update/programming-exercise-update.service';
 
 @Component({
     selector: 'jhi-programming-exercise-update-wizard-problem',
-    templateUrl: './programming-exercise-update-wizard-problem.component.html',
+    template: `
+        <h1><span jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.problemStepTitle">Problem</span></h1>
+        <p><span jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.problemStepMessage">Set problem.</span></p>
+        <div class="form-group">
+            <jhi-programming-exercise-problem [(exercise)]="exercise"></jhi-programming-exercise-problem>
+        </div>
+    `,
     styleUrls: ['./programming-exercise-update-wizard.component.scss'],
 })
 export class ProgrammingExerciseUpdateWizardProblemComponent {
