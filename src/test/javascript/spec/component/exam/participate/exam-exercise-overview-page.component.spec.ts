@@ -10,6 +10,7 @@ import { ExamExerciseOverviewPageComponent } from 'app/exam/participate/exercise
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { StudentExam } from 'app/entities/student-exam.model';
 import { TranslateService } from '@ngx-translate/core';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { QuizExamSubmission } from 'app/entities/quiz/quiz-exam-submission.model';
@@ -35,7 +36,8 @@ describe('Exam Exercise Overview Component', () => {
         fixture = TestBed.createComponent(ExamExerciseOverviewPageComponent);
         comp = fixture.componentInstance;
         examParticipationService = TestBed.inject(ExamParticipationService);
-        comp.exercises = [
+        comp.studentExam = new StudentExam();
+        comp.studentExam.exercises = [
             {
                 id: 0,
                 type: ExerciseType.PROGRAMMING,
@@ -58,7 +60,7 @@ describe('Exam Exercise Overview Component', () => {
     it('should open the exercise', () => {
         jest.spyOn(comp.onPageChanged, 'emit');
 
-        comp.openExercise(comp.exercises![0]);
+        comp.openExercise(comp.studentExam.exercises![0]);
 
         expect(comp.onPageChanged.emit).toHaveBeenCalledOnce();
     });
