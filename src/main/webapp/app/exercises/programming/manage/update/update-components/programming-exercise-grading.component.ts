@@ -24,7 +24,7 @@ export class ProgrammingExerciseGradingComponent {
     constructor(private translateService: TranslateService, public programmingExerciseUpdateService: ProgrammingExerciseUpdateService) {}
 
     get programmingExercise() {
-        return this.programmingExerciseUpdateService.stepInputs.programmingExercise;
+        return this.programmingExerciseUpdateService.config.programmingExercise;
     }
 
     getGradingSummary() {

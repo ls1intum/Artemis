@@ -1,7 +1,7 @@
 <div
     *ngIf="
-        !programmingExerciseUpdateService.stepInputs.shouldHidePreview ||
-        (programmingExerciseUpdateService.stepInputs.programmingExercise.title && programmingExerciseUpdateService.stepInputs.programmingExercise.shortName)
+        !programmingExerciseUpdateService.config.shouldHidePreview ||
+        (programmingExerciseUpdateService.config.programmingExercise.title && programmingExerciseUpdateService.config.programmingExercise.shortName)
     "
 >
     <div class="form-group mt-2 mb-0">
@@ -10,9 +10,9 @@
         </label>
     </div>
     <jhi-programming-exercise-plans-and-repositories-preview
-        [programmingExercise]="programmingExerciseUpdateService.stepInputs.programmingExercise"
+        [programmingExercise]="programmingExerciseUpdateService.config.programmingExercise"
     ></jhi-programming-exercise-plans-and-repositories-preview>
-    <div *ngIf="!programmingExerciseUpdateService.stepInputs.isImport" class="form-group">
+    <div *ngIf="!programmingExerciseUpdateService.config.isImport" class="form-group">
         <ngx-datatable
             id="auxiliaryRepositoryTable"
             class="bootstrap"
@@ -21,10 +21,10 @@
             [limit]="20"
             [columnMode]="'force'"
             [rowHeight]="'auto'"
-            [rows]="programmingExerciseUpdateService.stepInputs.programmingExercise.auxiliaryRepositories"
+            [rows]="programmingExerciseUpdateService.config.programmingExercise.auxiliaryRepositories"
             *ngIf="
-                programmingExerciseUpdateService.stepInputs.programmingExercise.auxiliaryRepositories &&
-                programmingExerciseUpdateService.stepInputs.programmingExercise.auxiliaryRepositories.length > 0
+                programmingExerciseUpdateService.config.programmingExercise.auxiliaryRepositories &&
+                programmingExerciseUpdateService.config.programmingExercise.auxiliaryRepositories.length > 0
             "
         >
             <ngx-datatable-column name="Repository Name" prop="repositoryName">
@@ -32,8 +32,8 @@
                     <jhi-table-editable-field
                         [id]="row.id + '-repositoryName'"
                         [value]="row.name || ''"
-                        [onValueUpdate]="programmingExerciseUpdateService.stepInputs.updateRepositoryName(row)"
-                        [pattern]="programmingExerciseUpdateService.stepInputs.invalidRepositoryNamePattern"
+                        [onValueUpdate]="programmingExerciseUpdateService.config.updateRepositoryName(row)"
+                        [pattern]="programmingExerciseUpdateService.config.invalidRepositoryNamePattern"
                         [isRequired]="true"
                         [translationBase]="'artemisApp.programmingExercise.auxiliaryRepository.repositoryNameRequired'"
                     >
@@ -45,8 +45,8 @@
                     <jhi-table-editable-field
                         [id]="row.id + '-checkoutDirectory'"
                         [value]="row.checkoutDirectory || ''"
-                        [onValueUpdate]="programmingExerciseUpdateService.stepInputs.updateCheckoutDirectory(row)"
-                        [pattern]="programmingExerciseUpdateService.stepInputs.invalidDirectoryNamePattern"
+                        [onValueUpdate]="programmingExerciseUpdateService.config.updateCheckoutDirectory(row)"
+                        [pattern]="programmingExerciseUpdateService.config.invalidDirectoryNamePattern"
                         [translationBase]="'artemisApp.programmingExercise.auxiliaryRepository.invalidDirectoryName'"
                     >
                     </jhi-table-editable-field>
@@ -61,8 +61,8 @@
                 <ng-template ngx-datatable-cell-template let-row="row">
                     <jhi-remove-auxiliary-repository-button
                         placement="right auto"
-                        [programmingExercise]="programmingExerciseUpdateService.stepInputs.programmingExercise"
-                        (onRefresh)="programmingExerciseUpdateService.stepInputs.refreshAuxiliaryRepositoryChecks()"
+                        [programmingExercise]="programmingExerciseUpdateService.config.programmingExercise"
+                        (onRefresh)="programmingExerciseUpdateService.config.refreshAuxiliaryRepositoryChecks()"
                         [row]="row"
                         class="ml-2"
                     ></jhi-remove-auxiliary-repository-button>
@@ -72,23 +72,21 @@
         <ngb-alert
             [dismissible]="false"
             [type]="'danger'"
-            *ngIf="
-                programmingExerciseUpdateService.stepInputs.auxiliaryRepositoryDuplicateNames || programmingExerciseUpdateService.stepInputs.auxiliaryRepositoryDuplicateDirectories
-            "
+            *ngIf="programmingExerciseUpdateService.config.auxiliaryRepositoryDuplicateNames || programmingExerciseUpdateService.config.auxiliaryRepositoryDuplicateDirectories"
         >
-            <span *ngIf="programmingExerciseUpdateService.stepInputs.auxiliaryRepositoryDuplicateNames">{{
+            <span *ngIf="programmingExerciseUpdateService.config.auxiliaryRepositoryDuplicateNames">{{
                 'artemisApp.programmingExercise.auxiliaryRepository.duplicateRepositoryNames' | artemisTranslate
             }}</span>
-            <span *ngIf="programmingExerciseUpdateService.stepInputs.auxiliaryRepositoryDuplicateDirectories">{{
+            <span *ngIf="programmingExerciseUpdateService.config.auxiliaryRepositoryDuplicateDirectories">{{
                 'artemisApp.programmingExercise.auxiliaryRepository.duplicateDirectoryNames' | artemisTranslate
             }}</span>
         </ngb-alert>
-        <ngb-alert [dismissible]="false" [type]="'info'" *ngIf="programmingExerciseUpdateService.stepInputs.isEdit">
+        <ngb-alert [dismissible]="false" [type]="'info'" *ngIf="programmingExerciseUpdateService.config.isEdit">
             <span>{{ 'artemisApp.programmingExercise.auxiliaryRepository.warning' | artemisTranslate }}</span>
         </ngb-alert>
         <jhi-add-auxiliary-repository-button
-            [programmingExercise]="programmingExerciseUpdateService.stepInputs.programmingExercise"
-            (onRefresh)="programmingExerciseUpdateService.stepInputs.refreshAuxiliaryRepositoryChecks()"
+            [programmingExercise]="programmingExerciseUpdateService.config.programmingExercise"
+            (onRefresh)="programmingExerciseUpdateService.config.refreshAuxiliaryRepositoryChecks()"
             class="ml-2"
         ></jhi-add-auxiliary-repository-button>
     </div>
@@ -96,18 +94,18 @@
 
 <div class="form-group mb-0">
     <div class="form-check">
-        <label [class]="!programmingExerciseUpdateService.stepInputs.validIdeSelection() ? 'form-check-label text-danger' : 'form-check-label'" for="field_allowOfflineIde">
+        <label [class]="!programmingExerciseUpdateService.config.validIdeSelection() ? 'form-check-label text-danger' : 'form-check-label'" for="field_allowOfflineIde">
             <input
                 class="form-check-input"
                 type="checkbox"
                 name="allowOfflineIde"
                 id="field_allowOfflineIde"
-                [(ngModel)]="programmingExerciseUpdateService.stepInputs.programmingExercise.allowOfflineIde"
+                [(ngModel)]="programmingExerciseUpdateService.config.programmingExercise.allowOfflineIde"
                 checked
             />
             <span jhiTranslate="artemisApp.programmingExercise.allowOfflineIde.title">Allow Offline IDE</span>
             <fa-icon
-                *ngIf="!programmingExerciseUpdateService.stepInputs.validIdeSelection()"
+                *ngIf="!programmingExerciseUpdateService.config.validIdeSelection()"
                 [icon]="faQuestionCircle"
                 class="text-danger"
                 [placement]="'top'"
@@ -117,20 +115,20 @@
     </div>
 </div>
 
-<div class="form-group mb-0" *ngIf="ProjectType.XCODE !== programmingExerciseUpdateService.stepInputs.selectedProjectType">
+<div class="form-group mb-0" *ngIf="ProjectType.XCODE !== programmingExerciseUpdateService.config.selectedProjectType">
     <div class="form-check">
-        <label [class]="!programmingExerciseUpdateService.stepInputs.validIdeSelection() ? 'form-check-label text-danger' : 'form-check-label'" for="field_allowOnlineEditor">
+        <label [class]="!programmingExerciseUpdateService.config.validIdeSelection() ? 'form-check-label text-danger' : 'form-check-label'" for="field_allowOnlineEditor">
             <input
                 class="form-check-input"
                 type="checkbox"
                 name="allowOnlineEditor"
                 id="field_allowOnlineEditor"
-                [(ngModel)]="programmingExerciseUpdateService.stepInputs.programmingExercise.allowOnlineEditor"
+                [(ngModel)]="programmingExerciseUpdateService.config.programmingExercise.allowOnlineEditor"
                 checked
             />
             <span jhiTranslate="artemisApp.programmingExercise.allowOnlineEditor.title">Allow Online Editor</span>
             <fa-icon
-                *ngIf="!programmingExerciseUpdateService.stepInputs.validIdeSelection()"
+                *ngIf="!programmingExerciseUpdateService.config.validIdeSelection()"
                 [icon]="faQuestionCircle"
                 class="text-danger"
                 [placement]="'top'"
@@ -148,7 +146,7 @@
                 type="checkbox"
                 name="showTestNamesToStudents"
                 id="field_showTestNamesToStudents"
-                [(ngModel)]="programmingExerciseUpdateService.stepInputs.programmingExercise.showTestNamesToStudents"
+                [(ngModel)]="programmingExerciseUpdateService.config.programmingExercise.showTestNamesToStudents"
                 checked
             />
             <span jhiTranslate="artemisApp.programmingExercise.showTestNamesToStudents">Show Test Names to Students</span>
@@ -170,7 +168,7 @@
                 type="checkbox"
                 name="publishBuildPlanUrl"
                 id="field_publishBuildPlanUrl"
-                [(ngModel)]="programmingExerciseUpdateService.stepInputs.programmingExercise.publishBuildPlanUrl"
+                [(ngModel)]="programmingExerciseUpdateService.config.programmingExercise.publishBuildPlanUrl"
                 checked
             />
             <span jhiTranslate="artemisApp.programmingExercise.publishBuildPlanUrl">Publish Build Plan Url</span>

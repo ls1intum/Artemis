@@ -1,6 +1,6 @@
 <div class="form-group mb-0" id="field_problemStatement" name="problemStatement">
     <label class="form-control-label" for="field_problemStatement" jhiTranslate="artemisApp.programmingExercise.problemStatement.title"></label>
-    <ng-container *ngIf="programmingExerciseUpdateService.stepInputs.isImport">
+    <ng-container *ngIf="programmingExerciseUpdateService.config.isImport">
         <ngb-alert [dismissible]="false">
             <span class="font-weight-bold">{{ 'artemisApp.exercise.import.attention' | artemisTranslate }}</span
             ><span>{{ 'artemisApp.exercise.import.markdownWarning' | artemisTranslate }}</span>
@@ -10,16 +10,16 @@
     </ng-container>
     <jhi-programming-exercise-editable-instructions
         *ngIf="
-            programmingExerciseUpdateService.stepInputs.problemStatementLoaded &&
-            programmingExerciseUpdateService.stepInputs.templateParticipationResultLoaded &&
-            !programmingExerciseUpdateService.stepInputs.isImport
+            programmingExerciseUpdateService.config.problemStatementLoaded &&
+            programmingExerciseUpdateService.config.templateParticipationResultLoaded &&
+            !programmingExerciseUpdateService.config.isImport
         "
         [participation]="programmingExercise.templateParticipation!"
         [(exercise)]="exercise"
         [showStatus]="!!programmingExercise?.id"
         [editMode]="!!programmingExercise?.id"
-        (hasUnsavedChanges)="programmingExerciseUpdateService.stepInputs.hasUnsavedChanges = $event"
-        [forceRender]="programmingExerciseUpdateService.stepInputs.rerenderSubject"
+        (hasUnsavedChanges)="programmingExerciseUpdateService.config.hasUnsavedChanges = $event"
+        [forceRender]="programmingExerciseUpdateService.config.rerenderSubject"
         class="form__editable-instructions"
     ></jhi-programming-exercise-editable-instructions>
 </div>
@@ -37,7 +37,7 @@
 <!-- Setting whether the solution repository should be checked out is only supported for Haskell exercises and is only available for new exercises -->
 <div
     class="form-group mb-0"
-    *ngIf="!programmingExercise.id && programmingExercise.programmingLanguage && programmingExerciseUpdateService.stepInputs.checkoutSolutionRepositoryAllowed"
+    *ngIf="!programmingExercise.id && programmingExercise.programmingLanguage && programmingExerciseUpdateService.config.checkoutSolutionRepositoryAllowed"
 >
     <div class="form-check">
         <label class="form-check-label" for="field_checkoutSolutionRepository">
@@ -56,7 +56,7 @@
 <!--This checkbox is only visible in the dev environment. If the checkbox is checked and the user clicks on the generate button
      a programming exercise without a connection to the VCS and CI will be generated
      This functionality is only for testing purposes-->
-<div class="form-group mb-0" *ngIf="!programmingExerciseUpdateService.stepInputs.inProductionEnvironment">
+<div class="form-group mb-0" *ngIf="!programmingExerciseUpdateService.config.inProductionEnvironment">
     <div class="form-check">
         <label class="form-check-label" for="field_noVersionControlAndContinuousIntegrationAvailable">
             <input
@@ -72,7 +72,7 @@
     </div>
 </div>
 
-<div *ngIf="programmingExerciseUpdateService.stepInputs.isImport" class="form-group mb-0">
+<div *ngIf="programmingExerciseUpdateService.config.isImport" class="form-group mb-0">
     <div class="form-check">
         <label class="form-check-label" for="field_recreateBuildPlans">
             <input
@@ -80,8 +80,8 @@
                 type="checkbox"
                 name="recreateBuildPlans"
                 id="field_recreateBuildPlans"
-                [(ngModel)]="programmingExerciseUpdateService.stepInputs.recreateBuildPlans"
-                (change)="programmingExerciseUpdateService.stepInputs.onRecreateBuildPlanOrUpdateTemplateChange()"
+                [(ngModel)]="programmingExerciseUpdateService.config.recreateBuildPlans"
+                (change)="programmingExerciseUpdateService.config.onRecreateBuildPlanOrUpdateTemplateChange()"
             />
             <span jhiTranslate="artemisApp.programmingExercise.recreateBuildPlans.title">Recreate Build Plans</span>
             <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.recreateBuildPlans.description"></jhi-help-icon>
@@ -91,7 +91,7 @@
 <div
     class="form-group mb-0"
     *ngIf="
-        programmingExerciseUpdateService.stepInputs.isImport &&
+        programmingExerciseUpdateService.config.isImport &&
         programmingExercise.projectType !== ProjectType.PLAIN_GRADLE &&
         programmingExercise.projectType !== ProjectType.GRADLE_GRADLE
     "
@@ -103,8 +103,8 @@
                 type="checkbox"
                 name="updateTemplateFiles"
                 id="field_updateTemplateFiles"
-                [(ngModel)]="programmingExerciseUpdateService.stepInputs.updateTemplate"
-                (change)="programmingExerciseUpdateService.stepInputs.onRecreateBuildPlanOrUpdateTemplateChange()"
+                [(ngModel)]="programmingExerciseUpdateService.config.updateTemplate"
+                (change)="programmingExerciseUpdateService.config.onRecreateBuildPlanOrUpdateTemplateChange()"
             />
             <span jhiTranslate="artemisApp.programmingExercise.updateTemplate.title">Update template</span>
             <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.updateTemplate.description"></jhi-help-icon>

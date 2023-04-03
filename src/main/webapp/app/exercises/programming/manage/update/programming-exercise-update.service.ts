@@ -4,7 +4,7 @@ import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/entit
 import { ModePickerOption } from 'app/exercises/shared/mode-picker/mode-picker.component';
 import { Observable } from 'rxjs';
 
-interface StepInputs {
+interface ExerciseUpdateConfig {
     programmingExercise: ProgrammingExercise;
     isImport: boolean;
     titleNamePattern: string;
@@ -54,11 +54,11 @@ interface StepInputs {
 }
 
 export class ProgrammingExerciseUpdateService {
-    stepInputs: StepInputs;
+    config: ExerciseUpdateConfig;
 
     constructor() {}
 
-    public configure(stepInputs: any) {
-        this.stepInputs = stepInputs;
+    public configure(stepInputs: ExerciseUpdateConfig) {
+        this.config = stepInputs;
     }
 }

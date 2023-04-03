@@ -9,8 +9,8 @@
         class="form-control"
         name="title"
         id="field_title"
-        [pattern]="programmingExerciseUpdateService.stepInputs.titleNamePattern"
-        [(ngModel)]="programmingExerciseUpdateService.stepInputs.programmingExercise.title"
+        [pattern]="programmingExerciseUpdateService.config.titleNamePattern"
+        [(ngModel)]="programmingExerciseUpdateService.config.programmingExercise.title"
         #title="ngModel"
     />
     <ng-container *ngFor="let e of title.errors! | keyvalue | removekeys : ['required']">
@@ -32,9 +32,9 @@
         name="shortName"
         id="field_shortName"
         minlength="3"
-        [pattern]="programmingExerciseUpdateService.stepInputs.shortNamePattern"
-        [(ngModel)]="programmingExerciseUpdateService.stepInputs.programmingExercise.shortName"
-        [readonly]="!programmingExerciseUpdateService.stepInputs.isImport && programmingExerciseUpdateService.stepInputs.programmingExercise.id"
+        [pattern]="programmingExerciseUpdateService.config.shortNamePattern"
+        [(ngModel)]="programmingExerciseUpdateService.config.programmingExercise.shortName"
+        [readonly]="!programmingExerciseUpdateService.config.isImport && programmingExerciseUpdateService.config.programmingExercise.id"
         #shortName="ngModel"
     />
     <ng-container *ngFor="let error of shortName.errors! | keyvalue | removekeys : ['required']">
@@ -50,8 +50,8 @@
         <jhi-help-icon text="artemisApp.exercise.categoriesTooltip"></jhi-help-icon>
     </div>
     <jhi-category-selector
-        [categories]="programmingExerciseUpdateService.stepInputs.exerciseCategories"
-        [existingCategories]="programmingExerciseUpdateService.stepInputs.existingCategories"
-        (selectedCategories)="programmingExerciseUpdateService.stepInputs.updateCategories($event)"
+        [categories]="programmingExerciseUpdateService.config.exerciseCategories"
+        [existingCategories]="programmingExerciseUpdateService.config.existingCategories"
+        (selectedCategories)="programmingExerciseUpdateService.config.updateCategories($event)"
     ></jhi-category-selector>
 </div>
