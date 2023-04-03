@@ -14,6 +14,7 @@ import { GradingStepInputs } from 'app/exercises/programming/manage/update/wizar
 })
 export class ProgrammingExerciseGradingComponent {
     readonly IncludedInOverallScore = IncludedInOverallScore;
+    readonly AssessmentType = AssessmentType;
 
     private translationBasePath = 'artemisApp.programmingExercise.wizardMode.gradingLabels.';
 

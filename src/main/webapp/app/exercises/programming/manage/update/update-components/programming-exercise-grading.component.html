@@ -71,3 +71,8 @@
     <jhi-presentation-score-checkbox [exercise]="programmingExercise"></jhi-presentation-score-checkbox>
     <h6 *ngIf="showSummary">{{ getGradingSummary() }}</h6>
 </div>
+
+<div *ngIf="programmingExercise.assessmentType === AssessmentType.SEMI_AUTOMATIC" class="form-group">
+    <label class="form-control-label" jhiTranslate="artemisApp.exercise.assessmentInstructions" for="gradingInstructions">Assessment Instructions</label>
+    <jhi-grading-instructions-details id="gradingInstructions" [exercise]="programmingExercise"></jhi-grading-instructions-details>
+</div>
