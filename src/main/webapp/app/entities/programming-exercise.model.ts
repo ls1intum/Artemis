@@ -76,6 +76,7 @@ export class ProgrammingExercise extends Exercise {
      * This functionality is only for testing purposes.
      */
     public noVersionControlAndContinuousIntegrationAvailable?: boolean;
+    public isLocalSimulation?: boolean;
 
     constructor(course: Course | undefined, exerciseGroup: ExerciseGroup | undefined) {
         super(ExerciseType.PROGRAMMING);
