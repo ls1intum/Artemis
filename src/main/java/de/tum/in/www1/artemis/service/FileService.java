@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service;
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
 import java.io.*;
+import java.net.URLDecoder;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -14,6 +15,7 @@ import java.util.concurrent.*;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
@@ -95,7 +97,7 @@ public class FileService implements DisposableBean {
     /**
      * These directories get falsely marked as files and should be ignored during copying.
      */
-    private static final List<String> IGNORED_DIRECTORIES = List.of(".xcassets/", ".colorset/", ".appiconset/", ".xcworkspace/", ".xcodeproj/", ".swiftpm/");
+    private static final List<Path> IGNORED_DIRECTORIES = Stream.of(".xcassets", ".colorset", ".appiconset", ".xcworkspace", ".xcodeproj", ".swiftpm").map(Path::of).toList();
 
     @Override
     public void destroy() {
@@ -498,71 +500,124 @@ public class FileService implements DisposableBean {
     }
 
     /**
-     * This copies the directory at the old directory path to the new path, including all files and sub folders
+     * Copies the given resources to the target directory.
      *
-     * @param resources           the resources that should be copied
-     * @param prefix              cut everything until the end of the prefix (e.g. exercise-abc -> abc when prefix = exercise)
-     * @param targetDirectoryPath the path of the folder where the copy should be located
-     * @param keepParentFolder    if true also creates the resources with the folder they are currently in (e.g. current/parent/* -> new/parent/*)
-     * @throws IOException if the copying operation fails.
+     * @param resources             The resources that should be copied.
+     * @param prefix                Cut everything until the end of the prefix.
+     *                                  E.g. source {@code …/templates/java/gradle/wrapper.jar}, prefix {@code templates/java/} results in
+     *                                  {@code <targetDirectory>/gradle/wrapper.jar}).
+     * @param targetDirectory       The directory where the copy should be located.
+     * @param keepParentDirectories Create the resources with the directory they are currently in (e.g. current/parent/* -> new/parent/*)
+     * @throws IOException If the copying operation fails.
      */
-    public void copyResources(Resource[] resources, String prefix, String targetDirectoryPath, Boolean keepParentFolder) throws IOException {
-        for (Resource resource : resources) {
-            // Replace windows separator with "/"
-            String fileUrl = java.net.URLDecoder.decode(resource.getURL().toString(), StandardCharsets.UTF_8).replaceAll("\\\\", "/");
-            // cut the prefix (e.g. 'exercise', 'solution', 'test') from the actual path
-            int index = fileUrl.indexOf(prefix);
-
-            String targetFilePath = keepParentFolder ? fileUrl.substring(index + prefix.length()) : "/" + resource.getFilename();
-            targetFilePath = applySpecialFilenameReplacements(targetFilePath);
-
-            if (isIgnoredDirectory(targetFilePath)) {
-                continue;
-            }
-
-            Path copyPath = Path.of(targetDirectoryPath + targetFilePath);
-            File parentFolder = copyPath.toFile().getParentFile();
-            if (!parentFolder.exists()) {
-                Files.createDirectories(parentFolder.toPath());
-            }
-
-            Files.copy(resource.getInputStream(), copyPath, REPLACE_EXISTING);
-            // make gradlew executable
-            if (targetFilePath.endsWith("gradlew")) {
-                copyPath.toFile().setExecutable(true);
-            }
+    public void copyResources(final Resource[] resources, final Path prefix, final Path targetDirectory, final boolean keepParentDirectories) throws IOException {
+        for (final Resource resource : resources) {
+            copyResource(resource, prefix, targetDirectory, keepParentDirectories);
         }
+    }
+
+    /**
+     * Copies the given resource to the target directory.
+     *
+     * @param resource              The resource that should be copied.
+     * @param prefix                Cut everything until the end of the prefix.
+     *                                  E.g. source {@code …/templates/java/gradle/wrapper.jar}, prefix {@code templates/java/} results in
+     *                                  {@code <targetDirectory>/gradle/wrapper.jar}).
+     * @param targetDirectory       The directory where the copy should be located.
+     * @param keepParentDirectories Create the resources with the directory they are currently in (e.g. current/parent/* -> new/parent/*)
+     * @throws IOException If the copying operation fails.
+     */
+    public void copyResource(final Resource resource, final Path prefix, final Path targetDirectory, final boolean keepParentDirectories) throws IOException {
+        final Path targetPath = getTargetPath(resource, prefix, targetDirectory, keepParentDirectories);
+
+        if (isIgnoredDirectory(targetPath)) {
+            return;
+        }
+
+        Files.createDirectories(targetPath.getParent());
+        Files.copy(resource.getInputStream(), targetPath, REPLACE_EXISTING);
+
+        if (targetPath.endsWith("gradlew")) {
+            targetPath.toFile().setExecutable(true);
+        }
+    }
+
+    private Path getTargetPath(final Resource resource, final Path prefix, final Path targetDirectory, final boolean keepParentDirectory) throws IOException {
+        final Path filePath;
+        if (resource.isFile()) {
+            filePath = resource.getFile().toPath();
+        }
+        else {
+            final String url = URLDecoder.decode(resource.getURL().toString(), StandardCharsets.UTF_8);
+            filePath = Path.of(url);
+        }
+
+        final Path targetPath = getTargetPath(filePath, prefix, targetDirectory, keepParentDirectory);
+        return applyFilenameReplacements(targetPath);
+    }
+
+    /**
+     * Determines the target file path which a resource should be copied to.
+     * <p>
+     * Searches for {@code prefix} in the {@code source} and removes all path elements including and up to the prefix.
+     * The target file path is then determined by resolving this trimmed path against the target directory.
+     *
+     * @param source              The path where the resource is copied from.
+     * @param prefix              The prefix that should be trimmed from the source path.
+     * @param targetDirectory     The base target directory.
+     * @param keepParentDirectory Keep directories in the path between prefix and filename.
+     * @return The target path where the resource should be copied to.
+     */
+    private Path getTargetPath(final Path source, final Path prefix, final Path targetDirectory, final boolean keepParentDirectory) {
+        if (!keepParentDirectory) {
+            return targetDirectory.resolve(source.getFileName());
+        }
+
+        final List<Path> sourcePathElements = getPathElements(source);
+        final List<Path> prefixPathElements = getPathElements(prefix);
+
+        final int prefixStartIdx = Collections.indexOfSubList(sourcePathElements, prefixPathElements);
+
+        if (prefixStartIdx >= 0) {
+            final int startIdx = prefixStartIdx + prefixPathElements.size();
+            final Path relativeSource = source.subpath(startIdx, sourcePathElements.size());
+            return targetDirectory.resolve(relativeSource);
+        }
+        else {
+            return targetDirectory.resolve(source);
+        }
+    }
+
+    private List<Path> getPathElements(final Path path) {
+        final List<Path> elements = new ArrayList<>();
+
+        for (final Path value : path) {
+            elements.add(value);
+        }
+
+        return elements;
     }
 
     /**
      * Replaces filenames where the template name differs from the name the file should have in the repository.
      *
-     * @param filePath The path to a file.
+     * @param originalTargetPath The path to a file.
      * @return The path with replacements applied where necessary.
      */
-    private String applySpecialFilenameReplacements(final String filePath) {
-        String resultFilePath = filePath;
+    private Path applyFilenameReplacements(final Path originalTargetPath) {
+        final Path filename = originalTargetPath.getFileName();
 
-        for (final Map.Entry<String, String> replacementDirective : FILENAME_REPLACEMENTS.entrySet()) {
-            String oldName = replacementDirective.getKey();
-            String newName = replacementDirective.getValue();
-
-            if (resultFilePath.endsWith(oldName)) {
-                resultFilePath = resultFilePath.replace(oldName, newName);
-                break;
-            }
-        }
-
-        return resultFilePath;
+        final String newFilename = FILENAME_REPLACEMENTS.getOrDefault(filename.toString(), filename.toString());
+        return originalTargetPath.getParent().resolve(newFilename);
     }
 
     /**
-     * Checks if the given path has been identified as a file but it actually points to a directory.
+     * Checks if the given path has been identified as a file, but it actually points to a directory.
      *
      * @param filePath The path to a file/directory.
      * @return True, if the path is assumed to be a file but actually points to a directory.
      */
-    private boolean isIgnoredDirectory(final String filePath) {
+    private boolean isIgnoredDirectory(final Path filePath) {
         return IGNORED_DIRECTORIES.stream().anyMatch(filePath::endsWith);
     }
 

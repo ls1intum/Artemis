@@ -3,8 +3,7 @@
         "quizQuestion": {
             "home": {
                 "title": "Questions",
-                "createLabel": "Create a new Question",
-                "createOrEditLabel": "Create or edit a Question"
+                "createLabel": "Create a new Question"
             },
             "created": "Created new Question with identifier {{ param }}",
             "updated": "Updated Question with identifier {{ param }}",

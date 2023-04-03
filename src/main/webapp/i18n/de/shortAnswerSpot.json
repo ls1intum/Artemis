@@ -3,8 +3,7 @@
         "shortAnswerSpot": {
             "home": {
                 "title": "Short Answer Spots",
-                "createLabel": "Short Answer Spot erstellen",
-                "createOrEditLabel": "Short Answer Spot erstellen oder bearbeiten"
+                "createLabel": "Short Answer Spot erstellen"
             },
             "created": "Short Answer Spot erstellt mit ID {{ param }}",
             "updated": "Short Answer Spot aktualisiert mit ID {{ param }}",

@@ -19,7 +19,6 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ScheduleFormComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups/crud/tutorial-group-form/schedule-form/schedule-form.component';
 import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import '@angular/localize/init';
-import { Language } from 'app/entities/course.model';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { generateClickSubmitButton, generateTestFormIsInvalidOnMissingRequiredProperty } from '../../../helpers/tutorialGroupFormsUtils';
 import { ArtemisDateRangePipe } from 'app/shared/pipes/artemis-date-range.pipe';
@@ -42,7 +41,7 @@ describe('TutorialGroupFormComponent', () => {
     const validCampus = 'ExampleCampus';
     const validCapacity = 10;
     const validIsOnline = true;
-    const validLanguage = Language.GERMAN;
+    const validLanguage = 'GERMAN';
     const validAdditionalInformation = 'ExampleAdditionalInformation';
     const validNotificationText = 'ExampleNotificationText';
     // schedule
@@ -78,6 +77,9 @@ describe('TutorialGroupFormComponent', () => {
                 }),
                 MockProvider(TutorialGroupsService, {
                     getUniqueCampusValues: () => {
+                        return of(new HttpResponse({ body: [] }));
+                    },
+                    getUniqueLanguageValues: () => {
                         return of(new HttpResponse({ body: [] }));
                     },
                 }),

@@ -33,7 +33,7 @@
         {{ (tutorialGroup.isOnline ? 'artemisApp.generic.online' : 'artemisApp.generic.offline') | artemisTranslate }}
     </td>
     <td *ngIf="mifOfDifferentLanguages">
-        {{ (tutorialGroup.language === GERMAN ? 'artemisApp.generic.german' : 'artemisApp.generic.english') | artemisTranslate }}
+        {{ tutorialGroup.language ? tutorialGroup.language : '' }}
     </td>
     <td *ngIf="tutorialGroupsSplitAcrossMultipleCampuses">
         <span class="d-inline-block text-truncate long-text"> {{ tutorialGroup.campus }} </span>

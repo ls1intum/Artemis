@@ -21,6 +21,7 @@ import shortAnswerSubmissionTemplate from '../../fixtures/exercise/quiz/short_an
 import modelingExerciseSubmissionTemplate from '../../fixtures/exercise/modeling/submission.json';
 import lectureTemplate from '../../fixtures/lecture/template.json';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+import { Channel } from 'app/entities/metis/conversation/channel.model';
 
 export const COURSE_BASE = BASE_API + 'courses/';
 export const COURSE_ADMIN_BASE = BASE_API + 'admin/courses';
@@ -243,6 +244,22 @@ export class CourseManagementRequests {
             visibleForStudents: true,
         };
         return cy.request({ method: POST, url: `${COURSE_BASE}${course.id}/posts`, body });
+    }
+
+    createCourseMessageChannel(course: Course, name: string, description: string, isAnnouncementChannel: boolean, isPublic: boolean) {
+        const body = {
+            description,
+            isAnnouncementChannel,
+            isPublic,
+            name,
+            type: 'channel',
+        };
+        return cy.request({ method: POST, url: `${COURSE_BASE}${course.id}/channels`, body });
+    }
+
+    joinUserIntoChannel(course: Course, channel: Channel, user: CypressCredentials) {
+        const body = [`${user.username}`];
+        return cy.request({ method: POST, url: `${COURSE_BASE}${course.id}/channels/${channel.id}/register`, body });
     }
 
     /**
