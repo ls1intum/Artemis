@@ -162,7 +162,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     nextWizardStep() {
         this.currentWizardModeStep++;
 
-        if (this.currentWizardModeStep > 5) {
+        if (this.currentWizardModeStep > 6) {
             this.save();
         }
     }
