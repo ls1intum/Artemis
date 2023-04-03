@@ -117,6 +117,7 @@ class PrivacyStatementResourceIntegrationTest extends AbstractSpringIntegrationB
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void testUpdatePrivacyStatement_writesFile_ReturnsUpdatedFileContent() throws Exception {
         PrivacyStatement response;
         PrivacyStatement requestBody = new PrivacyStatement(PrivacyStatementLanguage.GERMAN);
