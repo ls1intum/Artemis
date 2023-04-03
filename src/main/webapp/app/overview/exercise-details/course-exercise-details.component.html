@@ -78,7 +78,7 @@
                             <fa-icon [icon]="faSignal"></fa-icon>
                             <span class="d-none d-md-inline" jhiTranslate="artemisApp.courseOverview.exerciseDetails.instructorActions.statistics">Statistics</span>
                         </a>
-                        <a *ngIf="exercise.type === PROGRAMMING" [routerLink]="baseResource + 'grading/test-cases'" class="btn btn-info btn-sm">
+                        <a *ngIf="exercise.type === PROGRAMMING" [routerLink]="baseResource + 'grading/test-cases'" class="btn btn-warning btn-sm">
                             <fa-icon [icon]="faFileSignature"></fa-icon>
                             <span class="d-none d-md-inline" jhiTranslate="artemisApp.programmingExercise.configureGrading.shortTitle">Grading</span>
                         </a>
@@ -263,7 +263,7 @@
             </a>
         </div>
         <div class="col d-flex flex-grow-1 justify-end" style="max-width: min-content">
-            <router-outlet *ngIf="exercise.course && exercise.course.postsEnabled" (activate)="onChildActivate($event)"></router-outlet>
+            <router-outlet *ngIf="exercise.course && isCommunicationEnabled(exercise.course)" (activate)="onChildActivate($event)"></router-outlet>
         </div>
     </div>
     <jhi-lti-initializer></jhi-lti-initializer>

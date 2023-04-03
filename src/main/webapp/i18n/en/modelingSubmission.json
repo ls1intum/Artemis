@@ -3,8 +3,7 @@
         "modelingSubmission": {
             "home": {
                 "title": "Modeling Submissions",
-                "createLabel": "Create a new Modeling Submission",
-                "createOrEditLabel": "Create or edit a Modeling Submission"
+                "createLabel": "Create a new Modeling Submission"
             },
             "created": "Created new Modeling Submission with identifier {{ param }}",
             "updated": "Updated Modeling Submission with identifier {{ param }}",

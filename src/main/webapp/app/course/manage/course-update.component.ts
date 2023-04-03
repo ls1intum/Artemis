@@ -1,11 +1,11 @@
 import { ActivatedRoute, Router } from '@angular/router';
 import { Component, OnInit, ViewChild } from '@angular/core';
-import { FormControl, FormGroup, ValidatorFn, Validators } from '@angular/forms';
+import { FormBuilder, FormControl, FormGroup, ValidatorFn, Validators } from '@angular/forms';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { Observable, OperatorFunction, Subject, debounceTime, distinctUntilChanged, filter, map, merge, tap } from 'rxjs';
 import { regexValidator } from 'app/shared/form/shortname-validator.directive';
-import { Course } from 'app/entities/course.model';
+import { Course, CourseInformationSharingConfiguration, isCommunicationEnabled, isMessagingEnabled } from 'app/entities/course.model';
 import { CourseManagementService } from './course-management.service';
 import { ColorSelectorComponent } from 'app/shared/color-selector/color-selector.component';
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
@@ -25,6 +25,7 @@ import { ImageCroppedEvent } from 'app/shared/image-cropper/interfaces/image-cro
 import { ProgrammingLanguage } from 'app/entities/programming-exercise.model';
 import { CourseAdminService } from 'app/course/manage/course-admin.service';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
+import { AccountService } from 'app/core/auth/account.service';
 
 @Component({
     selector: 'jhi-course-update',
@@ -55,12 +56,16 @@ export class CourseUpdateComponent implements OnInit {
     customizeGroupNames = false; // default value
     presentationScorePattern = /^[0-9]{0,4}$/; // makes sure that the presentation score is a positive natural integer greater than 0 and not too large
     courseOrganizations: Organization[];
+    isAdmin = false;
     // Icons
     faSave = faSave;
     faBan = faBan;
     faTimes = faTimes;
     faQuestionCircle = faQuestionCircle;
     faExclamationTriangle = faExclamationTriangle;
+
+    communicationEnabled = false;
+    messagingEnabled = false;
 
     // NOTE: These constants are used to define the maximum length of complaints and complaint responses.
     // This is the maximum value allowed in our database. These values must be the same as in Constants.java
@@ -81,6 +86,8 @@ export class CourseUpdateComponent implements OnInit {
         private navigationUtilService: ArtemisNavigationUtilService,
         private router: Router,
         private featureToggleService: FeatureToggleService,
+        private accountService: AccountService,
+        private fb: FormBuilder,
     ) {}
 
     ngOnInit() {
@@ -131,6 +138,9 @@ export class CourseUpdateComponent implements OnInit {
             }
         });
 
+        this.communicationEnabled = isCommunicationEnabled(this.course);
+        this.messagingEnabled = isMessagingEnabled(this.course);
+
         this.courseForm = new FormGroup(
             {
                 id: new FormControl(this.course.id),
@@ -179,7 +189,6 @@ export class CourseUpdateComponent implements OnInit {
                 maxRequestMoreFeedbackTimeDays: new FormControl(this.course.maxRequestMoreFeedbackTimeDays, {
                     validators: [Validators.required, Validators.min(0)],
                 }),
-                postsEnabled: new FormControl(this.course.postsEnabled),
                 registrationEnabled: new FormControl(this.course.registrationEnabled),
                 registrationConfirmationMessage: new FormControl(this.course.registrationConfirmationMessage, {
                     validators: [Validators.maxLength(2000)],
@@ -208,6 +217,8 @@ export class CourseUpdateComponent implements OnInit {
                     this.courseForm.addControl('timeZone', new FormControl(this.course?.timeZone));
                 }
             });
+
+        this.isAdmin = this.accountService.isAdmin();
     }
     tzResultFormatter = (timeZone: string) => timeZone;
     tzInputFormatter = (timeZone: string) => timeZone;
@@ -252,6 +263,17 @@ export class CourseUpdateComponent implements OnInit {
         }
 
         const course = this.courseForm.getRawValue();
+
+        if (this.communicationEnabled && this.messagingEnabled) {
+            course['courseInformationSharingConfiguration'] = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING;
+        } else if (this.communicationEnabled && !this.messagingEnabled) {
+            course['courseInformationSharingConfiguration'] = CourseInformationSharingConfiguration.COMMUNICATION_ONLY;
+        } else if (!this.communicationEnabled && this.messagingEnabled) {
+            course['courseInformationSharingConfiguration'] = CourseInformationSharingConfiguration.MESSAGING_ONLY;
+        } else {
+            course['courseInformationSharingConfiguration'] = CourseInformationSharingConfiguration.DISABLED;
+        }
+
         if (this.course.id !== undefined) {
             this.subscribeToSaveResponse(this.courseManagementService.update(this.course.id, course, file));
         } else {

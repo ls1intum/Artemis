@@ -3,8 +3,7 @@
         "dragAndDropMapping": {
             "home": {
                 "title": "Drag-And-Drop Mappings",
-                "createLabel": "Drag-And-Drop Mapping erstellen",
-                "createOrEditLabel": "Drag-And-Drop Mapping erstellen oder bearbeiten"
+                "createLabel": "Drag-And-Drop Mapping erstellen"
             },
             "created": "Drag-And-Drop Mapping erstellt mit ID {{ param }}",
             "updated": "Drag-And-Drop Mapping aktualisiert mit ID {{ param }}",

@@ -340,6 +340,9 @@ public class DatabaseUtilService {
     @Autowired
     private QuizSubmissionRepository quizSubmissionRepository;
 
+    @Autowired
+    private QuizExerciseRepository quizExerciseRepository;
+
     // TODO: this should probably be moved into another service
     public void changeUser(String username) {
         User user = getUserByLogin(username);
@@ -731,7 +734,7 @@ public class DatabaseUtilService {
 
     public Course createCourseWithPostsDisabled() {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
-        course.setPostsEnabled(false);
+        course.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.DISABLED);
         return courseRepo.save(course);
     }
 
@@ -3919,6 +3922,73 @@ public class DatabaseUtilService {
         return quizExercise;
     }
 
+    /**
+     * Creates a new quiz that gets saved in the QuizExercise repository.
+     *
+     * @param releaseDate release date of the quiz, is also used to set the start date of the course
+     * @param dueDate     due date of the quiz, is also used to set the end date of the course
+     * @param quizMode    SYNCHRONIZED, BATCHED or INDIVIDUAL
+     * @return quiz that was created
+     */
+    public QuizExercise createAndSaveQuiz(ZonedDateTime releaseDate, ZonedDateTime dueDate, QuizMode quizMode) {
+        Course course = createAndSaveCourse(null, releaseDate == null ? null : releaseDate.minusDays(1), dueDate == null ? null : dueDate.plusDays(1), Set.of());
+
+        QuizExercise quizExercise = ModelFactory.generateQuizExercise(releaseDate, dueDate, quizMode, course);
+        initializeQuizExercise(quizExercise);
+        quizExerciseRepository.save(quizExercise);
+
+        return quizExercise;
+    }
+
+    /**
+     * Creates a new course that gets saved in the Course repository.
+     *
+     * @param id        the id of the course
+     * @param startDate start date of the course
+     * @param endDate   end date of the course
+     * @param exercises exercises of the course
+     * @return course that was created
+     */
+    public Course createAndSaveCourse(Long id, ZonedDateTime startDate, ZonedDateTime endDate, Set<Exercise> exercises) {
+        Course course = ModelFactory.generateCourse(id, startDate, endDate, exercises, "tumuser", "tutor", "editor", "instructor");
+        courseRepo.save(course);
+
+        return course;
+    }
+
+    /**
+     * Creates a new exam quiz that gets saved in the QuizExercise repository.
+     *
+     * @param startDate start date of the exam, is also used to set the end date of the course the exam is in
+     * @param endDate   end date of the exam, is also used to set the end date of the course the exam is in
+     * @return exam quiz that was created
+     */
+    @NotNull
+    public QuizExercise createAndSaveExamQuiz(ZonedDateTime startDate, ZonedDateTime endDate) {
+        Course course = createAndSaveCourse(null, startDate.minusDays(1), endDate.plusDays(1), new HashSet<>());
+
+        Exam exam = ModelFactory.generateExam(course, startDate.minusMinutes(5), startDate, endDate, false);
+        ExerciseGroup exerciseGroup = ModelFactory.generateExerciseGroup(true, exam);
+        examRepository.save(exam);
+
+        QuizExercise quizExercise = ModelFactory.generateQuizExerciseForExam(exerciseGroup);
+        initializeQuizExercise(quizExercise);
+        quizExerciseRepository.save(quizExercise);
+
+        return quizExercise;
+    }
+
+    /**
+     * Removes a user from all courses they are currently in
+     *
+     * @param login login to find user with
+     */
+    public void removeUserFromAllCourses(String login) {
+        User user = getUserByLogin(login);
+        user.setGroups(Set.of());
+        userRepo.save(user);
+    }
+
     @NotNull
     public QuizExercise createQuizWithQuizBatchedExercises(Course course, ZonedDateTime releaseDate, ZonedDateTime dueDate, QuizMode quizMode) {
         QuizExercise quizExerciseWithQuizBatches = ModelFactory.generateQuizExerciseWithQuizBatches(releaseDate, dueDate, quizMode, course);
@@ -3930,6 +4000,7 @@ public class DatabaseUtilService {
     public QuizExercise createQuizForExam(ExerciseGroup exerciseGroup) {
         QuizExercise quizExercise = ModelFactory.generateQuizExerciseForExam(exerciseGroup);
         initializeQuizExercise(quizExercise);
+
         return quizExercise;
     }
 
@@ -4639,7 +4710,7 @@ public class DatabaseUtilService {
         return tutorialGroupFreePeriodRepository.save(newTutorialGroupFreePeriod);
     }
 
-    public TutorialGroup createTutorialGroup(Long courseId, String title, String additionalInformation, Integer capacity, Boolean isOnline, String campus, Language language,
+    public TutorialGroup createTutorialGroup(Long courseId, String title, String additionalInformation, Integer capacity, Boolean isOnline, String campus, String language,
             User teachingAssistant, Set<User> registeredStudents) {
         var course = courseRepo.findByIdElseThrow(courseId);
 

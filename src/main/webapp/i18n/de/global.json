@@ -249,7 +249,7 @@
             "exercise": "Aufgaben",
             "scores": "Bewertungen",
             "exams": "Klausuren",
-            "manageHints": "Verwalte Hinweise",
+            "hints": "Hinweise",
             "addExternalSubmission": "Externe Einreichung anlegen",
             "addAuxiliaryRepository": "Hilfsrepository anlegen",
             "toggleToUnsubmitted": "Setze Studierenden-Klausur auf nicht abgegeben",

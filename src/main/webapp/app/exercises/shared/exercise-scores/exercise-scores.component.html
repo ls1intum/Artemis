@@ -92,7 +92,7 @@
                     <fa-icon [icon]="faListAlt"></fa-icon>
                     <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations">Participations</span>
                 </a>
-
+                <jhi-external-submission *ngIf="exercise.isAtLeastInstructor" class="d-inline-block me-1 mb-1" [exercise]="exercise"></jhi-external-submission>
                 <button
                     jhi-exercise-action-button
                     [buttonIcon]="faDownload"
@@ -100,7 +100,7 @@
                     [buttonLabel]="'entity.action.export' | artemisTranslate"
                     [hideLabelMobile]="false"
                     [ngbPopover]="popContent"
-                    [autoClose]="'outside'"
+                    [autoClose]="true"
                     placement="bottom-right auto"
                     container="body"
                 ></button>
@@ -167,13 +167,9 @@
 
                 <ngx-datatable-column prop="" [sortable]="true" [minWidth]="100" [width]="180">
                     <ng-template ngx-datatable-header-template>
-                        <span *ngIf="exercise.teamMode" class="datatable-header-cell-wrapper" (click)="controls.onSort('team.name')">
-                            <span class="datatable-header-cell-label bold sortable">{{ 'artemisApp.exercise.teamName' | artemisTranslate }}</span>
-                            <fa-icon [icon]="controls.iconForSortPropField('team.name')"></fa-icon>
-                        </span>
-                        <span *ngIf="!exercise.teamMode" class="datatable-header-cell-wrapper" (click)="controls.onSort('student.name')">
-                            <span class="datatable-header-cell-label bold sortable">{{ 'artemisApp.exercise.studentName' | artemisTranslate }}</span>
-                            <fa-icon [icon]="controls.iconForSortPropField('student.name')"></fa-icon>
+                        <span class="datatable-header-cell-wrapper" (click)="controls.onSort(exercise.teamMode ? 'team.name' : 'student.name')">
+                            <span class="datatable-header-cell-label bold sortable">{{ 'artemisApp.exercise.name' | artemisTranslate }}</span>
+                            <fa-icon [icon]="controls.iconForSortPropField(exercise.teamMode ? 'team.name' : 'student.name')"></fa-icon>
                         </span>
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
@@ -248,7 +244,7 @@
                 <ngx-datatable-column *ngIf="exercise.type === ExerciseType.PROGRAMMING && afterDueDate" prop="" [minWidth]="100" [width]="110">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('testRun')">
-                            <span class="datatable-header-cell-label bold" jhiTranslate="artemisApp.participation.practiceMode"> Practice Mode </span>
+                            <span class="datatable-header-cell-label bold" jhiTranslate="artemisApp.participation.practice"> Practice </span>
                             <fa-icon [icon]="controls.iconForSortPropField('testRun')"></fa-icon>
                         </span>
                     </ng-template>

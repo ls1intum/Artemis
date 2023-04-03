@@ -11,7 +11,7 @@
             <div *ngIf="channels && channels.length > 0" class="form-group mt-4">
                 <div class="table-wrapper-scroll-y scrollbar">
                     <ul class="list-group">
-                        <li *ngFor="let channel of channels; trackBy: trackIdentity" class="list-group-item">
+                        <li *ngFor="let channel of channels; trackBy: trackIdentity" [id]="'channel-' + channel.id" class="list-group-item">
                             <jhi-channel-item [channel]="channel" (channelAction)="onChannelAction($event)"></jhi-channel-item>
                         </li>
                     </ul>

@@ -5,7 +5,6 @@
             <div class="col-auto">
                 <label class="form-label" for="period">{{ 'artemisApp.forms.configurationForm.periodInput.label' | artemisTranslate }}</label>
                 <div class="input-group">
-                    <input formControlName="period" [owlDateTime]="period" class="d-none" [selectMode]="'range'" />
                     <input
                         name="period"
                         id="period"
@@ -17,6 +16,7 @@
                         readonly
                         class="form-control"
                     />
+                    <input formControlName="period" [owlDateTime]="period" class="date-time-picker-anchor" [selectMode]="'range'" />
                     <button type="button" class="btn btn-secondary" [owlDateTimeTrigger]="period">
                         <fa-icon [icon]="faCalendarAlt"></fa-icon>
                     </button>
@@ -37,7 +37,7 @@
                     </div>
                 </div>
                 <!-- Do not show options if the course has communication disabled -->
-                <div [hidden]="!course.postsEnabled">
+                <div [hidden]="!isMessagingEnabled(course)">
                     <div class="form-check">
                         <input class="form-check-input" type="checkbox" formControlName="useTutorialGroupChannels" id="useTutorialGroupChannels" />
                         <label class="form-check-label" for="useTutorialGroupChannels">

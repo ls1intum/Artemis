@@ -74,7 +74,7 @@ class TeamWebsocketServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
         Team team = new Team().name("Team").shortName("team").exercise(modelingExercise).students(students);
         team = request.postWithResponseBody(teamResourceUrl(), team, Team.class, HttpStatus.CREATED);
 
-        TeamAssignmentPayload expectedPayload = new TeamAssignmentPayload(modelingExercise, team);
+        TeamAssignmentPayload expectedPayload = new TeamAssignmentPayload(modelingExercise, team, List.of());
         team.getStudents().forEach(user -> verify(messagingTemplate).convertAndSendToUser(user.getLogin(), assignmentTopic, expectedPayload));
     }
 
@@ -88,7 +88,7 @@ class TeamWebsocketServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
         Team updatedTeam = new Team(team).id(team.getId()).removeStudents(studentToRemoveFromTeam);
         request.putWithResponseBody(teamResourceUrl() + "/" + updatedTeam.getId(), updatedTeam, Team.class, HttpStatus.OK);
 
-        TeamAssignmentPayload expectedPayload = new TeamAssignmentPayload(modelingExercise, null);
+        TeamAssignmentPayload expectedPayload = new TeamAssignmentPayload(modelingExercise, null, List.of());
         verify(messagingTemplate).convertAndSendToUser(studentToRemoveFromTeam.getLogin(), assignmentTopic, expectedPayload);
     }
 
@@ -101,7 +101,7 @@ class TeamWebsocketServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
         Team updatedTeam = new Team(team).id(team.getId()).students(students);
         updatedTeam = request.putWithResponseBody(teamResourceUrl() + "/" + updatedTeam.getId(), updatedTeam, Team.class, HttpStatus.OK);
 
-        TeamAssignmentPayload expectedPayload = new TeamAssignmentPayload(modelingExercise, updatedTeam);
+        TeamAssignmentPayload expectedPayload = new TeamAssignmentPayload(modelingExercise, updatedTeam, List.of());
         team.getStudents().forEach(user -> verify(messagingTemplate).convertAndSendToUser(user.getLogin(), assignmentTopic, expectedPayload));
     }
 
@@ -113,7 +113,7 @@ class TeamWebsocketServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
 
         request.delete(teamResourceUrl() + "/" + team.getId(), HttpStatus.OK);
 
-        TeamAssignmentPayload expectedPayload = new TeamAssignmentPayload(modelingExercise, null);
+        TeamAssignmentPayload expectedPayload = new TeamAssignmentPayload(modelingExercise, null, List.of());
         team.getStudents().forEach(user -> verify(messagingTemplate).convertAndSendToUser(user.getLogin(), assignmentTopic, expectedPayload));
     }
 
@@ -124,7 +124,7 @@ class TeamWebsocketServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
         List<Team> destinationTeams = request.putWithResponseBodyList(importFromExerciseUrl(textExercise), null, Team.class, HttpStatus.OK);
 
         destinationTeams.forEach(team -> {
-            TeamAssignmentPayload expectedPayload = new TeamAssignmentPayload(modelingExercise, team);
+            TeamAssignmentPayload expectedPayload = new TeamAssignmentPayload(modelingExercise, team, List.of());
             team.getStudents().forEach(user -> verify(messagingTemplate).convertAndSendToUser(user.getLogin(), assignmentTopic, expectedPayload));
         });
     }
