@@ -9,12 +9,6 @@
 <a class="reference" *ngIf="postingContentPart.attachmentToReference" (click)="openAttachment(postingContentPart.attachmentToReference)">
     <fa-icon class="px-1" [icon]="faFile"></fa-icon>{{ postingContentPart.referenceStr }}
 </a>
-<span
-    class="markdown-preview"
-    *ngIf="postingContentPart.contentAfterReference"
-    [innerHTML]="postingContentPart.contentAfterReference | htmlForPostingMarkdown : false : allowedHtmlTags : allowedHtmlAttributes"
-></span>
-
 <div style="max-width: 400px">
     <a class="reference" *ngIf="postingContentPart.slideToReference" (click)="enlargeImage(postingContentPart.slideToReference)">
         <img
@@ -28,3 +22,8 @@
         />
     </a>
 </div>
+<span
+    class="markdown-preview"
+    *ngIf="postingContentPart.contentAfterReference"
+    [innerHTML]="postingContentPart.contentAfterReference | htmlForPostingMarkdown : false : allowedHtmlTags : allowedHtmlAttributes"
+></span>

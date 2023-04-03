@@ -417,7 +417,7 @@ public class FileResource {
         if (!checkAttachmentAuthorization(course, attachment)) {
             throw new AccessForbiddenException();
         }
-        return buildFileResponse(Path.of(FilePathService.getSlideImageFilePath(), String.valueOf(attachmentUnit.getId())).toString(), filename);
+        return buildFileResponse(Path.of(FilePathService.getSlideImageFilePath(), String.valueOf(attachmentUnit.getId())).toString(), filename, true);
     }
 
     /**
