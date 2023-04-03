@@ -107,7 +107,7 @@ public class BuildPlanIntegrationTest extends AbstractSpringIntegrationJenkinsGi
         final BuildPlan buildPlan = buildPlanRepository.findByProgrammingExercises_IdWithProgrammingExercisesElseThrow(programmingExercise.getId());
 
         assertThat(newBuildPlan.getBuildPlan()).isEqualTo(someOtherBuildPlan.getBuildPlan());
-        assertThat(buildPlan).isEqualTo(newBuildPlan);
+        assertThat(buildPlan.getId()).isEqualTo(newBuildPlan.getId());
     }
 
     @Test
@@ -134,7 +134,7 @@ public class BuildPlanIntegrationTest extends AbstractSpringIntegrationJenkinsGi
         final BuildPlan buildPlan = buildPlanRepository.findByProgrammingExercises_IdWithProgrammingExercisesElseThrow(programmingExercise.getId());
 
         assertThat(newBuildPlan.getBuildPlan()).isEqualTo(someOtherBuildPlan.getBuildPlan());
-        assertThat(buildPlan).isEqualTo(newBuildPlan);
+        assertThat(buildPlan.getId()).isEqualTo(newBuildPlan.getId());
     }
 
     @Test
@@ -161,6 +161,6 @@ public class BuildPlanIntegrationTest extends AbstractSpringIntegrationJenkinsGi
         final BuildPlan buildPlan = buildPlanRepository.findByProgrammingExercises_IdWithProgrammingExercisesElseThrow(programmingExercise.getId());
 
         assertThat(newBuildPlan.getBuildPlan()).isEqualTo(someOtherBuildPlan.getBuildPlan());
-        assertThat(buildPlan).isEqualTo(newBuildPlan);
+        assertThat(buildPlan.getId()).isEqualTo(newBuildPlan.getId());
     }
 }
