@@ -1,5 +1,4 @@
-import { Component, Input } from '@angular/core';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { Component } from '@angular/core';
 import { ProgrammingExerciseUpdateService } from 'app/exercises/programming/manage/update/programming-exercise-update.service';
 
 @Component({
@@ -8,7 +7,5 @@ import { ProgrammingExerciseUpdateService } from 'app/exercises/programming/mana
     styleUrls: ['../../programming-exercise-form.scss'],
 })
 export class ProgrammingExerciseDifficultyComponent {
-    @Input() programmingExercise: ProgrammingExercise;
-
     constructor(public programmingExerciseUpdateService: ProgrammingExerciseUpdateService) {}
 }

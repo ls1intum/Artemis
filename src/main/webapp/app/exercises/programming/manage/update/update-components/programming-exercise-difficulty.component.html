@@ -1,7 +1,11 @@
 <div class="form-group">
     <label class="label-narrow" jhiTranslate="artemisApp.exercise.difficulty">Difficulty</label>
     <div>
-        <jhi-difficulty-picker [exercise]="programmingExercise"></jhi-difficulty-picker>
+        <jhi-difficulty-picker [exercise]="programmingExerciseUpdateService.stepInputs.programmingExercise"></jhi-difficulty-picker>
     </div>
 </div>
-<jhi-team-config-form-group class="form-element" [exercise]="programmingExercise" [isImport]="programmingExerciseUpdateService.stepInputs.isImport"></jhi-team-config-form-group>
+<jhi-team-config-form-group
+    class="form-element"
+    [exercise]="programmingExerciseUpdateService.stepInputs.programmingExercise"
+    [isImport]="programmingExerciseUpdateService.stepInputs.isImport"
+></jhi-team-config-form-group>

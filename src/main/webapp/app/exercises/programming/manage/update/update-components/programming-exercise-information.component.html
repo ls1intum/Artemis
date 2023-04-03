@@ -10,7 +10,7 @@
         name="title"
         id="field_title"
         [pattern]="programmingExerciseUpdateService.stepInputs.titleNamePattern"
-        [(ngModel)]="programmingExercise.title"
+        [(ngModel)]="programmingExerciseUpdateService.stepInputs.programmingExercise.title"
         #title="ngModel"
     />
     <ng-container *ngFor="let e of title.errors! | keyvalue | removekeys : ['required']">
@@ -33,8 +33,8 @@
         id="field_shortName"
         minlength="3"
         [pattern]="programmingExerciseUpdateService.stepInputs.shortNamePattern"
-        [(ngModel)]="programmingExercise.shortName"
-        [readonly]="!programmingExerciseUpdateService.stepInputs.isImport && programmingExercise.id"
+        [(ngModel)]="programmingExerciseUpdateService.stepInputs.programmingExercise.shortName"
+        [readonly]="!programmingExerciseUpdateService.stepInputs.isImport && programmingExerciseUpdateService.stepInputs.programmingExercise.id"
         #shortName="ngModel"
     />
     <ng-container *ngFor="let error of shortName.errors! | keyvalue | removekeys : ['required']">

@@ -1,10 +1,10 @@
 import { Component, Input } from '@angular/core';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { SubmissionPolicyType } from 'app/entities/submission-policy.model';
 import { TranslateService } from '@ngx-translate/core';
 import { IncludedInOverallScore } from 'app/entities/exercise.model';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import { ProgrammingExerciseUpdateService } from 'app/exercises/programming/manage/update/programming-exercise-update.service';
 
 @Component({
     selector: 'jhi-programming-exercise-grading',
@@ -17,12 +17,15 @@ export class ProgrammingExerciseGradingComponent {
 
     private translationBasePath = 'artemisApp.programmingExercise.wizardMode.gradingLabels.';
 
-    @Input() programmingExercise: ProgrammingExercise;
     @Input() showSummary = false;
 
     faQuestionCircle = faQuestionCircle;
 
-    constructor(private translateService: TranslateService) {}
+    constructor(private translateService: TranslateService, public programmingExerciseUpdateService: ProgrammingExerciseUpdateService) {}
+
+    get programmingExercise() {
+        return this.programmingExerciseUpdateService.stepInputs.programmingExercise;
+    }
 
     getGradingSummary() {
         const summary = [];

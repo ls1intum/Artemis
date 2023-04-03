@@ -1,10 +1,11 @@
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { AuxiliaryRepository } from 'app/entities/programming-exercise-auxiliary-repository-model';
-import { ProgrammingLanguage, ProjectType } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/entities/programming-exercise.model';
 import { ModePickerOption } from 'app/exercises/shared/mode-picker/mode-picker.component';
 import { Observable } from 'rxjs';
 
 interface StepInputs {
+    programmingExercise: ProgrammingExercise;
     isImport: boolean;
     titleNamePattern: string;
     shortNamePattern: RegExp;

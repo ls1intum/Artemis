@@ -468,6 +468,8 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         }
 
         this.ProgrammingExerciseUpdateService.configure({
+            programmingExercise: this.programmingExercise,
+            isImport: this.isImport,
             titleNamePattern: this.titleNamePattern,
             shortNamePattern: this.shortNamePattern,
             invalidRepositoryNamePattern: this.invalidRepositoryNamePattern,

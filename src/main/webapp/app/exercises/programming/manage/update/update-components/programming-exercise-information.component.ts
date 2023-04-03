@@ -1,5 +1,4 @@
 import { Component, Input } from '@angular/core';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseUpdateService } from 'app/exercises/programming/manage/update/programming-exercise-update.service';
 
 @Component({
@@ -9,7 +8,6 @@ import { ProgrammingExerciseUpdateService } from 'app/exercises/programming/mana
 })
 export class ProgrammingExerciseInformationComponent {
     @Input() isExamMode: boolean;
-    @Input() programmingExercise: ProgrammingExercise;
 
     constructor(public programmingExerciseUpdateService: ProgrammingExerciseUpdateService) {}
 }

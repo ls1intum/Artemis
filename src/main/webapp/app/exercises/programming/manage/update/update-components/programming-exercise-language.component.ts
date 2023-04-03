@@ -1,6 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
-import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/entities/programming-exercise.model';
+import { ProgrammingLanguage, ProjectType } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseUpdateService } from 'app/exercises/programming/manage/update/programming-exercise-update.service';
 
 @Component({
@@ -12,7 +12,6 @@ export class ProgrammingExerciseLanguageComponent {
     readonly ProgrammingLanguage = ProgrammingLanguage;
     readonly ProjectType = ProjectType;
 
-    @Input() programmingExercise: ProgrammingExercise;
     @Input() sequentialTestRunsAllowed: boolean;
 
     faQuestionCircle = faQuestionCircle;
