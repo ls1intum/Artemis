@@ -295,32 +295,60 @@ export class StudentExamDetailComponent implements OnInit {
         });
     }
 
+    /**
+     * Return the first submission of the first student participation of the given exercise
+     *
+     * @param exercise the exercise for which the submission to be returned
+     * @return Submission returns submission if exists, undefined otherwise
+     */
     getSubmission(exercise: Exercise): Submission | undefined {
-        if (exercise.studentParticipations && exercise.studentParticipations.length > 0) {
-            if (exercise.studentParticipations[0].submissions && exercise.studentParticipations[0].submissions.length > 0) {
-                return exercise.studentParticipations[0].submissions[0];
+        if (exercise.studentParticipations?.[0]) {
+            const studentParticipation = exercise.studentParticipations![0];
+            // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
+            if (studentParticipation.submissions?.length! > 0) {
+                return studentParticipation.submissions![0];
             }
         }
         return undefined;
     }
 
+    /**
+     * Return the first result of the first student participation of the given exercise
+     *
+     * @param exercise the exercise for which the result to be returned
+     * @return Result returns result if exists, undefined otherwise
+     */
     getResult(exercise: Exercise): Result | undefined {
-        if (exercise.studentParticipations && exercise.studentParticipations.length > 0) {
-            if (exercise.studentParticipations[0].results && exercise.studentParticipations[0].results.length > 0) {
-                return exercise.studentParticipations[0].results[0];
+        if (exercise.studentParticipations?.[0]) {
+            const studentParticipation = exercise.studentParticipations![0];
+            // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
+            if (studentParticipation.results?.length! > 0) {
+                return studentParticipation.results![0];
             }
         }
         return undefined;
     }
 
+    /**
+     * Return the first student participation of the given exercise
+     *
+     * @param exercise the exercise for which the student participation to be returned
+     * @return StudentParticipation returns student participation if exists, undefined otherwise
+     */
     getStudentParticipation(exercise: Exercise): StudentParticipation | undefined {
-        if (exercise.studentParticipations && exercise.studentParticipations.length > 0) {
-            return exercise.studentParticipations[0];
+        if (exercise.studentParticipations?.[0]) {
+            return exercise.studentParticipations![0];
         }
         return undefined;
     }
 
-    getQuizExamResult(studentExam: StudentExam) {
+    /**
+     * Return the quiz exam result of the given student exam
+     *
+     * @param studentExam the student exam of which the quiz exam result to be returned
+     * @return Result returns quiz exam result if exists, undefined otherwise
+     */
+    getQuizExamResult(studentExam: StudentExam): Result | undefined {
         if (studentExam.quizExamSubmission && studentExam.quizExamSubmission.results && studentExam.quizExamSubmission.results.length > 0) {
             return studentExam.quizExamSubmission.results[0];
         }
