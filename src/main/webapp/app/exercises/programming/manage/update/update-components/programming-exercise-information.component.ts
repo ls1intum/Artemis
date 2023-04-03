@@ -10,9 +10,6 @@ import { InfoStepInputs } from 'app/exercises/programming/manage/update/wizard-m
 export class ProgrammingExerciseInformationComponent {
     @Input() isImport: boolean;
     @Input() isExamMode: boolean;
-    @Input() isEdit: boolean;
     @Input() programmingExercise: ProgrammingExercise;
-
-    @Input() shouldHidePreview = false;
     @Input() infoInputs: InfoStepInputs;
 }

@@ -13,6 +13,7 @@
         [gradingStepInputs]="getGradingStepInputs()"
         [problemStepInputs]="getProblemStepInputs()"
     ></jhi-programming-exercise-update-wizard>
+
     <form name="editForm" role="form" novalidate #editForm="ngForm" (keydown.enter)="isEventInsideTextArea($event)" *ngIf="!isShowingWizardMode">
         <div class="d-flex" *ngIf="!isImport && !programmingExercise.id">
             <div class="flex-grow-1 align-items-center">
@@ -40,23 +41,22 @@
                 <label for="id" jhiTranslate="global.field.id">ID</label>
                 <input type="text" class="form-control" id="id" name="id" [(ngModel)]="programmingExercise.id" readonly />
             </div>
-            <jhi-programming-exercise-info
-                [isImport]="isImport"
-                [isEdit]="isEdit"
-                [isExamMode]="isExamMode"
-                [programmingExercise]="programmingExercise"
-                [infoInputs]="getInfoStepInputs()"
-            >
+
+            <jhi-programming-exercise-info [isImport]="isImport" [isExamMode]="isExamMode" [programmingExercise]="programmingExercise" [infoInputs]="getInfoStepInputs()">
             </jhi-programming-exercise-info>
+
             <jhi-programming-exercise-difficulty [isImport]="isImport" [programmingExercise]="programmingExercise"></jhi-programming-exercise-difficulty>
+
             <jhi-programming-exercise-language [isImport]="isImport" [programmingExercise]="programmingExercise" [languageStepInputs]="getLanguageStepInputs()">
             </jhi-programming-exercise-language>
+
             <jhi-programming-exercise-grading
                 class="form-step"
                 [isImport]="isImport"
                 [programmingExercise]="programmingExercise"
                 [gradingInputs]="getGradingStepInputs()"
             ></jhi-programming-exercise-grading>
+
             <jhi-programming-exercise-problem
                 [isImport]="isImport"
                 [isExamMode]="isExamMode"
@@ -74,6 +74,13 @@
                 [updateTemplate]="updateTemplate"
                 [selectedProjectType]="selectedProjectType"
             ></jhi-programming-exercise-problem>
+
+            <jhi-programming-exercise-additional-settings
+                [isImport]="isImport"
+                [isEdit]="isEdit"
+                [programmingExercise]="programmingExercise"
+                [infoInputs]="getInfoStepInputs()"
+            ></jhi-programming-exercise-additional-settings>
 
             <div class="update-programming-exercise-footer">
                 <div class="update-programming-exercise-footer-content">
