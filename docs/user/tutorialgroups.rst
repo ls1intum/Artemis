@@ -11,7 +11,7 @@ Overview
 --------
 Artemis facilitates the coordination of tutorial groups in a course. Tutorial groups are a learning strategy where students teach and learn from each other in small groups (20-30). In this strategy, proficient students act as tutors and lead the groups. The tutor and the group members usually meet weekly either on campus or online. Students present their solutions to homework assignments or other tasks and receive feedback and suggestions from the tutor and their peers.
 
-.. note:: The tutorial group overview page (used by students) displays dates in the students's current time zone. The tutorial group management page (used by instructors and tutors to manage groups and their sessions) displays dates in the course time zone. This is helpful if the instructors or tutors travel and work across multiple time zones. A header at the top of the page shows the current time zone used for dates.
+.. note:: The tutorial group overview page (used by students) displays dates in the student's current time zone. The tutorial group management page (used by instructors and tutors to manage groups and their sessions) displays dates in the course time zone. This is helpful if the instructors or tutors travel and work across multiple time zones. A header at the top of the page shows the current time zone used for dates.
     
 Setting up Tutorial Group Plan as an Instructor
 -----------------------------------------------
