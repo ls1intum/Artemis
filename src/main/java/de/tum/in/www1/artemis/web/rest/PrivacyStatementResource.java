@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import java.io.IOException;
+
 import javax.ws.rs.BadRequestException;
 
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -30,7 +32,7 @@ public class PrivacyStatementResource {
      * @return the privacy statement
      */
     @GetMapping("/privacy-statement")
-    public PrivacyStatement getPrivacyStatement(@RequestParam(value = "language") String language) {
+    public PrivacyStatement getPrivacyStatement(@RequestParam(value = "language") String language) throws IOException {
         if (!"de".equalsIgnoreCase(language) && !"en".equalsIgnoreCase(language))
             throw new BadRequestException("Language not supported");
         return privacyStatementService.getPrivacyStatement(PrivacyStatementLanguage.fromLanguageShortName(language));
@@ -45,7 +47,7 @@ public class PrivacyStatementResource {
      */
     @GetMapping("/privacy-statement-for-update")
     @PreAuthorize("hasRole('ADMIN')")
-    public PrivacyStatement getPrivacyStatementForUpdate(@RequestParam("language") String language) {
+    public PrivacyStatement getPrivacyStatementForUpdate(@RequestParam("language") String language) throws IOException {
         if (!"de".equalsIgnoreCase(language) && !"en".equalsIgnoreCase(language))
             throw new BadRequestException("Language not supported");
         return privacyStatementService.getPrivacyStatementForUpdate(PrivacyStatementLanguage.fromLanguageShortName(language));

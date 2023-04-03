@@ -7,6 +7,7 @@ import java.nio.file.StandardOpenOption;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.PrivacyStatement;
@@ -24,7 +25,7 @@ public class PrivacyStatementService {
 
     private static final String PRIVACY_STATEMENT_FILE_EXTENSION = ".md";
 
-    public PrivacyStatement getPrivacyStatementForUpdate(PrivacyStatementLanguage language) {
+    public PrivacyStatement getPrivacyStatementForUpdate(PrivacyStatementLanguage language) throws IOException {
         String privacyStatementText = "";
         if (!Files.exists(getPrivacyStatementPath(language))) {
             return new PrivacyStatement(privacyStatementText, language);
@@ -40,7 +41,7 @@ public class PrivacyStatementService {
 
     }
 
-    public PrivacyStatement getPrivacyStatement(PrivacyStatementLanguage language) {
+    public PrivacyStatement getPrivacyStatement(PrivacyStatementLanguage language) throws IOException {
         String privacyStatementText = "";
         // if it doesn't exist for one language, try to return the other language
         if (!Files.exists(getPrivacyStatementPath(PrivacyStatementLanguage.GERMAN)) && !Files.exists(getPrivacyStatementPath(PrivacyStatementLanguage.ENGLISH))) {
@@ -75,7 +76,9 @@ public class PrivacyStatementService {
         return new PrivacyStatement(privacyStatement.getText(), privacyStatement.getLanguage());
     }
 
-    private Path getPrivacyStatementPath(PrivacyStatementLanguage language) {
-        return Path.of(BASE_PATH, PRIVACY_STATEMENT_FILE_NAME + language.getShortName() + PRIVACY_STATEMENT_FILE_EXTENSION);
+    private Path getPrivacyStatementPath(PrivacyStatementLanguage language) throws IOException {
+        var path = new ClassPathResource("public/content/privacy_statement_" + language.getShortName() + ".md").getFile().toPath();
+        return path;
+        // return Path.of(BASE_PATH, PRIVACY_STATEMENT_FILE_NAME + language.getShortName() + PRIVACY_STATEMENT_FILE_EXTENSION);
     }
 }
