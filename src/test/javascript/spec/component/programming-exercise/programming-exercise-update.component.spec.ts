@@ -416,7 +416,7 @@ describe('ProgrammingExercise Management Update Component', () => {
                 fixture.detectChanges();
                 tick();
 
-                expect(comp.isImport).toBeTrue();
+                expect(comp.isImportFromExistingExercise).toBeTrue();
                 expect(comp.originalStaticCodeAnalysisEnabled).toBe(scaActivatedOriginal);
                 expect(comp.programmingExercise.staticCodeAnalysisEnabled).toBe(scaActivatedOriginal);
                 expect(comp.programmingExercise.maxStaticCodeAnalysisPenalty).toBe(maxPenalty);

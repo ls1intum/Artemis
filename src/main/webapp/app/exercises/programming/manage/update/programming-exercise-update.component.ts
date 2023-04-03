@@ -56,7 +56,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     auxiliaryRepositoryDuplicateDirectories: boolean;
     auxiliaryRepositoryNamedCorrectly: boolean;
     submitButtonTitle: string;
-    isImport: boolean;
+    isImportFromExistingExercise: boolean;
     isImportFromFile: boolean;
     isEdit: boolean;
     isExamMode: boolean;
@@ -368,7 +368,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         this.activatedRoute.url
             .pipe(
                 tap((segments) => {
-                    this.isImport = segments.some((segment) => segment.path === 'import');
+                    this.isImportFromExistingExercise = segments.some((segment) => segment.path === 'import');
                     this.isImportFromFile = segments.some((segment) => segment.path === 'import-from-file');
                 }),
                 switchMap(() => this.activatedRoute.params),
@@ -376,7 +376,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                     if (this.isImportFromFile) {
                         this.createProgrammingExerciseForImportFromFile();
                     }
-                    if (this.isImport) {
+                    if (this.isImportFromExistingExercise) {
                         this.createProgrammingExerciseForImport(params);
                     } else {
                         if (params['courseId'] && params['examId'] && params['exerciseGroupId']) {
@@ -404,7 +404,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                     }
 
                     // Set submit button text depending on component state
-                    if (this.isImport || this.isImportFromFile) {
+                    if (this.isImportFromExistingExercise || this.isImportFromFile) {
                         this.submitButtonTitle = 'entity.action.import';
                     } else if (this.programmingExercise.id) {
                         this.isEdit = true;
@@ -478,7 +478,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
      * @param params given by ActivatedRoute
      */
     private createProgrammingExerciseForImport(params: Params) {
-        this.isImport = true;
+        this.isImportFromExistingExercise = true;
         this.originalStaticCodeAnalysisEnabled = this.programmingExercise.staticCodeAnalysisEnabled;
         // The source exercise is injected via the Resolver. The route parameters determine the target exerciseGroup or course
         if (params['courseId'] && params['examId'] && params['exerciseGroupId']) {
@@ -580,7 +580,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         }
         if (this.isImportFromFile) {
             this.subscribeToSaveResponse(this.programmingExerciseService.importFromFile(this.programmingExercise));
-        } else if (this.isImport) {
+        } else if (this.isImportFromExistingExercise) {
             this.subscribeToSaveResponse(this.programmingExerciseService.importExercise(this.programmingExercise, this.recreateBuildPlans, this.updateTemplate));
         } else if (this.programmingExercise.id !== undefined) {
             const requestOptions = {} as any;
@@ -684,7 +684,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
 
     onStaticCodeAnalysisChanged() {
         // On import: If SCA mode changed, activate recreation of build plans and update of the template
-        if (this.isImport && this.programmingExercise.staticCodeAnalysisEnabled !== this.originalStaticCodeAnalysisEnabled) {
+        if (this.isImportFromExistingExercise && this.programmingExercise.staticCodeAnalysisEnabled !== this.originalStaticCodeAnalysisEnabled) {
             this.recreateBuildPlans = true;
             this.updateTemplate = true;
         }
