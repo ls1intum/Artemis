@@ -26,7 +26,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.*;
+import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
+import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
+import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseSolutionEntry;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
@@ -287,11 +290,10 @@ public class ProgrammingExerciseService {
 
             // Check if package name matches regex
             Matcher packageNameMatcher;
-            if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.SWIFT) {
-                packageNameMatcher = packageNamePatternForSwift.matcher(programmingExercise.getPackageName());
-            }
-            else {
-                packageNameMatcher = packageNamePattern.matcher(programmingExercise.getPackageName());
+            switch (programmingExercise.getProgrammingLanguage()) {
+                case JAVA, KOTLIN -> packageNameMatcher = packageNamePattern.matcher(programmingExercise.getPackageName());
+                case SWIFT -> packageNameMatcher = packageNamePatternForSwift.matcher(programmingExercise.getPackageName());
+                default -> throw new IllegalArgumentException("Programming language not supported");
             }
             if (!packageNameMatcher.matches()) {
                 throw new BadRequestAlertException("The package name is invalid", "Exercise", "packagenameInvalid");
