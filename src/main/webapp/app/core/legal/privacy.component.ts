@@ -2,7 +2,7 @@ import { AfterViewInit, Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { SafeHtml } from '@angular/platform-browser';
 import { StaticContentService } from 'app/shared/service/static-content.service';
-import { PrivacyStatementService } from 'app/admin/privacy-statement/privacy-statement.service';
+import { PrivacyStatementService } from 'app/shared/service/privacy-statement.service';
 import { PrivacyStatementLanguage } from 'app/entities/privacy-statement.model';
 import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
 import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';

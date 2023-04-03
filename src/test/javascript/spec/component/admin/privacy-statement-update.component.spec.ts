@@ -13,7 +13,7 @@ import { MockLanguageHelper } from '../../helpers/mocks/service/mock-translate.s
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ModePickerComponent } from 'app/exercises/shared/mode-picker/mode-picker.component';
 import { PrivacyStatementLanguage } from 'app/entities/privacy-statement.model';
-import { PrivacyStatementService } from 'app/admin/privacy-statement/privacy-statement.service';
+import { PrivacyStatementService } from 'app/shared/service/privacy-statement.service';
 
 describe('PrivacyStatementUpdateComponent', () => {
     let component: PrivacyStatementUpdateComponent;

@@ -1,6 +1,6 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
-import { PrivacyStatementService } from 'app/admin/privacy-statement/privacy-statement.service';
+import { PrivacyStatementService } from 'app/shared/service/privacy-statement.service';
 import { PrivacyStatement, PrivacyStatementLanguage } from 'app/entities/privacy-statement.model';
 import { MarkdownEditorComponent, MarkdownEditorHeight } from 'app/shared/markdown-editor/markdown-editor.component';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';

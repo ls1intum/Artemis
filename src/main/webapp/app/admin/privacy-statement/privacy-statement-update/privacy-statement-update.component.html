@@ -6,14 +6,14 @@
             >
         </h2>
 
-        <!--        <jhi-markdown-editor-->
-        <!--            [markdown]="privacyStatement.text"-->
-        <!--            (markdownChange)="checkUnsavedChanges($event)"-->
-        <!--            [resizableMinHeight]="minHeight"-->
-        <!--            [resizableMaxHeight]="maxHeight"-->
-        <!--            [enableResize]="true"-->
-        <!--            [minHeightEditor]="600"-->
-        <!--        ></jhi-markdown-editor>-->
+        <jhi-markdown-editor
+            [markdown]="privacyStatement.text"
+            (markdownChange)="checkUnsavedChanges($event)"
+            [resizableMinHeight]="minHeight"
+            [resizableMaxHeight]="maxHeight"
+            [enableResize]="true"
+            [minHeightEditor]="600"
+        ></jhi-markdown-editor>
         <div class="btn-below-editor">
             <jhi-button
                 id="update-privacy-statement-btn"
@@ -24,7 +24,7 @@
                 [ngStyle]="{ 'marginRight.px': 10 }"
                 >Save
             </jhi-button>
-            <!--            <jhi-mode-picker [options]="languageOptions" [value]="currentLanguage" (valueChange)="onLanguageChange($event!)"></jhi-mode-picker>-->
+            <jhi-mode-picker [options]="languageOptions" [value]="currentLanguage" (valueChange)="onLanguageChange($event!)"></jhi-mode-picker>
         </div>
     </div>
 </div>
