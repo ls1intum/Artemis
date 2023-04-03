@@ -119,7 +119,7 @@ Viewing Tutorial Groups as a Student
         Watch this video on TUM-Live.
     </iframe>
 
-Students can access their tutorial grouos for a specific course by navigating to the course's ``Tutorial Group`` page.
+Students can access their tutorial groups for a specific course by navigating to the course's ``Tutorial Group`` page.
 
 The view is split into two tabs that can be changed via the toolbar. In the ``Show my tutorial groups`` tab, students can see the groups for which they are registered. Each group is displayed as a card with the date of the next session in the center. At the bottom of the card, a link to the tutorial groups communication channel is shown (if this feature is activated). On the right side of the page, all course-wide holidays are displayed where no tutorial groups meet.
 
