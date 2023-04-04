@@ -178,6 +178,9 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
             });
     }
 
+    /**
+     * Opens a modal for adding a prerequisite to the current course.
+     */
     openPrerequisiteSelectionModal() {
         const modalRef = this.modalService.open(PrerequisiteImportComponent, { size: 'lg', backdrop: 'static' });
         modalRef.componentInstance.disabledIds = this.learningGoals.concat(this.prerequisites).map((learningGoal) => learningGoal.id);
@@ -200,6 +203,9 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
         );
     }
 
+    /**
+     * Opens a modal for selecting a learning goal to import to the current course.
+     */
     openImportModal() {
         const modalRef = this.modalService.open(LearningGoalImportComponent, { size: 'lg', backdrop: 'static' });
         modalRef.componentInstance.disabledIds = this.learningGoals.concat(this.prerequisites).map((learningGoal) => learningGoal.id);

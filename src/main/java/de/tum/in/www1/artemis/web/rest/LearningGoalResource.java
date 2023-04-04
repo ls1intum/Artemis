@@ -217,7 +217,7 @@ public class LearningGoalResource {
     }
 
     /**
-     * POST /courses/:courseId/learning-goals/import : creates a new learning goal.
+     * POST /courses/:courseId/learning-goals/import : imports a new learning goal.
      *
      * @param courseId             the id of the course to which the learning goal should be imported to
      * @param learningGoalToImport the learning goal that should be imported
