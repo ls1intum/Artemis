@@ -42,7 +42,6 @@ import { MockProfileService } from '../../../helpers/mocks/service/mock-profile.
 import { MockProgrammingSubmissionService } from '../../../helpers/mocks/service/mock-programming-submission.service';
 import { MockResultService } from '../../../helpers/mocks/service/mock-result.service';
 import { ArtemisTestModule } from '../../../test.module';
-import { expectElementToBeDisabled } from '../../../helpers/utils/general.utils';
 
 describe('Exercise Scores Component', () => {
     let component: ExerciseScoresComponent;
@@ -349,5 +348,18 @@ describe('Exercise Scores Component', () => {
 
         expect(component.rangeFilter).toBeUndefined();
         expect(component.filteredParticipations).toEqual([participation]);
+    });
+
+    it.each([
+        [{}, ['/course-management', '43', 'programming-exercises', '42', 'submissions', 'new', 'assessment']],
+        [{ results: [{ assessmentType: AssessmentType.AUTOMATIC }] }, ['/course-management', '43', 'programming-exercises', '42', 'submissions', 'new', 'assessment']],
+        [
+            { results: [{ assessmentType: AssessmentType.MANUAL, submission: { id: 44 } }] },
+            ['/course-management', '43', 'programming-exercises', '42', 'submissions', '44', 'assessment'],
+        ],
+    ])('getAssessmentLink should correctly determine if new assessment', (participation: StudentParticipation, expectedLink: string[]) => {
+        component.exercise = { type: ExerciseType.PROGRAMMING, id: 42 } as ProgrammingExercise;
+        component.course = { id: 43 };
+        expect(component.getAssessmentLink(participation)).toEqual(expectedLink);
     });
 });

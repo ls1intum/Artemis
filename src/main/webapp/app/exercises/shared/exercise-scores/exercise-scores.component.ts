@@ -401,12 +401,4 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
             participation.results?.[correctionRound]?.id,
         );
     }
-
-    /**
-     * Generates and returns the query parameters required for opening the assessment editor
-     * @param correctionRound
-     */
-    getAssessmentQueryParams(correctionRound = 0): object {
-        return { 'correction-round': correctionRound };
-    }
 }

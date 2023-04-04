@@ -313,8 +313,8 @@
                                     >
                                         <a
                                             [routerLink]="getAssessmentLink(value, correctionRound)"
-                                            [queryParams]="getAssessmentQueryParams(correctionRound)"
-                                            class="btn btn-sm me-1"
+                                            [queryParams]="{ 'correction-round': correctionRound }"
+                                            class="btn btn-sm me-1 mb-2"
                                             [class.btn-success]="(!value.results?.[correctionRound]?.assessmentType || value.results?.[correctionRound].assessmentType === AssessmentType.AUTOMATIC) && !value.results?.[0]?.hasComplaint"
                                             [class.btn-primary]="value.results?.[correctionRound]?.completionDate || value.results?.[correctionRound]?.hasComplaint"
                                             [class.btn-warning]="value.results?.[correctionRound] && !value.results[correctionRound].completionDate && !value.results[correctionRound].hasComplaint"
