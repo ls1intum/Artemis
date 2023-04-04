@@ -201,17 +201,14 @@
             </div>
         </div>
     </div>
-    <div class="quiz-is-over-overlay alert alert-info" *ngIf="!waitingForQuizStart && !showingResult && !submission.submitted && remainingTimeSeconds < 0">
+    <jhi-overlay-centered *ngIf="!waitingForQuizStart && !showingResult && !submission.submitted && remainingTimeSeconds < 0">
         <span *ngIf="submission.submissionDate" jhiTranslate="artemisApp.quizExercise.quizIsOverText"></span>
         <span *ngIf="!submission.submissionDate" jhiTranslate="artemisApp.quizExercise.notParticipatedText"></span>
-    </div>
-    <div
-        class="quiz-submitted-overlay alert alert-success"
-        *ngIf="!waitingForQuizStart && submission.submitted && !showingResult && quizExercise?.quizMode === QuizMode.SYNCHRONIZED"
-    >
+    </jhi-overlay-centered>
+    <jhi-overlay-centered *ngIf="!waitingForQuizStart && submission.submitted && !showingResult && quizExercise?.quizMode === QuizMode.SYNCHRONIZED">
         <span jhiTranslate="artemisApp.quizExercise.successfullySubmittedText"></span>
-    </div>
-    <div class="quiz-waiting-for-start-overlay alert alert-info" *ngIf="waitingForQuizStart">
+    </jhi-overlay-centered>
+    <jhi-overlay-centered *ngIf="waitingForQuizStart">
         <ng-container *ngIf="quizBatch || quizExercise.quizMode === QuizMode.SYNCHRONIZED">
             <span jhiTranslate="artemisApp.quizExercise.quizInstructions.waitForStart"></span>
             <div *ngIf="startDate">
@@ -235,7 +232,7 @@
             <div jhiTranslate="artemisApp.quizExercise.quizInstructions.noMoreAttempts" *ngIf="(quizExercise.allowedNumberOfAttempts ?? 0) > 1"></div>
             <div jhiTranslate="artemisApp.quizExercise.quizInstructions.alreadyAttempted" *ngIf="quizExercise.allowedNumberOfAttempts === 1"></div>
         </ng-container>
-    </div>
+    </jhi-overlay-centered>
     <div class="quiz-refresh-overlay" [class.active]="refreshingQuiz">
         <fa-icon size="lg" [icon]="faCircleNotch" [spin]="true"></fa-icon>
     </div>

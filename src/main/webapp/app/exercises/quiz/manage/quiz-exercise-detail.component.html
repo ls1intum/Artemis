@@ -17,9 +17,9 @@
         </div>
         <div *ngIf="hasSavedQuizStarted">
             <div class="quiz-is-active-background"></div>
-            <div class="quiz-is-active-overlay alert alert-warning">
+            <jhi-overlay-centered>
                 <span jhiTranslate="artemisApp.quizExercise.edit.quizHasStarted"></span>
-            </div>
+            </jhi-overlay-centered>
         </div>
         <div class="form-group" [hidden]="isImport || !quizExercise.id">
             <label for="id" jhiTranslate="global.field.id">ID</label>
@@ -309,21 +309,21 @@
                             <ng-template #tooltipTranslate>
                                 <div *ngFor="let reason of computeInvalidReasons()">
                                     <p
-                                        *ngIf="(reason.translateValues | json) != '{}'"
+                                        *ngIf="(reason.translateValues | json) !== '{}'"
                                         jhiTranslate="{{ reason.translateKey }}"
                                         [translateValues]="{ index: reason.translateValues.index, threshold: reason.translateValues.threshold }"
                                     ></p>
-                                    <p *ngIf="(reason.translateValues | json) == '{}'" jhiTranslate="{{ reason.translateKey }}"></p>
+                                    <p *ngIf="(reason.translateValues | json) === '{}'" jhiTranslate="{{ reason.translateKey }}"></p>
                                 </div>
                             </ng-template>
                             <ng-template #warningTranslate>
                                 <div *ngFor="let warning of computeInvalidWarnings()">
                                     <p
-                                        *ngIf="(warning.translateValues | json) != '{}'"
+                                        *ngIf="(warning.translateValues | json) !== '{}'"
                                         jhiTranslate="{{ warning.translateKey }}"
                                         [translateValues]="{ index: warning.translateValues.index }"
                                     ></p>
-                                    <p *ngIf="(warning.translateValues | json) == '{}'" jhiTranslate="{{ warning.translateKey }}"></p>
+                                    <p *ngIf="(warning.translateValues | json) === '{}'" jhiTranslate="{{ warning.translateKey }}"></p>
                                 </div>
                             </ng-template>
                             <span *ngIf="!quizIsValid" class="badge bg-danger" [ngbTooltip]="tooltipTranslate" tooltip-placement="top-right auto">

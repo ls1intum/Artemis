@@ -23,6 +23,7 @@ import { AssessmentWarningComponent } from 'app/assessment/assessment-warning/as
 import { JhiConnectionWarningComponent } from 'app/shared/connection-warning/connection-warning.component';
 import { LoadingIndicatorContainerComponent } from 'app/shared/loading-indicator-container/loading-indicator-container.component';
 import { LearningGoalSelectionComponent } from 'app/shared/learning-goal-selection/learning-goal-selection.component';
+import { OverlayCenteredComponent } from 'app/shared/overlay-centered/overlay-centered.component';
 
 @NgModule({
     imports: [ArtemisSharedLibsModule, ArtemisSharedCommonModule, ArtemisSharedPipesModule, RouterModule],
@@ -47,6 +48,7 @@ import { LearningGoalSelectionComponent } from 'app/shared/learning-goal-selecti
         ItemCountComponent,
         ConsistencyCheckComponent,
         AssessmentWarningComponent,
+        OverlayCenteredComponent,
     ],
     exports: [
         ArtemisSharedLibsModule,
@@ -72,6 +74,7 @@ import { LearningGoalSelectionComponent } from 'app/shared/learning-goal-selecti
         ConsistencyCheckComponent,
         AssessmentWarningComponent,
         LearningGoalSelectionComponent,
+        OverlayCenteredComponent,
     ],
 })
 export class ArtemisSharedModule {}
