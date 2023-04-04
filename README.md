@@ -189,7 +189,7 @@ The following universities are actively using Artemis or are currently evaluatin
   https://artemis.cs.hm.edu  
   Main contact person: [Michael Eggers](mailto:michael.eggers@hm.edu)  
   
-* **TU Dresden**  
+* **Technische Universität Dresden**  
   Main contact person: [Martin Morgenstern](mailto:martin.morgenstern1@tu-dresden.de)  
   
 * **Hochschule Heilbronn**  
@@ -201,3 +201,6 @@ The following universities are actively using Artemis or are currently evaluatin
 ##### Interested universities
 
 * HU Berlin
+* Westsächsische Hochschule Zwickau  
+  Main contact person: [Heiko Baum](https://www.fh-zwickau.de/pti/organisation/fachgruppe-informatik/personen/dr-ing-heiko-baum/)
+* Technische Universität Chemnitz
