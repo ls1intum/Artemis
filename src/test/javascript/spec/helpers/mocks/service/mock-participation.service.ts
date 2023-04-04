@@ -9,5 +9,5 @@ export class MockParticipationService {
     getSpecificStudentParticipation = (studentParticipations: StudentParticipation[], testRun: boolean) =>
         studentParticipations.filter((participation) => !!participation.testRun === testRun).first();
 
-    findAllParticipationsByExercise = (exerciseId: number, withLatestResult = false): Observable<EntityArrayResponseType> => EMPTY;
+    findAllParticipationsByExercise = (exerciseId: number, withLatestResults = false): Observable<EntityArrayResponseType> => EMPTY;
 }

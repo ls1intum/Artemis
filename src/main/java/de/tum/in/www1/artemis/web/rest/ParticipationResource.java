@@ -471,20 +471,20 @@ public class ParticipationResource {
     /**
      * GET /exercises/:exerciseId/participations : get all the participations for an exercise
      *
-     * @param exerciseId       The participationId of the exercise
-     * @param withLatestResult Whether the {@link Result results} for the participations should also be fetched
+     * @param exerciseId        The participationId of the exercise
+     * @param withLatestResults Whether the manual and latest {@link Result results} for the participations should also be fetched
      * @return A list of all participations for the exercise
      */
     @GetMapping("exercises/{exerciseId}/participations")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<Set<StudentParticipation>> getAllParticipationsForExercise(@PathVariable Long exerciseId,
-            @RequestParam(defaultValue = "false") boolean withLatestResult) {
+            @RequestParam(defaultValue = "false") boolean withLatestResults) {
         log.debug("REST request to get all Participations for Exercise {}", exerciseId);
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
         Set<StudentParticipation> participations;
-        if (withLatestResult) {
-            participations = studentParticipationRepository.findByExerciseIdWithLatestResult(exerciseId);
+        if (withLatestResults) {
+            participations = studentParticipationRepository.findByExerciseIdWithLatestResults(exerciseId);
         }
         else {
             participations = studentParticipationRepository.findByExerciseId(exerciseId);

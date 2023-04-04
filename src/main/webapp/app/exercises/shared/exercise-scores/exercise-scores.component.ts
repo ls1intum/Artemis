@@ -91,6 +91,8 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
 
     cancelConfirmationText: string;
 
+    correctionRoundIndices: number[] = [];
+
     // Icons
     faBan = faBan;
     faDownload = faDownload;
@@ -135,6 +137,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
             forkJoin([findCourse, findExercise]).subscribe(([courseRes, exerciseRes]) => {
                 this.course = courseRes.body!;
                 this.exercise = exerciseRes.body!;
+                this.correctionRoundIndices = [...Array(this.exercise.exerciseGroup?.exam?.numberOfCorrectionRoundsInExam ?? 1).keys()];
                 this.afterDueDate = !!this.exercise.dueDate && dayjs().isAfter(this.exercise.dueDate);
                 // After both calls are done, the loading flag is removed. If the exercise is not a programming exercise, only the result call is needed.
                 this.participationService.findAllParticipationsByExercise(this.exercise.id!, true).subscribe((participationsResponse) => {
@@ -174,9 +177,9 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     private handleNewParticipations(participationsResponse: HttpResponse<Participation[]>) {
         this.participations = participationsResponse.body ?? [];
         this.participations.forEach((participation) => {
-            if (participation.results?.[0]) {
-                participation.results[0].durationInMinutes = dayjs(participation.results[0].completionDate).diff(participation.initializationDate, 'seconds');
-            }
+            participation.results?.forEach((result, index) => {
+                participation.results![index].durationInMinutes = dayjs(result.completionDate).diff(participation.initializationDate, 'seconds');
+            });
         });
         this.filteredParticipations = this.filterByScoreRange(this.participations);
         if (this.exercise.type === ExerciseType.PROGRAMMING) {
@@ -382,20 +385,28 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
         }
     }
 
-    getAssessmentLink(participation: Participation) {
-        if (!this.exercise.type || !this.course.id || !this.exercise.id || !participation.results?.[0]?.submission?.id) {
+    getAssessmentLink(participation: Participation, correctionRound = 0) {
+        const newAssessment = !participation.results?.[correctionRound]?.assessmentType || participation.results?.[correctionRound].assessmentType === AssessmentType.AUTOMATIC;
+        if (!this.exercise.type || !this.exercise.id || !this.course.id || (!participation.results?.[correctionRound]?.submission?.id && !newAssessment)) {
             return;
         }
-        const newAssessment = !participation.results?.[0]?.assessmentType || participation.results?.[0].assessmentType === AssessmentType.AUTOMATIC;
         return getLinkToSubmissionAssessment(
             this.exercise.type,
             this.course.id,
             this.exercise.id,
             participation.id,
-            newAssessment ? 'new' : participation.results[0].submission.id,
+            newAssessment ? 'new' : participation.results![correctionRound].submission!.id!,
             this.exercise.exerciseGroup?.exam?.id,
             this.exercise.exerciseGroup?.id,
-            participation.results[0].id,
+            participation.results?.[correctionRound]?.id,
         );
+    }
+
+    /**
+     * Generates and returns the query parameters required for opening the assessment editor
+     * @param correctionRound
+     */
+    getAssessmentQueryParams(correctionRound = 0): object {
+        return { 'correction-round': correctionRound };
     }
 }

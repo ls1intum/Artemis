@@ -86,7 +86,12 @@
                     "open": "Bewertung öffnen",
                     "cancel": "Bewertung abbrechen",
                     "assess": "Abgabe bewerten",
-                    "continue": "Bewertung fortsetzen"
+                    "continue": "Bewertung fortsetzen",
+                    "examCorrectionRound": {
+                        "open": "Bewertung von Korrekturrunde {{correctionRound}} öffnen",
+                        "assess": "Abgabe in Korrekturrunde {{correctionRound}} bewerten",
+                        "continue": "Bewertung in Korrekturrunde {{correctionRound}} fortsetzen"
+                    }
                 },
                 "filters": {
                     "showAll": "Alle anzeigen",

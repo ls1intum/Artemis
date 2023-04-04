@@ -85,8 +85,13 @@
                 "actions": {
                     "open": "Open assessment",
                     "cancel": "Cancel assessment",
-                    "assess": "Assess Submission",
-                    "continue": "Continue assessment"
+                    "assess": "Assess submission",
+                    "continue": "Continue assessment",
+                    "examCorrectionRound": {
+                        "open": "Open assessment of correction round {{correctionRound}}",
+                        "assess": "Assess submission in correction round {{correctionRound}}",
+                        "continue": "Continue assessment in correction round {{correctionRound}}"
+                    }
                 },
                 "filters": {
                     "showAll": "Show all",

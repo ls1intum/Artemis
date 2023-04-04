@@ -42,6 +42,7 @@ import { MockProfileService } from '../../../helpers/mocks/service/mock-profile.
 import { MockProgrammingSubmissionService } from '../../../helpers/mocks/service/mock-programming-submission.service';
 import { MockResultService } from '../../../helpers/mocks/service/mock-result.service';
 import { ArtemisTestModule } from '../../../test.module';
+import { expectElementToBeDisabled } from '../../../helpers/utils/general.utils';
 
 describe('Exercise Scores Component', () => {
     let component: ExerciseScoresComponent;
@@ -182,6 +183,7 @@ describe('Exercise Scores Component', () => {
         expect(getParticipationsMock).toHaveBeenCalledOnce();
         expect(getParticipationsMock).toHaveBeenCalledWith(2, true);
         expect(component.filteredParticipations).toEqual(participationsToFilter);
+        expect(component.correctionRoundIndices).toEqual([0]);
     }));
 
     it('should get exercise participation link for exercise without an exercise group', () => {
