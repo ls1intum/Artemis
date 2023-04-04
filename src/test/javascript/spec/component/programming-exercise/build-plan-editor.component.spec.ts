@@ -95,4 +95,6 @@ describe('Build Plan Editor', () => {
 
         expect(comp.buildPlan.buildPlan).toBe('new text');
     });
+
+    // Buildplan service mock, mock returnvalue
 });
