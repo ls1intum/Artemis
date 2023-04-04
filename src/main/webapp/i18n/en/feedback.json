@@ -23,10 +23,10 @@
                 "linkedToCommit": "linked to commit"
             },
             "group": {
-                "wrong": "wrong",
-                "warning": "warning",
-                "info": "info",
-                "correct": "correct"
+                "wrong": "Wrong",
+                "warning": "Warning",
+                "info": "Info",
+                "correct": "Correct"
             }
         }
     }
