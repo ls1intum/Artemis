@@ -61,7 +61,7 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
      */
     writeValue(value: any): void {
         if (value !== undefined && this.value !== value) {
-            this.value = !value ? null : isDate(value) ? value : value.toDate();
+            this.value = !value ? null : isDate(value) ? value : dayjs(value).toDate();
             this.value?.setSeconds(0, 0);
             this._onChange(value);
         }
