@@ -1,15 +1,26 @@
 package de.tum.in.www1.artemis.localvcci;
 
-import java.io.File;
-import java.io.IOException;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
-import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.api.errors.GitAPIException;
-import org.eclipse.jgit.lib.Constants;
-import org.eclipse.jgit.lib.RefUpdate;
-import org.eclipse.jgit.lib.Repository;
+import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.Map;
+
+import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
+import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
+import org.mockito.ArgumentMatcher;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+
+import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.api.command.CopyArchiveFromContainerCmd;
 
 @Service
 public class LocalVCLocalCITestService {
@@ -17,24 +28,34 @@ public class LocalVCLocalCITestService {
     @Value("${artemis.version-control.default-branch:main}")
     protected String defaultBranch;
 
-    public Repository createGitRepositoryWithInitialPush(File tempRemoteRepoFolder) {
-        try {
-            Git git = Git.init().setDirectory(tempRemoteRepoFolder).setBare(true).call();
+    public void mockInputStreamReturnedFromContainer(DockerClient mockDockerClient, String resourceRegexPattern, Map<String, String> dataToReturn) throws IOException {
+        // Mock dockerClient.copyArchiveFromContainerCmd(String containerId, String resource).exec()
+        CopyArchiveFromContainerCmd copyArchiveFromContainerCmd = mock(CopyArchiveFromContainerCmd.class);
+        BufferedInputStream dataInputStream = createInputStreamForTarArchiveFromMap(dataToReturn);
+        ArgumentMatcher<String> expectedPathMatcher = path -> path.matches(resourceRegexPattern);
+        doReturn(copyArchiveFromContainerCmd).when(mockDockerClient).copyArchiveFromContainerCmd(anyString(), argThat(expectedPathMatcher));
+        when(copyArchiveFromContainerCmd.exec()).thenReturn(dataInputStream);
+    }
 
-            // Change the default branch to the Artemis default branch name.
-            Repository repository = git.getRepository();
-            RefUpdate refUpdate = repository.getRefDatabase().newUpdate(Constants.HEAD, false);
-            refUpdate.setForceUpdate(true);
-            refUpdate.link("refs/heads/" + defaultBranch);
+    private BufferedInputStream createInputStreamForTarArchiveFromMap(Map<String, String> dataMap) throws IOException {
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        TarArchiveOutputStream tarArchiveOutputStream = new TarArchiveOutputStream(byteArrayOutputStream);
 
-            // Push some files to the repository.
+        for (Map.Entry<String, String> entry : dataMap.entrySet()) {
+            String filePath = entry.getKey();
+            String content = entry.getValue();
 
-            git.close();
+            byte[] contentBytes = content.getBytes(StandardCharsets.UTF_8);
 
-            return repository;
+            TarArchiveEntry tarEntry = new TarArchiveEntry(filePath);
+            tarEntry.setSize(contentBytes.length);
+            tarArchiveOutputStream.putArchiveEntry(tarEntry);
+            tarArchiveOutputStream.write(contentBytes);
+            tarArchiveOutputStream.closeArchiveEntry();
         }
-        catch (IOException | GitAPIException e) {
-            throw new RuntimeException("Could not create temp git repository", e);
-        }
+
+        tarArchiveOutputStream.close();
+
+        return new BufferedInputStream(new ByteArrayInputStream(byteArrayOutputStream.toByteArray()));
     }
 }

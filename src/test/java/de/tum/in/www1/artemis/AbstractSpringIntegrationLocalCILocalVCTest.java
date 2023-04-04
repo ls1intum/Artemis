@@ -12,6 +12,7 @@ import java.util.Set;
 import org.gitlab4j.api.GitLabApiException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -33,6 +34,7 @@ import de.tum.in.www1.artemis.domain.participation.AbstractBaseProgrammingExerci
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.localvcci.LocalVCLocalCITestConfig;
+import de.tum.in.www1.artemis.localvcci.LocalVCLocalCITestService;
 import de.tum.in.www1.artemis.util.AbstractArtemisIntegrationTest;
 import io.zonky.test.db.AutoConfigureEmbeddedDatabase;
 
@@ -56,11 +58,16 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     @Value("${artemis.version-control.local-vcs-repo-path}")
     protected Path localVCSBasePath;
 
-    // @Autowired
-    // protected LocalVCLocalCITestConfig localVCLocalCITestConfig;
+    @Autowired
+    protected LocalVCLocalCITestConfig localVCLocalCITestConfig;
+
+    @Autowired
+    protected LocalVCLocalCITestService localVCLocalCITestService;
 
     @LocalServerPort
     protected int port;
+
+    protected static final String dummyCommitHash = "1234567890abcdef";
 
     @AfterEach
     protected void resetSpyBeans() {

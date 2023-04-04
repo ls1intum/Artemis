@@ -269,6 +269,7 @@ public class LocalCIBuildJobService {
         List<LocalCIBuildResult.LocalCITestJobDTO> successfulTests = new ArrayList<>();
 
         XMLInputFactory xmlInputFactory = XMLInputFactory.newInstance();
+
         String testResultsFolderName = projectType.isGradle() ? "test" : "surefire-reports";
         TarArchiveEntry tarEntry;
         while ((tarEntry = testResultsTarInputStream.getNextTarEntry()) != null) {

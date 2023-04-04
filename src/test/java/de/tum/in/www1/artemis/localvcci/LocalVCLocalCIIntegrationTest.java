@@ -9,6 +9,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.ZonedDateTime;
+import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
@@ -23,6 +24,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
+
+import com.github.dockerjava.api.DockerClient;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationLocalCILocalVCTest;
 import de.tum.in.www1.artemis.domain.Course;
@@ -45,6 +48,9 @@ class LocalVCLocalCIIntegrationTest extends AbstractSpringIntegrationLocalCILoca
 
     @Autowired
     private GitUtilService gitUtilService;
+
+    @Autowired
+    private DockerClient mockDockerClient;
 
     private ProgrammingExercise programmingExercise;
 
@@ -205,13 +211,22 @@ class LocalVCLocalCIIntegrationTest extends AbstractSpringIntegrationLocalCILoca
 
     @Test
     public void testPushAndReceiveResult_allTestCasesFail() throws Exception {
-        // Create a file and push the changes to the remote assignment repository, this time via the Artemis Git servlet.
+        // Create a file and push the changes to the remote assignment repository.
         Path testJsonFilePath = Path.of(localAssignmentRepositoryFolder.toString(), "src", programmingExercise.getPackageFolderName(), "test.txt");
         gitUtilService.writeEmptyJsonFileToPath(testJsonFilePath);
         localAssignmentGit.add().addFilepattern(".").call();
         RevCommit commit = localAssignmentGit.commit().setMessage("Add test.txt").call();
         String commitHash = commit.getId().getName();
+
+        // Mock dockerClient.copyArchiveFromContainerCmd() such that it returns the commitHash for the assignment repository, a dummy commit hash for the tests repository, and an
+        // XML containing failed test cases for the test results.
+        localVCLocalCITestService.mockInputStreamReturnedFromContainer(mockDockerClient, "/repositories/assignment-repository/.git/refs/heads/[^/]+",
+                Map.of("assignmentCommitHash", commitHash));
+        localVCLocalCITestService.mockInputStreamReturnedFromContainer(mockDockerClient, "/repositories/test-repository/.git/refs/heads/[^/]+",
+                Map.of("testCommitHash", dummyCommitHash));
+
         // localVCLocalCITestConfig.setAssignmentRepoCommitHashSupplier(() -> commitHash);
+
         localAssignmentGit.push().setRemote(constructLocalVCUrl(TEST_PREFIX + "student1", programmingExercise.getProjectKey(), assignmentRepoName)).call();
     }
 

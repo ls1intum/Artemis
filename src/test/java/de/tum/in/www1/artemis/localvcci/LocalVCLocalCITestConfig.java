@@ -3,26 +3,18 @@ package de.tum.in.www1.artemis.localvcci;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import java.io.BufferedInputStream;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
+import java.util.Map;
 
-import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
-import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
-import org.mockito.ArgumentMatcher;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.async.ResultCallback;
-import com.github.dockerjava.api.command.CopyArchiveFromContainerCmd;
 import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.command.ExecCreateCmd;
@@ -35,17 +27,8 @@ import com.github.dockerjava.api.command.StartContainerCmd;
 @TestConfiguration
 public class LocalVCLocalCITestConfig {
 
-    private static final String dummyCommitHash = "1234567890abcdef";
-
-    // private Supplier<String> assignmentRepoCommitHashSupplier = () -> dummyCommitHash;
-
-    // public LocalVCLocalCITestConfig(Supplier<String> assignmentRepoCommitHashSupplier) {
-    // this.assignmentRepoCommitHashSupplier = assignmentRepoCommitHashSupplier;
-    // }
-
-    // public void setAssignmentRepoCommitHashSupplier(Supplier<String> assignmentRepoCommitHashSupplier) {
-    // this.assignmentRepoCommitHashSupplier = assignmentRepoCommitHashSupplier;
-    // }
+    @Autowired
+    private LocalVCLocalCITestService localVCLocalCITestService;
 
     @Bean
     public DockerClient dockerClient() throws IOException {
@@ -92,43 +75,12 @@ public class LocalVCLocalCITestConfig {
             return null;
         });
 
-        // Mock dockerClient.copyArchiveFromContainerCmd(String containerId, String resource).exec() for retrieving the assignment commit hash
-        CopyArchiveFromContainerCmd copyArchiveFromContainerCmdAssignmentCommitHash = mock(CopyArchiveFromContainerCmd.class);
-        String assignmentRepoCommitHash = dummyCommitHash;// assignmentRepoCommitHashSupplier.get();
-        InputStream assignmentCommitHashInputStream = createInputStreamWithCommitHash(assignmentRepoCommitHash);
-        ArgumentMatcher<String> expectedPathMatcherAssignmentRepository = path -> {
-            String regexPattern = "/repositories/assignment-repository/.git/refs/heads/[^/]+";
-            return path.matches(regexPattern);
-        };
-        when(dockerClient.copyArchiveFromContainerCmd(anyString(), argThat(expectedPathMatcherAssignmentRepository))).thenReturn(copyArchiveFromContainerCmdAssignmentCommitHash);
-        when(copyArchiveFromContainerCmdAssignmentCommitHash.exec()).thenReturn(assignmentCommitHashInputStream);
+        String mockData = "mockData";
 
-        // Mock dockerClient.copyArchiveFromContainerCmd(String containerId, String resource).exec() for retrieving the tests commit hash
-        CopyArchiveFromContainerCmd copyArchiveFromContainerCmdTestsCommitHash = mock(CopyArchiveFromContainerCmd.class);
-        InputStream testsCommitHashInputStream = createInputStreamWithCommitHash(dummyCommitHash);
-        ArgumentMatcher<String> expectedPathMatcherTestsRepository = path -> {
-            String regexPattern = "/repositories/test-repository/.git/refs/heads/[^/]+";
-            return path.matches(regexPattern);
-        };
-        when(dockerClient.copyArchiveFromContainerCmd(anyString(), argThat(expectedPathMatcherTestsRepository))).thenReturn(copyArchiveFromContainerCmdAssignmentCommitHash);
-        when(copyArchiveFromContainerCmdTestsCommitHash.exec()).thenReturn(testsCommitHashInputStream);
+        localVCLocalCITestService.mockInputStreamReturnedFromContainer(dockerClient, "/repositories/assignment-repository/.git/refs/heads/[^/]+", Map.of(mockData, mockData));
+        localVCLocalCITestService.mockInputStreamReturnedFromContainer(dockerClient, "/repositories/test-repository/.git/refs/heads/[^/]+", Map.of(mockData, mockData));
+        localVCLocalCITestService.mockInputStreamReturnedFromContainer(dockerClient, "/repositories/test-repository/build/test-results/test", Map.of(mockData, mockData));
 
         return dockerClient;
-    }
-
-    private InputStream createInputStreamWithCommitHash(String commitHash) throws IOException {
-        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        TarArchiveOutputStream tarArchiveOutputStream = new TarArchiveOutputStream(byteArrayOutputStream);
-
-        byte[] commitHashBytes = (commitHash + "\n").getBytes(StandardCharsets.UTF_8);
-
-        TarArchiveEntry tarEntry = new TarArchiveEntry("commit");
-        tarEntry.setSize(commitHashBytes.length); // Add 1 for the newline character
-        tarArchiveOutputStream.putArchiveEntry(tarEntry);
-        tarArchiveOutputStream.write(commitHashBytes);
-        tarArchiveOutputStream.closeArchiveEntry();
-        tarArchiveOutputStream.close();
-
-        return new BufferedInputStream(new ByteArrayInputStream(byteArrayOutputStream.toByteArray()));
     }
 }
