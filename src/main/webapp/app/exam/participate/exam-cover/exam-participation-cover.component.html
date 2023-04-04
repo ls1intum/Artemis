@@ -115,7 +115,7 @@
                 </button>
             </div>
         </div>
-        <div class="exam-waiting-for-start-overlay alert alert-info" *ngIf="waitingForExamStart">
+        <jhi-overlay-centered *ngIf="waitingForExamStart">
             <span>{{ 'artemisApp.examParticipation.waitForStart' | artemisTranslate : { title: exam.title } }}</span>
             <div *ngIf="exam.startDate">
                 <hr />
@@ -124,6 +124,6 @@
                 <br />
                 <span>({{ exam.startDate | artemisDate : 'time' }})</span>
             </div>
-        </div>
+        </jhi-overlay-centered>
     </ng-container>
 </div>
