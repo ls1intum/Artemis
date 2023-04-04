@@ -213,9 +213,6 @@ dependencies {
 
     implementation "uk.ac.ox.ctl:spring-security-lti13:0.0.4"
 
-    // https://mvnrepository.com/artifact/org.apache.pdfbox/pdfbox-tools
-    implementation 'org.apache.pdfbox:pdfbox-tools:2.0.0-RC1'
-
     // https://search.maven.org/artifact/org.eclipse.jgit/org.eclipse.jgit
     implementation "org.eclipse.jgit:org.eclipse.jgit:${jgit_version}"
     implementation "org.eclipse.jgit:org.eclipse.jgit.ssh.apache:${jgit_version}"

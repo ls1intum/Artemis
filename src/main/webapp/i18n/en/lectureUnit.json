@@ -147,7 +147,8 @@
                     "releaseDate": "Release Date",
                     "startPage": "Start Page",
                     "endPage": "End Page"
-                }
+                },
+                "processTimeInfo": "The processing of the lecture units can take a few seconds. Please be patient."
             },
             "createAttachmentUnit": {
                 "title": "Create Attachment Unit",

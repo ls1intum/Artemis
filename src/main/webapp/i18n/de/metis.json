@@ -39,8 +39,7 @@
             "editor": {
                 "reference": "Referenz",
                 "exercise": "Aufgabe",
-                "lecture": "Vortrag",
-                "attachmentUnit": "Attachment Unit"
+                "lecture": "Vortrag"
             },
             "communication": {
                 "label": "Kommunikation",
