@@ -38,7 +38,8 @@
                     "difficultyStepTitle": "Schwierigkeit",
                     "languageStepTitle": "Sprache",
                     "gradingStepTitle": "Benotung",
-                    "problemStepTitle": "Problem"
+                    "problemStepTitle": "Problem",
+                    "additionalStepTitle": "Sonstiges"
                 },
                 "detailedSteps": {
                     "generalInfoStepTitle": "Allgemeine Informationen",
@@ -50,7 +51,9 @@
                     "gradingStepTitle": "Benotung",
                     "gradingStepMessage": "Lege fest, wie Studenten bei dieser Übung benotet werden sollen.",
                     "problemStepTitle": "Aufgabenstellung",
-                    "problemStepMessage": "Lege die Aufgabenstellung für die neue Übung fest."
+                    "problemStepMessage": "Lege die Aufgabenstellung für die neue Übung fest.",
+                    "additionalStepTitle": "Sonstige Einstellungen",
+                    "additionalStepMessage": "Konfiguriere sonstige Einstellungen bezüglich Infrastruktur, etc"
                 },
                 "gradingLabels": {
                     "points": "Es gibt insgesamt maximal {maxPoints} Punkte bei dieser {exerciseType} zu erreichen.",

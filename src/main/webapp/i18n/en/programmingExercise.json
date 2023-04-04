@@ -38,7 +38,8 @@
                     "difficultyStepTitle": "Difficulty",
                     "languageStepTitle": "Language",
                     "gradingStepTitle": "Grading",
-                    "problemStepTitle": "Problem"
+                    "problemStepTitle": "Problem",
+                    "additionalStepTitle": "Additional"
                 },
                 "detailedSteps": {
                     "generalInfoStepTitle": "General Information",
@@ -50,7 +51,9 @@
                     "gradingStepTitle": "Grading",
                     "gradingStepMessage": "Specify how students should be graded when completing this exercise.",
                     "problemStepTitle": "Problem Statement",
-                    "problemStepMessage": "Specify the problem statement for the new exercise."
+                    "problemStepMessage": "Specify the problem statement for the new exercise.",
+                    "additionalStepTitle": "Additional Settings",
+                    "additionalStepMessage": "Set additional settings related to infrastructure, etc"
                 },
                 "gradingLabels": {
                     "points": "There is a total of {maxPoints} points to achieve in this {exerciseType}.",
