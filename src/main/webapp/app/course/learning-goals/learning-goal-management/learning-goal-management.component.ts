@@ -202,7 +202,7 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
 
     openImportModal() {
         const modalRef = this.modalService.open(LearningGoalImportComponent, { size: 'lg', backdrop: 'static' });
-        modalRef.componentInstance.disabledIds = this.learningGoals.map((learningGoal) => learningGoal.id);
+        modalRef.componentInstance.disabledIds = this.learningGoals.concat(this.prerequisites).map((learningGoal) => learningGoal.id);
         modalRef.result.then(
             (selectedLearningGoal: LearningGoal) => {
                 this.learningGoalService

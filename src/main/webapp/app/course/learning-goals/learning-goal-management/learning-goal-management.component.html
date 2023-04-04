@@ -11,7 +11,7 @@
             <jhi-documentation-button [type]="documentationType"></jhi-documentation-button>
         </div>
         <div class="ms-auto text-truncate justify-content-end" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
-            <button class="btn btn-primary" (click)="openImportModal()">
+            <button class="btn btn-primary" id="learningGoalImportButton" (click)="openImportModal()">
                 <fa-icon [icon]="faPlus"></fa-icon>
                 <span>{{ 'artemisApp.learningGoal.manageLearningGoals.import' | artemisTranslate }}</span>
             </button>
