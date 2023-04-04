@@ -103,6 +103,8 @@ describe('Course communication', () => {
                     cy.reload();
                     courseCommunication.showReplies(post.id);
                     courseCommunication.markAsAnswer(answerPost.id);
+                    cy.reload();
+                    courseCommunication.checkResolved(post.id);
                 });
             });
         });
@@ -158,7 +160,14 @@ describe('Course communication', () => {
                 const post = response.body;
                 cy.login(studentTwo, `/courses/${course.id}/discussion`);
                 cy.reload();
-                courseCommunication.reply(post.id, 'My Test reply');
+                const replyText = 'My Test reply';
+                courseCommunication.openReply(post.id);
+                courseCommunication.reply(post.id, replyText).then((intercept) => {
+                    const reply = intercept.response?.body;
+                    cy.login(studentOne, `/courses/${course.id}/discussion`);
+                    courseCommunication.showReplies(post.id);
+                    courseCommunication.checkReply(reply.id, replyText);
+                });
             });
         });
 
@@ -170,8 +179,10 @@ describe('Course communication', () => {
             courseManagementRequest.createCoursePost(course, title, content, context).then((response) => {
                 const post = response.body;
                 cy.login(studentTwo, `/courses/${course.id}/discussion`);
+                const emoji = 'tada';
+                courseCommunication.react(post.id, emoji);
                 cy.reload();
-                courseCommunication.react(post.id, 'thumbs up');
+                courseCommunication.checkReaction(post.id, emoji);
             });
         });
 
@@ -244,19 +255,28 @@ describe('Course communication', () => {
                 const post = response.body;
                 cy.login(studentTwo, `/courses/${course.id}/exercises/${textExercise.id}`);
                 cy.reload();
-                courseCommunication.reply(post.id, 'My Test reply');
+                const replyText = 'My Test reply';
+                courseCommunication.openReply(post.id);
+                courseCommunication.reply(post.id, replyText).then((intercept) => {
+                    const reply = intercept.response?.body;
+                    cy.login(studentOne, `/courses/${course.id}/exercises/${textExercise.id}`);
+                    courseCommunication.showReplies(post.id);
+                    courseCommunication.checkReply(reply.id, replyText);
+                });
             });
         });
 
-        it('other students should be able to react to exercise post', () => {
+        it('other students should be able to react to an exercise post', () => {
             const title = 'My React Test Post';
             const content = 'Test React Post Content';
             cy.login(studentOne, `/courses/${course.id}/discussion`);
             courseManagementRequest.createCourseExercisePost(course, textExercise, title, content).then((response) => {
                 const post = response.body;
                 cy.login(studentTwo, `/courses/${course.id}/exercises/${textExercise.id}`);
+                const emoji = 'tada';
+                courseCommunication.react(post.id, emoji);
                 cy.reload();
-                courseCommunication.react(post.id, 'thumbs up');
+                courseCommunication.checkReaction(post.id, emoji);
             });
         });
     });

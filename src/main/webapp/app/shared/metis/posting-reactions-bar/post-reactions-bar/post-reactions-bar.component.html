@@ -3,6 +3,7 @@
         <button
             [disabled]="readOnlyMode"
             class="reaction-button clickable"
+            [ngClass]="'emoji-' + reactionMetaData.key"
             [class.reaction-button--reacted]="reactionMetaData.value.hasReacted"
             (click)="updateReaction(reactionMetaData.key)"
             [ngbTooltip]="reactionMetaData.value.reactingUsers | reactingUsersOnPosting | async"

@@ -44,16 +44,23 @@ export class CourseCommunicationPage {
         return cy.get(`.items-container #item-${postID}`);
     }
 
-    reply(postID: number, content: string) {
+    openReply(postID: number) {
         this.getSinglePost(postID).find('.reply-btn').click();
+    }
+
+    reply(postID: number, content: string) {
         this.getSinglePost(postID).find('.new-reply-inline-input').find('.markdown-editor').find('.ace_content').click().type(content, { delay: 8 });
+        cy.intercept(POST, BASE_API + 'courses/*/answer-posts').as('createReply');
         this.getSinglePost(postID).find('.new-reply-inline-input').find('#save').click();
+        return cy.wait('@createReply');
     }
 
     react(postID: number, emoji: string) {
         this.getSinglePost(postID).find('.react').click();
         cy.get('.emoji-mart').find('.emoji-mart-search input').type(emoji);
+        cy.intercept(POST, BASE_API + 'courses/*/postings/reactions').as('createReaction');
         cy.get('.emoji-mart').find('.emoji-mart-scroll').find('ngx-emoji:first()').click();
+        return cy.wait('@createReaction');
     }
 
     pinPost(postID: number) {
@@ -91,6 +98,18 @@ export class CourseCommunicationPage {
         this.getSinglePost(postID).find('.post-title').contains(title);
         this.getSinglePost(postID).find('.markdown-preview').contains(content);
         this.getSinglePost(postID).find('.reference-hash').contains(`#${postID}`);
+    }
+
+    checkReply(postID: number, content: string) {
+        this.getSinglePost(postID).find('.markdown-preview').contains(content);
+    }
+
+    checkReaction(postID: number, reaction: string) {
+        this.getSinglePost(postID).find(`.reaction-button.emoji-${reaction}`).should('exist');
+    }
+
+    checkResolved(postID: number) {
+        this.getSinglePost(postID).find('fa-icon.resolved').should('exist');
     }
 
     checkSinglePostByPosition(position: number, title: string, content: string, context: CourseWideContext) {
