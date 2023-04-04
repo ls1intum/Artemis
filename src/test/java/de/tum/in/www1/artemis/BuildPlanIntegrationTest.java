@@ -55,19 +55,19 @@ public class BuildPlanIntegrationTest extends AbstractSpringIntegrationJenkinsGi
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
     }
 
-    void testNoReadAccess() throws Exception {
+    private void testNoReadAccess() throws Exception {
         request.get("/api/programming-exercises/" + programmingExercise.getId() + "/build-plan/for-editor", HttpStatus.FORBIDDEN, BuildPlan.class);
 
         // students / tutors don't know the secret
         request.get("/api/programming-exercises/" + programmingExercise.getId() + "/build-plan?secret=", HttpStatus.FORBIDDEN, String.class);
     }
 
-    void testNoWriteAccess() throws Exception {
+    private void testNoWriteAccess() throws Exception {
         BuildPlan someOtherBuildPlan = new BuildPlan();
         request.put("/api/programming-exercises/" + programmingExercise.getId() + "/build-plan", someOtherBuildPlan, HttpStatus.FORBIDDEN);
     }
 
-    void testReadAccess() throws Exception {
+    private void testReadAccess() throws Exception {
         programmingExercise.generateAndSetBuildPlanAccessSecret();
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
 
@@ -78,7 +78,7 @@ public class BuildPlanIntegrationTest extends AbstractSpringIntegrationJenkinsGi
                 String.class);
     }
 
-    void testWriteAccess() throws Exception {
+    private void testWriteAccess() throws Exception {
         BuildPlan someOtherBuildPlan = new BuildPlan();
         someOtherBuildPlan.setBuildPlan("Content");
 
