@@ -45,6 +45,7 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     protected String defaultBranch;
 
     // NOTE: we prefer SpyBean over MockBean, because it is more lightweight, we can mock method, but we can also invoke actual methods during testing
+
     @SpyBean
     protected Lti10Service lti10Service;
 

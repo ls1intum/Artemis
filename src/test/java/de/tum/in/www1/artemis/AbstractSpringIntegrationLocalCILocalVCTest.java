@@ -2,27 +2,23 @@ package de.tum.in.www1.artemis;
 
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
-import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
 
-import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.api.errors.GitAPIException;
-import org.eclipse.jgit.lib.Constants;
-import org.eclipse.jgit.lib.RefUpdate;
-import org.eclipse.jgit.lib.Repository;
 import org.gitlab4j.api.GitLabApiException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
@@ -36,18 +32,32 @@ import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.domain.participation.AbstractBaseProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.localvcci.LocalVCLocalCITestConfig;
 import de.tum.in.www1.artemis.util.AbstractArtemisIntegrationTest;
 import io.zonky.test.db.AutoConfigureEmbeddedDatabase;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-// @SpringBootTest
+// Must start up an actual web server such that the tests can communicate with the ArtemisGitServlet using JGit.
+// Otherwise, only MockMvc requests could be used. The port this runs on is defined at server.port in application.myl.
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT)
 @AutoConfigureMockMvc
 @ExtendWith(SpringExtension.class)
 @AutoConfigureEmbeddedDatabase
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
 @ActiveProfiles({ SPRING_PROFILE_TEST, "artemis", "localci", "localvc", "scheduling" })
-@TestPropertySource(properties = { "artemis.user-management.use-external=false" })
+@TestPropertySource(properties = { "artemis.user-management.use-external=false", "artemis.version-control.local-vcs-repo-path=${java.io.tmpdir}",
+        "artemis.version-control.url=http://localhost:8080", "artemis.continuous-integration.build.images.java.default=dummy-docker-image" })
+// Contains the mock setup for the DockerClient.
+@ContextConfiguration(classes = LocalVCLocalCITestConfig.class)
 public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends AbstractArtemisIntegrationTest {
+
+    @Value("${artemis.version-control.url}")
+    protected String localVCSBaseUrl;
+
+    @Value("${artemis.version-control.local-vcs-repo-path}")
+    protected Path localVCSBasePath;
+
+    // @Autowired
+    // protected LocalVCLocalCITestConfig localVCLocalCITestConfig;
 
     @LocalServerPort
     protected int port;
@@ -57,44 +67,9 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
         super.resetSpyBeans();
     }
 
-    @AfterEach
-    public void tearDown() throws IOException {
-        repository.close();
-        Files.delete(tempRemoteRepoFolder.toPath());
-        Files.delete(tempLocalRepoFolder.toPath());
-    }
-
-    protected File tempRemoteRepoFolder;
-
-    protected File tempLocalRepoFolder;
-
-    protected Repository repository;
-
-    protected void createGitRepositoryWithInitialPush() {
-        try {
-            tempRemoteRepoFolder = Files.createTempDirectory("remoteRepo").toFile();
-            Git git = Git.init().setDirectory(tempRemoteRepoFolder).setBare(true).call();
-
-            // Change the default branch to the Artemis default branch name.
-            Repository repository = git.getRepository();
-            RefUpdate refUpdate = repository.getRefDatabase().newUpdate(Constants.HEAD, false);
-            refUpdate.setForceUpdate(true);
-            refUpdate.link("refs/heads/" + defaultBranch);
-
-            // Push some files to the repository.
-
-            git.close();
-
-            this.repository = repository;
-        }
-        catch (IOException | GitAPIException e) {
-            throw new RuntimeException("Could not create temp git repository", e);
-        }
-    }
-
     // Note: Mocking requests to the VC and CI server is not necessary for local VC and local CI.
     // The VC system is part of the application context and can thus be called directly.
-    // For the CI system, the creation of a Docker container and the running of a script in there is mocked.
+    // For the CI system, all communication with the DockerClient is mocked.
 
     @Override
     public void mockConnectorRequestsForSetup(ProgrammingExercise exercise, boolean failToCreateCiProject) {

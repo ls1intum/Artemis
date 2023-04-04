@@ -30,6 +30,7 @@ import com.github.dockerjava.api.async.ResultCallback;
 import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.command.ExecCreateCmdResponse;
 import com.github.dockerjava.api.command.PullImageResultCallback;
+import com.github.dockerjava.api.exception.BadRequestException;
 import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.model.Bind;
 import com.github.dockerjava.api.model.HostConfig;
@@ -112,13 +113,13 @@ public class LocalCIBuildJobService {
             testsRepoCommitHash = getCommitHashOfBranch(container.getId(), "test-repository", branch);
         }
         catch (IOException e) {
-            // Could not read commit hash from .git folder. Stop the container and return a build results that indicates that the build failed (empty list for failed tests and
+            // Could not read commit hash from .git folder. Stop the container and return a build result that indicates that the build failed (empty list for failed tests and
             // empty list for successful tests).
             stopContainer(container.getId(), scriptPath);
             return constructBuildResult(List.of(), List.of(), branch, assignmentRepoCommitHash, testsRepoCommitHash, false, buildCompletedDate);
         }
 
-        // When Gradle is used as the build tool, the test results are located in /repositories/test-repository/build/test-resuls/test/TEST-*.xml.
+        // When Gradle is used as the build tool, the test results are located in /repositories/test-repository/build/test-results/test/TEST-*.xml.
         // When Maven is used as the build tool, the test results are located in /repositories/test-repository/target/surefire-reports/TEST-*.xml.
         String testResultsPath = getTestResultsPath(projectType);
 
@@ -234,6 +235,9 @@ public class LocalCIBuildJobService {
             catch (InterruptedException ie) {
                 throw new LocalCIException("Interrupted while pulling docker image " + dockerImage, ie);
             }
+        }
+        catch (BadRequestException e) {
+            throw new LocalCIException("Error while inspecting docker image " + dockerImage, e);
         }
     }
 
