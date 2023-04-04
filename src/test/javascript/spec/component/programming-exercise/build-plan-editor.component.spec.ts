@@ -96,5 +96,24 @@ describe('Build Plan Editor', () => {
         expect(comp.buildPlan.buildPlan).toBe('new text');
     });
 
-    // Buildplan service mock, mock returnvalue
+    it('should load the build plan that was previously saved on init', () => {
+        const originalBuildPlan = {
+            id: 1,
+            buildPlan: 'build plan text',
+        } as BuildPlan;
+        const buildPlan = {
+            id: 2,
+            buildPlan: 'new text',
+        } as BuildPlan;
+
+        putBuildPlanStub = putBuildPlanStub.mockReturnValue(of(new HttpResponse<BuildPlan>({ body: buildPlan })));
+
+        comp.exerciseId = 3;
+        comp.buildPlan = originalBuildPlan;
+
+        comp.submit();
+        comp.ngOnInit();
+
+        expect(comp.buildPlan.buildPlan).toBe('new text');
+    });
 });
