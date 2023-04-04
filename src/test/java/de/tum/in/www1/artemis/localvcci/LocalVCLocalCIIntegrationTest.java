@@ -5,10 +5,14 @@ import static de.tum.in.www1.artemis.util.ModelFactory.USER_PASSWORD;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.time.ZonedDateTime;
+import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
@@ -209,6 +213,40 @@ class LocalVCLocalCIIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         }
     }
 
+    /**
+     * Create a map from the files in a folder containing test results.
+     * This map contains one entry for each file in the folder, the key being the file path and the value being the content of the file in case it is an XML file.
+     * This map is used by localVCLocalCITestService.mockInputStreamReturnedFromContainer() to mock the InputStream returned by dockerClient.copyArchiveFromContainerCmd() and thus
+     * mocks the retrieval of test results from the Docker container.
+     *
+     * @param testResultsPath Path to the folder containing the test results.
+     * @return Map containing the file paths and the content of the files.
+     */
+    private Map<String, String> createMapFromTestResultsFolder(Path testResultsPath) throws IOException {
+        Map<String, String> resultMap = new HashMap<>();
+
+        Files.walkFileTree(testResultsPath, new SimpleFileVisitor<>() {
+
+            @Override
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                if (!attrs.isDirectory()) {
+                    String key = file.toAbsolutePath().toString();
+                    String value;
+                    if (file.getFileName().toString().endsWith(".xml")) {
+                        value = new String(Files.readAllBytes(file));
+                    }
+                    else {
+                        value = "dummy-data";
+                    }
+                    resultMap.put(key, value);
+                }
+                return FileVisitResult.CONTINUE;
+            }
+        });
+
+        return resultMap;
+    }
+
     @Test
     public void testPushAndReceiveResult_allTestCasesFail() throws Exception {
         // Create a file and push the changes to the remote assignment repository.
@@ -218,14 +256,19 @@ class LocalVCLocalCIIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         RevCommit commit = localAssignmentGit.commit().setMessage("Add test.txt").call();
         String commitHash = commit.getId().getName();
 
-        // Mock dockerClient.copyArchiveFromContainerCmd() such that it returns the commitHash for the assignment repository, a dummy commit hash for the tests repository, and an
+        // Mock dockerClient.copyArchiveFromContainerCmd() such that it returns the commitHash for the assignment repository.
         // XML containing failed test cases for the test results.
         localVCLocalCITestService.mockInputStreamReturnedFromContainer(mockDockerClient, "/repositories/assignment-repository/.git/refs/heads/[^/]+",
                 Map.of("assignmentCommitHash", commitHash));
+
+        // Mock dockerClient.copyArchiveFromContainerCmd() such that it returns a dummy commit hash for the tests repository.
         localVCLocalCITestService.mockInputStreamReturnedFromContainer(mockDockerClient, "/repositories/test-repository/.git/refs/heads/[^/]+",
                 Map.of("testCommitHash", dummyCommitHash));
 
-        // localVCLocalCITestConfig.setAssignmentRepoCommitHashSupplier(() -> commitHash);
+        // Mock dockerClient.copyArchiveFromContainerCmd() such that it returns the XML containing the failed test cases.
+        Path failedTestResultsPath = Paths.get("src", "test", "resources", "test-data", "test-results", "java-gradle", "all-fail");
+        localVCLocalCITestService.mockInputStreamReturnedFromContainer(mockDockerClient, "/repositories/test-repository/build/test-results/test",
+                createMapFromTestResultsFolder(failedTestResultsPath));
 
         localAssignmentGit.push().setRemote(constructLocalVCUrl(TEST_PREFIX + "student1", programmingExercise.getProjectKey(), assignmentRepoName)).call();
     }
