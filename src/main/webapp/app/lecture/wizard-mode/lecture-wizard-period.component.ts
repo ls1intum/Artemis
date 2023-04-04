@@ -13,7 +13,16 @@ export class LectureUpdateWizardPeriodComponent {
     @Output() invalidChange = new EventEmitter();
 
     constructor() {}
-    update() {
-        this.invalidChange.emit();
+
+    /**
+     * emits in case the end date is set before the start date. The parent component is informed about this change
+     * @param validateDates function used to update isEndDateBeforeStartDate
+     */
+    update(validateDates: () => void) {
+        validateDates();
+
+        if (this.isEndDateBeforeStartDate) {
+            this.invalidChange.emit();
+        }
     }
 }

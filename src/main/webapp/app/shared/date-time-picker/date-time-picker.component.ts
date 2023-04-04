@@ -1,6 +1,6 @@
 import { Component, ElementRef, EventEmitter, Input, Output, ViewChild, forwardRef } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
-import { faCalendarAlt, faClock, faGlobe, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import { faCalendarAlt, faCalendarMinus, faClock, faGlobe, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { isDate } from 'app/shared/util/utils';
 
@@ -34,6 +34,7 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
     faGlobe = faGlobe;
     faClock = faClock;
     faQuestionCircle = faQuestionCircle;
+    faCalendarMinus = faCalendarMinus;
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     _onChange = (val: dayjs.Dayjs) => {};
@@ -56,13 +57,13 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
 
     /**
      * Function that writes the value safely.
-     * @param obj as dayjs or date
+     * @param object as dayjs or date  //todo
      */
-    writeValue(obj: any): void {
-        if (obj !== undefined && this.value !== obj) {
-            this.value = !obj ? null : isDate(obj) ? obj : obj.toDate();
+    writeValue(object: any): void {
+        if (object !== undefined && this.value !== object) {
+            this.value = !object ? null : isDate(object) ? object : object.toDate();
             this.value?.setSeconds(0, 0);
-            this._onChange(obj);
+            this._onChange(object);
         }
     }
 

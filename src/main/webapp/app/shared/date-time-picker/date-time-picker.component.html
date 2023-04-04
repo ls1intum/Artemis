@@ -24,8 +24,9 @@
         readonly
         [owlDateTimeTrigger]="dt"
     />
-    <button *ngIf="value" (click)="resetDate()" class="btn position-absolute" type="button">
-        <fa-icon [icon]="faCalendarAlt"></fa-icon>
+    <button *ngIf="value" (click)="resetDate()" class="btn position-absolute calendar-event-toggle" type="button">
+        <fa-icon class="icon-static" [icon]="faCalendarAlt"></fa-icon>
+        <fa-icon class="icon-remove" [icon]="faCalendarMinus"></fa-icon>
     </button>
     <button *ngIf="!value" [owlDateTimeTrigger]="dt" class="btn position-absolute" type="button">
         <fa-icon [icon]="faCalendarAlt"></fa-icon>
