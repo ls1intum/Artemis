@@ -30,6 +30,10 @@ export class BuildPlanEditorComponent implements AfterViewInit, OnInit {
 
     constructor(private buildPlanService: BuildPlanService, private programmingExerciseService: ProgrammingExerciseService, private activatedRoute: ActivatedRoute) {}
 
+    /**
+     * @function ngOnInit
+     * Sets the exercise and corresponding build plan based on the exerciseId in the current URL.
+     */
     ngOnInit(): void {
         this.activatedRoute.data.subscribe(({ exercise }) => {
             this.programmingExercise = exercise;
@@ -84,6 +88,11 @@ export class BuildPlanEditorComponent implements AfterViewInit, OnInit {
         this.editor.getEditor().getSession().setValue(text);
     }
 
+    /**
+     * @function submit
+     * Replaces the initial build plan with the current content of the editor window, but only if a build plan is
+     * currently loaded.
+     */
     submit() {
         if (!this.buildPlan) {
             return;
@@ -95,10 +104,20 @@ export class BuildPlanEditorComponent implements AfterViewInit, OnInit {
         });
     }
 
+    /**
+     * @function onTextChanged
+     * Replaces the build plan with the current text from the editor window.
+     * @param event The text inside the editor window.
+     */
     onTextChanged(event: any) {
         this.buildPlan!.buildPlan = event as string;
     }
 
+    /**
+     * @function updateTabSize
+     * Updates the tab size.
+     * @param tabSize The new tab size.
+     */
     updateTabSize(tabSize: number) {
         this.tabSize = tabSize;
     }
