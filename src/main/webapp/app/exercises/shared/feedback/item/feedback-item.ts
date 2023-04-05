@@ -12,17 +12,5 @@ export class FeedbackItem implements FeedbackNode {
     text?: string; // this is typically feedback.detailText
     positive?: boolean;
     color?: FeedbackColor;
-    feedbackReference: FeedbackReference;
-}
-
-export class FeedbackReference {
-    feedbackId: number;
-    resultId: number;
-    hasLongFeedback: boolean;
-
-    public constructor(feedback: Feedback) {
-        this.feedbackId = feedback.id!;
-        this.resultId = feedback.result?.id ?? 0;
-        this.hasLongFeedback = feedback.hasLongFeedbackText ?? false;
-    }
+    feedbackReference: Feedback; // has to be connected to a result
 }

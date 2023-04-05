@@ -1,18 +1,12 @@
 import { FeedbackItemServiceImpl } from 'app/exercises/shared/feedback/item/feedback-item-service';
 import { TranslateService } from '@ngx-translate/core';
 import { Feedback } from 'app/entities/feedback.model';
-import { FeedbackItem, FeedbackReference } from 'app/exercises/shared/feedback/item/feedback-item';
+import { FeedbackItem } from 'app/exercises/shared/feedback/item/feedback-item';
 import { FeedbackGroup, isFeedbackGroup } from 'app/exercises/shared/feedback/group/feedback-group';
 import { FeedbackNode } from 'app/exercises/shared/feedback/node/feedback-node';
 
 describe('FeedbackItemService', () => {
     let service: FeedbackItemServiceImpl;
-
-    const feedbackReference: FeedbackReference = {
-        feedbackId: 1,
-        resultId: 0,
-        hasLongFeedback: false,
-    };
 
     beforeEach(() => {
         const fake = { instant: (key: string) => key };
@@ -33,7 +27,7 @@ describe('FeedbackItemService', () => {
             title: feedback.text,
             text: feedback.detailText,
             credits: feedback.credits,
-            feedbackReference,
+            feedbackReference: feedback,
         } as FeedbackItem;
 
         expect(service.create([feedback], false)).toEqual([expected]);
@@ -47,7 +41,7 @@ describe('FeedbackItemService', () => {
             text: 'GI feedback\ndetailText',
             title: 'text',
             type: 'Reviewer',
-            feedbackReference,
+            feedbackReference: feedback,
         } as FeedbackItem;
 
         expect(service.create([feedback], false)).toEqual([expected]);
@@ -61,7 +55,7 @@ describe('FeedbackItemService', () => {
             text: 'GI feedback\ndetailText',
             title: 'text',
             type: 'Subsequent',
-            feedbackReference,
+            feedbackReference: feedback,
         } as FeedbackItem;
 
         expect(service.create([feedback], false)).toEqual([expected]);

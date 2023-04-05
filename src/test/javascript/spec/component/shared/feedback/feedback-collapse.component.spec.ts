@@ -53,9 +53,9 @@ describe('FeedbackCollapseComponent', () => {
             type: 'Test',
             text,
             feedbackReference: {
-                feedbackId: 1,
-                resultId: 2,
-                hasLongFeedback: false,
+                id: 1,
+                result: { id: 2 },
+                hasLongFeedbackText: false,
             },
         };
     };

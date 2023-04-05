@@ -23,14 +23,14 @@ export class FeedbackTextComponent implements OnInit {
     ngOnInit(): void {
         this.text = this.feedback.text ?? '';
 
-        if (this.feedback.feedbackReference.hasLongFeedback) {
+        if (this.feedback.feedbackReference.hasLongFeedbackText) {
             this.loadLongFeedback();
         }
     }
 
     private loadLongFeedback() {
-        const resultId = this.feedback.feedbackReference.resultId;
-        const feedbackId = this.feedback.feedbackReference.feedbackId;
+        const resultId = this.feedback.feedbackReference.result!.id!;
+        const feedbackId = this.feedback.feedbackReference.id!;
 
         this.longFeedbackService.find(resultId, feedbackId).subscribe((longFeedbackResponse) => {
             const longFeedback = longFeedbackResponse.body!;
@@ -46,6 +46,6 @@ export class FeedbackTextComponent implements OnInit {
 
     private setDownloadInfo(longFeedback: LongFeedbackText) {
         this.downloadText = 'data:text/plain;charset=utf-8,' + encodeURIComponent(longFeedback.text!);
-        this.downloadFilename = `feedback_${this.feedback.feedbackReference.feedbackId}.txt`;
+        this.downloadFilename = `feedback_${this.feedback.feedbackReference.id}.txt`;
     }
 }

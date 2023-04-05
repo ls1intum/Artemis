@@ -15,7 +15,7 @@ import { SubmissionType } from 'app/entities/submission.model';
 import { BuildLogService } from 'app/exercises/programming/shared/service/build-log.service';
 import { FeedbackCollapseComponent } from 'app/exercises/shared/feedback/collapse/feedback-collapse.component';
 import { FeedbackComponent } from 'app/exercises/shared/feedback/feedback.component';
-import { FeedbackItem, FeedbackReference } from 'app/exercises/shared/feedback/item/feedback-item';
+import { FeedbackItem } from 'app/exercises/shared/feedback/item/feedback-item';
 import { ProgrammingFeedbackItemService } from 'app/exercises/shared/feedback/item/programming-feedback-item.service';
 import { FeedbackNode } from 'app/exercises/shared/feedback/node/feedback-node';
 import { ResultService } from 'app/exercises/shared/result/result.service';
@@ -44,11 +44,11 @@ describe('FeedbackComponent', () => {
     // Template for Bitbucket commit hash url
     const commitHashURLTemplate = 'https://bitbucket.ase.in.tum.de/projects/{projectKey}/repos/{repoSlug}/commits/{commitHash}';
 
-    const feedbackReference: FeedbackReference = {
-        feedbackId: 1,
-        resultId: 2,
+    const feedbackReference = {
+        id: 1,
+        result: { id: 2 } as Result,
         hasLongFeedback: false,
-    };
+    } as Feedback;
 
     const makeFeedback = (fb: Feedback) => {
         return Object.assign({ type: FeedbackType.AUTOMATIC, text: '', detailText: '', credits: 0 } as Feedback, fb);

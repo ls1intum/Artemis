@@ -3,10 +3,12 @@ import { FeedbackTextComponent } from 'app/exercises/shared/feedback/text/feedba
 import { ArtemisTestModule } from '../../../test.module';
 import { LongFeedbackTextService } from 'app/exercises/shared/feedback/long-feedback-text.service';
 import { MockProvider } from 'ng-mocks';
-import { FeedbackItem, FeedbackReference } from 'app/exercises/shared/feedback/item/feedback-item';
+import { FeedbackItem } from 'app/exercises/shared/feedback/item/feedback-item';
+import { Feedback } from 'app/entities/feedback.model';
 import { LongFeedbackText } from 'app/entities/long-feedback-text.model';
 import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
+import { Result } from 'app/entities/result.model';
 
 describe('FeedbackTextComponent', () => {
     let fixture: ComponentFixture<FeedbackTextComponent>;
@@ -95,15 +97,15 @@ describe('FeedbackTextComponent', () => {
         expect(comp.downloadText).toContain(longFeedbackText.text);
     }));
 
-    const getFeedbackReference = (resultId: number, feedbackId: number, hasLongFeedback: boolean): FeedbackReference => {
+    const getFeedbackReference = (resultId: number, feedbackId: number, hasLongFeedbackText: boolean): Feedback => {
         return {
-            resultId,
-            feedbackId,
-            hasLongFeedback,
-        };
+            id: feedbackId,
+            result: { id: resultId } as Result,
+            hasLongFeedbackText,
+        } as Feedback;
     };
 
-    const getFeedbackItem = (text: string | undefined, feedbackReference: FeedbackReference): FeedbackItem => {
+    const getFeedbackItem = (text: string | undefined, feedbackReference: Feedback): FeedbackItem => {
         return {
             credits: undefined,
             name: 'ignored',
