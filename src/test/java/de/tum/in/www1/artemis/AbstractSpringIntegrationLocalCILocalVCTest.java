@@ -3,18 +3,26 @@ package de.tum.in.www1.artemis;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Set;
 
+import org.apache.commons.io.FileUtils;
+import org.eclipse.jgit.api.Git;
 import org.gitlab4j.api.GitLabApiException;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
@@ -26,11 +34,14 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.Team;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
+import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.participation.AbstractBaseProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.localvcci.LocalVCLocalCITestConfig;
 import de.tum.in.www1.artemis.localvcci.LocalVCLocalCITestService;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.util.AbstractArtemisIntegrationTest;
 import io.zonky.test.db.AutoConfigureEmbeddedDatabase;
 
@@ -47,7 +58,11 @@ import io.zonky.test.db.AutoConfigureEmbeddedDatabase;
         "artemis.continuous-integration.build.images.java.default=dummy-docker-image" })
 // Contains the mock setup for the DockerClient.
 @ContextConfiguration(classes = LocalVCLocalCITestConfig.class)
+// Enable @BeforeAll and @AfterAll
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends AbstractArtemisIntegrationTest {
+
+    protected static final String TEST_PREFIX = "localvclocalciintegration";
 
     @Value("${artemis.version-control.url}")
     protected String localVCSBaseUrl;
@@ -61,10 +76,107 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     @Autowired
     protected LocalVCLocalCITestService localVCLocalCITestService;
 
+    @Autowired
+    private ProgrammingExerciseRepository programmingExerciseRepository;
+
+    @Autowired
+    private ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
+
     @LocalServerPort
     protected int port;
 
     protected static final String dummyCommitHash = "1234567890abcdef";
+
+    protected ProgrammingExercise programmingExercise;
+
+    protected ProgrammingExerciseStudentParticipation participation;
+
+    protected Path templateRepositoryFolder;
+
+    protected Git templateGit;
+
+    protected Path testsRepositoryFolder;
+
+    protected Git testsGit;
+
+    protected Path remoteAssignmentRepositoryFolder;
+
+    protected Git remoteAssignmentGit;
+
+    protected String assignmentRepositoryName;
+
+    protected Path localAssignmentRepositoryFolder;
+
+    protected Git localAssignmentGit;
+
+    @BeforeAll
+    void initProgrammingExerciseAndRepositories() throws Exception {
+        database.addUsers(TEST_PREFIX, 1, 0, 0, 0);
+        String studentLogin = TEST_PREFIX + "student1";
+
+        Course course = database.addCourseWithOneProgrammingExercise();
+        programmingExercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        programmingExercise.setReleaseDate(ZonedDateTime.now().minusDays(1));
+        programmingExercise.setProjectType(ProjectType.PLAIN_GRADLE);
+        programmingExercise.setAllowOfflineIde(true);
+        programmingExercise.setTestRepositoryUrl(
+                localVCSBaseUrl + "/git/" + programmingExercise.getProjectKey().toUpperCase() + "/" + programmingExercise.getProjectKey().toLowerCase() + "-tests.git");
+        programmingExerciseRepository.save(programmingExercise);
+        programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).orElseThrow();
+        participation = database.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
+        assignmentRepositoryName = (programmingExercise.getProjectKey() + "-" + studentLogin).toLowerCase();
+        participation.setRepositoryUrl(String.format(localVCSBaseUrl + "/git/%s/%s.git", programmingExercise.getProjectKey(), assignmentRepositoryName));
+        participation.setBranch(defaultBranch);
+        programmingExerciseStudentParticipationRepository.save(participation);
+        localVCLocalCITestService.addTestCases(programmingExercise);
+
+        // Create template and tests repository
+        final String templateRepositoryName = programmingExercise.getProjectKey().toLowerCase() + "-exercise";
+        templateRepositoryFolder = localVCLocalCITestService.createRepositoryFolderInTempDirectory(programmingExercise.getProjectKey(), templateRepositoryName);
+        ClassPathResource templateResource = new ClassPathResource("test-data/java-templates/exercise");
+        templateGit = localVCLocalCITestService.createGitRepository(templateRepositoryFolder, templateResource.getFile());
+        final String testsRepoName = programmingExercise.getProjectKey().toLowerCase() + "-tests";
+        testsRepositoryFolder = localVCLocalCITestService.createRepositoryFolderInTempDirectory(programmingExercise.getProjectKey(), testsRepoName);
+        ClassPathResource testsResource = new ClassPathResource("test-data/java-templates/tests");
+        testsGit = localVCLocalCITestService.createGitRepository(testsRepositoryFolder, testsResource.getFile());
+
+        // Create remote assignment repository
+        remoteAssignmentRepositoryFolder = localVCLocalCITestService.createRepositoryFolderInTempDirectory(programmingExercise.getProjectKey(), assignmentRepositoryName);
+        ClassPathResource assignmentResource = new ClassPathResource("test-data/java-templates/exercise");
+        remoteAssignmentGit = localVCLocalCITestService.createGitRepository(remoteAssignmentRepositoryFolder, assignmentResource.getFile());
+
+        // Clone the remote assignment repository into a local folder.
+        localAssignmentRepositoryFolder = Files.createTempDirectory("localAssignment");
+        localAssignmentGit = Git.cloneRepository().setURI(remoteAssignmentRepositoryFolder.toString()).setDirectory(localAssignmentRepositoryFolder.toFile()).call();
+    }
+
+    @AfterAll
+    void removeRepositories() throws IOException {
+        if (templateGit != null) {
+            templateGit.close();
+        }
+        if (testsGit != null) {
+            testsGit.close();
+        }
+        if (remoteAssignmentGit != null) {
+            remoteAssignmentGit.close();
+        }
+        if (localAssignmentGit != null) {
+            localAssignmentGit.close();
+        }
+        if (templateRepositoryFolder != null && Files.exists(templateRepositoryFolder)) {
+            FileUtils.deleteDirectory(templateRepositoryFolder.toFile());
+        }
+        if (testsRepositoryFolder != null && Files.exists(testsRepositoryFolder)) {
+            FileUtils.deleteDirectory(testsRepositoryFolder.toFile());
+        }
+        if (remoteAssignmentRepositoryFolder != null && Files.exists(remoteAssignmentRepositoryFolder)) {
+            FileUtils.deleteDirectory(remoteAssignmentRepositoryFolder.toFile());
+        }
+        if (localAssignmentRepositoryFolder != null && Files.exists(localAssignmentRepositoryFolder)) {
+            FileUtils.deleteDirectory(localAssignmentRepositoryFolder.toFile());
+        }
+    }
 
     @AfterEach
     protected void resetSpyBeans() {
