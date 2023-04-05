@@ -99,7 +99,7 @@ public class ProgrammingExerciseTestCaseResource {
 
     /**
      * Use with care: Resets all test cases of an exercise to their initial configuration
-     * Set all test case weights to 1, all bonus multipliers to 1 all bonus points to 0 and visibility to always.
+     * Set all test case weights to 1, all bonus multipliers to 1, all bonus points to 0 and visibility to always.
      *
      * @param exerciseId the id of the exercise to reset the test case weights of.
      * @return the updated set of test cases for the programming exercise.
