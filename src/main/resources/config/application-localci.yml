@@ -5,5 +5,5 @@
 # ===================================================================
 artemis:
     continuous-integration:
-        # The number of threads that are used to execute the CI jobs.
+        # The number of threads that are used to execute the CI jobs. Choose a thread pool size of 0 to synchronously execute tasks.
         thread-pool-size: 1

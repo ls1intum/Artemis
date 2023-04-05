@@ -3,8 +3,6 @@ package de.tum.in.www1.artemis;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
@@ -22,8 +20,6 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
@@ -47,7 +43,8 @@ import io.zonky.test.db.AutoConfigureEmbeddedDatabase;
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
 @ActiveProfiles({ SPRING_PROFILE_TEST, "artemis", "localci", "localvc", "scheduling" })
 @TestPropertySource(properties = { "artemis.user-management.use-external=false", "artemis.version-control.local-vcs-repo-path=${java.io.tmpdir}",
-        "artemis.version-control.url=http://localhost:8080", "artemis.continuous-integration.build.images.java.default=dummy-docker-image" })
+        "artemis.version-control.url=http://localhost:8080", "artemis.continuous-integration.thread-pool-size=0",
+        "artemis.continuous-integration.build.images.java.default=dummy-docker-image" })
 // Contains the mock setup for the DockerClient.
 @ContextConfiguration(classes = LocalVCLocalCITestConfig.class)
 public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends AbstractArtemisIntegrationTest {
@@ -74,9 +71,11 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
         super.resetSpyBeans();
     }
 
-    // Note: Mocking requests to the VC and CI server is not necessary for local VC and local CI.
-    // The VC system is part of the application context and can thus be called directly.
-    // For the CI system, all communication with the DockerClient is mocked.
+    /**
+     * Note: Mocking requests to the VC and CI server is not necessary for local VC and local CI.
+     * The VC system is part of the application context and can thus be called directly.
+     * For the CI system, all communication with the DockerClient is mocked (see {@link LocalVCLocalCITestConfig}).
+     */
 
     @Override
     public void mockConnectorRequestsForSetup(ProgrammingExercise exercise, boolean failToCreateCiProject) {
@@ -90,98 +89,97 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
 
     @Override
     public void mockImportProgrammingExerciseWithFailingEnablePlan(ProgrammingExercise sourceExercise, ProgrammingExercise exerciseToBeImported, boolean planExistsInCi,
-            boolean shouldPlanEnableFail) throws Exception {
+            boolean shouldPlanEnableFail) {
         // Not implemented for local VC and local CI
     }
 
     @Override
-    public void mockConnectorRequestsForStartParticipation(ProgrammingExercise exercise, String username, Set<User> users, boolean ltiUserExists) throws Exception {
+    public void mockConnectorRequestsForStartParticipation(ProgrammingExercise exercise, String username, Set<User> users, boolean ltiUserExists) {
 
     }
 
     @Override
-    public void mockConnectorRequestsForResumeParticipation(ProgrammingExercise exercise, String username, Set<User> users, boolean ltiUserExists) throws Exception {
+    public void mockConnectorRequestsForResumeParticipation(ProgrammingExercise exercise, String username, Set<User> users, boolean ltiUserExists) {
         // Not implemented for local VC and local CI
     }
 
     @Override
-    public void mockUpdatePlanRepositoryForParticipation(ProgrammingExercise exercise, String username) throws IOException, URISyntaxException {
+    public void mockUpdatePlanRepositoryForParticipation(ProgrammingExercise exercise, String username) {
         // Not implemented for local VC and local CI
     }
 
     @Override
-    public void mockUpdatePlanRepository(ProgrammingExercise exercise, String planName, String repoNameInCI, String repoNameInVcs, List<String> triggeredBy)
-            throws IOException, URISyntaxException {
+    public void mockUpdatePlanRepository(ProgrammingExercise exercise, String planName, String repoNameInCI, String repoNameInVcs, List<String> triggeredBy) {
         // Not implemented for local VC and local CI
     }
 
     @Override
-    public void mockRemoveRepositoryAccess(ProgrammingExercise exercise, Team team, User firstStudent) throws Exception {
+    public void mockRemoveRepositoryAccess(ProgrammingExercise exercise, Team team, User firstStudent) {
         // Not implemented for local VC and local CI
     }
 
     @Override
-    public void mockCopyRepositoryForParticipation(ProgrammingExercise exercise, String username) throws URISyntaxException, IOException, GitLabApiException {
+    public void mockCopyRepositoryForParticipation(ProgrammingExercise exercise, String username) {
         // Not implemented for local VC and local CI
     }
 
     @Override
-    public void mockRepositoryWritePermissionsForTeam(Team team, User newStudent, ProgrammingExercise exercise, HttpStatus status) throws Exception {
+    public void mockRepositoryWritePermissionsForTeam(Team team, User newStudent, ProgrammingExercise exercise, HttpStatus status) {
         // Not implemented for local VC and local CI
     }
 
     @Override
-    public void mockRepositoryWritePermissionsForStudent(User student, ProgrammingExercise exercise, HttpStatus status) throws Exception {
+    public void mockRepositoryWritePermissionsForStudent(User student, ProgrammingExercise exercise, HttpStatus status) {
         // Not implemented for local VC and local CI
     }
 
     @Override
-    public void mockRetrieveArtifacts(ProgrammingExerciseStudentParticipation participation) throws MalformedURLException, URISyntaxException, JsonProcessingException {
+    public void mockRetrieveArtifacts(ProgrammingExerciseStudentParticipation participation) {
         // Not implemented for local VC and local CI
     }
 
     @Override
-    public void mockFetchCommitInfo(String projectKey, String repositorySlug, String hash) throws URISyntaxException, JsonProcessingException {
+    public void mockFetchCommitInfo(String projectKey, String repositorySlug, String hash) {
         // Not implemented for local VC and local CI
     }
 
     @Override
-    public void mockCopyBuildPlan(ProgrammingExerciseStudentParticipation participation) throws Exception {
+    public void mockCopyBuildPlan(ProgrammingExerciseStudentParticipation participation) {
         // Not implemented for local VC and local CI
     }
 
     @Override
-    public void mockConfigureBuildPlan(ProgrammingExerciseStudentParticipation participation) throws Exception {
+    public void mockConfigureBuildPlan(ProgrammingExerciseStudentParticipation participation) {
         // Not implemented for local VC and local CI
     }
 
     @Override
-    public void mockTriggerFailedBuild(ProgrammingExerciseStudentParticipation participation) throws Exception {
+    public void mockTriggerFailedBuild(ProgrammingExerciseStudentParticipation participation) {
         // Not implemented for local VC and local CI
     }
 
     @Override
-    public void mockGrantReadAccess(ProgrammingExerciseStudentParticipation participation) throws URISyntaxException {
+    public void mockGrantReadAccess(ProgrammingExerciseStudentParticipation participation) {
         // Not implemented for local VC and local CI
     }
 
     @Override
-    public void mockNotifyPush(ProgrammingExerciseStudentParticipation participation) throws Exception {
+    public void mockNotifyPush(ProgrammingExerciseStudentParticipation participation) {
         // Not implemented for local VC and local CI
     }
 
     @Override
-    public void mockTriggerParticipationBuild(ProgrammingExerciseStudentParticipation participation) throws Exception {
+    public void mockTriggerParticipationBuild(ProgrammingExerciseStudentParticipation participation) {
         // Not implemented for local VC and local CI
     }
 
     @Override
-    public void mockTriggerInstructorBuildAll(ProgrammingExerciseStudentParticipation participation) throws Exception {
+    public void mockTriggerInstructorBuildAll(ProgrammingExerciseStudentParticipation participation) {
         // Not implemented for local VC and local CI
     }
 
     @Override
-    public void resetMockProvider() throws Exception {
+    public void resetMockProvider() {
         // Not implemented for local VC and local CI
     }
 
@@ -191,48 +189,48 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     }
 
     @Override
-    public void mockUpdateUserInUserManagement(String oldLogin, User user, String password, Set<String> oldGroups) throws Exception {
+    public void mockUpdateUserInUserManagement(String oldLogin, User user, String password, Set<String> oldGroups) {
         // Not implemented for local VC and local CI
     }
 
     @Override
-    public void mockUpdateCoursePermissions(Course updatedCourse, String oldInstructorGroup, String oldEditorGroup, String oldTeachingAssistantGroup) throws Exception {
+    public void mockUpdateCoursePermissions(Course updatedCourse, String oldInstructorGroup, String oldEditorGroup, String oldTeachingAssistantGroup) {
         // Not implemented for local VC and local CI
     }
 
     @Override
     public void mockFailUpdateCoursePermissionsInCi(Course updatedCourse, String oldInstructorGroup, String oldEditorGroup, String oldTeachingAssistantGroup,
-            boolean failToAddUsers, boolean failToRemoveUsers) throws Exception {
+            boolean failToAddUsers, boolean failToRemoveUsers) {
         // Not implemented for local VC and local CI
     }
 
     @Override
-    public void mockCreateUserInUserManagement(User user, boolean userExistsInCi) throws Exception {
+    public void mockCreateUserInUserManagement(User user, boolean userExistsInCi) {
         // Not implemented for local VC and local CI
     }
 
     @Override
-    public void mockFailToCreateUserInExternalUserManagement(User user, boolean failInVcs, boolean failInCi, boolean failToGetCiUser) throws Exception {
+    public void mockFailToCreateUserInExternalUserManagement(User user, boolean failInVcs, boolean failInCi, boolean failToGetCiUser) {
         // Not implemented for local VC and local CI
     }
 
     @Override
-    public void mockDeleteUserInUserManagement(User user, boolean userExistsInUserManagement, boolean failInVcs, boolean failInCi) throws Exception {
+    public void mockDeleteUserInUserManagement(User user, boolean userExistsInUserManagement, boolean failInVcs, boolean failInCi) {
         // Not implemented for local VC and local CI
     }
 
     @Override
-    public void mockCreateGroupInUserManagement(String groupName) throws Exception {
+    public void mockCreateGroupInUserManagement(String groupName) {
         // Not implemented for local VC and local CI
     }
 
     @Override
-    public void mockDeleteGroupInUserManagement(String groupName) throws Exception {
+    public void mockDeleteGroupInUserManagement(String groupName) {
         // Not implemented for local VC and local CI
     }
 
     @Override
-    public void mockAddUserToGroupInUserManagement(User user, String group, boolean failInCi) throws Exception {
+    public void mockAddUserToGroupInUserManagement(User user, String group, boolean failInCi) {
         // Not implemented for local VC and local CI
     }
 
@@ -242,12 +240,12 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     }
 
     @Override
-    public void mockDeleteRepository(String projectKey, String repositoryName, boolean shouldFail) throws Exception {
+    public void mockDeleteRepository(String projectKey, String repositoryName, boolean shouldFail) {
         // Not implemented for local VC and local CI
     }
 
     @Override
-    public void mockDeleteProjectInVcs(String projectKey, boolean shouldFail) throws Exception {
+    public void mockDeleteProjectInVcs(String projectKey, boolean shouldFail) {
         // Not implemented for local VC and local CI
     }
 
@@ -257,38 +255,37 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     }
 
     @Override
-    public void mockDeleteBuildPlanProject(String projectKey, boolean shouldFail) throws Exception {
+    public void mockDeleteBuildPlanProject(String projectKey, boolean shouldFail) {
         // Not implemented for local VC and local CI
     }
 
     @Override
-    public void mockGetBuildPlan(String projectKey, String planName, boolean planExistsInCi, boolean planIsActive, boolean planIsBuilding, boolean failToGetBuild)
-            throws Exception {
+    public void mockGetBuildPlan(String projectKey, String planName, boolean planExistsInCi, boolean planIsActive, boolean planIsBuilding, boolean failToGetBuild) {
         // Not implemented for local VC and local CI
     }
 
     @Override
-    public void mockHealthInCiService(boolean isRunning, HttpStatus httpStatus) throws Exception {
+    public void mockHealthInCiService(boolean isRunning, HttpStatus httpStatus) {
         // Not implemented for local VC and local CI
     }
 
     @Override
-    public void mockConfigureBuildPlan(ProgrammingExerciseParticipation participation, String defaultBranch) throws Exception {
+    public void mockConfigureBuildPlan(ProgrammingExerciseParticipation participation, String defaultBranch) {
         // Not implemented for local VC and local CI
     }
 
     @Override
-    public void mockCheckIfProjectExistsInVcs(ProgrammingExercise exercise, boolean existsInVcs) throws Exception {
+    public void mockCheckIfProjectExistsInVcs(ProgrammingExercise exercise, boolean existsInVcs) {
         // Not implemented for local VC and local CI
     }
 
     @Override
-    public void mockCheckIfProjectExistsInCi(ProgrammingExercise exercise, boolean existsInCi, boolean shouldFail) throws Exception {
+    public void mockCheckIfProjectExistsInCi(ProgrammingExercise exercise, boolean existsInCi, boolean shouldFail) {
         // Not implemented for local VC and local CI
     }
 
     @Override
-    public void mockCheckIfBuildPlanExists(String projectKey, String templateBuildPlanId, boolean buildPlanExists, boolean shouldFail) throws Exception {
+    public void mockCheckIfBuildPlanExists(String projectKey, String templateBuildPlanId, boolean buildPlanExists, boolean shouldFail) {
         // Not implemented for local VC and local CI
     }
 
@@ -303,7 +300,7 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     }
 
     @Override
-    public void mockTriggerBuildFailed(AbstractBaseProgrammingExerciseParticipation solutionParticipation) throws Exception {
+    public void mockTriggerBuildFailed(AbstractBaseProgrammingExerciseParticipation solutionParticipation) {
         // Not implemented for local VC and local CI
     }
 
@@ -313,7 +310,7 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     }
 
     @Override
-    public void mockConfigureRepository(ProgrammingExercise exercise, String participantIdentifier, Set<User> students, boolean userExists) throws Exception {
+    public void mockConfigureRepository(ProgrammingExercise exercise, String participantIdentifier, Set<User> students, boolean userExists) {
         // Not implemented for local VC and local CI
     }
 

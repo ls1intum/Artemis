@@ -9,6 +9,8 @@ import static org.mockito.Mockito.when;
 import java.io.IOException;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
@@ -26,6 +28,8 @@ import com.github.dockerjava.api.command.StartContainerCmd;
 
 @TestConfiguration
 public class LocalVCLocalCITestConfig {
+
+    private final Logger log = LoggerFactory.getLogger(LocalVCLocalCITestConfig.class);
 
     @Autowired
     private LocalVCLocalCITestService localVCLocalCITestService;
@@ -80,6 +84,8 @@ public class LocalVCLocalCITestConfig {
         localVCLocalCITestService.mockInputStreamReturnedFromContainer(dockerClient, "/repositories/assignment-repository/.git/refs/heads/[^/]+", Map.of(mockData, mockData));
         localVCLocalCITestService.mockInputStreamReturnedFromContainer(dockerClient, "/repositories/test-repository/.git/refs/heads/[^/]+", Map.of(mockData, mockData));
         localVCLocalCITestService.mockInputStreamReturnedFromContainer(dockerClient, "/repositories/test-repository/build/test-results/test", Map.of(mockData, mockData));
+
+        log.info("Using mock docker client: " + dockerClient.getClass());
 
         return dockerClient;
     }

@@ -1,8 +1,12 @@
 package de.tum.in.www1.artemis.config;
 
+import java.util.List;
+import java.util.concurrent.AbstractExecutorService;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -37,7 +41,59 @@ public class LocalCIConfiguration {
      */
     @Bean
     public ExecutorService executorService() {
-        return Executors.newFixedThreadPool(threadPoolSize);
+        if (threadPoolSize > 0) {
+            log.info("Using ExecutorService with thread pool size: " + threadPoolSize);
+            return Executors.newFixedThreadPool(threadPoolSize);
+        }
+        else {
+            log.info("Using SynchronousExecutorService");
+            // Return a synchronous ExecutorService.
+            return new SynchronousExecutorService();
+        }
+    }
+
+    /**
+     * This class can be used instead of the regular ExecutorService for testing purposes.
+     * The regular ExecutorService maintains a thread pool and new build runs are executed in a separate thread.
+     * When testing or debugging, it is helpful to run all tasks synchronously.
+     */
+    static class SynchronousExecutorService extends AbstractExecutorService {
+
+        private boolean isShutdown = false;
+
+        @Override
+        public void execute(@NotNull Runnable command) {
+            if (isShutdown) {
+                throw new IllegalStateException("ExecutorService is already shut down.");
+            }
+            command.run();
+        }
+
+        @Override
+        public void shutdown() {
+            isShutdown = true;
+        }
+
+        @Override
+        public List<Runnable> shutdownNow() {
+            isShutdown = true;
+            return List.of();
+        }
+
+        @Override
+        public boolean isShutdown() {
+            return isShutdown;
+        }
+
+        @Override
+        public boolean isTerminated() {
+            return isShutdown;
+        }
+
+        @Override
+        public boolean awaitTermination(long timeout, @NotNull TimeUnit unit) {
+            return true;
+        }
     }
 
     /**

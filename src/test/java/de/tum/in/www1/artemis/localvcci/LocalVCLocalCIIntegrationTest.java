@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.localvcci;
 
 import static de.tum.in.www1.artemis.util.ModelFactory.USER_PASSWORD;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.File;
 import java.io.IOException;
@@ -12,7 +13,9 @@ import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
@@ -34,10 +37,16 @@ import com.github.dockerjava.api.DockerClient;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationLocalCILocalVCTest;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
+import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
+import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
+import de.tum.in.www1.artemis.domain.enumeration.Visibility;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.util.GitUtilService;
 
 class LocalVCLocalCIIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
@@ -56,7 +65,15 @@ class LocalVCLocalCIIntegrationTest extends AbstractSpringIntegrationLocalCILoca
     @Autowired
     private DockerClient mockDockerClient;
 
+    @Autowired
+    private ProgrammingExerciseTestCaseRepository testCaseRepository;
+
+    @Autowired
+    private ProgrammingSubmissionRepository programmingSubmissionRepository;
+
     private ProgrammingExercise programmingExercise;
+
+    private ProgrammingExerciseStudentParticipation participation;
 
     private Path templateRepositoryFolder;
 
@@ -81,8 +98,9 @@ class LocalVCLocalCIIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         database.addUsers(TEST_PREFIX, 1, 0, 0, 0);
         String studentLogin = TEST_PREFIX + "student1";
 
-        Course course = database.addCourseWithOneProgrammingExerciseAndTestCases();
+        Course course = database.addCourseWithOneProgrammingExercise();
         programmingExercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        addTestCases();
         programmingExercise.setReleaseDate(ZonedDateTime.now().minusDays(1));
         programmingExercise.setProjectType(ProjectType.PLAIN_GRADLE);
         programmingExercise.setAllowOfflineIde(true);
@@ -90,7 +108,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractSpringIntegrationLocalCILoca
                 localVCSBaseUrl + "/git/" + programmingExercise.getProjectKey().toUpperCase() + "/" + programmingExercise.getProjectKey().toLowerCase() + "-tests.git");
         programmingExerciseRepository.save(programmingExercise);
         programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).get();
-        ProgrammingExerciseStudentParticipation participation = database.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
+        participation = database.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
         final String repoName = (programmingExercise.getProjectKey() + "-" + studentLogin).toLowerCase();
         participation.setRepositoryUrl(String.format(localVCSBaseUrl + "/git/%s/%s.git", programmingExercise.getProjectKey(), repoName));
         participation.setBranch(defaultBranch);
@@ -115,6 +133,44 @@ class LocalVCLocalCIIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         // Clone the remote assignment repository into a local folder.
         localAssignmentRepositoryFolder = Files.createTempDirectory("localAssignment");
         localAssignmentGit = Git.cloneRepository().setURI(remoteAssignmentRepositoryFolder.toString()).setDirectory(localAssignmentRepositoryFolder.toFile()).call();
+    }
+
+    private void addTestCases() {
+        // Clean up existing test cases
+        testCaseRepository.deleteAll(testCaseRepository.findByExerciseId(programmingExercise.getId()));
+
+        List<ProgrammingExerciseTestCase> testCases = new ArrayList<>();
+        testCases.add(new ProgrammingExerciseTestCase().testName("testClass[SortStrategy]").weight(1.0).active(true).exercise(programmingExercise).visibility(Visibility.ALWAYS)
+                .bonusMultiplier(1D).bonusPoints(0D));
+        testCases.add(new ProgrammingExerciseTestCase().testName("testAttributes[Context]").weight(1.0).active(true).exercise(programmingExercise).visibility(Visibility.ALWAYS)
+                .bonusMultiplier(1D).bonusPoints(0D));
+        testCases.add(new ProgrammingExerciseTestCase().testName("testAttributes[Policy]").weight(1.0).active(true).exercise(programmingExercise).visibility(Visibility.ALWAYS)
+                .bonusMultiplier(1D).bonusPoints(0D));
+        testCases.add(new ProgrammingExerciseTestCase().testName("testClass[MergeSort]").weight(1.0).active(true).exercise(programmingExercise).visibility(Visibility.ALWAYS)
+                .bonusMultiplier(1D).bonusPoints(0D));
+        testCases.add(new ProgrammingExerciseTestCase().testName("testClass[BubbleSort]").weight(1.0).active(true).exercise(programmingExercise).visibility(Visibility.ALWAYS)
+                .bonusMultiplier(1D).bonusPoints(0D));
+        testCases.add(new ProgrammingExerciseTestCase().testName("testConstructors[Policy]").weight(1.0).active(true).exercise(programmingExercise).visibility(Visibility.ALWAYS)
+                .bonusMultiplier(1D).bonusPoints(0D));
+        testCases.add(new ProgrammingExerciseTestCase().testName("testMethods[Context]").weight(1.0).active(true).exercise(programmingExercise).visibility(Visibility.ALWAYS)
+                .bonusMultiplier(1D).bonusPoints(0D));
+        testCases.add(new ProgrammingExerciseTestCase().testName("testMethods[Policy]").weight(1.0).active(true).exercise(programmingExercise).visibility(Visibility.ALWAYS)
+                .bonusMultiplier(1D).bonusPoints(0D));
+        testCases.add(new ProgrammingExerciseTestCase().testName("testMethods[SortStrategy]").weight(1.0).active(true).exercise(programmingExercise).visibility(Visibility.ALWAYS)
+                .bonusMultiplier(1D).bonusPoints(0D));
+        testCases.add(new ProgrammingExerciseTestCase().testName("testMergeSort()").weight(1.0).active(true).exercise(programmingExercise).visibility(Visibility.ALWAYS)
+                .bonusMultiplier(1D).bonusPoints(0D));
+        testCases.add(new ProgrammingExerciseTestCase().testName("testUseBubbleSortForSmallList()").weight(1.0).active(true).exercise(programmingExercise)
+                .visibility(Visibility.ALWAYS).bonusMultiplier(1D).bonusPoints(0D));
+        testCases.add(new ProgrammingExerciseTestCase().testName("testUseMergeSortForBigList()").weight(1.0).active(true).exercise(programmingExercise)
+                .visibility(Visibility.ALWAYS).bonusMultiplier(1D).bonusPoints(0D));
+        testCases.add(new ProgrammingExerciseTestCase().testName("testBubbleSort()").weight(1.0).active(true).exercise(programmingExercise).visibility(Visibility.ALWAYS)
+                .bonusMultiplier(1D).bonusPoints(0D));
+
+        testCaseRepository.saveAll(testCases);
+
+        List<ProgrammingExerciseTestCase> tests = new ArrayList<>(testCaseRepository.findByExerciseId(programmingExercise.getId()));
+        assertThat(tests).as("test case is initialized").hasSize(13);
     }
 
     private Path createRepositoryFolderInTempDirectory(String projectKey, String repositorySlug) {
@@ -224,13 +280,14 @@ class LocalVCLocalCIIntegrationTest extends AbstractSpringIntegrationLocalCILoca
      */
     private Map<String, String> createMapFromTestResultsFolder(Path testResultsPath) throws IOException {
         Map<String, String> resultMap = new HashMap<>();
+        String testResultsPathString = testResultsPath.toString();
 
         Files.walkFileTree(testResultsPath, new SimpleFileVisitor<>() {
 
             @Override
             public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
                 if (!attrs.isDirectory()) {
-                    String key = file.toAbsolutePath().toString();
+                    String key = file.toString().replace(testResultsPathString, "test");
                     String value;
                     if (file.getFileName().toString().endsWith(".xml")) {
                         value = new String(Files.readAllBytes(file));
@@ -248,7 +305,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractSpringIntegrationLocalCILoca
     }
 
     @Test
-    public void testPushAndReceiveResult_allTestCasesFail() throws Exception {
+    public void testPushAndReceiveResult_partlySuccessful() throws Exception {
         // Create a file and push the changes to the remote assignment repository.
         Path testJsonFilePath = Path.of(localAssignmentRepositoryFolder.toString(), "src", programmingExercise.getPackageFolderName(), "test.txt");
         gitUtilService.writeEmptyJsonFileToPath(testJsonFilePath);
@@ -266,23 +323,17 @@ class LocalVCLocalCIIntegrationTest extends AbstractSpringIntegrationLocalCILoca
                 Map.of("testCommitHash", dummyCommitHash));
 
         // Mock dockerClient.copyArchiveFromContainerCmd() such that it returns the XML containing the failed test cases.
-        Path failedTestResultsPath = Paths.get("src", "test", "resources", "test-data", "test-results", "java-gradle", "all-fail");
+        Path failedTestResultsPath = Paths.get("src", "test", "resources", "test-data", "test-results", "java-gradle", "partly-successful");
         localVCLocalCITestService.mockInputStreamReturnedFromContainer(mockDockerClient, "/repositories/test-repository/build/test-results/test",
                 createMapFromTestResultsFolder(failedTestResultsPath));
 
         localAssignmentGit.push().setRemote(constructLocalVCUrl(TEST_PREFIX + "student1", programmingExercise.getProjectKey(), assignmentRepoName)).call();
-    }
 
-    @Test
-    public void testPushAndReceiveResult_someTestCasesFail() {
-        // Prepare programming exercise with template repository, tests repository, and assignment repository for a student.
-
-        // Clone the assignment repository.
-
-        // Make changes to the assignment repository.
-
-        // Push the changes to the assignment repository.
-
-        // Check that the new result was successfully created.
+        // Assert that the latest submission has the correct commit hash and the correct result.
+        ProgrammingSubmission programmingSubmission = programmingSubmissionRepository.findFirstByParticipationIdOrderBySubmissionDateDesc(participation.getId()).get();
+        assertThat(programmingSubmission.getCommitHash()).isEqualTo(commitHash);
+        Result result = programmingSubmission.getLatestResult();
+        assertThat(result.getTestCaseCount()).isEqualTo(13);
+        assertThat(result.getPassedTestCaseCount()).isEqualTo(1);
     }
 }
