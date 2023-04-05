@@ -30,7 +30,7 @@ public class QuizExamResult implements QuizResult {
     }
 
     @Override
-    public Result getResult() {
+    public Result getEntity() {
         return this.result;
     }
 

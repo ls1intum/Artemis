@@ -594,7 +594,7 @@ public class Result extends DomainObject implements Comparable<Result>, QuizResu
 
     @Override
     @JsonIgnore
-    public Result getResult() {
+    public Result getEntity() {
         return this;
     }
 }

@@ -246,17 +246,17 @@ public class ExamQuizService {
         // NOTE: we save participation, submission and result here individually so that one exception (e.g. duplicated key) cannot destroy multiple student answers
         submissionRepository.save(submission);
 
-        QuizResult savedResult = resultRepository.save(result.getResult());
+        QuizResult savedResult = resultRepository.save(result.getEntity());
 
         if (participation != null) {
             // add result to participation
-            participation.addResult(savedResult.getResult());
+            participation.addResult(savedResult.getEntity());
             studentParticipationRepository.save(participation);
         }
 
         // add result to submission
         savedResult.setSubmission(submission);
-        submission.addResult(savedResult.getResult());
+        submission.addResult(savedResult.getEntity());
         submissionRepository.save(submission);
     }
 }

@@ -637,7 +637,7 @@ public class ExamService {
             }
         }
 
-        double quizExamOverallPointsAchieved = calculateAchievedPoints(quizExamMaxPoints, quizExamResult.getResult(), exam.getCourse(), 0.0);
+        double quizExamOverallPointsAchieved = calculateAchievedPoints(quizExamMaxPoints, quizExamResult.getEntity(), exam.getCourse(), 0.0);
         overallPointsAchieved += quizExamOverallPointsAchieved;
 
         // Round the points again to prevent floating point issues that might occur when summing up the exercise points (e.g. 0.3 + 0.3 + 0.3 = 0.8999999999999999)

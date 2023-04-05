@@ -10,8 +10,6 @@ public interface QuizResult {
 
     void evaluateQuizSubmission();
 
-    Result getResult();
-
     void setRated(Boolean rated);
 
     void setAssessmentType(AssessmentType assessmentType);
@@ -19,4 +17,6 @@ public interface QuizResult {
     void setCompletionDate(ZonedDateTime completionDate);
 
     void setSubmission(Submission submission);
+
+    Result getEntity();
 }
