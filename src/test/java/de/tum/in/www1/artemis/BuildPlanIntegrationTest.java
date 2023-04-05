@@ -18,7 +18,7 @@ import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.connectors.jenkins.build_plan.JenkinsPipelineScriptCreator;
 import de.tum.in.www1.artemis.service.programming.ProgrammingTriggerService;
 
-public class BuildPlanIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
+class BuildPlanIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
     private static final String TEST_PREFIX = "buildplanintegration";
 
