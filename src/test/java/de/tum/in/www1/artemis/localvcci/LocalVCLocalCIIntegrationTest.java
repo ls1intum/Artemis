@@ -18,6 +18,9 @@ import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.util.GitUtilService;
 
+/**
+ * This class contains integration tests for the local VC system that should go through successfully to the local CI system.
+ */
 class LocalVCLocalCIIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
     @Autowired
@@ -29,12 +32,14 @@ class LocalVCLocalCIIntegrationTest extends AbstractSpringIntegrationLocalCILoca
     @Autowired
     private ProgrammingSubmissionRepository programmingSubmissionRepository;
 
+    // ---- Tests for the assignment repository ----
+
     /**
      * Test that the connection between the local VC and the local CI system is working.
      * Perform a push to the assignment repository and check that a submission is created and the local CI system successfully builds and tests the source code.
      */
     @Test
-    public void testPushAndReceiveResult() throws Exception {
+    public void testPush_assignmentRepository_student() throws Exception {
         // Create a file and push the changes to the remote assignment repository.
         Path testJsonFilePath = Path.of(localAssignmentRepositoryFolder.toString(), "src", programmingExercise.getPackageFolderName(), "test.txt");
         gitUtilService.writeEmptyJsonFileToPath(testJsonFilePath);
@@ -55,8 +60,8 @@ class LocalVCLocalCIIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         localVCLocalCITestService.mockInputStreamReturnedFromContainer(mockDockerClient, "/repositories/test-repository/build/test-results/test",
                 localVCLocalCITestService.createMapFromTestResultsFolder(failedTestResultsPath));
 
-        localAssignmentGit.push()
-                .setRemote(localVCLocalCITestService.constructLocalVCUrl(TEST_PREFIX + "student1", port, programmingExercise.getProjectKey(), assignmentRepositoryName)).call();
+        localAssignmentGit.push().setRemote(localVCLocalCITestService.constructLocalVCUrl(TEST_PREFIX + "student1", programmingExercise.getProjectKey(), assignmentRepositoryName))
+                .call();
 
         // Assert that the latest submission has the correct commit hash and the correct result.
         ProgrammingSubmission programmingSubmission = programmingSubmissionRepository.findFirstByParticipationIdOrderBySubmissionDateDesc(participation.getId()).orElseThrow();
@@ -64,5 +69,87 @@ class LocalVCLocalCIIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         Result result = programmingSubmission.getLatestResult();
         assertThat(result.getTestCaseCount()).isEqualTo(13);
         assertThat(result.getPassedTestCaseCount()).isEqualTo(1);
+    }
+
+    @Test
+    public void testPush_assignmentRepository_teachingAssistant() {
+        // Teaching assistants and up should be able to push to the student's assignment repository.
+    }
+
+    @Test
+    public void testPush_assignmentRepository_teachingAssistant_beforeStartDate() {
+
+    }
+
+    @Test
+    public void testPush_assignmentRepository_teachingAssistant_afterDueDate() {
+
+    }
+
+    // -------- practice mode ----
+
+    @Test
+    public void testPush_assignmentRepository_student_practiceMode() {
+
+    }
+
+    @Test
+    public void testPush_assignmentRepository_teachingAssistant_practiceMode() {
+        // Teaching assistants and up should be able to push to the student's practice repository.
+    }
+
+    // -------- team mode ----
+
+    @Test
+    public void testPush_assignmentRepository_student_teamMode() {
+
+    }
+
+    @Test
+    public void testPush_assignmentRepository_teachingAssistant_teamMode() {
+        // Teaching assistants and up should be able to push to the student's team repository.
+    }
+
+    // -------- exam mode ----
+
+    @Test
+    public void testPush_assignmentRepository_student_examMode() {
+        // In time, should succeed.
+    }
+
+    @Test
+    public void testPush_assignmentRepository_teachingAssistant_examMode() {
+        // Teaching assistants and up should be able to push to the student's exam repository.
+    }
+
+    @Test
+    public void testPush_assignmentRepository_teachingAssistant_beforeExamStartDate() {
+        // Should succeed.
+    }
+
+    @Test
+    public void testPush_assignmentRepository_teachingAssistant_afterExamEndDate() {
+        // Should succeed.
+    }
+
+    // ---- Tests for the tests repository ----
+
+    @Test
+    public void testPush_testsRepository_teachingAssistant() {
+
+    }
+
+    // ---- Tests for the solution repository ----
+
+    @Test
+    public void testPush_solutionRepository_teachingAssistant() {
+
+    }
+
+    // ---- Tests for the template repository ----
+
+    @Test
+    public void testPush_templateRepository_teachingAssistant() {
+
     }
 }

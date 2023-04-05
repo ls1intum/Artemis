@@ -2,6 +2,8 @@ package de.tum.in.www1.artemis.localvcci;
 
 import static de.tum.in.www1.artemis.util.ModelFactory.USER_PASSWORD;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.doReturn;
@@ -29,11 +31,14 @@ import java.util.Map;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.apache.commons.io.FileUtils;
+import org.eclipse.jgit.api.FetchCommand;
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.PushCommand;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.RefUpdate;
 import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.transport.RefSpec;
 import org.eclipse.jgit.transport.URIish;
 import org.mockito.ArgumentMatcher;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,6 +58,12 @@ public class LocalVCLocalCITestService {
 
     @Value("${artemis.version-control.default-branch:main}")
     private String defaultBranch;
+
+    private int port;
+
+    public void setPort(int port) {
+        this.port = port;
+    }
 
     @Autowired
     private ProgrammingExerciseTestCaseRepository testCaseRepository;
@@ -174,7 +185,9 @@ public class LocalVCLocalCITestService {
         modifyDefaultBranch(localGit);
 
         // Copy the files from "test/resources/test-data/java-templates/..." to the temporary directory.
-        FileUtils.copyDirectory(resourcesFolder, tempDirectory.toFile());
+        if (resourcesFolder != null) {
+            FileUtils.copyDirectory(resourcesFolder, tempDirectory.toFile());
+        }
         // Add all files to the Git repository.
         localGit.add().addFilepattern(".").call();
         // Commit the files.
@@ -199,8 +212,12 @@ public class LocalVCLocalCITestService {
         refUpdate.link("refs/heads/" + defaultBranch);
     }
 
-    public String constructLocalVCUrl(String username, int port, String projectKey, String repositorySlug) {
-        return "http://" + username + ":" + USER_PASSWORD + "@localhost:" + port + "/git/" + projectKey.toUpperCase() + "/" + repositorySlug + ".git";
+    public String constructLocalVCUrl(String username, String projectKey, String repositorySlug) {
+        return constructLocalVCUrl(username, USER_PASSWORD, projectKey, repositorySlug);
+    }
+
+    private String constructLocalVCUrl(String username, String password, String projectKey, String repositorySlug) {
+        return "http://" + username + (password.length() > 0 ? ":" : "") + password + "@localhost:" + port + "/git/" + projectKey.toUpperCase() + "/" + repositorySlug + ".git";
     }
 
     /**
@@ -236,5 +253,60 @@ public class LocalVCLocalCITestService {
         });
 
         return resultMap;
+    }
+
+    public void testFetchSuccessful(Git repositoryHandle, String username, String projectKey, String repositorySlug) {
+        testFetchSuccessful(repositoryHandle, username, USER_PASSWORD, projectKey, repositorySlug);
+    }
+
+    public void testFetchSuccessful(Git repositoryHandle, String username, String password, String projectKey, String repositorySlug) {
+        try {
+            performFetch(repositoryHandle, username, password, projectKey, repositorySlug);
+        }
+        catch (GitAPIException e) {
+            fail("Fetching was not successful: " + e.getMessage());
+        }
+    }
+
+    public <T extends Exception> void testFetchThrowsException(Git repositoryHandle, String username, String projectKey, String repositorySlug, Class<T> expectedException,
+            String expectedMessage) {
+        testFetchThrowsException(repositoryHandle, username, USER_PASSWORD, projectKey, repositorySlug, expectedException, expectedMessage);
+    }
+
+    public <T extends Exception> void testFetchThrowsException(Git repositoryHandle, String username, String password, String projectKey, String repositorySlug,
+            Class<T> expectedException, String expectedMessage) {
+        T exception = assertThrows(expectedException, () -> performFetch(repositoryHandle, username, password, projectKey, repositorySlug));
+        assertThat(exception.getMessage()).contains(expectedMessage);
+    }
+
+    private void performFetch(Git repositoryHandle, String username, String password, String projectKey, String repositorySlug) throws GitAPIException {
+        String repositoryUrl = constructLocalVCUrl(username, password, projectKey, repositorySlug);
+        FetchCommand fetchCommand = repositoryHandle.fetch();
+        // Set the remote URL.
+        fetchCommand.setRemote(repositoryUrl);
+        // Set the refspec to fetch all branches.
+        fetchCommand.setRefSpecs(new RefSpec("+refs/heads/*:refs/remotes/origin/*"));
+        // Execute the fetch.
+        fetchCommand.call();
+    }
+
+    public <T extends Exception> void testPushThrowsException(Git repositoryHandle, String username, String projectKey, String repositorySlug, Class<T> expectedException,
+            String expectedMessage) {
+        testPushThrowsException(repositoryHandle, username, USER_PASSWORD, projectKey, repositorySlug, expectedException, expectedMessage);
+    }
+
+    public <T extends Exception> void testPushThrowsException(Git repositoryHandle, String username, String password, String projectKey, String repositorySlug,
+            Class<T> expectedException, String expectedMessage) {
+        T exception = assertThrows(expectedException, () -> performPush(repositoryHandle, username, password, projectKey, repositorySlug));
+        assertThat(exception.getMessage()).contains(expectedMessage);
+    }
+
+    private void performPush(Git repositoryHandle, String username, String password, String projectKey, String repositorySlug) throws GitAPIException {
+        String repositoryUrl = constructLocalVCUrl(username, password, projectKey, repositorySlug);
+        PushCommand pushCommand = repositoryHandle.push();
+        // Set the remote URL.
+        pushCommand.setRemote(repositoryUrl);
+        // Execute the push.
+        pushCommand.call();
     }
 }

@@ -115,7 +115,9 @@ public class LocalVCFilterService {
             url = new LocalVCRepositoryUrl(servletRequest.getRequestURL().toString().replace("/info/refs", ""), localVCBaseUrl);
         }
         catch (LocalVCException e) {
-            throw new LocalVCBadRequestException("Badly formed Local Git URI: " + servletRequest.getRequestURL().toString().replace("/info/refs", ""), e);
+            // This should never happen. At this point the request already went through the RepositoryResolver, and if the repository was not found, an error was already returned
+            // to the user.
+            throw new LocalVCInternalException("Cannot create LocalVCRepositoryUrl from request: " + servletRequest.getRequestURL().toString().replace("/info/refs", ""), e);
         }
 
         String projectKey = url.getProjectKey();

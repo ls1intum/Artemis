@@ -60,9 +60,7 @@ public class LocalVCServletService {
                 repository.getConfig().setBoolean("http", null, "receivepack", true);
 
                 this.repositories.put(repositoryPath, repository);
-
                 repository.incrementOpen();
-
                 return repository;
             }
             catch (IOException e) {

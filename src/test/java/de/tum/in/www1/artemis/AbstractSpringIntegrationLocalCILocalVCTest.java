@@ -77,7 +77,7 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     protected LocalVCLocalCITestService localVCLocalCITestService;
 
     @Autowired
-    private ProgrammingExerciseRepository programmingExerciseRepository;
+    protected ProgrammingExerciseRepository programmingExerciseRepository;
 
     @Autowired
     private ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
@@ -87,17 +87,33 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
 
     protected static final String dummyCommitHash = "1234567890abcdef";
 
+    // The error messages returned by JGit contain these Strings that correspond to the HTTP status codes.
+    protected static final String notFound = "not found";
+
+    protected static final String notAuthorized = "not authorized";
+
+    protected static final String internalServerError = "500";
+
+    protected static final String forbidden = "not permitted";
+
     protected ProgrammingExercise programmingExercise;
 
     protected ProgrammingExerciseStudentParticipation participation;
 
-    protected Path templateRepositoryFolder;
+    protected String student1Login;
 
+    // ---- Repository handles ----
     protected Git templateGit;
 
-    protected Path testsRepositoryFolder;
+    protected Path templateRepositoryFolder;
 
-    protected Git testsGit;
+    protected Path remoteTestsRepositoryFolder;
+
+    protected Git remoteTestsGit;
+
+    protected Path localTestsRepositoryFolder;
+
+    protected Git localTestsGit;
 
     protected Path remoteAssignmentRepositoryFolder;
 
@@ -111,8 +127,10 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
 
     @BeforeAll
     void initProgrammingExerciseAndRepositories() throws Exception {
+        localVCLocalCITestService.setPort(port);
+
         database.addUsers(TEST_PREFIX, 1, 0, 0, 0);
-        String studentLogin = TEST_PREFIX + "student1";
+        student1Login = TEST_PREFIX + "student1";
 
         Course course = database.addCourseWithOneProgrammingExercise();
         programmingExercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
@@ -124,7 +142,7 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
         programmingExerciseRepository.save(programmingExercise);
         programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).orElseThrow();
         participation = database.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
-        assignmentRepositoryName = (programmingExercise.getProjectKey() + "-" + studentLogin).toLowerCase();
+        assignmentRepositoryName = (programmingExercise.getProjectKey() + "-" + student1Login).toLowerCase();
         participation.setRepositoryUrl(String.format(localVCSBaseUrl + "/git/%s/%s.git", programmingExercise.getProjectKey(), assignmentRepositoryName));
         participation.setBranch(defaultBranch);
         programmingExerciseStudentParticipationRepository.save(participation);
@@ -136,15 +154,17 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
         ClassPathResource templateResource = new ClassPathResource("test-data/java-templates/exercise");
         templateGit = localVCLocalCITestService.createGitRepository(templateRepositoryFolder, templateResource.getFile());
         final String testsRepoName = programmingExercise.getProjectKey().toLowerCase() + "-tests";
-        testsRepositoryFolder = localVCLocalCITestService.createRepositoryFolderInTempDirectory(programmingExercise.getProjectKey(), testsRepoName);
+        remoteTestsRepositoryFolder = localVCLocalCITestService.createRepositoryFolderInTempDirectory(programmingExercise.getProjectKey(), testsRepoName);
         ClassPathResource testsResource = new ClassPathResource("test-data/java-templates/tests");
-        testsGit = localVCLocalCITestService.createGitRepository(testsRepositoryFolder, testsResource.getFile());
+        remoteTestsGit = localVCLocalCITestService.createGitRepository(remoteTestsRepositoryFolder, testsResource.getFile());
+        // Clone the remote tests repository into a local folder.
+        localTestsRepositoryFolder = Files.createTempDirectory("localTests");
+        localTestsGit = Git.cloneRepository().setURI(remoteTestsRepositoryFolder.toString()).setDirectory(localTestsRepositoryFolder.toFile()).call();
 
         // Create remote assignment repository
         remoteAssignmentRepositoryFolder = localVCLocalCITestService.createRepositoryFolderInTempDirectory(programmingExercise.getProjectKey(), assignmentRepositoryName);
         ClassPathResource assignmentResource = new ClassPathResource("test-data/java-templates/exercise");
         remoteAssignmentGit = localVCLocalCITestService.createGitRepository(remoteAssignmentRepositoryFolder, assignmentResource.getFile());
-
         // Clone the remote assignment repository into a local folder.
         localAssignmentRepositoryFolder = Files.createTempDirectory("localAssignment");
         localAssignmentGit = Git.cloneRepository().setURI(remoteAssignmentRepositoryFolder.toString()).setDirectory(localAssignmentRepositoryFolder.toFile()).call();
@@ -155,8 +175,8 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
         if (templateGit != null) {
             templateGit.close();
         }
-        if (testsGit != null) {
-            testsGit.close();
+        if (remoteTestsGit != null) {
+            remoteTestsGit.close();
         }
         if (remoteAssignmentGit != null) {
             remoteAssignmentGit.close();
@@ -167,8 +187,8 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
         if (templateRepositoryFolder != null && Files.exists(templateRepositoryFolder)) {
             FileUtils.deleteDirectory(templateRepositoryFolder.toFile());
         }
-        if (testsRepositoryFolder != null && Files.exists(testsRepositoryFolder)) {
-            FileUtils.deleteDirectory(testsRepositoryFolder.toFile());
+        if (remoteTestsRepositoryFolder != null && Files.exists(remoteTestsRepositoryFolder)) {
+            FileUtils.deleteDirectory(remoteTestsRepositoryFolder.toFile());
         }
         if (remoteAssignmentRepositoryFolder != null && Files.exists(remoteAssignmentRepositoryFolder)) {
             FileUtils.deleteDirectory(remoteAssignmentRepositoryFolder.toFile());
