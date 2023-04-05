@@ -130,9 +130,7 @@ public class LocalCIExecutorService {
             throw new IOException("Resource does not exist: " + path);
         }
 
-        URL resourceUrl;
-
-        resourceUrl = resource.getURL();
+        URL resourceUrl = resource.getURL();
 
         if (resourceUrl.getProtocol().equals("file")) {
             // Resource is in the file system.

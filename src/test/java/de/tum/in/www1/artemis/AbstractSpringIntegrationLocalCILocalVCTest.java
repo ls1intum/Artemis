@@ -22,7 +22,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
-import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
@@ -151,20 +150,19 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
         // Create template and tests repository
         final String templateRepositoryName = programmingExercise.getProjectKey().toLowerCase() + "-exercise";
         templateRepositoryFolder = localVCLocalCITestService.createRepositoryFolderInTempDirectory(programmingExercise.getProjectKey(), templateRepositoryName);
-        ClassPathResource templateResource = new ClassPathResource("test-data/java-templates/exercise");
-        templateGit = localVCLocalCITestService.createGitRepository(templateRepositoryFolder, templateResource.getFile());
+        Path templateResourcePath = Path.of("test-data", "java-templates", "exercise");
+        templateGit = localVCLocalCITestService.createGitRepository(templateRepositoryFolder, templateResourcePath);
         final String testsRepoName = programmingExercise.getProjectKey().toLowerCase() + "-tests";
         remoteTestsRepositoryFolder = localVCLocalCITestService.createRepositoryFolderInTempDirectory(programmingExercise.getProjectKey(), testsRepoName);
-        ClassPathResource testsResource = new ClassPathResource("test-data/java-templates/tests");
-        remoteTestsGit = localVCLocalCITestService.createGitRepository(remoteTestsRepositoryFolder, testsResource.getFile());
+        Path testsResourcePath = Path.of("test-data", "java-templates", "tests");
+        remoteTestsGit = localVCLocalCITestService.createGitRepository(remoteTestsRepositoryFolder, testsResourcePath);
         // Clone the remote tests repository into a local folder.
         localTestsRepositoryFolder = Files.createTempDirectory("localTests");
         localTestsGit = Git.cloneRepository().setURI(remoteTestsRepositoryFolder.toString()).setDirectory(localTestsRepositoryFolder.toFile()).call();
 
         // Create remote assignment repository
         remoteAssignmentRepositoryFolder = localVCLocalCITestService.createRepositoryFolderInTempDirectory(programmingExercise.getProjectKey(), assignmentRepositoryName);
-        ClassPathResource assignmentResource = new ClassPathResource("test-data/java-templates/exercise");
-        remoteAssignmentGit = localVCLocalCITestService.createGitRepository(remoteAssignmentRepositoryFolder, assignmentResource.getFile());
+        remoteAssignmentGit = localVCLocalCITestService.createGitRepository(remoteAssignmentRepositoryFolder, templateResourcePath);
         // Clone the remote assignment repository into a local folder.
         localAssignmentRepositoryFolder = Files.createTempDirectory("localAssignment");
         localAssignmentGit = Git.cloneRepository().setURI(remoteAssignmentRepositoryFolder.toString()).setDirectory(localAssignmentRepositoryFolder.toFile()).call();
