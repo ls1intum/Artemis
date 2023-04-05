@@ -117,6 +117,7 @@
         </div>
         <jhi-overlay-centered *ngIf="waitingForExamStart">
             <span>{{ 'artemisApp.examParticipation.waitForStart' | artemisTranslate : { title: exam.title } }}</span>
+            <hr />
             <jhi-countdown
                 *ngIf="exam.startDate"
                 [targetDate]="exam.startDate"
