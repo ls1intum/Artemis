@@ -211,13 +211,7 @@
     <jhi-overlay-centered *ngIf="waitingForQuizStart">
         <ng-container *ngIf="quizBatch || quizExercise.quizMode === QuizMode.SYNCHRONIZED">
             <span jhiTranslate="artemisApp.quizExercise.quizInstructions.waitForStart"></span>
-            <div *ngIf="startDate">
-                <hr />
-                <span jhiTranslate="artemisApp.quizExercise.quizInstructions.timeUntilPlannedStart"></span>
-                <span class="text-bold">{{ timeUntilStart }}</span>
-                <br />
-                <span>({{ quizExercise.releaseDate!.format('LT') }})</span>
-            </div>
+            <jhi-countdown *ngIf="startDate" [targetDate]="startDate"></jhi-countdown>
         </ng-container>
         <ng-container *ngIf="!quizBatch && quizExercise.quizMode === QuizMode.BATCHED && (quizExercise.remainingNumberOfAttempts ?? 1) > 0">
             <div jhiTranslate="artemisApp.quizExercise.quizInstructions.enterPassword"></div>

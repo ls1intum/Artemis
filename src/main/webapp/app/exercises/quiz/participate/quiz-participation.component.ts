@@ -80,7 +80,6 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
 
     remainingTimeText = '?';
     remainingTimeSeconds = 0;
-    timeUntilStart = '0';
     disconnected = false;
     unsavedChanges = false;
 
@@ -398,31 +397,23 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
             this.lastSavedTimeText = dayjs(this.submission.submissionDate).fromNow();
         }
 
-        // update time until start
-        if (this.quizBatch && this.startDate) {
-            if (this.startDate.isAfter(this.serverDateService.now())) {
-                this.timeUntilStart = this.relativeTimeText(this.startDate.diff(this.serverDateService.now(), 'seconds'));
-            } else {
-                this.timeUntilStart = this.translateService.instant(translationBasePath + 'now');
-                // Check if websocket has updated the quiz exercise and check that following block is only executed once
-                if (!this.quizBatch.started && !this.quizStarted) {
-                    this.quizStarted = true;
-                    if (this.quizExercise.quizMode === QuizMode.INDIVIDUAL) {
-                        // there is not websocket notification for INDIVIDUAL mode so just load the quiz
-                        this.refreshQuiz(true);
-                    } else {
-                        // Refresh quiz after 5 seconds when client did not receive websocket message to start the quiz
-                        setTimeout(() => {
-                            // Check again if websocket has updated the quiz exercise within the 5 seconds
-                            if (!this.quizBatch || !this.quizBatch.started) {
-                                this.refreshQuiz(true);
-                            }
-                        }, 5000);
-                    }
+        if (this.quizBatch && this.startDate && !this.startDate.isAfter(this.serverDateService.now())) {
+            // Check if websocket has updated the quiz exercise and check that following block is only executed once
+            if (!this.quizBatch.started && !this.quizStarted) {
+                this.quizStarted = true;
+                if (this.quizExercise.quizMode === QuizMode.INDIVIDUAL) {
+                    // there is not websocket notification for INDIVIDUAL mode so just load the quiz
+                    this.refreshQuiz(true);
+                } else {
+                    // Refresh quiz after 5 seconds when client did not receive websocket message to start the quiz
+                    setTimeout(() => {
+                        // Check again if websocket has updated the quiz exercise within the 5 seconds
+                        if (!this.quizBatch || !this.quizBatch.started) {
+                            this.refreshQuiz(true);
+                        }
+                    }, 5000);
                 }
             }
-        } else {
-            this.timeUntilStart = '';
         }
     }
 
