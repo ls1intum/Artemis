@@ -23,6 +23,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
@@ -125,6 +126,7 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     protected Git localAssignmentGit;
 
     @BeforeAll
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void initProgrammingExerciseAndRepositories() throws Exception {
         localVCLocalCITestService.setPort(port);
 

@@ -58,6 +58,7 @@ public class LocalVCLocalCITestService {
     @Value("${artemis.version-control.default-branch:main}")
     private String defaultBranch;
 
+    // Cannot inject {local.server.port} here, because it is not available at the time this class is instantiated.
     private int port;
 
     public void setPort(int port) {
