@@ -3,19 +3,13 @@ package de.tum.in.www1.artemis;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Set;
 
-import org.apache.commons.io.FileUtils;
-import org.eclipse.jgit.api.Git;
 import org.gitlab4j.api.GitLabApiException;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -65,8 +59,6 @@ import io.zonky.test.db.AutoConfigureEmbeddedDatabase;
         "artemis.continuous-integration.build.images.java.default=dummy-docker-image" })
 // Contains the mock setup for the DockerClient.
 @ContextConfiguration(classes = LocalVCLocalCITestConfig.class)
-// Enable @BeforeAll and @AfterAll
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends AbstractArtemisIntegrationTest {
 
     protected static final String TEST_PREFIX = "localvclocalciintegration";
@@ -131,31 +123,12 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
 
     protected String tutor1Login;
 
-    // ---- Repository handles ----
-    protected Git templateGit;
-
-    protected Path templateRepositoryFolder;
-
-    protected Path remoteTestsRepositoryFolder;
-
-    protected Git remoteTestsGit;
-
-    protected Path localTestsRepositoryFolder;
-
-    protected Git localTestsGit;
-
-    protected Path remoteAssignmentRepositoryFolder;
-
-    protected Git remoteAssignmentGit;
-
     protected String assignmentRepositoryName;
 
-    protected Path localAssignmentRepositoryFolder;
-
-    protected Git localAssignmentGit;
-
-    @BeforeAll
-    void initProgrammingExerciseAndRepositories() throws Exception {
+    @BeforeEach
+    void initUsersAndExercise() {
+        // The port cannot be injected into the LocalVCLocalCITestService because {local.server.port} is not available when the class is instantiated.
+        // Thus, "inject" the port from here.
         localVCLocalCITestService.setPort(port);
 
         List<User> users = database.addUsers(TEST_PREFIX, 2, 1, 0, 0);
@@ -166,7 +139,7 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
 
         // Set the Authentication object for student1 in the SecurityContextHolder.
         // This is necessary because the "database.addStudentParticipationForProgrammingExercise()" below needs the Authentication object set.
-        // In tests, this is done using e.g. @WithMockUser(username="student1", roles="USER"), but this does not work on this @BeforeAll method.
+        // In tests, this is done using e.g. @WithMockUser(username="student1", roles="USER"), but this does not work on this @BeforeEach method.
         List<SimpleGrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("ROLE_USER"));
         Authentication authentication = new UsernamePasswordAuthenticationToken(student1Login, null, authorities);
         SecurityContextHolder.getContext().setAuthentication(authentication);
@@ -188,63 +161,6 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
         programmingExerciseStudentParticipationRepository.save(participation);
 
         localVCLocalCITestService.addTestCases(programmingExercise);
-
-        // Create template and tests repository
-        final String templateRepositoryName = projectKey1.toLowerCase() + "-exercise";
-        templateRepositoryFolder = localVCLocalCITestService.createRepositoryFolderInTempDirectory(projectKey1, templateRepositoryName);
-        templateGit = localVCLocalCITestService.createGitRepository(templateRepositoryFolder);
-        final String testsRepoName = projectKey1.toLowerCase() + "-tests";
-        remoteTestsRepositoryFolder = localVCLocalCITestService.createRepositoryFolderInTempDirectory(projectKey1, testsRepoName);
-        remoteTestsGit = localVCLocalCITestService.createGitRepository(remoteTestsRepositoryFolder);
-        // Clone the remote tests repository into a local folder.
-        localTestsRepositoryFolder = Files.createTempDirectory("localTests");
-        localTestsGit = Git.cloneRepository().setURI(remoteTestsRepositoryFolder.toString()).setDirectory(localTestsRepositoryFolder.toFile()).call();
-
-        // Create remote assignment repository
-        remoteAssignmentRepositoryFolder = localVCLocalCITestService.createRepositoryFolderInTempDirectory(projectKey1, assignmentRepositoryName);
-        remoteAssignmentGit = localVCLocalCITestService.createGitRepository(remoteAssignmentRepositoryFolder);
-        // Clone the remote assignment repository into a local folder.
-        localAssignmentRepositoryFolder = Files.createTempDirectory("localAssignment");
-        localAssignmentGit = Git.cloneRepository().setURI(remoteAssignmentRepositoryFolder.toString()).setDirectory(localAssignmentRepositoryFolder.toFile()).call();
-    }
-
-    @AfterAll
-    void removeRepositories() throws IOException {
-        if (templateGit != null) {
-            templateGit.close();
-        }
-        if (remoteTestsGit != null) {
-            remoteTestsGit.close();
-        }
-        if (localTestsGit != null) {
-            localTestsGit.close();
-        }
-        if (remoteAssignmentGit != null) {
-            remoteAssignmentGit.close();
-        }
-        if (localAssignmentGit != null) {
-            localAssignmentGit.close();
-        }
-        if (templateRepositoryFolder != null && Files.exists(templateRepositoryFolder)) {
-            FileUtils.deleteDirectory(templateRepositoryFolder.toFile());
-        }
-        if (remoteTestsRepositoryFolder != null && Files.exists(remoteTestsRepositoryFolder)) {
-            FileUtils.deleteDirectory(remoteTestsRepositoryFolder.toFile());
-        }
-        if (localTestsRepositoryFolder != null && Files.exists(localTestsRepositoryFolder)) {
-            FileUtils.deleteDirectory(localTestsRepositoryFolder.toFile());
-        }
-        if (remoteAssignmentRepositoryFolder != null && Files.exists(remoteAssignmentRepositoryFolder)) {
-            FileUtils.deleteDirectory(remoteAssignmentRepositoryFolder.toFile());
-        }
-        if (localAssignmentRepositoryFolder != null && Files.exists(localAssignmentRepositoryFolder)) {
-            FileUtils.deleteDirectory(localAssignmentRepositoryFolder.toFile());
-        }
-    }
-
-    @AfterEach
-    protected void resetSpyBeans() {
-        super.resetSpyBeans();
     }
 
     /**

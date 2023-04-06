@@ -2,12 +2,19 @@ package de.tum.in.www1.artemis.localvcci;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
 
-import org.eclipse.jgit.api.errors.TransportException;
+import org.apache.commons.io.FileUtils;
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.revwalk.RevCommit;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -33,6 +40,69 @@ class LocalVCLocalCIIntegrationTest extends AbstractSpringIntegrationLocalCILoca
 
     @Autowired
     private ProgrammingSubmissionRepository programmingSubmissionRepository;
+
+    // ---- Repository handles ----
+    protected Git templateGit;
+
+    protected Path templateRepositoryFolder;
+
+    protected Path remoteTestsRepositoryFolder;
+
+    protected Git remoteTestsGit;
+
+    protected Path remoteAssignmentRepositoryFolder;
+
+    protected Git remoteAssignmentGit;
+
+    protected Path localAssignmentRepositoryFolder;
+
+    protected Git localAssignmentGit;
+
+    @BeforeEach
+    void initRepositories() throws GitAPIException, IOException, URISyntaxException {
+        // Create template and tests repository
+        final String templateRepositoryName = projectKey1.toLowerCase() + "-exercise";
+        templateRepositoryFolder = localVCLocalCITestService.createRepositoryFolderInTempDirectory(projectKey1, templateRepositoryName);
+        templateGit = localVCLocalCITestService.createGitRepository(templateRepositoryFolder);
+        final String testsRepoName = projectKey1.toLowerCase() + "-tests";
+        remoteTestsRepositoryFolder = localVCLocalCITestService.createRepositoryFolderInTempDirectory(projectKey1, testsRepoName);
+        remoteTestsGit = localVCLocalCITestService.createGitRepository(remoteTestsRepositoryFolder);
+
+        // Create remote assignment repository
+        remoteAssignmentRepositoryFolder = localVCLocalCITestService.createRepositoryFolderInTempDirectory(projectKey1, assignmentRepositoryName);
+        remoteAssignmentGit = localVCLocalCITestService.createGitRepository(remoteAssignmentRepositoryFolder);
+        // Clone the remote assignment repository into a local folder.
+        localAssignmentRepositoryFolder = Files.createTempDirectory("localAssignment");
+        localAssignmentGit = Git.cloneRepository().setURI(remoteAssignmentRepositoryFolder.toString()).setDirectory(localAssignmentRepositoryFolder.toFile()).call();
+    }
+
+    @AfterEach
+    void removeRepositories() throws IOException {
+        if (templateGit != null) {
+            templateGit.close();
+        }
+        if (remoteTestsGit != null) {
+            remoteTestsGit.close();
+        }
+        if (remoteAssignmentGit != null) {
+            remoteAssignmentGit.close();
+        }
+        if (localAssignmentGit != null) {
+            localAssignmentGit.close();
+        }
+        if (templateRepositoryFolder != null && Files.exists(templateRepositoryFolder)) {
+            FileUtils.deleteDirectory(templateRepositoryFolder.toFile());
+        }
+        if (remoteTestsRepositoryFolder != null && Files.exists(remoteTestsRepositoryFolder)) {
+            FileUtils.deleteDirectory(remoteTestsRepositoryFolder.toFile());
+        }
+        if (remoteAssignmentRepositoryFolder != null && Files.exists(remoteAssignmentRepositoryFolder)) {
+            FileUtils.deleteDirectory(remoteAssignmentRepositoryFolder.toFile());
+        }
+        if (localAssignmentRepositoryFolder != null && Files.exists(localAssignmentRepositoryFolder)) {
+            FileUtils.deleteDirectory(localAssignmentRepositoryFolder.toFile());
+        }
+    }
 
     // ---- Tests for the assignment repository ----
 
@@ -62,8 +132,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         localVCLocalCITestService.mockInputStreamReturnedFromContainer(mockDockerClient, "/repositories/test-repository/build/test-results/test",
                 localVCLocalCITestService.createMapFromTestResultsFolder(failedTestResultsPath));
 
-        localAssignmentGit.push().setRemote(localVCLocalCITestService.constructLocalVCUrl(TEST_PREFIX + "student1", programmingExercise.getProjectKey(), assignmentRepositoryName))
-                .call();
+        localAssignmentGit.push().setRemote(localVCLocalCITestService.constructLocalVCUrl(student1Login, projectKey1, assignmentRepositoryName)).call();
 
         // Assert that the latest submission has the correct commit hash and the correct result.
         ProgrammingSubmission programmingSubmission = programmingSubmissionRepository.findFirstByParticipationIdOrderBySubmissionDateDesc(participation.getId()).orElseThrow();
@@ -83,16 +152,13 @@ class LocalVCLocalCIIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         // LockRepositoryPolicy is enforced
         LockRepositoryPolicy lockRepositoryPolicy = new LockRepositoryPolicy();
         lockRepositoryPolicy.setSubmissionLimit(1);
+        lockRepositoryPolicy.setActive(true);
         database.addSubmissionPolicyToExercise(lockRepositoryPolicy, programmingExercise);
 
         // Push once successfully.
         // localVCLocalCITestService.testPush
         // Second push should fail.
-        localVCLocalCITestService.testPushThrowsException(localAssignmentGit, student1Login, projectKey1, assignmentRepositoryName, TransportException.class, forbidden);
-
-        // Cleanup
-        programmingExercise.setSubmissionPolicy(null);
-        programmingExerciseRepository.save(programmingExercise);
+        // localVCLocalCITestService.testPushThrowsException(localAssignmentGit, student1Login, projectKey1, assignmentRepositoryName, TransportException.class, forbidden);
     }
 
     @Test

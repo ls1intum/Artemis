@@ -17,7 +17,10 @@ import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.InvalidRemoteException;
 import org.eclipse.jgit.api.errors.TransportException;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationLocalCILocalVCTest;
 import de.tum.in.www1.artemis.domain.Team;
@@ -28,10 +31,43 @@ import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 
 /**
- * This class contains integration tests for the local VC system that should not touch the local CI system (i.e. either fetch requests or failing push requests).
- * Note: All test cases are prepared by the @BeforeAll in the {@link AbstractSpringIntegrationLocalCILocalVCTest}. Make sure to clean up in each test case.
+ * This class contains integration tests requesting the assignment repository that should not touch the local CI system (i.e. either fetch requests or failing push requests).
  */
-class LocalVCIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
+class LocalVCAssignmentRepositoryIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
+
+    protected Path remoteAssignmentRepositoryFolder;
+
+    protected Git remoteAssignmentGit;
+
+    protected Path localAssignmentRepositoryFolder;
+
+    protected Git localAssignmentGit;
+
+    @BeforeEach
+    void initRepository() throws GitAPIException, IOException, URISyntaxException {
+        // Create remote assignment repository
+        remoteAssignmentRepositoryFolder = localVCLocalCITestService.createRepositoryFolderInTempDirectory(projectKey1, assignmentRepositoryName);
+        remoteAssignmentGit = localVCLocalCITestService.createGitRepository(remoteAssignmentRepositoryFolder);
+        // Clone the remote assignment repository into a local folder.
+        localAssignmentRepositoryFolder = Files.createTempDirectory("localAssignment");
+        localAssignmentGit = Git.cloneRepository().setURI(remoteAssignmentRepositoryFolder.toString()).setDirectory(localAssignmentRepositoryFolder.toFile()).call();
+    }
+
+    @AfterEach
+    void removeRepositories() throws IOException {
+        if (remoteAssignmentGit != null) {
+            remoteAssignmentGit.close();
+        }
+        if (localAssignmentGit != null) {
+            localAssignmentGit.close();
+        }
+        if (remoteAssignmentRepositoryFolder != null && Files.exists(remoteAssignmentRepositoryFolder)) {
+            FileUtils.deleteDirectory(remoteAssignmentRepositoryFolder.toFile());
+        }
+        if (localAssignmentRepositoryFolder != null && Files.exists(localAssignmentRepositoryFolder)) {
+            FileUtils.deleteDirectory(localAssignmentRepositoryFolder.toFile());
+        }
+    }
 
     @Test
     void testFetch_repositoryDoesNotExist() {
@@ -138,6 +174,7 @@ class LocalVCIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest
 
         localVCLocalCITestService.testFetchThrowsException(localGit, student2Login, projectKey1, repositorySlug, TransportException.class, internalServerError);
         localVCLocalCITestService.testPushThrowsException(localGit, student2Login, projectKey1, repositorySlug, TransportException.class, internalServerError);
+
         // Cleanup
         localGit.close();
         FileUtils.deleteDirectory(localRepositoryFolder.toFile());
@@ -158,10 +195,6 @@ class LocalVCIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest
         programmingExerciseRepository.save(programmingExercise);
 
         localVCLocalCITestService.testPushThrowsException(localAssignmentGit, student1Login, projectKey1, assignmentRepositoryName, TransportException.class, forbidden);
-
-        // Cleanup
-        programmingExercise.setStartDate(ZonedDateTime.now().minusHours(1));
-        programmingExerciseRepository.save(programmingExercise);
     }
 
     @Test
@@ -171,10 +204,6 @@ class LocalVCIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest
 
         localVCLocalCITestService.testFetchSuccessful(localAssignmentGit, student1Login, projectKey1, assignmentRepositoryName);
         localVCLocalCITestService.testPushThrowsException(localAssignmentGit, student1Login, projectKey1, assignmentRepositoryName, TransportException.class, forbidden);
-
-        // Cleanup
-        programmingExercise.setDueDate(ZonedDateTime.now().plusHours(1));
-        programmingExerciseRepository.save(programmingExercise);
     }
 
     // -------- practice mode ----
@@ -208,17 +237,15 @@ class LocalVCIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest
         FileUtils.deleteDirectory(localRepositoryFolder.toFile());
         remoteGit.close();
         FileUtils.deleteDirectory(remoteRepositoryFolder.toFile());
+        programmingExerciseStudentParticipationRepository.delete(practiceParticipation);
     }
 
     // -------- team mode ----
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testFetch_assignmentRepository_student_teamMode() throws GitAPIException, IOException, URISyntaxException {
-        // Switch exercise to team mode.
-        // ProgrammingExercise teamProgrammingExercise = database.addProgrammingExerciseToCourse(course, false, false, ProgrammingLanguage.JAVA, "Team Exercise", "TEAMEX");
         programmingExercise.setMode(ExerciseMode.TEAM);
-        // teamProgrammingExercise.setReleaseDate(ZonedDateTime.now().minusDays(1));
-        // teamProgrammingExercise.setAllowOfflineIde(true);
         programmingExerciseRepository.save(programmingExercise);
 
         // Create a new team repository.
@@ -262,8 +289,6 @@ class LocalVCIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest
         FileUtils.deleteDirectory(remoteRepositoryFolder.toFile());
         programmingExerciseStudentParticipationRepository.delete(teamParticipation);
         teamRepository.delete(team);
-        programmingExercise.setMode(ExerciseMode.INDIVIDUAL);
-        programmingExerciseRepository.save(programmingExercise);
     }
 
     // -------- exam mode ----
@@ -312,33 +337,6 @@ class LocalVCIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest
         studentExamRepository.delete(studentExam);
         examRepository.delete(exam);
         exerciseGroupRepository.delete(exerciseGroup);
-    }
-
-    // ---- Tests for the tests repository ----
-
-    @Test
-    void testFetch_testsRepository_student() {
-        // The tests repository can only be fetched by users that are at least teaching assistants in the course.
-    }
-
-    @Test
-    void testPush_testsRepository_student() {
-        // The tests repository can only be pushed to by users that are at least teaching assistants in the course.
-    }
-
-    @Test
-    void testFetch_testsRepository_teachingAssistant() {
-        // Should be successful
-    }
-
-    @Test
-    void testFetch_testsRepository_teachingAssistant_noParticipation() {
-
-    }
-
-    @Test
-    void testPush_testsRepository_teachingAssistant_noParticipation() {
-
     }
 
     // ---- Tests for the solution repository ----
