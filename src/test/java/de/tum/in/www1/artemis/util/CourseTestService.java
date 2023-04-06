@@ -1949,14 +1949,17 @@ public class CourseTestService {
         // Generate a course that has an archive
         var course = database.addCourseWithOneProgrammingExercise(false, false, ProgrammingLanguage.JAVA);
         course.setCourseArchivePath("some-archive-path");
-        courseRepo.save(course);
+        course = courseRepo.save(course);
 
-        var programmingExercise = programmingExerciseRepository.findAllWithEagerTemplateAndSolutionParticipations().get(0);
-        database.addStudentParticipationForProgrammingExercise(programmingExercise, userPrefix + "student1");
+        final ProgrammingExercise courseExercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
+
+        final var programmingExercise = programmingExerciseRepository.findWithEagerTemplateAndSolutionParticipationsById(courseExercise.getId()).orElseThrow();
         database.addStudentParticipationForProgrammingExercise(programmingExercise, userPrefix + "student1");
 
-        mockDelegate.mockDeleteRepository(programmingExercise.getProjectKey(), (programmingExercise.getProjectKey()).toLowerCase() + "-student1", false);
-        var buildPlanId = (programmingExercise.getProjectKey() + "-student1").toUpperCase();
+        final String repoSuffix = "-" + userPrefix + "student1";
+
+        mockDelegate.mockDeleteRepository(programmingExercise.getProjectKey(), (programmingExercise.getProjectKey()).toLowerCase() + repoSuffix, false);
+        var buildPlanId = (programmingExercise.getProjectKey() + repoSuffix).toUpperCase();
         mockDelegate.mockDeleteBuildPlan(programmingExercise.getProjectKey(), buildPlanId, false);
         request.delete("/api/courses/" + course.getId() + "/cleanup", HttpStatus.OK);
 
