@@ -6,6 +6,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
 
+import org.eclipse.jgit.api.errors.TransportException;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +16,7 @@ import com.github.dockerjava.api.DockerClient;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationLocalCILocalVCTest;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.util.GitUtilService;
 
@@ -74,6 +76,23 @@ class LocalVCLocalCIIntegrationTest extends AbstractSpringIntegrationLocalCILoca
     @Test
     void testPush_assignmentRepository_teachingAssistant() {
         // Teaching assistants and up should be able to push to the student's assignment repository.
+    }
+
+    @Test
+    void testPush_assignmentRepository_student_tooManySubmissions() {
+        // LockRepositoryPolicy is enforced
+        LockRepositoryPolicy lockRepositoryPolicy = new LockRepositoryPolicy();
+        lockRepositoryPolicy.setSubmissionLimit(1);
+        database.addSubmissionPolicyToExercise(lockRepositoryPolicy, programmingExercise);
+
+        // Push once successfully.
+        // localVCLocalCITestService.testPush
+        // Second push should fail.
+        localVCLocalCITestService.testPushThrowsException(localAssignmentGit, student1Login, projectKey1, assignmentRepositoryName, TransportException.class, forbidden);
+
+        // Cleanup
+        programmingExercise.setSubmissionPolicy(null);
+        programmingExerciseRepository.save(programmingExercise);
     }
 
     @Test

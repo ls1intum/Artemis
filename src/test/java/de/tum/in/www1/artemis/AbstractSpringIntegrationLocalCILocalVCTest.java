@@ -43,8 +43,12 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipat
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.localvcci.LocalVCLocalCITestConfig;
 import de.tum.in.www1.artemis.localvcci.LocalVCLocalCITestService;
+import de.tum.in.www1.artemis.repository.ExamRepository;
+import de.tum.in.www1.artemis.repository.ExerciseGroupRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.StudentExamRepository;
+import de.tum.in.www1.artemis.repository.TeamRepository;
 import de.tum.in.www1.artemis.util.AbstractArtemisIntegrationTest;
 import io.zonky.test.db.AutoConfigureEmbeddedDatabase;
 
@@ -83,7 +87,19 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     protected ProgrammingExerciseRepository programmingExerciseRepository;
 
     @Autowired
-    private ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
+    protected ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
+
+    @Autowired
+    protected TeamRepository teamRepository;
+
+    @Autowired
+    protected ExerciseGroupRepository exerciseGroupRepository;
+
+    @Autowired
+    protected ExamRepository examRepository;
+
+    @Autowired
+    protected StudentExamRepository studentExamRepository;
 
     @LocalServerPort
     protected int port;
@@ -99,11 +115,21 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
 
     protected static final String forbidden = "not permitted";
 
+    protected Course course;
+
     protected ProgrammingExercise programmingExercise;
 
     protected ProgrammingExerciseStudentParticipation participation;
 
     protected String student1Login;
+
+    protected User student1;
+
+    protected String student2Login;
+
+    protected String projectKey1;
+
+    protected String tutor1Login;
 
     // ---- Repository handles ----
     protected Git templateGit;
@@ -132,8 +158,11 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     void initProgrammingExerciseAndRepositories() throws Exception {
         localVCLocalCITestService.setPort(port);
 
-        database.addUsers(TEST_PREFIX, 2, 0, 0, 0);
+        List<User> users = database.addUsers(TEST_PREFIX, 2, 1, 0, 0);
         student1Login = TEST_PREFIX + "student1";
+        student1 = users.stream().filter(user -> student1Login.equals(user.getLogin())).findFirst().orElseThrow();
+        student2Login = TEST_PREFIX + "student2";
+        tutor1Login = TEST_PREFIX + "tutor1";
 
         // Set the Authentication object for student1 in the SecurityContextHolder.
         // This is necessary because the "database.addStudentParticipationForProgrammingExercise()" below needs the Authentication object set.
@@ -142,37 +171,37 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
         Authentication authentication = new UsernamePasswordAuthenticationToken(student1Login, null, authorities);
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        Course course = database.addCourseWithOneProgrammingExercise();
+        course = database.addCourseWithOneProgrammingExercise();
         programmingExercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        projectKey1 = programmingExercise.getProjectKey();
         programmingExercise.setReleaseDate(ZonedDateTime.now().minusDays(1));
         programmingExercise.setProjectType(ProjectType.PLAIN_GRADLE);
         programmingExercise.setAllowOfflineIde(true);
-        programmingExercise.setTestRepositoryUrl(
-                localVCSBaseUrl + "/git/" + programmingExercise.getProjectKey().toUpperCase() + "/" + programmingExercise.getProjectKey().toLowerCase() + "-tests.git");
+        programmingExercise.setTestRepositoryUrl(localVCSBaseUrl + "/git/" + projectKey1 + "/" + projectKey1.toLowerCase() + "-tests.git");
         programmingExerciseRepository.save(programmingExercise);
         programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).orElseThrow();
-        assignmentRepositoryName = (programmingExercise.getProjectKey() + "-" + student1Login).toLowerCase();
+        assignmentRepositoryName = (projectKey1 + "-" + student1Login).toLowerCase();
 
         participation = database.addStudentParticipationForProgrammingExercise(programmingExercise, student1Login);
-        participation.setRepositoryUrl(String.format(localVCSBaseUrl + "/git/%s/%s.git", programmingExercise.getProjectKey(), assignmentRepositoryName));
+        participation.setRepositoryUrl(String.format(localVCSBaseUrl + "/git/%s/%s.git", projectKey1, assignmentRepositoryName));
         participation.setBranch(defaultBranch);
         programmingExerciseStudentParticipationRepository.save(participation);
 
         localVCLocalCITestService.addTestCases(programmingExercise);
 
         // Create template and tests repository
-        final String templateRepositoryName = programmingExercise.getProjectKey().toLowerCase() + "-exercise";
-        templateRepositoryFolder = localVCLocalCITestService.createRepositoryFolderInTempDirectory(programmingExercise.getProjectKey(), templateRepositoryName);
+        final String templateRepositoryName = projectKey1.toLowerCase() + "-exercise";
+        templateRepositoryFolder = localVCLocalCITestService.createRepositoryFolderInTempDirectory(projectKey1, templateRepositoryName);
         templateGit = localVCLocalCITestService.createGitRepository(templateRepositoryFolder);
-        final String testsRepoName = programmingExercise.getProjectKey().toLowerCase() + "-tests";
-        remoteTestsRepositoryFolder = localVCLocalCITestService.createRepositoryFolderInTempDirectory(programmingExercise.getProjectKey(), testsRepoName);
+        final String testsRepoName = projectKey1.toLowerCase() + "-tests";
+        remoteTestsRepositoryFolder = localVCLocalCITestService.createRepositoryFolderInTempDirectory(projectKey1, testsRepoName);
         remoteTestsGit = localVCLocalCITestService.createGitRepository(remoteTestsRepositoryFolder);
         // Clone the remote tests repository into a local folder.
         localTestsRepositoryFolder = Files.createTempDirectory("localTests");
         localTestsGit = Git.cloneRepository().setURI(remoteTestsRepositoryFolder.toString()).setDirectory(localTestsRepositoryFolder.toFile()).call();
 
         // Create remote assignment repository
-        remoteAssignmentRepositoryFolder = localVCLocalCITestService.createRepositoryFolderInTempDirectory(programmingExercise.getProjectKey(), assignmentRepositoryName);
+        remoteAssignmentRepositoryFolder = localVCLocalCITestService.createRepositoryFolderInTempDirectory(projectKey1, assignmentRepositoryName);
         remoteAssignmentGit = localVCLocalCITestService.createGitRepository(remoteAssignmentRepositoryFolder);
         // Clone the remote assignment repository into a local folder.
         localAssignmentRepositoryFolder = Files.createTempDirectory("localAssignment");
@@ -286,7 +315,7 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     }
 
     @Override
-    public void mockFetchCommitInfo(String projectKey, String repositorySlug, String hash) {
+    public void mockFetchCommitInfo(String projectKey1, String repositorySlug, String hash) {
         // Not implemented for local VC and local CI
     }
 
@@ -387,27 +416,27 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     }
 
     @Override
-    public void mockDeleteRepository(String projectKey, String repositoryName, boolean shouldFail) {
+    public void mockDeleteRepository(String projectKey1, String repositoryName, boolean shouldFail) {
         // Not implemented for local VC and local CI
     }
 
     @Override
-    public void mockDeleteProjectInVcs(String projectKey, boolean shouldFail) {
+    public void mockDeleteProjectInVcs(String projectKey1, boolean shouldFail) {
         // Not implemented for local VC and local CI
     }
 
     @Override
-    public void mockDeleteBuildPlan(String projectKey, String planName, boolean shouldFail) throws Exception {
+    public void mockDeleteBuildPlan(String projectKey1, String planName, boolean shouldFail) throws Exception {
         // Not implemented for local VC and local CI
     }
 
     @Override
-    public void mockDeleteBuildPlanProject(String projectKey, boolean shouldFail) {
+    public void mockDeleteBuildPlanProject(String projectKey1, boolean shouldFail) {
         // Not implemented for local VC and local CI
     }
 
     @Override
-    public void mockGetBuildPlan(String projectKey, String planName, boolean planExistsInCi, boolean planIsActive, boolean planIsBuilding, boolean failToGetBuild) {
+    public void mockGetBuildPlan(String projectKey1, String planName, boolean planExistsInCi, boolean planIsActive, boolean planIsBuilding, boolean failToGetBuild) {
         // Not implemented for local VC and local CI
     }
 
@@ -432,12 +461,12 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     }
 
     @Override
-    public void mockCheckIfBuildPlanExists(String projectKey, String templateBuildPlanId, boolean buildPlanExists, boolean shouldFail) {
+    public void mockCheckIfBuildPlanExists(String projectKey1, String templateBuildPlanId, boolean buildPlanExists, boolean shouldFail) {
         // Not implemented for local VC and local CI
     }
 
     @Override
-    public void mockRepositoryUrlIsValid(VcsRepositoryUrl vcsTemplateRepositoryUrl, String projectKey, boolean b) throws Exception {
+    public void mockRepositoryUrlIsValid(VcsRepositoryUrl vcsTemplateRepositoryUrl, String projectKey1, boolean b) throws Exception {
         // Not implemented for local VC and local CI
     }
 
@@ -452,7 +481,7 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     }
 
     @Override
-    public void mockSetRepositoryPermissionsToReadOnly(VcsRepositoryUrl repositoryUrl, String projectKey, Set<User> users) throws Exception {
+    public void mockSetRepositoryPermissionsToReadOnly(VcsRepositoryUrl repositoryUrl, String projectKey1, Set<User> users) throws Exception {
         // Not implemented for local VC and local CI
     }
 
