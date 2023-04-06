@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.Visibility;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.service.hestia.ProgrammingExerciseTaskService;
@@ -110,7 +111,7 @@ public class ProgrammingExerciseTestCaseService {
     }
 
     /**
-     * Reset the weights of all test cases to 1.
+     * Reset all tests to their initial configuration
      *
      * @param exerciseId to find exercise test cases
      * @return test cases that have been reset
@@ -121,8 +122,10 @@ public class ProgrammingExerciseTestCaseService {
             testCase.setWeight(1.0);
             testCase.setBonusMultiplier(1.0);
             testCase.setBonusPoints(0.0);
+            testCase.setVisibility(Visibility.ALWAYS);
         }
         List<ProgrammingExerciseTestCase> updatedTestCases = testCaseRepository.saveAll(testCases);
+
         // The tests' weights were updated. We use this flag to inform the instructor about outdated student results.
         programmingTriggerService.setTestCasesChangedAndTriggerTestCaseUpdate(exerciseId);
         return updatedTestCases;
