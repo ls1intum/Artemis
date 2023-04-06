@@ -135,7 +135,12 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
         database.addUsers(TEST_PREFIX, 2, 0, 0, 0);
         student1Login = TEST_PREFIX + "student1";
 
-        setUpStudent1();
+        // Set the Authentication object for student1 in the SecurityContextHolder.
+        // This is necessary because the "database.addStudentParticipationForProgrammingExercise()" below needs the Authentication object set.
+        // In tests, this is done using e.g. @WithMockUser(username="student1", roles="USER"), but this does not work on this @BeforeAll method.
+        List<SimpleGrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("ROLE_USER"));
+        Authentication authentication = new UsernamePasswordAuthenticationToken(student1Login, null, authorities);
+        SecurityContextHolder.getContext().setAuthentication(authentication);
 
         Course course = database.addCourseWithOneProgrammingExercise();
         programmingExercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
@@ -148,7 +153,7 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
         programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).orElseThrow();
         assignmentRepositoryName = (programmingExercise.getProjectKey() + "-" + student1Login).toLowerCase();
 
-        participation = database.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
+        participation = database.addStudentParticipationForProgrammingExercise(programmingExercise, student1Login);
         participation.setRepositoryUrl(String.format(localVCSBaseUrl + "/git/%s/%s.git", programmingExercise.getProjectKey(), assignmentRepositoryName));
         participation.setBranch(defaultBranch);
         programmingExerciseStudentParticipationRepository.save(participation);
@@ -173,23 +178,6 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
         localAssignmentRepositoryFolder = Files.createTempDirectory("localAssignment");
         localAssignmentGit = Git.cloneRepository().setURI(remoteAssignmentRepositoryFolder.toString()).setDirectory(localAssignmentRepositoryFolder.toFile()).call();
     }
-
-    private void setUpStudent1() {
-        List<SimpleGrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("ROLE_USER"));
-        Authentication authentication = new UsernamePasswordAuthenticationToken(student1Login, null, authorities);
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-    }
-
-    // @BeforeEach
-    // void addParticipation() {
-    //
-    // }
-    //
-    // @AfterEach
-    // void removeParticipation() {
-    // programmingExerciseStudentParticipationRepository.delete(participation);
-    // participation = null;
-    // }
 
     @AfterAll
     void removeRepositories() throws IOException {
