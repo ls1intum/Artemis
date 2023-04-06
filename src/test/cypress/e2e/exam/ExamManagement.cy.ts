@@ -1,7 +1,7 @@
 import { Interception } from 'cypress/types/net-stubbing';
 import { Exam } from 'app/entities/exam.model';
 import { Course } from 'app/entities/course.model';
-import { CypressExamBuilder, convertCourseAfterMultiPart } from '../../support/requests/CourseManagementRequests';
+import { ExamBuilder, convertCourseAfterMultiPart } from '../../support/requests/CourseManagementRequests';
 import { generateUUID } from '../../support/utils';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import {
@@ -34,7 +34,7 @@ describe('Exam management', () => {
         courseManagementRequest.createCourse(true).then((response) => {
             course = convertCourseAfterMultiPart(response);
             courseManagementRequest.addStudentToCourse(course, studentOne);
-            const examConfig = new CypressExamBuilder(course).title(examTitle).build();
+            const examConfig = new ExamBuilder(course).title(examTitle).build();
             courseManagementRequest.createExam(examConfig).then((examResponse) => {
                 exam = examResponse.body;
             });
