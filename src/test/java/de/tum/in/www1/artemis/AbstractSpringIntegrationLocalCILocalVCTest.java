@@ -150,19 +150,17 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
         // Create template and tests repository
         final String templateRepositoryName = programmingExercise.getProjectKey().toLowerCase() + "-exercise";
         templateRepositoryFolder = localVCLocalCITestService.createRepositoryFolderInTempDirectory(programmingExercise.getProjectKey(), templateRepositoryName);
-        String templateResourcePath = "java-templates/exercise";
-        templateGit = localVCLocalCITestService.createGitRepository(templateRepositoryFolder, templateResourcePath);
+        templateGit = localVCLocalCITestService.createGitRepository(templateRepositoryFolder);
         final String testsRepoName = programmingExercise.getProjectKey().toLowerCase() + "-tests";
         remoteTestsRepositoryFolder = localVCLocalCITestService.createRepositoryFolderInTempDirectory(programmingExercise.getProjectKey(), testsRepoName);
-        String testsResourcePath = "java-templates/tests";
-        remoteTestsGit = localVCLocalCITestService.createGitRepository(remoteTestsRepositoryFolder, testsResourcePath);
+        remoteTestsGit = localVCLocalCITestService.createGitRepository(remoteTestsRepositoryFolder);
         // Clone the remote tests repository into a local folder.
         localTestsRepositoryFolder = Files.createTempDirectory("localTests");
         localTestsGit = Git.cloneRepository().setURI(remoteTestsRepositoryFolder.toString()).setDirectory(localTestsRepositoryFolder.toFile()).call();
 
         // Create remote assignment repository
         remoteAssignmentRepositoryFolder = localVCLocalCITestService.createRepositoryFolderInTempDirectory(programmingExercise.getProjectKey(), assignmentRepositoryName);
-        remoteAssignmentGit = localVCLocalCITestService.createGitRepository(remoteAssignmentRepositoryFolder, templateResourcePath);
+        remoteAssignmentGit = localVCLocalCITestService.createGitRepository(remoteAssignmentRepositoryFolder);
         // Clone the remote assignment repository into a local folder.
         localAssignmentRepositoryFolder = Files.createTempDirectory("localAssignment");
         localAssignmentGit = Git.cloneRepository().setURI(remoteAssignmentRepositoryFolder.toString()).setDirectory(localAssignmentRepositoryFolder.toFile()).call();

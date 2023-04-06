@@ -43,7 +43,6 @@ import org.mockito.ArgumentMatcher;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.util.ResourceUtils;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CopyArchiveFromContainerCmd;
@@ -173,24 +172,22 @@ public class LocalVCLocalCITestService {
         return repositoryFolder;
     }
 
-    public Git createGitRepository(Path repositoryFolder, String resourcePath) throws IOException, GitAPIException, URISyntaxException {
+    public Git createGitRepository(Path repositoryFolder) throws IOException, GitAPIException, URISyntaxException {
 
         // Initialize bare Git repository in the repository folder.
         Git remoteGit = Git.init().setDirectory(repositoryFolder.toFile()).setBare(true).call();
         modifyDefaultBranch(remoteGit);
 
         // Initialize a non-bare Git repository in a temporary folder.
-        Path tempDirectory = Files.createTempDirectory("temp");
+        Path tempDirectory = Files.createTempDirectory("temp").toAbsolutePath();
         Git localGit = Git.init().setDirectory(tempDirectory.toFile()).call();
         modifyDefaultBranch(localGit);
 
-        // Copy the files from "test/resources/test-data/java-templates/..." to the temporary directory.
-        if (resourcePath != null) {
-            copyResourceFilesToTemp(resourcePath, tempDirectory);
-        }
-        // Add all files to the Git repository.
+        // Add a file to the temporary directory.
+        Path filePath = tempDirectory.resolve("Test.java");
+        Files.createFile(filePath);
+
         localGit.add().addFilepattern(".").call();
-        // Commit the files.
         localGit.commit().setMessage("Initial commit").call();
 
         // Set the remote to the bare repository.
@@ -203,11 +200,6 @@ public class LocalVCLocalCITestService {
         FileUtils.deleteDirectory(tempDirectory.toFile());
 
         return remoteGit;
-    }
-
-    // TODO: Fix such that it works on Bamboo.
-    private void copyResourceFilesToTemp(String resourcePath, Path tempDirectory) throws IOException {
-        FileUtils.copyDirectory(ResourceUtils.getFile("classpath:test-data/" + resourcePath), tempDirectory.toFile());
     }
 
     private void modifyDefaultBranch(Git gitHandle) throws IOException {

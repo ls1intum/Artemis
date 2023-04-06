@@ -40,7 +40,7 @@ class LocalVCIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest
         String projectKey = "SOMEPROJECTKEY";
         String repositorySlug = "some-repository-slug";
         Path remoteRepositoryFolder = localVCLocalCITestService.createRepositoryFolderInTempDirectory(projectKey, repositorySlug);
-        Git remoteGit = localVCLocalCITestService.createGitRepository(remoteRepositoryFolder, null);
+        Git remoteGit = localVCLocalCITestService.createGitRepository(remoteRepositoryFolder);
         Path localRepositoryFolder = Files.createTempDirectory("localRepository");
         Git localGit = Git.cloneRepository().setURI(remoteRepositoryFolder.toString()).setDirectory(localRepositoryFolder.toFile()).call();
 
@@ -86,7 +86,7 @@ class LocalVCIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest
         String projectKey = "SOMEPROJECTKEY";
         String repositorySlug = "someprojectkey-some-repository-slug";
         Path remoteRepositoryFolder = localVCLocalCITestService.createRepositoryFolderInTempDirectory(projectKey, repositorySlug);
-        Git remoteGit = localVCLocalCITestService.createGitRepository(remoteRepositoryFolder, null);
+        Git remoteGit = localVCLocalCITestService.createGitRepository(remoteRepositoryFolder);
         Path localRepositoryFolder = Files.createTempDirectory("localRepository");
         Git localGit = Git.cloneRepository().setURI(remoteRepositoryFolder.toString()).setDirectory(localRepositoryFolder.toFile()).call();
 
