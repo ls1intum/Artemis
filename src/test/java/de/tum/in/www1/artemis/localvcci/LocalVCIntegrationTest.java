@@ -123,7 +123,8 @@ class LocalVCIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest
 
     @Test
     void testFetch_assignmentRepository_student_noParticipation() {
-
+        localVCLocalCITestService.testFetchThrowsException(localAssignmentGit, TEST_PREFIX + "student2", programmingExercise.getProjectKey(), assignmentRepositoryName,
+                TransportException.class, notFound);
     }
 
     @Test

@@ -23,7 +23,10 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
@@ -126,12 +129,13 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     protected Git localAssignmentGit;
 
     @BeforeAll
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void initProgrammingExerciseAndRepositories() throws Exception {
         localVCLocalCITestService.setPort(port);
 
-        database.addUsers(TEST_PREFIX, 1, 0, 0, 0);
+        database.addUsers(TEST_PREFIX, 2, 0, 0, 0);
         student1Login = TEST_PREFIX + "student1";
+
+        setUpStudent1();
 
         Course course = database.addCourseWithOneProgrammingExercise();
         programmingExercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
@@ -142,11 +146,13 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
                 localVCSBaseUrl + "/git/" + programmingExercise.getProjectKey().toUpperCase() + "/" + programmingExercise.getProjectKey().toLowerCase() + "-tests.git");
         programmingExerciseRepository.save(programmingExercise);
         programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).orElseThrow();
-        participation = database.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
         assignmentRepositoryName = (programmingExercise.getProjectKey() + "-" + student1Login).toLowerCase();
+
+        participation = database.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
         participation.setRepositoryUrl(String.format(localVCSBaseUrl + "/git/%s/%s.git", programmingExercise.getProjectKey(), assignmentRepositoryName));
         participation.setBranch(defaultBranch);
         programmingExerciseStudentParticipationRepository.save(participation);
+
         localVCLocalCITestService.addTestCases(programmingExercise);
 
         // Create template and tests repository
@@ -168,6 +174,23 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
         localAssignmentGit = Git.cloneRepository().setURI(remoteAssignmentRepositoryFolder.toString()).setDirectory(localAssignmentRepositoryFolder.toFile()).call();
     }
 
+    private void setUpStudent1() {
+        List<SimpleGrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("ROLE_USER"));
+        Authentication authentication = new UsernamePasswordAuthenticationToken(student1Login, null, authorities);
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+    }
+
+    // @BeforeEach
+    // void addParticipation() {
+    //
+    // }
+    //
+    // @AfterEach
+    // void removeParticipation() {
+    // programmingExerciseStudentParticipationRepository.delete(participation);
+    // participation = null;
+    // }
+
     @AfterAll
     void removeRepositories() throws IOException {
         if (templateGit != null) {
@@ -175,6 +198,9 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
         }
         if (remoteTestsGit != null) {
             remoteTestsGit.close();
+        }
+        if (localTestsGit != null) {
+            localTestsGit.close();
         }
         if (remoteAssignmentGit != null) {
             remoteAssignmentGit.close();
@@ -187,6 +213,9 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
         }
         if (remoteTestsRepositoryFolder != null && Files.exists(remoteTestsRepositoryFolder)) {
             FileUtils.deleteDirectory(remoteTestsRepositoryFolder.toFile());
+        }
+        if (localTestsRepositoryFolder != null && Files.exists(localTestsRepositoryFolder)) {
+            FileUtils.deleteDirectory(localTestsRepositoryFolder.toFile());
         }
         if (remoteAssignmentRepositoryFolder != null && Files.exists(remoteAssignmentRepositoryFolder)) {
             FileUtils.deleteDirectory(remoteAssignmentRepositoryFolder.toFile());
