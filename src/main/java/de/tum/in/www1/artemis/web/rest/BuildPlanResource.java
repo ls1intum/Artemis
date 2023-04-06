@@ -87,6 +87,15 @@ public class BuildPlanResource {
         return ResponseEntity.ok().body(buildPlan);
     }
 
+    /**
+     * Updates the build plan for the given exercise.
+     * <p>
+     * Triggers a template and solution build to give feedback if the new build plan works as expected.
+     *
+     * @param exerciseId The exercise for which the build plan should be updated.
+     * @param buildPlan  The new build plan for the exercise.
+     * @return The updated build plan.
+     */
     @PutMapping("/programming-exercises/{exerciseId}/build-plan")
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<BuildPlan> setBuildPlan(@PathVariable Long exerciseId, @RequestBody BuildPlan buildPlan) {

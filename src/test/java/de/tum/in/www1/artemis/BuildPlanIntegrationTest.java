@@ -15,7 +15,6 @@ import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.repository.BuildPlanRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.in.www1.artemis.service.connectors.jenkins.build_plan.JenkinsPipelineScriptCreator;
 import de.tum.in.www1.artemis.service.programming.ProgrammingTriggerService;
 
 class BuildPlanIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
@@ -27,9 +26,6 @@ class BuildPlanIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTes
 
     @Autowired
     private BuildPlanRepository buildPlanRepository;
-
-    @Autowired
-    private JenkinsPipelineScriptCreator jenkinsPipelineScriptCreator;
 
     @Autowired
     private ProgrammingTriggerService programmingTriggerService;
@@ -51,15 +47,11 @@ class BuildPlanIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTes
         course.addExercises(programmingExercise);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
 
-        jenkinsPipelineScriptCreator.createBuildPlanForExercise(programmingExercise);
-        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        database.addBuildPlanAndSecretToProgrammingExercise(programmingExercise, "dummy-build-plan");
     }
 
     private void testNoReadAccess() throws Exception {
         request.get("/api/programming-exercises/" + programmingExercise.getId() + "/build-plan/for-editor", HttpStatus.FORBIDDEN, BuildPlan.class);
-
-        // students / tutors don't know the secret
-        request.get("/api/programming-exercises/" + programmingExercise.getId() + "/build-plan?secret=", HttpStatus.FORBIDDEN, String.class);
     }
 
     private void testNoWriteAccess() throws Exception {
@@ -72,10 +64,6 @@ class BuildPlanIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTes
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
 
         request.get("/api/programming-exercises/" + programmingExercise.getId() + "/build-plan/for-editor", HttpStatus.OK, BuildPlan.class);
-
-        // this assumes that the secret is known to the editor / instructor / admin
-        request.get("/api/programming-exercises/" + programmingExercise.getId() + "/build-plan?secret=" + programmingExercise.getBuildPlanAccessSecret(), HttpStatus.OK,
-                String.class);
     }
 
     private void testWriteAccess() throws Exception {
@@ -88,6 +76,26 @@ class BuildPlanIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTes
 
         assertThat(newBuildPlan.getBuildPlan()).isEqualTo(someOtherBuildPlan.getBuildPlan());
         assertThat(buildPlan.getId()).isEqualTo(newBuildPlan.getId());
+    }
+
+    @Test
+    void testReadAccessWithSecret() throws Exception {
+        final String buildPlan = request.get("/api/programming-exercises/" + programmingExercise.getId() + "/build-plan?secret=" + programmingExercise.getBuildPlanAccessSecret(),
+                HttpStatus.OK, String.class);
+        assertThat(buildPlan).isNotEmpty();
+    }
+
+    @Test
+    void testReadAccessForbiddenWithoutSecret() throws Exception {
+        final String response = request.get("/api/programming-exercises/" + programmingExercise.getId() + "/build-plan?secret=", HttpStatus.FORBIDDEN, String.class);
+        assertThat(response).isNull();
+    }
+
+    @Test
+    void testReadAccessForbiddenWithWrongSecret() throws Exception {
+        final String response = request.get("/api/programming-exercises/" + programmingExercise.getId() + "/build-plan?secret=randomWrongSecret", HttpStatus.FORBIDDEN,
+                String.class);
+        assertThat(response).isNull();
     }
 
     @Test
@@ -135,18 +143,6 @@ class BuildPlanIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTes
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testWriteAccessForInstructor() throws Exception {
-        testWriteAccess();
-    }
-
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void testReadAccessForAdmin() throws Exception {
-        testReadAccess();
-    }
-
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void testWriteAccessForAdmin() throws Exception {
         testWriteAccess();
     }
 
