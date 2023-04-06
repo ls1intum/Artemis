@@ -290,7 +290,7 @@ public class LocalCIBuildJobService {
             }
 
             // Check if the start element is the "testsuite" node.
-            if (!xmlStreamReader.getLocalName().equals("testsuite")) {
+            if (!("testsuite".equals(xmlStreamReader.getLocalName()))) {
                 throw new IllegalStateException("Expected testsuite element, but got " + xmlStreamReader.getLocalName());
             }
 

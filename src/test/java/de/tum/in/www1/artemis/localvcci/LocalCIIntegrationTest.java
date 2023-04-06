@@ -7,7 +7,7 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationLocalCILocalVCTest;
 public class LocalCIIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
     @Test
-    public void testAllSuccessful() {
+    void testAllSuccessful() {
 
     }
 }

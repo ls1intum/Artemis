@@ -150,11 +150,11 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
         // Create template and tests repository
         final String templateRepositoryName = programmingExercise.getProjectKey().toLowerCase() + "-exercise";
         templateRepositoryFolder = localVCLocalCITestService.createRepositoryFolderInTempDirectory(programmingExercise.getProjectKey(), templateRepositoryName);
-        Path templateResourcePath = Path.of("test-data", "java-templates", "exercise");
+        String templateResourcePath = "java-templates/exercise";
         templateGit = localVCLocalCITestService.createGitRepository(templateRepositoryFolder, templateResourcePath);
         final String testsRepoName = programmingExercise.getProjectKey().toLowerCase() + "-tests";
         remoteTestsRepositoryFolder = localVCLocalCITestService.createRepositoryFolderInTempDirectory(programmingExercise.getProjectKey(), testsRepoName);
-        Path testsResourcePath = Path.of("test-data", "java-templates", "tests");
+        String testsResourcePath = "java-templates/tests";
         remoteTestsGit = localVCLocalCITestService.createGitRepository(remoteTestsRepositoryFolder, testsResourcePath);
         // Clone the remote tests repository into a local folder.
         localTestsRepositoryFolder = Files.createTempDirectory("localTests");

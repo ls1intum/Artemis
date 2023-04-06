@@ -42,8 +42,8 @@ import org.eclipse.jgit.transport.URIish;
 import org.mockito.ArgumentMatcher;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
+import org.springframework.util.ResourceUtils;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CopyArchiveFromContainerCmd;
@@ -173,7 +173,7 @@ public class LocalVCLocalCITestService {
         return repositoryFolder;
     }
 
-    public Git createGitRepository(Path repositoryFolder, Path resourcePath) throws IOException, GitAPIException, URISyntaxException {
+    public Git createGitRepository(Path repositoryFolder, String resourcePath) throws IOException, GitAPIException, URISyntaxException {
 
         // Initialize bare Git repository in the repository folder.
         Git remoteGit = Git.init().setDirectory(repositoryFolder.toFile()).setBare(true).call();
@@ -206,9 +206,8 @@ public class LocalVCLocalCITestService {
     }
 
     // TODO: Fix such that it works on Bamboo.
-    private void copyResourceFilesToTemp(Path resourcePath, Path tempDirectory) throws IOException {
-        ClassPathResource resource = new ClassPathResource(resourcePath.toString());
-        FileUtils.copyDirectory(resource.getFile(), tempDirectory.toFile());
+    private void copyResourceFilesToTemp(String resourcePath, Path tempDirectory) throws IOException {
+        FileUtils.copyDirectory(ResourceUtils.getFile("classpath:test-data/" + resourcePath), tempDirectory.toFile());
     }
 
     private void modifyDefaultBranch(Git gitHandle) throws IOException {

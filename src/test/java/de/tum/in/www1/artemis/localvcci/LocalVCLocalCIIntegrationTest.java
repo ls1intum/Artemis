@@ -39,7 +39,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractSpringIntegrationLocalCILoca
      * Perform a push to the assignment repository and check that a submission is created and the local CI system successfully builds and tests the source code.
      */
     @Test
-    public void testPush_assignmentRepository_student() throws Exception {
+    void testPush_assignmentRepository_student() throws Exception {
         // Create a file and push the changes to the remote assignment repository.
         Path testJsonFilePath = Path.of(localAssignmentRepositoryFolder.toString(), "src", programmingExercise.getPackageFolderName(), "test.txt");
         gitUtilService.writeEmptyJsonFileToPath(testJsonFilePath);
@@ -72,84 +72,84 @@ class LocalVCLocalCIIntegrationTest extends AbstractSpringIntegrationLocalCILoca
     }
 
     @Test
-    public void testPush_assignmentRepository_teachingAssistant() {
+    void testPush_assignmentRepository_teachingAssistant() {
         // Teaching assistants and up should be able to push to the student's assignment repository.
     }
 
     @Test
-    public void testPush_assignmentRepository_teachingAssistant_beforeStartDate() {
+    void testPush_assignmentRepository_teachingAssistant_beforeStartDate() {
 
     }
 
     @Test
-    public void testPush_assignmentRepository_teachingAssistant_afterDueDate() {
+    void testPush_assignmentRepository_teachingAssistant_afterDueDate() {
 
     }
 
     // -------- practice mode ----
 
     @Test
-    public void testPush_assignmentRepository_student_practiceMode() {
+    void testPush_assignmentRepository_student_practiceMode() {
 
     }
 
     @Test
-    public void testPush_assignmentRepository_teachingAssistant_practiceMode() {
+    void testPush_assignmentRepository_teachingAssistant_practiceMode() {
         // Teaching assistants and up should be able to push to the student's practice repository.
     }
 
     // -------- team mode ----
 
     @Test
-    public void testPush_assignmentRepository_student_teamMode() {
+    void testPush_assignmentRepository_student_teamMode() {
 
     }
 
     @Test
-    public void testPush_assignmentRepository_teachingAssistant_teamMode() {
+    void testPush_assignmentRepository_teachingAssistant_teamMode() {
         // Teaching assistants and up should be able to push to the student's team repository.
     }
 
     // -------- exam mode ----
 
     @Test
-    public void testPush_assignmentRepository_student_examMode() {
+    void testPush_assignmentRepository_student_examMode() {
         // In time, should succeed.
     }
 
     @Test
-    public void testPush_assignmentRepository_teachingAssistant_examMode() {
+    void testPush_assignmentRepository_teachingAssistant_examMode() {
         // Teaching assistants and up should be able to push to the student's exam repository.
     }
 
     @Test
-    public void testPush_assignmentRepository_teachingAssistant_beforeExamStartDate() {
+    void testPush_assignmentRepository_teachingAssistant_beforeExamStartDate() {
         // Should succeed.
     }
 
     @Test
-    public void testPush_assignmentRepository_teachingAssistant_afterExamEndDate() {
+    void testPush_assignmentRepository_teachingAssistant_afterExamEndDate() {
         // Should succeed.
     }
 
     // ---- Tests for the tests repository ----
 
     @Test
-    public void testPush_testsRepository_teachingAssistant() {
+    void testPush_testsRepository_teachingAssistant() {
 
     }
 
     // ---- Tests for the solution repository ----
 
     @Test
-    public void testPush_solutionRepository_teachingAssistant() {
+    void testPush_solutionRepository_teachingAssistant() {
 
     }
 
     // ---- Tests for the template repository ----
 
     @Test
-    public void testPush_templateRepository_teachingAssistant() {
+    void testPush_templateRepository_teachingAssistant() {
 
     }
 }

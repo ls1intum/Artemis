@@ -24,7 +24,7 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationLocalCILocalVCTest;
 class LocalVCIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
     @Test
-    public void testFetch_repositoryDoesNotExist() {
+    void testFetch_repositoryDoesNotExist() {
         String repositoryUrl = localVCLocalCITestService.constructLocalVCUrl(student1Login, "SOMENONEXISTENTPROJECTKEY", "some-nonexistent-repository-slug");
         Exception exception = assertThrows(InvalidRemoteException.class, () -> {
             try (Git ignored = Git.cloneRepository().setURI(repositoryUrl).call()) {
@@ -35,7 +35,7 @@ class LocalVCIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest
     }
 
     @Test
-    public void testPush_repositoryDoesNotExist() throws IOException, GitAPIException, URISyntaxException {
+    void testPush_repositoryDoesNotExist() throws IOException, GitAPIException, URISyntaxException {
         // Create a new repository, delete the remote repository and try to push to the remote repository.
         String projectKey = "SOMEPROJECTKEY";
         String repositorySlug = "some-repository-slug";
@@ -57,31 +57,31 @@ class LocalVCIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest
     }
 
     @Test
-    public void testFetch_wrongCredentials() {
+    void testFetch_wrongCredentials() {
         localVCLocalCITestService.testFetchThrowsException(localAssignmentGit, student1Login, "wrong-password", programmingExercise.getProjectKey(), assignmentRepositoryName,
                 TransportException.class, notAuthorized);
     }
 
     @Test
-    public void testPush_wrongCredentials() {
+    void testPush_wrongCredentials() {
         localVCLocalCITestService.testPushThrowsException(localAssignmentGit, student1Login, "wrong-password", programmingExercise.getProjectKey(), assignmentRepositoryName,
                 TransportException.class, notAuthorized);
     }
 
     @Test
-    public void testFetch_incompleteCredentials() {
+    void testFetch_incompleteCredentials() {
         localVCLocalCITestService.testFetchThrowsException(localAssignmentGit, student1Login, "", programmingExercise.getProjectKey(), assignmentRepositoryName,
                 TransportException.class, notAuthorized);
     }
 
     @Test
-    public void testPush_incompleteCredentials() {
+    void testPush_incompleteCredentials() {
         localVCLocalCITestService.testPushThrowsException(localAssignmentGit, student1Login, "", programmingExercise.getProjectKey(), assignmentRepositoryName,
                 TransportException.class, notAuthorized);
     }
 
     @Test
-    public void testFetchPush_programmingExerciseDoesNotExist() throws GitAPIException, IOException, URISyntaxException {
+    void testFetchPush_programmingExerciseDoesNotExist() throws GitAPIException, IOException, URISyntaxException {
         // Create a repository for an exercise that does not exist.
         String projectKey = "SOMEPROJECTKEY";
         String repositorySlug = "someprojectkey-some-repository-slug";
@@ -101,7 +101,7 @@ class LocalVCIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest
     }
 
     @Test
-    public void testFetchPush_offlineIDENotAllowed() {
+    void testFetchPush_offlineIDENotAllowed() {
         programmingExercise.setAllowOfflineIde(false);
         programmingExerciseRepository.save(programmingExercise);
 
@@ -117,229 +117,229 @@ class LocalVCIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest
     // ---- Tests for the assignment repository ----
 
     @Test
-    public void testFetch_assignmentRepository_student() {
+    void testFetch_assignmentRepository_student() {
         localVCLocalCITestService.testFetchSuccessful(localAssignmentGit, student1Login, programmingExercise.getProjectKey(), assignmentRepositoryName);
     }
 
     @Test
-    public void testFetch_assignmentRepository_student_noParticipation() {
+    void testFetch_assignmentRepository_student_noParticipation() {
 
     }
 
     @Test
-    public void testPush_assignmentRepository_student_noParticipation() {
+    void testPush_assignmentRepository_student_noParticipation() {
 
     }
 
     @Test
-    public void testFetch_assignmentRepository_student_studentDoesNotOwnParticipation() {
+    void testFetch_assignmentRepository_student_studentDoesNotOwnParticipation() {
 
     }
 
     @Test
-    public void testPush_assignmentRepository_student_studentDoesNotOwnParticipation() {
+    void testPush_assignmentRepository_student_studentDoesNotOwnParticipation() {
 
     }
 
     @Test
-    public void testPush_assignmentRepository_student_tooManySubmissions() {
+    void testPush_assignmentRepository_student_tooManySubmissions() {
         // LockRepositoryPolicy is enforced
     }
 
     @Test
-    public void testFetch_assignmentRepository_student_beforeStartDate() {
+    void testFetch_assignmentRepository_student_beforeStartDate() {
         // Should fail
     }
 
     @Test
-    public void testPush_assignmentRepository_student_beforeStartDate() {
+    void testPush_assignmentRepository_student_beforeStartDate() {
         // Should fail
     }
 
     @Test
-    public void testFetch_assignmentRepository_student_afterDueDate() {
+    void testFetch_assignmentRepository_student_afterDueDate() {
         // Should be successful
     }
 
     @Test
-    public void testPush_assignmentRepository_student_afterDueDate() {
+    void testPush_assignmentRepository_student_afterDueDate() {
         // Should fail
     }
 
     // -------- practice mode ----
 
     @Test
-    public void testFetch_assignmentRepository_student_practiceMode() {
+    void testFetch_assignmentRepository_student_practiceMode() {
         // Should be successful
     }
 
     @Test
-    public void testFetch_assignmentRepository_student_practiceMode_noParticipation() {
+    void testFetch_assignmentRepository_student_practiceMode_noParticipation() {
 
     }
 
     @Test
-    public void testPush_assignmentRepository_student_practiceMode_noParticipation() {
+    void testPush_assignmentRepository_student_practiceMode_noParticipation() {
 
     }
 
     @Test
-    public void testFetch_assignmentRepository_student_practiceMode_studentDoesNotOwnParticipation() {
+    void testFetch_assignmentRepository_student_practiceMode_studentDoesNotOwnParticipation() {
 
     }
 
     @Test
-    public void testPush_assignmentRepository_student_practiceMode_studentDoesNotOwnParticipation() {
+    void testPush_assignmentRepository_student_practiceMode_studentDoesNotOwnParticipation() {
 
     }
 
     // -------- team mode ----
 
     @Test
-    public void testFetch_assignmentRepository_student_teamMode() {
+    void testFetch_assignmentRepository_student_teamMode() {
         // Should be successful
     }
 
     @Test
-    public void testFetch_assignmentRepository_student_teamMode_teamDoesNotExist() {
+    void testFetch_assignmentRepository_student_teamMode_teamDoesNotExist() {
 
     }
 
     @Test
-    public void testPush_assignmentRepository_student_teamMode_teamDoesNotExist() {
+    void testPush_assignmentRepository_student_teamMode_teamDoesNotExist() {
 
     }
 
     @Test
-    public void testFetch_assignmentRepository_student_teamMode_noParticipation() {
+    void testFetch_assignmentRepository_student_teamMode_noParticipation() {
 
     }
 
     @Test
-    public void testPush_assignmentRepository_student_teamMode_noParticipation() {
+    void testPush_assignmentRepository_student_teamMode_noParticipation() {
 
     }
 
     @Test
-    public void testFetch_assignmentRepository_student_teamMode_studentIsNotPartOfTeam() {
+    void testFetch_assignmentRepository_student_teamMode_studentIsNotPartOfTeam() {
 
     }
 
     @Test
-    public void testPush_assignmentRepository_student_teamMode_studentIsNotPartOfTeam() {
+    void testPush_assignmentRepository_student_teamMode_studentIsNotPartOfTeam() {
 
     }
 
     // -------- exam mode ----
 
     @Test
-    public void testFetch_assignmentRepository_student_examMode() {
+    void testFetch_assignmentRepository_student_examMode() {
         // Should be successful
     }
 
     @Test
-    public void testFetch_assignmentRepository_student_examMode_beforeStartDate() {
+    void testFetch_assignmentRepository_student_examMode_beforeStartDate() {
         // Should fail
     }
 
     @Test
-    public void testFetch_assignmentRepository_teachingAssistant_examMode_beforeStartDate() {
+    void testFetch_assignmentRepository_teachingAssistant_examMode_beforeStartDate() {
         // Should be successful
     }
 
     @Test
-    public void testPush_assignmentRepository_student_examMode_beforeStartDate() {
+    void testPush_assignmentRepository_student_examMode_beforeStartDate() {
         // Should fail
     }
 
     @Test
-    public void testFetch_assignmentRepository_student_examMode_afterDueDate() {
+    void testFetch_assignmentRepository_student_examMode_afterDueDate() {
         // Should be successful
     }
 
     @Test
-    public void testPush_assignmentRepository_student_examMode_afterDueDate() {
+    void testPush_assignmentRepository_student_examMode_afterDueDate() {
         // Should fail
     }
 
     // ---- Tests for the tests repository ----
 
     @Test
-    public void testFetch_testsRepository_student() {
+    void testFetch_testsRepository_student() {
         // The tests repository can only be fetched by users that are at least teaching assistants in the course.
     }
 
     @Test
-    public void testPush_testsRepository_student() {
+    void testPush_testsRepository_student() {
         // The tests repository can only be pushed to by users that are at least teaching assistants in the course.
     }
 
     @Test
-    public void testFetch_testsRepository_teachingAssistant() {
+    void testFetch_testsRepository_teachingAssistant() {
         // Should be successful
     }
 
     @Test
-    public void testFetch_testsRepository_teachingAssistant_noParticipation() {
+    void testFetch_testsRepository_teachingAssistant_noParticipation() {
 
     }
 
     @Test
-    public void testPush_testsRepository_teachingAssistant_noParticipation() {
+    void testPush_testsRepository_teachingAssistant_noParticipation() {
 
     }
 
     // ---- Tests for the solution repository ----
 
     @Test
-    public void testFetch_solutionRepository_teachingAssistant() {
+    void testFetch_solutionRepository_teachingAssistant() {
         // Should be successful
     }
 
     @Test
-    public void testFetch_solutionRepository_teachingAssistant_noParticipation() {
+    void testFetch_solutionRepository_teachingAssistant_noParticipation() {
 
     }
 
     @Test
-    public void testPush_solutionRepository_teachingAssistant_noParticipation() {
+    void testPush_solutionRepository_teachingAssistant_noParticipation() {
 
     }
 
     @Test
-    public void testFetch_solutionRepository_student() {
+    void testFetch_solutionRepository_student() {
         // The tests repository can only be fetched by users that are at least teaching assistants in the course.
     }
 
     @Test
-    public void testPush_solutionRepository_student() {
+    void testPush_solutionRepository_student() {
         // The tests repository can only be pushed to by users that are at least teaching assistants in the course.
     }
 
     // ---- Tests for the template repository ----
 
     @Test
-    public void testFetch_templateRepository_teachingAssistant() {
+    void testFetch_templateRepository_teachingAssistant() {
         // Should be successful
     }
 
     @Test
-    public void testFetch_templateRepository_teachingAssistant_noParticipation() {
+    void testFetch_templateRepository_teachingAssistant_noParticipation() {
 
     }
 
     @Test
-    public void testPush_templateRepository_teachingAssistant_noParticipation() {
+    void testPush_templateRepository_teachingAssistant_noParticipation() {
 
     }
 
     @Test
-    public void testFetch_templateRepository_student() {
+    void testFetch_templateRepository_student() {
         // The tests repository can only be fetched by users that are at least teaching assistants in the course.
     }
 
     @Test
-    public void testPush_templateRepository_student() {
+    void testPush_templateRepository_student() {
         // The tests repository can only be pushed to by users that are at least teaching assistants in the course.
     }
 }
