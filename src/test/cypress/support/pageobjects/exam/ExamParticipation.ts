@@ -15,6 +15,7 @@ import {
 import { Interception } from 'cypress/types/net-stubbing';
 import { CypressCredentials } from '../../users';
 import { ProgrammingExerciseSubmission } from '../exercises/programming/OnlineEditorPage';
+import { ProgrammingExerciseAssessmentType } from '../../requests/CourseManagementRequests';
 
 /**
  * A class which encapsulates UI selectors and actions for the exam details page.
@@ -124,6 +125,7 @@ export class AdditionalData {
     expectedScore?: number;
     textFixture?: string;
     practiceMode?: boolean;
+    progExerciseAssessmentType?: ProgrammingExerciseAssessmentType;
 }
 
 export type Exercise = {
