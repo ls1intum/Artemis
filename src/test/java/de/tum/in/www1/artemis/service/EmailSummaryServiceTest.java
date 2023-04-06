@@ -117,7 +117,8 @@ class EmailSummaryServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
         assertThat(filteredUsers).contains(userWithActivatedWeeklySummaries);
         assertThat(filteredUsers).doesNotContain(userWithDeactivatedWeeklySummaries);
 
-        // TODO: make sure only exerciseReleasedYesterdayAndNotYetDue is returned by exerciseRepository.findAllExercisesForSummary
+        // TODO: make sure only exerciseReleasedYesterdayAndNotYetDue is returned by exerciseRepository.findAllExercisesForSummary() without using @SpyBean.
+        // Refer to the TODO in automaticCleanupBuildPlans() in ProgrammingExerciseTestService for more information.
 
         weeklyEmailSummaryService.prepareEmailSummariesForUsers(Set.of(userWithActivatedWeeklySummaries));
 
