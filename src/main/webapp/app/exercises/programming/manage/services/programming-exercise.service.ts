@@ -519,9 +519,10 @@ export class ProgrammingExerciseService {
         formData.append('file', exercise.zipFileForImport!);
         const exerciseBlob = new Blob([JSON.stringify(copy)], { type: 'application/json' });
         formData.append('programmingExercise', exerciseBlob);
+        const courseId = exercise.course?.id;
 
         return this.http
-            .post<ProgrammingExercise>(`${this.resourceUrl}/import-from-file`, formData, { observe: 'response' })
+            .post<ProgrammingExercise>(`${this.resourceUrl}/import-from-file/${courseId}`, formData, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.processProgrammingExerciseEntityResponse(res)));
     }
 }

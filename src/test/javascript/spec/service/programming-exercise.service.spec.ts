@@ -15,6 +15,7 @@ import { Result } from 'app/entities/result.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../helpers/mocks/service/mock-account.service';
 import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programming-exercise-solution-entry.model';
+import { Course } from 'app/entities/course.model';
 
 describe('ProgrammingExercise Service', () => {
     let service: ProgrammingExerciseService;
@@ -224,14 +225,16 @@ describe('ProgrammingExercise Service', () => {
         tick();
     }));
     it('should make post request for import from file', fakeAsync(() => {
-        const request = new ProgrammingExercise(undefined, undefined);
-        const expected = new ProgrammingExercise(undefined, undefined);
+        const course = new Course();
+        course.id = 1;
+        const request = new ProgrammingExercise(course, undefined);
+        const expected = new ProgrammingExercise(course, undefined);
         const dummyFile = new File([''], 'dummyFile');
         expected.studentParticipations = [];
         expected.zipFileForImport = dummyFile;
         request.zipFileForImport = dummyFile;
         service.importFromFile(request).subscribe((resp) => expect(resp.body).toEqual(expected));
-        const req = httpMock.expectOne({ method: 'POST', url: `${resourceUrl}/import-from-file` });
+        const req = httpMock.expectOne({ method: 'POST', url: `${resourceUrl}/import-from-file/1` });
         req.flush(request);
         tick();
     }));

@@ -227,12 +227,12 @@ public class ProgrammingExerciseExportImportResource {
     @PostMapping(IMPORT_FROM_FILE)
     @PreAuthorize("hasRole('EDITOR')")
     @FeatureToggle(Feature.ProgrammingExercises)
-    public ResponseEntity<ProgrammingExercise> importProgrammingExerciseFromFile(@RequestPart("programmingExercise") ProgrammingExercise programmingExercise,
-            @RequestPart("file") MultipartFile zipFile) {
+    public ResponseEntity<ProgrammingExercise> importProgrammingExerciseFromFile(@PathVariable long courseId,
+            @RequestPart("programmingExercise") ProgrammingExercise programmingExercise, @RequestPart("file") MultipartFile zipFile) {
         final var user = userRepository.getUserWithGroupsAndAuthorities();
         // Valid exercises have set either a course or an exerciseGroup
         programmingExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
-        final var course = courseRepository.findByIdElseThrow(programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
+        final var course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
         try {
             return ResponseEntity.ok(programmingExerciseImportFromFileService.importProgrammingExerciseFromFile(programmingExercise, zipFile, course));

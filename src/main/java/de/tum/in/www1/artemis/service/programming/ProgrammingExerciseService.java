@@ -64,18 +64,18 @@ public class ProgrammingExerciseService {
      * (<a href="https://docs.oracle.com/javase/specs/jls/se14/html/jls-7.html#jls-7.4.1">https://docs.oracle.com/javase/specs/jls/se14/html/jls-7.html#jls-7.4.1</a>)
      * with the restriction to a-z,A-Z,_ as "Java letter" and 0-9 as digits due to JavaScript/Browser Unicode character class limitations
      */
-    private static final String packageNameRegex = "^(?!.*(?:\\.|^)(?:abstract|continue|for|new|switch|assert|default|if|package|synchronized|boolean|do|goto|private|this|break|double|implements|protected|throw|byte|else|import|public|throws|case|enum|instanceof|return|transient|catch|extends|int|short|try|char|final|interface|static|void|class|finally|long|strictfp|volatile|const|float|native|super|while|_|true|false|null)(?:\\.|$))[A-Z_a-z]\\w*(?:\\.[A-Z_a-z]\\w*)*$";
+    private static final String PACKAGE_NAME_REGEX = "^(?!.*(?:\\.|^)(?:abstract|continue|for|new|switch|assert|default|if|package|synchronized|boolean|do|goto|private|this|break|double|implements|protected|throw|byte|else|import|public|throws|case|enum|instanceof|return|transient|catch|extends|int|short|try|char|final|interface|static|void|class|finally|long|strictfp|volatile|const|float|native|super|while|_|true|false|null)(?:\\.|$))[A-Z_a-z]\\w*(?:\\.[A-Z_a-z]\\w*)*$";
 
     /**
      * Swift package name Regex derived from
      * (<a href="https://docs.swift.org/swift-book/ReferenceManual/LexicalStructure.html#ID412">https://docs.swift.org/swift-book/ReferenceManual/LexicalStructure.html#ID412</a>),
      * with the restriction to a-z,A-Z as "Swift letter" and 0-9 as digits where no separators are allowed
      */
-    private static final String packageNameRegexForSwift = "^(?!(?:associatedtype|class|deinit|enum|extension|fileprivate|func|import|init|inout|internal|let|open|operator|private|protocol|public|rethrows|static|struct|subscript|typealias|var|break|case|continue|default|defer|do|else|fallthrough|for|guard|if|in|repeat|return|switch|where|while|as|Any|catch|false|is|nil|super|self|Self|throw|throws|true|try|_|[sS]wift)$)[A-Za-z][\\dA-Za-z]*$";
+    private static final String SWIFT_PACKAGE_NAME_REGEX = "^(?!(?:associatedtype|class|deinit|enum|extension|fileprivate|func|import|init|inout|internal|let|open|operator|private|protocol|public|rethrows|static|struct|subscript|typealias|var|break|case|continue|default|defer|do|else|fallthrough|for|guard|if|in|repeat|return|switch|where|while|as|Any|catch|false|is|nil|super|self|Self|throw|throws|true|try|_|[sS]wift)$)[A-Za-z][\\dA-Za-z]*$";
 
-    private final Pattern packageNamePattern = Pattern.compile(packageNameRegex);
+    private final Pattern packageNamePattern = Pattern.compile(PACKAGE_NAME_REGEX);
 
-    private final Pattern packageNamePatternForSwift = Pattern.compile(packageNameRegexForSwift);
+    private final Pattern packageNamePatternForSwift = Pattern.compile(SWIFT_PACKAGE_NAME_REGEX);
 
     private final Logger log = LoggerFactory.getLogger(ProgrammingExerciseService.class);
 
@@ -282,22 +282,23 @@ public class ProgrammingExerciseService {
     }
 
     private void validatePackageName(ProgrammingExercise programmingExercise, ProgrammingLanguageFeature programmingLanguageFeature) {
+        if (!programmingLanguageFeature.isPackageNameRequired()) {
+            return;
+        }
         // Check if package name is set
-        if (programmingLanguageFeature.isPackageNameRequired()) {
-            if (programmingExercise.getPackageName() == null) {
-                throw new BadRequestAlertException("The package name is invalid", "Exercise", "packagenameInvalid");
-            }
+        if (programmingExercise.getPackageName() == null) {
+            throw new BadRequestAlertException("The package name is invalid", "Exercise", "packagenameInvalid");
+        }
 
-            // Check if package name matches regex
-            Matcher packageNameMatcher;
-            switch (programmingExercise.getProgrammingLanguage()) {
-                case JAVA, KOTLIN -> packageNameMatcher = packageNamePattern.matcher(programmingExercise.getPackageName());
-                case SWIFT -> packageNameMatcher = packageNamePatternForSwift.matcher(programmingExercise.getPackageName());
-                default -> throw new IllegalArgumentException("Programming language not supported");
-            }
-            if (!packageNameMatcher.matches()) {
-                throw new BadRequestAlertException("The package name is invalid", "Exercise", "packagenameInvalid");
-            }
+        // Check if package name matches regex
+        Matcher packageNameMatcher;
+        switch (programmingExercise.getProgrammingLanguage()) {
+            case JAVA, KOTLIN -> packageNameMatcher = packageNamePattern.matcher(programmingExercise.getPackageName());
+            case SWIFT -> packageNameMatcher = packageNamePatternForSwift.matcher(programmingExercise.getPackageName());
+            default -> throw new IllegalArgumentException("Programming language not supported");
+        }
+        if (!packageNameMatcher.matches()) {
+            throw new BadRequestAlertException("The package name is invalid", "Exercise", "packagenameInvalid");
         }
     }
 

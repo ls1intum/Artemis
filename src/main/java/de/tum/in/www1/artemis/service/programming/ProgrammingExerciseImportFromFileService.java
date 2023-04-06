@@ -46,6 +46,8 @@ public class ProgrammingExerciseImportFromFileService {
 
     private final FileService fileService;
 
+    private static final List<String> SHORT_NAME_REPLACEMENT_EXCLUSIONS = List.of("gradle-wrapper.jar");
+
     public ProgrammingExerciseImportFromFileService(ProgrammingExerciseService programmingExerciseService, ZipFileService zipFileService,
             StaticCodeAnalysisService staticCodeAnalysisService, RepositoryService repositoryService, GitService gitService, FileService fileService) {
         this.programmingExerciseService = programmingExerciseService;
@@ -68,11 +70,12 @@ public class ProgrammingExerciseImportFromFileService {
      **/
     public ProgrammingExercise importProgrammingExerciseFromFile(ProgrammingExercise programmingExerciseForImport, MultipartFile zipFile, Course course)
             throws IOException, GitAPIException, URISyntaxException {
-        Path importExerciseDir = Files.createTempDirectory("imported-exercise-dir");
-        Path exerciseFilePath = Files.createTempFile(importExerciseDir, "exercise-for-import", ".zip");
         if (!"zip".equals(FileNameUtils.getExtension(zipFile.getOriginalFilename()))) {
             throw new BadRequestAlertException("The file is not a zip file", "programmingExercise", "fileNotZip");
         }
+        Path importExerciseDir = Files.createTempDirectory("imported-exercise-dir");
+        Path exerciseFilePath = Files.createTempFile(importExerciseDir, "exercise-for-import", ".zip");
+
         zipFile.transferTo(exerciseFilePath);
         zipFileService.extractZipFileRecursively(exerciseFilePath);
         checkRepositoriesExist(importExerciseDir);
@@ -83,6 +86,7 @@ public class ProgrammingExerciseImportFromFileService {
             staticCodeAnalysisService.createDefaultCategories(importedProgrammingExercise);
         }
         importRepositoriesFromFile(importedProgrammingExercise, importExerciseDir, oldShortName);
+        importedProgrammingExercise.setCourse(course);
         return importedProgrammingExercise;
     }
 
@@ -92,7 +96,7 @@ public class ProgrammingExerciseImportFromFileService {
         Repository testRepo = gitService.getOrCheckoutRepository(new VcsRepositoryUrl(newExercise.getTestRepositoryUrl()), false);
 
         copyImportedExerciseContentToRepositories(templateRepo, solutionRepo, testRepo, basePath);
-        replaceImportedExerciseShortName(Map.of(oldExerciseShortName, newExercise.getShortName()), List.of("gradle-wrapper.jar"), templateRepo, solutionRepo, testRepo);
+        replaceImportedExerciseShortName(Map.of(oldExerciseShortName, newExercise.getShortName()), templateRepo, solutionRepo, testRepo);
 
         gitService.stageAllChanges(templateRepo);
         gitService.stageAllChanges(solutionRepo);
@@ -103,9 +107,9 @@ public class ProgrammingExerciseImportFromFileService {
 
     }
 
-    private void replaceImportedExerciseShortName(Map<String, String> replacements, List<String> exclusions, Repository... repositories) throws IOException {
+    private void replaceImportedExerciseShortName(Map<String, String> replacements, Repository... repositories) throws IOException {
         for (Repository repository : repositories) {
-            fileService.replaceVariablesInFileRecursive(repository.getLocalPath().toString(), replacements, exclusions);
+            fileService.replaceVariablesInFileRecursive(repository.getLocalPath().toString(), replacements, SHORT_NAME_REPLACEMENT_EXCLUSIONS);
         }
     }
 
@@ -162,7 +166,7 @@ public class ProgrammingExerciseImportFromFileService {
     private Path retrieveRepositoryDirectoryPath(Path dirPath, String repoType) {
         List<Path> result;
         try (Stream<Path> walk = Files.walk(dirPath)) {
-            result = walk.filter(Files::isDirectory).filter(f -> f.getFileName().toString().endsWith("-" + repoType)).filter(f -> !f.getFileName().endsWith(".zip")).toList();
+            result = walk.filter(Files::isDirectory).filter(file -> file.getFileName().toString().endsWith("-" + repoType)).toList();
         }
         catch (IOException e) {
             throw new BadRequestAlertException("Could not read the directory", "programmingExercise", "couldnotreaddirectory");

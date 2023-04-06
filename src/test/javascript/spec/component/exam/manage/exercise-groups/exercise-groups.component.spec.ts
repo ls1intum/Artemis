@@ -30,7 +30,6 @@ import { of } from 'rxjs';
 import { MockRouter } from '../../../../helpers/mocks/mock-router';
 import { MockNgbModalService } from '../../../../helpers/mocks/service/mock-ngb-modal.service';
 import { ArtemisTestModule } from '../../../../test.module';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 
 describe('Exercise Groups Component', () => {
     const course = new Course();
@@ -224,8 +223,6 @@ describe('Exercise Groups Component', () => {
 
             comp.openImportModal(groups[0], exerciseType);
             tick();
-            const expectedProgrammingExercise = new ProgrammingExercise(undefined, undefined) as Exercise;
-
             expect(modalService.open).toHaveBeenCalledOnce();
             expect(router.navigate).toHaveBeenCalledOnce();
             expect(router.navigate).toHaveBeenCalledWith(
