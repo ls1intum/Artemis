@@ -86,6 +86,9 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     private ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
     @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
     private PlagiarismComparisonRepository plagiarismComparisonRepository;
 
     @Autowired
@@ -586,6 +589,13 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
+    void testUpdateParticipationFiles_cannotAccessParticipation() throws Exception {
+        // student2 should not have access to student1's participation.
+        request.put(studentRepoBaseUrl + participation.getId() + "/files", List.of(), HttpStatus.FORBIDDEN);
+    }
+
+    @Test
     @DisabledOnOs(OS.WINDOWS) // git file locking issues
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testPullChanges() throws Exception {
@@ -725,6 +735,13 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         var receivedLogs = request.getList(studentRepoBaseUrl + participation.getId() + "/buildlogs", HttpStatus.OK, BuildLogEntry.class);
         assertThat(receivedLogs).hasSize(2);
         assertLogsContent(receivedLogs);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
+    void testGetBuildLogs_cannotAccessParticipation() throws Exception {
+        // student2 should not have access to student1's participation.
+        request.getList(studentRepoBaseUrl + participation.getId() + "/buildlogs", HttpStatus.FORBIDDEN, BuildLogEntry.class);
     }
 
     private void assertLogsContent(List<BuildLogEntry> receivedLogs) {
@@ -991,16 +1008,18 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
     void checkCanAccessParticipation(ProgrammingExercise programmingExercise, ProgrammingExerciseStudentParticipation participation, boolean shouldBeAllowed,
             boolean shouldBeAllowedTemplateSolution) {
-        var isAllowed = programmingExerciseParticipationService.canAccessParticipation(participation);
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+
+        var isAllowed = programmingExerciseParticipationService.canAccessParticipation(participation, user);
         assertThat(isAllowed).isEqualTo(shouldBeAllowed);
 
-        var isAllowedSolution = programmingExerciseParticipationService.canAccessParticipation(programmingExercise.getSolutionParticipation());
+        var isAllowedSolution = programmingExerciseParticipationService.canAccessParticipation(programmingExercise.getSolutionParticipation(), user);
         assertThat(isAllowedSolution).isEqualTo(shouldBeAllowedTemplateSolution);
 
-        var isAllowedTemplate = programmingExerciseParticipationService.canAccessParticipation(programmingExercise.getTemplateParticipation());
+        var isAllowedTemplate = programmingExerciseParticipationService.canAccessParticipation(programmingExercise.getTemplateParticipation(), user);
         assertThat(isAllowedTemplate).isEqualTo(shouldBeAllowedTemplateSolution);
 
-        var responseOther = programmingExerciseParticipationService.canAccessParticipation(null);
+        var responseOther = programmingExerciseParticipationService.canAccessParticipation(null, user);
         assertThat(responseOther).isFalse();
     }
 
