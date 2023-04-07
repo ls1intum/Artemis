@@ -1,0 +1,36 @@
+# ----------------------------------------------------------------------------------------------------------------------
+# Jenkins base service
+# ----------------------------------------------------------------------------------------------------------------------
+
+services:
+    jenkins:
+        container_name: artemis-jenkins
+        extra_hosts:
+            - "host.docker.internal:host-gateway"
+        build: ./jenkins
+        user: root
+        volumes:
+            - artemis-jenkins-data:/var/jenkins_home
+            - ./jenkins/jenkins-disable-csrf.groovy:/var/jenkins_home/init.groovy # Disable CSRF token
+            - ./jenkins/master-key-only-for-testing.key:/var/jenkins_home/master.key # Preset master key to use pre-generated secrets
+            - ./jenkins/jenkins-casc-config.yml:/usr/share/jenkins/ref/jenkins-casc-config.yml:ro
+            - /var/run/docker.sock:/var/run/docker.sock
+            - /usr/bin/docker:/usr/bin/docker:ro
+        ports:
+            - "8082:8080"
+        # expose the port to make it reachable docker internally even if the external port mapping changes
+        expose:
+            - "8080"
+        networks:
+            - artemis
+        environment:
+            CASC_JENKINS_CONFIG: "/usr/share/jenkins/ref/jenkins-casc-config.yml"
+            JAVA_OPTS:
+
+networks:
+    artemis:
+        driver: "bridge"
+        name: artemis
+volumes:
+    artemis-jenkins-data:
+        name: artemis-jenkins-data
