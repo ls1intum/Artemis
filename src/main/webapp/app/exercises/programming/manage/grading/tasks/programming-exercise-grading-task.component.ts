@@ -20,6 +20,7 @@ export class ProgrammingExerciseGradingTaskComponent implements OnInit {
     faQuestionCircle = faQuestionCircle;
     isSaving = false;
     tasks: ProgrammingExerciseTask[];
+    allTasksExpanded: boolean;
 
     get ignoreInactive() {
         return this.taskService.ignoreInactive;

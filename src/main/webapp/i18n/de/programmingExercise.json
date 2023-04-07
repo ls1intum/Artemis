@@ -189,6 +189,8 @@
                 "shortTitle": "Bewertung",
                 "save": "Speichern",
                 "reset": "Zurücksetzen",
+                "expandAll": "Alle Testfälle einblenden",
+                "collapseAll": "Alle Testfälle ausblenden",
                 "status": {
                     "unsavedChanges": "Ungespeicherte Änderungen",
                     "unsavedTestCaseChanges": "Ungespeicherte Tests",

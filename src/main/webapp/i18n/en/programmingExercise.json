@@ -189,6 +189,8 @@
                 "shortTitle": "Grading",
                 "save": "Save",
                 "reset": "Reset",
+                "expandAll": "Expand all",
+                "collapseAll": "Collapse all",
                 "status": {
                     "unsavedChanges": "Unsaved changes",
                     "unsavedTestCaseChanges": "Unsaved test cases",
