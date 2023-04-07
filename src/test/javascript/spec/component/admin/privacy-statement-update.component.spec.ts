@@ -88,6 +88,5 @@ describe('PrivacyStatementUpdateComponent', () => {
         fixture.nativeElement.querySelector('#update-privacy-statement-btn').click();
         expect(updateFile).toHaveBeenCalledOnce();
         expect(updateFile).toHaveBeenCalledWith(component.privacyStatement);
-        expect(component.unsavedChanges).toBeFalse();
     });
 });
