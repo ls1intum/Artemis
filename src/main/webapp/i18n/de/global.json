@@ -203,7 +203,7 @@
             "connect": "Verknüpfen",
             "editSelected": "Ausgewählte bearbeiten",
             "editInEditor": "In Editor bearbeiten",
-            "editBuildPlan": "Build Plan bearbeiten",
+            "editBuildPlan": "Build-Plan bearbeiten",
             "editInIntelliJ": "In IntelliJ bearbeiten",
             "editEntity": "{{entity}} bearbeiten",
             "exampleSubmissions": "Beispielabgaben",
