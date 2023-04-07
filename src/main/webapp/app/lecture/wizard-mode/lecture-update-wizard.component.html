@@ -22,7 +22,7 @@
     <!-- Bottom Navigation Bar -->
     <div class="d-flex align-items-center">
         <div class="me-3">
-            <button type="button" id="back" [disabled]="isSaving || isEndDateBeforeStartDate" class="btn btn-secondary" (click)="toggleWizardMode()">
+            <button type="button" id="back" [disabled]="isSaving || isEndDateBeforeStartDate || !lecture.title" class="btn btn-secondary" (click)="toggleWizardMode()">
                 <fa-icon [icon]="faHandShakeAngle"></fa-icon>&nbsp;<span jhiTranslate="artemisApp.lecture.home.switchToTraditionalModeLabel">Switch to normal mode</span>
             </button>
         </div>
