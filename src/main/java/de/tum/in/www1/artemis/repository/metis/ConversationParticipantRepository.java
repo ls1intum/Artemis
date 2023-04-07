@@ -61,7 +61,7 @@ public interface ConversationParticipantRepository extends JpaRepository<Convers
     @Modifying
     void deleteAllByConversationId(Long conversationId);
 
-    @Transactional
+    @Transactional // ok because of delete
     @Modifying
     void deleteAllByUser(User user);
 

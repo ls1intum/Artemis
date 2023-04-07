@@ -20,7 +20,7 @@ public interface ConversationRepository extends JpaRepository<Conversation, Long
     @Modifying
     void deleteById(@NotNull Long conversationId);
 
-    @Transactional
+    @Transactional // ok because of delete
     @Modifying
     void deleteAllByCreator(User creator);
 

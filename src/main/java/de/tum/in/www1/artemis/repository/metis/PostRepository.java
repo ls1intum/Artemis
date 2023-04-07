@@ -60,20 +60,19 @@ public interface PostRepository extends JpaRepository<Post, Long>, JpaSpecificat
         }
     }
 
-    @Transactional
+    @Transactional // ok because of delete
     @Modifying
     void deleteAllByConversationIn(Set<OneToOneChat> oneToOneChats);
 
-    @Transactional
+    @Transactional // ok because of delete
     @Modifying
-    // ok because of delete
     void deleteAllByConversationId(Long conversationId);
 
-    @Transactional
+    @Transactional // ok because of delete
     @Modifying
     void deleteAllByConversationCreator(User user);
 
-    @Transactional
+    @Transactional // ok because of delete
     @Modifying
     void deleteAllByAuthor(User author);
 
