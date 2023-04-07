@@ -226,13 +226,6 @@ describe('ExamParticipationCoverComponent', () => {
         expect(eventSpy).toHaveBeenCalledOnce();
     }));
 
-    it('should create the relative time text correctly', () => {
-        let result = component.relativeTimeText(100);
-        expect(result).toBe('1 min 40 s');
-        result = component.relativeTimeText(10);
-        expect(result).toBe('10 s');
-    });
-
     it('should submit exam', () => {
         component.onExamEnded = new EventEmitter<StudentExam>();
         const saveStudentExamSpy = jest.spyOn(component.onExamEnded, 'emit');

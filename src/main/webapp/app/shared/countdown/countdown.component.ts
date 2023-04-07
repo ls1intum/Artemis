@@ -3,6 +3,7 @@ import dayjs from 'dayjs/esm';
 import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
 import { TranslateService } from '@ngx-translate/core';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
+import { relativeTimeText } from 'app/utils/date.utils';
 
 @Component({
     selector: 'jhi-countdown',
@@ -64,27 +65,8 @@ export class CountdownComponent implements OnInit, OnDestroy {
                 this.reachedZeroEmitted = true;
             }
         } else {
-            this.timeUntilTarget = this.relativeTimeText(this.remainingTimeSeconds());
+            this.timeUntilTarget = relativeTimeText(this.remainingTimeSeconds());
             this.reachedZeroEmitted = false; // reset the flag
-        }
-    }
-
-    /**
-     * Express the given timespan as humanized text
-     *
-     * @param remainingTimeSeconds {number?} the amount of seconds to display, or the empty string if no time is given
-     * @return {string} humanized text for the given amount of seconds
-     */
-    relativeTimeText(remainingTimeSeconds: number | undefined): string {
-        if (remainingTimeSeconds == undefined) {
-            return '';
-        }
-        if (remainingTimeSeconds > 210) {
-            return Math.ceil(remainingTimeSeconds / 60) + ' min';
-        } else if (remainingTimeSeconds > 59) {
-            return Math.floor(remainingTimeSeconds / 60) + ' min ' + (remainingTimeSeconds % 60) + ' s';
-        } else {
-            return remainingTimeSeconds + ' s';
         }
     }
 }

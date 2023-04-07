@@ -1,4 +1,11 @@
-import { convertDateFromClient, convertDateFromServer, dayOfWeekZeroSundayToZeroMonday, toISO8601DateString, toISO8601DateTimeString } from 'app/utils/date.utils';
+import {
+    convertDateFromClient,
+    convertDateFromServer,
+    dayOfWeekZeroSundayToZeroMonday,
+    relativeTimeText,
+    toISO8601DateString,
+    toISO8601DateTimeString,
+} from 'app/utils/date.utils';
 import dayjs from 'dayjs/esm';
 
 describe('DateUtils', () => {
@@ -67,6 +74,24 @@ describe('DateUtils', () => {
         it('should throw error if day of week is not in range', () => {
             expect(() => dayOfWeekZeroSundayToZeroMonday(-1)).toThrow();
             expect(() => dayOfWeekZeroSundayToZeroMonday(7)).toThrow();
+        });
+    });
+
+    describe('relativeTimeText', () => {
+        it('should correctly format relative time text', () => {
+            expect(relativeTimeText(undefined)).toBe('');
+            expect(relativeTimeText(0)).toBe('0 s');
+            expect(relativeTimeText(5)).toBe('5 s');
+            expect(relativeTimeText(10)).toBe('10 s');
+            expect(relativeTimeText(50)).toBe('50 s');
+            expect(relativeTimeText(60)).toBe('1 min 0 s');
+            expect(relativeTimeText(61)).toBe('1 min 1 s');
+            expect(relativeTimeText(100)).toBe('1 min 40 s');
+            expect(relativeTimeText(130)).toBe('2 min 10 s');
+            expect(relativeTimeText(150)).toBe('2 min 30 s');
+            expect(relativeTimeText(220)).toBe('4 min');
+            expect(relativeTimeText(240)).toBe('4 min');
+            expect(relativeTimeText(100020)).toBe('1667 min');
         });
     });
 });

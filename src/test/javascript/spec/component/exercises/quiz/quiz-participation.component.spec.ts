@@ -405,12 +405,6 @@ describe('QuizParticipationComponent', () => {
             expect(alertSpy).toHaveBeenCalledTimes(2);
         });
 
-        it('should express timespan in humanized text', () => {
-            expect(component.relativeTimeText(100020)).toBe('1667 min');
-            expect(component.relativeTimeText(60)).toBe('1 min 0 s');
-            expect(component.relativeTimeText(5)).toBe('5 s');
-        });
-
         it('should adjust release date of the quiz if it didnt start', () => {
             const releaseDate = dayjs().add(1, 'minutes');
             const timeUntilPlannedStart = 10;

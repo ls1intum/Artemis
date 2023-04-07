@@ -74,3 +74,22 @@ export function dayOfWeekZeroSundayToZeroMonday(dayOfWeekZeroSunday: number): nu
     }
     return (dayOfWeekZeroSunday + 6) % 7;
 }
+
+/**
+ * Express the given timespan as humanized text
+ *
+ * @param remainingTimeSeconds {number?} the amount of seconds to display, or the empty string if no time is given
+ * @return {string} humanized text for the given amount of seconds
+ */
+export function relativeTimeText(remainingTimeSeconds: number | undefined): string {
+    if (remainingTimeSeconds == undefined) {
+        return '';
+    }
+    if (remainingTimeSeconds > 210) {
+        return Math.ceil(remainingTimeSeconds / 60) + ' min';
+    } else if (remainingTimeSeconds > 59) {
+        return Math.floor(remainingTimeSeconds / 60) + ' min ' + (remainingTimeSeconds % 60) + ' s';
+    } else {
+        return remainingTimeSeconds + ' s';
+    }
+}

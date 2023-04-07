@@ -154,22 +154,6 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Express the given timespan as humanized text
-     *
-     * @param remainingTimeSeconds {number} the amount of seconds to display
-     * @return {string} humanized text for the given amount of seconds
-     */
-    relativeTimeText(remainingTimeSeconds: number): string {
-        if (remainingTimeSeconds > 210) {
-            return Math.ceil(remainingTimeSeconds / 60) + ' min';
-        } else if (remainingTimeSeconds > 59) {
-            return Math.floor(remainingTimeSeconds / 60) + ' min ' + (remainingTimeSeconds % 60) + ' s';
-        } else {
-            return remainingTimeSeconds + ' s';
-        }
-    }
-
-    /**
      * Submits the exam
      */
     submitExam() {
