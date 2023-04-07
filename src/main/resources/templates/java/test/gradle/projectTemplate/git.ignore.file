@@ -1,3 +1,6 @@
+### Gradle
+!gradle/wrapper/gradle-wrapper.jar
+.gradle
 assignment/
 
 # Taken from https://github.com/github/gitignore
