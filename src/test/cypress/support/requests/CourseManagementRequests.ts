@@ -128,14 +128,14 @@ export class CourseManagementRequests {
         programmingShortName = 'cypress' + generateUUID(),
         packageName = 'de.test',
         assessmentDate = day().add(2, 'days'),
-        assessmentType = CypressAssessmentType.AUTOMATIC,
+        assessmentType = ProgrammingExerciseAssessmentType.AUTOMATIC,
     ): Cypress.Chainable<Cypress.Response<ProgrammingExercise>> {
         const template = {
             ...programmingExerciseTemplate,
             title,
             shortName: programmingShortName,
             packageName,
-            assessmentType: CypressAssessmentType[assessmentType],
+            assessmentType: ProgrammingExerciseAssessmentType[assessmentType],
         };
         const exercise: ProgrammingExercise = Object.assign({}, template, body) as ProgrammingExercise;
         // eslint-disable-next-line no-prototype-builtins
@@ -264,7 +264,7 @@ export class CourseManagementRequests {
 
     /**
      * Creates an exam with the provided settings.
-     * @param exam the exam object created by a {@link CypressExamBuilder}
+     * @param exam the exam object created by a {@link ExamBuilder}
      * @returns <Chainable> request response
      */
     createExam(exam: Exam) {
@@ -289,7 +289,7 @@ export class CourseManagementRequests {
 
     /**
      * Creates an exam with the provided settings.
-     * @param exam the exam object created by a {@link CypressExamBuilder}
+     * @param exam the exam object created by a {@link ExamBuilder}
      * @param exerciseArray an array of exercises
      * @param workingTime the working time in seconds
      * @returns <Chainable> request response
@@ -581,7 +581,7 @@ export class CourseManagementRequests {
 /**
  * Helper class to construct exam objects for the {@link CourseManagementRequests.createExam} method.
  */
-export class CypressExamBuilder {
+export class ExamBuilder {
     readonly template: any = examTemplate;
 
     /**
@@ -705,7 +705,7 @@ export class CypressExamBuilder {
     }
 }
 
-export enum CypressAssessmentType {
+export enum ProgrammingExerciseAssessmentType {
     AUTOMATIC,
     SEMI_AUTOMATIC,
     MANUAL,
