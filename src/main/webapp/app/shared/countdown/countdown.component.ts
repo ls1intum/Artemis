@@ -20,6 +20,7 @@ export class CountdownComponent implements OnInit, OnDestroy {
     constructor(private serverDateService: ArtemisServerDateService, private translateService: TranslateService) {}
 
     ngOnInit(): void {
+        this.updateDisplayedTimes();
         this.interval = window.setInterval(() => {
             this.updateDisplayedTimes();
         }, UI_RELOAD_TIME);
@@ -59,7 +60,6 @@ export class CountdownComponent implements OnInit, OnDestroy {
         if (this.hasReachedZero()) {
             this.timeUntilTarget = this.translateService.instant('artemisApp.showStatistic.now');
             if (!this.reachedZeroEmitted) {
-                console.log('emitting');
                 this.reachedZero.emit();
                 this.reachedZeroEmitted = true;
             }

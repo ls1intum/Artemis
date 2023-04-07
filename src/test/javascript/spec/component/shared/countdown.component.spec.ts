@@ -1,27 +1,30 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { TranslateService } from '@ngx-translate/core';
-import { MockPipe, MockProvider } from 'ng-mocks';
-import { ArtemisTestModule } from '../../test.module';
 import { CountdownComponent } from 'app/shared/countdown/countdown.component';
+import { TranslateService } from '@ngx-translate/core';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import dayjs from 'dayjs/esm';
+import { EventEmitter } from '@angular/core';
+import { ArtemisTestModule } from '../../test.module';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { MockPipe } from 'ng-mocks';
 
-describe('Countdown Component', () => {
-    let comp: CountdownComponent;
+describe('CountdownComponent', () => {
+    let component: CountdownComponent;
     let fixture: ComponentFixture<CountdownComponent>;
+    let mockNow: dayjs.Dayjs = dayjs();
 
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [CountdownComponent, MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDatePipe)],
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }, MockProvider(ArtemisServerDateService), MockProvider(TranslateService)],
+            declarations: [CountdownComponent, MockPipe(ArtemisDatePipe)],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }, ArtemisServerDateService],
         })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(CountdownComponent);
-                comp = fixture.componentInstance;
+                component = fixture.componentInstance;
+                jest.spyOn(TestBed.inject(ArtemisServerDateService), 'now').mockImplementation(() => mockNow);
             });
     });
 
@@ -31,20 +34,65 @@ describe('Countdown Component', () => {
 
     it('should initialize', () => {
         fixture.detectChanges();
-        expect(comp).not.toBeNull();
+        expect(component).not.toBeNull();
     });
 
-    /*
-    use:
-        const difference = Math.ceil(component.exam.startDate.diff(now, 'seconds') / 60);
-        expect(component.timeUntilStart).toBe(difference + ' min');
+    it('should update displayed times and emit reachedZero event', async () => {
+        component.targetDate = mockNow.add(10, 'seconds');
+        component.waitingText = 'Waiting for countdown';
+        component.reachedZero = new EventEmitter<void>();
 
-        tick();
-        jest.advanceTimersByTime(UI_RELOAD_TIME + 1); // simulate setInterval time passing
+        const emitSpy = jest.spyOn(component.reachedZero, 'emit');
+        const advanceTimeBySeconds = (seconds: number) => {
+            mockNow = mockNow.add(seconds, 'seconds');
+        };
 
-        const difference1 = Math.ceil(component.exam.startDate.diff(now1, 's') / 60);
-        expect(component.timeUntilStart).toBe(difference1 + ' min');
+        fixture.detectChanges();
+        jest.useFakeTimers();
 
-        Test external date changes
-     */
+        expect(component.timeUntilTarget).toBe('10 s');
+
+        // Advance time by 5 seconds
+        advanceTimeBySeconds(5);
+        component.updateDisplayedTimes();
+        expect(component.timeUntilTarget).toBe('5 s');
+        expect(emitSpy).toHaveBeenCalledTimes(0);
+
+        // Advance time by another 5 seconds
+        advanceTimeBySeconds(5);
+        component.updateDisplayedTimes();
+        expect(component.timeUntilTarget).toBe('artemisApp.showStatistic.now');
+        expect(emitSpy).toHaveBeenCalledOnce();
+
+        jest.useRealTimers();
+    });
+
+    it('should clear interval when component is destroyed', () => {
+        const clearIntervalSpy = jest.spyOn(window, 'clearInterval');
+        component.interval = 123;
+        component.ngOnDestroy();
+        expect(clearIntervalSpy).toHaveBeenCalledWith(123);
+    });
+
+    it('should correctly calculate remaining time in seconds', () => {
+        component.targetDate = dayjs(mockNow).add(10, 'seconds');
+        expect(component.remainingTimeSeconds()).toBe(10);
+    });
+
+    it('should correctly determine if countdown has reached zero', () => {
+        component.targetDate = dayjs(mockNow).add(10, 'seconds');
+        expect(component.hasReachedZero()).toBeFalse();
+
+        component.targetDate = dayjs(mockNow).subtract(10, 'seconds');
+        expect(component.hasReachedZero()).toBeTrue();
+    });
+
+    it('should correctly format relative time text', () => {
+        const remainingTimeSeconds = 150;
+        expect(component.relativeTimeText(undefined)).toBe('');
+        expect(component.relativeTimeText(remainingTimeSeconds)).toBe('2 min 30 s');
+        expect(component.relativeTimeText(0)).toBe('0 s');
+        expect(component.relativeTimeText(60)).toBe('1 min 0 s');
+        expect(component.relativeTimeText(240)).toBe('4 min');
+    });
 });
