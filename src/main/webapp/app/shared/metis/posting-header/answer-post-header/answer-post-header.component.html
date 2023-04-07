@@ -40,7 +40,7 @@
         </div>
     </ng-template>
     <div *ngIf="!isCourseMessagesPage && !isAnswerOfAnnouncement" class="col-auto ps-0">
-        <div id="toggleElement" [ngClass]="isAtLeastTutorInCourse || isAuthorOfOriginalPost ? 'clickable' : ''" (click)="toggleResolvesPost()">
+        <div id="toggleElement" class="resolve" [ngClass]="isAtLeastTutorInCourse || isAuthorOfOriginalPost ? 'clickable' : ''" (click)="toggleResolvesPost()">
             <div *ngIf="posting.resolvesPost; else notResolved">
                 <fa-icon
                     class="resolved"

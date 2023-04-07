@@ -3,6 +3,7 @@
         <button
             [disabled]="readOnlyMode"
             class="reaction-button clickable"
+            [ngClass]="'emoji-' + reactionMetaData.key"
             [class.reaction-button--reacted]="reactionMetaData.value.hasReacted"
             (click)="updateReaction(reactionMetaData.key)"
             [ngbTooltip]="reactionMetaData.value.reactingUsers | reactingUsersOnPosting | async"
@@ -14,7 +15,7 @@
     <div class="col-auto px-0" [hidden]="readOnlyMode">
         <fa-icon
             [icon]="farSmile"
-            class="reaction-button text-secondary clickable"
+            class="reaction-button react text-secondary clickable"
             [class.open-selector]="showReactionSelector"
             (click)="showReactionSelector = !showReactionSelector"
             cdkOverlayOrigin
