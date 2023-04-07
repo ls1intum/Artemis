@@ -15,7 +15,6 @@ import { QuizQuestion } from 'app/entities/quiz/quiz-question.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { QuizPointStatisticComponent } from 'app/exercises/quiz/manage/statistics/quiz-point-statistic/quiz-point-statistic.component';
-import dayjs from 'dayjs/esm';
 import { QuizPointStatistic } from 'app/entities/quiz/quiz-point-statistic.model';
 import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
 import { MockProvider } from 'ng-mocks';
@@ -42,7 +41,6 @@ describe('QuizExercise Point Statistic Component', () => {
     let accountService: AccountService;
     let accountSpy: jest.SpyInstance;
     let router: Router;
-    let translateService: TranslateService;
     let quizServiceFindSpy: jest.SpyInstance;
     Date.now = jest.fn(() => new Date(Date.UTC(2017, 0, 1)).valueOf());
 
@@ -68,7 +66,6 @@ describe('QuizExercise Point Statistic Component', () => {
                 quizService = fixture.debugElement.injector.get(QuizExerciseService);
                 accountService = fixture.debugElement.injector.get(AccountService);
                 router = fixture.debugElement.injector.get(Router);
-                translateService = fixture.debugElement.injector.get(TranslateService);
                 quizServiceFindSpy = jest.spyOn(quizService, 'find').mockReturnValue(of(new HttpResponse({ body: quizExercise })));
             });
     });
@@ -83,7 +80,6 @@ describe('QuizExercise Point Statistic Component', () => {
             jest.useFakeTimers();
             accountSpy = jest.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
             const loadQuizSuccessSpy = jest.spyOn(comp, 'loadQuizSuccess');
-            const updateDisplayedTimesSpy = jest.spyOn(comp, 'updateDisplayedTimes');
             comp.quizExerciseChannel = '';
             comp.waitingForQuizStart = true;
             comp.quizExercise = quizExercise;
@@ -100,7 +96,6 @@ describe('QuizExercise Point Statistic Component', () => {
             expect(quizServiceFindSpy).toHaveBeenCalledWith(42);
             expect(loadQuizSuccessSpy).toHaveBeenCalledWith(quizExercise);
             expect(comp.quizExerciseChannel).toBe('/topic/courses/2/quizExercises');
-            expect(updateDisplayedTimesSpy).toHaveBeenCalledOnce();
             discardPeriodicTasks();
         }));
 
@@ -116,33 +111,6 @@ describe('QuizExercise Point Statistic Component', () => {
             expect(loadQuizSuccessSpy).not.toHaveBeenCalled();
             discardPeriodicTasks();
         }));
-    });
-
-    describe('updateDisplayedTimes', () => {
-        it('should update remaining time', () => {
-            // setup
-            quizExercise.dueDate = dayjs();
-            comp.quizExercise = quizExercise;
-
-            // call
-            comp.updateDisplayedTimes();
-
-            // check
-            expect(comp.remainingTimeSeconds).toBe(-1);
-            expect(comp.remainingTimeText).toEqual(translateService.instant('artemisApp.showStatistic.quizHasEnded'));
-        });
-
-        it('should show remaining time as zero if time unknown', () => {
-            // setup
-            comp.quizExercise = quizExercise;
-
-            // call
-            comp.updateDisplayedTimes();
-
-            // check
-            expect(comp.remainingTimeSeconds).toBe(0);
-            expect(comp.remainingTimeText).toBe('?');
-        });
     });
 
     describe('loadQuizSuccess', () => {

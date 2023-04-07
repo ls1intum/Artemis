@@ -10,14 +10,11 @@ import { QuizPointStatistic } from 'app/entities/quiz/quiz-point-statistic.model
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { blueColor } from 'app/exercises/quiz/manage/statistics/question-statistic.component';
-import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
 import { round } from 'app/shared/util/utils';
 import { QuizStatistics } from 'app/exercises/quiz/manage/statistics/quiz-statistics';
 import { TranslateService } from '@ngx-translate/core';
 import { faSync } from '@fortawesome/free-solid-svg-icons';
 import { calculateMaxScore } from 'app/exercises/quiz/manage/statistics/quiz-statistic/quiz-statistics.utils';
-import { ArtemisServerDateService } from 'app/shared/server-date.service';
-import { relativeTimeText } from 'app/utils/date.utils';
 
 @Component({
     selector: 'jhi-quiz-point-statistic',
@@ -54,9 +51,6 @@ export class QuizPointStatisticComponent extends QuizStatistics implements OnIni
 
     // timer
     waitingForQuizStart = false;
-    remainingTimeText = '?';
-    remainingTimeSeconds = 0;
-    interval: any;
 
     // Icons
     faSync = faSync;
@@ -70,7 +64,6 @@ export class QuizPointStatisticComponent extends QuizStatistics implements OnIni
         private quizStatisticUtil: QuizStatisticUtil,
         private jhiWebsocketService: JhiWebsocketService,
         protected changeDetector: ChangeDetectorRef,
-        private serverDateService: ArtemisServerDateService,
     ) {
         super(translateService);
         this.translateService.onLangChange.subscribe(() => {
@@ -109,39 +102,10 @@ export class QuizPointStatisticComponent extends QuizStatistics implements OnIni
             });
         });
 
-        // update displayed times in UI regularly
-        this.interval = setInterval(() => {
-            this.updateDisplayedTimes();
-        }, UI_RELOAD_TIME);
         this.changeDetector.detectChanges();
     }
 
-    /**
-     * updates all displayed (relative) times in the UI
-     */
-    updateDisplayedTimes() {
-        const translationBasePath = 'artemisApp.showStatistic.';
-        // update remaining time
-        if (this.quizExercise && this.quizExercise.dueDate) {
-            const endDate = this.quizExercise.dueDate;
-            if (endDate.isAfter(this.serverDateService.now())) {
-                // quiz is still running => calculate remaining seconds and generate text based on that
-                this.remainingTimeSeconds = endDate.diff(this.serverDateService.now(), 'seconds');
-                this.remainingTimeText = relativeTimeText(this.remainingTimeSeconds);
-            } else {
-                // quiz is over => set remaining seconds to negative, to deactivate 'Submit' button
-                this.remainingTimeSeconds = -1;
-                this.remainingTimeText = this.translateService.instant(translationBasePath + 'quizHasEnded');
-            }
-        } else {
-            // remaining time is unknown => Set remaining seconds to 0, to keep 'Submit' button enabled
-            this.remainingTimeSeconds = 0;
-            this.remainingTimeText = '?';
-        }
-    }
-
     ngOnDestroy() {
-        clearInterval(this.interval);
         this.jhiWebsocketService.unsubscribe(this.websocketChannelForData);
     }
 
