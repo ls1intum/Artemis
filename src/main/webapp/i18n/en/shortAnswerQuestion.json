@@ -3,8 +3,7 @@
         "shortAnswerQuestion": {
             "home": {
                 "title": "Short Answer Questions",
-                "createLabel": "Create a new Short Answer Question",
-                "createOrEditLabel": "Create or edit a Short Answer Question"
+                "createLabel": "Create a new Short Answer Question"
             },
             "created": "Created new Short Answer Question with identifier {{ param }}",
             "updated": "Updated Short Answer Question with identifier {{ param }}",

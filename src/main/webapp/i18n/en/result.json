@@ -3,8 +3,7 @@
         "result": {
             "home": {
                 "title": "Results",
-                "createLabel": "Create a new result",
-                "createOrEditLabel": "Create or edit a result"
+                "createLabel": "Create a new result"
             },
             "created": "Created new result with identifier {{ param }}",
             "updated": "Updated result with identifier {{ param }}",
