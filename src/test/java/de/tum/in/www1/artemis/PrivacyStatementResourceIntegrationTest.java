@@ -13,6 +13,7 @@ import java.nio.file.StandardOpenOption;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -67,17 +68,45 @@ class PrivacyStatementResourceIntegrationTest extends AbstractSpringIntegrationB
     }
 
     // no mock user as anonymous access should be allowed
-    @Test
-    void testGetPrivacyStatementReturnsOtherLanguageIfFirstLanguageNotFound() throws Exception {
+    @ParameterizedTest
+    @EnumSource(value = PrivacyStatementLanguage.class, names = { "GERMAN", "ENGLISH" })
+    void testGetPrivacyStatementReturnsOtherLanguageIfFirstLanguageNotFound(PrivacyStatementLanguage language) throws Exception {
         PrivacyStatement response;
         try (MockedStatic<Files> mockedFiles = mockStatic(Files.class)) {
-            mockedFiles.when(() -> Files.exists(argThat(path -> path.toString().contains("_en")))).thenReturn(true);
+            if ("de".equals(language.getShortName())) {
+                mockedFiles.when(() -> Files.exists(argThat(path -> path.toString().contains("_de")))).thenReturn(false);
+                mockedFiles.when(() -> Files.exists(argThat(path -> path.toString().contains("_en")))).thenReturn(true);
+                mockedFiles.when(() -> Files.readString(argThat(path -> path.toString().contains("_en")))).thenReturn("Privacy Statement");
+            }
+            else {
+                mockedFiles.when(() -> Files.exists(argThat(path -> path.toString().contains("_de")))).thenReturn(true);
+                mockedFiles.when(() -> Files.exists(argThat(path -> path.toString().contains("_en")))).thenReturn(false);
+                mockedFiles.when(() -> Files.readString(argThat(path -> path.toString().contains("_de")))).thenReturn("Datenschutzerklärung");
+            }
+
+            response = request.get("/api/privacy-statement?language=" + language.getShortName(), HttpStatus.OK, PrivacyStatement.class);
+        }
+        if ("de".equals(language.getShortName())) {
+            assertThat(response.getLanguage()).isEqualTo(PrivacyStatementLanguage.ENGLISH);
+            assertThat(response.getText()).isEqualTo("Privacy Statement");
+        }
+        else {
+            assertThat(response.getLanguage()).isEqualTo(PrivacyStatementLanguage.GERMAN);
+            assertThat(response.getText()).isEqualTo("Datenschutzerklärung");
+        }
+    }
+
+    @Test
+    void testGetPrivacyStatementReturnsEmptyStringIfNoLanguageFound() throws Exception {
+        PrivacyStatement response;
+        try (MockedStatic<Files> mockedFiles = mockStatic(Files.class)) {
             mockedFiles.when(() -> Files.exists(argThat(path -> path.toString().contains("_de")))).thenReturn(false);
-            mockedFiles.when(() -> Files.readString(argThat(path -> path.toString().contains("_en")))).thenReturn("test");
+            mockedFiles.when(() -> Files.exists(argThat(path -> path.toString().contains("_en")))).thenReturn(false);
+
             response = request.get("/api/privacy-statement?language=de", HttpStatus.OK, PrivacyStatement.class);
         }
-        assertThat(response.getLanguage()).isEqualTo(PrivacyStatementLanguage.ENGLISH);
-        assertThat(response.getText()).isEqualTo("test");
+        assertThat(response.getText()).isEmpty();
+        assertThat(response.getLanguage()).isEqualTo(PrivacyStatementLanguage.GERMAN);
     }
 
     @Test
