@@ -247,7 +247,7 @@
                     }
                 },
                 "gradingTableHeader": {
-                    "testName": "Testname",
+                    "testName": "<b>Task</b> / Test",
                     "weight": "Gewichtung",
                     "bonusMultiplier": "Bonusmultiplikator",
                     "bonusPoints": "Bonuspunkte",
