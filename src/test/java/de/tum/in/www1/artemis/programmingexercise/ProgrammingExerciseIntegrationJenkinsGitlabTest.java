@@ -583,7 +583,7 @@ class ProgrammingExerciseIntegrationJenkinsGitlabTest extends AbstractSpringInte
 
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    // It should fail for all ProgrammingExercises except Haskell
+    // It should return a bad request error for all ProgrammingExercises except Haskell
     @EnumSource(value = ProgrammingLanguage.class, names = { "HASKELL", "KOTLIN", "VHDL", "ASSEMBLER", "OCAML" }, mode = EnumSource.Mode.EXCLUDE)
     void createProgrammingExercise_checkoutSolutionRepositoryProgrammingLanguageNotSupported_badRequest(ProgrammingLanguage programmingLanguage) throws Exception {
         programmingExerciseIntegrationTestService.createProgrammingExercise_checkoutSolutionRepositoryProgrammingLanguageNotSupported_badRequest(programmingLanguage);
@@ -605,6 +605,15 @@ class ProgrammingExerciseIntegrationJenkinsGitlabTest extends AbstractSpringInte
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createProgrammingExercise_notIncluded_invalidBonusPoints_badRequest() throws Exception {
         programmingExerciseIntegrationTestService.createProgrammingExercise_notIncluded_invalidBonusPoints_badRequest();
+    }
+
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    // It should return a bad request error for all ProgrammingExercises except Java and Kotlin. VHTL, Assembler and OCAML are not supported for Jenkíns at all so they also return
+    // a bad request.
+    @EnumSource(value = ProgrammingLanguage.class, names = { "JAVA", "KOTLIN", "VHDL", "ASSEMBLER", "OCAML" }, mode = EnumSource.Mode.EXCLUDE)
+    void createProgrammingExercise_testwiseCoverageAnalysisNotSupported_badRequest(ProgrammingLanguage programmingLanguage) throws Exception {
+        programmingExerciseIntegrationTestService.createProgrammingExercise_testwiseCoverageAnalysisNotSupported_badRequest(programmingLanguage);
     }
 
     @Test

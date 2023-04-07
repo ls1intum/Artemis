@@ -61,7 +61,18 @@ spotless {
     java {
         target project.fileTree(project.rootDir) {
             include "**/*.java"
-            exclude "**/src/main/java/de/tum/in/www1/artemis/service/connectors/BambooService.java", "**/src/test/resources/test-data/repository-export/EncodingISO_8559_1.java", "**/node_modules/**", "**/out/**", "**/repos/**", "**/repos-download/**", "**/build/**", "**/src/main/generated/**", "**/src/main/resources/templates/**"
+            exclude(
+                "**/src/main/java/de/tum/in/www1/artemis/service/connectors/BambooService.java",
+                "**/src/test/resources/test-data/repository-export/EncodingISO_8559_1.java",
+                "**/node_modules/**",
+                "**/out/**",
+                "**/repos/**",
+                "**/repos-download/**",
+                "**/build/**",
+                "**/src/main/generated/**",
+                "**/src/main/resources/templates/**",
+                "/docker/**"
+            )
         }
         importOrderFile "artemis-spotless.importorder"
         eclipse("4.19.0").configFile "artemis-spotless-style.xml"
@@ -402,10 +413,6 @@ checkstyle {
     configFile file("checkstyle.xml")
     checkstyleTest.enabled = false
     maxErrors = 0
-}
-
-task buildJarForDocker (type: Exec) {
-    commandLine "./gradlew", "build", "-x", "webapp", "-x", "test", "-x", "jacocoTestCoverageVerification"
 }
 
 def isNonStable = { String version ->
