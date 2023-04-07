@@ -15,19 +15,15 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
-import de.tum.in.www1.artemis.domain.participation.Participation;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
-import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.security.annotations.EnforceNothing;
 import de.tum.in.www1.artemis.service.ResultService;
-import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
-import de.tum.in.www1.artemis.service.connectors.lti.LtiNewResultService;
 import de.tum.in.www1.artemis.service.hestia.TestwiseCoverageService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseGradingService;
+import de.tum.in.www1.artemis.service.programming.ProgrammingMessagingService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingTriggerService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -47,10 +43,6 @@ public class PublicResultResource {
 
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
 
-    private final WebsocketMessagingService messagingService;
-
-    private final LtiNewResultService ltiNewResultService;
-
     private final ProgrammingExerciseGradingService programmingExerciseGradingService;
 
     private final ResultService resultService;
@@ -59,16 +51,17 @@ public class PublicResultResource {
 
     private final ProgrammingTriggerService programmingTriggerService;
 
-    public PublicResultResource(Optional<ContinuousIntegrationService> continuousIntegrationService, WebsocketMessagingService messagingService,
-            LtiNewResultService ltiNewResultService, ProgrammingExerciseGradingService programmingExerciseGradingService, ResultService resultService,
-            TestwiseCoverageService testwiseCoverageService, ProgrammingTriggerService programmingTriggerService) {
+    private final ProgrammingMessagingService programmingMessagingService;
+
+    public PublicResultResource(Optional<ContinuousIntegrationService> continuousIntegrationService, ProgrammingExerciseGradingService programmingExerciseGradingService,
+            ResultService resultService, TestwiseCoverageService testwiseCoverageService, ProgrammingTriggerService programmingTriggerService,
+            ProgrammingMessagingService programmingMessagingService) {
         this.continuousIntegrationService = continuousIntegrationService;
-        this.messagingService = messagingService;
-        this.ltiNewResultService = ltiNewResultService;
         this.programmingExerciseGradingService = programmingExerciseGradingService;
         this.resultService = resultService;
         this.testwiseCoverageService = testwiseCoverageService;
         this.programmingTriggerService = programmingTriggerService;
+        this.programmingMessagingService = programmingMessagingService;
     }
 
     /**
@@ -137,13 +130,8 @@ public class PublicResultResource {
                 }
             }
 
-            log.debug("Send result to client over websocket. Result: {}, Submission: {}, Participation: {}", result, result.getSubmission(), result.getParticipation());
-            // notify user via websocket
-            messagingService.broadcastNewResult((Participation) participation, result);
-            if (participation instanceof StudentParticipation) {
-                // do not try to report results for template or solution participations
-                ltiNewResultService.onNewResult((ProgrammingExerciseStudentParticipation) participation);
-            }
+            programmingMessagingService.notifyUserAboutNewResult(result, participation);
+
             log.info("The new result for {} was saved successfully", planKey);
         }
         return ResponseEntity.ok().build();

@@ -17,23 +17,22 @@ import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.*;
-import de.tum.in.www1.artemis.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.BuildLogEntryService;
+import de.tum.in.www1.artemis.service.RepositoryAccessService;
 import de.tum.in.www1.artemis.service.RepositoryService;
-import de.tum.in.www1.artemis.service.SubmissionPolicyService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.in.www1.artemis.service.exam.ExamSubmissionService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
-import de.tum.in.www1.artemis.service.plagiarism.PlagiarismService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
 import de.tum.in.www1.artemis.web.rest.dto.FileMove;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryStatusDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
+import de.tum.in.www1.artemis.web.rest.errors.AccessUnauthorizedException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -51,94 +50,55 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
 
     private final ProgrammingSubmissionRepository programmingSubmissionRepository;
 
-    private final SubmissionPolicyService submissionPolicyService;
-
     private final ParticipationRepository participationRepository;
 
-    private final PlagiarismService plagiarismService;
+    private final SubmissionPolicyRepository submissionPolicyRepository;
 
     public RepositoryProgrammingExerciseParticipationResource(UserRepository userRepository, AuthorizationCheckService authCheckService, GitService gitService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService, RepositoryService repositoryService,
             ProgrammingExerciseParticipationService participationService, ProgrammingExerciseRepository programmingExerciseRepository,
             ParticipationRepository participationRepository, ExamSubmissionService examSubmissionService, BuildLogEntryService buildLogService,
-            ProgrammingSubmissionRepository programmingSubmissionRepository, SubmissionPolicyService submissionPolicyService, PlagiarismService plagiarismService) {
-        super(userRepository, authCheckService, gitService, continuousIntegrationService, repositoryService, versionControlService, programmingExerciseRepository);
+            ProgrammingSubmissionRepository programmingSubmissionRepository, RepositoryAccessService repositoryAccessService,
+            SubmissionPolicyRepository submissionPolicyRepository) {
+        super(userRepository, authCheckService, gitService, continuousIntegrationService, repositoryService, versionControlService, programmingExerciseRepository,
+                repositoryAccessService);
         this.participationService = participationService;
         this.examSubmissionService = examSubmissionService;
         this.buildLogService = buildLogService;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
-        this.submissionPolicyService = submissionPolicyService;
         this.participationRepository = participationRepository;
-        this.plagiarismService = plagiarismService;
+        this.submissionPolicyRepository = submissionPolicyRepository;
     }
 
     @Override
-    Repository getRepository(Long participationId, RepositoryActionType repositoryAction, boolean pullOnGet) throws IllegalAccessException, GitAPIException {
+    Repository getRepository(Long participationId, RepositoryActionType repositoryActionType, boolean pullOnGet) throws IllegalAccessException, GitAPIException {
         Participation participation = participationRepository.findByIdElseThrow(participationId);
-        // Error case 1: The participation is not from a programming exercise.
+
         if (!(participation instanceof ProgrammingExerciseParticipation programmingParticipation)) {
             throw new IllegalArgumentException();
         }
+
         ProgrammingExercise programmingExercise = programmingExerciseRepository.getProgrammingExerciseFromParticipation(programmingParticipation);
-        // Error case 2: The programming exercise cannot be found.
         if (programmingExercise == null) {
             throw new IllegalArgumentException();
         }
-        boolean lockRepositoryPolicyEnforced = false;
 
-        if (programmingExerciseRepository.findWithSubmissionPolicyById(programmingExercise.getId()).get().getSubmissionPolicy() instanceof LockRepositoryPolicy policy) {
-            lockRepositoryPolicyEnforced = submissionPolicyService.isParticipationLocked(policy, participation);
-        }
-        // Error case 3: The user does not have permissions to push into the repository and the user is not notified for a related plagiarism case.
-        boolean hasPermissions = participationService.canAccessParticipation(programmingParticipation);
-        if (!hasPermissions && !plagiarismService.wasUserNotifiedByInstructor(participationId, userRepository.getUser().getLogin())) {
-            // TODO: change to AccessForbiddenException
-            throw new IllegalAccessException();
-        }
-        // Error case 4: The user's participation repository is locked.
-        if (repositoryAction == RepositoryActionType.WRITE && (programmingParticipation.isLocked() || lockRepositoryPolicyEnforced)) {
-            // TODO: change to AccessForbiddenException
-            throw new IllegalAccessException();
+        // Add submission policy to the programming exercise.
+        if (programmingExercise.getSubmissionPolicy() == null) {
+            programmingExercise.setSubmissionPolicy(submissionPolicyRepository.findByProgrammingExerciseId(programmingExercise.getId()));
         }
 
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        boolean isStudent = !authCheckService.isAtLeastTeachingAssistantForExercise(programmingExercise);
-        // Error case 5: The student can reset the repository only before and a tutor/instructor only after the due date has passed
-        if (repositoryAction == RepositoryActionType.RESET) {
-            boolean isOwner = true; // true for Solution- and TemplateProgrammingExerciseParticipation
-            if (participation instanceof StudentParticipation) {
-                isOwner = authCheckService.isOwnerOfParticipation((StudentParticipation) participation);
-            }
-            if (isStudent && programmingParticipation.isLocked()) {
-                // TODO: change to AccessForbiddenException
-                throw new IllegalAccessException();
-            }
-            // A tutor/instructor who is owner of the exercise should always be able to reset the repository
-            else if (!isStudent && !isOwner) {
-                // Check if a tutor is allowed to reset during the assessment
-                // Check for a regular course exercise
-                if (programmingExercise.isCourseExercise() && !programmingParticipation.isLocked()) {
-                    // TODO: change to AccessForbiddenException
-                    throw new IllegalAccessException();
-                }
-                // Check for an exam exercise, as it might not be locked but a student might still be allowed to submit
-                var optStudent = ((StudentParticipation) participation).getStudent();
-                if (optStudent.isPresent() && programmingExercise.isExamExercise()
-                        && examSubmissionService.isAllowedToSubmitDuringExam(programmingExercise, optStudent.get(), false)) {
-                    // TODO: change to AccessForbiddenException
-                    throw new IllegalAccessException();
-                }
-            }
+        try {
+            repositoryAccessService.checkAccessRepositoryElseThrow(programmingParticipation, userRepository.getUserWithGroupsAndAuthorities(), programmingExercise,
+                    repositoryActionType);
         }
-        // Error case 6: The user is not (any longer) allowed to submit to the exam/exercise. This check is only relevant for students.
-        // This must be a student participation as hasPermissions would have been false and an error already thrown
-        // But the student should still be able to access if they are notified for a related plagiarism case.
-        boolean isStudentParticipation = participation instanceof ProgrammingExerciseStudentParticipation;
-        if (isStudentParticipation && isStudent && !examSubmissionService.isAllowedToSubmitDuringExam(programmingExercise, user, false)
-                && !plagiarismService.wasUserNotifiedByInstructor(participationId, userRepository.getUser().getLogin())) {
-            // TODO: change to AccessForbiddenException
-            throw new IllegalAccessException();
+        catch (AccessUnauthorizedException e) {
+            // All methods calling this getRepository method only expect the AccessForbiddenException to determine whether a user has access to the repository.
+            // The local version control system, that also uses checkAccessRepositoryElseThrow, needs a more fine-grained check to return the correct HTTP status and thus expects
+            // both the AccessUnauthorizedException and the AccessForbiddenException.
+            throw new AccessForbiddenException(e);
         }
+
         var repositoryUrl = programmingParticipation.getVcsRepositoryUrl();
 
         // This check reduces the amount of REST-calls that retrieve the default branch of a repository.

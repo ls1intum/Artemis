@@ -16,7 +16,7 @@
     <form name="editForm" role="form" novalidate #editForm="ngForm" (keydown.enter)="isEventInsideTextArea($event)" *ngIf="!isShowingWizardMode">
         <div class="d-flex" *ngIf="!isImport && !programmingExercise.id">
             <div class="flex-grow-1 align-items-center">
-                <h4 *ngIf="!isImport && !programmingExercise.id" id="jhi-programming-exercise-heading-create" jhiTranslate="artemisApp.programmingExercise.home.generateLabel">
+                <h4 *ngIf="!isImport && !programmingExercise.id" id="jhi-programming-exercise-heading-create" jhiTranslate="artemisApp.programmingExercise.home.createLabel">
                     Generate new Programming Exercise
                 </h4>
                 <jhi-documentation-button [type]="documentationType"></jhi-documentation-button>

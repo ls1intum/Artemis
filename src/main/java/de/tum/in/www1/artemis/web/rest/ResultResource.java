@@ -87,30 +87,6 @@ public class ResultResource {
     }
 
     /**
-     * GET /exercises/:exerciseId/results : get the successful results for an exercise, ordered ascending by build completion date.
-     *
-     * @param exerciseId      the id of the exercise for which to retrieve the results
-     * @param withSubmissions defines if submissions are loaded from the database for the results
-     * @return the ResponseEntity with status 200 (OK) and the list of results in body
-     */
-    @GetMapping("exercises/{exerciseId}/results")
-    @PreAuthorize("hasRole('TA')")
-    public ResponseEntity<List<Result>> getResultsForExercise(@PathVariable Long exerciseId, @RequestParam(defaultValue = "true") boolean withSubmissions) {
-        long start = System.currentTimeMillis();
-        log.debug("REST request to get Results for Exercise : {}", exerciseId);
-
-        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
-
-        final List<StudentParticipation> participations = studentParticipationRepository.findByExerciseIdAndTestRunWithEagerSubmissionsResultAssessor(exerciseId, false);
-
-        List<Result> results = resultService.resultsForExercise(exercise, participations, withSubmissions);
-        log.info("getResultsForExercise took {}ms for {} results.", System.currentTimeMillis() - start, results.size());
-
-        return ResponseEntity.ok().body(results);
-    }
-
-    /**
      * GET /exercises/:exerciseId/results-with-points-per-criterion : get the successful results for an exercise, ordered ascending by build completion date.
      * Also contains for each result the points the student achieved with manual feedback. Those points are grouped as sum for each grading criterion.
      *

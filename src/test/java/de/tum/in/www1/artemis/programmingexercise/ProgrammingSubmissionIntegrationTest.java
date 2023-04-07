@@ -203,6 +203,14 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void triggerBuildStudentForbidden() throws Exception {
+        StudentParticipation participation = database.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student2");
+        String url = "/api/programming-submissions/" + participation.getId() + "/trigger-build";
+        request.postWithoutLocation(url, null, HttpStatus.FORBIDDEN, new HttpHeaders());
+    }
+
+    @Test
     @Timeout(5)
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void triggerBuildForExerciseAsInstructor() throws Exception {
