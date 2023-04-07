@@ -369,7 +369,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * updates all displayed (relative) times in the UI
+     * updates all displayed (relative) times in the UI except for the countdown timer, which is its own component
      */
     updateDisplayedTimes() {
         const translationBasePath = 'artemisApp.showStatistic.';
