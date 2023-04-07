@@ -75,7 +75,7 @@ public class RepositoryAccessService {
             checkAccessRepositoryForReset(programmingParticipation, programmingExercise, user);
         }
 
-        // Error case 4: The user is not (any longer) allowed to submit to the exam/exercise. This check is only relevant for students and tutors.
+        // Error case 4: The user is not allowed to read or submit to the repository for an exam exercise. This check is only relevant for students and tutors.
         // But the student should still be able to access if they are notified for a related plagiarism case.
         if (!isAtLeastEditor && !examSubmissionService.isAllowedToSubmitDuringExam(programmingExercise, user, false) && !userWasNotifiedAboutPlagiarismCase) {
             throw new AccessForbiddenException();
