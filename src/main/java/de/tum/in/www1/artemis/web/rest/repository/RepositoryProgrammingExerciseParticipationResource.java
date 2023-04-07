@@ -72,7 +72,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     }
 
     @Override
-    Repository getRepository(Long participationId, RepositoryActionType repositoryActionType, boolean pullOnGet) throws IllegalAccessException, GitAPIException {
+    Repository getRepository(Long participationId, RepositoryActionType repositoryActionType, boolean pullOnGet) throws GitAPIException {
         Participation participation = participationRepository.findByIdElseThrow(participationId);
 
         if (!(participation instanceof ProgrammingExerciseParticipation programmingParticipation)) {
@@ -275,11 +275,11 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
 
         // User must have the necessary permissions to update a file.
         // When the buildAndTestAfterDueDate is set, the student can't change the repository content anymore after the due date.
-        boolean repositoryIsLocked = programmingExerciseParticipation.isLocked();
-        if (repositoryIsLocked || !participationService.canAccessParticipation(programmingExerciseParticipation)) {
-            FileSubmissionError error = new FileSubmissionError(participationId, "noPermissions");
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, error.getMessage(), error);
-        }
+//        boolean repositoryIsLocked = programmingExerciseParticipation.isLocked();
+//        if (repositoryIsLocked || !participationService.canAccessParticipation(programmingExerciseParticipation)) {
+//            FileSubmissionError error = new FileSubmissionError(participationId, "noPermissions");
+//            throw new ResponseStatusException(HttpStatus.FORBIDDEN, error.getMessage(), error);
+//        }
 
         // Git repository must be available to update a file
         Repository repository;
@@ -294,7 +294,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
             FileSubmissionError error = new FileSubmissionError(participationId, "checkoutFailed");
             throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, error.getMessage(), error);
         }
-        catch (IllegalAccessException e) {
+        catch (AccessForbiddenException e) {
             FileSubmissionError error = new FileSubmissionError(participationId, "noPermissions");
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, error.getMessage(), error);
         }

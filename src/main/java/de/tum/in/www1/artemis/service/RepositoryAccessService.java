@@ -43,6 +43,7 @@ public class RepositoryAccessService {
 
     /**
      * Checks if the user has access to the repository of the given participation.
+     * Throws an {@link AccessForbiddenException} otherwise.
      *
      * @param programmingParticipation The participation for which the repository should be accessed.
      * @param user                     The user who wants to access the repository.
@@ -64,7 +65,11 @@ public class RepositoryAccessService {
         if (programmingExercise.getSubmissionPolicy() instanceof LockRepositoryPolicy policy) {
             lockRepositoryPolicyEnforced = submissionPolicyService.isParticipationLocked(policy, (Participation) programmingParticipation);
         }
-        if (repositoryActionType == RepositoryActionType.WRITE && (programmingParticipation.isLocked() || lockRepositoryPolicyEnforced)) {
+
+        // Editors and up are able to push to any repository even if the participation is locked for the student.
+        boolean isAtLeastEditor = authorizationCheckService.isAtLeastEditorInCourse(programmingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
+
+        if (repositoryActionType == RepositoryActionType.WRITE && !isAtLeastEditor && (programmingParticipation.isLocked() || lockRepositoryPolicyEnforced)) {
             throw new AccessForbiddenException();
         }
 
@@ -118,6 +123,7 @@ public class RepositoryAccessService {
 
     /**
      * Checks if the user has access to the test repository of the given programming exercise.
+     * Throws an {@link AccessForbiddenException} otherwise.
      *
      * @param atLeastEditor if true, the user needs at least editor permissions, otherwise only teaching assistant permissions are required.
      * @param exercise      the programming exercise the test repository belongs to.
