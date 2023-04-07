@@ -273,17 +273,10 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, error.getMessage(), error);
         }
 
-        // User must have the necessary permissions to update a file.
-        // When the buildAndTestAfterDueDate is set, the student can't change the repository content anymore after the due date.
-//        boolean repositoryIsLocked = programmingExerciseParticipation.isLocked();
-//        if (repositoryIsLocked || !participationService.canAccessParticipation(programmingExerciseParticipation)) {
-//            FileSubmissionError error = new FileSubmissionError(participationId, "noPermissions");
-//            throw new ResponseStatusException(HttpStatus.FORBIDDEN, error.getMessage(), error);
-//        }
-
         // Git repository must be available to update a file
         Repository repository;
         try {
+            // Get the repository and also conduct access checks.
             repository = getRepository(programmingExerciseParticipation.getId(), RepositoryActionType.WRITE, true);
         }
         catch (CheckoutConflictException | WrongRepositoryStateException ex) {
