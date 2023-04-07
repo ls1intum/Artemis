@@ -13,7 +13,6 @@ import { StatisticsComponent } from 'app/admin/statistics/statistics.component';
 import { DocsComponent } from 'app/admin/docs/docs.component';
 import { organizationMgmtRoute } from 'app/admin/organization-management/organization-management.route';
 import { MetricsComponent } from 'app/admin/metrics/metrics.component';
-import { PrivacyStatementUpdateComponent } from 'app/admin/privacy-statement/privacy-statement-update/privacy-statement-update.component';
 
 export const adminState: Routes = [
     {
@@ -82,7 +81,7 @@ export const adminState: Routes = [
             },
             {
                 path: 'privacy-statement',
-                component: PrivacyStatementUpdateComponent,
+                loadChildren: () => import('./privacy-statement/privacy-statement-update/privacy-statement-update.module').then((module) => module.PrivacyStatementUpdateModule),
             },
             ...organizationMgmtRoute,
             ...userManagementRoute,

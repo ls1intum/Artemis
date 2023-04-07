@@ -1,28 +1,20 @@
 import { AfterViewInit, Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { SafeHtml } from '@angular/platform-browser';
-import { StaticContentService } from 'app/shared/service/static-content.service';
 import { PrivacyStatementService } from 'app/shared/service/privacy-statement.service';
 import { PrivacyStatementLanguage } from 'app/entities/privacy-statement.model';
-import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
 import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
 
 @Component({
     selector: 'jhi-privacy',
     template: `
         <h3 jhiTranslate="legal.privacy.title">Datenschutzerklärung</h3>
-        <div [innerHTML]="privacyStatement"></div>
+        <div [innerHTML]="privacyStatement | htmlForMarkdown"></div>
     `,
 })
 export class PrivacyComponent implements AfterViewInit, OnInit {
-    privacyStatement: SafeHtml;
+    privacyStatement: string;
 
-    constructor(
-        private route: ActivatedRoute,
-        private staticContentService: StaticContentService,
-        private privacyStatementService: PrivacyStatementService,
-        private localConversionService: LocaleConversionService,
-    ) {}
+    constructor(private route: ActivatedRoute, private privacyStatementService: PrivacyStatementService, private localConversionService: LocaleConversionService) {}
 
     /**
      * On init get the privacy statement file from the Artemis server and save it.
@@ -30,7 +22,7 @@ export class PrivacyComponent implements AfterViewInit, OnInit {
     ngOnInit(): void {
         this.privacyStatementService
             .getPrivacyStatement(this.localConversionService.locale as PrivacyStatementLanguage)
-            .subscribe((statement) => (this.privacyStatement = htmlForMarkdown(statement.text)));
+            .subscribe((statement) => (this.privacyStatement = statement.text));
     }
 
     /**

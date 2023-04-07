@@ -5,7 +5,6 @@ import { PrivacyStatement, PrivacyStatementLanguage } from 'app/entities/privacy
 import { MarkdownEditorComponent, MarkdownEditorHeight } from 'app/shared/markdown-editor/markdown-editor.component';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { PrivacyStatementUnsavedChangesWarningComponent } from 'app/admin/privacy-statement/unsaved-changes-warning/privacy-statement-unsaved-changes-warning.component';
-import { JhiLanguageHelper } from 'app/core/language/language.helper';
 
 @Component({
     selector: 'jhi-privacy-statement-update-component',
@@ -31,11 +30,10 @@ export class PrivacyStatementUpdateComponent implements OnInit {
     currentLanguage = this.defaultLanguage;
     unsavedChangesWarning: NgbModalRef;
 
-    constructor(private privacyStatementService: PrivacyStatementService, private modalService: NgbModal, private languageHelper: JhiLanguageHelper) {}
+    constructor(private privacyStatementService: PrivacyStatementService, private modalService: NgbModal) {}
 
     ngOnInit() {
         this.privacyStatement = new PrivacyStatement(this.defaultLanguage);
-        this.languageHelper.updateTitle('artemisApp.privacyStatement.title');
         this.privacyStatementService.getPrivacyStatementForUpdate(this.defaultLanguage).subscribe((statement) => {
             this.privacyStatement = statement;
         });
@@ -49,7 +47,6 @@ export class PrivacyStatementUpdateComponent implements OnInit {
             this.unsavedChanges = false;
             this.isSaving = false;
         });
-        this.unsavedChanges = false;
     }
 
     checkUnsavedChanges(content: string) {

@@ -54,12 +54,14 @@ describe('PrivacyStatementUpdateComponent', () => {
         expect(open).toHaveBeenCalledOnce();
         expect(open).toHaveBeenCalledWith(PrivacyStatementUnsavedChangesWarningComponent, { size: 'lg', backdrop: 'static' });
     });
+
     it('should load privacy statement in German on init', () => {
         const loadFile = jest.spyOn(privacyStatementService, 'getPrivacyStatementForUpdate');
         component.ngOnInit();
         expect(loadFile).toHaveBeenCalledOnce();
         expect(loadFile).toHaveBeenCalledWith(PrivacyStatementLanguage.GERMAN);
     });
+
     it('should load privacy statement in selected language on language change', () => {
         const loadFile = jest.spyOn(privacyStatementService, 'getPrivacyStatementForUpdate');
         component.currentLanguage = PrivacyStatementLanguage.GERMAN;
@@ -69,17 +71,20 @@ describe('PrivacyStatementUpdateComponent', () => {
         expect(loadFile).toHaveBeenCalledWith(PrivacyStatementLanguage.ENGLISH);
         expect(component.currentLanguage).toEqual(PrivacyStatementLanguage.ENGLISH);
     });
+
     it('should correctly determine unsaved changes', () => {
         component.unsavedChanges = false;
         component.privacyStatement.text = 'text';
         component.checkUnsavedChanges('changed text');
         expect(component.unsavedChanges).toBeTrue();
     });
+
     it('should update privacy statement when clicking save', () => {
         const updateFile = jest.spyOn(privacyStatementService, 'updatePrivacyStatement');
         component.privacyStatement.text = 'Datenschutzerklärung';
         component.privacyStatement.language = PrivacyStatementLanguage.GERMAN;
         component.privacyStatement.text = 'text';
+        component.unsavedChanges = true;
         fixture.nativeElement.querySelector('#update-privacy-statement-btn').click();
         expect(updateFile).toHaveBeenCalledOnce();
         expect(updateFile).toHaveBeenCalledWith(component.privacyStatement);
