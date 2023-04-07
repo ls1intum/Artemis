@@ -6,5 +6,5 @@ import { Component, HostBinding } from '@angular/core';
     styleUrls: ['./overlay-centered.component.scss'],
 })
 export class OverlayCenteredComponent {
-    @HostBinding('class') class = 'alert alert-info';
+    @HostBinding('class') classList: string[] = ['alert'];
 }
