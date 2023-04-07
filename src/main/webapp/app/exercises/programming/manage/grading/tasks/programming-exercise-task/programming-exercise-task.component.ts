@@ -10,6 +10,7 @@ import { ProgrammingExerciseTaskService } from '../programming-exercise-task.ser
     styleUrls: ['./programming-exercise-task.component.scss'],
 })
 export class ProgrammingExerciseTaskComponent {
+    @Input() index: number;
     @Input() task: ProgrammingExerciseTask;
     @Input() open: boolean;
 
@@ -57,5 +58,9 @@ export class ProgrammingExerciseTaskComponent {
         });
 
         this.updateTasksEvent.emit();
+    }
+
+    formatTestIndex(i: number, j: number): string {
+        return `${i + 1}.${j + 1}`;
     }
 }

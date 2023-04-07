@@ -38,6 +38,8 @@
 
 <form>
     <div class="task__head task__row">
+        <div class="task__row__index"></div>
+
         <div class="task__row__cell">
             <p class="mb-0" [innerHtml]="'artemisApp.programmingExercise.configureGrading.gradingTableHeader.testName' | artemisTranslate"></p>
         </div>
@@ -107,5 +109,11 @@
         </div>
     </div>
 
-    <jhi-programming-exercise-task *ngFor="let task of tasks" [task]="task" [open]="allTasksExpanded" (updateTasksEvent)="updateTasks()"></jhi-programming-exercise-task>
+    <jhi-programming-exercise-task
+        *ngFor="let task of tasks; index as i"
+        [index]="i"
+        [task]="task"
+        [open]="allTasksExpanded"
+        (updateTasksEvent)="updateTasks()"
+    ></jhi-programming-exercise-task>
 </form>

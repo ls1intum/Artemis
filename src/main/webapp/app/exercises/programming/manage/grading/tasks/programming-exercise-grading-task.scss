@@ -8,6 +8,10 @@
         padding: 1rem;
         gap: 0.5rem;
 
+        &__index {
+            width: 3rem;
+        }
+
         &__cell {
             flex: 1 1 0;
             display: flex;
