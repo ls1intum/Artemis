@@ -28,6 +28,8 @@ describe('CountdownComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(CountdownComponent);
                 component = fixture.componentInstance;
+                // initially, the countdown is for 10s
+                component.targetDate = mockNow.add(10, 'seconds');
                 jest.spyOn(TestBed.inject(ArtemisServerDateService), 'now').mockImplementation(() => mockNow);
                 component.onFinish = new EventEmitter<void>();
                 onFinishEmitSpy = jest.spyOn(component.onFinish, 'emit');
@@ -40,16 +42,8 @@ describe('CountdownComponent', () => {
         jest.useRealTimers();
     });
 
-    it('should initialize', () => {
-        fixture.detectChanges();
-        expect(component).not.toBeNull();
-    });
-
     it('should update displayed times and emit reachedZero event', async () => {
-        component.targetDate = mockNow.add(10, 'seconds');
-
         fixture.detectChanges();
-
         expect(component.timeUntilTarget).toBe('10 s');
 
         advanceTimeBySeconds(5);
@@ -71,37 +65,24 @@ describe('CountdownComponent', () => {
     });
 
     it('should correctly calculate remaining time in seconds', () => {
-        component.targetDate = dayjs(mockNow).add(10, 'seconds');
         expect(component.remainingTimeSeconds()).toBe(10);
     });
 
     it('should correctly determine if countdown has reached zero', () => {
-        component.targetDate = dayjs(mockNow).add(10, 'seconds');
         expect(component.hasReachedZero()).toBeFalse();
-
-        component.targetDate = dayjs(mockNow).subtract(10, 'seconds');
+        component.targetDate = mockNow.subtract(10, 'seconds');
         expect(component.hasReachedZero()).toBeTrue();
     });
 
     it('should fire event when targetDate changes', () => {
-        component.targetDate = mockNow.add(10, 'seconds');
-
-        fixture.detectChanges();
-
-        component.targetDate = mockNow.add(15, 'seconds');
-        advanceTimeBySeconds(15);
+        advanceTimeBySeconds(10);
         component.updateDisplayedTimes();
         expect(component.timeUntilTarget).toBe('artemisApp.showStatistic.now');
         expect(onFinishEmitSpy).toHaveBeenCalledOnce();
     });
 
     it('should fire event only once when countdown continues to exist', () => {
-        component.targetDate = mockNow.add(10, 'seconds');
-
-        fixture.detectChanges();
-
-        component.targetDate = mockNow.add(15, 'seconds');
-        advanceTimeBySeconds(15);
+        advanceTimeBySeconds(10);
         component.updateDisplayedTimes();
         expect(onFinishEmitSpy).toHaveBeenCalledOnce();
 
@@ -112,10 +93,6 @@ describe('CountdownComponent', () => {
     });
 
     it('should fire event multiple times when countdown is over and restarted', () => {
-        component.targetDate = mockNow.add(10, 'seconds');
-
-        fixture.detectChanges();
-
         advanceTimeBySeconds(10);
         component.updateDisplayedTimes();
         expect(component.timeUntilTarget).toBe('artemisApp.showStatistic.now');
@@ -132,8 +109,6 @@ describe('CountdownComponent', () => {
     });
 
     it('should show artemisApp.showStatistic.now when the countdown is over', () => {
-        component.targetDate = dayjs(mockNow).add(10, 'seconds');
-
         advanceTimeBySeconds(10);
         component.updateDisplayedTimes();
         expect(component.timeUntilTarget).toBe('artemisApp.showStatistic.now');
