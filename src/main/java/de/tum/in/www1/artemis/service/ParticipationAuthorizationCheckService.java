@@ -50,17 +50,29 @@ public class ParticipationAuthorizationCheckService {
     }
 
     /**
-     * Checks if the current user is allowed to access the given participation.
+     * Checks if the current user is allowed to access the participation.
      *
      * @param participation Some participation.
-     * @return True, if the user is allowed to access the participation; false otherwise.
+     * @return True, if the current user is allowed to access the participation; false otherwise.
      */
     public boolean canAccessParticipation(@NotNull final ParticipationInterface participation) {
+        final User user = userRepository.getUserWithGroupsAndAuthorities();
+        return canAccessParticipation(participation, user);
+    }
+
+    /**
+     * Checks if the user is allowed to access the participation.
+     *
+     * @param participation Some participation.
+     * @param user          The user that wants to access the participation.
+     * @return True, if the user is allowed to access the participation; false otherwise.
+     */
+    public boolean canAccessParticipation(@NotNull final ParticipationInterface participation, final User user) {
         if (participation instanceof ProgrammingExerciseParticipation programmingExerciseParticipation) {
-            return canAccessParticipation(programmingExerciseParticipation);
+            return canAccessParticipation(programmingExerciseParticipation, user);
         }
         else if (participation instanceof StudentParticipation studentParticipation) {
-            return canAccessParticipation(studentParticipation);
+            return canAccessParticipation(studentParticipation, user);
         }
         else {
             // unknown participation type, should not exist unless class hierarchy changes: do not give access
@@ -77,8 +89,7 @@ public class ParticipationAuthorizationCheckService {
      * @param participation to check permissions for.
      * @return true if the user can access the participation, false if not. Also returns false if the participation is not from a programming exercise.
      */
-    private boolean canAccessParticipation(final ProgrammingExerciseParticipation participation) {
-        final User user = userRepository.getUserWithGroupsAndAuthorities();
+    private boolean canAccessParticipation(final ProgrammingExerciseParticipation participation, final User user) {
         // If the current user is owner of the participation, they are allowed to access it
         if (participation instanceof ProgrammingExerciseStudentParticipation studentParticipation && studentParticipation.isOwnedBy(user)) {
             return true;
@@ -100,8 +111,8 @@ public class ParticipationAuthorizationCheckService {
      * @param participation to access
      * @return can user access participation
      */
-    private boolean canAccessParticipation(final StudentParticipation participation) {
-        return participation != null && userHasPermissionsToAccessParticipation(participation);
+    private boolean canAccessParticipation(final StudentParticipation participation, final User user) {
+        return participation != null && userHasPermissionsToAccessParticipation(participation, user);
     }
 
     /**
@@ -110,14 +121,13 @@ public class ParticipationAuthorizationCheckService {
      * @param participation to access
      * @return does user has permissions to access participation
      */
-    private boolean userHasPermissionsToAccessParticipation(final StudentParticipation participation) {
+    private boolean userHasPermissionsToAccessParticipation(final StudentParticipation participation, final User user) {
         if (authCheckService.isOwnerOfParticipation(participation)) {
             return true;
         }
 
         // if the user is not the owner of the participation, the user can only see it in case they are
         // a teaching assistant, an editor or an instructor of the course, or in case they are an admin
-        final User user = userRepository.getUserWithGroupsAndAuthorities();
         final Course course = participation.getExercise().getCourseViaExerciseGroupOrCourseMember();
         return authCheckService.isAtLeastTeachingAssistantInCourse(course, user);
     }

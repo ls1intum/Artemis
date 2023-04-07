@@ -44,8 +44,8 @@ public class ProgrammingExerciseParticipationService {
     private final GitService gitService;
 
     public ProgrammingExerciseParticipationService(SolutionProgrammingExerciseParticipationRepository solutionParticipationRepository,
-            ProgrammingExerciseStudentParticipationRepository studentParticipationRepository, ParticipationRepository participationRepository, TeamRepository teamRepository,
-            TemplateProgrammingExerciseParticipationRepository templateParticipationRepository, Optional<VersionControlService> versionControlService, GitService gitService) {
+            TemplateProgrammingExerciseParticipationRepository templateParticipationRepository, ProgrammingExerciseStudentParticipationRepository studentParticipationRepository,
+            ParticipationRepository participationRepository, TeamRepository teamRepository, GitService gitService, Optional<VersionControlService> versionControlService) {
         this.studentParticipationRepository = studentParticipationRepository;
         this.solutionParticipationRepository = solutionParticipationRepository;
         this.templateParticipationRepository = templateParticipationRepository;
