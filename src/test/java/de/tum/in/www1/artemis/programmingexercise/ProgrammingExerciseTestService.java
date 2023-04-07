@@ -402,7 +402,7 @@ public class ProgrammingExerciseTestService {
 
         var file = new MockMultipartFile("file", "test.zip", "application/zip", resource.getInputStream());
         var course = database.addEmptyCourse();
-        var importedExercise = request.postWithMultipartFile(ROOT + PROGRAMMING_EXERCISES + "/import-from-file/" + course.getId(), exercise, "programmingExercise", file,
+        var importedExercise = request.postWithMultipartFile(ROOT + "/courses/" + course.getId() + "/programming-exercises/import-from-file", exercise, "programmingExercise", file,
                 ProgrammingExercise.class, HttpStatus.OK);
         assertThat(importedExercise).isNotNull();
         assertThat(importedExercise.getProgrammingLanguage()).isEqualTo(JAVA);
@@ -445,37 +445,37 @@ public class ProgrammingExerciseTestService {
         }
 
         var file = new MockMultipartFile("file", "test.zip", "application/zip", resource.getInputStream());
-        request.postWithMultipartFile(ROOT + PROGRAMMING_EXERCISES + "/import-from-file/" + course.getId(), exercise, "programmingExercise", file, ProgrammingExercise.class,
-                HttpStatus.OK);
+        request.postWithMultipartFile(ROOT + "/courses/" + course.getId() + "/programming-exercises/import-from-file", exercise, "programmingExercise", file,
+                ProgrammingExercise.class, HttpStatus.OK);
     }
 
     void importFromFile_missingExerciseDetailsJson_badRequest() throws Exception {
         Resource resource = new ClassPathResource("test-data/import-from-file/missing-json.zip");
         var file = new MockMultipartFile("file", "test.zip", "application/zip", resource.getInputStream());
-        request.postWithMultipartFile(ROOT + PROGRAMMING_EXERCISES + "/import-from-file/" + course.getId(), exercise, "programmingExercise", file, ProgrammingExercise.class,
-                HttpStatus.BAD_REQUEST);
+        request.postWithMultipartFile(ROOT + "/courses/" + course.getId() + "/programming-exercises/import-from-file", exercise, "programmingExercise", file,
+                ProgrammingExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     void importFromFile_fileNoZip_badRequest() throws Exception {
         Resource resource = new ClassPathResource("test-data/import-from-file/valid-import.zip");
         var file = new MockMultipartFile("file", "test.txt", "application/zip", resource.getInputStream());
-        request.postWithMultipartFile(ROOT + PROGRAMMING_EXERCISES + "/import-from-file/" + course.getId(), exercise, "programmingExercise", file, ProgrammingExercise.class,
-                HttpStatus.BAD_REQUEST);
+        request.postWithMultipartFile(ROOT + "/courses/" + course.getId() + "/programming-exercises/import-from-file", exercise, "programmingExercise", file,
+                ProgrammingExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     void importFromFile_tutor_forbidden() throws Exception {
         course.setInstructorGroupName("test");
         courseRepository.save(course);
         var file = new MockMultipartFile("file", "test.zip", "application/zip", new byte[0]);
-        request.postWithMultipartFile(ROOT + PROGRAMMING_EXERCISES + "/import-from-file/" + course.getId(), exercise, "programmingExercise", file, ProgrammingExercise.class,
-                HttpStatus.FORBIDDEN);
+        request.postWithMultipartFile(ROOT + "/courses/" + course.getId() + "/programming-exercises/import-from-file", exercise, "programmingExercise", file,
+                ProgrammingExercise.class, HttpStatus.FORBIDDEN);
     }
 
     void importFromFile_missingRepository_BadRequest() throws Exception {
         Resource resource = new ClassPathResource("test-data/import-from-file/missing-repository.zip");
         var file = new MockMultipartFile("file", "test.zip", "application/zip", resource.getInputStream());
-        request.postWithMultipartFile(ROOT + PROGRAMMING_EXERCISES + "/import-from-file/" + course.getId(), exercise, "programmingExercise", file, ProgrammingExercise.class,
-                HttpStatus.BAD_REQUEST);
+        request.postWithMultipartFile(ROOT + "/courses/" + course.getId() + "/programming-exercises/import-from-file", exercise, "programmingExercise", file,
+                ProgrammingExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     // TEST

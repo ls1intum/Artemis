@@ -520,9 +520,9 @@ export class ProgrammingExerciseService {
         const exerciseBlob = new Blob([JSON.stringify(copy)], { type: 'application/json' });
         formData.append('programmingExercise', exerciseBlob);
         const courseId = exercise.course?.id;
-
+        const url = `api/courses/${courseId}/programming-exercises/import-from-file`;
         return this.http
-            .post<ProgrammingExercise>(`${this.resourceUrl}/import-from-file/${courseId}`, formData, { observe: 'response' })
+            .post<ProgrammingExercise>(url, formData, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.processProgrammingExerciseEntityResponse(res)));
     }
 }

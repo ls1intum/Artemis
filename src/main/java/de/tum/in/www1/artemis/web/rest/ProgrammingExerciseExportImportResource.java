@@ -221,6 +221,7 @@ public class ProgrammingExerciseExportImportResource {
      *
      * @param programmingExercise The exercise that should be imported
      * @param zipFile             The zip file containing the template, solution and test repositories plus a json file with the exercise configuration
+     * @param courseId            The id of the course the exercise should be imported into
      * @return The imported exercise (200)
      *         (403) if the user is not at least an editor in the target course.
      */
