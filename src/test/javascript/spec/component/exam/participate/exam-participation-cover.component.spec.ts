@@ -173,15 +173,12 @@ describe('ExamParticipationCoverComponent', () => {
         tick();
         jest.advanceTimersByTime(UI_RELOAD_TIME + 1); // simulate setInterval time passing
         expect(component.waitingForExamStart).toBeTrue();
-        const difference = Math.ceil(component.exam.startDate.diff(now, 'seconds') / 60);
-        expect(component.timeUntilStart).toBe(difference + ' min');
 
         component.exam.startDate = undefined;
         component.startExam();
         tick();
         jest.advanceTimersByTime(UI_RELOAD_TIME + 1); // simulate setInterval time passing
         expect(component.waitingForExamStart).toBeTrue();
-        expect(component.timeUntilStart).toBe('');
 
         // Case test exam
         component.testRun = false;
@@ -206,15 +203,12 @@ describe('ExamParticipationCoverComponent', () => {
         tick();
         jest.advanceTimersByTime(UI_RELOAD_TIME + 1); // simulate setInterval time passing
         expect(component.waitingForExamStart).toBeTrue();
-        const difference1 = Math.ceil(component.exam.startDate.diff(now1, 's') / 60);
-        expect(component.timeUntilStart).toBe(difference1 + ' min');
 
         component.exam.startDate = undefined;
         component.startExam();
         tick();
         jest.advanceTimersByTime(UI_RELOAD_TIME + 1); // simulate setInterval time passing
         expect(component.waitingForExamStart).toBeTrue();
-        expect(component.timeUntilStart).toBe('');
     }));
 
     it('test run should always have already started', () => {
@@ -222,15 +216,15 @@ describe('ExamParticipationCoverComponent', () => {
         expect(component.hasStarted()).toBeTrue();
     });
 
-    it('should update displayed times if exam suddenly started', () => {
+    it('should fire onExamStarted when the exam starts', fakeAsync(() => {
         component.testRun = true;
-        component.exam.startDate = dayjs();
         component.onExamStarted = new EventEmitter<StudentExam>();
         const eventSpy = jest.spyOn(component.onExamStarted, 'emit');
 
-        component.updateDisplayedTimes(studentExam);
+        component.startExam();
+
         expect(eventSpy).toHaveBeenCalledOnce();
-    });
+    }));
 
     it('should create the relative time text correctly', () => {
         let result = component.relativeTimeText(100);

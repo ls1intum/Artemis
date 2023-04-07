@@ -33,4 +33,18 @@ describe('Countdown Component', () => {
         fixture.detectChanges();
         expect(comp).not.toBeNull();
     });
+
+    /*
+    use:
+        const difference = Math.ceil(component.exam.startDate.diff(now, 'seconds') / 60);
+        expect(component.timeUntilStart).toBe(difference + ' min');
+
+        tick();
+        jest.advanceTimersByTime(UI_RELOAD_TIME + 1); // simulate setInterval time passing
+
+        const difference1 = Math.ceil(component.exam.startDate.diff(now1, 's') / 60);
+        expect(component.timeUntilStart).toBe(difference1 + ' min');
+
+        Test external date changes
+     */
 });

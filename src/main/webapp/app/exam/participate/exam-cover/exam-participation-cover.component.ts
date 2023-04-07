@@ -46,7 +46,6 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
 
     interval: number;
     waitingForExamStart = false;
-    timeUntilStart = '0';
 
     accountName = '';
     enteredName = '';
@@ -152,10 +151,6 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
                     }
                 });
         }
-    }
-
-    onCountdownReachedZero() {
-        this.onExamStarted.emit(this.studentExam);
     }
 
     /**

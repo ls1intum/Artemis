@@ -39,6 +39,8 @@ import { MockWebsocketService } from '../../../helpers/mocks/service/mock-websoc
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { NgModel } from '@angular/forms';
+import { OverlayCenteredComponent } from 'app/shared/overlay-centered/overlay-centered.component';
+import { CountdownComponent } from 'app/shared/countdown/countdown.component';
 
 // Store a copy of now to avoid timing issues
 const now = dayjs();
@@ -115,6 +117,8 @@ const testBedDeclarations = [
     MockComponent(DragAndDropQuestionComponent),
     MockComponent(ShortAnswerQuestionComponent),
     MockComponent(JhiConnectionStatusComponent),
+    MockComponent(OverlayCenteredComponent),
+    MockComponent(CountdownComponent),
     MockDirective(FeatureToggleDirective),
 ];
 
@@ -657,7 +661,6 @@ describe('QuizParticipationComponent', () => {
 
             expect(component.remainingTimeSeconds).toBe(0);
             expect(component.remainingTimeText).toBe('?');
-            expect(component.timeUntilStart).toBe('');
 
             // Now test the remaining non-error branches
             component.quizExercise = quizExerciseUnreleased;
@@ -671,7 +674,6 @@ describe('QuizParticipationComponent', () => {
             fixture.detectChanges();
 
             expect(component.remainingTimeText).toBe('artemisApp.showStatistic.quizHasEnded');
-            expect(component.timeUntilStart).toBe('');
         });
     });
 });
