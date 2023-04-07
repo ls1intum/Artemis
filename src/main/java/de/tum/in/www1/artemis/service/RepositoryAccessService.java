@@ -6,7 +6,6 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.in.www1.artemis.service.exam.ExamSubmissionService;
@@ -65,26 +64,20 @@ public class RepositoryAccessService {
         if (programmingExercise.getSubmissionPolicy() instanceof LockRepositoryPolicy policy) {
             lockRepositoryPolicyEnforced = submissionPolicyService.isParticipationLocked(policy, (Participation) programmingParticipation);
         }
-
         // Editors and up are able to push to any repository even if the participation is locked for the student.
         boolean isAtLeastEditor = authorizationCheckService.isAtLeastEditorInCourse(programmingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
-
         if (repositoryActionType == RepositoryActionType.WRITE && !isAtLeastEditor && (programmingParticipation.isLocked() || lockRepositoryPolicyEnforced)) {
             throw new AccessForbiddenException();
         }
 
-        boolean isStudent = !authorizationCheckService.isAtLeastTeachingAssistantInCourse(programmingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
-
         // Error case 3: The student can reset the repository only before and a tutor/instructor only after the due date has passed
         if (repositoryActionType == RepositoryActionType.RESET) {
-            checkAccessRepositoryForReset(programmingParticipation, isStudent, programmingExercise);
+            checkAccessRepositoryForReset(programmingParticipation, programmingExercise, user);
         }
 
-        // Error case 4: The user is not (any longer) allowed to submit to the exam/exercise. This check is only relevant for students.
-        // This must be a student participation as hasPermissions would have been false and an error already thrown
+        // Error case 4: The user is not (any longer) allowed to submit to the exam/exercise. This check is only relevant for students and tutors.
         // But the student should still be able to access if they are notified for a related plagiarism case.
-        boolean isStudentParticipation = programmingParticipation instanceof ProgrammingExerciseStudentParticipation;
-        if (isStudentParticipation && isStudent && !examSubmissionService.isAllowedToSubmitDuringExam(programmingExercise, user, false) && !userWasNotifiedAboutPlagiarismCase) {
+        if (!isAtLeastEditor && !examSubmissionService.isAllowedToSubmitDuringExam(programmingExercise, user, false) && !userWasNotifiedAboutPlagiarismCase) {
             throw new AccessForbiddenException();
         }
     }
@@ -92,7 +85,8 @@ public class RepositoryAccessService {
     /*
      * The student can reset the repository only before and a tutor/instructor only after the due date has passed
      */
-    private void checkAccessRepositoryForReset(ProgrammingExerciseParticipation programmingExerciseParticipation, boolean isStudent, ProgrammingExercise programmingExercise) {
+    private void checkAccessRepositoryForReset(ProgrammingExerciseParticipation programmingExerciseParticipation, ProgrammingExercise programmingExercise, User user) {
+        boolean isStudent = !authorizationCheckService.isAtLeastTeachingAssistantInCourse(programmingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         boolean isOwner = true; // true for Solution- and TemplateProgrammingExerciseParticipation
         if (programmingExerciseParticipation instanceof StudentParticipation studentParticipation) {
             isOwner = authorizationCheckService.isOwnerOfParticipation(studentParticipation);

@@ -25,7 +25,6 @@ import de.tum.in.www1.artemis.service.RepositoryService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
-import de.tum.in.www1.artemis.service.exam.ExamSubmissionService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
@@ -45,8 +44,6 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
 
     private final ProgrammingExerciseParticipationService participationService;
 
-    private final ExamSubmissionService examSubmissionService;
-
     private final BuildLogEntryService buildLogService;
 
     private final ProgrammingSubmissionRepository programmingSubmissionRepository;
@@ -58,13 +55,11 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     public RepositoryProgrammingExerciseParticipationResource(UserRepository userRepository, AuthorizationCheckService authCheckService, GitService gitService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService, RepositoryService repositoryService,
             ProgrammingExerciseParticipationService participationService, ProgrammingExerciseRepository programmingExerciseRepository,
-            ParticipationRepository participationRepository, ExamSubmissionService examSubmissionService, BuildLogEntryService buildLogService,
-            ProgrammingSubmissionRepository programmingSubmissionRepository, RepositoryAccessService repositoryAccessService,
-            SubmissionPolicyRepository submissionPolicyRepository) {
+            ParticipationRepository participationRepository, BuildLogEntryService buildLogService, ProgrammingSubmissionRepository programmingSubmissionRepository,
+            RepositoryAccessService repositoryAccessService, SubmissionPolicyRepository submissionPolicyRepository) {
         super(userRepository, authCheckService, gitService, continuousIntegrationService, repositoryService, versionControlService, programmingExerciseRepository,
                 repositoryAccessService);
         this.participationService = participationService;
-        this.examSubmissionService = examSubmissionService;
         this.buildLogService = buildLogService;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.participationRepository = participationRepository;
@@ -291,14 +286,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
             FileSubmissionError error = new FileSubmissionError(participationId, "noPermissions");
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, error.getMessage(), error);
         }
-        // Apply checks for exam (submission is in time & user's student exam has the exercise)
-        // Checks only apply to students, tutors and editors, otherwise template, solution and assignment participation can't be edited using the code editor
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isAtLeastEditorForExercise(programmingExerciseParticipation.getProgrammingExercise())
-                && !examSubmissionService.isAllowedToSubmitDuringExam(programmingExerciseParticipation.getProgrammingExercise(), user, false)) {
-            FileSubmissionError error = new FileSubmissionError(participationId, "notAllowedExam");
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, error.getMessage(), error);
-        }
+
         Map<String, String> fileSaveResult = saveFileSubmissions(submissions, repository);
 
         if (commit) {
