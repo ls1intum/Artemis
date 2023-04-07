@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.argThat;
 import static org.mockito.Mockito.mockStatic;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 
@@ -28,15 +29,44 @@ class PrivacyStatementResourceIntegrationTest extends AbstractSpringIntegrationB
     private static final String TEST_PREFIX = "psr"; // only lower case is supported
 
     @Test
-    void testGetPrivacyStatement_anonymousAccessAllowed() throws Exception {
-        request.get("/api/privacy-statement?language=de", HttpStatus.OK, PrivacyStatement.class);
-    }
-
-    @Test
     void testGetPrivacyStatement_unsupportedLanguageBadRequest() throws Exception {
         request.get("/api/privacy-statement?language=fr", HttpStatus.BAD_REQUEST, PrivacyStatement.class);
     }
 
+    @Test
+    void testGetPrivacyStatement_cannotReadFileInternalServerError() throws Exception {
+        try (MockedStatic<Files> mockedFiles = mockStatic(Files.class)) {
+            mockedFiles.when(() -> Files.exists(argThat(path -> path.toString().contains("_de")))).thenReturn(true);
+            mockedFiles.when(() -> Files.readString(argThat(path -> path.toString().contains("_de")))).thenThrow(new IOException());
+            request.get("/api/privacy-statement?language=de", HttpStatus.INTERNAL_SERVER_ERROR, PrivacyStatement.class);
+        }
+
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testGetPrivacyStatementForUpdate_cannotReadFileInternalServerError() throws Exception {
+        try (MockedStatic<Files> mockedFiles = mockStatic(Files.class)) {
+            mockedFiles.when(() -> Files.exists(argThat(path -> path.toString().contains("_de")))).thenReturn(true);
+            mockedFiles.when(() -> Files.readString(argThat(path -> path.toString().contains("_de")))).thenThrow(new IOException());
+            request.get("/api/privacy-statement-for-update?language=de", HttpStatus.INTERNAL_SERVER_ERROR, PrivacyStatement.class);
+
+        }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testUpdatePrivacyStatement_cannotWriteFileInternalServerError() throws Exception {
+        try (MockedStatic<Files> mockedFiles = mockStatic(Files.class)) {
+            mockedFiles.when(() -> Files.exists(argThat(path -> path.toString().contains("_de")))).thenReturn(true);
+            mockedFiles.when(() -> Files.writeString(argThat(path -> path.toString().contains("_de")), any(), eq(StandardOpenOption.WRITE), eq(StandardOpenOption.CREATE)))
+                    .thenThrow(new IOException());
+            request.putWithResponseBody("/api/privacy-statement", new PrivacyStatement(PrivacyStatementLanguage.GERMAN), PrivacyStatement.class, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+    }
+
+    // no mock user as anonymous access should be allowed
     @Test
     void testGetPrivacyStatementReturnsOtherLanguageIfFirstLanguageNotFound() throws Exception {
         PrivacyStatement response;

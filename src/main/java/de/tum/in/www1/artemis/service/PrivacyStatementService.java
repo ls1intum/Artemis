@@ -25,7 +25,7 @@ public class PrivacyStatementService {
 
     private static final String PRIVACY_STATEMENT_FILE_EXTENSION = ".md";
 
-    public PrivacyStatement getPrivacyStatementForUpdate(PrivacyStatementLanguage language) throws IOException {
+    public PrivacyStatement getPrivacyStatementForUpdate(PrivacyStatementLanguage language) {
         String privacyStatementText = "";
         if (getPrivacyStatementPath(language).isEmpty()) {
             return new PrivacyStatement(privacyStatementText, language);
@@ -41,9 +41,9 @@ public class PrivacyStatementService {
 
     }
 
-    public PrivacyStatement getPrivacyStatement(PrivacyStatementLanguage language) throws IOException {
+    public PrivacyStatement getPrivacyStatement(PrivacyStatementLanguage language) {
         String privacyStatementText = "";
-        // if it doesn't exist for one language, try to return the other language
+        // if it doesn't exist for one language, try to return the other language, and only return an empty string if it doesn't exist for both languages
         if (getPrivacyStatementPath(PrivacyStatementLanguage.GERMAN).isEmpty() && getPrivacyStatementPath(PrivacyStatementLanguage.ENGLISH).isEmpty()) {
             return new PrivacyStatement(privacyStatementText, language);
         }
