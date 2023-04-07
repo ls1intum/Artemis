@@ -115,15 +115,14 @@
                 </button>
             </div>
         </div>
-        <jhi-overlay-centered *ngIf="waitingForExamStart">
-            <span>{{ 'artemisApp.examParticipation.waitForStart' | artemisTranslate : { title: exam.title } }}</span>
+        <jhi-countdown-overlay
+            *ngIf="waitingForExamStart"
+            [targetDate]="exam.startDate"
+            [waitingText]="'artemisApp.examParticipation.timeUntilPlannedStart' | artemisTranslate"
+            (onFinish)="startExam()"
+        >
             <hr />
-            <jhi-countdown
-                *ngIf="exam.startDate"
-                [targetDate]="exam.startDate"
-                [waitingText]="'artemisApp.examParticipation.timeUntilPlannedStart' | artemisTranslate"
-                (reachedZero)="startExam()"
-            ></jhi-countdown>
-        </jhi-overlay-centered>
+            <span>{{ 'artemisApp.examParticipation.waitForStart' | artemisTranslate : { title: exam.title } }}</span>
+        </jhi-countdown-overlay>
     </ng-container>
 </div>

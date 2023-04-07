@@ -1,0 +1,9 @@
+<jhi-overlay-centered>
+    <ng-container *ngIf="targetDate">
+        <span>{{ waitingText }}</span>
+        <jhi-countdown [targetDate]="targetDate" (onFinish)="onFinish()"></jhi-countdown>
+        <br />
+        <span>({{ targetDate | artemisDate : 'time' }})</span>
+    </ng-container>
+    <ng-content></ng-content>
+</jhi-overlay-centered>

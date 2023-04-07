@@ -40,7 +40,7 @@ import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-questi
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { NgModel } from '@angular/forms';
 import { OverlayCenteredComponent } from 'app/shared/overlay-centered/overlay-centered.component';
-import { CountdownComponent } from 'app/shared/countdown/countdown.component';
+import { CountdownOverlayComponent } from 'app/shared/countdown/countdown-overlay.component';
 
 // Store a copy of now to avoid timing issues
 const now = dayjs();
@@ -118,7 +118,7 @@ const testBedDeclarations = [
     MockComponent(ShortAnswerQuestionComponent),
     MockComponent(JhiConnectionStatusComponent),
     MockComponent(OverlayCenteredComponent),
-    MockComponent(CountdownComponent),
+    MockComponent(CountdownOverlayComponent),
     MockDirective(FeatureToggleDirective),
 ];
 

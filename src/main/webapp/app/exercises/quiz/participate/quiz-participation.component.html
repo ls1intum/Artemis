@@ -208,30 +208,29 @@
     <jhi-overlay-centered *ngIf="!waitingForQuizStart && submission.submitted && !showingResult && quizExercise?.quizMode === QuizMode.SYNCHRONIZED">
         <span jhiTranslate="artemisApp.quizExercise.successfullySubmittedText"></span>
     </jhi-overlay-centered>
-    <jhi-overlay-centered *ngIf="waitingForQuizStart">
-        <ng-container *ngIf="quizBatch || quizExercise.quizMode === QuizMode.SYNCHRONIZED">
-            <span jhiTranslate="artemisApp.quizExercise.quizInstructions.waitForStart"></span>
+    <ng-container *ngIf="waitingForQuizStart">
+        <jhi-countdown-overlay
+            *ngIf="quizBatch || quizExercise.quizMode === QuizMode.SYNCHRONIZED"
+            [targetDate]="startDate"
+            [waitingText]="'artemisApp.quizExercise.quizInstructions.timeUntilPlannedStart' | artemisTranslate"
+        >
             <hr />
-            <jhi-countdown
-                *ngIf="startDate"
-                [targetDate]="startDate"
-                [waitingText]="'artemisApp.quizExercise.quizInstructions.timeUntilPlannedStart' | artemisTranslate"
-            ></jhi-countdown>
-        </ng-container>
-        <ng-container *ngIf="!quizBatch && quizExercise.quizMode === QuizMode.BATCHED && (quizExercise.remainingNumberOfAttempts ?? 1) > 0">
-            <div jhiTranslate="artemisApp.quizExercise.quizInstructions.enterPassword"></div>
-            <input id="join-patch-password" [(ngModel)]="password" />
-            <jhi-button id="join-batch" [title]="'artemisApp.quizExercise.join'" [btnType]="ButtonType.SUCCESS" (onClick)="joinBatch()"></jhi-button>
-        </ng-container>
-        <ng-container *ngIf="!quizBatch && quizExercise.quizMode === QuizMode.INDIVIDUAL && (quizExercise.remainingNumberOfAttempts ?? 1) > 0">
-            <div jhiTranslate="artemisApp.quizExercise.quizInstructions.startNow"></div>
-            <jhi-button id="start-batch" [title]="'artemisApp.quizExercise.startBatch'" [btnType]="ButtonType.SUCCESS" (onClick)="joinBatch()"></jhi-button>
-        </ng-container>
-        <ng-container *ngIf="!quizBatch && quizExercise.quizMode !== QuizMode.SYNCHRONIZED && quizExercise.remainingNumberOfAttempts === 0">
-            <div jhiTranslate="artemisApp.quizExercise.quizInstructions.noMoreAttempts" *ngIf="(quizExercise.allowedNumberOfAttempts ?? 0) > 1"></div>
-            <div jhiTranslate="artemisApp.quizExercise.quizInstructions.alreadyAttempted" *ngIf="quizExercise.allowedNumberOfAttempts === 1"></div>
-        </ng-container>
-    </jhi-overlay-centered>
+            <span jhiTranslate="artemisApp.quizExercise.quizInstructions.waitForStart"></span>
+            <ng-container *ngIf="!quizBatch && quizExercise.quizMode === QuizMode.BATCHED && (quizExercise.remainingNumberOfAttempts ?? 1) > 0">
+                <div jhiTranslate="artemisApp.quizExercise.quizInstructions.enterPassword"></div>
+                <input id="join-patch-password" [(ngModel)]="password" />
+                <jhi-button id="join-batch" [title]="'artemisApp.quizExercise.join'" [btnType]="ButtonType.SUCCESS" (onClick)="joinBatch()"></jhi-button>
+            </ng-container>
+            <ng-container *ngIf="!quizBatch && quizExercise.quizMode === QuizMode.INDIVIDUAL && (quizExercise.remainingNumberOfAttempts ?? 1) > 0">
+                <div jhiTranslate="artemisApp.quizExercise.quizInstructions.startNow"></div>
+                <jhi-button id="start-batch" [title]="'artemisApp.quizExercise.startBatch'" [btnType]="ButtonType.SUCCESS" (onClick)="joinBatch()"></jhi-button>
+            </ng-container>
+            <ng-container *ngIf="!quizBatch && quizExercise.quizMode !== QuizMode.SYNCHRONIZED && quizExercise.remainingNumberOfAttempts === 0">
+                <div jhiTranslate="artemisApp.quizExercise.quizInstructions.noMoreAttempts" *ngIf="(quizExercise.allowedNumberOfAttempts ?? 0) > 1"></div>
+                <div jhiTranslate="artemisApp.quizExercise.quizInstructions.alreadyAttempted" *ngIf="quizExercise.allowedNumberOfAttempts === 1"></div>
+            </ng-container>
+        </jhi-countdown-overlay>
+    </ng-container>
     <div class="quiz-refresh-overlay" [class.active]="refreshingQuiz">
         <fa-icon size="lg" [icon]="faCircleNotch" [spin]="true"></fa-icon>
     </div>

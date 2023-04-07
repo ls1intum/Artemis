@@ -43,9 +43,9 @@ describe('CountdownComponent', () => {
     it('should update displayed times and emit reachedZero event', async () => {
         component.targetDate = mockNow.add(10, 'seconds');
         component.waitingText = 'Waiting for countdown';
-        component.reachedZero = new EventEmitter<void>();
+        component.onFinish = new EventEmitter<void>();
 
-        const emitSpy = jest.spyOn(component.reachedZero, 'emit');
+        const emitSpy = jest.spyOn(component.onFinish, 'emit');
 
         fixture.detectChanges();
         jest.useFakeTimers();
@@ -88,8 +88,8 @@ describe('CountdownComponent', () => {
     it('should fire event when targetDate changes', () => {
         component.targetDate = mockNow.add(10, 'seconds');
         component.waitingText = 'Waiting for countdown';
-        component.reachedZero = new EventEmitter<void>();
-        const emitSpy = jest.spyOn(component.reachedZero, 'emit');
+        component.onFinish = new EventEmitter<void>();
+        const emitSpy = jest.spyOn(component.onFinish, 'emit');
 
         fixture.detectChanges();
         jest.useFakeTimers();
@@ -107,8 +107,8 @@ describe('CountdownComponent', () => {
 
     it('should fire event only once when countdown continues to exist', () => {
         component.targetDate = mockNow.add(10, 'seconds');
-        component.reachedZero = new EventEmitter<void>();
-        const emitSpy = jest.spyOn(component.reachedZero, 'emit');
+        component.onFinish = new EventEmitter<void>();
+        const emitSpy = jest.spyOn(component.onFinish, 'emit');
 
         fixture.detectChanges();
         jest.useFakeTimers();
@@ -129,8 +129,8 @@ describe('CountdownComponent', () => {
     it('should fire event multiple times when countdown is over and restarted', () => {
         component.targetDate = mockNow.add(10, 'seconds');
         component.waitingText = 'Waiting for countdown';
-        component.reachedZero = new EventEmitter<void>();
-        const emitSpy = jest.spyOn(component.reachedZero, 'emit');
+        component.onFinish = new EventEmitter<void>();
+        const emitSpy = jest.spyOn(component.onFinish, 'emit');
 
         fixture.detectChanges();
         jest.useFakeTimers();

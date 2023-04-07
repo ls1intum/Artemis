@@ -11,8 +11,7 @@ import { relativeTimeText } from 'app/utils/date.utils';
 })
 export class CountdownComponent implements OnInit, OnDestroy {
     @Input() targetDate: dayjs.Dayjs;
-    @Input() waitingText: string;
-    @Output() reachedZero = new EventEmitter<void>();
+    @Output() onFinish = new EventEmitter<void>();
     reachedZeroEmitted = false;
 
     timeUntilTarget = '0';
@@ -61,7 +60,7 @@ export class CountdownComponent implements OnInit, OnDestroy {
         if (this.hasReachedZero()) {
             this.timeUntilTarget = this.translateService.instant('artemisApp.showStatistic.now');
             if (!this.reachedZeroEmitted) {
-                this.reachedZero.emit();
+                this.onFinish.emit();
                 this.reachedZeroEmitted = true;
             }
         } else {

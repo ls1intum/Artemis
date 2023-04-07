@@ -24,7 +24,6 @@ import { JhiConnectionWarningComponent } from 'app/shared/connection-warning/con
 import { LoadingIndicatorContainerComponent } from 'app/shared/loading-indicator-container/loading-indicator-container.component';
 import { LearningGoalSelectionComponent } from 'app/shared/learning-goal-selection/learning-goal-selection.component';
 import { OverlayCenteredComponent } from 'app/shared/overlay-centered/overlay-centered.component';
-import { CountdownComponent } from 'app/shared/countdown/countdown.component';
 
 @NgModule({
     imports: [ArtemisSharedLibsModule, ArtemisSharedCommonModule, ArtemisSharedPipesModule, RouterModule],
@@ -50,7 +49,6 @@ import { CountdownComponent } from 'app/shared/countdown/countdown.component';
         ConsistencyCheckComponent,
         AssessmentWarningComponent,
         OverlayCenteredComponent,
-        CountdownComponent,
     ],
     exports: [
         ArtemisSharedLibsModule,
@@ -77,7 +75,6 @@ import { CountdownComponent } from 'app/shared/countdown/countdown.component';
         AssessmentWarningComponent,
         LearningGoalSelectionComponent,
         OverlayCenteredComponent,
-        CountdownComponent,
     ],
 })
 export class ArtemisSharedModule {}

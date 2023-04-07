@@ -31,6 +31,7 @@ import { FileUploadExamSubmissionComponent } from 'app/exam/participate/exercise
 import { ExamExerciseOverviewPageComponent } from 'app/exam/participate/exercises/exercise-overview-page/exam-exercise-overview-page.component';
 import { ExamExerciseUpdateHighlighterComponent } from 'app/exam/participate/exercises/exam-exercise-update-highlighter/exam-exercise-update-highlighter.component';
 import { SubmissionResultStatusModule } from 'app/overview/submission-result-status.module';
+import { ArtemisCountdownModule } from 'app/shared/countdown/countdown.module';
 
 const ENTITY_STATES = [...examParticipationState];
 
@@ -40,6 +41,7 @@ const ENTITY_STATES = [...examParticipationState];
         ArtemisSharedCommonModule,
         ArtemisHeaderExercisePageWithDetailsModule,
         ArtemisSharedModule,
+        ArtemisCountdownModule,
         ArtemisModelingEditorModule,
         ArtemisQuizQuestionTypesModule,
         ArtemisFullscreenModule,
