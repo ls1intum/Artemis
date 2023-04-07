@@ -91,7 +91,10 @@
 
                     <hr />
                     <!-- Exercise Group table -->
-                    <jhi-exam-checklist-exercisegroup-table [exerciseGroups]="exam.exerciseGroups || []"></jhi-exam-checklist-exercisegroup-table>
+                    <jhi-exam-checklist-exercisegroup-table
+                        [quizPoolMaxPoints]="exam.quizPoolMaxPoints ?? 0"
+                        [exerciseGroups]="exam.exerciseGroups || []"
+                    ></jhi-exam-checklist-exercisegroup-table>
                 </td>
                 <td>
                     <a type="submit" [routerLink]="getExamRoutesByIdentifier('exercise-groups')" class="btn btn-primary" id="exercises-button-groups-table">

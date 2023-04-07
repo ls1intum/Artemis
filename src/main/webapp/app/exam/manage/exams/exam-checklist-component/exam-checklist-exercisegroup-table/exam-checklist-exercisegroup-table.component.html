@@ -30,6 +30,21 @@
         </tr>
     </thead>
     <tbody>
+        <tr *ngIf="quizPoolMaxPoints > 0">
+            <td></td>
+            <td></td>
+            <td></td>
+            <td>
+                <div class="d-flex">
+                    <div style="padding-right: 10px" [ngbTooltip]="getIconTooltip(ExerciseType.QUIZ) | artemisTranslate">
+                        <fa-icon [icon]="getIcon(ExerciseType.QUIZ)" placement="right auto"></fa-icon>
+                    </div>
+                    <span>Quiz Exam</span>
+                </div>
+            </td>
+            <td>{{ quizPoolMaxPoints }}</td>
+            <td>{{ totalParticipants }}</td>
+        </tr>
         <tr *ngFor="let column of exerciseGroupVariantColumns; let i = index">
             <td style="max-width: 30px">
                 <div *ngIf="column.indexExerciseGroup">{{ column.indexExerciseGroup }}</div>

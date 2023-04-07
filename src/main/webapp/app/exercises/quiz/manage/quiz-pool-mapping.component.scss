@@ -1,0 +1,14 @@
+.table-wrapper {
+    table {
+        table-layout: fixed;
+
+        td {
+            width: 5rem;
+            vertical-align: middle;
+        }
+    }
+}
+
+.question-list-container {
+    border: 1px solid var(--border-color);
+}

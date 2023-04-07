@@ -1,0 +1,40 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.18.xsd">
+    <changeSet author="rriyaldhi" id="20230524102945">
+        <createTable tableName="quiz_pool">
+            <column autoIncrement="true" name="id" type="bigint">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="exam_id" type="bigint" />
+            <column name="max_points" type="int" />
+            <column name="randomize_question_order" type="boolean"/>
+        </createTable>
+        <createTable tableName="quiz_group">
+            <column autoIncrement="true" name="id" type="bigint">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="name" type="varchar(50)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addColumn tableName="quiz_question">
+            <column name="quiz_pool_id" type="bigint">
+                <constraints nullable="true"/>
+            </column>
+            <column name="quiz_group_id" type="bigint">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+        <addForeignKeyConstraint baseColumnNames="exam_id" baseTableName="quiz_pool" constraintName="FKtyzazcKwI6xRpuhH0DoNiZeWH"
+                                 deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id"
+                                 referencedTableName="exam" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="quiz_pool_id" baseTableName="quiz_question" constraintName="FKfIH1sii1GTGlX7wfMoVrr8AAb"
+                                 deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id"
+                                 referencedTableName="quiz_pool" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="quiz_group_id" baseTableName="quiz_question" constraintName="FKkYIc8NStrPM5ULjNkq417ssEc"
+                                 deferrable="false" initiallyDeferred="false" onDelete="SET NULL" onUpdate="RESTRICT" referencedColumnNames="id"
+                                 referencedTableName="quiz_group" validate="true"/>
+    </changeSet>
+</databaseChangeLog>

@@ -68,6 +68,13 @@ public abstract class QuizQuestion extends DomainObject {
     @JsonIgnore
     private QuizExercise exercise;
 
+    @ManyToOne
+    private QuizGroup quizGroup;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JsonIgnore
+    private QuizPool quizPool;
+
     public String getTitle() {
         return title;
     }
@@ -161,6 +168,22 @@ public abstract class QuizQuestion extends DomainObject {
 
     public void setExercise(QuizExercise quizExercise) {
         this.exercise = quizExercise;
+    }
+
+    public QuizPool getQuizPool() {
+        return quizPool;
+    }
+
+    public void setQuizPool(QuizPool quizPool) {
+        this.quizPool = quizPool;
+    }
+
+    public QuizGroup getQuizGroup() {
+        return quizGroup;
+    }
+
+    public void setQuizGroup(QuizGroup quizGroup) {
+        this.quizGroup = quizGroup;
     }
 
     /**

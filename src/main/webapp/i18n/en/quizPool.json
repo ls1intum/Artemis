@@ -1,0 +1,20 @@
+{
+    "artemisApp": {
+        "quizPool": {
+            "editTitle": "Edit Quiz Pool",
+            "group": "Group",
+            "groupName": "Group Name",
+            "addGroup": "Add Group",
+            "delete": {
+                "question": "Are you sure you want to delete Quiz Group <strong>{{ title }}</strong>? All assigned Questions will be unmapped."
+            },
+            "dragExplanation": "Drag the question below to assign it to a group.",
+            "groupExplanation": "Questions in the same group will be randomly chosen for each student. Questions that are not in a group will be assigned to all students.",
+            "updated": "Updated Quiz Pool with identifier {{ param }}",
+            "invalidReasons": {
+                "groupNoQuestion": "Group {{name}}: Group does not have any question.",
+                "groupHasDifferentQuestionPoints": "Group {{name}}: Group has questions with different points."
+            }
+        }
+    }
+}
