@@ -151,4 +151,19 @@ describe('CountdownComponent', () => {
 
         jest.useRealTimers();
     });
+
+    it('should use artemisApp.showStatistic.now when the countdown is over', () => {
+        component.targetDate = dayjs(mockNow).add(10, 'seconds');
+        jest.useFakeTimers();
+
+        advanceTimeBySeconds(10);
+        component.updateDisplayedTimes();
+        expect(component.timeUntilTarget).toBe('artemisApp.showStatistic.now');
+
+        advanceTimeBySeconds(10);
+        component.updateDisplayedTimes();
+        expect(component.timeUntilTarget).toBe('artemisApp.showStatistic.now');
+
+        jest.useRealTimers();
+    });
 });
