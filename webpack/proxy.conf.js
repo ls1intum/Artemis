@@ -11,7 +11,8 @@ function setupProxy({ tls }) {
         '/auth',
         '/health',
         '/time',
-        '/public'
+        '/public',
+        '/.well-known'
       ],
       target: `http${tls ? 's' : ''}://localhost:8080`,
       secure: false,
