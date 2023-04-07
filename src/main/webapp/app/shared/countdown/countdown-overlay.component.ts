@@ -7,6 +7,7 @@ import dayjs from 'dayjs/esm';
 })
 export class CountdownOverlayComponent {
     @Input() targetDate: dayjs.Dayjs;
-    @Input() waitingText: string;
+    @Input() timeUntilPlannedStartText: string;
+    @Input() waitForStartText: string;
     @Output() onFinish = new EventEmitter<void>();
 }
