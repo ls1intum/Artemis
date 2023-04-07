@@ -2,13 +2,14 @@
     <div class="d-flex flex-column gap-3">
         <h2 class="mb-1 fw-medium">Tasks</h2>
 
-        <div class="btn-group">
-            <button type="button" (click)="allTasksExpanded = true" class="btn btn-secondary" jhiTranslate="artemisApp.programmingExercise.configureGrading.expandAll">
+        <div>
+            <jhi-button [shouldSubmit]="false" (click)="allTasksExpanded = true" title="artemisApp.programmingExercise.configureGrading.expandAll" [icon]="faAngleDown">
                 Expand all
-            </button>
-            <button type="button" (click)="allTasksExpanded = false" class="btn btn-secondary" jhiTranslate="artemisApp.programmingExercise.configureGrading.collapseAll">
+            </jhi-button>
+
+            <jhi-button [shouldSubmit]="false" (click)="allTasksExpanded = false" title="artemisApp.programmingExercise.configureGrading.collapseAll" [icon]="faAngleRight">
                 Collapse all
-            </button>
+            </jhi-button>
         </div>
 
         <div class="form-check form-switch">
