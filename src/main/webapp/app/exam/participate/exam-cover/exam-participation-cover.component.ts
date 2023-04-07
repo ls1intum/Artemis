@@ -11,7 +11,6 @@ import { StudentExam } from 'app/entities/student-exam.model';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import dayjs from 'dayjs/esm';
 import { EXAM_START_WAIT_TIME_MINUTES } from 'app/app.constants';
-import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
 import { faArrowLeft, faSpinner } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
@@ -150,30 +149,13 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
                         if (this.interval) {
                             clearInterval(this.interval);
                         }
-                        this.interval = window.setInterval(() => {
-                            this.updateDisplayedTimes(studentExam);
-                        }, UI_RELOAD_TIME);
                     }
                 });
         }
     }
 
-    /**
-     * updates all displayed (relative) times in the UI
-     */
-    updateDisplayedTimes(studentExam: StudentExam) {
-        const translationBasePath = 'artemisApp.showStatistic.';
-        // update time until start
-        if (this.exam && this.exam.startDate) {
-            if (this.hasStarted()) {
-                this.timeUntilStart = this.translateService.instant(translationBasePath + 'now');
-                this.onExamStarted.emit(studentExam);
-            } else {
-                this.timeUntilStart = this.relativeTimeText(this.exam.startDate.diff(this.serverDateService.now(), 'seconds'));
-            }
-        } else {
-            this.timeUntilStart = '';
-        }
+    onCountdownReachedZero() {
+        this.onExamStarted.emit(this.studentExam);
     }
 
     /**

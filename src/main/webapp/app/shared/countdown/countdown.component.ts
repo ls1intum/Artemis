@@ -11,7 +11,8 @@ import { ArtemisServerDateService } from 'app/shared/server-date.service';
 export class CountdownComponent implements OnInit, OnDestroy {
     @Input() targetDate: dayjs.Dayjs;
     @Input() waitingText: string;
-    @Output() onReachedZero = new EventEmitter<void>();
+    @Output() reachedZero = new EventEmitter<void>();
+    reachedZeroEmitted = false;
 
     timeUntilTarget = '0';
     interval: number;
@@ -20,7 +21,7 @@ export class CountdownComponent implements OnInit, OnDestroy {
 
     ngOnInit(): void {
         this.interval = window.setInterval(() => {
-            this.timeUntilTarget = this.relativeTimeText(this.targetDate.diff(this.serverDateService.now(), 'seconds'));
+            this.updateDisplayedTimes();
         }, UI_RELOAD_TIME);
     }
 
@@ -29,37 +30,55 @@ export class CountdownComponent implements OnInit, OnDestroy {
     }
 
     /**
+     * Returns the remaining time in seconds
+     */
+    remainingTimeSeconds(): number | undefined {
+        if (this.targetDate == undefined) {
+            return undefined;
+        }
+        const remaining = this.targetDate.diff(this.serverDateService.now(), 'seconds');
+        return Math.max(remaining, 0);
+    }
+
+    /**
      * Whether the countdown has reached zero
      */
     hasReachedZero(): boolean {
-        return this.targetDate.diff(dayjs(), 'seconds') <= 0;
+        const remaining = this.remainingTimeSeconds();
+        if (remaining == undefined) {
+            return false;
+        }
+        return remaining <= 0;
     }
 
     /**
      * Updates all displayed (relative) times in the UI
      */
     updateDisplayedTimes() {
-        const translationBasePath = 'artemisApp.showStatistic.';
         // update time until start
-        if (this.targetDate) {
-            if (this.hasReachedZero()) {
-                this.timeUntilTarget = this.translateService.instant(translationBasePath + 'now');
-                this.onReachedZero.emit();
-            } else {
-                this.timeUntilTarget = this.relativeTimeText(this.targetDate.diff(this.serverDateService.now(), 'seconds'));
+        if (this.hasReachedZero()) {
+            this.timeUntilTarget = this.translateService.instant('artemisApp.showStatistic.now');
+            if (!this.reachedZeroEmitted) {
+                console.log('emitting');
+                this.reachedZero.emit();
+                this.reachedZeroEmitted = true;
             }
         } else {
-            this.timeUntilTarget = '';
+            this.timeUntilTarget = this.relativeTimeText(this.remainingTimeSeconds());
+            this.reachedZeroEmitted = false; // reset the flag
         }
     }
 
     /**
      * Express the given timespan as humanized text
      *
-     * @param remainingTimeSeconds {number} the amount of seconds to display
+     * @param remainingTimeSeconds {number?} the amount of seconds to display, or the empty string if no time is given
      * @return {string} humanized text for the given amount of seconds
      */
-    relativeTimeText(remainingTimeSeconds: number): string {
+    relativeTimeText(remainingTimeSeconds: number | undefined): string {
+        if (remainingTimeSeconds == undefined) {
+            return '';
+        }
         if (remainingTimeSeconds > 210) {
             return Math.ceil(remainingTimeSeconds / 60) + ' min';
         } else if (remainingTimeSeconds > 59) {

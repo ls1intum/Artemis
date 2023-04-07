@@ -122,6 +122,7 @@
                 *ngIf="exam.startDate"
                 [targetDate]="exam.startDate"
                 [waitingText]="'artemisApp.examParticipation.timeUntilPlannedStart' | artemisTranslate"
+                (reachedZero)="onCountdownReachedZero()"
             ></jhi-countdown>
         </jhi-overlay-centered>
     </ng-container>
