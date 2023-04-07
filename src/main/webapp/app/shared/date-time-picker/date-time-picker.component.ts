@@ -59,8 +59,7 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
      * Function that writes the value safely.
      * @param value as dayjs or date
      */
-    writeValue(value: dayjs.Dayjs | Date): void {
-        //todo: test this
+    writeValue(value: dayjs.Dayjs | Date | null): void {
         if (value !== undefined && this.value !== value) {
             this.value = !value ? null : isDate(value) ? value : dayjs(value).toDate();
             this.value?.setSeconds(0, 0);
@@ -104,7 +103,7 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
      * resets the date to null
      */
     resetDate() {
-        this.writeValue(dayjs(null));
+        this.writeValue(null);
         this.valueChanged();
     }
 }

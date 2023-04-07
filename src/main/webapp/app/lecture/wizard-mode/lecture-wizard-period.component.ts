@@ -17,7 +17,7 @@ export class LectureUpdateWizardPeriodComponent {
     /**
      * emits in case the end date is set before the start date, informing the parent component about this invalid change
      */
-    update() {
+    emitInvalidDateConfiguration() {
         if (this.isEndDateBeforeStartDate) {
             this.invalidChange.emit();
         }
