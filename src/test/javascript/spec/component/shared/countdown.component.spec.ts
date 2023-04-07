@@ -42,7 +42,6 @@ describe('CountdownComponent', () => {
 
     it('should update displayed times and emit reachedZero event', async () => {
         component.targetDate = mockNow.add(10, 'seconds');
-        component.waitingText = 'Waiting for countdown';
         component.onFinish = new EventEmitter<void>();
 
         const emitSpy = jest.spyOn(component.onFinish, 'emit');
@@ -87,7 +86,6 @@ describe('CountdownComponent', () => {
 
     it('should fire event when targetDate changes', () => {
         component.targetDate = mockNow.add(10, 'seconds');
-        component.waitingText = 'Waiting for countdown';
         component.onFinish = new EventEmitter<void>();
         const emitSpy = jest.spyOn(component.onFinish, 'emit');
 
@@ -128,7 +126,6 @@ describe('CountdownComponent', () => {
 
     it('should fire event multiple times when countdown is over and restarted', () => {
         component.targetDate = mockNow.add(10, 'seconds');
-        component.waitingText = 'Waiting for countdown';
         component.onFinish = new EventEmitter<void>();
         const emitSpy = jest.spyOn(component.onFinish, 'emit');
 
@@ -152,7 +149,7 @@ describe('CountdownComponent', () => {
         jest.useRealTimers();
     });
 
-    it('should use artemisApp.showStatistic.now when the countdown is over', () => {
+    it('should show artemisApp.showStatistic.now when the countdown is over', () => {
         component.targetDate = dayjs(mockNow).add(10, 'seconds');
         jest.useFakeTimers();
 
