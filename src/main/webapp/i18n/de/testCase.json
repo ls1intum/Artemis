@@ -3,7 +3,8 @@
         "TestCase": {
             "null": "",
             "STRUCTURAL": "STRUCTURAL",
-            "BEHAVIOR": "BEHAVIOR"
+            "BEHAVIOR": "BEHAVIOR",
+            "MIXED": "MIXED"
         }
     }
 }

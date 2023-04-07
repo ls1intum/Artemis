@@ -21,6 +21,7 @@ import shortAnswerSubmissionTemplate from '../../fixtures/exercise/quiz/short_an
 import modelingExerciseSubmissionTemplate from '../../fixtures/exercise/modeling/submission.json';
 import lectureTemplate from '../../fixtures/lecture/template.json';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+import { Channel } from 'app/entities/metis/conversation/channel.model';
 
 export const COURSE_BASE = BASE_API + 'courses/';
 export const COURSE_ADMIN_BASE = BASE_API + 'admin/courses';
@@ -127,14 +128,14 @@ export class CourseManagementRequests {
         programmingShortName = 'cypress' + generateUUID(),
         packageName = 'de.test',
         assessmentDate = day().add(2, 'days'),
-        assessmentType = CypressAssessmentType.AUTOMATIC,
+        assessmentType = ProgrammingExerciseAssessmentType.AUTOMATIC,
     ): Cypress.Chainable<Cypress.Response<ProgrammingExercise>> {
         const template = {
             ...programmingExerciseTemplate,
             title,
             shortName: programmingShortName,
             packageName,
-            assessmentType: CypressAssessmentType[assessmentType],
+            assessmentType: ProgrammingExerciseAssessmentType[assessmentType],
         };
         const exercise: ProgrammingExercise = Object.assign({}, template, body) as ProgrammingExercise;
         // eslint-disable-next-line no-prototype-builtins
@@ -245,9 +246,25 @@ export class CourseManagementRequests {
         return cy.request({ method: POST, url: `${COURSE_BASE}${course.id}/posts`, body });
     }
 
+    createCourseMessageChannel(course: Course, name: string, description: string, isAnnouncementChannel: boolean, isPublic: boolean) {
+        const body = {
+            description,
+            isAnnouncementChannel,
+            isPublic,
+            name,
+            type: 'channel',
+        };
+        return cy.request({ method: POST, url: `${COURSE_BASE}${course.id}/channels`, body });
+    }
+
+    joinUserIntoChannel(course: Course, channel: Channel, user: CypressCredentials) {
+        const body = [`${user.username}`];
+        return cy.request({ method: POST, url: `${COURSE_BASE}${course.id}/channels/${channel.id}/register`, body });
+    }
+
     /**
      * Creates an exam with the provided settings.
-     * @param exam the exam object created by a {@link CypressExamBuilder}
+     * @param exam the exam object created by a {@link ExamBuilder}
      * @returns <Chainable> request response
      */
     createExam(exam: Exam) {
@@ -272,7 +289,7 @@ export class CourseManagementRequests {
 
     /**
      * Creates an exam with the provided settings.
-     * @param exam the exam object created by a {@link CypressExamBuilder}
+     * @param exam the exam object created by a {@link ExamBuilder}
      * @param exerciseArray an array of exercises
      * @param workingTime the working time in seconds
      * @returns <Chainable> request response
@@ -564,7 +581,7 @@ export class CourseManagementRequests {
 /**
  * Helper class to construct exam objects for the {@link CourseManagementRequests.createExam} method.
  */
-export class CypressExamBuilder {
+export class ExamBuilder {
     readonly template: any = examTemplate;
 
     /**
@@ -688,7 +705,7 @@ export class CypressExamBuilder {
     }
 }
 
-export enum CypressAssessmentType {
+export enum ProgrammingExerciseAssessmentType {
     AUTOMATIC,
     SEMI_AUTOMATIC,
     MANUAL,
