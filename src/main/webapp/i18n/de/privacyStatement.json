@@ -5,8 +5,6 @@
             "updatePrivacyStatement": "Datenschutzerklärung aktualisieren",
             "createOrEditLabel": "Datenschutzerklärung erstellen oder bearbeiten",
             "unsavedChangesWarning": "Die Datenschutzerklärung enhält ungespeicherte Änderungen. Möchtest du wirklich die Sprache wechseln und alle ungespeicherten Änderungen verwerfen?",
-            "save": "Speichern",
-            "cancel": "Abbrechen",
             "language": {
                 "de": "Deutsch",
                 "en": "Englisch"

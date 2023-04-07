@@ -10,7 +10,7 @@ const routes: Routes = [
         component: PrivacyStatementUpdateComponent,
         data: {
             authorities: [Authority.ADMIN],
-            pageTitle: 'artemisApp.privacyStatement.title',
+            pageTitle: 'artemisApp.privacyStatement.updatePrivacyStatement',
         },
     },
 ];

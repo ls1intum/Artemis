@@ -108,7 +108,6 @@
                 "audits": "Audits",
                 "apidocs": "API",
                 "database": "Datenbank",
-                "privacyStatement": "Datenschutzerklärung",
                 "jhipster-needle-menu-add-admin-element": "JHipster will add additional menu entries here (do not translate!)"
             },
             "language": "Sprache",
