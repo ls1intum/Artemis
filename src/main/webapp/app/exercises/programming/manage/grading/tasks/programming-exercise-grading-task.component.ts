@@ -59,4 +59,12 @@ export class ProgrammingExerciseGradingTaskComponent implements OnInit {
             this.updateTasks();
         });
     };
+
+    toggleAllTasksExpanded = (value: boolean) => {
+        // Force change detection in angular
+        this.allTasksExpanded = !value;
+        setTimeout(() => {
+            this.allTasksExpanded = value;
+        }, 10);
+    };
 }
