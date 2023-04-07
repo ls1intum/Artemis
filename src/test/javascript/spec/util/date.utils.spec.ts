@@ -78,9 +78,15 @@ describe('DateUtils', () => {
     });
 
     describe('relativeTimeText', () => {
-        it('should correctly format relative time text', () => {
+        it('should return an empty string for undefined input', () => {
             expect(relativeTimeText(undefined)).toBe('');
+        });
+
+        it('should correctly format relative time text for zero', () => {
             expect(relativeTimeText(0)).toBe('0 s');
+        });
+
+        it('should correctly format relative time text for positive numbers', () => {
             expect(relativeTimeText(5)).toBe('5 s');
             expect(relativeTimeText(10)).toBe('10 s');
             expect(relativeTimeText(50)).toBe('50 s');
