@@ -1,0 +1,81 @@
+<div class="row" *ngIf="quizPool">
+    <div class="row">
+        <h4 jhiTranslate="artemisApp.quizPool.editTitle">Edit Quiz Pool</h4>
+    </div>
+    <div class="row mt-3">
+        <jhi-quiz-pool-mapping
+            [quizGroups]="quizPool.quizGroups"
+            [quizQuestions]="quizPool.quizQuestions"
+            [disabled]="isExamStarted"
+            #quizPoolQuestionMapping
+            (onQuizGroupUpdated)="handleUpdate()"
+            (onQuizQuestionDropped)="handleUpdate()"
+        ></jhi-quiz-pool-mapping>
+    </div>
+    <div class="row mt-2">
+        <div class="edit-quiz">
+            <jhi-quiz-question-list-edit
+                #quizQuestionsEdit
+                [courseId]="courseId"
+                [quizQuestions]="quizPool.quizQuestions"
+                [disabled]="isExamStarted"
+                (onQuestionAdded)="handleQuestionAdded($event)"
+                (onQuestionDeleted)="handleQuestionDeleted($event)"
+                (onQuestionUpdated)="handleUpdate()"
+            />
+        </div>
+    </div>
+    <div class="edit-quiz-footer">
+        <div class="container">
+            <div class="edit-quiz-footer-content">
+                <div class="form-group">
+                    <span *ngIf="hasPendingChanges && isValid && !isSaving" jhiTranslate="artemisApp.quizExercise.edit.pendingChanges" class="badge bg-secondary"></span>
+                    <span *ngIf="isSaving" jhiTranslate="artemisApp.quizExercise.edit.saving" class="badge bg-secondary"></span>
+                    <ng-template #tooltipTranslate>
+                        <div *ngFor="let reason of invalidReasons">
+                            <p
+                                *ngIf="(reason.translateValues | json) != '{}'"
+                                jhiTranslate="{{ reason.translateKey }}"
+                                [translateValues]="{
+                                    index: reason.translateValues.index,
+                                    threshold: reason.translateValues.threshold,
+                                    name: reason.translateValues.name
+                                }"
+                            ></p>
+                            <p *ngIf="(reason.translateValues | json) == '{}'" jhiTranslate="{{ reason.translateKey }}"></p>
+                        </div>
+                    </ng-template>
+                    <ng-template #warningTranslate>
+                        <div *ngFor="let warning of warningReasons">
+                            <p
+                                *ngIf="(warning.translateValues | json) != '{}'"
+                                jhiTranslate="{{ warning.translateKey }}"
+                                [translateValues]="{ index: warning.translateValues.index, name: warning.translateValues.name }"
+                            ></p>
+                            <p *ngIf="(warning.translateValues | json) == '{}'" jhiTranslate="{{ warning.translateKey }}"></p>
+                        </div>
+                    </ng-template>
+                    <span *ngIf="!isValid" class="badge bg-danger" [ngbTooltip]="tooltipTranslate" tooltip-placement="top-right auto">
+                        <fa-icon [icon]="faExclamationCircle"></fa-icon>
+                        <span jhiTranslate="artemisApp.quizExercise.edit.invalidInput"></span>
+                        <span>({{ invalidReasons.length }})</span>
+                    </span>
+                    <span *ngIf="warningReasons.length > 0" class="badge bg-warning" [ngbTooltip]="warningTranslate" tooltip-placement="top-right auto">
+                        <span jhiTranslate="artemisApp.quizExercise.edit.warning"></span>
+                        <span>({{ warningReasons.length }})</span>
+                    </span>
+                    <button
+                        id="quiz-save"
+                        class="btn btn-success"
+                        [disabled]="isSaving || !hasPendingChanges || !this.isValid || isExamStarted"
+                        [ngbTooltip]="isValid ? '' : tooltipTranslate"
+                        jhiTranslate="entity.action.save"
+                        tooltip-placement="top-right auto"
+                        tooltip-class="invalid-reasons-tooltip"
+                        (click)="save()"
+                    ></button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
