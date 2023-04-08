@@ -538,12 +538,13 @@ describe('ProgrammingExercise Management Update Component', () => {
             comp.programmingExercise = entity;
             comp.backupExercise = {} as ProgrammingExercise;
             comp.programmingExercise.course = course;
+            comp.courseId = course.id!;
             // WHEN
             comp.save();
             tick(); // simulate async
 
             // THEN
-            expect(programmingExerciseService.importFromFile).toHaveBeenCalledWith(entity);
+            expect(programmingExerciseService.importFromFile).toHaveBeenCalledWith(entity, 1);
             expect(comp.isSaving).toBeFalse();
         }));
     });

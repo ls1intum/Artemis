@@ -69,6 +69,8 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     problemStatementLoaded = false;
     templateParticipationResultLoaded = true;
     notificationText?: string;
+    courseId: number;
+
     EditorMode = EditorMode;
     AssessmentType = AssessmentType;
     rerenderSubject = new Subject<void>();
@@ -384,9 +386,13 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                                 this.isExamMode = true;
                                 this.programmingExercise.exerciseGroup = res.body!;
                             });
+                            // we need the course id  to make the request to the server if it's an import from file
+                            if (this.isImportFromFile) {
+                                this.courseId = params['courseId'];
+                            }
                         } else if (params['courseId']) {
-                            const courseId = params['courseId'];
-                            this.courseService.find(courseId).subscribe((res) => {
+                            this.courseId = params['courseId'];
+                            this.courseService.find(this.courseId).subscribe((res) => {
                                 this.isExamMode = false;
                                 this.programmingExercise.course = res.body!;
                                 if (this.programmingExercise.course?.defaultProgrammingLanguage) {
@@ -579,7 +585,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             });
         }
         if (this.isImportFromFile) {
-            this.subscribeToSaveResponse(this.programmingExerciseService.importFromFile(this.programmingExercise));
+            this.subscribeToSaveResponse(this.programmingExerciseService.importFromFile(this.programmingExercise, this.courseId));
         } else if (this.isImportFromExistingExercise) {
             this.subscribeToSaveResponse(this.programmingExerciseService.importExercise(this.programmingExercise, this.recreateBuildPlans, this.updateTemplate));
         } else if (this.programmingExercise.id !== undefined) {
