@@ -49,7 +49,7 @@
         <jhi-help-icon text="artemisApp.programmingExercise.preview.tooltip"></jhi-help-icon>
     </div>
     <jhi-programming-exercise-plans-and-repositories-preview [programmingExercise]="programmingExercise"></jhi-programming-exercise-plans-and-repositories-preview>
-    <div *ngIf="!isImportFromExistingExercise" class="form-group">
+    <div *ngIf="!isImportFromExistingExercise && auxiliaryRepositoriesSupported" class="form-group">
         <ngx-datatable
             id="auxiliaryRepositoryTable"
             class="bootstrap"

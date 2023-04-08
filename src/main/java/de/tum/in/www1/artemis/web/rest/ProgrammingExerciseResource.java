@@ -175,6 +175,10 @@ public class ProgrammingExerciseResource {
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<ProgrammingExercise> createProgrammingExercise(@RequestBody ProgrammingExercise programmingExercise) {
         log.debug("REST request to setup ProgrammingExercise : {}", programmingExercise);
+        if (programmingExercise.getId() != null) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "A new programmingExercise cannot already have an ID", "idExists")).body(null);
+        }
+
         // Valid exercises have set either a course or an exerciseGroup
         programmingExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(programmingExercise);
@@ -677,7 +681,7 @@ public class ProgrammingExerciseResource {
 
     /**
      * GET programming-exercises/:exerciseId/solution-files-content
-     * <p>
+     *
      * Returns the solution repository files with content for a given programming exercise.
      * Note: This endpoint redirects the request to the ProgrammingExerciseParticipationService. This is required if
      * the solution participation id is not known for the client.
@@ -700,7 +704,7 @@ public class ProgrammingExerciseResource {
 
     /**
      * GET programming-exercises/:exerciseId/template-files-content
-     * <p>
+     *
      * Returns the template repository files with content for a given programming exercise.
      * Note: This endpoint redirects the request to the ProgrammingExerciseParticipationService. This is required if
      * the template participation id is not known for the client.
@@ -723,7 +727,7 @@ public class ProgrammingExerciseResource {
 
     /**
      * GET programming-exercises/:exerciseId/solution-file-names
-     * <p>
+     *
      * Returns the solution repository file names for a given programming exercise.
      * Note: This endpoint redirects the request to the ProgrammingExerciseParticipationService. This is required if
      * the solution participation id is not known for the client.
@@ -746,7 +750,7 @@ public class ProgrammingExerciseResource {
 
     /**
      * GET programming-exercises/:exerciseId/build-log-statistics
-     * <p>
+     *
      * Returns the averaged build log statistics for a given programming exercise.
      *
      * @param exerciseId the exercise for which the build log statistics should be retrieved

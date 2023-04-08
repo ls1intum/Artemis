@@ -41,6 +41,7 @@ export class AboutUsComponent implements OnInit {
         ['integratedMarkdownEditor', { markdownEditorUrl: 'https://docs.artemis.cit.tum.de/user/markdown-support/' }],
         ['plagiarismChecks', { jPlagUrl: 'https://github.com/jplag/JPlag/', plagiarismChecksUrl: 'https://docs.artemis.cit.tum.de/user/plagiarism-check/' }],
         ['learningAnalytics', { learningAnalyticsUrl: 'https://docs.artemis.cit.tum.de/user/learning-analytics/' }],
+        ['tutorialGroups', { tutorialGroupsUrl: 'https://docs.artemis.cit.tum.de/user/tutorialgroups/' }],
         ['scalable', { scalingUrl: 'https://docs.artemis.cit.tum.de/user/scaling/' }],
         ['highUserSatisfaction', { userExperienceUrl: 'https://docs.artemis.cit.tum.de/user/user-experience/' }],
         ['customizable', { customizableUrl: 'https://docs.artemis.cit.tum.de/user/courses/customizable' }],

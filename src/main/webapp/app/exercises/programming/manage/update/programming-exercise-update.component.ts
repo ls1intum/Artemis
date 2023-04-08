@@ -111,6 +111,9 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     public staticCodeAnalysisAllowed = false;
     public checkoutSolutionRepositoryAllowed = false;
     public sequentialTestRunsAllowed = false;
+    public publishBuildPlanUrlAllowed = false;
+    public testwiseCoverageAnalysisSupported = false;
+    public auxiliaryRepositoriesSupported = false;
     public auxiliaryRepositoriesValid = true;
 
     // Additional options for import
@@ -239,6 +242,9 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         this.staticCodeAnalysisAllowed = programmingLanguageFeature.staticCodeAnalysis;
         this.checkoutSolutionRepositoryAllowed = programmingLanguageFeature.checkoutSolutionRepositoryAllowed;
         this.sequentialTestRunsAllowed = programmingLanguageFeature.sequentialTestRuns;
+        this.publishBuildPlanUrlAllowed = programmingLanguageFeature.publishBuildPlanUrlAllowed;
+        this.testwiseCoverageAnalysisSupported = programmingLanguageFeature.testwiseCoverageAnalysisSupported;
+        this.auxiliaryRepositoriesSupported = programmingLanguageFeature.auxiliaryRepositoriesSupported;
         // filter out MAVEN_MAVEN and GRADLE_GRADLE because they are not directly selectable but only via a checkbox
         this.projectTypes = programmingLanguageFeature.projectTypes.filter((projectType) => projectType !== ProjectType.MAVEN_MAVEN && projectType !== ProjectType.GRADLE_GRADLE);
         this.modePickerOptions = this.projectTypes.map((projectType) => ({

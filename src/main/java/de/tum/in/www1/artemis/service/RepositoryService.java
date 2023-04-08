@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.service;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
-import java.security.Principal;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -18,7 +17,6 @@ import org.springframework.util.FileSystemUtils;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.File;
-import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.web.rest.dto.FileMove;
 
@@ -30,16 +28,10 @@ public class RepositoryService {
 
     private final GitService gitService;
 
-    private final AuthorizationCheckService authCheckService;
-
-    private final UserRepository userRepository;
-
     private final Logger log = LoggerFactory.getLogger(RepositoryService.class);
 
-    public RepositoryService(GitService gitService, AuthorizationCheckService authCheckService, UserRepository userRepository) {
+    public RepositoryService(GitService gitService) {
         this.gitService = gitService;
-        this.authCheckService = authCheckService;
-        this.userRepository = userRepository;
     }
 
     /**
@@ -331,45 +323,5 @@ public class RepositoryService {
     public boolean isClean(VcsRepositoryUrl repositoryUrl, String defaultBranch) throws GitAPIException {
         Repository repository = gitService.getOrCheckoutRepository(repositoryUrl, true, defaultBranch);
         return gitService.isClean(repository);
-    }
-
-    /**
-     * Retrieve a repository by its name.
-     *
-     * @param exercise       to which the repository belongs.
-     * @param repoUrl        of the repository on the server.
-     * @param pullOnCheckout if true pulls after checking out the git repository.
-     * @return the repository if available.
-     * @throws GitAPIException        if the repository can't be checked out.
-     * @throws IllegalAccessException if the user does not have access to the repository.
-     */
-    public Repository checkoutRepositoryByName(Exercise exercise, VcsRepositoryUrl repoUrl, boolean pullOnCheckout) throws IllegalAccessException, GitAPIException {
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
-        boolean hasPermissions = authCheckService.isAtLeastTeachingAssistantInCourse(course, user);
-        if (!hasPermissions) {
-            throw new IllegalAccessException();
-        }
-        return gitService.getOrCheckoutRepository(repoUrl, pullOnCheckout);
-    }
-
-    /**
-     * Retrieve a repository by its name.
-     *
-     * @param principal entity used for permission checking.
-     * @param exercise  to which the repository belongs.
-     * @param repoUrl   of the repository on the server.
-     * @return the repository if available.
-     * @throws GitAPIException        if the repository can't be checked out.
-     * @throws IllegalAccessException if the user does not have access to the repository.
-     */
-    public Repository checkoutRepositoryByName(Principal principal, Exercise exercise, VcsRepositoryUrl repoUrl) throws IllegalAccessException, GitAPIException {
-        User user = userRepository.getUserWithGroupsAndAuthorities(principal.getName());
-        Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
-        boolean hasPermissions = authCheckService.isAtLeastEditorInCourse(course, user);
-        if (!hasPermissions) {
-            throw new IllegalAccessException();
-        }
-        return gitService.getOrCheckoutRepository(repoUrl, true);
     }
 }
