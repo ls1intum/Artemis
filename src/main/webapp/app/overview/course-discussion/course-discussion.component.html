@@ -10,7 +10,7 @@
             placeholder="{{ 'artemisApp.metis.overview.searchBarDefault' | artemisTranslate }}"
         />
         <jhi-button [btnType]="ButtonType.SECONDARY" [icon]="faTimes" (onClick)="searchText = ''; onSelectContext()"></jhi-button>
-        <jhi-button id="searchSubmit" class="ms-1" [icon]="faSearch" (onClick)="onSelectContext()"></jhi-button>
+        <jhi-button id="search-submit" class="ms-1" [icon]="faSearch" (onClick)="onSelectContext()"></jhi-button>
         <jhi-documentation-button [type]="documentationType" class="information-button"></jhi-documentation-button>
         <div *ngIf="createdPost">
             <button id="new-post" class="btn btn-md btn-primary ms-1" (click)="createEditModal.open()">
@@ -159,6 +159,7 @@
                 <jhi-posting-thread
                     *ngFor="let post of virtualScrollContainer.domTreeItems; trackBy: postsTrackByFn"
                     [id]="'item-' + post.id"
+                    class="item"
                     [post]="post"
                     [showAnswers]="posts.length === 1"
                 >

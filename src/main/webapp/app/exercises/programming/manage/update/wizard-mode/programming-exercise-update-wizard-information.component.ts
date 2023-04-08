@@ -12,4 +12,5 @@ export class ProgrammingExerciseUpdateWizardInformationComponent {
     @Input() programmingExercise: ProgrammingExercise;
 
     @Input() infoStepInputs: InfoStepInputs;
+    @Input() auxiliaryRepositoriesSupported: boolean;
 }
