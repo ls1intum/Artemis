@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import de.tum.in.www1.artemis.security.annotations.ManualConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -27,6 +28,7 @@ public class AppleAppSiteAssociationResource {
      * @return apple-app-site-association as json
      */
     @GetMapping("/apple-app-site-association")
+    @ManualConfig
     public ResponseEntity<AppleAppSiteAssociation> getAppleAppSiteAssociation() {
         if (appId == null || appId.length() < 10) {
             log.debug("Apple AppID is not configured!");

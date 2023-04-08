@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.web.rest;
 
 import java.util.List;
 
+import de.tum.in.www1.artemis.security.annotations.ManualConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -32,6 +33,7 @@ public class AndroidAppSiteAssociationResource {
      * @return assetslinks as json
      */
     @GetMapping("/assetlinks.json")
+    @ManualConfig
     public ResponseEntity<List<AndroidAssetLinksEntry>> getAndroidAssetLinks() {
         if (androidAppPackage == null || androidAppPackage.length() < 4 || sha256CertFingerprints == null || sha256CertFingerprints.length() < 20) {
             log.debug("Android Assetlinks information is not configured!");
