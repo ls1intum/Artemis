@@ -1,0 +1,50 @@
+# ----------------------------------------------------------------------------------------------------------------------
+# Nginx base service
+# ----------------------------------------------------------------------------------------------------------------------
+
+services:
+    nginx:
+        # nginx setup based on artemis prod ansible repository
+        # TODO: merge KIT settings for the proxy
+        # TODO: Adjust worker_rlimit_nofile in nginx.conf (from ansible task)
+        # TODO: Adjust worker_connections in nginx.conf (from ansible task)
+        # TODO: Adjust worker_connections in nginx.conf (from ansible task)
+        # TODO: Ensure file-max limit in sysctl.conf (from ansible task)
+        # TODO: Copy security-limits nginx.conf (from ansible task)
+        # TODO: Copy systemd-limits nginx.conf (from ansible task)
+        container_name: artemis-nginx
+        image: nginx:1.23
+        pull_policy: always
+        volumes:
+            - ./nginx/timeouts.conf:/etc/nginx/conf.d/timeouts.conf:ro
+            - ./nginx/artemis-nginx.conf:/etc/nginx/conf.d/artemis-nginx.conf:ro
+            - ./nginx/artemis-server.conf:/etc/nginx/includes/artemis-server.conf:ro
+            - ./nginx/dhparam.pem:/etc/nginx/dhparam.pem:ro
+            - ./nginx/nginx_502.html:/usr/share/nginx/html/502.html:ro
+            - ./nginx/70-artemis-setup.sh:/docker-entrypoint.d/70-artemis-setup.sh
+            # TODO: move the certs to a place for testing in cypress and/or development envs
+            - ../src/test/cypress/certs/artemis-nginx+4.pem:/certs/fullchain.pem:ro
+            - ../src/test/cypress/certs/artemis-nginx+4-key.pem:/certs/priv_key.pem:ro
+            #- ./pki:/etc/pki/nginx:ro
+            #- ./defaults/templates:/etc/nginx/templates:ro
+            #- ./defaults/nginx.conf:/etc/nginx/nginx.conf:ro
+            #- ./defaults/proxy.conf:/etc/nginx/proxy.conf:ro
+            #- ./defaults/ssl.conf:/etc/nginx/ssl.conf:ro
+            #- ./defaults/dhparam.pem:/etc/nginx/dhparam.pem:ro
+        ports:
+            - "80:80"
+            - "443:443"
+        # expose the port to make it reachable docker internally even if the external port mapping changes
+        expose:
+            - "80"
+            - "443"
+        healthcheck:
+            test: service nginx status || exit 1
+            start_period: 60s
+        networks:
+            - artemis
+
+networks:
+    artemis:
+        driver: "bridge"
+        name: artemis

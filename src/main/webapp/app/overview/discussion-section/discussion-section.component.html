@@ -34,7 +34,7 @@
                 <!-- new post button -->
                 <div class="row mt-2" *ngIf="createdPost">
                     <div class="col-12">
-                        <button class="btn btn-sm btn-primary" (click)="createEditModal.open()">
+                        <button id="new-post" class="btn btn-sm btn-primary" (click)="createEditModal.open()">
                             <fa-icon [icon]="faPlus"></fa-icon>
                             <span class="d-none d-md-inline">{{ 'artemisApp.metis.addNewPost' | artemisTranslate }}</span>
                         </button>
@@ -46,6 +46,7 @@
                         <!-- search bar -->
                         <div class="input-group px-0 my-2">
                             <input
+                                id="search"
                                 name="searchText"
                                 [(ngModel)]="searchText"
                                 class="form-control"
@@ -53,7 +54,7 @@
                                 placeholder="{{ 'artemisApp.metis.discussionSection.searchBarDefault' | artemisTranslate }}"
                             />
                             <jhi-button [btnType]="ButtonType.SECONDARY" [icon]="faTimes" (onClick)="searchText = ''; onSelectContext()"></jhi-button>
-                            <jhi-button class="ms-1" [icon]="faSearch" (onClick)="onSelectContext()"></jhi-button>
+                            <jhi-button id="search-submit" class="ms-1" [icon]="faSearch" (onClick)="onSelectContext()"></jhi-button>
                         </div>
                     </div>
 
@@ -122,7 +123,14 @@
                             <jhi-post-create-edit-modal #createEditModal [posting]="createdPost" (onCreate)="createEmptyPost()"></jhi-post-create-edit-modal>
                         </div>
                     </div>
-                    <jhi-posting-thread *ngFor="let post of posts; trackBy: postsTrackByFn" [post]="post" [showAnswers]="posts.length === 1"></jhi-posting-thread>
+                    <div class="items-container">
+                        <jhi-posting-thread
+                            *ngFor="let post of posts; trackBy: postsTrackByFn"
+                            [id]="'item-' + post.id"
+                            [post]="post"
+                            [showAnswers]="posts.length === 1"
+                        ></jhi-posting-thread>
+                    </div>
                 </ng-template>
             </div>
         </div>
