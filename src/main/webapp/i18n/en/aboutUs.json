@@ -50,6 +50,9 @@
             "learningAnalytics": {
                 "text": "<a href={{ learningAnalyticsUrl }}>Learning analytics:</a> Statistics to compare based on the course average. Evaluate the average performance based on exercises and competencies."
             },
+            "tutorialGroups": {
+                "text": "<a href={{ tutorialGroupsUrl }}>Tutorial Groups:</a> Manage the tutorial groups of a course. Plan the sessions, assign responsible tutors, register students and track the attendance."
+            },
             "scalable": {
                 "text": "<a href={{ scalingUrl }}>Scalable</a> to multiple courses with thousands of students. Configure additional build agents in the continuous integration environment."
             },

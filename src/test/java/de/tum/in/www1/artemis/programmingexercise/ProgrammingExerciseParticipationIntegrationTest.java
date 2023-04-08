@@ -52,7 +52,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringInte
 
     @BeforeEach
     void initTestCase() {
-        database.addUsers(TEST_PREFIX, 3, 2, 0, 2);
+        database.addUsers(TEST_PREFIX, 4, 2, 0, 2);
         var course = database.addCourseWithOneProgrammingExerciseAndTestCases();
         programmingExercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
         programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).get();
@@ -140,6 +140,15 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringInte
         var result = addStudentParticipationWithResult(AssessmentType.SEMI_AUTOMATIC, null);
         StudentParticipation participation = (StudentParticipation) result.getParticipation();
         request.get(participationsBaseUrl + participation.getId() + "/student-participation-with-latest-result-and-feedbacks", HttpStatus.NOT_FOUND,
+                ProgrammingExerciseStudentParticipation.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student4", roles = "USER")
+    void testGetParticipationWithLatestResult_cannotAccessParticipation() throws Exception {
+        // student4 should have no connection to student1's participation and should thus receive a Forbidden HTTP status.
+        ProgrammingExerciseStudentParticipation participation = database.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
+        request.get(participationsBaseUrl + participation.getId() + "/student-participation-with-latest-result-and-feedbacks", HttpStatus.FORBIDDEN,
                 ProgrammingExerciseStudentParticipation.class);
     }
 
@@ -324,6 +333,17 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringInte
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "student4", roles = "USER")
+    void testGetLatestPendingSubmission_cannotAccessParticipation() throws Exception {
+        // student4 should have no connection to student1's participation and should thus receive a Forbidden HTTP status.
+        ProgrammingSubmission submission = (ProgrammingSubmission) new ProgrammingSubmission().submissionDate(ZonedDateTime.now());
+        submission = database.addProgrammingSubmission(programmingExercise, submission, TEST_PREFIX + "student1");
+        Submission returnedSubmission = request.getNullable(participationsBaseUrl + submission.getParticipation().getId() + "/latest-pending-submission", HttpStatus.FORBIDDEN,
+                ProgrammingSubmission.class);
+        assertThat(returnedSubmission).isNull();
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getLatestSubmissionsForExercise_instructor() throws Exception {
         ProgrammingSubmission submission = (ProgrammingSubmission) new ProgrammingSubmission().submissionDate(ZonedDateTime.now().minusSeconds(61L));
@@ -385,8 +405,8 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringInte
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void checkResetRepository_noAccessToGradedParticipation_forbidden() throws Exception {
-        var gradedParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
-        var practiceParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student2");
+        var gradedParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student2");
+        var practiceParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
         practiceParticipation.setTestRun(true);
         participationRepository.save(practiceParticipation);
 
