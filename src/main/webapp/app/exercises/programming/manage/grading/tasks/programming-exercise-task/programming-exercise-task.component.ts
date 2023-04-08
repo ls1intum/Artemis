@@ -7,7 +7,7 @@ import { ProgrammingExerciseTaskService } from '../programming-exercise-task.ser
 @Component({
     selector: 'jhi-programming-exercise-task',
     templateUrl: './programming-exercise-task.component.html',
-    styleUrls: ['./programming-exercise-task.component.scss'],
+    styleUrls: ['../programming-exercise-grading-task.scss'],
 })
 export class ProgrammingExerciseTaskComponent {
     @Input() index: number;

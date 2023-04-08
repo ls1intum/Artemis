@@ -1,19 +1,17 @@
 <div class="task">
-    <div class="task__head">
+    <div class="d-flex">
         <button type="button" (click)="open = !open" class="task__collapse">
             <fa-icon class="me-2" [icon]="open ? faAngleDown : faAngleRight"></fa-icon>
         </button>
 
         <div class="task__row">
-            <div class="task__row__index">
+            <div class="task__row__cell gap-3">
                 <b>{{ index + 1 }}</b>
-            </div>
-            <div class="task__row__cell">
                 <span class="task__field">
                     <b>{{ task.taskName }}</b></span
                 >
             </div>
-            <div class="task__row__cell">
+            <div class="task__row__cell task__row__cell--small">
                 <input
                     [disabled]="task.taskName === NOT_ASSIGNED_TO_TASK_NAME"
                     type="number"
@@ -24,7 +22,7 @@
                     (change)="taskUpdateHandler()"
                 />
             </div>
-            <div class="task__row__cell">
+            <div class="task__row__cell task__row__cell--small">
                 <input
                     [disabled]="task.taskName === NOT_ASSIGNED_TO_TASK_NAME"
                     type="number"
@@ -35,7 +33,7 @@
                     (change)="taskUpdateHandler()"
                 />
             </div>
-            <div class="task__row__cell">
+            <div class="task__row__cell task__row__cell--small">
                 <input
                     [disabled]="task.taskName === NOT_ASSIGNED_TO_TASK_NAME"
                     type="number"
@@ -73,16 +71,14 @@
 
     <div *ngIf="open" class="task__body">
         <div *ngFor="let test of task.testCases; index as j" class="task__row" [class.bg-secondary]="!test.active">
-            <div class="task__row__index ps-3">
-                {{ formatTestIndex(index, j) }}
-            </div>
-            <div class="task__row__cell">
+            <div class="task__row__cell gap-3">
+                <span class="ps-3">{{ formatTestIndex(index, j) }}</span>
                 <span class="task__field">{{ test.testName }}</span>
             </div>
-            <div class="task__row__cell">
+            <div class="task__row__cell task__row__cell--small">
                 <input type="number" class="form-control" min="0" [(ngModel)]="test.weight" name="{{ test.testName }}-name" (change)="testUpdateHandler(test)" />
             </div>
-            <div class="task__row__cell">
+            <div class="task__row__cell task__row__cell--small">
                 <input
                     type="number"
                     class="form-control"
@@ -92,7 +88,7 @@
                     (change)="testUpdateHandler(test)"
                 />
             </div>
-            <div class="task__row__cell">
+            <div class="task__row__cell task__row__cell--small">
                 <input type="number" class="form-control" min="0" [(ngModel)]="test.bonusPoints" name="{{ test.testName }}-bonusPoints" (change)="testUpdateHandler(test)" />
             </div>
             <div class="task__row__cell">
