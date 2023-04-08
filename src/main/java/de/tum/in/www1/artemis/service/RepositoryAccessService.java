@@ -74,7 +74,7 @@ public class RepositoryAccessService {
 
         // Error case 3: The student can reset the repository only before and a tutor/instructor only after the due date has passed
         if (repositoryActionType == RepositoryActionType.RESET) {
-            checkAccessRepositoryForReset(programmingParticipation, programmingExercise, isStudent);
+            checkAccessRepositoryForReset(programmingParticipation, isStudent, programmingExercise);
         }
 
         // Error case 4: Before or after exam working time, students are not allowed to read or submit to the repository for an exam exercise. Teaching assistants are only allowed
@@ -90,7 +90,7 @@ public class RepositoryAccessService {
     /*
      * The student can reset the repository only before and a tutor/instructor only after the due date has passed
      */
-    private void checkAccessRepositoryForReset(ProgrammingExerciseParticipation programmingExerciseParticipation, ProgrammingExercise programmingExercise, boolean isStudent) {
+    private void checkAccessRepositoryForReset(ProgrammingExerciseParticipation programmingExerciseParticipation, boolean isStudent, ProgrammingExercise programmingExercise) {
         boolean isOwner = true; // true for Solution- and TemplateProgrammingExerciseParticipation
         if (programmingExerciseParticipation instanceof StudentParticipation studentParticipation) {
             isOwner = authorizationCheckService.isOwnerOfParticipation(studentParticipation);
