@@ -253,8 +253,17 @@ public class ProgrammingExerciseService {
         validateProjectType(programmingExercise, programmingLanguageFeature);
 
         // Check if checkout solution repository is enabled
-        if (programmingExercise.getCheckoutSolutionRepository() && !programmingLanguageFeature.isCheckoutSolutionRepositoryAllowed()) {
+        if (programmingExercise.getCheckoutSolutionRepository() && !programmingLanguageFeature.checkoutSolutionRepositoryAllowed()) {
             throw new BadRequestAlertException("Checkout solution repository is not supported for this programming language", "Exercise", "checkoutSolutionRepositoryNotSupported");
+        }
+        // Check if publish build plan URL is enabled
+        if (Boolean.TRUE.equals(programmingExercise.isPublishBuildPlanUrl()) && !programmingLanguageFeature.publishBuildPlanUrlAllowed()) {
+            throw new BadRequestAlertException("Publishing the build plan URL is not supported for this language", "Exercise", "publishBuildPlanUrlNotSupported");
+        }
+
+        // Check if testwise coverage analysis is enabled
+        if (Boolean.TRUE.equals(programmingExercise.isTestwiseCoverageEnabled()) && !programmingLanguageFeature.testwiseCoverageAnalysisSupported()) {
+            throw new BadRequestAlertException("Testwise coverage analysis is not supported for this language", "Exercise", "testwiseCoverageAnalysisNotSupported");
         }
 
         programmingExerciseRepository.validateCourseSettings(programmingExercise, course);
@@ -267,11 +276,11 @@ public class ProgrammingExerciseService {
 
     private void validateProjectType(ProgrammingExercise programmingExercise, ProgrammingLanguageFeature programmingLanguageFeature) {
         // Check if project type is selected
-        if (!programmingLanguageFeature.getProjectTypes().isEmpty()) {
+        if (!programmingLanguageFeature.projectTypes().isEmpty()) {
             if (programmingExercise.getProjectType() == null) {
                 throw new BadRequestAlertException("The project type is not set", "Exercise", "projectTypeNotSet");
             }
-            if (!programmingLanguageFeature.getProjectTypes().contains(programmingExercise.getProjectType())) {
+            if (!programmingLanguageFeature.projectTypes().contains(programmingExercise.getProjectType())) {
                 throw new BadRequestAlertException("The project type is not supported for this programming language", "Exercise", "projectTypeNotSupported");
             }
         }
@@ -282,7 +291,7 @@ public class ProgrammingExerciseService {
     }
 
     private void validatePackageName(ProgrammingExercise programmingExercise, ProgrammingLanguageFeature programmingLanguageFeature) {
-        if (!programmingLanguageFeature.isPackageNameRequired()) {
+        if (!programmingLanguageFeature.packageNameRequired()) {
             return;
         }
         // Check if package name is set
