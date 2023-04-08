@@ -2,17 +2,22 @@ package de.tum.in.www1.artemis.service.programming;
 
 import static de.tum.in.www1.artemis.config.Constants.*;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
+import de.tum.in.www1.artemis.service.connectors.lti.LtiNewResultService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.web.websocket.programmingSubmission.BuildTriggerWebsocketError;
 
 @Service
 public class ProgrammingMessagingService {
+
+    private final Logger log = LoggerFactory.getLogger(ProgrammingMessagingService.class);
 
     private final GroupNotificationService groupNotificationService;
 
@@ -20,11 +25,14 @@ public class ProgrammingMessagingService {
 
     private final SimpMessageSendingOperations messagingTemplate;
 
+    private final LtiNewResultService ltiNewResultService;
+
     public ProgrammingMessagingService(GroupNotificationService groupNotificationService, WebsocketMessagingService websocketMessagingService,
-            SimpMessageSendingOperations messagingTemplate) {
+            SimpMessageSendingOperations messagingTemplate, LtiNewResultService ltiNewResultService) {
         this.groupNotificationService = groupNotificationService;
         this.websocketMessagingService = websocketMessagingService;
         this.messagingTemplate = messagingTemplate;
+        this.ltiNewResultService = ltiNewResultService;
     }
 
     public void notifyInstructorAboutStartedExerciseBuildRun(ProgrammingExercise programmingExercise) {
@@ -115,5 +123,22 @@ public class ProgrammingMessagingService {
 
     private static String getProgrammingExerciseAllExerciseBuildsTriggeredTopic(Long programmingExerciseId) {
         return "/topic/programming-exercises/" + programmingExerciseId + "/all-builds-triggered";
+    }
+
+    /**
+     * Notify user about new result.
+     *
+     * @param result        the result created from the result returned from the CI system.
+     * @param participation the participation for which the result was created.
+     */
+    public void notifyUserAboutNewResult(Result result, ProgrammingExerciseParticipation participation) {
+        log.debug("Send result to client over websocket. Result: {}, Submission: {}, Participation: {}", result, result.getSubmission(), result.getParticipation());
+        // notify user via websocket
+        websocketMessagingService.broadcastNewResult((Participation) participation, result);
+
+        if (participation instanceof ProgrammingExerciseStudentParticipation studentParticipation) {
+            // do not try to report results for template or solution participations
+            ltiNewResultService.onNewResult(studentParticipation);
+        }
     }
 }

@@ -11,4 +11,5 @@ import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPolicy;
 @Repository
 public interface SubmissionPolicyRepository extends JpaRepository<SubmissionPolicy, Long> {
 
+    SubmissionPolicy findByProgrammingExerciseId(Long exerciseId);
 }
