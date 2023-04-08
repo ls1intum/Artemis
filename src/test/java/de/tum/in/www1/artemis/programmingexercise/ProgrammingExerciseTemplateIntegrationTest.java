@@ -143,7 +143,7 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIntegrati
         // Add programming exercises that should be tested with Maven here
         List<ProgrammingLanguage> programmingLanguages = List.of(ProgrammingLanguage.JAVA, ProgrammingLanguage.KOTLIN);
         for (ProgrammingLanguage language : programmingLanguages) {
-            List<ProjectType> projectTypes = programmingLanguageFeatureService.getProgrammingLanguageFeatures(language).getProjectTypes();
+            List<ProjectType> projectTypes = programmingLanguageFeatureService.getProgrammingLanguageFeatures(language).projectTypes();
             if (projectTypes.isEmpty()) {
                 argumentBuilder.add(Arguments.of(language, null));
             }
