@@ -1,5 +1,5 @@
 import { Exam } from 'app/entities/exam.model';
-import { CypressExamBuilder, convertCourseAfterMultiPart } from '../../support/requests/CourseManagementRequests';
+import { ExamBuilder, convertCourseAfterMultiPart } from '../../support/requests/CourseManagementRequests';
 import dayjs from 'dayjs/esm';
 import submission from '../../fixtures/exercise/programming/build_error/submission.json';
 import { Course } from 'app/entities/course.model';
@@ -14,7 +14,7 @@ import { admin, instructor } from '../../support/users';
 const textFixture = 'loremIpsum.txt';
 const examTitle = 'exam' + generateUUID();
 
-const exerciseArray: Array<Exercise> = [];
+let exerciseArray: Array<Exercise> = [];
 
 describe('Exam test run', () => {
     let course: Course;
@@ -25,7 +25,7 @@ describe('Exam test run', () => {
         cy.login(admin);
         courseManagementRequest.createCourse(true).then((response) => {
             course = convertCourseAfterMultiPart(response);
-            const examContent = new CypressExamBuilder(course)
+            const examContent = new ExamBuilder(course)
                 .title(examTitle)
                 .visibleDate(dayjs().subtract(3, 'days'))
                 .startDate(dayjs().add(1, 'days'))
@@ -35,13 +35,14 @@ describe('Exam test run', () => {
                 .build();
             courseManagementRequest.createExam(examContent).then((examResponse) => {
                 exam = examResponse.body;
-                examExerciseGroupCreation.addGroupWithExercise(exerciseArray, exam, EXERCISE_TYPE.Text, { textFixture });
-
-                examExerciseGroupCreation.addGroupWithExercise(exerciseArray, exam, EXERCISE_TYPE.Programming, { submission, practiceMode: true });
-
-                examExerciseGroupCreation.addGroupWithExercise(exerciseArray, exam, EXERCISE_TYPE.Quiz, { quizExerciseID: 0 });
-
-                examExerciseGroupCreation.addGroupWithExercise(exerciseArray, exam, EXERCISE_TYPE.Modeling);
+                Promise.all([
+                    examExerciseGroupCreation.addGroupWithExercise(exam, EXERCISE_TYPE.Text, { textFixture }),
+                    examExerciseGroupCreation.addGroupWithExercise(exam, EXERCISE_TYPE.Programming, { submission, practiceMode: true }),
+                    examExerciseGroupCreation.addGroupWithExercise(exam, EXERCISE_TYPE.Quiz, { quizExerciseID: 0 }),
+                    examExerciseGroupCreation.addGroupWithExercise(exam, EXERCISE_TYPE.Modeling),
+                ]).then((responses) => {
+                    exerciseArray = exerciseArray.concat(responses);
+                });
             });
         });
     });

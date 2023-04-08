@@ -1,3 +1,5 @@
+.. _Bamboo Bitbucket and Jira Setup:
+
 Bamboo, Bitbucket and Jira Setup
 --------------------------------
 
@@ -32,15 +34,15 @@ setup is present.
 Docker-Compose
 ^^^^^^^^^^^^^^
 
-Before you start the docker-compose, check if the bamboo version in the
+Before you start the *docker compose*, check if the bamboo version in the
 ``build.gradle`` (search for ``com.atlassian.bamboo:bamboo-specs``) is
 equal to the bamboo version number in the docker compose in
-``src/main/docker/atlassian.yml``
+``docker/atlassian.yml``
 If the version number is not equal, adjust the version number.
-Further details about the docker-compose setup can be found in ``src/main/docker``
+Further details about the *docker compose* setup can be found in ``docker``
 
-Execute the docker-compose file e.g. with
-``docker-compose -f src/main/docker/atlassian.yml up -d``.
+Execute the *docker compose* file e.g. with
+``docker compose -f docker/atlassian.yml up -d``.
 
 Error Handling: It can happen that there is an overload with other
 docker networks
@@ -51,7 +53,7 @@ Make sure that docker has enough memory (~ 6GB). To adapt it, go to ``Settings �
 
 
 In case you want to enable Swift or C programming exercises, refer to the readme in
-``src/main/docker``
+``docker``
 
 
 Configure Bamboo, Bitbucket and Jira
@@ -71,13 +73,12 @@ under ``localhost:7990``.
 
 #. Provide the just created license key during the setup and create an admin user with the same credentials
    in all 3 applications.
-   For the Bamboo database you can choose H2.
-   Also, you can select the evaluation/internal/test/dev setups if you are asked.
+   - Bamboo:
 
-   Put the admin username and password into ``application-local.yml`` at ``artemis.version-control.user``
-   and ``artemis.continuous-integration.user``.
-
-   Follow the additional steps for Jira and Bitbucket:
+    - Choose the H2 database
+    - Select the evaluation/internal/test/dev setups if you are asked
+    - Put the admin username and password into ``application-local.yml`` at ``artemis.version-control.user``
+      and ``artemis.continuous-integration.user``.
 
    - Jira:
 
@@ -105,8 +106,8 @@ under ``localhost:7990``.
 
 
    Execute the shell script ``atlassian-setup.sh`` in the
-   ``src/main/docker/atlassian`` directory (e.g. with
-   ``src/main/docker/./atlassian-setup.sh``). This script creates
+   ``docker/atlassian`` directory (e.g. with
+   ``./docker/atlassian/atlassian-setup.sh``). This script creates
    groups, users and assigns the user to their respective group.
    In addition, it configures disabled application links between the 3 applications.
 
@@ -133,32 +134,32 @@ under ``localhost:7990``.
              - **Jira:**
            * - .. figure:: setup/bamboo-bitbucket-jira/bamboo_bitbucket_applicationLink.png
                   :align: center
-                  :target: ../_images/bamboo_bitbucket_applicationLink.png
+                  :target: ../../_images/bamboo_bitbucket_applicationLink.png
 
                   Bamboo → Bitbucket
              - .. figure:: setup/bamboo-bitbucket-jira/bitbucket_bamboo_applicationLink.png
                   :align: center
-                  :target: ../_images/bitbucket_bamboo_applicationLink.png
+                  :target: ../../_images/bitbucket_bamboo_applicationLink.png
 
                   Bitbucket → Bamboo
              - .. figure:: setup/bamboo-bitbucket-jira/jira_bamboo_applicationLink.png
                   :align: center
-                  :target: ../_images/jira_bamboo_applicationLink.png
+                  :target: ../../_images/jira_bamboo_applicationLink.png
 
                   Jira → Bamboo
            * - .. figure:: setup/bamboo-bitbucket-jira/bamboo_jira_applicationLink.png
                   :align: center
-                  :target: ../_images/bamboo_jira_applicationLink.png
+                  :target: ../../_images/bamboo_jira_applicationLink.png
 
                   Bamboo → Jira
              - .. figure:: setup/bamboo-bitbucket-jira/bitbucket_jira_applicationLink.png
                   :align: center
-                  :target: ../_images/bitbucket_jira_applicationLink.png
+                  :target: ../../_images/bitbucket_jira_applicationLink.png
 
                   Bitbucket → Jira
              - .. figure:: setup/bamboo-bitbucket-jira/jira_bitbucket_applicationLink.png
                   :align: center
-                  :target: ../_images/jira_bitbucket_applicationLink.png
+                  :target: ../../_images/jira_bitbucket_applicationLink.png
 
                   Jira → Bitbucket
 
@@ -218,23 +219,21 @@ under ``localhost:7990``.
    and add it to bamboo. Go to Bamboo → Manage apps → Upload app → select
    the downloaded .jar file → Upload
 
-#. Add Maven and JDK:
+#. Authorize the Bamboo agent. Bamboo Administration → Agents → Remote agents → Agent authentication
 
-   -  Go to Bamboo → Server capabilities → Add capabilities menu →
-      Capability type ``Executable`` → select type ``Maven 3.x`` → insert
-      ``Maven 3`` as executable label → insert ``/artemis`` as path.
+   Approve the agent and edit the IP address in a development setup to ``*.*.*.*`` as the Docker container doesn't
+   have a static IP address.
 
-   -  Add capabilities menu → Capability type ``JDK`` → insert ``JDK17``
-      as JDK label → insert ``/usr/lib/jvm/java-17-oracle`` as Java home.
-
-#. Create a Bamboo agent. Configure → Agents → Add local agent
+   .. figure:: setup/bamboo-bitbucket-jira/bamboo_agent_configuration.png
+      :target: ../../_images/bamboo_agent_configuration.png
+      :align: center
 
 #. Generate a personal access token
 
    While username and password can still be used as a fallback, this option is already marked as deprecated and will
    be removed in the future.
 
-   #. Personal access token for Bamboo.
+   #. Personal access token for Bamboo:
 
       - Log in as the admin user and go to Bamboo → Profile (top right corner) → Personal access tokens →
         Create token
@@ -252,7 +251,7 @@ under ``localhost:7990``.
                   password: <password>
                   token: #insert the token here
 
-   #. Personal access token for Bitbucket
+   #. Personal access token for Bitbucket:
 
       - Log in as the admin user and go to Bitbucket → Your profile image (top right corner) → Manage account →
         HTTP access tokens → Create token
