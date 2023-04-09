@@ -124,10 +124,6 @@ Write access **(W)** corresponds to ``git push`` if you are using your local Git
 .. note:: The Practice repositories in the table above only exist for course exercises.
 
 .. note::
-  If the exercise belongs to a course, it might happen that the instructor decides to add a start date after publishing the exercise.
-  In this case, students can read the repository before the start date, if they had started the exercise earlier. In case the exercise is an exam exercise, students can never read the repository before the start date!
-
-.. note::
   The instructor can access the Instructor Assignment repository using the online editor either from the *Edit in editor* view accessed via the Course Management (-> Exercises -> Edit in editor)  or from the Course Overview (clicking on the course card -> Open code editor).
   After the due date of the exercise has passed, the instructor can push to the repository only via the online editor reached from the Course Management or using their local Git client.
   The online editor accessible from the Course Overview will show that the repository is locked, as it does for all students taking part in the course.
