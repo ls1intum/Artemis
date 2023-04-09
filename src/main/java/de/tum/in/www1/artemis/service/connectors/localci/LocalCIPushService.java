@@ -23,7 +23,6 @@ import de.tum.in.www1.artemis.domain.Commit;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
@@ -33,9 +32,7 @@ import de.tum.in.www1.artemis.exception.localvc.LocalVCException;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
-import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildResult;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUrl;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseGradingService;
@@ -71,13 +68,9 @@ public class LocalCIPushService {
 
     private final LocalCITriggerService localCITriggerService;
 
-    private final UserRepository userRepository;
-
     private final SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
 
     private final TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
-
-    private final AuthorizationCheckService authorizationCheckService;
 
     @Value("${artemis.version-control.url}")
     private URL localVCBaseUrl;
@@ -85,9 +78,8 @@ public class LocalCIPushService {
     public LocalCIPushService(ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingSubmissionService programmingSubmissionService,
             ProgrammingMessagingService programmingMessagingService, ProgrammingTriggerService programmingTriggerService, LocalCIExecutorService localCIExecutorService,
             ProgrammingExerciseGradingService programmingExerciseGradingService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
-            LocalCITriggerService localCITriggerService, UserRepository userRepository,
-            SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
-            TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository, AuthorizationCheckService authorizationCheckService) {
+            LocalCITriggerService localCITriggerService, SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
+            TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingSubmissionService = programmingSubmissionService;
         this.programmingMessagingService = programmingMessagingService;
@@ -96,10 +88,8 @@ public class LocalCIPushService {
         this.programmingExerciseGradingService = programmingExerciseGradingService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.localCITriggerService = localCITriggerService;
-        this.userRepository = userRepository;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
-        this.authorizationCheckService = authorizationCheckService;
     }
 
     /**
@@ -267,15 +257,8 @@ public class LocalCIPushService {
                 return programmingExerciseParticipationService.findTeamParticipationByExerciseAndTeamShortNameOrThrow(exercise, repositoryTypeOrUserName, true);
             }
 
-            // Try to retrieve the user from the repositoryTypeOrUserName extracted from the repository URL. The user is needed to check if the repository belongs to an exam test
-            // run.
-            User user = userRepository.findOneByLogin(repositoryTypeOrUserName)
-                    .orElseThrow(() -> new EntityNotFoundException("User with login " + repositoryTypeOrUserName + " does not exist"));
-
-            boolean isInstructorForExercise = authorizationCheckService.isAtLeastInstructorForExercise(exercise, user);
-
             return programmingExerciseParticipationService.findStudentParticipationByExerciseAndStudentLoginAndTestRunOrThrow(exercise, repositoryTypeOrUserName,
-                    localVCRepositoryUrl.isPracticeRepository(), true, isInstructorForExercise);
+                    localVCRepositoryUrl.isPracticeRepository(), true);
         }
         catch (EntityNotFoundException e) {
             throw new LocalCIException("No participation found for the given repository: " + localVCRepositoryUrl.getURI(), e);
