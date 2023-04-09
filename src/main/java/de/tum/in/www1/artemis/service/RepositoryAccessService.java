@@ -69,7 +69,8 @@ public class RepositoryAccessService {
             lockRepositoryPolicyEnforced = submissionPolicyService.isParticipationLocked(policy, (Participation) programmingParticipation);
         }
         // Editors and up are able to push to any repository even if the participation is locked for the student.
-        if (repositoryActionType == RepositoryActionType.WRITE && !isAtLeastEditor && (programmingParticipation.isLocked() || lockRepositoryPolicyEnforced)) {
+        // Teaching assistants trying to push to a student assignment repository will be blocked by the next check.
+        if (repositoryActionType == RepositoryActionType.WRITE && isStudent && (programmingParticipation.isLocked() || lockRepositoryPolicyEnforced)) {
             throw new AccessForbiddenException();
         }
 

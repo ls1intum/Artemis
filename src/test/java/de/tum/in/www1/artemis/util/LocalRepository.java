@@ -2,7 +2,9 @@ package de.tum.in.www1.artemis.util;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.stream.StreamSupport;
 
@@ -46,6 +48,27 @@ public class LocalRepository {
         this.originGit = initialize(originRepoFile, defaultBranch);
 
         this.localGit.remoteAdd().setName("origin").setUri(new URIish(String.valueOf(this.originRepoFile))).call();
+    }
+
+    public void configureRepos(String localRepoFileName, Path originRepositoryFolder) throws IOException, GitAPIException, URISyntaxException {
+
+        Path localRepoPath = Files.createTempDirectory(localRepoFileName);
+        this.localRepoFile = localRepoPath.toFile();
+        this.localGit = initialize(localRepoFile, defaultBranch);
+
+        this.originRepoFile = originRepositoryFolder.toFile();
+        // Create a bare remote repository.
+        this.originGit = Git.init().setDirectory(originRepositoryFolder.toFile()).setBare(true).call();
+
+        this.localGit.remoteAdd().setName("origin").setUri(new URIish(String.valueOf(this.originRepoFile))).call();
+
+        // Push a file to the remote repository to create the default branch there.
+        // This is needed because the local CI system only considers pushes that update the existing default branch.
+        Path filePath = localRepoPath.resolve("test.txt");
+        Files.createFile(filePath);
+        localGit.add().addFilepattern("test.txt").call();
+        localGit.commit().setMessage("Initial commit").call();
+        localGit.push().setRemote("origin").call();
     }
 
     public void resetLocalRepo() throws IOException {

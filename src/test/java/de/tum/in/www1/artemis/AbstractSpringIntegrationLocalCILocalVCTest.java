@@ -111,7 +111,11 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
 
     protected ProgrammingExercise programmingExercise;
 
-    protected ProgrammingExerciseStudentParticipation participation;
+    protected ProgrammingExerciseStudentParticipation studentParticipation;
+
+    protected ProgrammingExerciseStudentParticipation teachingAssistantParticipation;
+
+    protected ProgrammingExerciseStudentParticipation instructorParticipation;
 
     protected String student1Login;
 
@@ -119,9 +123,11 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
 
     protected String student2Login;
 
-    protected String projectKey1;
-
     protected String tutor1Login;
+
+    protected String instructorLogin;
+
+    protected String projectKey1;
 
     protected String assignmentRepositoryName;
 
@@ -131,11 +137,12 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
         // Thus, "inject" the port from here.
         localVCLocalCITestService.setPort(port);
 
-        List<User> users = database.addUsers(TEST_PREFIX, 2, 1, 0, 0);
+        List<User> users = database.addUsers(TEST_PREFIX, 2, 1, 0, 1);
         student1Login = TEST_PREFIX + "student1";
         student1 = users.stream().filter(user -> student1Login.equals(user.getLogin())).findFirst().orElseThrow();
         student2Login = TEST_PREFIX + "student2";
         tutor1Login = TEST_PREFIX + "tutor1";
+        instructorLogin = TEST_PREFIX + "instructor1";
 
         // Set the Authentication object for student1 in the SecurityContextHolder.
         // This is necessary because the "database.addStudentParticipationForProgrammingExercise()" below needs the Authentication object set.
@@ -155,10 +162,23 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
         programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).orElseThrow();
         assignmentRepositoryName = (projectKey1 + "-" + student1Login).toLowerCase();
 
-        participation = database.addStudentParticipationForProgrammingExercise(programmingExercise, student1Login);
-        participation.setRepositoryUrl(String.format(localVCSBaseUrl + "/git/%s/%s.git", projectKey1, assignmentRepositoryName));
-        participation.setBranch(defaultBranch);
-        programmingExerciseStudentParticipationRepository.save(participation);
+        // Add a participation for student1.
+        studentParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, student1Login);
+        studentParticipation.setRepositoryUrl(String.format(localVCSBaseUrl + "/git/%s/%s.git", projectKey1, assignmentRepositoryName));
+        studentParticipation.setBranch(defaultBranch);
+        programmingExerciseStudentParticipationRepository.save(studentParticipation);
+
+        // Add a participation for tutor1.
+        teachingAssistantParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, tutor1Login);
+        teachingAssistantParticipation.setRepositoryUrl(String.format(localVCSBaseUrl + "/git/%s/%s.git", projectKey1, (projectKey1 + "-" + tutor1Login).toLowerCase()));
+        teachingAssistantParticipation.setBranch(defaultBranch);
+        programmingExerciseStudentParticipationRepository.save(teachingAssistantParticipation);
+
+        // Add a participation for instructor1.
+        instructorParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, instructorLogin);
+        instructorParticipation.setRepositoryUrl(String.format(localVCSBaseUrl + "/git/%s/%s.git", projectKey1, (projectKey1 + "-" + instructorLogin).toLowerCase()));
+        instructorParticipation.setBranch(defaultBranch);
+        programmingExerciseStudentParticipationRepository.save(instructorParticipation);
 
         localVCLocalCITestService.addTestCases(programmingExercise);
     }

@@ -14,7 +14,6 @@ import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
@@ -29,19 +28,13 @@ import java.util.Map;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
-import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.FetchCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.PushCommand;
 import org.eclipse.jgit.api.errors.GitAPIException;
-import org.eclipse.jgit.lib.Constants;
-import org.eclipse.jgit.lib.RefUpdate;
-import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.transport.RefSpec;
-import org.eclipse.jgit.transport.URIish;
 import org.mockito.ArgumentMatcher;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import com.github.dockerjava.api.DockerClient;
@@ -54,9 +47,6 @@ import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 
 @Service
 public class LocalVCLocalCITestService {
-
-    @Value("${artemis.version-control.default-branch:main}")
-    private String defaultBranch;
 
     // Cannot inject {local.server.port} here, because it is not available at the time this class is instantiated.
     private int port;
@@ -171,43 +161,6 @@ public class LocalVCLocalCITestService {
         }
 
         return repositoryFolder;
-    }
-
-    public Git createGitRepository(Path repositoryFolder) throws IOException, GitAPIException, URISyntaxException {
-
-        // Initialize bare Git repository in the repository folder.
-        Git remoteGit = Git.init().setDirectory(repositoryFolder.toFile()).setBare(true).call();
-        modifyDefaultBranch(remoteGit);
-
-        // Initialize a non-bare Git repository in a temporary folder.
-        Path tempDirectory = Files.createTempDirectory("temp").toAbsolutePath();
-        Git localGit = Git.init().setDirectory(tempDirectory.toFile()).call();
-        modifyDefaultBranch(localGit);
-
-        // Add a file to the temporary directory.
-        Path filePath = tempDirectory.resolve("Test.java");
-        Files.createFile(filePath);
-
-        localGit.add().addFilepattern(".").call();
-        localGit.commit().setMessage("Initial commit").call();
-
-        // Set the remote to the bare repository.
-        localGit.remoteAdd().setName("origin").setUri(new URIish(repositoryFolder.toString())).call();
-
-        // Push the files to the bare repository.
-        localGit.push().setRemote("origin").call();
-
-        localGit.close();
-        FileUtils.deleteDirectory(tempDirectory.toFile());
-
-        return remoteGit;
-    }
-
-    private void modifyDefaultBranch(Git gitHandle) throws IOException {
-        Repository repository = gitHandle.getRepository();
-        RefUpdate refUpdate = repository.getRefDatabase().newUpdate(Constants.HEAD, false);
-        refUpdate.setForceUpdate(true);
-        refUpdate.link("refs/heads/" + defaultBranch);
     }
 
     public String constructLocalVCUrl(String username, String projectKey, String repositorySlug) {

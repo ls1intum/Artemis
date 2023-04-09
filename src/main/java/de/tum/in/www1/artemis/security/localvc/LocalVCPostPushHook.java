@@ -41,7 +41,9 @@ public class LocalVCPostPushHook implements PostReceiveHook {
         }
 
         if (command.getType() != ReceiveCommand.Type.UPDATE) {
-            command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, "Only update commands are allowed.");
+            // The command can also be of type CREATE (e.g. when creating a new branch). This will never lead to a new submission.
+            // Pushes for submissions must come from the default branch, which can only be updated and not created by the student.
+            command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, "Only update commands are taken into consideration for submissions.");
             return;
         }
 

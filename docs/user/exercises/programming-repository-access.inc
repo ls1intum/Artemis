@@ -36,19 +36,19 @@ Write access **(W)** corresponds to ``git push`` if you are using your local Git
 +--------------------------+------+---------------+--------+
 | Repository type          | Role | Point in time | Access |
 +==========================+======+===============+========+
-|                          | S    | all           | none   | ok
+|                          | S    | all           | none   |
 |                          +------+---------------+--------+
-| Base                     | TA   | all           | R      | ok
+| Base                     | TA   | all           | R      |
 |                          +------+---------------+--------+
-|                          | I    | all           | R/W    | ok
+|                          | I    | all           | R/W    |
 +--------------------------+------+---------------+--------+
 |                          | S    | Before start  | none   |
 |                          +------+---------------+--------+
-|                          | S    | Working time  | R/W    | ok
+|                          | S    | Working time  | R/W    |
 |                          +------+---------------+--------+
 | Student Assignment       | S    | After due     | R      |
 |                          +------+---------------+--------+
-|                          | TA   | all           | R      | ok
+|                          | TA   | all           | R      |
 |                          +------+---------------+--------+
 |                          | I    | all           | R/W    |
 +--------------------------+------+---------------+--------+

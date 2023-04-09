@@ -13,6 +13,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationLocalCILocalVCTest;
+import de.tum.in.www1.artemis.util.LocalRepository;
 
 public class LocalVCTestsRepositoryIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
@@ -29,11 +30,11 @@ public class LocalVCTestsRepositoryIntegrationTest extends AbstractSpringIntegra
     void initRepository() throws IOException, GitAPIException, URISyntaxException {
         final String testsRepoName = projectKey1.toLowerCase() + "-tests";
         remoteTestsRepositoryFolder = localVCLocalCITestService.createRepositoryFolderInTempDirectory(projectKey1, testsRepoName);
-        remoteTestsGit = localVCLocalCITestService.createGitRepository(remoteTestsRepositoryFolder);
-
-        // Clone the remote tests repository into a local folder.
-        localTestsRepositoryFolder = Files.createTempDirectory("localTests");
-        localTestsGit = Git.cloneRepository().setURI(remoteTestsRepositoryFolder.toString()).setDirectory(localTestsRepositoryFolder.toFile()).call();
+        LocalRepository testsRepository = new LocalRepository(defaultBranch);
+        testsRepository.configureRepos("localTests", remoteTestsRepositoryFolder);
+        remoteTestsGit = testsRepository.originGit;
+        localTestsRepositoryFolder = testsRepository.localRepoFile.toPath();
+        localTestsGit = testsRepository.localGit;
     }
 
     @AfterEach
