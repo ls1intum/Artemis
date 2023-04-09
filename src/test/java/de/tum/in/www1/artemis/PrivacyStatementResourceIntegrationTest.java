@@ -97,15 +97,12 @@ class PrivacyStatementResourceIntegrationTest extends AbstractSpringIntegrationB
 
     @Test
     void testGetPrivacyStatementReturnsEmptyStringIfNoLanguageFound() throws Exception {
-        PrivacyStatement response;
         try (MockedStatic<Files> mockedFiles = mockStatic(Files.class)) {
             mockedFiles.when(() -> Files.exists(argThat(path -> path.toString().contains("_de")))).thenReturn(false);
             mockedFiles.when(() -> Files.exists(argThat(path -> path.toString().contains("_en")))).thenReturn(false);
 
-            response = request.get("/api/privacy-statement?language=de", HttpStatus.OK, PrivacyStatement.class);
+            request.get("/api/privacy-statement?language=de", HttpStatus.BAD_REQUEST, PrivacyStatement.class);
         }
-        assertThat(response.getText()).isEmpty();
-        assertThat(response.getLanguage()).isEqualTo(PrivacyStatementLanguage.GERMAN);
     }
 
     @Test

@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.PrivacyStatement;
 import de.tum.in.www1.artemis.domain.PrivacyStatementLanguage;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
 @Service
@@ -25,6 +26,13 @@ public class PrivacyStatementService {
 
     private static final String PRIVACY_STATEMENT_FILE_EXTENSION = ".md";
 
+    /**
+     * Returns the privacy statement if you want to update it.
+     * If it currently doesn't exist an empty string is returned as it will be created once the user saves it.
+     *
+     * @param language the language of the privacy statement
+     * @return the privacy statement with the given language
+     */
     public PrivacyStatement getPrivacyStatementForUpdate(PrivacyStatementLanguage language) {
         String privacyStatementText = "";
         if (getPrivacyStatementPath(language).isEmpty()) {
@@ -41,11 +49,20 @@ public class PrivacyStatementService {
 
     }
 
+    /**
+     * Returns the privacy statement if you want to view it
+     * If it currently doesn't exist in the given language, the other language is returned.
+     * If it currently doesn't exist in any language, an exception is thrown.
+     *
+     * @param language the language of the privacy statement
+     * @return the privacy statement with the given language
+     */
+
     public PrivacyStatement getPrivacyStatement(PrivacyStatementLanguage language) {
-        String privacyStatementText = "";
-        // if it doesn't exist for one language, try to return the other language, and only return an empty string if it doesn't exist for both languages
+        String privacyStatementText;
+        // if it doesn't exist for one language, try to return the other language, and only throw an exception if it doesn't exist for both languages
         if (getPrivacyStatementPath(PrivacyStatementLanguage.GERMAN).isEmpty() && getPrivacyStatementPath(PrivacyStatementLanguage.ENGLISH).isEmpty()) {
-            return new PrivacyStatement(privacyStatementText, language);
+            throw new BadRequestAlertException("Could not find privacy statement file for any language", "privacyStatement", "noPrivacyStatementFile");
         }
         else if (language == PrivacyStatementLanguage.GERMAN && getPrivacyStatementPath(language).isEmpty()) {
             language = PrivacyStatementLanguage.ENGLISH;

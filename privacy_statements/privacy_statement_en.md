@@ -1,139 +1,133 @@
-The [Technical University of Munich (TUM)](https://www.tum.de/) takes the protection of your personal data very seriously and uses secure and encrypted communication according to
-best practices and latest technologies (e.g. HTTPS with a secure certificate of TUM, TLS 1.3, Strict Transport Security, Forward Secrecy, Same Site Cookie Protection) to protect
-the privacy of Artemis users optimally.
-Artemis processes personal data regarding teaching and exams considering the framework of existing privacy legislation.
-The legal basis for the processing of data is Art 6. para. 1(c) (legal duty) of the  [General Data Protection Regulation (GDPR)](http://data.europa.eu/eli/reg/2016/679/oj).
-Furthermore, Art. 61 [Bavarian University Regulations (BayHschG)](https://www.gesetze-bayern.de/Content/Document/BayHSchG)
-and the [General examination and study regulations (APSO)](https://portal.mytum.de/archiv/kompendium_rechtsangelegenheiten/apso/folder_listing) of TUM
-and the Bayerische Fernprüfungserprobungsverordnung (BayFEV)](https://www.gesetze-bayern.de/Content/Document/BayFEV) apply.
+# Privacy
 
-In the following, we inform you about the type, scope and purpose of the collection and use of personal data. This information can be retrieved at any time from our website.
+The [Technical University of Munich (TUM)](https://www.tum.de) takes the protection of your personal data very seriously and uses secure and encrypted communication according to
+best practices and state-of-the-art technologies (e.g. HTTPS with secure certificate of TUM, TLS 1.3, Strict Transport Security, Forward Secrecy, Same Site Cookie protection) to
+protect the privacy of Artemis users in the best possible way. Artemis processes personal data in the context of teaching and in the context of examinations in compliance with the
+applicable data protection regulations.
+The legal basis for the processing of data is Art. 6(1) lit. c (Legal Obligation) of the General Data Protection Regulation (GDPR).
+In addition, Art. 61 of [Bayerisches Hochschulgesetz (BayHschG)](https://www.gesetze-bayern.de/Content/Document/BayHSchG) as well
+as [Allgemeine Prüfungs- und Studienordnung (APSO)](https://portal.mytum.de/archiv/kompendium_rechtsangelegenheiten/apso/folder_listing) of TUM
+and [Bayerische Fernprüfungserprobungsverordnung (BayFEV)](https://www.gesetze-bayern.de/Content/Document/BayFEV) apply.
 
-## General information
+In the following, we provide information on the type, scope and purpose of the collection and use of personal data. This information can be accessed at any time from our website.
 
-#### Name and contact details of the responsible body
+## General Information
+
+### Name and contact details of the person responsible
 
 Technical University of Munich  
-Mail address: Arcisstraße 21, 80333 Munich  
-Phone: +49-(0)89-289-01  
-E-Mail: poststelle(at)tum.de
+Postal address: Arcisstrasse 21, 80333 Munich  
+Telephone: +49-(0)89-289-01  
+Email: poststelle(at)tum.de
 
-#### Name and contact details of the data protection officer
+### Name and contact details of the data protection officer
 
 The data protection officer of the Technical University of Munich  
-Mail address: Arcisstraße 21, 80333 Munich  
-Phone: 089/289-17052  
-E-Mail: beauftragter(at)datenschutz.tum.de
+Postal address: Arcisstraße 21, 80333 Munich  
+Telephone: +49-(0)89-289-17052  
+E-mail: beauftragter(at)datenschutz.tum.de
 
-#### Purposes and legal basis for the processing of personal data
+### Purpose and legal basis for the processing of personal data
 
-Purpose of the processing is the fulfillment of public services assigned by the legislature, especially teaching and examinations in a university environment.
-The legal basis for the processing of personal data follows from, unless stated otherwise,  
-Art. 6 para. 1(c) (legal duty) of the [General Data Protection Regulation (GDPR)](http://data.europa.eu/eli/reg/2016/679/oj).   
-Furthermore, Art. 61 [Bavarian University Regulations (BayHschG)](https://www.gesetze-bayern.de/Content/Document/BayHSchG)  
-and the [General examination and study regulations (APSO)](https://portal.mytum.de/archiv/kompendium_rechtsangelegenheiten/apso/folder_listing) of TUM  
-and the Bayerische Fernprüfungserprobungsverordnung (BayFEV)](https://www.gesetze-bayern.de/Content/Document/BayFEV) apply.
-Thus, we are allowed to process the data required for the fulfillment of our duty.
+The purpose of the processing is to fulfill the public duties assigned to us by the legislator, in particular teaching and examination in the university environment. Unless
+otherwise stated, the legal basis for processing your data results from Art. 6(1) lit. c (Legal Obligation) of the General Data Protection Regulation (GDPR).
+In addition, Art. 61 of [Bayerisches Hochschulgesetz (BayHschG)](https://www.gesetze-bayern.de/Content/Document/BayHSchG) (BayHschG) as well
+as [Allgemeine Prüfungs- und Studienordnung (APSO)](https://portal.mytum.de/archiv/kompendium_rechtsangelegenheiten/apso/folder_listing) of TUM
+and [Bayerische Fernprüfungserprobungsverordnung (BayFEV)](https://www.gesetze-bayern.de/Content/Document/BayFEV) apply. Accordingly, we are permitted to process the data required
+to fulfill a duty incumbent upon us.
 
-#### Recipients of personal data
+### Recipients of personal data
 
-The technical operation of our data processing systems is carried out by:
-[Rechnerbetriebsgruppe](https://www.rbg.tum.de) of the Technical University of Munich
+The technical operation of our data processing systems is carried out by:  
+Rechnerbetriebsgruppe of the Technical University of Munich
 
-Boltzmannstraße 3  
+Boltzmannstrasse 3  
 D-85748 Garching near Munich  
-Phone: (089) 289 18018  
-E-Mail: rbg(at)in.tum.de  
-[http://rbg.tum.de](https://www.rbg.tum.de)
+Telephone: +49(0)-89-289-18018  
+Email: rbg(at)in.tum.de  
+https://www.rbg.tum.de
 
-If necessary, we will pass on your data to the responsible supervisory and auditing authorities to perform their respective control rights.
+If necessary, your data will be transmitted to the responsible supervisory and auditing authorities for the exercise of the respective control rights.
 
-For the defense of information security, data that is transmitted electronically can be forwarded to the State Office for Information Security for the purpose of processing under
-Art. 12 ff. of the Bavarian E-Government Act.
+In order to avert risks to information technology security, data may be forwarded to the State Office for Information Technology Security in the case of electronic transmission and
+processed there on the basis of Art. 12 ff. of the Bavarian E-Government Act.
 
-#### Storage duration of personal data
+### Duration of the storage of personal data
 
-Your data will only be stored as long as necessary for the fulfillment of our duties, taking into account statutory periods of retention.
+Your data will only be stored for as long as is necessary for the fulfillment of duties, taking into account statutory retention periods.
 
-#### Your rights
+### Your rights
 
-So far as we process your personal data, you as individual are entitled to exercise the following rights:
+Insofar as we process personal data from you, you are entitled to the following rights as a data subject:
 
-* You have a right of access (Art. 15 GDPR)
-* In case of the processing of incorrect personal data, you have a right to rectification (Art. 16 GDPR)
-* In case, the legal preconditions apply, you can demand the erasure or the limitation of the processing (Art. 17 and 18 GDPR)
-* If you agreed to the processing or an agreement for data processing exists and the data processing is done by automated tools, you, if necessary, have a right to data
-  portability.
-* If you agreed to the processing and the processing is based on your consent, you can withdraw your consent any time for the future. The lawfulness of the data processing due to
-  the consent given until the withdrawal is unaffected.
+* You have the right of access (Art. 15 GDPR).
+* If incorrect personal data is processed, you have the right to rectification (Art. 16 GDPR).
+* If the legal requirements are met, you may request the deletion or restriction of processing (Art. 17 and 18 GDPR).
+* If you have consented to the processing or if there is a contract for data processing and the data processing is carried out with the help of automated procedures, you may have a
+  right to data portability (Art. 20 GDPR).
+* If you have consented to the processing and the processing is based on this consent, you can revoke the consent at any time for the future. The lawfulness of the data processing
+  carried out on the basis of the consent until the revocation is not affected by it.
 
-You have the right due to reasons, that emerge from your special situation, to enter an objection anytime if the processing only happens because of Art 6. para. 1(e) or Art. 6.
-para. 1(f) GDPR (Art. 21 para. 1 cl. 1 GDPR)
+You have the right to object to the processing of your data at any time on grounds relating to your particular situation, if the processing is carried out exclusively on the basis
+of Art. 6(1) lit. e or f GDPR (Art. 21(1)(1) GDPR).
 
-#### Right to appeal at the supervisory authority
+### Right to appeal at the supervisory authority
 
-Furthermore, you have the right to appeal at the bavarian state representative for data protection. You can reach this at the following contact details:
-Weiterhin besteht ein Beschwerderecht beim Bayerischen Landesbeauftragten für den Datenschutz. Diesen können Sie unter folgenden Kontaktdaten erreichen:  
-Mail address: Postfach 22 12 19, 80502 München  
-Address: Wagmüllerstraße 18, 80538 München  
-Phone: 089 212672-0  
-E-Mail: poststelle(at)datenschutz-bayern.de  
-https://www.datenschutz-bayern.de/
+Furthermore, you have the right to appeal at the Bavarian State Commissioner for Data Protection.
+You can reach them under the following contact details:
 
-#### Further information
+Postal address: Postfach 22 22 19, 80502 Munich, Germany.  
+Address: Wagmüllerstraße 18, 80538 Munich, Germany  
+Telephone: +49-(0)89-212672-0  
+Email: poststelle(at)datenschutz-bayern.de  
+https://www.datenschutz-bayern.de
 
-For more information about the processing of your personal data and your rights, you can reach us using the contact details mentioned above (at the beginning of A.).
+#### Further Information
+
+For more detailed information on the processing of your data and your rights, you can contact us using the contact details provided above (at the beginning of A.).
 
 ## Information about the web presence
 
-#### Technical realisation
+### Technical implementation
 
-The web servers of Artemis are operated by the [Rechnerbetriebsgruppe](https://www.rbg.tum.de) (RBG) of the Technical University of Munich.
-The personal data you transmit during your visit on our website will therefore be processed by the RBG on our behalf:
+The web servers of Artemis are operated by the [Rechnerbetriebsgruppe](https://www.rbg.tum.de) (RBG) of the Technical University of Munich. The personal data you provide when
+visiting our website is therefore processed on our behalf by RBG:
 
 Rechnerbetriebsgruppe Boltzmannstraße 3  
 D-85748 Garching near Munich  
-Phone: (089) 289 18018  
-E-Mail: rbg(at)in.tum.de  
-[http://rbg.tum.de](https://www.rbg.tum.de)
+Telephone: +49-(0)89)-289-18018  
+Email: rbg(at)in.tum.de  
+https://rbg.tum.de
 
 #### Logging
 
-When you access this or other Artemis websites, your Internet browser transmits data to our web servers.
-The following data is temporarily recorded in a log file during an active connection for the communication between your Internet browser and our web servers:
-Wenn Sie diese oder andere Internetseiten von Artemis aufrufen, übermitteln Sie über Ihren Internetbrowser Daten an unsere Webserver. Die folgenden Daten werden während einer
-laufenden Verbindung zur Kommunikation zwischen Ihrem Internetbrowser und unseren Webservern temporär in einer Logdatei aufgezeichnet:
+When you access this or other Artemis web pages, you transmit data to our web servers via your Internet browser. The following data is temporarily recorded in a log file during an
+ongoing connection for communication between your Internet browser and our web servers:
 
 * IP address of the requesting computer
 * Date and time of access
-* Name, URL and transferred amount of data of the retrieved file
-* Access status (transferred requested file, not found etc.)
-* Identification data of the used browser and operating system (if transmitted by the requesting web browser)
-* Website from which the access was made (if transmitted by the requesting web browser)
+* Name, URL and transferred data volume of the retrieved file
+* Access status (requested file transferred, not found, etc.)
+* Identification data of the browser and operating system used (if transmitted by the requesting web browser)
+* Web page from which access was made (if transmitted by the requesting web browser)
+  The processing of the data in this log file can be done as follows:
 
-The processing of the data in this log file can take place as follows:
-
-* The log entries can be continuously and automatically analyzed to detect attacks on the web servers and to react accordingly.
-* In individual cases, i.e. in the event of reported disturbances, errors and security incidents, a manual analysis can take place.
+The log entries can be continuously and automatically evaluated in order to detect attacks on the web servers and react accordingly.
+In individual cases, i.e. in the event of reported malfunctions, errors and security incidents, a manual analysis may be carried out.
 
 #### Cookies
 
-To extend the functionality of our internet service and to make the use more comfortable for you, we partly use so-called "cookies".
-With the help of these cookies, data can be stored on your computer when you visit our website. However, you can deactivate the storage of cookies or configure your browser that
-cookies are only stored for the duration of the respective Internet connection.
-However, this could restrict the functionality of our service.
+In order to extend the range of functions of our Internet offering and to make its use more comfortable for you, we partly use so-called "cookies". With the help of these cookies,
+data can be stored on your computer when you call up our website. However, you can deactivate the storage of cookies or set your browser so that cookies are only stored for the
+duration of the respective connection to the Internet. This could, however, limit the functional scope of our offering.
 
-## Information about individual processing
+## Information on individual processing operations
 
 #### Login
 
-When you log in to Artemis, your personal data is verified against the directory service of the Technical University of Munich.
-Bei Ihrer Anmeldung am System werden Ihre personenbezogenen Daten gegenüber dem Verzeichnisdienst der Technischen Universität München verifiziert.
+When you log in to the system, your personal data will be verified with the directory service of the Technical University of Munich.
 
 #### Disclosure and rectification
 
-You have the right upon written request to obtain information free of charge about the personal data stored about you. In addition, you have the right to rectification of incorrect
-data.
-The data protection officer of the Technical University of Munich can be reached using the email address beauftragter(at)datenschutz.tum.de or
-via [www.datenschutz.tum.de](https://www.datenschutz.tum.de/).
-
+You have the right, upon written request and free of charge, to obtain information about the personal data stored about you. In addition, you have the right to have incorrect data
+corrected. You can reach the data protection officer of Technische Universität München by e-mail at beauftragter(at)datenschutz.tum.de or via www.datenschutz.tum.de.
