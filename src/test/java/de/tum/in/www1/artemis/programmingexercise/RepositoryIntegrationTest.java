@@ -589,6 +589,25 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testSaveFilesAfterDueDateAsInstructor() throws Exception {
+        // Instructors should be able to push to their personal assignment repository after the due date of the exercise has passed.
+        programmingExercise.setDueDate(ZonedDateTime.now().minusHours(1));
+
+        // Create assignment repository and participation for the instructor.
+        LocalRepository instructorAssignmentRepository = new LocalRepository(defaultBranch);
+        instructorAssignmentRepository.configureRepos("localInstructorAssignmentRepo", "remoteInstructorAssignmentRepo");
+        var instructorAssignmentRepoUrl = new GitUtilService.MockFileRepositoryUrl(instructorAssignmentRepository.localRepoFile);
+        ProgrammingExerciseStudentParticipation instructorAssignmentParticipation = database.addStudentParticipationForProgrammingExerciseForLocalRepo(programmingExercise,
+                TEST_PREFIX + "instructor1", instructorAssignmentRepoUrl.getURI());
+        doReturn(defaultBranch).when(versionControlService).getOrRetrieveBranchOfStudentParticipation(instructorAssignmentParticipation);
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(instructorAssignmentRepository.localRepoFile.toPath(), null)).when(gitService)
+                .getOrCheckoutRepository(instructorAssignmentParticipation.getVcsRepositoryUrl(), true, defaultBranch);
+
+        request.put(studentRepoBaseUrl + instructorAssignmentParticipation.getId() + "/files?commit=true", List.of(), HttpStatus.OK);
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
     void testUpdateParticipationFiles_cannotAccessParticipation() throws Exception {
         // student2 should not have access to student1's participation.

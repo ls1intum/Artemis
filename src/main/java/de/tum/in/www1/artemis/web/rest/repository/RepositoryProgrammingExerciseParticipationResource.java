@@ -27,7 +27,6 @@ import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.localci.LocalCIPushService;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
-import de.tum.in.www1.artemis.service.exam.ExamSubmissionService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
@@ -47,8 +46,6 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
 
     private final ProgrammingExerciseParticipationService participationService;
 
-    private final ExamSubmissionService examSubmissionService;
-
     private final BuildLogEntryService buildLogService;
 
     private final ProgrammingSubmissionRepository programmingSubmissionRepository;
@@ -60,13 +57,11 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     public RepositoryProgrammingExerciseParticipationResource(Environment environment, UserRepository userRepository, AuthorizationCheckService authCheckService,
             GitService gitService, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
             RepositoryService repositoryService, ProgrammingExerciseParticipationService participationService, ProgrammingExerciseRepository programmingExerciseRepository,
-            ParticipationRepository participationRepository, ExamSubmissionService examSubmissionService, BuildLogEntryService buildLogService,
-            ProgrammingSubmissionRepository programmingSubmissionRepository, RepositoryAccessService repositoryAccessService, SubmissionPolicyRepository submissionPolicyRepository,
-            Optional<LocalCIPushService> localCIPushService) {
+            ParticipationRepository participationRepository, BuildLogEntryService buildLogService, ProgrammingSubmissionRepository programmingSubmissionRepository,
+            RepositoryAccessService repositoryAccessService, SubmissionPolicyRepository submissionPolicyRepository, Optional<LocalCIPushService> localCIPushService) {
         super(environment, userRepository, authCheckService, gitService, continuousIntegrationService, repositoryService, versionControlService, programmingExerciseRepository,
                 repositoryAccessService, localCIPushService);
         this.participationService = participationService;
-        this.examSubmissionService = examSubmissionService;
         this.buildLogService = buildLogService;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.participationRepository = participationRepository;
@@ -74,7 +69,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     }
 
     @Override
-    Repository getRepository(Long participationId, RepositoryActionType repositoryActionType, boolean pullOnGet) throws IllegalAccessException, GitAPIException {
+    Repository getRepository(Long participationId, RepositoryActionType repositoryActionType, boolean pullOnGet) throws GitAPIException {
         Participation participation = participationRepository.findByIdElseThrow(participationId);
 
         if (!(participation instanceof ProgrammingExerciseParticipation programmingParticipation)) {
@@ -275,17 +270,10 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, error.getMessage(), error);
         }
 
-        // User must have the necessary permissions to update a file.
-        // When the buildAndTestAfterDueDate is set, the student can't change the repository content anymore after the due date.
-        boolean repositoryIsLocked = programmingExerciseParticipation.isLocked();
-        if (repositoryIsLocked || !participationService.canAccessParticipation(programmingExerciseParticipation)) {
-            FileSubmissionError error = new FileSubmissionError(participationId, "noPermissions");
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, error.getMessage(), error);
-        }
-
         // Git repository must be available to update a file
         Repository repository;
         try {
+            // Get the repository and also conduct access checks.
             repository = getRepository(programmingExerciseParticipation.getId(), RepositoryActionType.WRITE, true);
         }
         catch (CheckoutConflictException | WrongRepositoryStateException ex) {
@@ -296,18 +284,11 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
             FileSubmissionError error = new FileSubmissionError(participationId, "checkoutFailed");
             throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, error.getMessage(), error);
         }
-        catch (IllegalAccessException e) {
+        catch (AccessForbiddenException e) {
             FileSubmissionError error = new FileSubmissionError(participationId, "noPermissions");
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, error.getMessage(), error);
         }
-        // Apply checks for exam (submission is in time & user's student exam has the exercise)
-        // Checks only apply to students, tutors and editors, otherwise template, solution and assignment participation can't be edited using the code editor
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isAtLeastEditorForExercise(programmingExerciseParticipation.getProgrammingExercise())
-                && !examSubmissionService.isAllowedToSubmitDuringExam(programmingExerciseParticipation.getProgrammingExercise(), user, false)) {
-            FileSubmissionError error = new FileSubmissionError(participationId, "notAllowedExam");
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, error.getMessage(), error);
-        }
+
         Map<String, String> fileSaveResult = saveFileSubmissions(submissions, repository);
 
         if (commit) {
