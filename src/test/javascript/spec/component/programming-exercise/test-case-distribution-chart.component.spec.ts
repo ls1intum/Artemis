@@ -129,8 +129,8 @@ describe('Test case distribution chart', () => {
 
     it('should compute the relative score correctly', () => {
         const testMap = {
-            'test case': { numPassed: 0 },
-            'test case 4': { numPassed: 3 },
+            'test case': { numPassed: 0, numFailed: 0 },
+            'test case 4': { numPassed: 3, numFailed: 0 },
         } as TestCaseStatsMap;
         testCase.weight = 1;
         configureComponent([testCase, testCase4]);

@@ -1,6 +1,6 @@
 import { Exam } from 'app/entities/exam.model';
 import { Course } from 'app/entities/course.model';
-import { CypressExamBuilder, convertCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
+import { ExamBuilder, convertCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
 import { generateUUID } from '../../../support/utils';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import {
@@ -32,7 +32,7 @@ describe('Test Exam management', () => {
         courseManagementRequest.createCourse(true).then((response) => {
             course = convertCourseAfterMultiPart(response);
             courseManagementRequest.addStudentToCourse(course, studentOne);
-            const examConfig = new CypressExamBuilder(course).title(examTitle).testExam().build();
+            const examConfig = new ExamBuilder(course).title(examTitle).testExam().build();
             courseManagementRequest.createExam(examConfig).then((examResponse) => {
                 exam = examResponse.body;
             });
