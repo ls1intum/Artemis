@@ -5,8 +5,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.quiz.*;
@@ -16,19 +14,17 @@ import de.tum.in.www1.artemis.repository.ShortAnswerMappingRepository;
 @Service
 public abstract class QuizService<T extends QuizConfiguration> {
 
-    private final Logger log = LoggerFactory.getLogger(QuizService.class);
-
     private final DragAndDropMappingRepository dragAndDropMappingRepository;
 
     private final ShortAnswerMappingRepository shortAnswerMappingRepository;
 
-    protected abstract void preReferenceFix(T quizConfiguration);
-
-    protected abstract void preSave(T quizConfiguration);
-
-    protected abstract T saveAndFlush(QuizConfiguration quizConfiguration);
-
-    protected abstract void preSaveReturn(T quizConfiguration);
+    /**
+     * Save the given QuizConfiguration to the database according to the implementor.
+     *
+     * @param quizConfiguration the QuizConfiguration to be saved.
+     * @return the saved QuizConfiguration
+     */
+    protected abstract T saveAndFlush(T quizConfiguration);
 
     protected QuizService(DragAndDropMappingRepository dragAndDropMappingRepository, ShortAnswerMappingRepository shortAnswerMappingRepository) {
         this.dragAndDropMappingRepository = dragAndDropMappingRepository;
@@ -36,14 +32,12 @@ public abstract class QuizService<T extends QuizConfiguration> {
     }
 
     /**
-     * Save configuration of a quiz
+     * Save the given QuizConfiguration
      *
-     * @param quizConfiguration the configuration of a quiz to be saved
-     * @return QuizConfiguration the configuration of a quiz that has been saved
+     * @param quizConfiguration the QuizConfiguration to be saved
+     * @return saved QuizConfiguration
      */
     public T save(T quizConfiguration) {
-        preReferenceFix(quizConfiguration);
-
         // fix references in all questions (step 1/2)
         for (var quizQuestion : quizConfiguration.getQuizQuestions()) {
             if (quizQuestion instanceof MultipleChoiceQuestion mcQuestion) {
@@ -127,11 +121,6 @@ public abstract class QuizService<T extends QuizConfiguration> {
             }
         }
 
-        preSave(quizConfiguration);
-
-        // Note: save will automatically remove deleted questions from the exercise and deleted answer options from the questions
-        // and delete the now orphaned entries from the database
-        log.debug("Save quiz to database: {}", quizConfiguration);
         T savedQuizConfiguration = saveAndFlush(quizConfiguration);
 
         // fix references in all drag and drop questions and short answer questions (step 2/2)
@@ -145,8 +134,6 @@ public abstract class QuizService<T extends QuizConfiguration> {
                 restoreCorrectMappingsFromIndicesShortAnswer(shortAnswerQuestion);
             }
         }
-
-        preSaveReturn(savedQuizConfiguration);
 
         return savedQuizConfiguration;
     }

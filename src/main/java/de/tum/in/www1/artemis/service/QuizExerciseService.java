@@ -203,47 +203,48 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
     }
 
     @Override
-    protected void preReferenceFix(QuizExercise quizConfiguration) {
-        quizConfiguration.setMaxPoints(quizConfiguration.getOverallQuizPoints());
+    public QuizExercise save(QuizExercise quizExercise) {
+        quizExercise.setMaxPoints(quizExercise.getOverallQuizPoints());
 
         // create a quizPointStatistic if it does not yet exist
-        if (quizConfiguration.getQuizPointStatistic() == null) {
+        if (quizExercise.getQuizPointStatistic() == null) {
             var quizPointStatistic = new QuizPointStatistic();
-            quizConfiguration.setQuizPointStatistic(quizPointStatistic);
-            quizPointStatistic.setQuiz(quizConfiguration);
+            quizExercise.setQuizPointStatistic(quizPointStatistic);
+            quizPointStatistic.setQuiz(quizExercise);
         }
 
         // make sure the pointers in the statistics are correct
-        quizConfiguration.recalculatePointCounters();
+        quizExercise.recalculatePointCounters();
+
+        QuizExercise savedQuizExercise = super.save(quizExercise);
+
+        if (savedQuizExercise.isCourseExercise()) {
+            // only schedule quizzes for course exercises, not for exam exercises
+            quizScheduleService.scheduleQuizStart(savedQuizExercise.getId());
+        }
+
+        return savedQuizExercise;
     }
 
     @Override
-    protected void preSave(QuizExercise quizConfiguration) {
-        if (quizConfiguration.getQuizBatches() != null) {
-            for (QuizBatch quizBatch : quizConfiguration.getQuizBatches()) {
-                quizBatch.setQuizExercise(quizConfiguration);
-                if (quizConfiguration.getQuizMode() == QuizMode.SYNCHRONIZED) {
+    protected QuizExercise saveAndFlush(QuizExercise quizExercise) {
+        if (quizExercise.getQuizBatches() != null) {
+            for (QuizBatch quizBatch : quizExercise.getQuizBatches()) {
+                quizBatch.setQuizExercise(quizExercise);
+                if (quizExercise.getQuizMode() == QuizMode.SYNCHRONIZED) {
                     if (quizBatch.getStartTime() != null) {
-                        quizConfiguration.setDueDate(quizBatch.getStartTime().plusSeconds(quizConfiguration.getDuration() + Constants.QUIZ_GRACE_PERIOD_IN_SECONDS));
+                        quizExercise.setDueDate(quizBatch.getStartTime().plusSeconds(quizExercise.getDuration() + Constants.QUIZ_GRACE_PERIOD_IN_SECONDS));
                     }
                 }
                 else {
-                    quizBatch.setStartTime(quizBatchService.quizBatchStartDate(quizConfiguration, quizBatch.getStartTime()));
+                    quizBatch.setStartTime(quizBatchService.quizBatchStartDate(quizExercise, quizBatch.getStartTime()));
                 }
             }
         }
-    }
 
-    @Override
-    protected QuizExercise saveAndFlush(QuizConfiguration quizConfiguration) {
-        return quizExerciseRepository.saveAndFlush((QuizExercise) quizConfiguration);
-    }
-
-    @Override
-    protected void preSaveReturn(QuizExercise quizConfiguration) {
-        if (quizConfiguration.isCourseExercise()) {
-            // only schedule quizzes for course exercises, not for exam exercises
-            quizScheduleService.scheduleQuizStart(quizConfiguration.getId());
-        }
+        // Note: save will automatically remove deleted questions from the exercise and deleted answer options from the questions
+        // and delete the now orphaned entries from the database
+        log.debug("Save quiz exercise to database: {}", quizExercise);
+        return quizExerciseRepository.saveAndFlush(quizExercise);
     }
 }
