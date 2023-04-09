@@ -168,7 +168,7 @@ public class ProgrammingSubmissionResource {
             throw new EntityNotFoundException("Participation is not a ProgrammingExerciseParticipation");
         }
 
-        if (!programmingExerciseParticipationService.canAccessParticipation(programmingExerciseParticipation, userRepository.getUserWithGroupsAndAuthorities())) {
+        if (!programmingExerciseParticipationService.canAccessParticipation(programmingExerciseParticipation)) {
             throw new AccessForbiddenException();
         }
 
@@ -209,7 +209,7 @@ public class ProgrammingSubmissionResource {
         if (!(participation instanceof ProgrammingExerciseParticipation programmingExerciseParticipation)) {
             throw new EntityNotFoundException("Participation is not a ProgrammingExerciseParticipation");
         }
-        if (!programmingExerciseParticipationService.canAccessParticipation(programmingExerciseParticipation, userRepository.getUserWithGroupsAndAuthorities())) {
+        if (!programmingExerciseParticipationService.canAccessParticipation(programmingExerciseParticipation)) {
             throw new AccessForbiddenException();
         }
         ProgrammingSubmission submission = programmingSubmissionService.getLatestPendingSubmission(participationId, lastGraded)
