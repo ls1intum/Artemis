@@ -20,7 +20,7 @@ describe('TestCasePassedBuildsChartComponent', () => {
             });
     });
 
-    const initComponent = (testCaseStats: TestCaseStats | undefined, totalParticipations: number | undefined) => {
+    const initComponent = (testCaseStats: TestCaseStats | undefined, totalParticipations: number) => {
         comp.testCaseStats = testCaseStats;
         comp.totalParticipations = totalParticipations;
 

@@ -62,7 +62,7 @@ public class ProgrammingMessagingService {
             submission.getParticipation().setExercise(exercise);
         }
 
-        if (submission.getParticipation() != null && !(submission.getParticipation() instanceof StudentParticipation) && submission.getParticipation().getExercise() != null) {
+        if (submission.getParticipation() != null && submission.getParticipation().getExercise() != null) {
             var topicDestination = getExerciseTopicForTAAndAbove(submission.getParticipation().getExercise().getId());
             messagingTemplate.convertAndSend(topicDestination, submission);
         }
@@ -139,9 +139,9 @@ public class ProgrammingMessagingService {
         // notify user via websocket
         websocketMessagingService.broadcastNewResult((Participation) participation, result);
 
-        if (participation instanceof StudentParticipation) {
+        if (participation instanceof ProgrammingExerciseStudentParticipation studentParticipation) {
             // do not try to report results for template or solution participations
-            ltiNewResultService.onNewResult((ProgrammingExerciseStudentParticipation) participation);
+            ltiNewResultService.onNewResult(studentParticipation);
         }
     }
 }

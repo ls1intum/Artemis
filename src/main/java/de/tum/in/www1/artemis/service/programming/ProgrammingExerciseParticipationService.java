@@ -38,6 +38,8 @@ public class ProgrammingExerciseParticipationService {
 
     private final ParticipationRepository participationRepository;
 
+    private final TeamRepository teamRepository;
+
     private final Optional<VersionControlService> versionControlService;
 
     private final AuthorizationCheckService authCheckService;
@@ -46,21 +48,23 @@ public class ProgrammingExerciseParticipationService {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
-    private final TeamRepository teamRepository;
+    private final UserRepository userRepository;
 
     public ProgrammingExerciseParticipationService(SolutionProgrammingExerciseParticipationRepository solutionParticipationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ParticipationRepository participationRepository,
-            TemplateProgrammingExerciseParticipationRepository templateParticipationRepository, Optional<VersionControlService> versionControlService,
-            AuthorizationCheckService authCheckService, GitService gitService, ProgrammingExerciseRepository programmingExerciseRepository, TeamRepository teamRepository) {
+            TeamRepository teamRepository, TemplateProgrammingExerciseParticipationRepository templateParticipationRepository,
+            Optional<VersionControlService> versionControlService, AuthorizationCheckService authCheckService, GitService gitService,
+            ProgrammingExerciseRepository programmingExerciseRepository, UserRepository userRepository) {
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.solutionParticipationRepository = solutionParticipationRepository;
         this.templateParticipationRepository = templateParticipationRepository;
         this.participationRepository = participationRepository;
+        this.teamRepository = teamRepository;
         this.versionControlService = versionControlService;
         this.authCheckService = authCheckService;
         this.gitService = gitService;
         this.programmingExerciseRepository = programmingExerciseRepository;
-        this.teamRepository = teamRepository;
+        this.userRepository = userRepository;
     }
 
     /**
@@ -234,7 +238,21 @@ public class ProgrammingExerciseParticipationService {
      * - Template/SolutionParticipations should only be accessible for users with at least the role TA in the courses.
      *
      * @param participation to check permissions for.
-     * @param user          to check permissions for.
+     * @return true if the currently logged in user can access the participation, false if not. Also returns false if the participation is not from a programming exercise.
+     */
+    public boolean canAccessParticipation(@NotNull ProgrammingExerciseParticipation participation) {
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        return canAccessParticipation(participation, user);
+    }
+
+    /**
+     * Check if the currently logged-in user can access a given participation by accessing the exercise and course connected to this participation
+     * The method will treat the participation types differently:
+     * - ProgrammingExerciseStudentParticipations should only be accessible by its owner (student) or users with at least the role TA in the courses.
+     * - Template/SolutionParticipations should only be accessible for users with at least the role TA in the courses.
+     *
+     * @param participation to check permissions for.
+     * @param user          the current user.
      * @return true if the user can access the participation, false if not. Also returns false if the participation is not from a programming exercise.
      */
     public boolean canAccessParticipation(@NotNull ProgrammingExerciseParticipation participation, User user) {

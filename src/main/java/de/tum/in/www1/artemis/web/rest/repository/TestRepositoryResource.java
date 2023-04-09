@@ -160,17 +160,19 @@ public class TestRepositoryResource extends RepositoryResource {
     @PutMapping("/test-repository/{exerciseId}/files")
     public ResponseEntity<Map<String, String>> updateTestFiles(@PathVariable("exerciseId") Long exerciseId, @RequestBody List<FileSubmission> submissions,
             @RequestParam Boolean commit, Principal principal) {
-        ProgrammingExercise exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
 
         if (versionControlService.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "VCSNotPresent");
         }
 
+        ProgrammingExercise exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
+
         Repository repository;
         try {
-            repository = repositoryService.checkoutRepositoryByName(principal, exercise, exercise.getVcsTestRepositoryUrl());
+            repositoryAccessService.checkAccessTestRepositoryElseThrow(true, exercise, userRepository.getUserWithGroupsAndAuthorities(principal.getName()));
+            repository = gitService.getOrCheckoutRepository(exercise.getVcsTestRepositoryUrl(), true);
         }
-        catch (IllegalAccessException e) {
+        catch (AccessForbiddenException e) {
             FileSubmissionError error = new FileSubmissionError(exerciseId, "noPermissions");
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, error.getMessage(), error);
         }

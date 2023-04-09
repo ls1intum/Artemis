@@ -201,7 +201,7 @@ public class LocalVCFilterService {
         ProgrammingExerciseParticipation participation = getParticipation(repositoryTypeOrUserName, exercise, isPracticeRepository, user);
 
         try {
-            repositoryAccessService.checkAccessRepositoryElseThrow(participation, exercise, user, repositoryActionType);
+            repositoryAccessService.checkAccessRepositoryElseThrow(participation, user, exercise, repositoryActionType);
         }
         catch (AccessUnauthorizedException e) {
             throw new LocalVCAuthException(e);

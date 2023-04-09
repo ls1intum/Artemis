@@ -1,0 +1,62 @@
+# ----------------------------------------------------------------------------------------------------------------------
+# GitLab-GitLabCI Setup
+# ----------------------------------------------------------------------------------------------------------------------
+
+services:
+    gitlab:
+        # TODO: check if more settings can also be integrated into gitlab.yml
+        extends:
+            file: ./gitlab.yml
+            service: gitlab
+        volumes:
+            - artemis-gitlab-data:/var/opt/gitlab
+            - artemis-gitlab-logs:/var/log/gitlab
+            - artemis-gitlab-config:/etc/gitlab
+        environment:
+            GITLAB_OMNIBUS_CONFIG: |
+                external_url "${GIT_SERVER_NAME}"
+                prometheus_monitoring['enable'] = false
+                gitlab_rails['gitlab_shell_ssh_port'] = 2222
+                gitlab_rails['monitoring_whitelist'] = ['0.0.0.0/0']
+                letsencrypt['enable'] = ${SSL_ENABLED}
+                letsencrypt['auto_renew_hour'] = "12"
+                letsencrypt['auto_renew_minute'] = "30"
+                letsencrypt['auto_renew_day_of_month'] = "*/7"
+        ports:
+            - "2222:22"
+            - "80:80"
+            - "443:443"
+        # expose the ports to make them reachable docker internally even if the external port mapping changes
+        expose:
+            - "22"
+            - "80"
+            - "443"
+        shm_size: "256m"
+    gitlab-runner:
+        image: docker.io/gitlab/gitlab-runner:latest
+        pull_policy: always
+        container_name: artemis-gitlab-runner
+        volumes:
+            - /var/run/docker.sock:/var/run/docker.sock
+            - /usr/local/bin/docker:/usr/bin/docker
+            - artemis-gitlabci-runner-config:/etc/gitlab-runner
+        hostname: 'gitlab-runner'
+        extra_hosts:
+            - "host.docker.internal:host-gateway"
+        networks:
+            - artemis
+
+networks:
+    artemis:
+        driver: "bridge"
+        name: artemis
+
+volumes:
+    artemis-gitlab-data:
+        name: artemis-gitlab-data
+    artemis-gitlab-logs:
+        name: artemis-gitlab-logs
+    artemis-gitlab-config:
+        name: artemis-gitlab-config
+    artemis-gitlabci-runner-config:
+        name: artemis-gitlabci-runner-config

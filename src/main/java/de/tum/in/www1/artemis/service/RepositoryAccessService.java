@@ -17,8 +17,7 @@ import de.tum.in.www1.artemis.web.rest.errors.AccessUnauthorizedException;
 import de.tum.in.www1.artemis.web.rest.repository.RepositoryActionType;
 
 /**
- * This service is responsible for checking if a user has access to a repository.
- * It is used for accessing repositories in the local VC system from a local Git client as well as for accessing repositories via the online editor.
+ * Service for checking if a user has access to a repository.
  */
 @Service
 public class RepositoryAccessService {
@@ -46,17 +45,17 @@ public class RepositoryAccessService {
      * Checks if the user has access to the repository of the given participation.
      *
      * @param programmingParticipation The participation for which the repository should be accessed.
-     * @param programmingExercise      The programming exercise of the participation.
      * @param user                     The user who wants to access the repository.
+     * @param programmingExercise      The programming exercise of the participation.
      * @param repositoryActionType     The type of action that the user wants to perform on the repository (i.e. WRITE or READ).
      */
-    public void checkAccessRepositoryElseThrow(ProgrammingExerciseParticipation programmingParticipation, ProgrammingExercise programmingExercise, User user,
+    public void checkAccessRepositoryElseThrow(ProgrammingExerciseParticipation programmingParticipation, User user, ProgrammingExercise programmingExercise,
             RepositoryActionType repositoryActionType) {
 
         // Error case 1: The user does not have permissions to push into the repository and the user is not notified for a related plagiarism case.
         boolean hasPermissions = programmingExerciseParticipationService.canAccessParticipation(programmingParticipation, user);
-        boolean wasUserNotifiedAboutPlagiarismCase = plagiarismService.wasUserNotifiedByInstructor(programmingParticipation.getId(), user.getLogin());
-        if (!hasPermissions && !wasUserNotifiedAboutPlagiarismCase) {
+        boolean userWasNotifiedAboutPlagiarismCase = plagiarismService.wasUserNotifiedByInstructor(programmingParticipation.getId(), user.getLogin());
+        if (!hasPermissions && !userWasNotifiedAboutPlagiarismCase) {
             throw new AccessUnauthorizedException();
         }
 
@@ -71,37 +70,49 @@ public class RepositoryAccessService {
 
         boolean isStudent = !authorizationCheckService.isAtLeastTeachingAssistantInCourse(programmingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
 
-        // Error case 3: The student can reset the repository only before and a tutor/instructor only after the due date has passed.
+        // Error case 3: The student can reset the repository only before and a tutor/instructor only after the due date has passed
         if (repositoryActionType == RepositoryActionType.RESET) {
-            boolean isOwner = true; // true for Solution- and TemplateProgrammingExerciseParticipation
-            if (programmingParticipation instanceof StudentParticipation) {
-                isOwner = authorizationCheckService.isOwnerOfParticipation((StudentParticipation) programmingParticipation);
-            }
-            if (isStudent && programmingParticipation.isLocked()) {
-                throw new AccessForbiddenException();
-            }
-            // A tutor/instructor who is owner of the exercise should always be able to reset the repository
-            else if (!isStudent && !isOwner) {
-                // Check if a tutor is allowed to reset during the assessment
-                // Check for a regular course exercise
-                if (programmingExercise.isCourseExercise() && !programmingParticipation.isLocked()) {
-                    throw new AccessForbiddenException();
-                }
-                // Check for an exam exercise, as it might not be locked but a student might still be allowed to submit
-                var optStudent = ((StudentParticipation) programmingParticipation).getStudent();
-                if (optStudent.isPresent() && programmingExercise.isExamExercise()
-                        && examSubmissionService.isAllowedToSubmitDuringExam(programmingExercise, optStudent.get(), false)) {
-                    throw new AccessForbiddenException();
-                }
-            }
+            checkAccessRepositoryForReset(programmingParticipation, isStudent, programmingExercise);
         }
 
         // Error case 4: The user is not (any longer) allowed to submit to the exam/exercise. This check is only relevant for students.
         // This must be a student participation as hasPermissions would have been false and an error already thrown
         // But the student should still be able to access if they are notified for a related plagiarism case.
         boolean isStudentParticipation = programmingParticipation instanceof ProgrammingExerciseStudentParticipation;
-        if (isStudentParticipation && isStudent && !examSubmissionService.isAllowedToSubmitDuringExam(programmingExercise, user, false) && !wasUserNotifiedAboutPlagiarismCase) {
+        if (isStudentParticipation && isStudent && !examSubmissionService.isAllowedToSubmitDuringExam(programmingExercise, user, false) && !userWasNotifiedAboutPlagiarismCase) {
             throw new AccessForbiddenException();
+        }
+    }
+
+    /*
+     * The student can reset the repository only before and a tutor/instructor only after the due date has passed
+     */
+    private void checkAccessRepositoryForReset(ProgrammingExerciseParticipation programmingExerciseParticipation, boolean isStudent, ProgrammingExercise programmingExercise) {
+        boolean isOwner = true; // true for Solution- and TemplateProgrammingExerciseParticipation
+        if (programmingExerciseParticipation instanceof StudentParticipation studentParticipation) {
+            isOwner = authorizationCheckService.isOwnerOfParticipation(studentParticipation);
+        }
+        if (isStudent && programmingExerciseParticipation.isLocked()) {
+            throw new AccessForbiddenException();
+        }
+        // A tutor/instructor who is owner of the exercise should always be able to reset the repository
+        else if (!isStudent && !isOwner) {
+            // The user trying to reset the repository is at least a tutor in the course and the repository does not belong to them.
+            // This might be a tutor that resets the repository during assessment.
+            // If the student is still able to submit, don't allow for the tutor to reset the repository.
+
+            // For a regular course exercise, the participation must be locked.
+            if (programmingExercise.isCourseExercise() && !programmingExerciseParticipation.isLocked()) {
+                throw new AccessForbiddenException();
+            }
+
+            // For an exam exercise, the student must not be allowed to submit anymore.
+            // Retrieving the student via this type cast is safe because isOwner is false here which means that "programmingExerciseParticipation instanceof StudentParticipation"
+            // must have been true in the check above.
+            var optStudent = ((StudentParticipation) programmingExerciseParticipation).getStudent();
+            if (optStudent.isPresent() && programmingExercise.isExamExercise() && examSubmissionService.isAllowedToSubmitDuringExam(programmingExercise, optStudent.get(), false)) {
+                throw new AccessForbiddenException();
+            }
         }
     }
 
@@ -113,7 +124,8 @@ public class RepositoryAccessService {
      * @param user          the user that wants to access the test repository.
      */
     public void checkAccessTestRepositoryElseThrow(boolean atLeastEditor, ProgrammingExercise exercise, User user) {
-        // The only test-repository endpoint that requires at least editor permissions is the getStatus endpoint (GET /api/test-repository/{exerciseId}).
+        // The only test-repository endpoints that require at least editor permissions are the getStatus (GET /api/test-repository/{exerciseId}) and updateTestFiles (PUT
+        // /api/test-repository/{exerciseId}/files) endpoints.
         if (atLeastEditor) {
             if (!authorizationCheckService.isAtLeastEditorInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user)) {
                 throw new AccessForbiddenException("You are not allowed to access the test repository of this programming exercise.");

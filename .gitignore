@@ -18,7 +18,7 @@ node_modules/
 npm-debug.log.*
 /.awcache/*
 .node-gyp/
-/.cache-loader/*
+/.cache-loader/
 
 ######################
 # SASS
@@ -59,8 +59,9 @@ local.properties
 ######################
 # Intellij
 ######################
-.idea/
-!.idea/runConfigurations/*
+.idea/*
+!.idea/runConfigurations/
+!.idea/icon.svg
 *.iml
 *.iws
 *.ipr
@@ -152,6 +153,11 @@ repos/
 repos-download/
 local-vcs-repos
 /templates/
+.bash_history
+.v8flags.*.json
+/src/main/generated
+/coverage
+/exports
 
 ######################
 # Gradle Wrapper
@@ -172,21 +178,27 @@ local-vcs-repos
 ######################
 # Docker
 ######################
-.bash_history
-.v8flags.*.json
-/.cache-loader
-/src/main/generated
-/coverage
-/exports
-/src/main/docker/.env
+/docker/.env
+/docker/.docker-data/artemis-data/*
+!/docker/.docker-data/artemis-data/.gitkeep
+/docker/.docker-data/artemis-mysql-data/*
+!/docker/.docker-data/artemis-mysql-data/.gitkeep
+
+######################
+# Cypress
+######################
+/src/test/cypress/screenshots/
+/src/test/cypress/videos/
+/src/test/cypress/build
+
+######################
+# Artemis configs
+######################
 /src/main/resources/config/application-local*.yml
 !/src/main/resources/config/application-localvc.yml
 !/src/main/resources/config/application-localci.yml
 /src/main/resources/id_*
 /src/main/resources/known_hosts
-/src/test/cypress/screenshots/
-/src/test/cypress/videos/
-/src/test/cypress/build
 
 ######################
 # Coverage Files
