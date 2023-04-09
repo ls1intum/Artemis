@@ -76,7 +76,7 @@ describe('Course communication', () => {
                 .getNotifications()
                 .first()
                 .find('.notification-text')
-                .contains((`The course "` + courseName + `" got a new announcement: "` + content + `"`).substring(0, 300 - 1) + '...');
+                .contains((`The course "` + courseName + `" got a new announcement: "` + content + `"`).substring(0, 300 - 1));
         });
 
         it('instructor should be able to archive a post', () => {
