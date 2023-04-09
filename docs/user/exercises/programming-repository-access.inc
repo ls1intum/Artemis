@@ -121,7 +121,8 @@ Write access **(W)** corresponds to ``git push`` if you are using your local Git
 |                          | I    | all           | R/W          |
 +--------------------------+------+---------------+--------------+
 
-1) Only valid for course exercises. Students cannot read their repository for exam exercises after the due date.
+1) Only valid for course exercises.
+Students cannot read their repository for exam exercises after the due date.
 
 2) The instructor can access the Instructor Assignment repository using the online editor either from the *Edit in editor* view accessed via the Course Management (-> Exercises -> Edit in editor)  or from the Course Overview (clicking on the course card -> Open code editor).
 After the due date of the exercise has passed, the instructor can push to the repository only via the online editor reached from the Course Management or using their local Git client.
