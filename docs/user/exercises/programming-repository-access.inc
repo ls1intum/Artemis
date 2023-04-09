@@ -20,8 +20,7 @@ The different roles are:
 :Editor: An editor in the course.
 :Instructor (I): An instructor in the course.
 
-.. note::
-Editors and instructors are included in the role "Instructor" in the table as both roles have the same access rights.
+.. note:: Editors and instructors are included in the role "Instructor" in the table as both roles have the same access rights.
 
 The different points in time are:
 
@@ -29,11 +28,10 @@ The different points in time are:
 :Working time: After the exercise start date for a course exercise, after the exam release date for an exam exercise, before the due date for a course exercise, before the exam end date for an exam exercise.
 :After due: After the due date for a course exercise, after the exam end date for an exam exercise.
 
-.. note::
-For the Instructor Exam Test Run Repository, the point in time "Before start" is the start date of the test run, and the point in time "After due" is the end date of the test run. Both are before the exam start date.
+.. note:: For the Instructor Exam Test Run Repository, the point in time "Before start" is the start date of the test run, and the point in time "After due" is the end date of the test run. Both are before the exam start date.
 
 Read access **(R)** includes ``git fetch``, ``git clone``, and ``git pull``, if you are using your local Git client to access the repository.
-Write access **(W)** corresponds to ``git push`` if you are using your local Git client to access the repository.
+Write access **(W)** corresponds to ``git push`` if you are using your local Git client.
 
 +--------------------------+------+---------------+--------+
 | Repository type          | Role | Point in time | Access |
@@ -123,14 +121,13 @@ Write access **(W)** corresponds to ``git push`` if you are using your local Git
 |                          | I    | all           | R/W    |
 +--------------------------+------+---------------+--------+
 
-.. note::
-The Practice repositories in the table above only exist for course exercises.
+.. note:: The Practice repositories in the table above only exist for course exercises.
 
 .. note::
-If the exercise belongs to a course, it might happen that the instructor decides to add a start date after publishing the exercise.
-In this case, students can read the repository before the start date, if they had started the exercise earlier. In case the exercise is an exam exercise, students can never read the repository before the start date!
+  If the exercise belongs to a course, it might happen that the instructor decides to add a start date after publishing the exercise.
+  In this case, students can read the repository before the start date, if they had started the exercise earlier. In case the exercise is an exam exercise, students can never read the repository before the start date!
 
 .. note::
-The instructor can access the Instructor Assignment repository using the online editor either from the *Edit in editor* view accessed via the Course Management (-> Exercises -> Edit in editor)  or from the Course Overview (clicking on the course card -> Open code editor).
-After the due date of the exercise has passed, the instructor can push to the repository only via the online editor reached from the Course Management or using their local Git client.
-The online editor accessible from the Course Overview will show that the repository is locked, as it does for all students taking part in the course.
+  The instructor can access the Instructor Assignment repository using the online editor either from the *Edit in editor* view accessed via the Course Management (-> Exercises -> Edit in editor)  or from the Course Overview (clicking on the course card -> Open code editor).
+  After the due date of the exercise has passed, the instructor can push to the repository only via the online editor reached from the Course Management or using their local Git client.
+  The online editor accessible from the Course Overview will show that the repository is locked, as it does for all students taking part in the course.
