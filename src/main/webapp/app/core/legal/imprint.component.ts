@@ -1,27 +1,34 @@
-import { AfterViewInit, Component, OnInit } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { SafeHtml } from '@angular/platform-browser';
-import { StaticContentService } from 'app/shared/service/static-content.service';
-
-const imprintFile = 'imprint.html';
+import { Subscription } from 'rxjs';
+import { JhiLanguageHelper } from 'app/core/language/language.helper';
+import { LegalDocumentLanguage } from 'app/entities/legal-document.model';
+import { ImprintService } from 'app/shared/service/imprint.service';
 
 @Component({
     selector: 'jhi-imprint',
-    template: `
-        <h3 jhiTranslate="legal.imprint.title">Impressum</h3>
-        <div [innerHTML]="imprint"></div>
-    `,
+    template: ` <div [innerHTML]="imprintStatement | htmlForMarkdown"></div> `,
 })
-export class ImprintComponent implements AfterViewInit, OnInit {
-    imprint: SafeHtml;
+export class ImprintComponent implements AfterViewInit, OnInit, OnDestroy {
+    imprintStatement: string;
+    private languageChangeSubscription?: Subscription;
 
-    constructor(private route: ActivatedRoute, private staticContentService: StaticContentService) {}
+    constructor(private route: ActivatedRoute, private imprintService: ImprintService, private languageHelper: JhiLanguageHelper) {}
 
     /**
-     * On init get the privacy statement file from the Artemis server and save it.
+     * On init get the Imprint statement file from the Artemis server and set up a subscription to fetch the file again if the language was changed.
      */
     ngOnInit(): void {
-        this.staticContentService.getStaticHtmlFromArtemisServer(imprintFile).subscribe((imprint) => (this.imprint = imprint));
+        // Update the view if the language was changed
+        this.languageChangeSubscription = this.languageHelper.language.subscribe((lang) => {
+            this.imprintService.getImprint(lang as LegalDocumentLanguage).subscribe((imprint) => (this.imprintStatement = imprint.text));
+        });
+    }
+
+    ngOnDestroy() {
+        if (this.languageChangeSubscription) {
+            this.languageChangeSubscription.unsubscribe();
+        }
     }
 
     /**

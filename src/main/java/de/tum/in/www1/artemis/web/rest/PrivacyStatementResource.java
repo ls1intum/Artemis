@@ -1,14 +1,12 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import java.io.IOException;
-
 import javax.ws.rs.BadRequestException;
 
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import de.tum.in.www1.artemis.domain.LegalDocumentLanguage;
 import de.tum.in.www1.artemis.domain.PrivacyStatement;
-import de.tum.in.www1.artemis.domain.PrivacyStatementLanguage;
 import de.tum.in.www1.artemis.service.PrivacyStatementService;
 
 /**
@@ -32,10 +30,10 @@ public class PrivacyStatementResource {
      * @return the privacy statement
      */
     @GetMapping("/privacy-statement")
-    public PrivacyStatement getPrivacyStatement(@RequestParam(value = "language") String language) throws IOException {
+    public PrivacyStatement getPrivacyStatement(@RequestParam(value = "language") String language) {
         if (!"de".equalsIgnoreCase(language) && !"en".equalsIgnoreCase(language))
             throw new BadRequestException("Language not supported");
-        return privacyStatementService.getPrivacyStatement(PrivacyStatementLanguage.fromLanguageShortName(language));
+        return privacyStatementService.getPrivacyStatement(LegalDocumentLanguage.fromLanguageShortName(language));
     }
 
     /**
@@ -47,10 +45,10 @@ public class PrivacyStatementResource {
      */
     @GetMapping("/privacy-statement-for-update")
     @PreAuthorize("hasRole('ADMIN')")
-    public PrivacyStatement getPrivacyStatementForUpdate(@RequestParam("language") String language) throws IOException {
+    public PrivacyStatement getPrivacyStatementForUpdate(@RequestParam("language") String language) {
         if (!"de".equalsIgnoreCase(language) && !"en".equalsIgnoreCase(language))
             throw new BadRequestException("Language not supported");
-        return privacyStatementService.getPrivacyStatementForUpdate(PrivacyStatementLanguage.fromLanguageShortName(language));
+        return privacyStatementService.getPrivacyStatementForUpdate(LegalDocumentLanguage.fromLanguageShortName(language));
     }
 
     /**
@@ -62,7 +60,7 @@ public class PrivacyStatementResource {
     @PutMapping("/privacy-statement")
     @PreAuthorize("hasRole('ADMIN')")
     public PrivacyStatement updatePrivacyStatement(@RequestBody PrivacyStatement privacyStatement) {
-        if (PrivacyStatementLanguage.ENGLISH != privacyStatement.getLanguage() && PrivacyStatementLanguage.GERMAN != privacyStatement.getLanguage()) {
+        if (LegalDocumentLanguage.ENGLISH != privacyStatement.getLanguage() && LegalDocumentLanguage.GERMAN != privacyStatement.getLanguage()) {
             throw new BadRequestException("Language not supported");
         }
         return privacyStatementService.updatePrivacyStatement(privacyStatement);

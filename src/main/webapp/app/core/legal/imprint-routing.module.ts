@@ -5,7 +5,7 @@ import { ImprintComponent } from 'app/core/legal/imprint.component';
 
 const routes: Routes = [
     {
-        path: 'imprint',
+        path: '',
         children: [
             {
                 path: '',

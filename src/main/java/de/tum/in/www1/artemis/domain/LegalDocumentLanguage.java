@@ -1,10 +1,10 @@
 package de.tum.in.www1.artemis.domain;
 
-public enum PrivacyStatementLanguage {
+public enum LegalDocumentLanguage {
 
     GERMAN, ENGLISH;
 
-    public static PrivacyStatementLanguage fromLanguageShortName(String languageShortName) {
+    public static LegalDocumentLanguage fromLanguageShortName(String languageShortName) {
         if (("de").equals(languageShortName)) {
             return GERMAN;
         }

@@ -1,10 +1,11 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
 import { PrivacyStatementService } from 'app/shared/service/privacy-statement.service';
-import { PrivacyStatement, PrivacyStatementLanguage } from 'app/entities/privacy-statement.model';
+import { PrivacyStatement } from 'app/entities/privacy-statement.model';
 import { MarkdownEditorComponent, MarkdownEditorHeight } from 'app/shared/markdown-editor/markdown-editor.component';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { PrivacyStatementUnsavedChangesWarningComponent } from 'app/admin/privacy-statement/unsaved-changes-warning/privacy-statement-unsaved-changes-warning.component';
+import { LegalDocumentLanguage } from 'app/entities/legal-document.model';
 
 @Component({
     selector: 'jhi-privacy-statement-update-component',
@@ -13,7 +14,7 @@ import { PrivacyStatementUnsavedChangesWarningComponent } from 'app/admin/privac
 })
 export class PrivacyStatementUpdateComponent implements OnInit {
     privacyStatement: PrivacyStatement;
-    supportedLanguages: PrivacyStatementLanguage[] = [PrivacyStatementLanguage.GERMAN, PrivacyStatementLanguage.ENGLISH];
+    supportedLanguages: LegalDocumentLanguage[] = [LegalDocumentLanguage.GERMAN, LegalDocumentLanguage.ENGLISH];
     unsavedChanges = false;
     faBan = faBan;
     faSave = faSave;
@@ -24,7 +25,7 @@ export class PrivacyStatementUpdateComponent implements OnInit {
         labelKey: 'artemisApp.privacyStatement.language.' + language,
         btnClass: 'btn-primary',
     }));
-    readonly defaultLanguage = PrivacyStatementLanguage.GERMAN;
+    readonly defaultLanguage = LegalDocumentLanguage.GERMAN;
     readonly maxHeight = MarkdownEditorHeight.EXTRA_LARGE;
     readonly minHeight = MarkdownEditorHeight.MEDIUM;
     currentLanguage = this.defaultLanguage;
