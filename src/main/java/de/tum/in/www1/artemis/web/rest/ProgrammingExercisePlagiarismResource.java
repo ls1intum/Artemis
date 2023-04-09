@@ -105,7 +105,7 @@ public class ProgrammingExercisePlagiarismResource {
         ProgrammingLanguage language = programmingExercise.getProgrammingLanguage();
         ProgrammingLanguageFeature programmingLanguageFeature = programmingLanguageFeatureService.get().getProgrammingLanguageFeatures(language);
 
-        if (!programmingLanguageFeature.isPlagiarismCheckSupported()) {
+        if (!programmingLanguageFeature.plagiarismCheckSupported()) {
             throw new BadRequestAlertException("Artemis does not support plagiarism checks for the programming language " + programmingExercise.getProgrammingLanguage(),
                     ENTITY_NAME, "programmingLanguageNotSupported");
         }
@@ -137,7 +137,7 @@ public class ProgrammingExercisePlagiarismResource {
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, null);
         var programmingLanguageFeature = programmingLanguageFeatureService.get().getProgrammingLanguageFeatures(programmingExercise.getProgrammingLanguage());
-        if (!programmingLanguageFeature.isPlagiarismCheckSupported()) {
+        if (!programmingLanguageFeature.plagiarismCheckSupported()) {
             throw new BadRequestAlertException("Artemis does not support plagiarism checks for the programming language " + programmingExercise.getProgrammingLanguage(),
                     "Plagiarism Check", "programmingLanguageNotSupported");
         }
