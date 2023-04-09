@@ -27,6 +27,10 @@ describe('BonusComponent', () => {
     let bonusService: BonusService;
     let gradingSystemService: GradingSystemService;
 
+    let findGradeStepsSpy: jest.SpyInstance;
+    let findWithBonusSpy: jest.SpyInstance;
+    let findBonusForExamSpy: jest.SpyInstance;
+
     const courseId = 1;
     const examId = 2;
     const route = { snapshot: { paramMap: convertToParamMap({ courseId, examId }) } } as any as ActivatedRoute;
@@ -274,9 +278,11 @@ describe('BonusComponent', () => {
         bonusService = fixture.debugElement.injector.get(BonusService);
         gradingSystemService = fixture.debugElement.injector.get(GradingSystemService);
 
-        jest.spyOn(bonusService, 'findBonusForExam').mockReturnValue(throwError(() => ({ status: 404 })));
-        jest.spyOn(gradingSystemService, 'findWithBonusGradeTypeForInstructor').mockReturnValue(of({ body: searchResult } as HttpResponse<SearchResult<GradingScale>>));
-        jest.spyOn(gradingSystemService, 'findGradeSteps').mockReturnValue(of(examGradeSteps));
+        findBonusForExamSpy = jest.spyOn(bonusService, 'findBonusForExam').mockReturnValue(of({ body: bonus } as EntityResponseType));
+        findWithBonusSpy = jest
+            .spyOn(gradingSystemService, 'findWithBonusGradeTypeForInstructor')
+            .mockReturnValue(of({ body: searchResult } as HttpResponse<SearchResult<GradingScale>>));
+        findGradeStepsSpy = jest.spyOn(gradingSystemService, 'findGradeSteps').mockReturnValue(of(examGradeSteps));
         jest.spyOn(bonusService, 'generateBonusExamples').mockReturnValue(bonusExamples);
     });
 
@@ -288,11 +294,10 @@ describe('BonusComponent', () => {
         const sortGradeStepsSpy = jest.spyOn(gradingSystemService, 'sortGradeSteps');
         const setGradePointsSpy = jest.spyOn(gradingSystemService, 'setGradePoints');
 
-        const bonusSpy = jest.spyOn(bonusService, 'findBonusForExam').mockReturnValue(of({ body: bonus } as EntityResponseType));
+        fixture.detectChanges();
 
-        const gradingScaleSpy = jest.spyOn(gradingSystemService, 'findWithBonusGradeTypeForInstructor');
-
-        const gradeStepsSpy = jest.spyOn(gradingSystemService, 'findGradeSteps');
+        expect(findBonusForExamSpy).toHaveBeenCalledOnce();
+        expect(findBonusForExamSpy).toHaveBeenCalledWith(courseId, examId);
 
         const state: PageableSearch = {
             page: 1,
@@ -302,16 +307,11 @@ describe('BonusComponent', () => {
             sortedColumn: 'ID',
         };
 
-        fixture.detectChanges();
+        expect(findWithBonusSpy).toHaveBeenCalledOnce();
+        expect(findWithBonusSpy).toHaveBeenCalledWith(state);
 
-        expect(bonusSpy).toHaveBeenCalledOnce();
-        expect(bonusSpy).toHaveBeenCalledWith(courseId, examId);
-
-        expect(gradingScaleSpy).toHaveBeenCalledOnce();
-        expect(gradingScaleSpy).toHaveBeenCalledWith(state);
-
-        expect(gradeStepsSpy).toHaveBeenCalledOnce();
-        expect(gradeStepsSpy).toHaveBeenCalledWith(courseId, examId);
+        expect(findGradeStepsSpy).toHaveBeenCalledOnce();
+        expect(findGradeStepsSpy).toHaveBeenCalledWith(courseId, examId);
 
         tick();
 
@@ -336,7 +336,7 @@ describe('BonusComponent', () => {
     it.each(bonusStrategyToOptionAndDiscretenessMappings.slice(0, -1))(
         'should set bonus strategy and discreteness for [%p, %p, %p]',
         fakeAsync((bonusStrategy: BonusStrategy, bonusStrategyOption: BonusStrategyOption, bonusStrategyDiscreteness: BonusStrategyDiscreteness) => {
-            const bonusSpy = jest.spyOn(bonusService, 'findBonusForExam').mockReturnValue(of({ body: { bonusStrategy } } as EntityResponseType));
+            const bonusSpy = findBonusForExamSpy.mockReturnValue(of({ body: { bonusStrategy } } as EntityResponseType));
             component.ngOnInit();
             expect(bonusSpy).toHaveBeenCalledOnce();
             expect(component.currentBonusStrategyOption).toBe(bonusStrategyOption);
@@ -395,7 +395,7 @@ describe('BonusComponent', () => {
 
     it('should create bonus', fakeAsync(() => {
         const createBonusSpy = jest.spyOn(bonusService, 'createBonusForExam').mockReturnValue(of({ body: bonus } as EntityResponseType));
-        const findBonusSpy = jest.spyOn(bonusService, 'findBonusForExam').mockReturnValue(throwError(() => ({ status: 404 })));
+        const findBonusSpy = findBonusForExamSpy.mockReturnValue(throwError(() => ({ status: 404 })));
 
         fixture.detectChanges();
 
@@ -495,7 +495,7 @@ describe('BonusComponent', () => {
     });
 
     it('should handle find bonus response with error', fakeAsync(() => {
-        const findBonusSpy = jest.spyOn(bonusService, 'findBonusForExam').mockReturnValue(throwError(() => ({ status: 500 })));
+        const findBonusSpy = findBonusForExamSpy.mockReturnValue(throwError(() => ({ status: 500 })));
 
         component.ngOnInit();
 
@@ -509,7 +509,7 @@ describe('BonusComponent', () => {
     }));
 
     it('should handle empty find bonus response', fakeAsync(() => {
-        const findBonusSpy = jest.spyOn(bonusService, 'findBonusForExam').mockReturnValue(of({ body: undefined } as any as EntityResponseType));
+        const findBonusSpy = findBonusForExamSpy.mockReturnValue(of({ body: undefined } as any as EntityResponseType));
 
         component.ngOnInit();
 

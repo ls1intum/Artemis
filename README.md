@@ -39,10 +39,11 @@
 13. **[Integrated Markdown Editor](https://docs.artemis.cit.tum.de/user/markdown-support/)**: Markdown is used to format text content across the platform using an integrated markdown editor.
 14. **[Plagiarism checks](https://docs.artemis.cit.tum.de/user/plagiarism-check/)**: Artemis integrates plagiarism checks for programming exercises (based on [JPlag](https://github.com/jplag/JPlag)), text exercises, and modeling exercises in courses and exams. It allows notifying students about identified plagiarism. Students can review and comment on the allegation.
 15. **[Learning analytics](https://docs.artemis.cit.tum.de/user/learning-analytics/)**: Artemis integrated different statistics for students to compare themselves to the course average. It allows instructors to evaluate the average student performance based on exercises and competencies.
-16. **[Scalable](https://docs.artemis.cit.tum.de/user/scaling/)**: Artemis scales to multiple courses with thousands of students. In fact, the largest course had 2,400 students. Administrators can easily scale Artemis with additional build agents in the continuous integration environment.
-17. **[High user satisfaction](https://docs.artemis.cit.tum.de/user/user-experience/)**: Artemis is easy to use, provides guided tutorials. Developers focus on usability, user experience, and performance.
-18. **Customizable**: It supports multiple instructors, editors, and tutors per course and allows instructors to customize many course settings
-19. **[Open-source](https://docs.artemis.cit.tum.de/dev/open-source/)**: Free to use with a large community and many active maintainers.
+16. **[Tutorial Groups](https://docs.artemis.cit.tum.de/user/tutorialgroups/)**: Artemis support the management of tutorial groups of a course. This includes planning the sessions, assigning responsible tutors, registering students and tracking the attendance.
+17. **[Scalable](https://docs.artemis.cit.tum.de/user/scaling/)**: Artemis scales to multiple courses with thousands of students. In fact, the largest course had 2,400 students. Administrators can easily scale Artemis with additional build agents in the continuous integration environment.
+18. **[High user satisfaction](https://docs.artemis.cit.tum.de/user/user-experience/)**: Artemis is easy to use, provides guided tutorials. Developers focus on usability, user experience, and performance.
+19. **Customizable**: It supports multiple instructors, editors, and tutors per course and allows instructors to customize many course settings
+20. **[Open-source](https://docs.artemis.cit.tum.de/dev/open-source/)**: Free to use with a large community and many active maintainers.
 
 ## Roadmap
 
@@ -189,7 +190,7 @@ The following universities are actively using Artemis or are currently evaluatin
   https://artemis.cs.hm.edu  
   Main contact person: [Michael Eggers](mailto:michael.eggers@hm.edu)  
   
-* **TU Dresden**  
+* **Technische Universität Dresden**  
   Main contact person: [Martin Morgenstern](mailto:martin.morgenstern1@tu-dresden.de)  
   
 * **Hochschule Heilbronn**  
@@ -201,3 +202,6 @@ The following universities are actively using Artemis or are currently evaluatin
 ##### Interested universities
 
 * HU Berlin
+* Westsächsische Hochschule Zwickau  
+  Main contact person: [Heiko Baum](https://www.fh-zwickau.de/pti/organisation/fachgruppe-informatik/personen/dr-ing-heiko-baum/)
+* Technische Universität Chemnitz

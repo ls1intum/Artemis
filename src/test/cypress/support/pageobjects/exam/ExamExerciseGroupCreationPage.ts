@@ -30,16 +30,19 @@ export class ExamExerciseGroupCreationPage {
         cy.wait('@updateExerciseGroup');
     }
 
-    addGroupWithExercise(exerciseArray: Array<Exercise>, exam: Exam, exerciseType: EXERCISE_TYPE, additionalData?: AdditionalData) {
-        this.handleAddGroupWithExercise(exam, 'Exercise ' + generateUUID(), exerciseType, (response) => {
-            if (exerciseType == EXERCISE_TYPE.Quiz) {
-                additionalData!.quizExerciseID = response.body.quizQuestions![0].id;
-            }
-            this.addExerciseToArray(exerciseArray, response, additionalData);
+    addGroupWithExercise(exam: Exam, exerciseType: EXERCISE_TYPE, additionalData: AdditionalData = {}): Promise<Exercise> {
+        return new Promise((resolve) => {
+            this.handleAddGroupWithExercise(exam, 'Exercise ' + generateUUID(), exerciseType, additionalData, (response) => {
+                if (exerciseType == EXERCISE_TYPE.Quiz) {
+                    additionalData!.quizExerciseID = response.body.quizQuestions![0].id;
+                }
+                const exercise = { ...response.body, additionalData };
+                resolve(exercise);
+            });
         });
     }
 
-    handleAddGroupWithExercise(exam: Exam, title: string, exerciseType: EXERCISE_TYPE, processResponse: (data: any) => void) {
+    handleAddGroupWithExercise(exam: Exam, title: string, exerciseType: EXERCISE_TYPE, additionalData: AdditionalData, processResponse: (data: any) => void) {
         courseManagementRequest.addExerciseGroupForExam(exam).then((groupResponse) => {
             switch (exerciseType) {
                 case EXERCISE_TYPE.Text:
@@ -59,16 +62,23 @@ export class ExamExerciseGroupCreationPage {
                     break;
                 case EXERCISE_TYPE.Programming:
                     courseManagementRequest
-                        .createProgrammingExercise({ exerciseGroup: groupResponse.body }, undefined, false, undefined, undefined, title, undefined, 'de.test')
+                        .createProgrammingExercise(
+                            { exerciseGroup: groupResponse.body },
+                            undefined,
+                            false,
+                            undefined,
+                            undefined,
+                            title,
+                            undefined,
+                            'de.test',
+                            undefined,
+                            additionalData.progExerciseAssessmentType,
+                        )
                         .then((response) => {
                             processResponse(response);
                         });
                     break;
             }
         });
-    }
-
-    addExerciseToArray(exerciseArray: Array<Exercise>, response: any, additionalData?: AdditionalData) {
-        exerciseArray.push({ ...response.body, additionalData });
     }
 }

@@ -1,0 +1,45 @@
+# ----------------------------------------------------------------------------------------------------------------------
+# Artemis base service
+# ----------------------------------------------------------------------------------------------------------------------
+
+services:
+    artemis-app:
+        container_name: artemis-app
+        platform: linux/amd64
+        # look in the docs for more information about how to build your Artemis code with Docker
+        # https://docs.artemis.cit.tum.de/dev/setup/#
+        image: ghcr.io/ls1intum/artemis
+        build:
+            context: ..
+            dockerfile: docker/artemis/Dockerfile
+            pull: true
+            target: runtime
+        volumes:
+            - artemis-data:/opt/artemis/data
+        env_file:
+            - ./artemis/config/prod-application-local.env
+        # environments can also be used for custom overrides (alternative to application-local.yml)
+        # the following environments are necessary for docker images orchestrated by docker compose
+        environment:
+            SPRING_PROFILES_ACTIVE: artemis,scheduling,athene,prod,docker
+        # if you need to use another port than 8080 or one fixed port for all artemis-app containers in the future
+        # you will probably not be able to override this setting outside the artemis.yml
+        # as stated in the docker compose docs (at least not when this was committed)
+        # https://docs.docker.com/compose/compose-file/#finding-referenced-service
+        healthcheck:
+            test: wget -nv -t1 --spider http://localhost:8080/actuator/health || exit 1
+            start_period: 600s
+            interval: 1s
+        # expose the port to make it reachable docker internally even if the external port mapping changes
+        expose:
+            - "8080"
+        networks:
+            - artemis
+
+networks:
+    artemis:
+        driver: "bridge"
+        name: artemis
+volumes:
+    artemis-data:
+        name: artemis-data
