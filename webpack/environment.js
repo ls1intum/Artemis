@@ -8,7 +8,7 @@ module.exports = {
 };
 
 /*
- * Needed for client compilations with docker-compose, where the 'APP_VERSION' property isn't injected by gradle.
+ * Needed for client compilations with docker compose, where the 'APP_VERSION' property isn't injected by gradle.
  *
  * Returns the inferred APP_VERSION from 'build.gradle', or 'DEV' if this couldn't be retrieved
  */

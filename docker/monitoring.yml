@@ -1,0 +1,45 @@
+# ----------------------------------------------------------------------------------------------------------------------
+# Monitoring setup
+# ----------------------------------------------------------------------------------------------------------------------
+# This configuration is intended for development purpose, it's **your** responsibility to harden it for production
+#
+# Out of the box this setup just works with a non-containerized Artemis instancezs
+# ----------------------------------------------------------------------------------------------------------------------
+
+services:
+  prometheus:
+    container_name: artemis-prometheus
+    image: docker.io/prom/prometheus:v2.34.0
+    pull_policy: always
+    volumes:
+        - ./monitoring/prometheus/:/etc/prometheus/
+    # If you want to expose these ports outside your dev PC,
+    # remove the "127.0.0.1:" prefix
+    ports:
+      - "127.0.0.1:9090:9090"
+    # expose the port to make it reachable docker internally even if the external port mapping changes
+    expose:
+        - "9090"
+    # On macOS, remove next line and replace localhost by host.docker.internal in prometheus/prometheus.yml and
+    # grafana/provisioning/datasources/datasource.yml
+    network_mode: 'host' # to test locally running service
+  grafana:
+    container_name: artemis-grafana
+    image: docker.io/grafana/grafana:9.0.2
+    pull_policy: always
+    volumes:
+      - ./monitoring/grafana/provisioning/:/etc/grafana/provisioning/
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: "admin"
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_INSTALL_PLUGINS: "grafana-piechart-panel"
+    # If you want to expose these ports outside your dev PC,
+    # remove the "127.0.0.1:" prefix
+    ports:
+      - "127.0.0.1:3000:3000"
+    # expose the port to make it reachable docker internally even if the external port mapping changes
+    expose:
+      - "3000"
+    # On macOS, remove next line and replace localhost by host.docker.internal in prometheus/prometheus.yml and
+    # grafana/provisioning/datasources/datasource.yml
+    network_mode: 'host' # to test locally running service
