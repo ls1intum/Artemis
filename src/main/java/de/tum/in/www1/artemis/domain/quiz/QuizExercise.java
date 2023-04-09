@@ -621,8 +621,9 @@ public class QuizExercise extends Exercise implements QuizConfiguration {
         quizQuestion.setExercise(this);
     }
 
-    @Override
-    public void postReconnectJSONIgnoreAttributes() {
+    public void reconnectJSONIgnoreAttributes() {
+        QuizConfiguration.super.reconnectJSONIgnoreAttributes();
+
         // reconnect pointCounters
         for (PointCounter pointCounter : getQuizPointStatistic().getPointCounters()) {
             if (pointCounter.getId() != null) {

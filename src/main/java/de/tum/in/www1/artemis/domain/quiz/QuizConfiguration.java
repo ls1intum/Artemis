@@ -4,11 +4,19 @@ import java.util.List;
 
 public interface QuizConfiguration {
 
+    /**
+     * Find the list of QuizQuestion of the implementor entity.
+     *
+     * @return the list of QuizQuestion belongs to the implementor entity
+     */
     List<QuizQuestion> getQuizQuestions();
 
+    /**
+     * Set the parent of the given QuizQuestion to reconnect ignored JSON attributes.
+     *
+     * @param quizQuestion the QuizQuestion of which the parent to be set
+     */
     void setQuestionParent(QuizQuestion quizQuestion);
-
-    void postReconnectJSONIgnoreAttributes();
 
     /**
      * Recreate missing pointers from children to parents that were removed by @JSONIgnore
@@ -97,6 +105,5 @@ public interface QuizConfiguration {
                 }
             }
         }
-        postReconnectJSONIgnoreAttributes();
     }
 }
