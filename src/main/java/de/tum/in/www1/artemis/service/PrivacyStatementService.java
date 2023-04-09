@@ -82,6 +82,13 @@ public class PrivacyStatementService {
 
     }
 
+    /**
+     * Updates the privacy statement and saves it on the file system. Creates the file if it doesn't exist.
+     *
+     * @param privacyStatement the privacy statement to update
+     * @return the update privacy statement
+     */
+
     public PrivacyStatement updatePrivacyStatement(PrivacyStatement privacyStatement) {
         try {
             Files.writeString(getPrivacyStatementPath(privacyStatement.getLanguage(), true).get(), privacyStatement.getText(), StandardOpenOption.WRITE, StandardOpenOption.CREATE);
