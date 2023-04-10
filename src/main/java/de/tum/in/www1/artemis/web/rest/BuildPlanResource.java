@@ -73,7 +73,7 @@ public class BuildPlanResource {
      * @return the build plan stored in the database
      */
     @GetMapping(BUILD_PLAN + "/for-editor")
-    @PreAuthorize("permitAll()")
+    @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<BuildPlan> getBuildPlanForEditor(@PathVariable Long exerciseId) {
         log.debug("REST request to get build plan for programming exercise with id {}", exerciseId);
 
