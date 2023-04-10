@@ -2,7 +2,7 @@ import { Component, Input, OnInit } from '@angular/core';
 import { ProgrammingExerciseTaskService } from 'app/exercises/programming/manage/grading/tasks/programming-exercise-task.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { Course } from 'app/entities/course.model';
-import { faAngleDown, faAngleRight, faPlus, faQuestionCircle, faWeightHanging, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faAngleDown, faAngleRight, faAsterisk, faMedal, faPlus, faQuestionCircle, faScaleUnbalanced, faWeightHanging, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseGradingStatistics } from 'app/entities/programming-exercise-test-case-statistics.model';
 import { ProgrammingExerciseTask } from './programming-exercise-task';
 import { Observable } from 'rxjs';
@@ -21,9 +21,9 @@ export class ProgrammingExerciseGradingTaskComponent implements OnInit {
     faAngleDown = faAngleDown;
     faAngleRight = faAngleRight;
     faQuestionCircle = faQuestionCircle;
-    faWeightHanging = faWeightHanging;
-    faSquarePlus = faPlus;
-    faSquareXmark = faXmark;
+    faScaleUnbalanced = faScaleUnbalanced;
+    faMedal = faMedal;
+    faAsterisk = faAsterisk;
 
     isSaving = false;
     tasks: ProgrammingExerciseTask[];
