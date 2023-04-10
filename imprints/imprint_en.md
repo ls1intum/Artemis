@@ -12,11 +12,11 @@ Email: poststelle(at)tum.de
 
 The Technical University of Munich is legally represented by the President Prof. Dr. Thomas F. Hofmann.
 
-#### VAT number
+#### VAT identification number
 
-DE811193231 (according to § 27a Sales Tax Law)
+DE811193231 (in accordance with § 27a of the German VAT tax act - UStG)
 
-#### Responsible for the content
+#### Responsible for content
 
 Dr. Stephan Krusche  
 Boltzmannstrasse 3  
@@ -30,7 +30,7 @@ The following are not protected by copyright according to §5 of copyright law (
 Laws, ordinances, official decrees and announcements as well as decisions and officially written guidelines for
 decisions and other official works that have been published in the official interest for general knowledge,
 with the restriction that the provisions on prohibition of modification and indication of source in Section 62 (1) to (3) and
-Section 63 (1) and (2) UrhG are to be applied accordingly.
+Section 63 (1) and (2) UrhG apply accordingly.
 
 As a private individual, you may use copyrighted material for private and other personal use within the scope of Section 53 UrhG.
 Any duplication or use of objects such as images, diagrams, sounds or texts in other electronic or printed publications is not permitted without our agreement.
@@ -39,24 +39,24 @@ The reprinting and evaluation of press releases and speeches are generally permi
 Furthermore, texts, images, graphics and other files may be subject in whole or in part to the copyright of third parties.
 The persons responsible for the content will also provide more detailed information on the existence of possible third-party rights.
 
-#### Disclaimer
+#### Liability disclaimer
 
-All information provided on this website has been compiled and checked to the best of our knowledge and belief. However, we cannot guarantee that the information provided is
-up-to-date, correct, complete or available at all times. A contractual relationship with the users of the Internet offering does not come about.
+The information provided on this website has been collected and verified to the best of our knowledge and belief.
+However, there will be no warranty that the information provided is up-to-date, correct, complete, and available.
+There is no contractual relationship with users of this website.
 
-We are not liable for any damage caused by the use of this internet offering.
-This exclusion of liability does not apply if the provisions of § 839 BGB (Haftung bei Amtspflichtverletzung) are relevant.
-We accept no liability for any damage caused by malware or the installation or use of software when calling up or downloading data.
+We accept no liability for any loss or damage caused by using this website. The exclusion of liability does not apply where the provisions of the German Civil Code (BGB) on
+liability in case of breach of official duty are applicable (§ 839 of the BGB). We accept no liability for any loss or damage caused by malware when accessing or downloading data
+or the installation or use of software from this website.
 
-If necessary in individual cases:
-The exclusion of liability does not apply to information that falls within the scope of the European Services Directive (Directive 2006/123/EC - DLRL).
-For this information we guarantee that it is correct and up to date.
+Where necessary in individual cases: the exclusion of liability does not apply to information governed by the Directive 2006/123/EC of the European Parliament and of the Council.
+This information is guaranteed to be accurate and up to date.
 
 #### Links
 
-Cross-references ("links") to the websites of other providers are to be distinguished from our own content.
-Through these links, we merely provide access to the use of third-party content in accordance with § 8 of the German Telemedia Act (TMG).
-When first linking to these Internet offers, we have checked this external content to see whether it could trigger any possible civil or criminal liability.
-However, we cannot constantly check these external contents for changes and therefore cannot assume any responsibility for them.
-For illegal, incorrect or incomplete content and especially for damages resulting from the use or non-use of information provided by third parties, the respective provider of the
-site is solely liable.
+Our own content is to be distinguished from cross-references (“links”) to websites of other providers.
+These links only provide access for using third-party content in accordance with § 8 of the German telemedia act (TMG).
+Prior to providing links to other websites, we review third-party content for potential civil or criminal liability.
+However, a continuous review of third-party content for changes is not possible, and therefore we cannot accept any responsibility.
+For illegal, incorrect, or incomplete content, including any damage arising from the use or non-use of third-party information,
+liability rests solely with the provider of the website.
