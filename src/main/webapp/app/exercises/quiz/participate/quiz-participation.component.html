@@ -211,7 +211,7 @@
     <ng-container *ngIf="waitingForQuizStart">
         <jhi-countdown-overlay
             *ngIf="quizBatch || quizExercise.quizMode === QuizMode.SYNCHRONIZED"
-            [targetDate]="startDate"
+            [targetDate]="startDate!"
             [waitForStartText]="'artemisApp.quizExercise.quizInstructions.waitForStart' | artemisTranslate"
             [timeUntilPlannedStartText]="'artemisApp.quizExercise.quizInstructions.timeUntilPlannedStart' | artemisTranslate"
         >

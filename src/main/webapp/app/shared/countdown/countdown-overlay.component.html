@@ -3,7 +3,7 @@
     <hr />
     <ng-container *ngIf="targetDate">
         <span>{{ timeUntilPlannedStartText }}</span>
-        <jhi-countdown [targetDate]="targetDate" (onFinish)="onFinish()"></jhi-countdown>
+        <jhi-countdown [targetDate]="targetDate" (onFinish)="onFinish.emit()"></jhi-countdown>
         <br />
         <span>({{ targetDate | artemisDate : 'time' }})</span>
     </ng-container>
