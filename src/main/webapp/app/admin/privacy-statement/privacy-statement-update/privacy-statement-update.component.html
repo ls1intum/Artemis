@@ -19,6 +19,7 @@
                 id="update-privacy-statement-btn"
                 (click)="updatePrivacyStatement()"
                 [isLoading]="isSaving"
+                [disabled]="!markdownEditor?.markdown || markdownEditor?.markdown?.trim() === ''"
                 [title]="'entity.action.save'"
                 [icon]="faSave"
                 [ngStyle]="{ 'marginRight.px': 10 }"
