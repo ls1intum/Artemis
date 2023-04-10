@@ -1,18 +1,14 @@
 package de.tum.in.www1.artemis.localvcci;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
-import org.eclipse.jgit.revwalk.RevCommit;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -21,11 +17,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import com.github.dockerjava.api.DockerClient;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationLocalCILocalVCTest;
-import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
-import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.domain.submissionpolicy.LockRepositoryPolicy;
-import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
-import de.tum.in.www1.artemis.util.GitUtilService;
 import de.tum.in.www1.artemis.util.LocalRepository;
 
 /**
@@ -34,24 +25,24 @@ import de.tum.in.www1.artemis.util.LocalRepository;
 class LocalVCLocalCIIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
     @Autowired
-    private GitUtilService gitUtilService;
-
-    @Autowired
     private DockerClient mockDockerClient;
-
-    @Autowired
-    private ProgrammingSubmissionRepository programmingSubmissionRepository;
 
     // ---- Repository handles ----
     protected Git remoteTemplateGit;
 
     protected Path remoteTemplateRepositoryFolder;
 
+    private String testsRepositorySlug;
+
     protected Path remoteTestsRepositoryFolder;
 
     protected Git remoteTestsGit;
 
     protected Path remoteAssignmentRepositoryFolder;
+
+    private Git localTestsGit;
+
+    private Path localTestsRepositoryFolder;
 
     protected Git remoteAssignmentGit;
 
@@ -68,19 +59,25 @@ class LocalVCLocalCIIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         templateRepository.configureRepos("localTemplate", remoteTemplateRepositoryFolder);
         remoteTemplateGit = templateRepository.originGit;
 
-        final String testsRepoName = projectKey1.toLowerCase() + "-tests";
-        remoteTestsRepositoryFolder = localVCLocalCITestService.createRepositoryFolderInTempDirectory(projectKey1, testsRepoName);
+        testsRepositorySlug = projectKey1.toLowerCase() + "-tests";
+        remoteTestsRepositoryFolder = localVCLocalCITestService.createRepositoryFolderInTempDirectory(projectKey1, testsRepositorySlug);
         LocalRepository testsRepository = new LocalRepository(defaultBranch);
         testsRepository.configureRepos("localTests", remoteTestsRepositoryFolder);
         remoteTestsGit = testsRepository.originGit;
+        localTestsRepositoryFolder = testsRepository.localRepoFile.toPath();
+        localTestsGit = testsRepository.localGit;
 
         // Create remote assignment repository
-        remoteAssignmentRepositoryFolder = localVCLocalCITestService.createRepositoryFolderInTempDirectory(projectKey1, assignmentRepositoryName);
+        remoteAssignmentRepositoryFolder = localVCLocalCITestService.createRepositoryFolderInTempDirectory(projectKey1, assignmentRepositorySlug);
         LocalRepository assignmentRepository = new LocalRepository(defaultBranch);
         assignmentRepository.configureRepos("localAssignment", remoteAssignmentRepositoryFolder);
         remoteAssignmentGit = assignmentRepository.originGit;
         localAssignmentRepositoryFolder = assignmentRepository.localRepoFile.toPath();
         localAssignmentGit = assignmentRepository.localGit;
+
+        // Mock dockerClient.copyArchiveFromContainerCmd() such that it returns a dummy commit hash for the tests repository.
+        localVCLocalCITestService.mockInputStreamReturnedFromContainer(mockDockerClient, "/repositories/test-repository/.git/refs/heads/[^/]+",
+                Map.of("testCommitHash", dummyCommitHash));
     }
 
     @AfterEach
@@ -90,6 +87,9 @@ class LocalVCLocalCIIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         }
         if (remoteTestsGit != null) {
             remoteTestsGit.close();
+        }
+        if (localTestsGit != null) {
+            localTestsGit.close();
         }
         if (remoteAssignmentGit != null) {
             remoteAssignmentGit.close();
@@ -102,6 +102,9 @@ class LocalVCLocalCIIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         }
         if (remoteTestsRepositoryFolder != null && Files.exists(remoteTestsRepositoryFolder)) {
             FileUtils.deleteDirectory(remoteTestsRepositoryFolder.toFile());
+        }
+        if (localTestsRepositoryFolder != null && Files.exists(localTestsRepositoryFolder)) {
+            FileUtils.deleteDirectory(localTestsRepositoryFolder.toFile());
         }
         if (remoteAssignmentRepositoryFolder != null && Files.exists(remoteAssignmentRepositoryFolder)) {
             FileUtils.deleteDirectory(remoteAssignmentRepositoryFolder.toFile());
@@ -119,54 +122,20 @@ class LocalVCLocalCIIntegrationTest extends AbstractSpringIntegrationLocalCILoca
      */
     @Test
     void testPush_assignmentRepository_student() throws Exception {
-        // Create a file and push the changes to the remote assignment repository.
-        Path testJsonFilePath = Path.of(localAssignmentRepositoryFolder.toString(), "src", programmingExercise.getPackageFolderName(), "test.txt");
-        gitUtilService.writeEmptyJsonFileToPath(testJsonFilePath);
-        localAssignmentGit.add().addFilepattern(".").call();
-        RevCommit commit = localAssignmentGit.commit().setMessage("Add test.txt").call();
-        String commitHash = commit.getId().getName();
+        String commitHash = localVCLocalCITestService.commitFile(localAssignmentRepositoryFolder, programmingExercise.getPackageFolderName(), localAssignmentGit);
 
         // Mock dockerClient.copyArchiveFromContainerCmd() such that it returns the commitHash for the assignment repository.
-        localVCLocalCITestService.mockInputStreamReturnedFromContainer(mockDockerClient, "/repositories/assignment-repository/.git/refs/heads/[^/]+",
-                Map.of("assignmentCommitHash", commitHash));
-
-        // Mock dockerClient.copyArchiveFromContainerCmd() such that it returns a dummy commit hash for the tests repository.
-        localVCLocalCITestService.mockInputStreamReturnedFromContainer(mockDockerClient, "/repositories/test-repository/.git/refs/heads/[^/]+",
-                Map.of("testCommitHash", dummyCommitHash));
+        localVCLocalCITestService.mockCommitHash(mockDockerClient, commitHash);
 
         // Mock dockerClient.copyArchiveFromContainerCmd() such that it returns the XMLs containing the test results.
-        Path failedTestResultsPath = Paths.get("src", "test", "resources", "test-data", "test-results", "java-gradle", "partly-successful");
-        localVCLocalCITestService.mockInputStreamReturnedFromContainer(mockDockerClient, "/repositories/test-repository/build/test-results/test",
-                localVCLocalCITestService.createMapFromTestResultsFolder(failedTestResultsPath));
+        localVCLocalCITestService.mockTestResults(mockDockerClient, partlySuccessfulTestResultsPath);
 
-        localAssignmentGit.push().setRemote(localVCLocalCITestService.constructLocalVCUrl(student1Login, projectKey1, assignmentRepositoryName)).call();
-
-        // Assert that the latest submission has the correct commit hash and the correct result.
-        ProgrammingSubmission programmingSubmission = programmingSubmissionRepository.findFirstByParticipationIdOrderBySubmissionDateDesc(studentParticipation.getId())
-                .orElseThrow();
-        assertThat(programmingSubmission.getCommitHash()).isEqualTo(commitHash);
-        Result result = programmingSubmission.getLatestResult();
-        assertThat(result.getTestCaseCount()).isEqualTo(13);
-        assertThat(result.getPassedTestCaseCount()).isEqualTo(1);
+        localVCLocalCITestService.testPushSuccessful(localAssignmentGit, student1Login, projectKey1, assignmentRepositorySlug, commitHash, studentParticipation.getId(), 1);
     }
 
     @Test
-    void testPush_assignmentRepository_teachingAssistant() {
-        // Teaching assistants and up should be able to push to the student's assignment repository.
-    }
-
-    @Test
-    void testPush_assignmentRepository_student_tooManySubmissions() {
-        // LockRepositoryPolicy is enforced
-        LockRepositoryPolicy lockRepositoryPolicy = new LockRepositoryPolicy();
-        lockRepositoryPolicy.setSubmissionLimit(1);
-        lockRepositoryPolicy.setActive(true);
-        database.addSubmissionPolicyToExercise(lockRepositoryPolicy, programmingExercise);
-
-        // Push once successfully.
-        // localVCLocalCITestService.testPush
-        // Second push should fail.
-        // localVCLocalCITestService.testPushThrowsException(localAssignmentGit, student1Login, projectKey1, assignmentRepositoryName, TransportException.class, forbidden);
+    void testPush_assignmentRepository() {
+        // Instructors should be able to push to the student's assignment repository.
     }
 
     @Test
@@ -228,8 +197,27 @@ class LocalVCLocalCIIntegrationTest extends AbstractSpringIntegrationLocalCILoca
     // ---- Tests for the tests repository ----
 
     @Test
-    void testPush_testsRepository_teachingAssistant() {
+    void testPush_testsRepository_instructor() throws Exception {
+        // Students should not be able to fetch and push.
+        localVCLocalCITestService.testFetchThrowsException(localTestsGit, student1Login, projectKey1, testsRepositorySlug, notAuthorized);
+        localVCLocalCITestService.testPushThrowsException(localTestsGit, student1Login, projectKey1, testsRepositorySlug, notAuthorized);
 
+        // Teaching assistants should be able to fetch but not push.
+        localVCLocalCITestService.testFetchSuccessful(localTestsGit, tutor1Login, projectKey1, testsRepositorySlug);
+        localVCLocalCITestService.testPushThrowsException(localTestsGit, tutor1Login, projectKey1, testsRepositorySlug, notAuthorized);
+
+        // Instructors should be able to fetch and push.
+        localVCLocalCITestService.testFetchSuccessful(localTestsGit, instructorLogin, projectKey1, testsRepositorySlug);
+
+        String commitHash = localVCLocalCITestService.commitFile(localTestsRepositoryFolder, programmingExercise.getPackageFolderName(), localTestsGit);
+
+        // Mock dockerClient.copyArchiveFromContainerCmd() such that it returns the commitHash for the assignment repository.
+        localVCLocalCITestService.mockCommitHash(mockDockerClient, commitHash);
+
+        // Mock dockerClient.copyArchiveFromContainerCmd() such that it returns the XMLs containing the test results.
+        localVCLocalCITestService.mockTestResults(mockDockerClient, allFailTestResultsPath);
+
+        localVCLocalCITestService.testPushSuccessful(localTestsGit, instructorLogin, projectKey1, testsRepositorySlug, commitHash, studentParticipation.getId(), 1);
     }
 
     // ---- Tests for the solution repository ----

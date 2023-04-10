@@ -18,18 +18,20 @@ import de.tum.in.www1.artemis.util.LocalRepository;
 public class LocalVCTestsRepositoryIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
     // ---- Repository handles ----
-    protected Path remoteTestsRepositoryFolder;
+    private Path remoteTestsRepositoryFolder;
 
-    protected Git remoteTestsGit;
+    private Git remoteTestsGit;
 
-    protected Path localTestsRepositoryFolder;
+    private Path localTestsRepositoryFolder;
 
-    protected Git localTestsGit;
+    private Git localTestsGit;
+
+    private String testsRepositorySlug;
 
     @BeforeEach
     void initRepository() throws IOException, GitAPIException, URISyntaxException {
-        final String testsRepoName = projectKey1.toLowerCase() + "-tests";
-        remoteTestsRepositoryFolder = localVCLocalCITestService.createRepositoryFolderInTempDirectory(projectKey1, testsRepoName);
+        testsRepositorySlug = projectKey1.toLowerCase() + "-tests";
+        remoteTestsRepositoryFolder = localVCLocalCITestService.createRepositoryFolderInTempDirectory(projectKey1, testsRepositorySlug);
         LocalRepository testsRepository = new LocalRepository(defaultBranch);
         testsRepository.configureRepos("localTests", remoteTestsRepositoryFolder);
         remoteTestsGit = testsRepository.originGit;
@@ -53,30 +55,8 @@ public class LocalVCTestsRepositoryIntegrationTest extends AbstractSpringIntegra
         }
     }
 
-    // ---- Tests for the tests repository ----
-
     @Test
-    void testFetch_testsRepository_student() {
-        // The tests repository can only be fetched by users that are at least teaching assistants in the course.
-    }
-
-    @Test
-    void testPush_testsRepository_student() {
-        // The tests repository can only be pushed to by users that are at least teaching assistants in the course.
-    }
-
-    @Test
-    void testFetch_testsRepository_teachingAssistant() {
-        // Should be successful
-    }
-
-    @Test
-    void testFetch_testsRepository_teachingAssistant_noParticipation() {
-
-    }
-
-    @Test
-    void testPush_testsRepository_teachingAssistant_noParticipation() {
+    void testFetchPush_testsRepository() {
 
     }
 }

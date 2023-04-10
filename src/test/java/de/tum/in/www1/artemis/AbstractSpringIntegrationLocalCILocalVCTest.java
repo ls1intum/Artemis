@@ -4,6 +4,7 @@ import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Set;
@@ -35,33 +36,45 @@ import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.participation.AbstractBaseProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.localvcci.LocalVCLocalCITestConfig;
 import de.tum.in.www1.artemis.localvcci.LocalVCLocalCITestService;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.ExerciseGroupRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.repository.TeamRepository;
+import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.util.AbstractArtemisIntegrationTest;
 import io.zonky.test.db.AutoConfigureEmbeddedDatabase;
 
 // Must start up an actual web server such that the tests can communicate with the ArtemisGitServlet using JGit.
-// Otherwise, only MockMvc requests could be used. The port this runs on is defined at server.port in application.myl.
+// Otherwise, only MockMvc requests could be used. The port this runs on is defined at server.port (see @TestPropertySource).
+// Note: Cannot use WebEnvironment.RANDOM_PORT here because artemis.version-control.url must be set to the correct port in the @TestPropertySource annotation.
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT)
 @AutoConfigureMockMvc
 @ExtendWith(SpringExtension.class)
 @AutoConfigureEmbeddedDatabase
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
 @ActiveProfiles({ SPRING_PROFILE_TEST, "artemis", "localci", "localvc", "scheduling" })
-@TestPropertySource(properties = { "artemis.user-management.use-external=false", "artemis.version-control.local-vcs-repo-path=${java.io.tmpdir}",
-        "artemis.version-control.url=http://localhost:8080", "artemis.continuous-integration.thread-pool-size=0",
-        "artemis.continuous-integration.build.images.java.default=dummy-docker-image" })
+// Note: the server.port property must correspond to the port used in the artemis.version-control.url property.
+@TestPropertySource(properties = { "server.port=49152", "artemis.version-control.url=http://localhost:49152", "artemis.version-control.local-vcs-repo-path=${java.io.tmpdir}",
+        "artemis.continuous-integration.thread-pool-size=0", "artemis.continuous-integration.build.images.java.default=dummy-docker-image",
+        "artemis.user-management.use-external=false" })
 // Contains the mock setup for the DockerClient.
 @ContextConfiguration(classes = LocalVCLocalCITestConfig.class)
 public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends AbstractArtemisIntegrationTest {
 
     protected static final String TEST_PREFIX = "localvclocalciintegration";
+
+    protected static final Path allFailTestResultsPath = Paths.get("src", "test", "resources", "test-data", "test-results", "java-gradle", "all-fail");
+
+    protected static final Path partlySuccessfulTestResultsPath = Paths.get("src", "test", "resources", "test-data", "test-results", "java-gradle", "partly-successful");
+
+    protected static final Path allSucceedTestResultsPath = Paths.get("src", "test", "resources", "test-data", "test-results", "java-gradle", "all-succeed");
 
     @Value("${artemis.version-control.url}")
     protected String localVCSBaseUrl;
@@ -92,6 +105,12 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
 
     @Autowired
     protected StudentExamRepository studentExamRepository;
+
+    @Autowired
+    private TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
+
+    @Autowired
+    private SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
 
     @LocalServerPort
     protected int port;
@@ -129,7 +148,7 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
 
     protected String projectKey1;
 
-    protected String assignmentRepositoryName;
+    protected String assignmentRepositorySlug;
 
     @BeforeEach
     void initUsersAndExercise() {
@@ -159,12 +178,20 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
         programmingExercise.setAllowOfflineIde(true);
         programmingExercise.setTestRepositoryUrl(localVCSBaseUrl + "/git/" + projectKey1 + "/" + projectKey1.toLowerCase() + "-tests.git");
         programmingExerciseRepository.save(programmingExercise);
-        programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).orElseThrow();
-        assignmentRepositoryName = (projectKey1 + "-" + student1Login).toLowerCase();
+        programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExercise.getId()).orElseThrow(); // programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).orElseThrow();
+        // Set the correct repository URLs for the template and the solution participation.
+        TemplateProgrammingExerciseParticipation templateParticipation = programmingExercise.getTemplateParticipation();
+        templateParticipation.setRepositoryUrl(localVCSBaseUrl + "/git/" + projectKey1 + "/" + projectKey1.toLowerCase() + "-template.git");
+        templateProgrammingExerciseParticipationRepository.save(templateParticipation);
+        SolutionProgrammingExerciseParticipation solutionParticipation = programmingExercise.getSolutionParticipation();
+        solutionParticipation.setRepositoryUrl(localVCSBaseUrl + "/git/" + projectKey1 + "/" + projectKey1.toLowerCase() + "-solution.git");
+        solutionProgrammingExerciseParticipationRepository.save(solutionParticipation);
+
+        assignmentRepositorySlug = (projectKey1 + "-" + student1Login).toLowerCase();
 
         // Add a participation for student1.
         studentParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, student1Login);
-        studentParticipation.setRepositoryUrl(String.format(localVCSBaseUrl + "/git/%s/%s.git", projectKey1, assignmentRepositoryName));
+        studentParticipation.setRepositoryUrl(String.format(localVCSBaseUrl + "/git/%s/%s.git", projectKey1, assignmentRepositorySlug));
         studentParticipation.setBranch(defaultBranch);
         programmingExerciseStudentParticipationRepository.save(studentParticipation);
 

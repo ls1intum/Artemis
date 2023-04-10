@@ -16,7 +16,6 @@ import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.InvalidRemoteException;
-import org.eclipse.jgit.api.errors.TransportException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -29,6 +28,7 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.in.www1.artemis.util.LocalRepository;
 
 /**
@@ -47,7 +47,7 @@ class LocalVCAssignmentRepositoryIntegrationTest extends AbstractSpringIntegrati
     @BeforeEach
     void initRepository() throws GitAPIException, IOException, URISyntaxException {
         // Create remote assignment repository
-        remoteAssignmentRepositoryFolder = localVCLocalCITestService.createRepositoryFolderInTempDirectory(projectKey1, assignmentRepositoryName);
+        remoteAssignmentRepositoryFolder = localVCLocalCITestService.createRepositoryFolderInTempDirectory(projectKey1, assignmentRepositorySlug);
         LocalRepository assignmentRepository = new LocalRepository(defaultBranch);
         assignmentRepository.configureRepos("localAssignment", remoteAssignmentRepositoryFolder);
         remoteAssignmentGit = assignmentRepository.originGit;
@@ -99,7 +99,7 @@ class LocalVCAssignmentRepositoryIntegrationTest extends AbstractSpringIntegrati
         FileUtils.deleteDirectory(remoteRepositoryFolder.toFile());
 
         // Try to push to the remote repository.
-        localVCLocalCITestService.testPushThrowsException(localGit, "someUser", projectKey, repositorySlug, TransportException.class, notFound);
+        localVCLocalCITestService.testPushThrowsException(localGit, "someUser", projectKey, repositorySlug, notFound);
 
         // Cleanup
         localGit.close();
@@ -108,24 +108,22 @@ class LocalVCAssignmentRepositoryIntegrationTest extends AbstractSpringIntegrati
 
     @Test
     void testFetch_wrongCredentials() {
-        localVCLocalCITestService.testFetchThrowsException(localAssignmentGit, student1Login, "wrong-password", projectKey1, assignmentRepositoryName, TransportException.class,
-                notAuthorized);
+        localVCLocalCITestService.testFetchThrowsException(localAssignmentGit, student1Login, "wrong-password", projectKey1, assignmentRepositorySlug, notAuthorized);
     }
 
     @Test
     void testPush_wrongCredentials() {
-        localVCLocalCITestService.testPushThrowsException(localAssignmentGit, student1Login, "wrong-password", projectKey1, assignmentRepositoryName, TransportException.class,
-                notAuthorized);
+        localVCLocalCITestService.testPushThrowsException(localAssignmentGit, student1Login, "wrong-password", projectKey1, assignmentRepositorySlug, notAuthorized);
     }
 
     @Test
     void testFetch_incompleteCredentials() {
-        localVCLocalCITestService.testFetchThrowsException(localAssignmentGit, student1Login, "", projectKey1, assignmentRepositoryName, TransportException.class, notAuthorized);
+        localVCLocalCITestService.testFetchThrowsException(localAssignmentGit, student1Login, "", projectKey1, assignmentRepositorySlug, notAuthorized);
     }
 
     @Test
     void testPush_incompleteCredentials() {
-        localVCLocalCITestService.testPushThrowsException(localAssignmentGit, student1Login, "", projectKey1, assignmentRepositoryName, TransportException.class, notAuthorized);
+        localVCLocalCITestService.testPushThrowsException(localAssignmentGit, student1Login, "", projectKey1, assignmentRepositorySlug, notAuthorized);
     }
 
     @Test
@@ -140,8 +138,8 @@ class LocalVCAssignmentRepositoryIntegrationTest extends AbstractSpringIntegrati
         Path localRepositoryFolder = someRepository.localRepoFile.toPath();
         Git localGit = someRepository.localGit;
 
-        localVCLocalCITestService.testFetchThrowsException(localGit, student1Login, projectKey, repositorySlug, TransportException.class, internalServerError);
-        localVCLocalCITestService.testPushThrowsException(localGit, student1Login, projectKey, repositorySlug, TransportException.class, internalServerError);
+        localVCLocalCITestService.testFetchThrowsException(localGit, student1Login, projectKey, repositorySlug, internalServerError);
+        localVCLocalCITestService.testPushThrowsException(localGit, student1Login, projectKey, repositorySlug, internalServerError);
 
         // Cleanup
         localGit.close();
@@ -155,8 +153,8 @@ class LocalVCAssignmentRepositoryIntegrationTest extends AbstractSpringIntegrati
         programmingExercise.setAllowOfflineIde(false);
         programmingExerciseRepository.save(programmingExercise);
 
-        localVCLocalCITestService.testFetchThrowsException(localAssignmentGit, student1Login, projectKey1, assignmentRepositoryName, TransportException.class, forbidden);
-        localVCLocalCITestService.testPushThrowsException(localAssignmentGit, student1Login, projectKey1, assignmentRepositoryName, TransportException.class, forbidden);
+        localVCLocalCITestService.testFetchThrowsException(localAssignmentGit, student1Login, projectKey1, assignmentRepositorySlug, forbidden);
+        localVCLocalCITestService.testPushThrowsException(localAssignmentGit, student1Login, projectKey1, assignmentRepositorySlug, forbidden);
 
         programmingExercise.setAllowOfflineIde(true);
         programmingExerciseRepository.save(programmingExercise);
@@ -166,7 +164,7 @@ class LocalVCAssignmentRepositoryIntegrationTest extends AbstractSpringIntegrati
 
     @Test
     void testFetch_assignmentRepository_student() {
-        localVCLocalCITestService.testFetchSuccessful(localAssignmentGit, student1Login, projectKey1, assignmentRepositoryName);
+        localVCLocalCITestService.testFetchSuccessful(localAssignmentGit, student1Login, projectKey1, assignmentRepositorySlug);
     }
 
     @Test
@@ -180,8 +178,8 @@ class LocalVCAssignmentRepositoryIntegrationTest extends AbstractSpringIntegrati
         Path localRepositoryFolder = someRepository.localRepoFile.toPath();
         Git localGit = someRepository.localGit;
 
-        localVCLocalCITestService.testFetchThrowsException(localGit, student2Login, projectKey1, repositorySlug, TransportException.class, internalServerError);
-        localVCLocalCITestService.testPushThrowsException(localGit, student2Login, projectKey1, repositorySlug, TransportException.class, internalServerError);
+        localVCLocalCITestService.testFetchThrowsException(localGit, student2Login, projectKey1, repositorySlug, internalServerError);
+        localVCLocalCITestService.testPushThrowsException(localGit, student2Login, projectKey1, repositorySlug, internalServerError);
 
         // Cleanup
         localGit.close();
@@ -193,8 +191,8 @@ class LocalVCAssignmentRepositoryIntegrationTest extends AbstractSpringIntegrati
     @Test
     void testFetchPush_assignmentRepository_student_studentDoesNotOwnParticipation() {
         // Student2 tries to access the repository of student1.
-        localVCLocalCITestService.testFetchThrowsException(localAssignmentGit, student2Login, projectKey1, assignmentRepositoryName, TransportException.class, notAuthorized);
-        localVCLocalCITestService.testPushThrowsException(localAssignmentGit, student2Login, projectKey1, assignmentRepositoryName, TransportException.class, notAuthorized);
+        localVCLocalCITestService.testFetchThrowsException(localAssignmentGit, student2Login, projectKey1, assignmentRepositorySlug, notAuthorized);
+        localVCLocalCITestService.testPushThrowsException(localAssignmentGit, student2Login, projectKey1, assignmentRepositorySlug, notAuthorized);
     }
 
     @Test
@@ -202,7 +200,7 @@ class LocalVCAssignmentRepositoryIntegrationTest extends AbstractSpringIntegrati
         programmingExercise.setStartDate(ZonedDateTime.now().plusHours(1));
         programmingExerciseRepository.save(programmingExercise);
 
-        localVCLocalCITestService.testPushThrowsException(localAssignmentGit, student1Login, projectKey1, assignmentRepositoryName, TransportException.class, forbidden);
+        localVCLocalCITestService.testPushThrowsException(localAssignmentGit, student1Login, projectKey1, assignmentRepositorySlug, forbidden);
     }
 
     @Test
@@ -210,21 +208,21 @@ class LocalVCAssignmentRepositoryIntegrationTest extends AbstractSpringIntegrati
         programmingExercise.setDueDate(ZonedDateTime.now().minusMinutes(1));
         programmingExerciseRepository.save(programmingExercise);
 
-        localVCLocalCITestService.testFetchSuccessful(localAssignmentGit, student1Login, projectKey1, assignmentRepositoryName);
-        localVCLocalCITestService.testPushThrowsException(localAssignmentGit, student1Login, projectKey1, assignmentRepositoryName, TransportException.class, forbidden);
+        localVCLocalCITestService.testFetchSuccessful(localAssignmentGit, student1Login, projectKey1, assignmentRepositorySlug);
+        localVCLocalCITestService.testPushThrowsException(localAssignmentGit, student1Login, projectKey1, assignmentRepositorySlug, forbidden);
     }
 
     @Test
     void testFetchPush_assignmentRepository_teachingAssistant() {
         // Teaching assistants should always be able to fetch student assignment repositories.
-        localVCLocalCITestService.testFetchSuccessful(localAssignmentGit, tutor1Login, projectKey1, assignmentRepositoryName);
-        localVCLocalCITestService.testPushThrowsException(localAssignmentGit, tutor1Login, projectKey1, assignmentRepositoryName, TransportException.class, notAuthorized);
+        localVCLocalCITestService.testFetchSuccessful(localAssignmentGit, tutor1Login, projectKey1, assignmentRepositorySlug);
+        localVCLocalCITestService.testPushThrowsException(localAssignmentGit, tutor1Login, projectKey1, assignmentRepositorySlug, notAuthorized);
 
         programmingExercise.setDueDate(ZonedDateTime.now().minusMinutes(1));
         programmingExerciseRepository.save(programmingExercise);
 
-        localVCLocalCITestService.testFetchSuccessful(localAssignmentGit, tutor1Login, projectKey1, assignmentRepositoryName);
-        localVCLocalCITestService.testPushThrowsException(localAssignmentGit, tutor1Login, projectKey1, assignmentRepositoryName, TransportException.class, notAuthorized);
+        localVCLocalCITestService.testFetchSuccessful(localAssignmentGit, tutor1Login, projectKey1, assignmentRepositorySlug);
+        localVCLocalCITestService.testPushThrowsException(localAssignmentGit, tutor1Login, projectKey1, assignmentRepositorySlug, notAuthorized);
     }
 
     @Test
@@ -249,8 +247,8 @@ class LocalVCAssignmentRepositoryIntegrationTest extends AbstractSpringIntegrati
         programmingExerciseRepository.save(programmingExercise);
 
         // Student
-        localVCLocalCITestService.testFetchThrowsException(localGit, student1Login, projectKey1, repositorySlug, TransportException.class, notAuthorized);
-        localVCLocalCITestService.testPushThrowsException(localGit, student1Login, projectKey1, repositorySlug, TransportException.class, notAuthorized);
+        localVCLocalCITestService.testFetchThrowsException(localGit, student1Login, projectKey1, repositorySlug, notAuthorized);
+        localVCLocalCITestService.testPushThrowsException(localGit, student1Login, projectKey1, repositorySlug, notAuthorized);
 
         // Instructor
         localVCLocalCITestService.testFetchSuccessful(localGit, instructorLogin, projectKey1, repositorySlug);
@@ -263,6 +261,16 @@ class LocalVCAssignmentRepositoryIntegrationTest extends AbstractSpringIntegrati
         FileUtils.deleteDirectory(localRepositoryFolder.toFile());
         remoteGit.close();
         FileUtils.deleteDirectory(remoteRepositoryFolder.toFile());
+    }
+
+    @Test
+    void testPush_assignmentRepository_student_tooManySubmissions() {
+        // LockRepositoryPolicy is enforced
+        LockRepositoryPolicy lockRepositoryPolicy = new LockRepositoryPolicy();
+        lockRepositoryPolicy.setSubmissionLimit(0);
+        lockRepositoryPolicy.setActive(true);
+        database.addSubmissionPolicyToExercise(lockRepositoryPolicy, programmingExercise);
+        localVCLocalCITestService.testPushThrowsException(localAssignmentGit, student1Login, projectKey1, assignmentRepositorySlug, forbidden);
     }
 
     // -------- practice mode ----
@@ -279,8 +287,8 @@ class LocalVCAssignmentRepositoryIntegrationTest extends AbstractSpringIntegrati
         Git localGit = practiceRepository.localGit;
 
         // Test without participation.
-        localVCLocalCITestService.testFetchThrowsException(localGit, student1Login, projectKey1, repositorySlug, TransportException.class, internalServerError);
-        localVCLocalCITestService.testPushThrowsException(localGit, student1Login, projectKey1, repositorySlug, TransportException.class, internalServerError);
+        localVCLocalCITestService.testFetchThrowsException(localGit, student1Login, projectKey1, repositorySlug, internalServerError);
+        localVCLocalCITestService.testPushThrowsException(localGit, student1Login, projectKey1, repositorySlug, internalServerError);
 
         // Create practice participation.
         ProgrammingExerciseStudentParticipation practiceParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, student1Login);
@@ -290,8 +298,8 @@ class LocalVCAssignmentRepositoryIntegrationTest extends AbstractSpringIntegrati
         localVCLocalCITestService.testFetchSuccessful(localGit, student1Login, projectKey1, repositorySlug);
 
         // Try to access practice repository as student2 who does not own the participation.
-        localVCLocalCITestService.testFetchThrowsException(localGit, student2Login, projectKey1, repositorySlug, TransportException.class, notAuthorized);
-        localVCLocalCITestService.testPushThrowsException(localGit, student2Login, projectKey1, repositorySlug, TransportException.class, notAuthorized);
+        localVCLocalCITestService.testFetchThrowsException(localGit, student2Login, projectKey1, repositorySlug, notAuthorized);
+        localVCLocalCITestService.testPushThrowsException(localGit, student2Login, projectKey1, repositorySlug, notAuthorized);
 
         // Cleanup
         localGit.close();
@@ -320,8 +328,8 @@ class LocalVCAssignmentRepositoryIntegrationTest extends AbstractSpringIntegrati
         Git localGit = repository.localGit;
 
         // Test without team.
-        localVCLocalCITestService.testFetchThrowsException(localGit, student1Login, projectKey1, repositorySlug, TransportException.class, internalServerError);
-        localVCLocalCITestService.testPushThrowsException(localGit, student1Login, projectKey1, repositorySlug, TransportException.class, internalServerError);
+        localVCLocalCITestService.testFetchThrowsException(localGit, student1Login, projectKey1, repositorySlug, internalServerError);
+        localVCLocalCITestService.testPushThrowsException(localGit, student1Login, projectKey1, repositorySlug, internalServerError);
 
         // Create team.
         Team team = new Team();
@@ -333,8 +341,8 @@ class LocalVCAssignmentRepositoryIntegrationTest extends AbstractSpringIntegrati
         teamRepository.save(team);
 
         // Test without participation.
-        localVCLocalCITestService.testFetchThrowsException(localGit, student1Login, projectKey1, repositorySlug, TransportException.class, internalServerError);
-        localVCLocalCITestService.testPushThrowsException(localGit, student1Login, projectKey1, repositorySlug, TransportException.class, internalServerError);
+        localVCLocalCITestService.testFetchThrowsException(localGit, student1Login, projectKey1, repositorySlug, internalServerError);
+        localVCLocalCITestService.testPushThrowsException(localGit, student1Login, projectKey1, repositorySlug, internalServerError);
 
         // Create participation.
         ProgrammingExerciseStudentParticipation teamParticipation = database.addTeamParticipationForProgrammingExercise(programmingExercise, team);
@@ -342,8 +350,8 @@ class LocalVCAssignmentRepositoryIntegrationTest extends AbstractSpringIntegrati
         localVCLocalCITestService.testFetchSuccessful(localGit, student1Login, projectKey1, repositorySlug);
 
         // Try to access the repository as student2, which is not part of the team
-        localVCLocalCITestService.testFetchThrowsException(localGit, student2Login, projectKey1, repositorySlug, TransportException.class, notAuthorized);
-        localVCLocalCITestService.testPushThrowsException(localGit, student2Login, projectKey1, repositorySlug, TransportException.class, notAuthorized);
+        localVCLocalCITestService.testFetchThrowsException(localGit, student2Login, projectKey1, repositorySlug, notAuthorized);
+        localVCLocalCITestService.testPushThrowsException(localGit, student2Login, projectKey1, repositorySlug, notAuthorized);
 
         // Cleanup
         localGit.close();
@@ -376,10 +384,10 @@ class LocalVCAssignmentRepositoryIntegrationTest extends AbstractSpringIntegrati
         studentExamRepository.save(studentExam);
 
         // student1 should not be able to fetch or push yet, even if the repository was already prepared.
-        localVCLocalCITestService.testFetchThrowsException(localAssignmentGit, student1Login, projectKey1, assignmentRepositoryName, TransportException.class, forbidden);
-        localVCLocalCITestService.testPushThrowsException(localAssignmentGit, student1Login, projectKey1, assignmentRepositoryName, TransportException.class, forbidden);
+        localVCLocalCITestService.testFetchThrowsException(localAssignmentGit, student1Login, projectKey1, assignmentRepositorySlug, forbidden);
+        localVCLocalCITestService.testPushThrowsException(localAssignmentGit, student1Login, projectKey1, assignmentRepositorySlug, forbidden);
         // tutor1 should be able to fetch.
-        localVCLocalCITestService.testFetchSuccessful(localAssignmentGit, tutor1Login, projectKey1, assignmentRepositoryName);
+        localVCLocalCITestService.testFetchSuccessful(localAssignmentGit, tutor1Login, projectKey1, assignmentRepositorySlug);
 
         // Due date is in the past.
         exam.setStartDate(ZonedDateTime.now().minusHours(1));
@@ -389,10 +397,10 @@ class LocalVCAssignmentRepositoryIntegrationTest extends AbstractSpringIntegrati
         studentExamRepository.save(studentExam);
 
         // student1 should not be able to fetch or push.
-        localVCLocalCITestService.testFetchThrowsException(localAssignmentGit, student1Login, projectKey1, assignmentRepositoryName, TransportException.class, forbidden);
-        localVCLocalCITestService.testPushThrowsException(localAssignmentGit, student1Login, projectKey1, assignmentRepositoryName, TransportException.class, forbidden);
+        localVCLocalCITestService.testFetchThrowsException(localAssignmentGit, student1Login, projectKey1, assignmentRepositorySlug, forbidden);
+        localVCLocalCITestService.testPushThrowsException(localAssignmentGit, student1Login, projectKey1, assignmentRepositorySlug, forbidden);
         // tutor1 should be able to fetch.
-        localVCLocalCITestService.testFetchSuccessful(localAssignmentGit, tutor1Login, projectKey1, assignmentRepositoryName);
+        localVCLocalCITestService.testFetchSuccessful(localAssignmentGit, tutor1Login, projectKey1, assignmentRepositorySlug);
 
         // Cleanup
         programmingExercise.setExerciseGroup(null);

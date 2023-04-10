@@ -32,6 +32,8 @@ import org.eclipse.jgit.api.FetchCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.PushCommand;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.api.errors.TransportException;
+import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.transport.RefSpec;
 import org.mockito.ArgumentMatcher;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,8 +44,12 @@ import com.github.dockerjava.api.command.CopyArchiveFromContainerCmd;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
+import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
+import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.enumeration.Visibility;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
+import de.tum.in.www1.artemis.util.GitUtilService;
 
 @Service
 public class LocalVCLocalCITestService {
@@ -57,6 +63,32 @@ public class LocalVCLocalCITestService {
 
     @Autowired
     private ProgrammingExerciseTestCaseRepository testCaseRepository;
+
+    @Autowired
+    private ProgrammingSubmissionRepository programmingSubmissionRepository;
+
+    @Autowired
+    private GitUtilService gitUtilService;
+
+    /**
+     * Mock dockerClient.copyArchiveFromContainerCmd() such that it returns the commitHash for the assignment repository.
+     *
+     * @param mockDockerClient the mocked DockerClient.
+     * @param commitHash       the commit hash to return.
+     */
+    public void mockCommitHash(DockerClient mockDockerClient, String commitHash) throws IOException {
+        mockInputStreamReturnedFromContainer(mockDockerClient, "/repositories/assignment-repository/.git/refs/heads/[^/]+", Map.of("assignmentCommitHash", commitHash));
+    }
+
+    /**
+     * Mock dockerClient.copyArchiveFromContainerCmd() such that it returns the XMLs containing the test results.
+     *
+     * @param mockDockerClient the mocked DockerClient.
+     * @param testResultsPath  the path to the directory containing the test results in the resources folder.
+     */
+    public void mockTestResults(DockerClient mockDockerClient, Path testResultsPath) throws IOException {
+        mockInputStreamReturnedFromContainer(mockDockerClient, "/repositories/test-repository/build/test-results/test", createMapFromTestResultsFolder(testResultsPath));
+    }
 
     /**
      * Mocks the InputStream returned by dockerClient.copyArchiveFromContainerCmd(String containerId, String resource).exec()
@@ -206,6 +238,14 @@ public class LocalVCLocalCITestService {
         return resultMap;
     }
 
+    public String commitFile(Path localRepositoryFolder, String packageFolderName, Git localGit) throws Exception {
+        Path testJsonFilePath = Path.of(localRepositoryFolder.toString(), "src", packageFolderName, "test.txt");
+        gitUtilService.writeEmptyJsonFileToPath(testJsonFilePath);
+        localGit.add().addFilepattern(".").call();
+        RevCommit commit = localGit.commit().setMessage("Add test.txt").call();
+        return commit.getId().getName();
+    }
+
     public void testFetchSuccessful(Git repositoryHandle, String username, String projectKey, String repositorySlug) {
         testFetchSuccessful(repositoryHandle, username, USER_PASSWORD, projectKey, repositorySlug);
     }
@@ -219,14 +259,12 @@ public class LocalVCLocalCITestService {
         }
     }
 
-    public <T extends Exception> void testFetchThrowsException(Git repositoryHandle, String username, String projectKey, String repositorySlug, Class<T> expectedException,
-            String expectedMessage) {
-        testFetchThrowsException(repositoryHandle, username, USER_PASSWORD, projectKey, repositorySlug, expectedException, expectedMessage);
+    public void testFetchThrowsException(Git repositoryHandle, String username, String projectKey, String repositorySlug, String expectedMessage) {
+        testFetchThrowsException(repositoryHandle, username, USER_PASSWORD, projectKey, repositorySlug, expectedMessage);
     }
 
-    public <T extends Exception> void testFetchThrowsException(Git repositoryHandle, String username, String password, String projectKey, String repositorySlug,
-            Class<T> expectedException, String expectedMessage) {
-        T exception = assertThrows(expectedException, () -> performFetch(repositoryHandle, username, password, projectKey, repositorySlug));
+    public void testFetchThrowsException(Git repositoryHandle, String username, String password, String projectKey, String repositorySlug, String expectedMessage) {
+        TransportException exception = assertThrows(TransportException.class, () -> performFetch(repositoryHandle, username, password, projectKey, repositorySlug));
         assertThat(exception.getMessage()).contains(expectedMessage);
     }
 
@@ -241,14 +279,34 @@ public class LocalVCLocalCITestService {
         fetchCommand.call();
     }
 
-    public <T extends Exception> void testPushThrowsException(Git repositoryHandle, String username, String projectKey, String repositorySlug, Class<T> expectedException,
-            String expectedMessage) {
-        testPushThrowsException(repositoryHandle, username, USER_PASSWORD, projectKey, repositorySlug, expectedException, expectedMessage);
+    public void testPushSuccessful(Git repositoryHandle, String username, String projectKey, String repositorySlug, String commitHash, Long participationId,
+            int expectedSuccessfulTestCases) {
+        testPushSuccessful(repositoryHandle, username, USER_PASSWORD, projectKey, repositorySlug, commitHash, participationId, expectedSuccessfulTestCases);
     }
 
-    public <T extends Exception> void testPushThrowsException(Git repositoryHandle, String username, String password, String projectKey, String repositorySlug,
-            Class<T> expectedException, String expectedMessage) {
-        T exception = assertThrows(expectedException, () -> performPush(repositoryHandle, username, password, projectKey, repositorySlug));
+    public void testPushSuccessful(Git repositoryHandle, String username, String password, String projectKey, String repositorySlug, String commitHash, Long participationId,
+            int expectedSuccessfulTestCases) {
+        try {
+            performPush(repositoryHandle, username, password, projectKey, repositorySlug);
+        }
+        catch (GitAPIException e) {
+            fail("Fetching was not successful: " + e.getMessage());
+        }
+
+        // Assert that the latest submission has the correct commit hash and the correct result.
+        ProgrammingSubmission programmingSubmission = programmingSubmissionRepository.findFirstByParticipationIdOrderBySubmissionDateDesc(participationId).orElseThrow();
+        assertThat(programmingSubmission.getCommitHash()).isEqualTo(commitHash);
+        Result result = programmingSubmission.getLatestResult();
+        assertThat(result.getTestCaseCount()).isEqualTo(13);
+        assertThat(result.getPassedTestCaseCount()).isEqualTo(expectedSuccessfulTestCases);
+    }
+
+    public void testPushThrowsException(Git repositoryHandle, String username, String projectKey, String repositorySlug, String expectedMessage) {
+        testPushThrowsException(repositoryHandle, username, USER_PASSWORD, projectKey, repositorySlug, expectedMessage);
+    }
+
+    public void testPushThrowsException(Git repositoryHandle, String username, String password, String projectKey, String repositorySlug, String expectedMessage) {
+        TransportException exception = assertThrows(TransportException.class, () -> performPush(repositoryHandle, username, password, projectKey, repositorySlug));
         assertThat(exception.getMessage()).contains(expectedMessage);
     }
 

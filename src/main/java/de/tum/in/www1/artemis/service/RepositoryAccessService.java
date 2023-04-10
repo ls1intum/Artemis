@@ -137,8 +137,6 @@ public class RepositoryAccessService {
      * @param user          the user that wants to access the test repository.
      */
     public void checkAccessTestRepositoryElseThrow(boolean atLeastEditor, ProgrammingExercise exercise, User user) {
-        // The only test-repository endpoints that require at least editor permissions are the getStatus (GET /api/test-repository/{exerciseId}) and updateTestFiles (PUT
-        // /api/test-repository/{exerciseId}/files) endpoints.
         if (atLeastEditor) {
             if (!authorizationCheckService.isAtLeastEditorInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user)) {
                 throw new AccessForbiddenException("You are not allowed to access the test repository of this programming exercise.");
