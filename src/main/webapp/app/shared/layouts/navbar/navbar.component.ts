@@ -38,6 +38,7 @@ import {
     faList,
     faLock,
     faSignOutAlt,
+    faStamp,
     faTachometerAlt,
     faTasks,
     faThLarge,
@@ -97,6 +98,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     faCog = faCog;
     faWrench = faWrench;
     faLock = faLock;
+    faStamp = faStamp;
     faFlag = faFlag;
     faBook = faBook;
     faTasks = faTasks;
@@ -328,6 +330,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         tutorial_groups_checklist: 'artemisApp.pages.checklist.title',
         create_tutorial_groups_configuration: 'artemisApp.pages.createTutorialGroupsConfiguration.title',
         privacy_statement: 'artemisApp.privacyStatement.title',
+        imprint: 'artemisApp.imprint.title',
     };
 
     studentPathBreadcrumbTranslations = {

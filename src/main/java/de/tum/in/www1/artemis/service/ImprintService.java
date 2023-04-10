@@ -55,6 +55,6 @@ public class ImprintService extends LegalDocumentService {
 
     @Override
     protected Path getLegalDocumentPathForType(LegalDocumentLanguage language) {
-        return Path.of(BASE_PATH, IMPRINT_FILE_NAME + language.name() + IMPRINT_FILE_EXTENSION);
+        return Path.of(BASE_PATH, IMPRINT_FILE_NAME + language.getShortName() + IMPRINT_FILE_EXTENSION);
     }
 }

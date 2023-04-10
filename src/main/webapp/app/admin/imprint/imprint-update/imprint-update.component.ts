@@ -1,19 +1,19 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
-import { PrivacyStatementService } from 'app/shared/service/privacy-statement.service';
-import { PrivacyStatement } from 'app/entities/privacy-statement.model';
 import { MarkdownEditorComponent, MarkdownEditorHeight } from 'app/shared/markdown-editor/markdown-editor.component';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { PrivacyStatementUnsavedChangesWarningComponent } from 'app/admin/privacy-statement/unsaved-changes-warning/privacy-statement-unsaved-changes-warning.component';
 import { LegalDocumentLanguage } from 'app/entities/legal-document.model';
+import { ImprintService } from 'app/shared/service/imprint.service';
+import { Imprint } from 'app/entities/imprint.model';
 
 @Component({
-    selector: 'jhi-privacy-statement-update-component',
-    styleUrls: ['./privacy-statement-update.component.scss'],
-    templateUrl: './privacy-statement-update.component.html',
+    selector: 'jhi-imprint-update-component',
+    styleUrls: ['./imprint-update.component.scss'],
+    templateUrl: './imprint-update.component.html',
 })
-export class PrivacyStatementUpdateComponent implements OnInit {
-    privacyStatement: PrivacyStatement;
+export class ImprintUpdateComponent implements OnInit {
+    imprint: Imprint;
     supportedLanguages: LegalDocumentLanguage[] = [LegalDocumentLanguage.GERMAN, LegalDocumentLanguage.ENGLISH];
     unsavedChanges = false;
     faBan = faBan;
@@ -22,7 +22,7 @@ export class PrivacyStatementUpdateComponent implements OnInit {
     @ViewChild(MarkdownEditorComponent, { static: false }) markdownEditor: MarkdownEditorComponent;
     readonly languageOptions = this.supportedLanguages.map((language) => ({
         value: language,
-        labelKey: 'artemisApp.privacyStatement.language.' + language,
+        labelKey: 'artemisApp.imprint.language.' + language,
         btnClass: 'btn-primary',
     }));
     readonly defaultLanguage = LegalDocumentLanguage.GERMAN;
@@ -31,49 +31,47 @@ export class PrivacyStatementUpdateComponent implements OnInit {
     currentLanguage = this.defaultLanguage;
     unsavedChangesWarning: NgbModalRef;
 
-    constructor(private privacyStatementService: PrivacyStatementService, private modalService: NgbModal) {}
+    constructor(private imprintService: ImprintService, private modalService: NgbModal) {}
 
     ngOnInit() {
-        this.privacyStatement = new PrivacyStatement(this.defaultLanguage);
-        this.privacyStatementService.getPrivacyStatementForUpdate(this.defaultLanguage).subscribe((statement) => {
-            this.privacyStatement = statement;
+        this.imprint = new Imprint(this.defaultLanguage);
+        this.imprintService.getImprintForUpdate(this.defaultLanguage).subscribe((imprint) => {
+            this.imprint = imprint;
         });
     }
 
-    updatePrivacyStatement() {
+    updateImprint() {
         this.isSaving = true;
-        this.privacyStatement.text = this.markdownEditor.markdown!;
-        this.privacyStatementService.updatePrivacyStatement(this.privacyStatement).subscribe((statement) => {
-            this.privacyStatement = statement;
+        this.imprint.text = this.markdownEditor.markdown!;
+        this.imprintService.updateImprint(this.imprint).subscribe((imprint) => {
+            this.imprint = imprint;
             this.unsavedChanges = false;
             this.isSaving = false;
         });
     }
 
     checkUnsavedChanges(content: string) {
-        if (content !== this.privacyStatement.text) {
+        if (content !== this.imprint.text) {
             this.unsavedChanges = true;
         } else {
             this.unsavedChanges = false;
         }
     }
 
-    onLanguageChange(privacyStatementLanguage: any) {
+    onLanguageChange(imprintLanguage: any) {
         if (this.unsavedChanges) {
-            this.showWarning(privacyStatementLanguage);
+            this.showWarning(imprintLanguage);
         } else {
-            this.currentLanguage = privacyStatementLanguage;
-            this.privacyStatementService.getPrivacyStatementForUpdate(privacyStatementLanguage).subscribe((statement) => (this.privacyStatement = statement));
+            this.currentLanguage = imprintLanguage;
+            this.imprintService.getImprintForUpdate(imprintLanguage).subscribe((imprint) => (this.imprint = imprint));
         }
     }
 
-    showWarning(privacyStatementLanguage: any) {
+    showWarning(imprintLanguage: any) {
         this.unsavedChangesWarning = this.modalService.open(PrivacyStatementUnsavedChangesWarningComponent, { size: 'lg', backdrop: 'static' });
-        this.unsavedChangesWarning.componentInstance.textMessage = 'ABC';
-
         this.unsavedChangesWarning.result.then(() => {
             this.unsavedChanges = false;
-            this.onLanguageChange(privacyStatementLanguage);
+            this.onLanguageChange(imprintLanguage);
         });
     }
 }

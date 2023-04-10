@@ -2,7 +2,8 @@ import { HttpClientTestingModule, HttpTestingController } from '@angular/common/
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 
 import { PrivacyStatementService } from 'app/shared/service/privacy-statement.service';
-import { PrivacyStatement, PrivacyStatementLanguage } from 'app/entities/privacy-statement.model';
+import { PrivacyStatement } from 'app/entities/privacy-statement.model';
+import { LegalDocumentLanguage } from 'app/entities/legal-document.model';
 
 describe('PrivacyStatementService', () => {
     let service: PrivacyStatementService;
@@ -18,7 +19,7 @@ describe('PrivacyStatementService', () => {
     });
 
     it('should make PUT request to update privacy statement', fakeAsync(() => {
-        const update = new PrivacyStatement(PrivacyStatementLanguage.ENGLISH);
+        const update = new PrivacyStatement(LegalDocumentLanguage.ENGLISH);
         update.text = 'updated text';
         service.updatePrivacyStatement(update).subscribe((resp) => expect(resp).toEqual(update));
         const req = httpMock.expectOne({ method: 'PUT', url: `${resourceUrl}/privacy-statement` });
@@ -27,7 +28,7 @@ describe('PrivacyStatementService', () => {
     }));
 
     it('should make GET request to retrieve privacy statement for update', fakeAsync(() => {
-        const lang = PrivacyStatementLanguage.ENGLISH;
+        const lang = LegalDocumentLanguage.ENGLISH;
         const expected = new PrivacyStatement(lang);
         expected.text = 'text';
         service.getPrivacyStatementForUpdate(lang).subscribe((resp) => expect(resp).toEqual(expected));
@@ -37,7 +38,7 @@ describe('PrivacyStatementService', () => {
     }));
 
     it('should make GET request to retrieve privacy statement', fakeAsync(() => {
-        const lang = PrivacyStatementLanguage.GERMAN;
+        const lang = LegalDocumentLanguage.GERMAN;
         const expected = new PrivacyStatement(lang);
         expected.text = 'text';
         service.getPrivacyStatement(lang).subscribe((resp) => expect(resp).toEqual(expected));

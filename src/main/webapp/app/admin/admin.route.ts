@@ -83,6 +83,10 @@ export const adminState: Routes = [
                 path: 'privacy-statement',
                 loadChildren: () => import('./privacy-statement/privacy-statement-update/privacy-statement-update.module').then((module) => module.PrivacyStatementUpdateModule),
             },
+            {
+                path: 'imprint',
+                loadChildren: () => import('./imprint/imprint-update/imprint-update.module').then((module) => module.ImprintUpdateModule),
+            },
             ...organizationMgmtRoute,
             ...userManagementRoute,
             ...systemNotificationManagementRoute,

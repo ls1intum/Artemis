@@ -37,11 +37,11 @@ public class ImprintResource {
     }
 
     /**
-     * GET /privacy-statement-for-update : Returns the privacy statement if you want to update it.
+     * GET /imprint-for-update : Returns the imprint if you want to update it.
      * only accessible for admins
      *
-     * @param language the language of the privacy statement
-     * @return the privacy statement
+     * @param language the language of the imprint
+     * @return the imprint with the given language
      */
     @GetMapping("/imprint-for-update")
     @PreAuthorize("hasRole('ADMIN')")
@@ -57,7 +57,7 @@ public class ImprintResource {
      * @param imprint the imprint to update
      * @return the updated imprint
      */
-    @PutMapping("/privacy-statement")
+    @PutMapping("/imprint")
     @PreAuthorize("hasRole('ADMIN')")
     public Imprint updateImprint(@RequestBody Imprint imprint) {
         if (LegalDocumentLanguage.ENGLISH != imprint.getLanguage() && LegalDocumentLanguage.GERMAN != imprint.getLanguage()) {

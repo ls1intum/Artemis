@@ -105,6 +105,7 @@
                 "health": "Status",
                 "configuration": "Konfiguration",
                 "privacyStatement": "Datenschutzerklärung",
+                "imprint": "Impressum",
                 "logs": "Protokoll",
                 "audits": "Audits",
                 "apidocs": "API",

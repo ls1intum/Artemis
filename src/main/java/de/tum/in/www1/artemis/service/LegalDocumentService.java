@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -48,7 +49,7 @@ public abstract class LegalDocumentService {
     protected LegalDocument getLegalDocument(LegalDocumentLanguage language, LegalDocumentType type) {
         // if it doesn't exist for one language, try to return the other language, and only throw an exception if it doesn't exist for both languages
         if (getLegalDocumentPath(LegalDocumentLanguage.GERMAN).isEmpty() && getLegalDocumentPath(LegalDocumentLanguage.ENGLISH).isEmpty()) {
-            throw new BadRequestAlertException("Could not find " + type + " file for any language", "legalDocument", "noPrivacyStatementFile");
+            throw new BadRequestAlertException("Could not find " + type + " file for any language", type.name(), "noLegalDocumentFile");
         }
         else if (language == LegalDocumentLanguage.GERMAN && getLegalDocumentPath(language).isEmpty()) {
             language = LegalDocumentLanguage.ENGLISH;
@@ -74,8 +75,12 @@ public abstract class LegalDocumentService {
     }
 
     protected LegalDocument updateLegalDocument(LegalDocument legalDocument) {
+        if (legalDocument.getText().isBlank()) {
+            throw new BadRequestAlertException("Legal document text cannot be empty", legalDocument.getType().name(), "emptyLegalDocument");
+        }
         try {
-            Files.writeString(getLegalDocumentPath(legalDocument.getLanguage(), true).get(), legalDocument.getText());
+            Files.writeString(getLegalDocumentPath(legalDocument.getLanguage(), true).get(), legalDocument.getText(), StandardOpenOption.CREATE,
+                    StandardOpenOption.TRUNCATE_EXISTING);
         }
         catch (IOException e) {
             log.error("Could not update {} file for language {}", legalDocument.getType(), legalDocument.getLanguage());

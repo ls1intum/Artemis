@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
@@ -7,6 +7,9 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
     styleUrls: ['./privacy-statement-unsaved-changes-warning.component.scss'],
 })
 export class PrivacyStatementUnsavedChangesWarningComponent {
+    @Input()
+    textMessage: string;
+
     constructor(private activeModal: NgbActiveModal) {}
 
     /**
