@@ -90,8 +90,12 @@ public class PrivacyStatementService {
      */
 
     public PrivacyStatement updatePrivacyStatement(PrivacyStatement privacyStatement) {
+        if (privacyStatement.getText().isBlank()) {
+            throw new BadRequestAlertException("Privacy statement text cannot be empty", "privacyStatement", "emptyPrivacyStatement");
+        }
         try {
-            Files.writeString(getPrivacyStatementPath(privacyStatement.getLanguage(), true).get(), privacyStatement.getText(), StandardOpenOption.WRITE, StandardOpenOption.CREATE);
+            Files.writeString(getPrivacyStatementPath(privacyStatement.getLanguage(), true).get(), privacyStatement.getText(), StandardOpenOption.CREATE,
+                    StandardOpenOption.TRUNCATE_EXISTING);
         }
         catch (IOException e) {
             log.error("Could not update privacy statement file for language {}", privacyStatement.getLanguage());

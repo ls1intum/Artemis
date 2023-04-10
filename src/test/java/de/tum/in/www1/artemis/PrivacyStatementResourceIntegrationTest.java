@@ -1,8 +1,7 @@
 package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.argThat;
 import static org.mockito.Mockito.mockStatic;
 
@@ -193,7 +192,8 @@ class PrivacyStatementResourceIntegrationTest extends AbstractSpringIntegrationB
         try (MockedStatic<Files> mockedFiles = mockStatic(Files.class)) {
             mockedFiles.when(() -> Files.exists(any())).thenReturn(true);
             response = request.putWithResponseBody("/api/privacy-statement", requestBody, PrivacyStatement.class, HttpStatus.OK);
-            mockedFiles.verify(() -> Files.writeString(argThat(path -> path.toString().contains("_de")), any(), eq(StandardOpenOption.WRITE), eq(StandardOpenOption.CREATE)));
+            mockedFiles.verify(() -> Files.writeString(argThat(path -> path.toString().contains("_de")), anyString(), eq(StandardOpenOption.CREATE),
+                    eq(StandardOpenOption.TRUNCATE_EXISTING)));
 
         }
         assertThat(response.getLanguage()).isEqualTo(PrivacyStatementLanguage.GERMAN);
@@ -208,6 +208,14 @@ class PrivacyStatementResourceIntegrationTest extends AbstractSpringIntegrationB
         body.put("text", "test");
         body.put("language", "FRENCH");
         request.put("/api/privacy-statement", body, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testUpdatePrivacyStatement_blankTextBadRequest() throws Exception {
+        PrivacyStatement requestBody = new PrivacyStatement(PrivacyStatementLanguage.GERMAN);
+        requestBody.setText("           ");
+        request.put("/api/privacy-statement", requestBody, HttpStatus.BAD_REQUEST);
     }
 
 }
