@@ -2,9 +2,10 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { UnsavedChangesWarningComponent } from 'app/admin/legal/unsaved-changes-warning/unsaved-changes-warning.component';
 import { ButtonComponent } from 'app/shared/components/button.component';
-import { MockComponent } from 'ng-mocks';
+import { MockComponent, MockDirective } from 'ng-mocks';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisTestModule } from '../../test.module';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 describe('UnsavedChangesWarningComponent', () => {
     let component: UnsavedChangesWarningComponent;
@@ -14,7 +15,7 @@ describe('UnsavedChangesWarningComponent', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [UnsavedChangesWarningComponent, MockComponent(ButtonComponent)],
+            declarations: [UnsavedChangesWarningComponent, MockComponent(ButtonComponent), MockDirective(TranslateDirective)],
         }).compileComponents();
 
         fixture = TestBed.createComponent(UnsavedChangesWarningComponent);
