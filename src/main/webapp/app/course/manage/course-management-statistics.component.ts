@@ -1,10 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Graphs, SpanType, StatisticsView } from 'app/entities/statistics.model';
-import { Subscription } from 'rxjs';
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
 import { CourseManagementStatisticsDTO } from './course-management-statistics-dto';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
+import { Course } from 'app/entities/course.model';
 
 @Component({
     selector: 'jhi-course-management-statistics',
@@ -32,8 +32,7 @@ export class CourseManagementStatisticsComponent implements OnInit {
     ];
     currentSpan: SpanType = SpanType.WEEK;
     statisticsView: StatisticsView = StatisticsView.COURSE;
-    paramSub: Subscription;
-    courseId: number;
+    course: Course;
 
     defaultTitle = 'Course';
     // Average Score
@@ -54,11 +53,15 @@ export class CourseManagementStatisticsComponent implements OnInit {
     constructor(private service: StatisticsService, private route: ActivatedRoute) {}
 
     ngOnInit() {
-        this.paramSub = this.route.params.subscribe((params) => {
-            this.courseId = params['courseId'];
-        });
-        this.service.getCourseStatistics(this.courseId).subscribe((res: CourseManagementStatisticsDTO) => {
-            this.courseStatistics = res;
+        this.route.data.subscribe(({ course }) => {
+            if (course) {
+                this.course = course;
+            }
+            if (this.course.id) {
+                this.service.getCourseStatistics(this.course.id).subscribe((res: CourseManagementStatisticsDTO) => {
+                    this.courseStatistics = res;
+                });
+            }
         });
     }
 

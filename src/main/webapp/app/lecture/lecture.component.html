@@ -1,4 +1,6 @@
 <div>
+    <jhi-header-course *ngIf="course" [course]="course"></jhi-header-course>
+    <jhi-course-tab-bar *ngIf="course" [course]="course"></jhi-course-tab-bar>
     <div class="row">
         <div class="col-4 d-flex align-items-center">
             <h2 id="page-heading">

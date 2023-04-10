@@ -1,3 +1,5 @@
+<jhi-header-course *ngIf="childComponent?.course" [course]="childComponent!.course!"></jhi-header-course>
+<jhi-course-tab-bar *ngIf="childComponent?.course" [course]="childComponent!.course!"></jhi-course-tab-bar>
 <div class="d-flex align-items-center">
     <h2>
         {{ isExam ? ('artemisApp.gradingSystem.titleExam' | artemisTranslate) : ('artemisApp.gradingSystem.titleCourse' | artemisTranslate) }}

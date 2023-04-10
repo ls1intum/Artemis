@@ -6,13 +6,14 @@ import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/Plagiarism
 import { Exercise, getIcon } from 'app/entities/exercise.model';
 import { downloadFile } from 'app/shared/util/download.util';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
+import { Course } from 'app/entities/course.model';
 
 @Component({
     selector: 'jhi-plagiarism-cases-instructor-view',
     templateUrl: './plagiarism-cases-instructor-view.component.html',
 })
 export class PlagiarismCasesInstructorViewComponent implements OnInit {
-    courseId: number;
+    course: Course;
     examId?: number;
     plagiarismCases: PlagiarismCase[] = [];
     groupedPlagiarismCases: any; // maybe? { [key: number]: PlagiarismCase[] }
@@ -24,12 +25,16 @@ export class PlagiarismCasesInstructorViewComponent implements OnInit {
     constructor(private plagiarismCasesService: PlagiarismCasesService, private route: ActivatedRoute) {}
 
     ngOnInit(): void {
-        this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
+        this.route.data.subscribe(({ course }) => {
+            if (course) {
+                this.course = course;
+            }
+        });
         this.examId = Number(this.route.snapshot.paramMap.get('examId'));
 
         const plagiarismCasesForInstructor$ = this.examId
-            ? this.plagiarismCasesService.getExamPlagiarismCasesForInstructor(this.courseId, this.examId)
-            : this.plagiarismCasesService.getCoursePlagiarismCasesForInstructor(this.courseId);
+            ? this.plagiarismCasesService.getExamPlagiarismCasesForInstructor(this.course.id!, this.examId)
+            : this.plagiarismCasesService.getCoursePlagiarismCasesForInstructor(this.course.id!);
 
         plagiarismCasesForInstructor$.subscribe({
             next: (res: HttpResponse<PlagiarismCase[]>) => {

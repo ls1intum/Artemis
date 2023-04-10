@@ -1,4 +1,6 @@
 <jhi-loading-indicator-container [isLoading]="isLoading">
+    <jhi-header-course *ngIf="course" [course]="course"></jhi-header-course>
+    <jhi-course-tab-bar *ngIf="course" [course]="course"></jhi-course-tab-bar>
     <div class="row">
         <div class="col-12 col-xl-10">
             <div class="d-flex justify-content-between">

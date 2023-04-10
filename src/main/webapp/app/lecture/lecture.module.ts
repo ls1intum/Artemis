@@ -21,6 +21,7 @@ import { LectureUpdateWizardAttachmentsComponent } from 'app/lecture/wizard-mode
 import { LectureUpdateWizardUnitsComponent } from 'app/lecture/wizard-mode/lecture-wizard-units.component';
 import { LectureUpdateWizardLearningGoalsComponent } from 'app/lecture/wizard-mode/lecture-wizard-learning-goals.component';
 import { LectureUpdateWizardStepComponent } from 'app/lecture/wizard-mode/lecture-update-wizard-step.component';
+import { ArtemisCoursesModule } from 'app/overview/courses.module';
 
 const ENTITY_STATES = [...lectureRoute];
 
@@ -34,6 +35,7 @@ const ENTITY_STATES = [...lectureRoute];
         ArtemisMarkdownModule,
         ArtemisMarkdownEditorModule,
         ArtemisLearningGoalsModule,
+        ArtemisCoursesModule,
     ],
     declarations: [
         LectureComponent,
