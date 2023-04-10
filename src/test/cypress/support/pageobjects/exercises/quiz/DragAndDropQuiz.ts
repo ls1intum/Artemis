@@ -10,6 +10,12 @@ export class DragAndDropQuiz {
         cy.get('#quiz-title').type(title);
     }
 
+    /**
+     * Drags an element to the modeling editor canvas
+     *
+     * @param x drop location on X-axis
+     * @param y drop location on Y-axis
+     */
     dragUsingCoordinates(x: number, y: number) {
         // @ts-ignore https://github.com/4teamwork/cypress-drag-drop/issues/103
         cy.get('#modeling-editor-sidebar').children().eq(2).drag(MODELING_EDITOR_CANVAS, { target: { x, y } });
@@ -17,6 +23,11 @@ export class DragAndDropQuiz {
         cy.get(MODELING_EDITOR_CANVAS).trigger('pointerup');
     }
 
+    /**
+     * Returns minimum and maximum X value of drop location elements
+     *
+     * @param $els selected drop location elements
+     */
     getXAxis($els: JQuery<HTMLElement>) {
         let minX = Number.MAX_SAFE_INTEGER;
         let maxX = Number.MIN_SAFE_INTEGER;
@@ -30,6 +41,17 @@ export class DragAndDropQuiz {
             }
         });
         return { minX, maxX };
+    }
+
+    activateInteractiveMode() {
+        const modelingEditorSidebar = cy.get('#modeling-editor-sidebar');
+        const container = modelingEditorSidebar.children().eq(0);
+        const interactiveButton = container.children().eq(1);
+        interactiveButton.click();
+    }
+
+    markElementAsInteractive(nthElementOnCanvas: number, nthChildOfElement: number) {
+        cy.get(MODELING_EDITOR_CANVAS).children().children().children().eq(nthElementOnCanvas).children().eq(0).children().eq(nthChildOfElement).click();
     }
 
     submit() {

@@ -2,7 +2,6 @@ import { Course } from 'app/entities/course.model';
 import { admin } from '../../../support/users';
 import { courseManagementRequest, quizExerciseDragAndDropQuiz } from '../../../support/artemis';
 import { convertCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
-import { MODELING_EDITOR_CANVAS } from '../../../support/pageobjects/exercises/modeling/ModelingEditor';
 
 let course: Course;
 
@@ -25,18 +24,18 @@ describe('Quiz Exercise Drop Location Spec', () => {
             cy.get('#create-dd-quiz').should('be.visible').click();
             cy.get('#create-apollon-diagram').should('be.visible').click();
             cy.get('#field_title').type('cypress-dd-quiz');
-            cy.get('#save-dd-quiz').click();
+            cy.get('#save-dnd-quiz').click();
         });
         it('Checks drop locations', () => {
             let containerBounds: DOMRect;
             quizExerciseDragAndDropQuiz.dragUsingCoordinates(310, 320);
             quizExerciseDragAndDropQuiz.dragUsingCoordinates(730, 500);
             quizExerciseDragAndDropQuiz.dragUsingCoordinates(1000, 100);
-            cy.get('#modeling-editor-sidebar').children().eq(0).children().eq(1).click();
-            cy.get(MODELING_EDITOR_CANVAS).children().children().children().eq(0).children().eq(0).children().eq(4).click();
-            cy.get(MODELING_EDITOR_CANVAS).children().children().children().eq(1).children().eq(0).children().eq(3).click();
-            cy.get(MODELING_EDITOR_CANVAS).children().children().children().eq(2).children().eq(0).children().eq(3).click();
-            cy.get(MODELING_EDITOR_CANVAS).children().children().children().eq(2).children().eq(0).children().eq(4).click();
+            quizExerciseDragAndDropQuiz.activateInteractiveMode();
+            quizExerciseDragAndDropQuiz.markElementAsInteractive(0, 4);
+            quizExerciseDragAndDropQuiz.markElementAsInteractive(1, 3);
+            quizExerciseDragAndDropQuiz.markElementAsInteractive(2, 3);
+            quizExerciseDragAndDropQuiz.markElementAsInteractive(2, 4);
             cy.get('#generate-quiz-exercise').click();
             cy.get('#generate-quiz-exercise-save').click();
             cy.wait(500);
