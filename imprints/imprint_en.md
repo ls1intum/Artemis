@@ -6,7 +6,7 @@ Technical University of Munich
 Postal address: Arcisstrasse 21, 80333 Munich  
 Telephone: +49-(0)89-289-01  
 Fax: +49-(0)89-289-22000  
-Email: post office(at)tum.de
+Email: poststelle(at)tum.de
 
 #### Authorized to represent
 
