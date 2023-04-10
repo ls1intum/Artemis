@@ -225,7 +225,7 @@ public class QuizExerciseService {
             quizSubmission.getSubmittedAnswers().removeAll(submittedAnswersToDelete);
 
             // recalculate existing score
-            quizSubmission.calculateAndUpdateScores(quizExercise);
+            quizSubmission.calculateAndUpdateScores(quizExercise.getQuizQuestions());
             // update Successful-Flag in Result
             StudentParticipation studentParticipation = (StudentParticipation) result.getParticipation();
             studentParticipation.setExercise(quizExercise);

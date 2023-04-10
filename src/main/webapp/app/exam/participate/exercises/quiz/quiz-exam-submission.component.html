@@ -1,8 +1,8 @@
 <div class="row">
-    <div class="quiz-navigation sticky-top" *ngIf="exercise">
+    <div class="quiz-navigation sticky-top" *ngIf="quizQuestions">
         <div class="quiz-navigation-content">
             <div class="stepwizardquiz">
-                <div *ngFor="let question of exercise.quizQuestions; let i = index" class="stepwizardquiz__step">
+                <div *ngFor="let question of quizQuestions; let i = index" class="stepwizardquiz__step">
                     <span
                         *ngIf="question.type === DRAG_AND_DROP"
                         class="btn btn-light btn-circle stepbutton stepwizardquiz-circle draganddropcolor-question"
@@ -36,18 +36,18 @@
             </div>
         </div>
     </div>
-    <div class="quiz-content container" *ngIf="exercise">
+    <div class="quiz-content container" *ngIf="quizQuestions">
         <h4 class="exercise-title">
-            {{ exercise.title }}
+            {{ title }}
             <span
-                >[{{ exercise.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate }}]
+                >[{{ maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate }}]
                 <jhi-included-in-score-badge
-                    *ngIf="exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY"
-                    [includedInOverallScore]="exercise.includedInOverallScore"
+                    *ngIf="includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY"
+                    [includedInOverallScore]="includedInOverallScore"
                 ></jhi-included-in-score-badge
             ></span>
         </h4>
-        <div *ngFor="let question of exercise.quizQuestions; let i = index">
+        <div *ngFor="let question of quizQuestions; let i = index">
             <!-- TODO: Map vs Array consistency -->
             <jhi-multiple-choice-question
                 id="question{{ question.id }}"
@@ -56,7 +56,7 @@
                 [selectedAnswerOptions]="selectedAnswerOptions.get(question.id!)!"
                 (selectedAnswerOptionsChange)="selectedAnswerOptions.set(question.id!, $event)"
                 [fnOnSelection]="onSelectionChanged.bind(this)"
-                [submittedQuizExercise]="exercise"
+                [quizQuestions]="quizQuestions"
                 [questionIndex]="i + 1"
             ></jhi-multiple-choice-question>
             <!-- TODO: Map vs Array consistency -->

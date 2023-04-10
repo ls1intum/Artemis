@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.Optional;
 import java.util.Set;
 
@@ -16,6 +15,7 @@ import de.tum.in.www1.artemis.domain.enumeration.QuizMode;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.quiz.AbstractQuizSubmission;
 import de.tum.in.www1.artemis.domain.quiz.QuizBatch;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
@@ -28,7 +28,7 @@ import de.tum.in.www1.artemis.service.scheduled.cache.quiz.QuizScheduleService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
-public class QuizSubmissionService {
+public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSubmission> {
 
     private final Logger log = LoggerFactory.getLogger(QuizSubmissionService.class);
 
@@ -42,17 +42,15 @@ public class QuizSubmissionService {
 
     private final ParticipationService participationService;
 
-    private final SubmissionVersionService submissionVersionService;
-
     private final QuizBatchService quizBatchService;
 
     public QuizSubmissionService(QuizSubmissionRepository quizSubmissionRepository, QuizScheduleService quizScheduleService, ResultRepository resultRepository,
             SubmissionVersionService submissionVersionService, QuizExerciseRepository quizExerciseRepository, ParticipationService participationService,
             QuizBatchService quizBatchService) {
+        super(submissionVersionService);
         this.quizSubmissionRepository = quizSubmissionRepository;
         this.resultRepository = resultRepository;
         this.quizScheduleService = quizScheduleService;
-        this.submissionVersionService = submissionVersionService;
         this.quizExerciseRepository = quizExerciseRepository;
         this.participationService = participationService;
         this.quizBatchService = quizBatchService;
@@ -72,7 +70,7 @@ public class QuizSubmissionService {
         quizSubmission.setType(SubmissionType.MANUAL);
         quizSubmission.setSubmissionDate(ZonedDateTime.now());
         // calculate scores
-        quizSubmission.calculateAndUpdateScores(quizExercise);
+        quizSubmission.calculateAndUpdateScores(quizExercise.getQuizQuestions());
         // save parent submission object
         quizSubmission = quizSubmissionRepository.save(quizSubmission);
 
@@ -194,46 +192,6 @@ public class QuizSubmissionService {
     }
 
     /**
-     * Updates a submission for the exam mode
-     *
-     * @param quizExercise   the quiz exercise for which the submission for the exam mode should be done
-     * @param quizSubmission the quiz submission includes the submitted answers by the student
-     * @param user           the student who wants to submit the quiz during the exam
-     * @return the updated quiz submission after it has been saved to the database
-     */
-    public QuizSubmission saveSubmissionForExamMode(QuizExercise quizExercise, QuizSubmission quizSubmission, User user) {
-        // update submission properties
-        quizSubmission.setSubmitted(true);
-        quizSubmission.setType(SubmissionType.MANUAL);
-        quizSubmission.setSubmissionDate(ZonedDateTime.now());
-
-        Optional<StudentParticipation> optionalParticipation = participationService.findOneByExerciseAndStudentLoginAnyState(quizExercise, user.getLogin());
-
-        if (optionalParticipation.isEmpty()) {
-            log.warn("The participation for quiz exercise {}, quiz submission {} and user {} was not found", quizExercise.getId(), quizSubmission.getId(), user.getLogin());
-            // TODO: think of better way to handle failure
-            throw new EntityNotFoundException("Participation for quiz exercise " + quizExercise.getId() + " and quiz submission " + quizSubmission.getId() + " for user "
-                    + user.getLogin() + " was not found!");
-        }
-        StudentParticipation studentParticipation = optionalParticipation.get();
-        quizSubmission.setParticipation(studentParticipation);
-        // remove result from submission (in the unlikely case it is passed here), so that students cannot inject a result
-        quizSubmission.setResults(new ArrayList<>());
-        quizSubmissionRepository.save(quizSubmission);
-
-        // versioning of submission
-        try {
-            submissionVersionService.saveVersionForIndividual(quizSubmission, user);
-        }
-        catch (Exception ex) {
-            log.error("Quiz submission version could not be saved", ex);
-        }
-
-        log.debug("submit exam quiz finished: {}", quizSubmission);
-        return quizSubmission;
-    }
-
-    /**
      * Returns true if student has submitted at least once for the given quiz batch
      *
      * @param quizBatch the quiz batch of interest to check if submission exists
@@ -244,5 +202,39 @@ public class QuizSubmissionService {
         Set<QuizSubmission> submissions = quizSubmissionRepository.findAllByQuizBatchAndStudentLogin(quizBatch, login);
         Optional<QuizSubmission> submission = submissions.stream().findFirst();
         return submission.map(QuizSubmission::isSubmitted).orElse(false);
+    }
+
+    /**
+     * Find StudentParticipation of the given quizExercise that was done by the given user
+     *
+     * @param quizExercise   the QuizExercise of which the StudentParticipation belongs to
+     * @param quizSubmission the AbstractQuizSubmission of which the participation to be set to
+     * @param user           the User of the StudentParticipation
+     * @return StudentParticipation the participation if exists, otherwise throw entity not found exception
+     */
+    protected StudentParticipation getParticipation(QuizExercise quizExercise, AbstractQuizSubmission quizSubmission, User user) {
+        Optional<StudentParticipation> optionalParticipation = participationService.findOneByExerciseAndStudentLoginAnyState(quizExercise, user.getLogin());
+
+        if (optionalParticipation.isEmpty()) {
+            log.warn("The participation for quiz exercise {}, quiz submission {} and user {} was not found", quizExercise.getId(), quizSubmission.getId(), user.getLogin());
+            // TODO: think of better way to handle failure
+            throw new EntityNotFoundException("Participation for quiz exercise " + quizExercise.getId() + " and quiz submission " + quizSubmission.getId() + " for user "
+                    + user.getLogin() + " was not found!");
+        }
+        return optionalParticipation.get();
+    }
+
+    /**
+     * Save the quiz submission to the database and also save the submission version
+     *
+     * @param quizExercise   the QuizExercise for which the given quizSubmission to be submitted
+     * @param quizSubmission the QuizSubmission to be saved
+     * @param user           the User by which the given quizSubmission was made
+     * @return saved QuizSubmission
+     */
+    @Override
+    protected QuizSubmission save(QuizExercise quizExercise, QuizSubmission quizSubmission, User user) {
+        quizSubmission.setParticipation(this.getParticipation(quizExercise, quizSubmission, user));
+        return quizSubmissionRepository.save(quizSubmission);
     }
 }
