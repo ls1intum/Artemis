@@ -1,6 +1,6 @@
 # Imprint
 
-## Publisher
+#### Publisher
 
 Technical University of Munich  
 Postal address: Arcisstrasse 21, 80333 Munich  
@@ -8,21 +8,21 @@ Telephone: +49-(0)89-289-01
 Fax: +49-(0)89-289-22000  
 Email: post office(at)tum.de
 
-## Authorized to represent
+#### Authorized to represent
 
 The Technical University of Munich is legally represented by the President Prof. Dr. Thomas F. Hofmann.
 
-## VAT number
+#### VAT number
 
 DE811193231 (according to § 27a Sales Tax Law)
 
-## Responsible for the content
+#### Responsible for the content
 
-Dr. Stephan Krusche
-Boltzmannstrasse 3
+Dr. Stephan Krusche  
+Boltzmannstrasse 3  
 85748 Garching
 
-## Terms of use
+#### Terms of use
 
 Texts, images, graphics as well as the design of these Internet pages may be subject to copyright.
 The following are not protected by copyright according to §5 of copyright law (Urheberrechtsgesetz (UrhG)).
@@ -39,7 +39,7 @@ The reprinting and evaluation of press releases and speeches are generally permi
 Furthermore, texts, images, graphics and other files may be subject in whole or in part to the copyright of third parties.
 The persons responsible for the content will also provide more detailed information on the existence of possible third-party rights.
 
-### Disclaimer
+#### Disclaimer
 
 All information provided on this website has been compiled and checked to the best of our knowledge and belief. However, we cannot guarantee that the information provided is
 up-to-date, correct, complete or available at all times. A contractual relationship with the users of the Internet offering does not come about.
@@ -52,7 +52,7 @@ If necessary in individual cases:
 The exclusion of liability does not apply to information that falls within the scope of the European Services Directive (Directive 2006/123/EC - DLRL).
 For this information we guarantee that it is correct and up to date.
 
-### Links
+#### Links
 
 Cross-references ("links") to the websites of other providers are to be distinguished from our own content.
 Through these links, we merely provide access to the use of third-party content in accordance with § 8 of the German Telemedia Act (TMG).
