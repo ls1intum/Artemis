@@ -44,16 +44,16 @@ public class ProgrammingExerciseParticipationService {
 
     private final AuthorizationCheckService authCheckService;
 
-    private final UserRepository userRepository;
-
     private final GitService gitService;
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
+    private final UserRepository userRepository;
+
     public ProgrammingExerciseParticipationService(SolutionProgrammingExerciseParticipationRepository solutionParticipationRepository,
             ProgrammingExerciseStudentParticipationRepository studentParticipationRepository, ParticipationRepository participationRepository, TeamRepository teamRepository,
             TemplateProgrammingExerciseParticipationRepository templateParticipationRepository, Optional<VersionControlService> versionControlService,
-            UserRepository userRepository, AuthorizationCheckService authCheckService, GitService gitService, ProgrammingExerciseRepository programmingExerciseRepository) {
+            AuthorizationCheckService authCheckService, GitService gitService, ProgrammingExerciseRepository programmingExerciseRepository, UserRepository userRepository) {
         this.studentParticipationRepository = studentParticipationRepository;
         this.solutionParticipationRepository = solutionParticipationRepository;
         this.templateParticipationRepository = templateParticipationRepository;
@@ -61,9 +61,9 @@ public class ProgrammingExerciseParticipationService {
         this.teamRepository = teamRepository;
         this.versionControlService = versionControlService;
         this.authCheckService = authCheckService;
-        this.userRepository = userRepository;
         this.gitService = gitService;
         this.programmingExerciseRepository = programmingExerciseRepository;
+        this.userRepository = userRepository;
     }
 
     /**
@@ -147,13 +147,28 @@ public class ProgrammingExerciseParticipationService {
      * - Template/SolutionParticipations should only be accessible for users with at least the role TA in the courses.
      *
      * @param participation to check permissions for.
-     * @return true if the user can access the participation, false if not. Also returns false if the participation is not from a programming exercise.
+     * @return true if the currently logged in user can access the participation, false if not. Also returns false if the participation is not from a programming exercise.
      */
     public boolean canAccessParticipation(@NotNull ProgrammingExerciseParticipation participation) {
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        return canAccessParticipation(participation, user);
+    }
+
+    /**
+     * Check if the currently logged-in user can access a given participation by accessing the exercise and course connected to this participation
+     * The method will treat the participation types differently:
+     * - ProgrammingExerciseStudentParticipations should only be accessible by its owner (student) or users with at least the role TA in the courses.
+     * - Template/SolutionParticipations should only be accessible for users with at least the role TA in the courses.
+     *
+     * @param participation to check permissions for.
+     * @param user          the current user.
+     * @return true if the user can access the participation, false if not. Also returns false if the participation is not from a programming exercise.
+     */
+    public boolean canAccessParticipation(@NotNull ProgrammingExerciseParticipation participation, User user) {
         if (participation == null) {
             return false;
         }
-        User user = userRepository.getUserWithGroupsAndAuthorities();
+
         // If the current user is owner of the participation, they are allowed to access it
         if (participation instanceof ProgrammingExerciseStudentParticipation studentParticipation && studentParticipation.isOwnedBy(user)) {
             return true;
