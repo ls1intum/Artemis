@@ -200,14 +200,7 @@ public class LocalCIPushService {
             // Notify the user about the new solution result.
             programmingMessagingService.notifyUserAboutNewResult(result, participation);
 
-            // If the solution participation was updated, also trigger the template participation build.
-            ProgrammingSubmission solutionSubmission = (ProgrammingSubmission) result.getSubmission();
-            if (!solutionSubmission.belongsToTestRepository() || (submission.belongsToTestRepository() && submission.getResults() != null && !submission.getResults().isEmpty())) {
-                // Sanity check. This should not happen, just copied from triggerTemplateBuildIfTestCasesChanged in the ResultResource.
-                log.error("The submission of the solution repository build of participation {} does not belong to the test repository.", participation.getId());
-                return;
-            }
-
+            // The solution participation received a new result, also trigger a build of the template repository.
             try {
                 programmingTriggerService.triggerTemplateBuildAndNotifyUser(exercise.getId(), submission.getCommitHash(), SubmissionType.TEST);
             }

@@ -28,6 +28,7 @@ import java.util.Map;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
+import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.FetchCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.PushCommand;
@@ -50,6 +51,7 @@ import de.tum.in.www1.artemis.domain.enumeration.Visibility;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.util.GitUtilService;
+import de.tum.in.www1.artemis.util.LocalRepository;
 
 @Service
 public class LocalVCLocalCITestService {
@@ -74,10 +76,24 @@ public class LocalVCLocalCITestService {
      * Mock dockerClient.copyArchiveFromContainerCmd() such that it returns the commitHash for the assignment repository.
      *
      * @param mockDockerClient the mocked DockerClient.
-     * @param commitHash       the commit hash to return.
+     * @param commitHashes     the commit hashes to return.
      */
-    public void mockCommitHash(DockerClient mockDockerClient, String commitHash) throws IOException {
-        mockInputStreamReturnedFromContainer(mockDockerClient, "/repositories/assignment-repository/.git/refs/heads/[^/]+", Map.of("assignmentCommitHash", commitHash));
+    public void mockCommitHash(DockerClient mockDockerClient, String... commitHashes) throws IOException {
+        if (commitHashes.length == 0) {
+            throw new IllegalArgumentException("At least one commit hash must be provided.");
+        }
+
+        if (commitHashes.length > 2) {
+            throw new IllegalArgumentException("At most two commit hashes can be provided.");
+        }
+
+        if (commitHashes.length == 1) {
+            mockInputStreamReturnedFromContainer(mockDockerClient, "/repositories/assignment-repository/.git/refs/heads/[^/]+", Map.of("assignmentCommitHash", commitHashes[0]));
+        }
+        else {
+            mockInputStreamReturnedFromContainer(mockDockerClient, "/repositories/assignment-repository/.git/refs/heads/[^/]+", Map.of("assignmentCommitHash", commitHashes[0]),
+                    Map.of("assignmentCommitHash", commitHashes[1]));
+        }
     }
 
     /**
@@ -95,17 +111,35 @@ public class LocalVCLocalCITestService {
      *
      * @param mockDockerClient     the mocked DockerClient.
      * @param resourceRegexPattern the regex pattern that the resource path must match. The resource path is the path of the file or directory inside the container.
-     * @param dataToReturn         the data to return inside the InputStream in form of a map. Each entry will be one TarArchiveEntry with the key denoting the
-     *                                 tarArchiveEntry.getName() and the value being the content of the TarArchiveEntry.
+     * @param dataToReturn         the data to return inside the InputStream in form of a map. Each entry of the map will be one TarArchiveEntry with the key denoting the
+     *                                 tarArchiveEntry.getName() and the value being the content of the TarArchiveEntry. There can be multiple dataToReturn entries, in which case
+     *                                 the first call to "copyArchiveFromContainerCmd().exec()" will return the first entry, the second call will return the second entry, etc.
      * @throws IOException if the InputStream cannot be created.
      */
-    public void mockInputStreamReturnedFromContainer(DockerClient mockDockerClient, String resourceRegexPattern, Map<String, String> dataToReturn) throws IOException {
+    @SafeVarargs
+    public final void mockInputStreamReturnedFromContainer(DockerClient mockDockerClient, String resourceRegexPattern, Map<String, String>... dataToReturn) throws IOException {
         // Mock dockerClient.copyArchiveFromContainerCmd(String containerId, String resource).exec()
         CopyArchiveFromContainerCmd copyArchiveFromContainerCmd = mock(CopyArchiveFromContainerCmd.class);
-        BufferedInputStream dataInputStream = createInputStreamForTarArchiveFromMap(dataToReturn);
         ArgumentMatcher<String> expectedPathMatcher = path -> path.matches(resourceRegexPattern);
         doReturn(copyArchiveFromContainerCmd).when(mockDockerClient).copyArchiveFromContainerCmd(anyString(), argThat(expectedPathMatcher));
-        when(copyArchiveFromContainerCmd.exec()).thenReturn(dataInputStream);
+
+        if (dataToReturn.length == 0) {
+            throw new IllegalArgumentException("At least one dataToReturn entry must be provided.");
+        }
+
+        if (dataToReturn.length > 2) {
+            throw new IllegalArgumentException("Only two dataToReturn entries are supported.");
+        }
+
+        if (dataToReturn.length == 1) {
+            // If only one dataToReturn entry is provided, return it for every call to "copyArchiveFromContainerCmd().exec()"
+            when(copyArchiveFromContainerCmd.exec()).thenReturn(createInputStreamForTarArchiveFromMap(dataToReturn[0]));
+        }
+        else {
+            // If two dataToReturn entries are provided, return the first one for the first call to "copyArchiveFromContainerCmd().exec()" and the second one for the second call to
+            // "copyArchiveFromContainerCmd().exec()"
+            when(copyArchiveFromContainerCmd.exec()).thenReturn(createInputStreamForTarArchiveFromMap(dataToReturn[0]), createInputStreamForTarArchiveFromMap(dataToReturn[1]));
+        }
     }
 
     private BufferedInputStream createInputStreamForTarArchiveFromMap(Map<String, String> dataMap) throws IOException {
@@ -279,24 +313,25 @@ public class LocalVCLocalCITestService {
         fetchCommand.call();
     }
 
-    public void testPushSuccessful(Git repositoryHandle, String username, String projectKey, String repositorySlug, String commitHash, Long participationId,
-            int expectedSuccessfulTestCases) {
-        testPushSuccessful(repositoryHandle, username, USER_PASSWORD, projectKey, repositorySlug, commitHash, participationId, expectedSuccessfulTestCases);
+    public void testPushSuccessful(Git repositoryHandle, String username, String projectKey, String repositorySlug) {
+        testPushSuccessful(repositoryHandle, username, USER_PASSWORD, projectKey, repositorySlug);
     }
 
-    public void testPushSuccessful(Git repositoryHandle, String username, String password, String projectKey, String repositorySlug, String commitHash, Long participationId,
-            int expectedSuccessfulTestCases) {
+    public void testPushSuccessful(Git repositoryHandle, String username, String password, String projectKey, String repositorySlug) {
         try {
             performPush(repositoryHandle, username, password, projectKey, repositorySlug);
         }
         catch (GitAPIException e) {
             fail("Fetching was not successful: " + e.getMessage());
         }
+    }
 
+    public void testLastestSubmission(Long participationId, String expectedCommitHash, int expectedSuccessfulTestCases) {
         // Assert that the latest submission has the correct commit hash and the correct result.
         ProgrammingSubmission programmingSubmission = programmingSubmissionRepository.findFirstByParticipationIdOrderBySubmissionDateDesc(participationId).orElseThrow();
-        assertThat(programmingSubmission.getCommitHash()).isEqualTo(commitHash);
+        assertThat(programmingSubmission.getCommitHash()).isEqualTo(expectedCommitHash);
         Result result = programmingSubmission.getLatestResult();
+        assertThat(result).isNotNull();
         assertThat(result.getTestCaseCount()).isEqualTo(13);
         assertThat(result.getPassedTestCaseCount()).isEqualTo(expectedSuccessfulTestCases);
     }
@@ -317,5 +352,17 @@ public class LocalVCLocalCITestService {
         pushCommand.setRemote(repositoryUrl);
         // Execute the push.
         pushCommand.call();
+    }
+
+    public void removeRepository(LocalRepository repository) {
+        repository.localGit.close();
+        repository.originGit.close();
+        try {
+            FileUtils.deleteDirectory(repository.localRepoFile);
+            FileUtils.deleteDirectory(repository.originRepoFile);
+        }
+        catch (IOException e) {
+            throw new RuntimeException("Unable to delete repository folder.", e);
+        }
     }
 }

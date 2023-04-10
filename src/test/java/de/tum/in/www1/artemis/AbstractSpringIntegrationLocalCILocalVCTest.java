@@ -136,6 +136,10 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
 
     protected ProgrammingExerciseStudentParticipation instructorParticipation;
 
+    protected TemplateProgrammingExerciseParticipation templateParticipation;
+
+    protected SolutionProgrammingExerciseParticipation solutionParticipation;
+
     protected String student1Login;
 
     protected User student1;
@@ -180,10 +184,10 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
         programmingExerciseRepository.save(programmingExercise);
         programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExercise.getId()).orElseThrow(); // programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).orElseThrow();
         // Set the correct repository URLs for the template and the solution participation.
-        TemplateProgrammingExerciseParticipation templateParticipation = programmingExercise.getTemplateParticipation();
+        templateParticipation = programmingExercise.getTemplateParticipation();
         templateParticipation.setRepositoryUrl(localVCSBaseUrl + "/git/" + projectKey1 + "/" + projectKey1.toLowerCase() + "-template.git");
         templateProgrammingExerciseParticipationRepository.save(templateParticipation);
-        SolutionProgrammingExerciseParticipation solutionParticipation = programmingExercise.getSolutionParticipation();
+        solutionParticipation = programmingExercise.getSolutionParticipation();
         solutionParticipation.setRepositoryUrl(localVCSBaseUrl + "/git/" + projectKey1 + "/" + projectKey1.toLowerCase() + "-solution.git");
         solutionProgrammingExerciseParticipationRepository.save(solutionParticipation);
 
