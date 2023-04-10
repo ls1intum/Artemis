@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 
-import { PrivacyStatementUpdateComponent } from 'app/admin/privacy-statement/privacy-statement-update/privacy-statement-update.component';
+import { PrivacyStatementUpdateComponent } from 'app/admin/legal/privacy-statement/privacy-statement-update.component';
 import { Authority } from 'app/shared/constants/authority.constants';
 
 const routes: Routes = [

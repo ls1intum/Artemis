@@ -2,7 +2,7 @@ import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 
 import { Authority } from 'app/shared/constants/authority.constants';
-import { ImprintUpdateComponent } from 'app/admin/imprint/imprint-update/imprint-update.component';
+import { ImprintUpdateComponent } from 'app/admin/legal/imprint/imprint-update.component';
 
 const routes: Routes = [
     {

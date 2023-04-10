@@ -4,7 +4,7 @@ import { PrivacyStatementService } from 'app/shared/service/privacy-statement.se
 import { PrivacyStatement } from 'app/entities/privacy-statement.model';
 import { MarkdownEditorComponent, MarkdownEditorHeight } from 'app/shared/markdown-editor/markdown-editor.component';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { PrivacyStatementUnsavedChangesWarningComponent } from 'app/admin/privacy-statement/unsaved-changes-warning/privacy-statement-unsaved-changes-warning.component';
+import { UnsavedChangesWarningComponent } from 'app/admin/legal/unsaved-changes-warning/unsaved-changes-warning.component';
 import { LegalDocumentLanguage } from 'app/entities/legal-document.model';
 
 @Component({
@@ -68,8 +68,8 @@ export class PrivacyStatementUpdateComponent implements OnInit {
     }
 
     showWarning(privacyStatementLanguage: any) {
-        this.unsavedChangesWarning = this.modalService.open(PrivacyStatementUnsavedChangesWarningComponent, { size: 'lg', backdrop: 'static' });
-        this.unsavedChangesWarning.componentInstance.textMessage = 'ABC';
+        this.unsavedChangesWarning = this.modalService.open(UnsavedChangesWarningComponent, { size: 'lg', backdrop: 'static' });
+        this.unsavedChangesWarning.componentInstance.textMessage = 'artemisApp.privacyStatement.unsavedChangesWarning';
 
         this.unsavedChangesWarning.result.then(() => {
             this.unsavedChanges = false;

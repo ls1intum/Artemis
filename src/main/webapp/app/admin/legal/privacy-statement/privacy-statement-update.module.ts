@@ -1,21 +1,22 @@
 import { NgModule } from '@angular/core';
+
+import { PrivacyStatementUpdateComponent } from 'app/admin/legal/privacy-statement/privacy-statement-update.component';
 import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
 import { ArtemisModePickerModule } from 'app/exercises/shared/mode-picker/mode-picker.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
-import { ImprintUpdateComponent } from 'app/admin/imprint/imprint-update/imprint-update.component';
-import { LegalDocumentUnsavedChangesWarningModule } from 'app/admin/privacy-statement/unsaved-changes-warning/legal-document-unsaved-changes-warning.module';
-import { ImprintUpdateRoutingModule } from 'app/admin/imprint/imprint-update/imprint-update-routing.module';
+import { PrivacyStatementUpdateRoutingModule } from 'app/admin/legal/privacy-statement/privacy-statement-update-routing.module';
+import { LegalDocumentUnsavedChangesWarningModule } from 'app/admin/legal/unsaved-changes-warning/legal-document-unsaved-changes-warning.module';
 
 @NgModule({
     imports: [
         ArtemisSharedComponentModule,
         ArtemisSharedCommonModule,
-        ImprintUpdateRoutingModule,
+        PrivacyStatementUpdateRoutingModule,
         ArtemisMarkdownEditorModule,
         ArtemisModePickerModule,
         LegalDocumentUnsavedChangesWarningModule,
     ],
-    declarations: [ImprintUpdateComponent],
+    declarations: [PrivacyStatementUpdateComponent],
 })
-export class ImprintUpdateModule {}
+export class PrivacyStatementUpdateModule {}

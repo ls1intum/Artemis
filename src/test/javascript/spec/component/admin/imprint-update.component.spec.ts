@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockComponent, MockDirective } from 'ng-mocks';
-import { PrivacyStatementUnsavedChangesWarningComponent } from 'app/admin/privacy-statement/unsaved-changes-warning/privacy-statement-unsaved-changes-warning.component';
+import { UnsavedChangesWarningComponent } from 'app/admin/legal/unsaved-changes-warning/unsaved-changes-warning.component';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTestModule } from '../../test.module';
@@ -11,7 +11,7 @@ import { MockLanguageHelper } from '../../helpers/mocks/service/mock-translate.s
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ModePickerComponent } from 'app/exercises/shared/mode-picker/mode-picker.component';
 import { LegalDocumentLanguage } from 'app/entities/legal-document.model';
-import { ImprintUpdateComponent } from 'app/admin/imprint/imprint-update/imprint-update.component';
+import { ImprintUpdateComponent } from 'app/admin/legal/imprint/imprint-update.component';
 import { ImprintService } from 'app/shared/service/imprint.service';
 
 describe('ImprintUpdateComponent', () => {
@@ -25,7 +25,7 @@ describe('ImprintUpdateComponent', () => {
             imports: [ArtemisTestModule],
             declarations: [
                 ImprintUpdateComponent,
-                MockComponent(PrivacyStatementUnsavedChangesWarningComponent),
+                MockComponent(UnsavedChangesWarningComponent),
                 MockComponent(ButtonComponent),
                 MockDirective(TranslateDirective),
                 MockComponent(MarkdownEditorComponent),
@@ -51,7 +51,7 @@ describe('ImprintUpdateComponent', () => {
         component.onLanguageChange(LegalDocumentLanguage.GERMAN);
         fixture.detectChanges();
         expect(open).toHaveBeenCalledOnce();
-        expect(open).toHaveBeenCalledWith(PrivacyStatementUnsavedChangesWarningComponent, { size: 'lg', backdrop: 'static' });
+        expect(open).toHaveBeenCalledWith(UnsavedChangesWarningComponent, { size: 'lg', backdrop: 'static' });
     });
 
     it('should load imprint in German on init', () => {

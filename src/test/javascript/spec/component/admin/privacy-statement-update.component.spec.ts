@@ -1,8 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { PrivacyStatementUpdateComponent } from 'app/admin/privacy-statement/privacy-statement-update/privacy-statement-update.component';
+import { PrivacyStatementUpdateComponent } from 'app/admin/legal/privacy-statement/privacy-statement-update.component';
 import { MockComponent, MockDirective } from 'ng-mocks';
-import { PrivacyStatementUnsavedChangesWarningComponent } from 'app/admin/privacy-statement/unsaved-changes-warning/privacy-statement-unsaved-changes-warning.component';
+import { UnsavedChangesWarningComponent } from 'app/admin/legal/unsaved-changes-warning/unsaved-changes-warning.component';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTestModule } from '../../test.module';
@@ -26,7 +26,7 @@ describe('PrivacyStatementUpdateComponent', () => {
             imports: [ArtemisTestModule],
             declarations: [
                 PrivacyStatementUpdateComponent,
-                MockComponent(PrivacyStatementUnsavedChangesWarningComponent),
+                MockComponent(UnsavedChangesWarningComponent),
                 MockComponent(ButtonComponent),
                 MockDirective(TranslateDirective),
                 MockComponent(MarkdownEditorComponent),
@@ -52,7 +52,7 @@ describe('PrivacyStatementUpdateComponent', () => {
         component.onLanguageChange(LegalDocumentLanguage.GERMAN);
         fixture.detectChanges();
         expect(open).toHaveBeenCalledOnce();
-        expect(open).toHaveBeenCalledWith(PrivacyStatementUnsavedChangesWarningComponent, { size: 'lg', backdrop: 'static' });
+        expect(open).toHaveBeenCalledWith(UnsavedChangesWarningComponent, { size: 'lg', backdrop: 'static' });
     });
 
     it('should load privacy statement in German on init', () => {

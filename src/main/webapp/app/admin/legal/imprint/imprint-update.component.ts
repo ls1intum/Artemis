@@ -2,7 +2,7 @@ import { Component, OnInit, ViewChild } from '@angular/core';
 import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
 import { MarkdownEditorComponent, MarkdownEditorHeight } from 'app/shared/markdown-editor/markdown-editor.component';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { PrivacyStatementUnsavedChangesWarningComponent } from 'app/admin/privacy-statement/unsaved-changes-warning/privacy-statement-unsaved-changes-warning.component';
+import { UnsavedChangesWarningComponent } from 'app/admin/legal/unsaved-changes-warning/unsaved-changes-warning.component';
 import { LegalDocumentLanguage } from 'app/entities/legal-document.model';
 import { ImprintService } from 'app/shared/service/imprint.service';
 import { Imprint } from 'app/entities/imprint.model';
@@ -68,7 +68,8 @@ export class ImprintUpdateComponent implements OnInit {
     }
 
     showWarning(imprintLanguage: any) {
-        this.unsavedChangesWarning = this.modalService.open(PrivacyStatementUnsavedChangesWarningComponent, { size: 'lg', backdrop: 'static' });
+        this.unsavedChangesWarning = this.modalService.open(UnsavedChangesWarningComponent, { size: 'lg', backdrop: 'static' });
+        this.unsavedChangesWarning.componentInstance.textMessage = 'artemisApp.imprint.unsavedChangesWarning';
         this.unsavedChangesWarning.result.then(() => {
             this.unsavedChanges = false;
             this.onLanguageChange(imprintLanguage);
