@@ -621,6 +621,9 @@ public class QuizExercise extends Exercise implements QuizConfiguration {
         quizQuestion.setExercise(this);
     }
 
+    /**
+     * Recreate missing pointers from children to parents that were removed by @JSONIgnore
+     */
     public void reconnectJSONIgnoreAttributes() {
         QuizConfiguration.super.reconnectJSONIgnoreAttributes();
 
