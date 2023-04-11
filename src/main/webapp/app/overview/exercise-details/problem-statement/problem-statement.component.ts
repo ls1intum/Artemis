@@ -18,16 +18,14 @@ export class ProblemStatementComponent implements OnInit {
     @Input()
     participation?: StudentParticipation;
 
-    constructor(public route: ActivatedRoute, private exerciseService: ExerciseService, private participationService: ParticipationService) {}
+    constructor(private route: ActivatedRoute, private exerciseService: ExerciseService, private participationService: ParticipationService) {}
 
     ngOnInit() {
         this.route.params.subscribe((params) => {
             const exerciseId = parseInt(params['exerciseId'], 10);
-            let participationId: number | undefined;
+            let participationId: number | undefined = undefined;
             if (params['participationId']) {
                 participationId = parseInt(params['participationId'], 10);
-            } else {
-                participationId = undefined;
             }
 
             if (!this.exercise) {

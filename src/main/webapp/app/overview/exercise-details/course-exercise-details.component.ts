@@ -401,7 +401,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
      * Returns the latest finished result for modeling and text exercises. It does not have to be rated.
      * For other exercise types it returns a rated result.
      */
-    getLatestRatedResult() {
+    getLatestRatedResult(): void {
         if (!this.gradedStudentParticipation?.submissions?.[0] || !this.sortedHistoryResults?.length) {
             return;
         }
