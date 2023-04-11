@@ -8,11 +8,11 @@ import { RouterModule } from '@angular/router';
 import { IntervalGradingSystemComponent } from 'app/grading-system/interval-grading-system/interval-grading-system.component';
 import { ArtemisModePickerModule } from 'app/exercises/shared/mode-picker/mode-picker.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
-import { ArtemisCoursesModule } from 'app/overview/courses.module';
+import { CourseManagementTabBarModule } from 'app/shared/course-management-tab-bar/course-management-tab-bar.module';
 
 @NgModule({
     declarations: [GradingSystemComponent, DetailedGradingSystemComponent, IntervalGradingSystemComponent, GradingSystemInfoModalComponent],
-    imports: [ArtemisSharedModule, RouterModule.forChild(gradingSystemState), ArtemisModePickerModule, ArtemisSharedComponentModule, ArtemisCoursesModule],
+    imports: [ArtemisSharedModule, RouterModule.forChild(gradingSystemState), ArtemisModePickerModule, ArtemisSharedComponentModule, CourseManagementTabBarModule],
     exports: [GradingSystemComponent, GradingSystemInfoModalComponent],
 })
 export class GradingSystemModule {}

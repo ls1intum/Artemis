@@ -5,8 +5,8 @@ import { PlagiarismCaseInstructorDetailViewComponent } from 'app/course/plagiari
 import { Authority } from 'app/shared/constants/authority.constants';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { ArtemisPlagiarismCasesSharedModule } from 'app/course/plagiarism-cases/shared/plagiarism-cases-shared.module';
-import { ArtemisCoursesModule } from 'app/overview/courses.module';
 import { CourseManagementResolve } from 'app/course/manage/course-management-resolve.service';
+import { CourseManagementTabBarModule } from 'app/shared/course-management-tab-bar/course-management-tab-bar.module';
 
 const routes: Routes = [
     {
@@ -33,7 +33,7 @@ const routes: Routes = [
 ];
 
 @NgModule({
-    imports: [RouterModule.forChild(routes), ArtemisPlagiarismCasesSharedModule, ArtemisCoursesModule],
+    imports: [RouterModule.forChild(routes), ArtemisPlagiarismCasesSharedModule, CourseManagementTabBarModule],
     declarations: [PlagiarismCasesInstructorViewComponent, PlagiarismCaseInstructorDetailViewComponent],
 })
 export class ArtemisPlagiarismCasesInstructorViewModule {}

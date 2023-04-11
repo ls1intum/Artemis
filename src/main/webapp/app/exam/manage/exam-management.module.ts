@@ -53,7 +53,7 @@ import { ExamExerciseImportComponent } from 'app/exam/manage/exams/exam-exercise
 import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
 import { BonusComponent } from 'app/grading-system/bonus/bonus.component';
 import { ArtemisModePickerModule } from 'app/exercises/shared/mode-picker/mode-picker.module';
-import { ArtemisCoursesModule } from 'app/overview/courses.module';
+import { CourseManagementTabBarModule } from 'app/shared/course-management-tab-bar/course-management-tab-bar.module';
 
 const ENTITY_STATES = [...examManagementState];
 
@@ -87,7 +87,7 @@ const ENTITY_STATES = [...examManagementState];
         FeatureToggleModule,
         ArtemisModePickerModule,
         StudentsUploadImagesModule,
-        ArtemisCoursesModule,
+        CourseManagementTabBarModule,
     ],
     declarations: [
         ExamManagementComponent,

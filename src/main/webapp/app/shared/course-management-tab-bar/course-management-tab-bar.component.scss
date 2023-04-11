@@ -1,20 +1,16 @@
 .tab-bar {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     flex-wrap: wrap;
-    min-height: 60px;
     $padding-y: 11px;
 
-    padding-top: $padding-y;
-    margin-bottom: $padding-y;
     border-bottom: 1px solid #979797;
+    margin-bottom: $padding-y;
 
     .tab-item {
         margin-bottom: $padding-y;
     }
-}
 
-.tab-bar-course-detail {
     @media (max-width: 750px) {
         min-height: 100px;
         padding-bottom: 40px;

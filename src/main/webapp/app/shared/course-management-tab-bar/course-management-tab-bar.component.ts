@@ -3,7 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Subject, Subscription } from 'rxjs';
 import { Course, isCommunicationEnabled } from 'app/entities/course.model';
-import { CourseManagementService } from '../../course-management.service';
+import { CourseManagementService } from '../../course/manage/course-management.service';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { ButtonSize } from 'app/shared/components/button.component';
 import { EventManager } from 'app/core/util/event-manager.service';
@@ -27,17 +27,17 @@ import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service'
 import { CourseAdminService } from 'app/course/manage/course-admin.service';
 
 @Component({
-    selector: 'jhi-course-tab-bar',
-    templateUrl: './course-tab-bar.component.html',
-    styleUrls: ['./course-tab-bar.component.scss'],
+    selector: 'jhi-course-management-tab-bar',
+    templateUrl: './course-management-tab-bar.component.html',
+    styleUrls: ['./course-management-tab-bar.component.scss'],
 })
-export class CourseTabBarComponent implements OnInit, OnDestroy {
+export class CourseManagementTabBarComponent implements OnInit, OnDestroy {
     readonly FeatureToggle = FeatureToggle;
 
     ButtonSize = ButtonSize;
     ActionType = ActionType;
     activeStudents?: number[];
-    @Input() course: Course;
+    @Input() public course: Course;
     @Input() showCourseEditButtons = false;
 
     private eventSubscriber: Subscription;
