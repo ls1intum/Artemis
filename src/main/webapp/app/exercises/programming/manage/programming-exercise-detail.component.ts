@@ -458,7 +458,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
             return;
         }
 
-        const latestSolutionSubmissionSuccessful = this.programmingExerciseService.getLatestResult(this.programmingExercise?.solutionParticipation)?.successful;
+        const latestSolutionSubmissionSuccessful = this.programmingExerciseService.getLatestResult(this.programmingExercise.solutionParticipation)?.successful;
         if (this.programmingExercise.testwiseCoverageEnabled && !!latestSolutionSubmissionSuccessful) {
             this.programmingExerciseService.getLatestTestwiseCoverageReport(this.programmingExercise.id!).subscribe((coverageReport) => {
                 this.programmingExercise.coveredLinesRatio = coverageReport.coveredLineRatio;
