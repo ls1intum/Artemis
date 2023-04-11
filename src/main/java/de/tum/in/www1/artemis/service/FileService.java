@@ -608,8 +608,8 @@ public class FileService implements DisposableBean {
      * @return True, if the path is assumed to be a file but actually points to a directory.
      */
     private boolean isIgnoredDirectory(final Path filePath) {
-        final String path = filePath.getFileName().toString();
-        return IGNORED_DIRECTORY_SUFFIXES.stream().anyMatch(path::endsWith);
+        final String filename = filePath.getFileName().toString();
+        return IGNORED_DIRECTORY_SUFFIXES.stream().anyMatch(filename::endsWith);
     }
 
     /**
