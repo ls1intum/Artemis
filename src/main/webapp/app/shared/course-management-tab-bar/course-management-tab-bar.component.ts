@@ -37,7 +37,7 @@ export class CourseManagementTabBarComponent implements OnInit, OnDestroy {
     ButtonSize = ButtonSize;
     ActionType = ActionType;
     activeStudents?: number[];
-    @Input() public course: Course;
+    course: Course;
     @Input() showCourseEditButtons = false;
 
     private eventSubscriber: Subscription;
@@ -76,27 +76,13 @@ export class CourseManagementTabBarComponent implements OnInit, OnDestroy {
      * On init load the course information and subscribe to listen for changes in courses.
      */
     ngOnInit() {
-        this.route.data.subscribe(({ course }) => {
-            if (course) {
-                this.course = course;
-            }
-        });
-        // There is no course 0 -> will fetch no course if route does not provide different courseId
         let courseId = 0;
         this.paramSub = this.route.params.subscribe((params) => {
             courseId = params['courseId'];
         });
-        this.registerChangeInCourses(courseId);
-    }
 
-    /**
-     * Subscribe to changes in courses and reload the course after a change.
-     */
-    registerChangeInCourses(courseId: number) {
-        this.eventSubscriber = this.eventManager.subscribe('courseListModification', () => {
-            this.courseManagementService.find(courseId).subscribe((courseResponse) => {
-                this.course = courseResponse.body!;
-            });
+        this.eventSubscriber = this.courseManagementService.find(courseId).subscribe((courseResponse) => {
+            this.course = courseResponse.body!;
         });
     }
 

@@ -13,7 +13,6 @@ import { PrerequisiteImportComponent } from 'app/course/learning-goals/learning-
 import { ClusterNode, Edge, Node } from '@swimlane/ngx-graph';
 import { AccountService } from 'app/core/auth/account.service';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
-import { Course } from 'app/entities/course.model';
 
 @Component({
     selector: 'jhi-learning-goal-management',
@@ -21,7 +20,7 @@ import { Course } from 'app/entities/course.model';
     styleUrls: ['./learning-goal-management.component.scss'],
 })
 export class LearningGoalManagementComponent implements OnInit, OnDestroy {
-    course: Course;
+    courseId: number;
     isLoading = false;
     learningGoals: LearningGoal[] = [];
     prerequisites: LearningGoal[] = [];
@@ -62,9 +61,9 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
 
     ngOnInit(): void {
         this.showRelations = this.accountService.isAdmin(); // beta feature
-        this.activatedRoute.data.subscribe(({ course }) => {
-            this.course = course;
-            if (this.course.id) {
+        this.activatedRoute.parent!.params.subscribe((params) => {
+            this.courseId = +params['courseId'];
+            if (this.courseId) {
                 this.loadData();
             }
         });
@@ -75,7 +74,7 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
     }
 
     deleteLearningGoal(learningGoalId: number) {
-        this.learningGoalService.delete(learningGoalId, this.course.id!).subscribe({
+        this.learningGoalService.delete(learningGoalId, this.courseId).subscribe({
             next: () => {
                 this.dialogErrorSource.next('');
                 this.loadData();
@@ -85,7 +84,7 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
     }
 
     removePrerequisite(learningGoalId: number) {
-        this.learningGoalService.removePrerequisite(learningGoalId, this.course.id!).subscribe({
+        this.learningGoalService.removePrerequisite(learningGoalId, this.courseId).subscribe({
             next: () => {
                 this.dialogErrorSource.next('');
                 this.loadData();
@@ -97,7 +96,7 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
     loadData() {
         this.isLoading = true;
         this.learningGoalService
-            .getAllPrerequisitesForCourse(this.course.id!)
+            .getAllPrerequisitesForCourse(this.courseId)
             .pipe(map((response: HttpResponse<LearningGoal[]>) => response.body!))
             .subscribe({
                 next: (learningGoals) => {
@@ -106,7 +105,7 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
                 error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
             });
         this.learningGoalService
-            .getAllForCourse(this.course.id!)
+            .getAllForCourse(this.courseId)
             .pipe(
                 switchMap((res) => {
                     this.learningGoals = res.body!;
@@ -119,11 +118,11 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
                     );
 
                     const relationsObservable = this.learningGoals.map((lg) => {
-                        return this.learningGoalService.getLearningGoalRelations(lg.id!, this.course.id!);
+                        return this.learningGoalService.getLearningGoalRelations(lg.id!, this.courseId);
                     });
 
                     const progressObservable = this.learningGoals.map((lg) => {
-                        return this.learningGoalService.getCourseProgress(lg.id!, this.course.id!);
+                        return this.learningGoalService.getCourseProgress(lg.id!, this.courseId);
                     });
 
                     return forkJoin([forkJoin(relationsObservable), forkJoin(progressObservable)]);
@@ -184,7 +183,7 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
         modalRef.result.then(
             (result: LearningGoal) => {
                 this.learningGoalService
-                    .addPrerequisite(result.id!, this.course.id!)
+                    .addPrerequisite(result.id!, this.courseId)
                     .pipe(
                         filter((res: HttpResponse<LearningGoal>) => res.ok),
                         map((res: HttpResponse<LearningGoal>) => res.body),
@@ -202,7 +201,7 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
 
     createRelation() {
         this.learningGoalService
-            .createLearningGoalRelation(this.tailLearningGoal!, this.headLearningGoal!, this.relationType!, this.course.id!)
+            .createLearningGoalRelation(this.tailLearningGoal!, this.headLearningGoal!, this.relationType!, this.courseId)
             .pipe(
                 filter((res: HttpResponse<LearningGoalRelation>) => res.ok),
                 map((res: HttpResponse<LearningGoalRelation>) => res.body),
@@ -216,7 +215,7 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
     }
 
     removeRelation(edge: Edge) {
-        this.learningGoalService.removeLearningGoalRelation(Number(edge.source), Number(edge.data.id), this.course.id!).subscribe({
+        this.learningGoalService.removeLearningGoalRelation(Number(edge.source), Number(edge.data.id), this.courseId).subscribe({
             next: () => {
                 this.loadData();
             },

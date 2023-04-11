@@ -1,4 +1,4 @@
-<jhi-course-management-tab-bar *ngIf="course" [course]="course"></jhi-course-management-tab-bar>
+<jhi-course-management-tab-bar></jhi-course-management-tab-bar>
 <div class="d-flex align-items-center">
     <h3 jhiTranslate="artemisApp.plagiarism.cases.plagiarismCases">Plagiarism Cases</h3>
     <jhi-documentation-button [type]="documentationType"></jhi-documentation-button>
@@ -53,7 +53,7 @@
             <ng-container *ngFor="let plagiarismCase of groupedPlagiarismCases[exercise!.id!]">
                 <div class="row mb-3">
                     <div class="col-1 text-center">
-                        <a [routerLink]="['/course-management', course.id, 'plagiarism-cases', plagiarismCase.id]">
+                        <a [routerLink]="['/course-management', courseId, 'plagiarism-cases', plagiarismCase.id]">
                             {{ plagiarismCase.student.name }} ({{ plagiarismCase.student.login }})
                         </a>
                     </div>

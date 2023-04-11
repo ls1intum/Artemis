@@ -5,14 +5,14 @@
 </div>
 
 <div *ngIf="!isLoading">
-    <jhi-course-management-tab-bar *ngIf="course" [course]="course"></jhi-course-management-tab-bar>
+    <jhi-course-management-tab-bar></jhi-course-management-tab-bar>
     <div class="d-flex flex-wrap">
         <div class="my-auto d-flex align-items-center">
             <h2 jhiTranslate="artemisApp.learningGoal.manageLearningGoals.title">Learning Goal Management</h2>
             <jhi-documentation-button [type]="documentationType"></jhi-documentation-button>
         </div>
         <div class="ms-auto text-truncate justify-content-end" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
-            <a class="btn btn-primary" [routerLink]="['/course-management', course.id, 'goal-management', 'create']">
+            <a class="btn btn-primary" [routerLink]="['/course-management', courseId, 'goal-management', 'create']">
                 <fa-icon [icon]="faPlus"></fa-icon>
                 <span>{{ 'artemisApp.learningGoal.manageLearningGoals.create' | artemisTranslate }}</span>
             </a>
@@ -124,10 +124,10 @@
             <tbody>
                 <tr *ngFor="let learningGoal of learningGoals; trackBy: identify; let i = index" id="learning-goal-row-{{ i }}">
                     <td>
-                        <a [routerLink]="['/courses', course.id, 'learning-goals', learningGoal.id]">{{ learningGoal.id }}</a>
+                        <a [routerLink]="['/courses', courseId, 'learning-goals', learningGoal.id]">{{ learningGoal.id }}</a>
                     </td>
                     <td>
-                        <a [routerLink]="['/courses', course.id, 'learning-goals', learningGoal.id]">{{ learningGoal.title }}</a>
+                        <a [routerLink]="['/courses', courseId, 'learning-goals', learningGoal.id]">{{ learningGoal.title }}</a>
                     </td>
                     <td [innerHTML]="learningGoal.description"></td>
                     <td>
@@ -148,7 +148,7 @@
                         <a
                             *jhiHasAnyAuthority="['ROLE_INSTRUCTOR', 'ROLE_ADMIN']"
                             class="btn btn-sm btn-primary"
-                            [routerLink]="['/course-management', course.id, 'goal-management', learningGoal.id, 'edit']"
+                            [routerLink]="['/course-management', courseId, 'goal-management', learningGoal.id, 'edit']"
                         >
                             <fa-icon [icon]="faPencilAlt"></fa-icon>
                             <span class="d-none d-md-inline">{{ 'entity.action.edit' | artemisTranslate }}</span>

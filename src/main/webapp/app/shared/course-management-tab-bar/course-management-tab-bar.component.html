@@ -68,7 +68,7 @@
             [entityTitle]="course.title || ''"
             deleteQuestion="artemisApp.course.delete.question"
             deleteConfirmationText="artemisApp.course.delete.typeNameToConfirm"
-            (delete)="deleteCourse(course.id!)"
+            (delete)="deleteCourse(course.id ?? 0)"
             [dialogError]="dialogError$"
         >
             <fa-icon [icon]="faTimes"></fa-icon>

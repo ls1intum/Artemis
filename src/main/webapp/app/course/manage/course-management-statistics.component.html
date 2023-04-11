@@ -1,5 +1,5 @@
 <div>
-    <jhi-course-management-tab-bar [course]="course"></jhi-course-management-tab-bar>
+    <jhi-course-management-tab-bar></jhi-course-management-tab-bar>
     <div class="row mb-5">
         <div class="d-flex align-items-center col-md-2">
             <h2 id="statistics-page-heading" jhiTranslate="statistics.course_statistics_title">Course statistics</h2>
@@ -11,7 +11,7 @@
         *ngIf="courseStatistics"
         [exerciseAverageScores]="courseStatistics.averageScoresOfExercises"
         [courseAverage]="courseStatistics.averageScoreOfCourse"
-        [courseId]="course.id ?? 0"
+        [courseId]="courseId"
     >
     </jhi-statistics-average-score-graph>
     <div class="separator w-100 mb-4"></div>
@@ -37,6 +37,6 @@
     </div>
     <div *ngFor="let graph of graphTypes; let i = index" id="graph-{{ i }}" class="graph">
         <hr *ngIf="i !== 0" />
-        <jhi-statistics-graph [graphType]="graph" [currentSpan]="currentSpan" [statisticsView]="statisticsView" [entityId]="course.id"> </jhi-statistics-graph>
+        <jhi-statistics-graph [graphType]="graph" [currentSpan]="currentSpan" [statisticsView]="statisticsView" [entityId]="courseId"> </jhi-statistics-graph>
     </div>
 </div>
