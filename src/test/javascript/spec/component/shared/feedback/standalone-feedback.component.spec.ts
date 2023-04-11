@@ -80,13 +80,4 @@ describe('StandaloneFeedbackComponent', () => {
         expect(component.showMissingAutomaticFeedbackInformation).toBeFalse();
         expect(component.messageKey).toBeUndefined();
     }));
-
-    // it('should set messageKey correctly', fakeAsync(() => {
-    //     component.isTemplateStatusMissing = true;
-    //     fixture.detectChanges();
-    //     tick(500);
-    //
-    //     expect(component.showMissingAutomaticFeedbackInformation).toBeFalse();
-    //     expect(component.messageKey).toBe('artemisApp.result.notLatestSubmission');
-    // }));
 });
