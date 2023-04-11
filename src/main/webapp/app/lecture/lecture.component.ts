@@ -1,5 +1,5 @@
 import dayjs from 'dayjs/esm';
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { filter, map } from 'rxjs/operators';
 import { LectureService } from './lecture.service';
@@ -12,7 +12,6 @@ import { faFile, faFilter, faPencilAlt, faPlus, faPuzzlePiece, faTimes } from '@
 import { LectureImportComponent } from 'app/lecture/lecture-import.component';
 import { Subject } from 'rxjs';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
-import { Course } from 'app/entities/course.model';
 
 export enum LectureDateFilter {
     PAST = 'filterPast',
@@ -25,10 +24,10 @@ export enum LectureDateFilter {
     selector: 'jhi-lecture',
     templateUrl: './lecture.component.html',
 })
-export class LectureComponent implements OnInit, OnDestroy {
-    course: Course;
+export class LectureComponent implements OnInit {
     lectures: Lecture[];
     filteredLectures: Lecture[];
+    courseId: number;
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -55,18 +54,8 @@ export class LectureComponent implements OnInit, OnDestroy {
     ) {}
 
     ngOnInit() {
-        this.route.data.subscribe(({ course }) => {
-            if (course) {
-                this.course = course;
-            }
-            if (this.course.id) {
-                this.loadAll();
-            }
-        });
-    }
-
-    ngOnDestroy(): void {
-        this.dialogErrorSource.unsubscribe();
+        this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
+        this.loadAll();
     }
 
     trackId(index: number, item: Lecture) {
@@ -81,7 +70,7 @@ export class LectureComponent implements OnInit, OnDestroy {
         modalRef.result.then(
             (result: Lecture) => {
                 this.lectureService
-                    .import(this.course.id!, result.id!)
+                    .import(this.courseId, result.id!)
                     .pipe(
                         filter((res: HttpResponse<Lecture>) => res.ok),
                         map((res: HttpResponse<Lecture>) => res.body),
@@ -124,7 +113,7 @@ export class LectureComponent implements OnInit, OnDestroy {
 
     private loadAll() {
         this.lectureService
-            .findAllByCourseId(this.course.id!)
+            .findAllByCourseId(this.courseId)
             .pipe(
                 filter((res: HttpResponse<Lecture[]>) => res.ok),
                 map((res: HttpResponse<Lecture[]>) => res.body),
