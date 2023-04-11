@@ -1,36 +1,33 @@
 /* stylelint-disable */
 @use 'sass:meta';
 @use 'generate-css-vars';
-@use '@angular/material' as mat;
 
 @import 'default-variables';
 
 html {
     @include generate-css-vars.generate('default-variables');
+
+    .mat-mdc-menu-item:hover:not([disabled]),
+    .mat-mdc-menu-item.cdk-program-focused:not([disabled]),
+    .mat-mdc-menu-item.cdk-keyboard-focused:not([disabled]),
+    .mat-mdc-menu-item-highlighted:not([disabled]) {
+        background-color: $body-bg;
+    }
+
+    .mat-mdc-menu-panel {
+        background-color: $gray-100;
+    }
+
+    .mat-mdc-button:disabled {
+        color: $secondary;
+    }
+
+    .mat-mdc-menu-trigger.mat-mdc-button:hover {
+        background-color: $gray-200;
+    }
 }
 
 @import '../global';
 
 // Needed for highlighting code in the markdown editor
 @import '~highlight.js/styles/vs.css';
-
-@include mat.core();
-
-$angular-primary: mat.define-palette(mat.$teal-palette, 500, 100, 900);
-$angular-accent: mat.define-palette(mat.$pink-palette, A200, A100, A400);
-
-$angular-warn: mat.define-palette(mat.$red-palette);
-
-$angular-default-theme: mat.define-light-theme(
-    (
-        color: (
-            primary: $angular-primary,
-            accent: $angular-accent,
-            warn: $angular-warn,
-        ),
-    )
-);
-
-@include mat.menu-theme($angular-default-theme);
-@include mat.button-theme($angular-default-theme);
-@include mat.icon-button-theme($angular-default-theme);
