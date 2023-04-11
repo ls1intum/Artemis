@@ -208,7 +208,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
 
         // create a quizPointStatistic if it does not yet exist
         if (quizExercise.getQuizPointStatistic() == null) {
-            var quizPointStatistic = new QuizPointStatistic();
+            QuizPointStatistic quizPointStatistic = new QuizPointStatistic();
             quizExercise.setQuizPointStatistic(quizPointStatistic);
             quizPointStatistic.setQuiz(quizExercise);
         }
