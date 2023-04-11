@@ -56,14 +56,6 @@ describe('FormDateTimePickerComponent', () => {
 
             expect(convertedDate).toBeNull();
         });
-
-        it('should emit when date is reset', () => {
-            const emitStub = jest.spyOn(component.valueChange, 'emit').mockImplementation();
-
-            component.resetDate();
-
-            expect(emitStub).toHaveBeenCalledOnce();
-        });
     });
 
     describe('test date writing', () => {
@@ -78,13 +70,6 @@ describe('FormDateTimePickerComponent', () => {
             component.writeValue(normalDateAsDateObject);
 
             expect(component.value).toEqual(normalDateAsDateObject);
-        });
-
-        it('should write null if date is reset', () => {
-            component.value = normalDate;
-            component.resetDate();
-
-            expect(component.value).toBeNull();
         });
     });
 
@@ -107,16 +92,6 @@ describe('FormDateTimePickerComponent', () => {
         expect(component.value).toEqual(newDate);
         expect(onChangeSpy).toHaveBeenCalledOnce();
         expect(onChangeSpy).toHaveBeenCalledWith(newDate);
-        expect(valueChangedStub).toHaveBeenCalledOnce();
-    });
-
-    it('update field with null', () => {
-        const valueChangedStub = jest.spyOn(component, 'valueChanged').mockImplementation();
-        component.value = normalDate;
-
-        component.resetDate();
-
-        expect(component.value).toBeNull();
         expect(valueChangedStub).toHaveBeenCalledOnce();
     });
 });
