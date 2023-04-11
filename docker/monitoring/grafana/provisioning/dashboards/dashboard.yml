@@ -1,0 +1,11 @@
+apiVersion: 1
+
+providers:
+    - name: 'Artemis'
+      orgId: 1
+      folder: 'Artemis'
+      type: file
+      disableDeletion: false
+      editable: true
+      options:
+          path: /etc/grafana/provisioning/dashboards/artemis
