@@ -75,7 +75,6 @@ public class Slide extends DomainObject {
     public void beforeCreate() {
         // move file if necessary (id at this point will be null, so placeholder will be inserted)
         var targetFolder = Path.of(FilePathService.getSlideImageFilePath(), getAttachmentUnit().getId().toString(), "slide", String.valueOf(getSlideNumber())).toString();
-        System.out.println("targetFolder: " + targetFolder);
         slideImagePath = fileService.manageFilesForUpdatedFilePath(prevSlideImagePath, slideImagePath, targetFolder, (long) getSlideNumber(), true);
     }
 
