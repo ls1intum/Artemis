@@ -4,11 +4,8 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 
 import java.util.Optional;
 
-import javax.transaction.Transactional;
-
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -33,14 +30,6 @@ public interface BuildPlanRepository extends JpaRepository<BuildPlan, Long> {
 
     @EntityGraph(type = LOAD, attributePaths = { "programmingExercises" })
     Optional<BuildPlan> findByBuildPlan(String buildPlan);
-
-    @Transactional
-    @Modifying
-    @Query("""
-            DELETE FROM BuildPlan bp
-            WHERE bp.programmingExercises.size = 0
-            """)
-    void deleteAllWithoutProgrammingExercise();
 
     /**
      * Adds the given build plan to the exercise.
