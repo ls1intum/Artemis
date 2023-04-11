@@ -1,3 +1,5 @@
+.gradle
+
 # Taken from https://github.com/github/gitignore
 
 ### Java
@@ -196,3 +198,6 @@ $RECYCLE.BIN/
 
 # .nfs files are created when an open file is removed but is still being accessed
 .nfs*
+
+### Include gradle-wrapper
+!gradle/wrapper/gradle-wrapper.jar
