@@ -54,6 +54,8 @@ class LocalVCIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest
     @AfterEach
     void removeRepositories() {
         localVCLocalCITestService.removeRepository(assignmentRepository);
+        localVCLocalCITestService.removeRepository(templateRepository);
+        localVCLocalCITestService.removeRepository(solutionRepository);
     }
 
     @Test
@@ -121,8 +123,9 @@ class LocalVCIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest
         localVCLocalCITestService.testFetchThrowsException(assignmentRepository.localGit, student1Login, projectKey1, assignmentRepositorySlug, forbidden);
         localVCLocalCITestService.testPushThrowsException(assignmentRepository.localGit, student1Login, projectKey1, assignmentRepositorySlug, forbidden);
 
-        programmingExercise.setAllowOfflineIde(true);
-        programmingExerciseRepository.save(programmingExercise);
+        // Teaching assistants and higher should still be able to fetch and push.
+        localVCLocalCITestService.testFetchSuccessful(assignmentRepository.localGit, tutor1Login, projectKey1, assignmentRepositorySlug);
+        localVCLocalCITestService.testPushSuccessful(assignmentRepository.localGit, instructor1Login, projectKey1, assignmentRepositorySlug);
     }
 
     @Test
@@ -143,6 +146,8 @@ class LocalVCIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest
     @Test
     void testFetchPush_templateRepository_noParticipation() {
         // Remove the template participation from the programming exercise.
+        programmingExercise.setTemplateParticipation(null);
+        programmingExerciseRepository.save(programmingExercise);
         templateProgrammingExerciseParticipationRepository.delete(templateParticipation);
 
         localVCLocalCITestService.testFetchThrowsException(templateRepository.localGit, instructor1Login, projectKey1, templateRepositorySlug, internalServerError);
@@ -150,8 +155,14 @@ class LocalVCIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest
     }
 
     @Test
-    void testFetchPush_solutionRepository_teachingAssistant_noParticipation() {
+    void testFetchPush_solutionRepository_noParticipation() {
+        // Remove the solution participation from the programming exercise.
+        programmingExercise.setSolutionParticipation(null);
+        programmingExerciseRepository.save(programmingExercise);
+        solutionProgrammingExerciseParticipationRepository.delete(solutionParticipation);
 
+        localVCLocalCITestService.testFetchThrowsException(solutionRepository.localGit, instructor1Login, projectKey1, solutionRepositorySlug, internalServerError);
+        localVCLocalCITestService.testPushThrowsException(solutionRepository.localGit, instructor1Login, projectKey1, solutionRepositorySlug, internalServerError);
     }
 
     @Test
@@ -178,7 +189,7 @@ class LocalVCIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest
         localVCLocalCITestService.commitFile(assignmentRepository.localRepoFile.toPath(), programmingExercise.getPackageFolderName(), assignmentRepository.localGit,
                 "second-test.txt");
 
-        // Try to push normally, should fail because the remote already contains work that is not there locally.
+        // Try to push normally, should fail because the remote already contains work that does not exist locally.
         PushResult pushResultNormal = assignmentRepository.localGit.push().setRemote(repositoryUrl).call().iterator().next();
         RemoteRefUpdate remoteRefUpdateNormal = pushResultNormal.getRemoteUpdates().iterator().next();
         assertThat(remoteRefUpdateNormal.getStatus()).isEqualTo(RemoteRefUpdate.Status.REJECTED_NONFASTFORWARD);
