@@ -179,7 +179,7 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         var updatedAttachmentUnit = attachmentUnitRepository.findById(persistedAttachmentUnit.getId()).get();
         // Wait for async operation to complete (after attachment unit is saved, the file gets split into slides)
         latch.await(10, TimeUnit.SECONDS);
-        assertThat(slideRepository.findAllByAttachmentUnit_Id(persistedAttachmentUnit.getId())).hasSize(SLIDE_COUNT);
+        assertThat(slideRepository.findAllByAttachmentUnitId(persistedAttachmentUnit.getId())).hasSize(SLIDE_COUNT);
         assertThat(updatedAttachmentUnit.getAttachment()).isEqualTo(persistedAttachment);
         assertThat(updatedAttachmentUnit.getAttachment().getName()).isEqualTo("LoremIpsum");
     }
@@ -214,16 +214,16 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         attachmentUnit.setDescription("Changed");
         // Wait for async operation to complete (after attachment unit is saved, the file gets split into slides)
         latch.await(10, TimeUnit.SECONDS);
-        assertThat(slideRepository.findAllByAttachmentUnit_Id(attachmentUnit.getId())).hasSize(SLIDE_COUNT);
-        List<Slide> oldSlides = slideRepository.findAllByAttachmentUnit_Id(attachmentUnit.getId());
+        assertThat(slideRepository.findAllByAttachmentUnitId(attachmentUnit.getId())).hasSize(SLIDE_COUNT);
+        List<Slide> oldSlides = slideRepository.findAllByAttachmentUnitId(attachmentUnit.getId());
         CountDownLatch latch1 = new CountDownLatch(1);
         var updateResult = request.getMvc().perform(buildUpdateAttachmentUnit(attachmentUnit, attachment)).andExpect(status().isOk()).andReturn();
         attachmentUnit = mapper.readValue(updateResult.getResponse().getContentAsString(), AttachmentUnit.class);
         assertThat(attachmentUnit.getDescription()).isEqualTo("Changed");
         // Wait for async operation to complete (after attachment unit is updated, the new file gets split into slides)
         latch1.await(10, TimeUnit.SECONDS);
-        assertThat(slideRepository.findAllByAttachmentUnit_Id(attachmentUnit.getId())).hasSize(SLIDE_COUNT);
-        List<Slide> updatedSlides = slideRepository.findAllByAttachmentUnit_Id(attachmentUnit.getId());
+        assertThat(slideRepository.findAllByAttachmentUnitId(attachmentUnit.getId())).hasSize(SLIDE_COUNT);
+        List<Slide> updatedSlides = slideRepository.findAllByAttachmentUnitId(attachmentUnit.getId());
         assertThat(oldSlides).isNotEqualTo(updatedSlides);
         // testing if bidirectional relationship is kept
         attachmentUnit = attachmentUnitRepository.findById(attachmentUnit.getId()).get();
@@ -300,7 +300,7 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         var result = request.getMvc().perform(buildCreateAttachmentUnit(attachmentUnit, attachment, "Hello World")).andExpect(status().isCreated()).andReturn();
         var persistedAttachmentUnit = mapper.readValue(result.getResponse().getContentAsString(), AttachmentUnit.class);
         assertThat(persistedAttachmentUnit.getId()).isNotNull();
-        assertThat(slideRepository.findAllByAttachmentUnit_Id(persistedAttachmentUnit.getId())).hasSize(0);
+        assertThat(slideRepository.findAllByAttachmentUnitId(persistedAttachmentUnit.getId())).hasSize(0);
         request.delete("/api/lectures/" + lecture1.getId() + "/lecture-units/" + persistedAttachmentUnit.getId(), HttpStatus.OK);
         request.get("/api/lectures/" + lecture1.getId() + "/attachment-units/" + persistedAttachmentUnit.getId(), HttpStatus.NOT_FOUND, Attachment.class);
     }

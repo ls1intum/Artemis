@@ -74,8 +74,9 @@ public class Slide extends DomainObject {
     @PrePersist
     public void beforeCreate() {
         // move file if necessary (id at this point will be null, so placeholder will be inserted)
-        var targetFolder = Path.of(FilePathService.getSlideImageFilePath(), getAttachmentUnit().getId().toString()).toString();
-        slideImagePath = fileService.manageFilesForUpdatedFilePath(prevSlideImagePath, slideImagePath, targetFolder, getAttachmentUnit().getId());
+        var targetFolder = Path.of(FilePathService.getSlideImageFilePath(), getAttachmentUnit().getId().toString(), "slide", String.valueOf(getSlideNumber())).toString();
+        System.out.println("targetFolder: " + targetFolder);
+        slideImagePath = fileService.manageFilesForUpdatedFilePath(prevSlideImagePath, slideImagePath, targetFolder, (long) getSlideNumber(), true);
     }
 
     /**
@@ -93,14 +94,14 @@ public class Slide extends DomainObject {
     @PreUpdate
     public void onUpdate() {
         // move file and delete old file if necessary
-        var targetFolder = Path.of(FilePathService.getSlideImageFilePath(), getAttachmentUnit().getId().toString()).toString();
-        slideImagePath = fileService.manageFilesForUpdatedFilePath(prevSlideImagePath, slideImagePath, targetFolder, getAttachmentUnit().getId());
+        var targetFolder = Path.of(FilePathService.getSlideImageFilePath(), getAttachmentUnit().getId().toString(), "slide", String.valueOf(getSlideNumber())).toString();
+        slideImagePath = fileService.manageFilesForUpdatedFilePath(prevSlideImagePath, slideImagePath, targetFolder, (long) getSlideNumber(), true);
     }
 
     @PostRemove
     public void onDelete() {
         // delete old file if necessary
-        var targetFolder = Path.of(FilePathService.getSlideImageFilePath(), getAttachmentUnit().getId().toString()).toString();
-        fileService.manageFilesForUpdatedFilePath(prevSlideImagePath, null, targetFolder, getAttachmentUnit().getId());
+        var targetFolder = Path.of(FilePathService.getSlideImageFilePath(), getAttachmentUnit().getId().toString(), "slide", String.valueOf(getSlideNumber())).toString();
+        fileService.manageFilesForUpdatedFilePath(prevSlideImagePath, null, targetFolder, (long) getSlideNumber(), true);
     }
 }

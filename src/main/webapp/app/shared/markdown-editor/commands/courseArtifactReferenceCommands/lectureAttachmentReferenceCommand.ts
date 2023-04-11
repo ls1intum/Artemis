@@ -25,7 +25,7 @@ export class LectureAttachmentReferenceCommand extends MultiOptionCommand {
                 .findWithDetails(lecture.id!)
                 .pipe(map((response: HttpResponse<Lecture>) => response.body!))
                 .subscribe({
-                    next: (lecture: any) => {
+                    next: (lecture: Lecture) => {
                         this.setValues(
                             // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
                             [
@@ -86,7 +86,8 @@ export class LectureAttachmentReferenceCommand extends MultiOptionCommand {
                         if (!selectedSlideId) {
                             // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
                             const selectedUnit: AttachmentUnit = lecture.lectureUnits?.find((value: AttachmentUnit) => value.id!.toString() === selectedUnitId)!;
-                            const referenceLink = `[lecture-unit]${selectedUnit.name}(${selectedUnit.attachment?.link})[/lecture-unit]`;
+                            const shortLink = selectedUnit.attachment?.link!.split('attachments/')[1];
+                            const referenceLink = `[lecture-unit]${selectedUnit.name}(${shortLink})[/lecture-unit]`;
                             this.insertText(referenceLink);
                             this.focus();
                         } else {
@@ -94,17 +95,21 @@ export class LectureAttachmentReferenceCommand extends MultiOptionCommand {
                             const selectedUnit: AttachmentUnit = lecture.lectureUnits?.find((value: AttachmentUnit) => value.id!.toString() === selectedUnitId)!;
                             // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
                             const selectedSlide: Slide = selectedUnit.slides?.find((value: Slide) => value.id!.toString() === selectedSlideId)!;
-                            const referenceLink = `[slide]${selectedUnit.name}_SLIDE_${selectedSlide.slideNumber}(${selectedSlide.slideImagePath})[/slide]`;
+                            const shortLink = selectedSlide.slideImagePath!.split('attachments/')[1];
+                            // Use a regular expression and the replace() method to remove the file name and last slash
+                            const shortLinkWithoutFileName: string = shortLink.replace(new RegExp(`[^/]*${'.png'}`), '').replace(/\/$/, '');
+                            const referenceLink = `[slide]${selectedUnit.name} Slide ${selectedSlide.slideNumber}(${shortLinkWithoutFileName})[/slide]`;
                             this.insertText(referenceLink);
                             this.focus();
                         }
                     } else {
                         // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
                         const selectedAttachment = selectedLecture.attachments?.find((value) => value.id!.toString() === selectedElementId)!;
+                        const shortLink = selectedAttachment ? selectedAttachment.link!.split('attachments/')[1] : '';
                         const referenceLink =
                             ReferenceType.LECTURE === type
                                 ? `[lecture]${selectedLecture.title}(${this.metisService.getLinkForLecture(selectedLecture.id!.toString())})[/lecture]`
-                                : `[attachment]${selectedAttachment.name}(${selectedAttachment.link})[/attachment]`;
+                                : `[attachment]${selectedAttachment.name}(${shortLink})[/attachment]`;
                         this.insertText(referenceLink);
                         this.focus();
                     }

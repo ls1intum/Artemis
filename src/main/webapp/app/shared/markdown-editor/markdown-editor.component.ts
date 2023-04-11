@@ -36,6 +36,8 @@ import { faAngleRight, faGripLines, faQuestionCircle } from '@fortawesome/free-s
 import { MultiOptionCommand } from 'app/shared/markdown-editor/commands/multiOptionCommand';
 import { v4 as uuid } from 'uuid';
 import { MultipleChoiceVisualQuestionComponent } from 'app/exercises/quiz/shared/questions/multiple-choice-question/multiple-choice-visual-question.component';
+import { ExerciseReferenceCommand } from 'app/shared/markdown-editor/commands/courseArtifactReferenceCommands/exerciseReferenceCommand';
+import { MatMenuTrigger } from '@angular/material/menu';
 
 export enum MarkdownEditorHeight {
     INLINE = 100,
@@ -209,6 +211,10 @@ export class MarkdownEditorComponent implements AfterViewInit {
      */
     removeCommand(classRef: typeof Command) {
         setTimeout(() => (this.defaultCommands = this.defaultCommands.filter((element) => !(element instanceof classRef))));
+    }
+
+    isTypeOfExerciseReferenceCommand(commandToCheck: MultiOptionCommand) {
+        return commandToCheck instanceof ExerciseReferenceCommand;
     }
 
     ngAfterViewInit(): void {

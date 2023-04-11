@@ -12,7 +12,7 @@
 <div style="max-width: 400px">
     <a class="reference" *ngIf="postingContentPart.slideToReference" (click)="enlargeImage(postingContentPart.slideToReference)">
         <img
-            class="img-fluid"
+            class="img-fluid rounded-sm border mt-1 mb-1"
             *ngIf="postingContentPart.slideToReference"
             [src]="postingContentPart.slideToReference"
             [alt]="postingContentPart.referenceStr"

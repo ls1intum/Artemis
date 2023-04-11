@@ -21,6 +21,9 @@ export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
 
     private postsSubscription: Subscription;
 
+    // Directory for attachments. If the endpoint of the file service changes, this needs to be adapted
+    private readonly ATTACHMENT_DIR = 'api/files/attachments/';
+
     // Icons
     faAngleUp = faAngleUp;
     faAngleDown = faAngleDown;
@@ -49,6 +52,7 @@ export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
         this.postsSubscription = this.metisService.posts.subscribe((posts: Post[]) => {
             this.currentlyLoadedPosts = posts;
             const patternMatches: PatternMatch[] = this.getPatternMatches();
+            console.log(patternMatches);
             this.computePostingContentParts(patternMatches);
         });
     }
@@ -102,17 +106,23 @@ export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
                 } else if (ReferenceType.ATTACHMENT === referenceType || ReferenceType.ATTACHMENT_UNITS === referenceType) {
                     // referenceStr: string to be displayed for the reference
                     // attachmentToReference: location of attachment to be opened on reference click
+                    // attachmentRefDir: directory of the attachment
                     // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
                     referenceStr = this.content!.substring(this.content?.indexOf(']', patternMatch.startIndex)! + 1, this.content?.indexOf('(', patternMatch.startIndex)!);
-                    // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
-                    attachmentToReference = this.content!.substring(this.content?.indexOf('(', patternMatch.startIndex)! + 1, this.content?.indexOf(')', patternMatch.startIndex));
+                    const attachmentRefDir = this.ATTACHMENT_DIR;
+                    attachmentToReference =
+                        // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
+                        attachmentRefDir + this.content!.substring(this.content?.indexOf('(', patternMatch.startIndex)! + 1, this.content?.indexOf(')', patternMatch.startIndex));
                 } else if (ReferenceType.SLIDE === referenceType) {
                     // referenceStr: string to be displayed for the reference
                     // slideToReference: location of attachment to be opened on reference click
                     // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
                     referenceStr = this.content!.substring(this.content?.indexOf(']', patternMatch.startIndex)! + 1, this.content?.indexOf('(', patternMatch.startIndex)!);
-                    // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
-                    slideToReference = this.content!.substring(this.content?.indexOf('(', patternMatch.startIndex)! + 1, this.content?.indexOf(')', patternMatch.startIndex));
+                    const attachmentUnitRefDir = this.ATTACHMENT_DIR;
+                    slideToReference =
+                        attachmentUnitRefDir +
+                        // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
+                        this.content!.substring(this.content?.indexOf('(', patternMatch.startIndex)! + 1, this.content?.indexOf(')', patternMatch.startIndex));
                 }
 
                 // determining the endIndex of the content after the reference

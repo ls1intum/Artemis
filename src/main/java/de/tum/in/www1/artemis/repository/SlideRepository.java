@@ -13,5 +13,8 @@ import de.tum.in.www1.artemis.domain.lecture.Slide;
 @Repository
 public interface SlideRepository extends JpaRepository<Slide, Long> {
 
-    List<Slide> findAllByAttachmentUnit_Id(Long attachmentUnitId);
+    List<Slide> findAllByAttachmentUnitId(Long attachmentUnitId);
+
+    Slide findSlideByAttachmentUnitIdAndSlideNumber(Long attachmentUnitId, Integer slideNumber);
+
 }

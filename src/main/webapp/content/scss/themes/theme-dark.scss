@@ -1,6 +1,7 @@
 /* stylelint-disable */
 @use 'sass:meta';
 @use 'generate-css-vars';
+@use '@angular/material' as mat;
 
 @import 'dark-variables';
 
@@ -12,6 +13,23 @@ html {
 
 // Needed for highlighting code in the markdown editor
 @import '~highlight.js/styles/monokai.css';
+
+@include mat.core();
+$angular-primary: mat.define-palette(mat.$teal-palette, 500, 100, 900);
+$angular-accent: mat.define-palette(mat.$pink-palette, A200, A100, A400);
+
+$angular-warn: mat.define-palette(mat.$red-palette);
+$angular-dark-theme: mat.define-dark-theme(
+    (
+        color: (
+            primary: $angular-primary,
+            accent: $angular-accent,
+            warn: $angular-warn,
+        ),
+    )
+);
+
+@include mat.all-component-colors($angular-dark-theme);
 
 .blockquote {
     &-footer {
@@ -165,6 +183,32 @@ html {
 
     .owl-dt-calendar-cell-content {
         color: white !important;
+    }
+}
+
+/* Styling for mat-menu */
+::ng-deep .mat-menu {
+    background-color: #222222; /* Background color for menu */
+    color: #ffffff; /* Text color for menu items */
+}
+
+/* Styling for mat-menu-item */
+::ng-deep .mat-menu-item {
+    color: #ffffff; /* Text color for menu items */
+    background-color: #333333; /* Background color for menu items */
+    &:hover {
+        background-color: #444444; /* Background color for menu items on hover */
+    }
+}
+
+/* Styling for mat-menu-button */
+::ng-deep .mat-menu-button {
+    .mat-icon-button {
+        color: #ffffff; /* Icon color for menu button */
+        background-color: #222222; /* Background color for menu button */
+        &:hover {
+            background-color: #333333; /* Background color for menu button on hover */
+        }
     }
 }
 

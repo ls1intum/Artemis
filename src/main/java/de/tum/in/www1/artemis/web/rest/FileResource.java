@@ -11,6 +11,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.activation.MimetypesFileTypeMap;
 
@@ -31,6 +33,7 @@ import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.exam.ExamUser;
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
+import de.tum.in.www1.artemis.domain.lecture.Slide;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
@@ -60,6 +63,8 @@ public class FileResource {
 
     private final AttachmentUnitRepository attachmentUnitRepository;
 
+    private final SlideRepository slideRepository;
+
     private final FileUploadSubmissionRepository fileUploadSubmissionRepository;
 
     private final FileUploadExerciseRepository fileUploadExerciseRepository;
@@ -76,7 +81,7 @@ public class FileResource {
 
     private final JHipsterProperties jHipsterProperties;
 
-    public FileResource(AuthorizationCheckService authorizationCheckService, FileService fileService, ResourceLoaderService resourceLoaderService,
+    public FileResource(SlideRepository slideRepository, AuthorizationCheckService authorizationCheckService, FileService fileService, ResourceLoaderService resourceLoaderService,
             LectureRepository lectureRepository, FileUploadSubmissionRepository fileUploadSubmissionRepository, FileUploadExerciseRepository fileUploadExerciseRepository,
             AttachmentRepository attachmentRepository, AttachmentUnitRepository attachmentUnitRepository, AuthorizationCheckService authCheckService, UserRepository userRepository,
             ExamUserRepository examUserRepository, JHipsterProperties jHipsterProperties) {
@@ -92,6 +97,7 @@ public class FileResource {
         this.authorizationCheckService = authorizationCheckService;
         this.examUserRepository = examUserRepository;
         this.jHipsterProperties = jHipsterProperties;
+        this.slideRepository = slideRepository;
     }
 
     /**
@@ -402,13 +408,13 @@ public class FileResource {
      * GET files/attachments/slides/attachment-unit/:attachmentUnitId/:filename : Get the lecture unit attachment slide
      *
      * @param attachmentUnitId ID of the attachment unit, the attachment belongs to
-     * @param filename         the filename of the file
+     * @param slideNumber      the slideNumber of the file
      * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
      */
-    @GetMapping("files/attachments/slides/attachment-unit/{attachmentUnitId}/{filename:.+}")
+    @GetMapping("files/attachments/slides/attachment-unit/{attachmentUnitId}/slide/{slideNumber}")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<byte[]> getAttachmentUnitAttachmentSlide(@PathVariable Long attachmentUnitId, @PathVariable String filename) {
-        log.debug("REST request to get the slide : {}", filename);
+    public ResponseEntity<byte[]> getAttachmentUnitAttachmentSlide(@PathVariable Long attachmentUnitId, @PathVariable String slideNumber) {
+        log.debug("REST request to get the slide : {}", slideNumber);
         AttachmentUnit attachmentUnit = attachmentUnitRepository.findByIdElseThrow(attachmentUnitId);
 
         Attachment attachment = attachmentUnit.getAttachment();
@@ -417,7 +423,22 @@ public class FileResource {
         if (!checkAttachmentAuthorization(course, attachment)) {
             throw new AccessForbiddenException();
         }
-        return buildFileResponse(Path.of(FilePathService.getSlideImageFilePath(), String.valueOf(attachmentUnit.getId())).toString(), filename, true);
+        Slide slide = slideRepository.findSlideByAttachmentUnitIdAndSlideNumber(attachmentUnitId, Integer.parseInt(slideNumber));
+        String directoryPath = slide.getSlideImagePath();
+
+        // Use regular expression to match and extract the file name with ".png" format
+        Pattern pattern = Pattern.compile(".*\\/([^/]+\\.png)$");
+        Matcher matcher = pattern.matcher(directoryPath);
+
+        if (matcher.matches()) {
+            String fileName = matcher.group(1);
+            return buildFileResponse(
+                    Path.of(FilePathService.getSlideImageFilePath(), String.valueOf(attachmentUnit.getId()), "slide", String.valueOf(slide.getSlideNumber())).toString(), fileName,
+                    true);
+        }
+        else {
+            throw new EntityNotFoundException("Slide", slideNumber);
+        }
     }
 
     /**
