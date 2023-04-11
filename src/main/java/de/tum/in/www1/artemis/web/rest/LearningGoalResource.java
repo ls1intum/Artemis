@@ -226,7 +226,7 @@ public class LearningGoalResource {
      */
     @PostMapping("/courses/{courseId}/learning-goals/import")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<LearningGoal> importLearningGoal(@PathVariable Long courseId, @RequestBody LearningGoal learningGoalToImport) throws URISyntaxException {
+    public ResponseEntity<LearningGoal> importLearningGoal(@PathVariable long courseId, @RequestBody LearningGoal learningGoalToImport) throws URISyntaxException {
         log.info("REST request to import a learning goal: {}", learningGoalToImport.getId());
 
         var course = courseRepository.findWithEagerLearningGoalsByIdElseThrow(courseId);
