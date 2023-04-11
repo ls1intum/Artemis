@@ -11,9 +11,11 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.participation.ParticipationInterface;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 
 class ParticipationAuthorizationCheckServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -22,6 +24,9 @@ class ParticipationAuthorizationCheckServiceTest extends AbstractSpringIntegrati
 
     @Autowired
     private ProgrammingExerciseRepository programmingExerciseRepository;
+
+    @Autowired
+    private StudentParticipationRepository studentParticipationRepository;
 
     @Autowired
     private ParticipationAuthorizationCheckService participationAuthCheckService;
@@ -34,7 +39,7 @@ class ParticipationAuthorizationCheckServiceTest extends AbstractSpringIntegrati
     void setup() throws Exception {
         database.addUsers(TEST_PREFIX, 2, 1, 1, 1);
 
-        var course = database.addCourseWithOneProgrammingExerciseAndTestCases();
+        final var course = database.addCourseWithOneProgrammingExerciseAndTestCases();
         programmingExercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
         programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).orElseThrow();
 
@@ -48,8 +53,29 @@ class ParticipationAuthorizationCheckServiceTest extends AbstractSpringIntegrati
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testCanAccessOwnTextParticipation() {
+        final var course = database.addCourseWithOneExerciseAndSubmissions(TEST_PREFIX, "text", 1);
+        final var exercise = database.getFirstExerciseWithType(course, TextExercise.class);
+        final var participation = studentParticipationRepository.findByExerciseId(exercise.getId()).stream().findFirst().orElseThrow();
+
+        checkParticipationAccess(participation, true);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testStudentCannotAccessOtherTextParticipation() {
+        final var course = database.addCourseWithOneExerciseAndSubmissions(TEST_PREFIX, "text", 2);
+        final var exercise = database.getFirstExerciseWithType(course, TextExercise.class);
+        final var participation = studentParticipationRepository.findByExerciseId(exercise.getId()).stream()
+                .filter(studentParticipation -> !studentParticipation.isOwnedBy(TEST_PREFIX + "student1")).findFirst().orElseThrow();
+
+        checkParticipationAccess(participation, false);
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testCanAccessParticipation_asInstructor() {
+    void testCanAccessParticipationAsInstructor() {
         // Set solution and template participation
         database.addSolutionParticipationForProgrammingExercise(programmingExercise);
         database.addTemplateParticipationForProgrammingExercise(programmingExercise);
@@ -59,7 +85,7 @@ class ParticipationAuthorizationCheckServiceTest extends AbstractSpringIntegrati
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testCanAccessParticipation_asInstructor_edgeCase_exercise_null() {
+    void testCanAccessParticipationAsInstructorEdgeCaseExerciseNull() {
         // Set solution and template participation
         database.addSolutionParticipationForProgrammingExercise(programmingExercise);
         database.addTemplateParticipationForProgrammingExercise(programmingExercise);
@@ -85,7 +111,7 @@ class ParticipationAuthorizationCheckServiceTest extends AbstractSpringIntegrati
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testCanAccessParticipation_asInstructor_edgeCase_programmingExercise_null() {
+    void testCanAccessParticipationAsInstructorEdgeCaseProgrammingExerciseNull() {
         // Set solution and template participation
         database.addSolutionParticipationForProgrammingExercise(programmingExercise);
         database.addTemplateParticipationForProgrammingExercise(programmingExercise);
@@ -100,7 +126,7 @@ class ParticipationAuthorizationCheckServiceTest extends AbstractSpringIntegrati
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testCanAccessParticipation_asInstructor_edgeCase_programmingExercise_unknownId() {
+    void testCanAccessParticipationAsInstructorEdgeCaseProgrammingExerciseUnknownId() {
         // Set solution and template participation
         database.addSolutionParticipationForProgrammingExercise(programmingExercise);
         database.addTemplateParticipationForProgrammingExercise(programmingExercise);
@@ -118,7 +144,7 @@ class ParticipationAuthorizationCheckServiceTest extends AbstractSpringIntegrati
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testCanAccessParticipation_asStudent() {
+    void testCanAccessParticipationAsStudent() {
         // Set solution and template participation
         database.addSolutionParticipationForProgrammingExercise(programmingExercise);
         database.addTemplateParticipationForProgrammingExercise(programmingExercise);
@@ -128,7 +154,7 @@ class ParticipationAuthorizationCheckServiceTest extends AbstractSpringIntegrati
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void testCanAccessParticipation_asTutor() {
+    void testCanAccessParticipationAsTutor() {
         // Set solution and template participation
         database.addSolutionParticipationForProgrammingExercise(programmingExercise);
         database.addTemplateParticipationForProgrammingExercise(programmingExercise);
@@ -138,7 +164,7 @@ class ParticipationAuthorizationCheckServiceTest extends AbstractSpringIntegrati
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
-    void testCanAccessParticipation_asEditor() {
+    void testCanAccessParticipationAsEditor() {
         // Set solution and template participation
         database.addSolutionParticipationForProgrammingExercise(programmingExercise);
         database.addTemplateParticipationForProgrammingExercise(programmingExercise);

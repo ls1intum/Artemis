@@ -69,13 +69,13 @@ public class ParticipationAuthorizationCheckService {
      */
     public boolean canAccessParticipation(@NotNull final ParticipationInterface participation, final User user) {
         if (participation instanceof ProgrammingExerciseParticipation programmingExerciseParticipation) {
-            return canAccessParticipation(programmingExerciseParticipation, user);
+            return canAccessProgrammingParticipation(programmingExerciseParticipation, user);
         }
         else if (participation instanceof StudentParticipation studentParticipation) {
-            return canAccessParticipation(studentParticipation, user);
+            return userHasPermissionsToAccessParticipation(studentParticipation, user);
         }
         else {
-            // unknown participation type, should not exist unless class hierarchy changes: do not give access
+            // null or unknown participation type (should not exist unless class hierarchy changes): do not give access
             return false;
         }
     }
@@ -89,7 +89,7 @@ public class ParticipationAuthorizationCheckService {
      * @param participation to check permissions for.
      * @return true if the user can access the participation, false if not. Also returns false if the participation is not from a programming exercise.
      */
-    private boolean canAccessParticipation(final ProgrammingExerciseParticipation participation, final User user) {
+    private boolean canAccessProgrammingParticipation(final ProgrammingExerciseParticipation participation, final User user) {
         // If the current user is owner of the participation, they are allowed to access it
         if (participation instanceof ProgrammingExerciseStudentParticipation studentParticipation && studentParticipation.isOwnedBy(user)) {
             return true;
@@ -103,16 +103,6 @@ public class ParticipationAuthorizationCheckService {
         }
 
         return authCheckService.isAtLeastTeachingAssistantForExercise(programmingExercise, user);
-    }
-
-    /**
-     * Check if a participation can be accessed with the current user.
-     *
-     * @param participation to access
-     * @return can user access participation
-     */
-    private boolean canAccessParticipation(final StudentParticipation participation, final User user) {
-        return participation != null && userHasPermissionsToAccessParticipation(participation, user);
     }
 
     /**
