@@ -13,15 +13,15 @@ import { ExerciseCacheService } from 'app/exercises/shared/exercise/exercise-cac
     styleUrls: ['./../feedback.scss'],
 })
 export class StandaloneFeedbackComponent implements OnInit {
-    public exercise?: Exercise;
-    public result?: Result;
+    exercise?: Exercise;
+    result?: Result;
 
-    public isTemplateStatusMissing = false;
-    public showMissingAutomaticFeedbackInformation = false;
-    public messageKey?: string = undefined;
-    public exerciseType?: ExerciseType = undefined;
+    isTemplateStatusMissing = false;
+    showMissingAutomaticFeedbackInformation = false;
+    messageKey?: string = undefined;
+    exerciseType?: ExerciseType = undefined;
 
-    public latestDueDate?: dayjs.Dayjs;
+    latestDueDate?: dayjs.Dayjs;
 
     constructor(public route: ActivatedRoute, private exerciseService: ExerciseService, @Optional() private exerciseCacheService: ExerciseCacheService) {}
 
