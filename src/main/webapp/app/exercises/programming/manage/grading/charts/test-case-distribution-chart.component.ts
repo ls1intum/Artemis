@@ -35,7 +35,6 @@ enum TestCaseBarTitle {
             </div>
             <div #containerRefWeight class="chart bg-light">
                 <ngx-charts-bar-horizontal-normalized
-                    [view]="[containerRefWeight.offsetWidth, containerRefWeight.offsetHeight]"
                     [results]="ngxWeightData"
                     [xAxis]="true"
                     [yAxis]="true"
@@ -85,7 +84,6 @@ enum TestCaseBarTitle {
             </div>
             <div #containerRefPoints class="points-chart bg-light">
                 <ngx-charts-bar-horizontal-stacked
-                    [view]="[containerRefPoints.offsetWidth, containerRefPoints.offsetHeight]"
                     [results]="ngxPointsData"
                     [xAxis]="true"
                     [yAxis]="true"

@@ -1,0 +1,41 @@
+# ----------------------------------------------------------------------------------------------------------------------
+# Artemis-Dev-MySQL Setup
+# ----------------------------------------------------------------------------------------------------------------------
+
+services:
+    artemis-app:
+        extends:
+            file: ./artemis.yml
+            service: artemis-app
+        # just add this linux workaround for docker compose in a development version of artemis as developers
+        # might want to access external services on the docker host
+        extra_hosts:
+            - "host.docker.internal:host-gateway"
+        ports:
+            - "8080:8080"
+            - "5005:5005" # Java Remote Debugging port declared in the java cmd options
+        # expose the port to make it reachable docker internally even if the external port mapping changes
+        expose:
+            - "5005"
+        environment:
+            # The following enables the Java Remote Debugging port. More infos in the documentation:
+            # https://docs.artemis.cit.tum.de/dev/setup.html#debugging-with-docker
+            _JAVA_OPTIONS: -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005
+            SPRING_PROFILES_ACTIVE: artemis,scheduling,athene,dev,docker
+        depends_on:
+            mysql:
+                condition: service_healthy
+    mysql:
+        extends:
+            file: ./mysql.yml
+            service: mysql
+
+networks:
+    artemis:
+        driver: "bridge"
+        name: artemis
+volumes:
+    artemis-mysql-data:
+        name: artemis-mysql-data
+    artemis-data:
+        name: artemis-data

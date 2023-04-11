@@ -38,12 +38,12 @@ GitLab
 2. Configure GitLab
     .. code:: bash
 
-        cp src/main/docker/env.example.gitlab-gitlabci.txt src/main/docker/.env
+        cp docker/env.example.gitlab-gitlabci.txt docker/.env
 
 3. Start GitLab and the GitLab Runner
     .. code:: bash
 
-        docker-compose -f src/main/docker/gitlab-gitlabci.yml --env-file src/main/docker/.env up --build -d
+        docker-compose -f docker/gitlab-gitlabci.yml --env-file docker/.env up --build -d
 
 4. Get your GitLab root password
     .. code:: bash
