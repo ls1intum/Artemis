@@ -2,6 +2,7 @@ import { Component, ElementRef, EventEmitter, Input, Output, ViewChild, forwardR
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { faCalendarAlt, faClock, faGlobe, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
+import { isDate } from 'app/shared/util/utils';
 
 @Component({
     selector: 'jhi-date-time-picker',
@@ -27,6 +28,9 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
     @Input() max: dayjs.Dayjs; // Dates after this date are not selectable.
     @Input() shouldDisplayTimeZoneWarning = true; // Displays a warning that the current time zone might differ from the participants'.
     @Output() valueChange = new EventEmitter();
+    @Output() invalidDate = new EventEmitter();
+
+    invalidD = false;
 
     // Icons
     faCalendarAlt = faCalendarAlt;
@@ -50,7 +54,13 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
      * @param value as dayjs
      */
     convert(value?: dayjs.Dayjs) {
-        return value != undefined && value.isValid() ? value.toDate() : null;
+        if (value != undefined && value.isValid()) {
+            this.invalidD = true;
+            return value.toDate();
+        } else {
+            this.invalidD = false;
+            return null;
+        }
     }
 
     /**
@@ -98,13 +108,17 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
     }
 
     /**
-     * updates the value
+     * updates the value, if a valid Dayjs value is passed
      * @param newValue used to update value
      */
-    updateField(newValue: dayjs.Dayjs) {
-        this.value = newValue;
-        this._onChange(dayjs(this.value));
-        this.valueChanged();
+    updateField(newValue: any) {
+        if (dayjs.isDayjs(newValue) || isDate(newValue)) {
+            this.value = newValue;
+            this._onChange(dayjs(this.value));
+            this.valueChanged();
+        } else if (newValue == null) {
+            this.value = null;
+        }
     }
 
     /**
