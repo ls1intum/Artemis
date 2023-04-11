@@ -38,6 +38,7 @@ import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagi
 import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/PlagiarismVerdict';
+import { CourseManagementTabBarComponent } from 'app/shared/course-management-tab-bar/course-management-tab-bar.component';
 
 describe('CourseScoresComponent', () => {
     let fixture: ComponentFixture<CourseScoresComponent>;
@@ -261,6 +262,7 @@ describe('CourseScoresComponent', () => {
                 MockDirective(DeleteButtonDirective),
                 MockDirective(TranslateDirective),
                 MockTranslateValuesDirective,
+                MockComponent(CourseManagementTabBarComponent),
             ],
             providers: [
                 {

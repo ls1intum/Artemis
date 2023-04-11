@@ -22,6 +22,7 @@ import { generateExampleTutorialGroupsConfiguration } from '../../../helpers/tut
 import { Course } from 'app/entities/course.model';
 import { TutorialGroupsConfigurationService } from 'app/course/tutorial-groups/services/tutorial-groups-configuration.service';
 import { NgbDropdownModule, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { CourseManagementTabBarComponent } from 'app/shared/course-management-tab-bar/course-management-tab-bar.component';
 
 @Component({ selector: 'jhi-tutorial-groups-course-information', template: '' })
 class MockTutorialGroupsCourseInformationComponent {
@@ -67,6 +68,7 @@ describe('TutorialGroupsManagementComponent', () => {
                 MockComponent(FaIconComponent),
                 MockRouterLinkDirective,
                 MockTutorialGroupsImportButtonComponent,
+                MockComponent(CourseManagementTabBarComponent),
             ],
             providers: [
                 MockProvider(TutorialGroupsConfigurationService),

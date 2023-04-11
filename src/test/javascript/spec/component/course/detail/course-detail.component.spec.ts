@@ -24,6 +24,7 @@ import { EventManager } from 'app/core/util/event-manager.service';
 import { FullscreenComponent } from 'app/shared/fullscreen/fullscreen.component';
 import { Course } from 'app/entities/course.model';
 import { CourseAdminService } from 'app/course/manage/course-admin.service';
+import { CourseManagementTabBarComponent } from 'app/shared/course-management-tab-bar/course-management-tab-bar.component';
 
 describe('Course Management Detail Component', () => {
     let component: CourseDetailComponent;
@@ -82,6 +83,7 @@ describe('Course Management Detail Component', () => {
                 MockComponent(FullscreenComponent),
                 MockComponent(HeaderCourseComponent),
                 MockDirective(FeatureToggleLinkDirective),
+                MockComponent(CourseManagementTabBarComponent),
             ],
             providers: [
                 {
@@ -132,12 +134,14 @@ describe('Course Management Detail Component', () => {
     });
 
     it('should broadcast course modification on delete', () => {
+        let componentTabBar: CourseManagementTabBarComponent;
+        componentTabBar = TestBed.createComponent(CourseManagementTabBarComponent).componentInstance;
         const broadcastSpy = jest.spyOn(eventManager, 'broadcast');
         const deleteStub = jest.spyOn(courseAdminService, 'delete');
         deleteStub.mockReturnValue(of(new HttpResponse<void>()));
 
         const courseId = 444;
-        component.deleteCourse(courseId);
+        componentTabBar.deleteCourse(courseId);
 
         expect(deleteStub).toHaveBeenCalledWith(courseId);
         expect(broadcastSpy).toHaveBeenCalledWith({

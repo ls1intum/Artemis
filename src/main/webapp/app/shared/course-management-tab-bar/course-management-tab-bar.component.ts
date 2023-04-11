@@ -3,8 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Subject, Subscription } from 'rxjs';
 import { Course, isCommunicationEnabled } from 'app/entities/course.model';
-import { CourseManagementService } from '../../course/manage/course-management.service';
-import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ButtonSize } from 'app/shared/components/button.component';
 import { EventManager } from 'app/core/util/event-manager.service';
 import {
@@ -33,18 +32,17 @@ import { CourseAdminService } from 'app/course/manage/course-admin.service';
 })
 export class CourseManagementTabBarComponent implements OnInit, OnDestroy {
     readonly FeatureToggle = FeatureToggle;
+    readonly ButtonSize = ButtonSize;
 
-    ButtonSize = ButtonSize;
-    ActionType = ActionType;
-    activeStudents?: number[];
     course: Course;
+
     @Input() showCourseEditButtons = false;
 
-    private eventSubscriber: Subscription;
+    private paramSub: Subscription;
+    private courseSub: Subscription;
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
-    paramSub: Subscription;
 
     // Icons
     faTimes = faTimes;
@@ -81,7 +79,7 @@ export class CourseManagementTabBarComponent implements OnInit, OnDestroy {
             courseId = params['courseId'];
         });
 
-        this.eventSubscriber = this.courseManagementService.find(courseId).subscribe((courseResponse) => {
+        this.courseSub = this.courseManagementService.find(courseId).subscribe((courseResponse) => {
             this.course = courseResponse.body!;
         });
     }
@@ -93,7 +91,7 @@ export class CourseManagementTabBarComponent implements OnInit, OnDestroy {
         if (this.paramSub) {
             this.paramSub.unsubscribe();
         }
-        this.eventManager.destroy(this.eventSubscriber);
+        this.eventManager.destroy(this.courseSub);
     }
 
     /**

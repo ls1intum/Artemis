@@ -41,6 +41,7 @@ import { SortService } from 'app/shared/service/sort.service';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { ExamAssessmentButtonsComponent } from 'app/course/dashboards/assessment-dashboard/exam-assessment-buttons/exam-assessment-buttons.component';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
+import { CourseManagementTabBarComponent } from 'app/shared/course-management-tab-bar/course-management-tab-bar.component';
 
 describe('AssessmentDashboardInformationComponent', () => {
     let comp: AssessmentDashboardComponent;
@@ -157,6 +158,7 @@ describe('AssessmentDashboardInformationComponent', () => {
                 MockDirective(MockHasAnyAuthorityDirective),
                 MockComponent(ExamAssessmentButtonsComponent),
                 MockComponent(DocumentationButtonComponent),
+                MockComponent(CourseManagementTabBarComponent),
             ],
             providers: [
                 { provide: ActivatedRoute, useValue: route },

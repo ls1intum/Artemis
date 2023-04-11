@@ -1,3 +1,4 @@
+<jhi-course-management-tab-bar></jhi-course-management-tab-bar>
 <div *ngIf="isLoading" class="d-flex justify-content-center">
     <div class="spinner-border" role="status">
         <span class="sr-only">{{ 'loading' | artemisTranslate }}</span>
@@ -5,7 +6,6 @@
 </div>
 
 <div *ngIf="!isLoading">
-    <jhi-course-management-tab-bar></jhi-course-management-tab-bar>
     <div class="d-flex flex-wrap">
         <div class="my-auto d-flex align-items-center">
             <h2 jhiTranslate="artemisApp.learningGoal.manageLearningGoals.title">Learning Goal Management</h2>

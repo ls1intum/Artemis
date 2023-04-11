@@ -20,6 +20,7 @@ import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
 import { LectureImportComponent } from 'app/lecture/lecture-import.component';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
+import { CourseManagementTabBarComponent } from 'app/shared/course-management-tab-bar/course-management-tab-bar.component';
 
 describe('Lecture', () => {
     let lectureComponentFixture: ComponentFixture<LectureComponent>;
@@ -86,6 +87,7 @@ describe('Lecture', () => {
                 MockComponent(DocumentationButtonComponent),
                 MockDirective(TranslateDirective),
                 MockRouterLinkDirective,
+                MockComponent(CourseManagementTabBarComponent),
             ],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
