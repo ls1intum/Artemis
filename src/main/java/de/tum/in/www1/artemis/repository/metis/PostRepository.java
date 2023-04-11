@@ -41,13 +41,13 @@ public interface PostRepository extends JpaRepository<Post, Long>, JpaSpecificat
      */
     default Page<Post> findPosts(PostContextFilter postContextFilter, Long userId, boolean pagingEnabled, Pageable pageable) {
         Specification<Post> specification = Specification.where(distinct())
-                .and(getCourseSpecification(postContextFilter.getCourseId(), postContextFilter.getLectureId(), postContextFilter.getExerciseId())
-                        .and(getLectureSpecification(postContextFilter.getLectureId()).and(getExerciseSpecification(postContextFilter.getExerciseId()))
-                                .and(getSearchTextSpecification(postContextFilter.getSearchText())).and(getCourseWideContextSpecification(postContextFilter.getCourseWideContext()))
-                                .and(getOwnSpecification(postContextFilter.getFilterToOwn(), userId)))
-                        .and(getAnsweredOrReactedSpecification(postContextFilter.getFilterToAnsweredOrReacted(), userId))
-                        .and(getUnresolvedSpecification(postContextFilter.getFilterToUnresolved()))
-                        .and(getSortSpecification(pagingEnabled, postContextFilter.getPostSortCriterion(), postContextFilter.getSortingOrder())));
+                .and(getCourseSpecification(postContextFilter.getCourseId(), postContextFilter.getLectureId(), postContextFilter.getExerciseId()))
+                .and(getLectureSpecification(postContextFilter.getLectureId()).or(getExerciseSpecification(postContextFilter.getExerciseId()))
+                        .or(getCourseWideContextSpecification(postContextFilter.getCourseWideContext())))
+                .and(getSearchTextSpecification(postContextFilter.getSearchText())).and(getOwnSpecification(postContextFilter.getFilterToOwn(), userId))
+                .and(getAnsweredOrReactedSpecification(postContextFilter.getFilterToAnsweredOrReacted(), userId))
+                .and(getUnresolvedSpecification(postContextFilter.getFilterToUnresolved()))
+                .and(getSortSpecification(pagingEnabled, postContextFilter.getPostSortCriterion(), postContextFilter.getSortingOrder()));
 
         if (pagingEnabled) {
             return findAll(specification, pageable);

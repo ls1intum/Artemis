@@ -243,27 +243,17 @@ public class PostService extends PostingService {
         }
 
         Page<Post> postsInCourse;
-        // get all posts in course or filter by course-wide context
-        if (postContextFilter.getExerciseId() == null && postContextFilter.getLectureId() == null && postContextFilter.getPlagiarismCaseId() == null) {
-            postsInCourse = this.getCoursePosts(postContextFilter, pagingEnabled, pageable);
-        }
-        // filter by exercise
-        else if (postContextFilter.getCourseWideContext() == null && postContextFilter.getExerciseId() != null && postContextFilter.getLectureId() == null
-                && postContextFilter.getPlagiarismCaseId() == null) {
-            postsInCourse = this.getAllExercisePosts(postContextFilter, pagingEnabled, pageable);
-        }
-        // filter by lecture
-        else if (postContextFilter.getCourseWideContext() == null && postContextFilter.getExerciseId() == null && postContextFilter.getLectureId() != null
-                && postContextFilter.getPlagiarismCaseId() == null) {
-            postsInCourse = this.getAllLecturePosts(postContextFilter, pagingEnabled, pageable);
-        }
         // filter by plagiarism case
-        else if (postContextFilter.getCourseWideContext() == null && postContextFilter.getExerciseId() == null && postContextFilter.getLectureId() == null
+        if (postContextFilter.getCourseWideContext() == null && postContextFilter.getExerciseId() == null && postContextFilter.getLectureId() == null
                 && postContextFilter.getPlagiarismCaseId() != null) {
             postsInCourse = new PageImpl<>(this.getAllPlagiarismCasePosts(postContextFilter));
         }
+        // filter by all other contexts
+        else if (postContextFilter.getPlagiarismCaseId() != null) {
+            postsInCourse = this.getCoursePosts(postContextFilter, pagingEnabled, pageable);
+        }
         else {
-            throw new BadRequestAlertException("A new post cannot be associated with more than one context", METIS_POST_ENTITY_NAME, "ambiguousContext");
+            throw new BadRequestAlertException("A post cannot be associated with more than one context", METIS_POST_ENTITY_NAME, "ambiguousContext");
         }
 
         setAuthorRoleOfPostings(postsInCourse.getContent());
