@@ -238,7 +238,7 @@ export class NotificationService {
             title: QUIZ_EXERCISE_STARTED_TITLE,
             text: QUIZ_EXERCISE_STARTED_TEXT,
             textIsPlaceholder: true,
-            placeholderValues: '["' + quizExercise.title + '"]',
+            placeholderValues: '["' + quizExercise.course!.title + '","' + quizExercise.title + '"]',
             notificationDate: dayjs(),
             target: JSON.stringify({
                 course: quizExercise.course!.id,
