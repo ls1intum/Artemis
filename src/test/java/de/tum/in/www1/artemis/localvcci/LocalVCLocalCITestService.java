@@ -76,24 +76,10 @@ public class LocalVCLocalCITestService {
      * Mock dockerClient.copyArchiveFromContainerCmd() such that it returns the commitHash for the assignment repository.
      *
      * @param mockDockerClient the mocked DockerClient.
-     * @param commitHashes     the commit hashes to return.
+     * @param commitHash       the commit hash to return.
      */
-    public void mockCommitHash(DockerClient mockDockerClient, String... commitHashes) throws IOException {
-        if (commitHashes.length == 0) {
-            throw new IllegalArgumentException("At least one commit hash must be provided.");
-        }
-
-        if (commitHashes.length > 2) {
-            throw new IllegalArgumentException("At most two commit hashes can be provided.");
-        }
-
-        if (commitHashes.length == 1) {
-            mockInputStreamReturnedFromContainer(mockDockerClient, "/repositories/assignment-repository/.git/refs/heads/[^/]+", Map.of("assignmentCommitHash", commitHashes[0]));
-        }
-        else {
-            mockInputStreamReturnedFromContainer(mockDockerClient, "/repositories/assignment-repository/.git/refs/heads/[^/]+", Map.of("assignmentCommitHash", commitHashes[0]),
-                    Map.of("assignmentCommitHash", commitHashes[1]));
-        }
+    public void mockCommitHash(DockerClient mockDockerClient, String commitHash) throws IOException {
+        mockInputStreamReturnedFromContainer(mockDockerClient, "/repositories/assignment-repository/.git/refs/heads/[^/]+", Map.of("assignmentCommitHash", commitHash));
     }
 
     /**
@@ -273,10 +259,14 @@ public class LocalVCLocalCITestService {
     }
 
     public String commitFile(Path localRepositoryFolder, String packageFolderName, Git localGit) throws Exception {
-        Path testJsonFilePath = Path.of(localRepositoryFolder.toString(), "src", packageFolderName, "test.txt");
+        return commitFile(localRepositoryFolder, packageFolderName, localGit, "test.txt");
+    }
+
+    public String commitFile(Path localRepositoryFolder, String packageFolderName, Git localGit, String fileName) throws Exception {
+        Path testJsonFilePath = Path.of(localRepositoryFolder.toString(), "src", packageFolderName, fileName);
         gitUtilService.writeEmptyJsonFileToPath(testJsonFilePath);
         localGit.add().addFilepattern(".").call();
-        RevCommit commit = localGit.commit().setMessage("Add test.txt").call();
+        RevCommit commit = localGit.commit().setMessage("Add " + fileName).call();
         return commit.getId().getName();
     }
 
@@ -298,7 +288,12 @@ public class LocalVCLocalCITestService {
     }
 
     public void testFetchThrowsException(Git repositoryHandle, String username, String password, String projectKey, String repositorySlug, String expectedMessage) {
-        TransportException exception = assertThrows(TransportException.class, () -> performFetch(repositoryHandle, username, password, projectKey, repositorySlug));
+        testFetchThrowsException(repositoryHandle, username, password, projectKey, repositorySlug, TransportException.class, expectedMessage);
+    }
+
+    public <T extends Exception> void testFetchThrowsException(Git repositoryHandle, String username, String password, String projectKey, String repositorySlug,
+            Class<T> expectedException, String expectedMessage) {
+        T exception = assertThrows(expectedException, () -> performFetch(repositoryHandle, username, password, projectKey, repositorySlug));
         assertThat(exception.getMessage()).contains(expectedMessage);
     }
 

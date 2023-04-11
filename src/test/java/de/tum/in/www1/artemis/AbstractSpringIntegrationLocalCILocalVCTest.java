@@ -148,7 +148,7 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
 
     protected String tutor1Login;
 
-    protected String instructorLogin;
+    protected String instructor1Login;
 
     protected String projectKey1;
 
@@ -165,7 +165,7 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
         student1 = users.stream().filter(user -> student1Login.equals(user.getLogin())).findFirst().orElseThrow();
         student2Login = TEST_PREFIX + "student2";
         tutor1Login = TEST_PREFIX + "tutor1";
-        instructorLogin = TEST_PREFIX + "instructor1";
+        instructor1Login = TEST_PREFIX + "instructor1";
 
         // Set the Authentication object for student1 in the SecurityContextHolder.
         // This is necessary because the "database.addStudentParticipationForProgrammingExercise()" below needs the Authentication object set.
@@ -206,8 +206,8 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
         programmingExerciseStudentParticipationRepository.save(teachingAssistantParticipation);
 
         // Add a participation for instructor1.
-        instructorParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, instructorLogin);
-        instructorParticipation.setRepositoryUrl(String.format(localVCSBaseUrl + "/git/%s/%s.git", projectKey1, (projectKey1 + "-" + instructorLogin).toLowerCase()));
+        instructorParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, instructor1Login);
+        instructorParticipation.setRepositoryUrl(String.format(localVCSBaseUrl + "/git/%s/%s.git", projectKey1, (projectKey1 + "-" + instructor1Login).toLowerCase()));
         instructorParticipation.setBranch(defaultBranch);
         programmingExerciseStudentParticipationRepository.save(instructorParticipation);
 

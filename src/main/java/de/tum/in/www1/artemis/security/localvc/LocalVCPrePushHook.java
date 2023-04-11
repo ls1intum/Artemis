@@ -58,12 +58,6 @@ public class LocalVCPrePushHook implements PreReceiveHook {
                 return;
             }
 
-            // Prevent renaming branches.
-            if (!command.getRefName().startsWith("refs/heads/")) {
-                command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, "You cannot rename a branch.");
-                return;
-            }
-
             git.close();
         }
         catch (IOException e) {

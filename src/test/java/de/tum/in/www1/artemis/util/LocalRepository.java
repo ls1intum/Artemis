@@ -11,6 +11,9 @@ import java.util.stream.StreamSupport;
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.lib.Constants;
+import org.eclipse.jgit.lib.RefUpdate;
+import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.transport.URIish;
 
@@ -61,6 +64,12 @@ public class LocalRepository {
         this.originGit = Git.init().setDirectory(originRepositoryFolder.toFile()).setBare(true).call();
 
         this.localGit.remoteAdd().setName("origin").setUri(new URIish(String.valueOf(this.originRepoFile))).call();
+
+        // Modify the HEAD file to contain the correct branch. Otherwise, cloning the repository does not work.
+        Repository repository = originGit.getRepository();
+        RefUpdate refUpdate = repository.getRefDatabase().newUpdate(Constants.HEAD, false);
+        refUpdate.setForceUpdate(true);
+        refUpdate.link("refs/heads/" + defaultBranch);
 
         // Push a file to the remote repository to create the default branch there.
         // This is needed because the local CI system only considers pushes that update the existing default branch.
