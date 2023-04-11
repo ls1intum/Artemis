@@ -17,7 +17,7 @@ import { SortService } from 'app/shared/service/sort.service';
 import { ExamInformationDTO } from 'app/entities/exam-information.model';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
-import { MockDirective, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-router-link.directive';
@@ -27,6 +27,7 @@ import { SortDirective } from 'app/shared/sort/sort.directive';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { MockNgbModalService } from '../../../helpers/mocks/service/mock-ngb-modal.service';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
+import { CourseManagementTabBarComponent } from 'app/shared/course-management-tab-bar/course-management-tab-bar.component';
 
 describe('Exam Management Component', () => {
     const course = { id: 456 } as Course;
@@ -57,6 +58,7 @@ describe('Exam Management Component', () => {
                 MockDirective(SortDirective),
                 MockPipe(DurationPipe),
                 MockDirective(DeleteButtonDirective),
+                MockComponent(CourseManagementTabBarComponent),
             ],
             providers: [
                 { provide: SessionStorageService, useClass: MockSyncStorage },
