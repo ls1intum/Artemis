@@ -107,10 +107,10 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     protected StudentExamRepository studentExamRepository;
 
     @Autowired
-    private TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
+    protected TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
 
     @Autowired
-    private SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
+    protected SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
 
     @LocalServerPort
     protected int port;
@@ -154,6 +154,10 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
 
     protected String assignmentRepositorySlug;
 
+    protected String templateRepositorySlug;
+
+    protected String solutionRepositorySlug;
+
     @BeforeEach
     void initUsersAndExercise() {
         // The port cannot be injected into the LocalVCLocalCITestService because {local.server.port} is not available when the class is instantiated.
@@ -184,8 +188,9 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
         programmingExerciseRepository.save(programmingExercise);
         programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExercise.getId()).orElseThrow(); // programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).orElseThrow();
         // Set the correct repository URLs for the template and the solution participation.
+        templateRepositorySlug = projectKey1.toLowerCase() + "-exercise";
         templateParticipation = programmingExercise.getTemplateParticipation();
-        templateParticipation.setRepositoryUrl(localVCSBaseUrl + "/git/" + projectKey1 + "/" + projectKey1.toLowerCase() + "-template.git");
+        templateParticipation.setRepositoryUrl(localVCSBaseUrl + "/git/" + projectKey1 + "/" + templateRepositorySlug + ".git");
         templateProgrammingExerciseParticipationRepository.save(templateParticipation);
         solutionParticipation = programmingExercise.getSolutionParticipation();
         solutionParticipation.setRepositoryUrl(localVCSBaseUrl + "/git/" + projectKey1 + "/" + projectKey1.toLowerCase() + "-solution.git");

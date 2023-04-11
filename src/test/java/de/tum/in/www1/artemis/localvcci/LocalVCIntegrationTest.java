@@ -29,12 +29,26 @@ class LocalVCIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest
 
     private LocalRepository assignmentRepository;
 
+    private LocalRepository templateRepository;
+
+    private LocalRepository solutionRepository;
+
     @BeforeEach
     void initRepository() throws GitAPIException, IOException, URISyntaxException {
-        // Create remote assignment repository
+        // Create assignment repository
         Path remoteAssignmentRepositoryFolder = localVCLocalCITestService.createRepositoryFolderInTempDirectory(projectKey1, assignmentRepositorySlug);
         assignmentRepository = new LocalRepository(defaultBranch);
         assignmentRepository.configureRepos("localAssignment", remoteAssignmentRepositoryFolder);
+
+        // Create template repository
+        Path remoteTemplateRepositoryFolder = localVCLocalCITestService.createRepositoryFolderInTempDirectory(projectKey1, (projectKey1 + "-exercise").toLowerCase());
+        templateRepository = new LocalRepository(defaultBranch);
+        templateRepository.configureRepos("localTemplate", remoteTemplateRepositoryFolder);
+
+        // Create solution repository
+        Path remoteSolutionRepositoryFolder = localVCLocalCITestService.createRepositoryFolderInTempDirectory(projectKey1, (projectKey1 + "-solution").toLowerCase());
+        solutionRepository = new LocalRepository(defaultBranch);
+        solutionRepository.configureRepos("localSolution", remoteSolutionRepositoryFolder);
     }
 
     @AfterEach
@@ -116,25 +130,23 @@ class LocalVCIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest
         // Create a new repository, but don't create a participation for student2.
         String repositorySlug = projectKey1.toLowerCase() + "-" + student2Login;
         Path remoteRepositoryFolder = localVCLocalCITestService.createRepositoryFolderInTempDirectory(projectKey1, repositorySlug);
-        LocalRepository someRepository = new LocalRepository(defaultBranch);
-        someRepository.configureRepos("localRepository", remoteRepositoryFolder);
-        Git remoteGit = someRepository.originGit;
-        Path localRepositoryFolder = someRepository.localRepoFile.toPath();
-        Git localGit = someRepository.localGit;
+        LocalRepository student2Repository = new LocalRepository(defaultBranch);
+        student2Repository.configureRepos("localRepository", remoteRepositoryFolder);
 
-        localVCLocalCITestService.testFetchThrowsException(localGit, student2Login, projectKey1, repositorySlug, internalServerError);
-        localVCLocalCITestService.testPushThrowsException(localGit, student2Login, projectKey1, repositorySlug, internalServerError);
+        localVCLocalCITestService.testFetchThrowsException(student2Repository.localGit, student2Login, projectKey1, repositorySlug, internalServerError);
+        localVCLocalCITestService.testPushThrowsException(student2Repository.localGit, student2Login, projectKey1, repositorySlug, internalServerError);
 
         // Cleanup
-        localGit.close();
-        FileUtils.deleteDirectory(localRepositoryFolder.toFile());
-        remoteGit.close();
-        FileUtils.deleteDirectory(remoteRepositoryFolder.toFile());
+        localVCLocalCITestService.removeRepository(student2Repository);
     }
 
     @Test
-    void testFetchPush_templateRepository_teachingAssistant_noParticipation() {
+    void testFetchPush_templateRepository_noParticipation() {
+        // Remove the template participation from the programming exercise.
+        templateProgrammingExerciseParticipationRepository.delete(templateParticipation);
 
+        localVCLocalCITestService.testFetchThrowsException(templateRepository.localGit, instructor1Login, projectKey1, templateRepositorySlug, internalServerError);
+        localVCLocalCITestService.testPushThrowsException(templateRepository.localGit, instructor1Login, projectKey1, templateRepositorySlug, internalServerError);
     }
 
     @Test
@@ -160,7 +172,6 @@ class LocalVCIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest
         // Create a second local repository, push a file from there, and then try to force push from the original local repository.
         Path tempDirectory = Files.createTempDirectory("tempDirectory");
         Git secondLocalGit = Git.cloneRepository().setURI(repositoryUrl).setDirectory(tempDirectory.toFile()).call();
-        // secondLocalGit.remoteAdd().setName("origin").setUri(new URIish(String.valueOf(assignmentRepository.originRepoFile))).call();
         localVCLocalCITestService.commitFile(tempDirectory, programmingExercise.getPackageFolderName(), secondLocalGit);
         localVCLocalCITestService.testPushSuccessful(secondLocalGit, student1Login, projectKey1, assignmentRepositorySlug);
 
