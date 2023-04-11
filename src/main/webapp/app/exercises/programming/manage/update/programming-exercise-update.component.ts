@@ -401,7 +401,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                             this.courseService.find(this.courseId).subscribe((res) => {
                                 this.isExamMode = false;
                                 this.programmingExercise.course = res.body!;
-                                if (this.programmingExercise.course?.defaultProgrammingLanguage) {
+                                if (this.programmingExercise.course?.defaultProgrammingLanguage && !this.isImportFromFile) {
                                     this.selectedProgrammingLanguage = this.programmingExercise.course.defaultProgrammingLanguage!;
                                 }
                                 this.exerciseCategories = this.programmingExercise.categories || [];
@@ -960,7 +960,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     }
 
     private createProgrammingExerciseForImportFromFile() {
-        this.programmingExercise = history.state.programmingExerciseForImportFromFile;
+        this.programmingExercise = cloneDeep(history.state.programmingExerciseForImportFromFile);
         this.programmingExercise.id = undefined;
         this.programmingExercise.exerciseGroup = undefined;
         this.programmingExercise.course = undefined;
@@ -974,7 +974,9 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         this.programmingExercise.allowComplaintsForAutomaticAssessments = false;
         this.programmingExercise.allowManualFeedbackRequests = false;
         this.selectedProgrammingLanguage = this.programmingExercise.programmingLanguage!;
-        this.selectedProjectType = this.programmingExercise.projectType!;
+        // we need to get it from the history object as setting the programming language
+        // sets the project type of the programming exercise to the default value for the programming language.
+        this.selectedProjectType = history.state.programmingExerciseForImportFromFile.projectType;
     }
 
     getInfoStepInputs() {
