@@ -69,6 +69,7 @@ describe('FormDateTimePickerComponent', () => {
     describe('test date writing', () => {
         it('should write the correct date if date is dayjs object', () => {
             component.writeValue(normalDate);
+            normalDate.isValid();
 
             expect(component.value).toEqual(normalDateAsDateObject);
         });

@@ -2,12 +2,3 @@
     height: 1rem;
     width: 1rem;
 }
-
-.calendar-event-toggle:hover .icon-static,
-.calendar-event-toggle .icon-remove {
-    display: none;
-}
-
-.calendar-event-toggle:hover .icon-remove {
-    display: inline;
-}

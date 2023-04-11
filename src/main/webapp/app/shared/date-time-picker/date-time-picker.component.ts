@@ -1,8 +1,7 @@
 import { Component, ElementRef, EventEmitter, Input, Output, ViewChild, forwardRef } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
-import { faCalendarAlt, faCalendarMinus, faClock, faGlobe, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import { faCalendarAlt, faClock, faGlobe, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
-import { isDate } from 'app/shared/util/utils';
 
 @Component({
     selector: 'jhi-date-time-picker',
@@ -34,7 +33,6 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
     faGlobe = faGlobe;
     faClock = faClock;
     faQuestionCircle = faQuestionCircle;
-    faCalendarMinus = faCalendarMinus;
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     _onChange = (val: dayjs.Dayjs) => {};
@@ -59,11 +57,28 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
      * Function that writes the value safely.
      * @param value as dayjs or date
      */
-    writeValue(value: dayjs.Dayjs | Date | null): void {
+    /*writeValue(value: dayjs.Dayjs | Date | null): void {
         if (value !== undefined && this.value !== value) {
-            this.value = !value ? null : isDate(value) ? value : dayjs(value).toDate();
-            this.value?.setSeconds(0, 0);
-            this._onChange(dayjs(value));
+            if (value == null) {
+                this.value = null;
+            } else {
+                this.value = isDate(value) ? value : ((dayjs) value).toDate();
+                this.value.setSeconds(0, 0);
+            }
+            this._onChange(value);
+        } TODO: reuse old?
+    }*/
+
+    /**
+     * Function that writes the value safely.
+     * @param value as dayjs or date
+     */
+    writeValue(value: any) {
+        // convert dayjs to date, because owl-date-time only works correctly with date objects
+        if (dayjs.isDayjs(value)) {
+            this.value = (value as dayjs.Dayjs).toDate();
+        } else {
+            this.value = value;
         }
     }
 
