@@ -54,13 +54,7 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
      * @param value as dayjs
      */
     convert(value?: dayjs.Dayjs) {
-        if (value != undefined && value.isValid()) {
-            this.invalidD = true;
-            return value.toDate();
-        } else {
-            this.invalidD = false;
-            return null;
-        }
+        return value != undefined && value.isValid() ? value.toDate() : null;
     }
 
     /**
@@ -111,13 +105,15 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
      * updates the value, if a valid Dayjs value is passed
      * @param newValue used to update value
      */
-    updateField(newValue: any) {
+    updateField(newValue: dayjs.Dayjs) {
+        alert(newValue);
         if (dayjs.isDayjs(newValue) || isDate(newValue)) {
-            this.value = newValue;
+            alert('updateField!!');
+            this.invalidD = false;
+            this.value = newValue.toDate();
             this._onChange(dayjs(this.value));
             this.valueChanged();
-        } else if (newValue == null) {
-            this.value = null;
+            alert(this.value);
         }
     }
 
@@ -128,11 +124,36 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
         return Intl.DateTimeFormat().resolvedOptions().timeZone;
     }
 
-    /**
-     * resets the date to null
-     */
-    resetDate() {
-        this.writeValue(null);
+    updateFieldTest(newValue: Date) {
+        if (newValue == null) {
+            alert('new value is null :p');
+        }
+
+        this.value = newValue;
+        this._onChange(dayjs(this.value));
         this.valueChanged();
+    }
+
+    validate(event: Event) {
+        const val = (event.target as HTMLInputElement).value;
+
+        if (val == '') {
+            this.invalidD = false;
+            this.value = null;
+            this._onChange(dayjs(this.value));
+            this.valueChanged();
+        } else if (dayjs(val).isValid()) {
+            this.invalidD = false;
+            this.value = new Date(val);
+            this._onChange(dayjs(this.value));
+            this.valueChanged();
+        } else {
+            this.invalidD = true;
+        }
+    }
+
+    all() {
+        const str = (<HTMLInputElement>document.getElementById('date-input-field')).value;
+        alert('DEBUG: ' + str);
     }
 }

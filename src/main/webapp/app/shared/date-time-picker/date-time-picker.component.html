@@ -8,6 +8,7 @@
     <fa-icon [icon]="faGlobe" stackItemSize="1x" class="text-lightgrey"></fa-icon>
     <fa-icon [icon]="faClock" stackItemSize="1x" transform="shrink-6 down-5 right-5" class="text-secondary"></fa-icon>
 </fa-stack>
+
 <div class="d-flex">
     <input
         #dateInput="ngModel"
@@ -18,8 +19,9 @@
         [disabled]="disabled"
         [min]="convert(min)"
         [max]="convert(max)"
-        (ngModelChange)="updateField($event)"
+        (change)="validate($event)"
         [owlDateTime]="dt"
+        (dateTimeChange)="updateField($event)"
         name="datePicker"
     />
     <button [owlDateTimeTrigger]="dt" class="btn position-absolute" type="button">
