@@ -12,6 +12,7 @@
         [languageStepInputs]="getLanguageStepInputs()"
         [gradingStepInputs]="getGradingStepInputs()"
         [problemStepInputs]="getProblemStepInputs()"
+        [auxiliaryRepositoriesSupported]="auxiliaryRepositoriesSupported"
     ></jhi-programming-exercise-update-wizard>
     <form name="editForm" role="form" novalidate #editForm="ngForm" (keydown.enter)="isEventInsideTextArea($event)" *ngIf="!isShowingWizardMode">
         <div class="d-flex" *ngIf="!isImport && !programmingExercise.id">
@@ -46,6 +47,7 @@
                 [isExamMode]="isExamMode"
                 [programmingExercise]="programmingExercise"
                 [infoInputs]="getInfoStepInputs()"
+                [auxiliaryRepositoriesSupported]="auxiliaryRepositoriesSupported"
             >
             </jhi-programming-exercise-info>
             <jhi-programming-exercise-difficulty [isImport]="isImport" [programmingExercise]="programmingExercise"></jhi-programming-exercise-difficulty>
@@ -67,6 +69,8 @@
                 [rerenderSubject]="rerenderSubject"
                 [sequentialTestRunsAllowed]="sequentialTestRunsAllowed"
                 [checkoutSolutionRepositoryAllowed]="checkoutSolutionRepositoryAllowed"
+                [publishBuildPlanUrlAllowed]="publishBuildPlanUrlAllowed"
+                [testwiseCoverageAnalysisSupported]="testwiseCoverageAnalysisSupported"
                 [validIdeSelection]="validIdeSelection"
                 [inProductionEnvironment]="inProductionEnvironment"
                 [recreateBuildPlans]="recreateBuildPlans"
