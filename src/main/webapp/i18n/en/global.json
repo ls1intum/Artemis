@@ -302,7 +302,7 @@
             "datetimelocal": "This field must be a date and time.",
             "patternLogin": "This field may only contain letters, digits and e-mail addresses.",
             "invalidPattern": "This field contains an invalid e-mail pattern.",
-            "invalidDate": "This field contains an invalid date. The date should have a MM YY DD or similar format."
+            "invalidDate": "This field contains an invalid date. The date should have a MM DD YY or similar format."
         },
         "timeZoneWarning": "You are currently in the {{ timeZone }} time zone."
     },
