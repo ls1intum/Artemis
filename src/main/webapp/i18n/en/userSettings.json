@@ -19,14 +19,14 @@
                 "NOTIFICATION_SETTINGS": "Notification Settings"
             },
             "settingGroupNames": {
-                "weeklySummary                      ": "Weekly Summary",
-                "exerciseNotifications              ": "Exercise Notifications",
-                "lectureNotifications               ": "Lecture Notifications",
-                "tutorialGroupNotifications         ": "Tutorial Group Notifications",
-                "courseWideDiscussionNotifications  ": "Course-wide Discussion Notifications",
-                "tutorNotifications                 ": "Tutor Notifications",
-                "editorNotifications                ": "Editor Notifications",
-                "instructorNotifications            ": "Instructor Notifications"
+                "weeklySummary": "Weekly Summary",
+                "exerciseNotifications": "Exercise Notifications",
+                "lectureNotifications": "Lecture Notifications",
+                "tutorialGroupNotifications": "Tutorial Group Notifications",
+                "courseWideDiscussionNotifications": "Course-wide Discussion Notifications",
+                "tutorNotifications": "Tutor Notifications",
+                "editorNotifications": "Editor Notifications",
+                "instructorNotifications": "Instructor Notifications"
             },
             "settingNames": {
                 "basicWeeklySummary": "Basic Weekly Summary",
