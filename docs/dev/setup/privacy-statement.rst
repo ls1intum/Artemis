@@ -1,9 +1,7 @@
-.. _privacy_statement:
-
+.. _privacy-statement:
 
 Privacy Statement
-^^^^^^^^^^^^^^
-
+-----------------
 The privacy statement is stored in the ``./legal``  directory by default. You can override this value by setting the ``legal-path` value in the `application-artemis.yml`.
 The privacy statement is stored as markdown file. Currently, English and German as languages are supported.
 The privacy statement file has to follow the naming convention ``privacy_statement_<de|en>.md``.
@@ -18,7 +16,7 @@ These are only template that are used at TUM and need to be adapted to your need
 
 German version
 ^^^^^^^^
-.. code:: markdown
+.. code::
 
 # Datenschutz
 Die <University> nimmt den Schutz von personenbezogenen Daten sehr ernst und nutzt eine sichere und verschlüsselte Kommunikation nach
@@ -149,8 +147,11 @@ Sie haben das Recht, auf schriftlichen Antrag und unentgeltlich Auskunft über d
 auf Berichtigung unrichtiger Daten. Den behördlichen Datenschutzbeauftragten der <University> erreichen Sie per E-Mail unter <Email Datenschutzbeauftragter>
 oder über <Link zum Datenschutzbeauftragten>.
 
+
 English version
 ^^^^^^^^
+
+.. code::
 
 # Privacy
 
@@ -280,3 +281,5 @@ When you log in to the system, your personal data will be verified with the dire
 
 You have the right, upon written request and free of charge, to obtain information about the personal data stored about you. In addition, you have the right to have incorrect data
 corrected. You can reach the data protection officer of <University by e-mail at <Email> or via <Website>.
+
+
