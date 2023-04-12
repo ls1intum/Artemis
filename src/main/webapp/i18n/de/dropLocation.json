@@ -3,8 +3,7 @@
         "dropLocation": {
             "home": {
                 "title": "Drop Locations",
-                "createLabel": "Drop Location erstellen",
-                "createOrEditLabel": "Drop Location erstellen oder bearbeiten"
+                "createLabel": "Drop Location erstellen"
             },
             "created": "Drop Location erstellt mit ID {{ param }}",
             "updated": "Drop Location aktualisiert mit ID {{ param }}",
