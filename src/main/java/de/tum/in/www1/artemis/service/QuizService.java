@@ -125,7 +125,7 @@ public abstract class QuizService<T extends QuizConfiguration> {
         for (QuizQuestion quizQuestion : savedQuizConfiguration.getQuizQuestions()) {
             if (quizQuestion instanceof DragAndDropQuestion dragAndDropQuestion) {
                 // restore references from index after save
-                restoreCorrectMappingsFromIndices(dragAndDropQuestion);
+                restoreCorrectMappingsFromIndicesDragAndDrop(dragAndDropQuestion);
             }
             else if (quizQuestion instanceof ShortAnswerQuestion shortAnswerQuestion) {
                 // restore references from index after save
@@ -238,7 +238,7 @@ public abstract class QuizService<T extends QuizConfiguration> {
      *
      * @param dragAndDropQuestion the question for which to perform these actions
      */
-    private void restoreCorrectMappingsFromIndices(DragAndDropQuestion dragAndDropQuestion) {
+    private void restoreCorrectMappingsFromIndicesDragAndDrop(DragAndDropQuestion dragAndDropQuestion) {
         for (DragAndDropMapping mapping : dragAndDropQuestion.getCorrectMappings()) {
             // drag item
             mapping.setDragItem(dragAndDropQuestion.getDragItems().get(mapping.getDragItemIndex()));
