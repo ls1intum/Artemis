@@ -14,7 +14,7 @@
             #datePicker
             class="form-control position-relative ps-5"
             id="date-input-field"
-            [ngClass]="{ 'is-invalid': error || invalidD }"
+            [ngClass]="{ 'is-invalid': error || invalidDate }"
             [ngModel]="value"
             [disabled]="disabled"
             [min]="convert(min)"
@@ -28,5 +28,5 @@
         </button>
         <owl-date-time [startAt]="convert(startAt)" #dt></owl-date-time>
     </div>
-    <span *ngIf="invalidD" class="invalid-feedback">{{ 'artemisApp.exercise.assessmentDueDateError' | artemisTranslate }}</span>
+    <span *ngIf="invalidDate" class="invalid-feedback">{{ 'entity.validation.invalidDate' | artemisTranslate }}</span>
 </div>

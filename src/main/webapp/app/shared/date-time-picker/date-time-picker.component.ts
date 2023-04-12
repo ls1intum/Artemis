@@ -29,9 +29,8 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
     @Input() max: dayjs.Dayjs; // Dates after this date are not selectable.
     @Input() shouldDisplayTimeZoneWarning = true; // Displays a warning that the current time zone might differ from the participants'.
     @Output() valueChange: EventEmitter<boolean> = new EventEmitter();
-    @Output() invalidDate = new EventEmitter();
 
-    invalidD = false;
+    invalidDate = false;
 
     public nameControl = new FormControl();
 
@@ -42,7 +41,7 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
     faQuestionCircle = faQuestionCircle;
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    _onChange = (val: dayjs.Dayjs) => {};
+    _onChange = (val: any) => {};
 
     /**
      * Emits the value change from component.
@@ -59,22 +58,6 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
     convert(value?: dayjs.Dayjs) {
         return value != undefined && value.isValid() ? value.toDate() : null;
     }
-
-    /**
-     * Function that writes the value safely.
-     * @param value as dayjs or date
-     */
-    /*writeValue(value: dayjs.Dayjs | Date | null): void {
-        if (value !== undefined && this.value !== value) {
-            if (value == null) {
-                this.value = null;
-            } else {
-                this.value = isDate(value) ? value : ((dayjs) value).toDate();
-                this.value.setSeconds(0, 0);
-            }
-            this._onChange(value);
-        } TODO: reuse old?
-    }*/
 
     /**
      * Function that writes the value safely.
@@ -108,16 +91,21 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
         this._onChange = fn;
     }
 
-    updateField(newValue: any, ok: string) {
-        if (newValue != null || ok == '') {
-            this.invalidD = false;
-            this.value = newValue;
+    /**
+     * updates the value with the passed newValue. It is checked if the field is empty or the newValue is not null. Then
+     * the passed date is valid, invalidDate can be set to false. Otherwise the date is invalid.
+     * @param newValue a valid date object or null
+     * @param inputValue the string value of #datePicker, the field is empty when inputValue == ''
+     */
+    updateField(newValue: any, inputValue: string) {
+        if (newValue != null || inputValue == '') {
+            this.invalidDate = false;
         } else {
-            this.invalidD = true;
-            this.value = null;
+            this.invalidDate = true;
         }
-        this._onChange(dayjs(this.value));
-        this.valueChanged(this.invalidD);
+        this.value = newValue;
+        this._onChange(this.value);
+        this.valueChanged(this.invalidDate);
     }
 
     /**
