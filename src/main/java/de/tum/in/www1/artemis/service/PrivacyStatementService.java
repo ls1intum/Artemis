@@ -8,6 +8,7 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.PrivacyStatement;
@@ -20,7 +21,8 @@ public class PrivacyStatementService {
 
     private final Logger log = LoggerFactory.getLogger(PrivacyStatementService.class);
 
-    private static final String BASE_PATH = "privacy_statements";
+    @Value("${artemis.legal-path}")
+    private String legalDirBasePath;
 
     private static final String PRIVACY_STATEMENT_FILE_NAME = "privacy_statement_";
 
@@ -45,7 +47,9 @@ public class PrivacyStatementService {
             log.error("Could not read privacy statement file for language {}", language);
             throw new InternalServerErrorException("Could not read privacy statement file for language " + language);
         }
-        return new PrivacyStatement(privacyStatementText, language);
+        return new
+
+        PrivacyStatement(privacyStatementText, language);
 
     }
 
@@ -94,11 +98,16 @@ public class PrivacyStatementService {
             throw new BadRequestAlertException("Privacy statement text cannot be empty", "privacyStatement", "emptyPrivacyStatement");
         }
         try {
+            var baseDirAsPath = Path.of(legalDirBasePath);
+            // if we do not create the directory, if it doesn't exist, the file cannot be created
+            if (!Files.exists(baseDirAsPath)) {
+                Files.createDirectory(baseDirAsPath);
+            }
             Files.writeString(getPrivacyStatementPath(privacyStatement.getLanguage(), true).get(), privacyStatement.getText(), StandardOpenOption.CREATE,
                     StandardOpenOption.TRUNCATE_EXISTING);
         }
         catch (IOException e) {
-            log.error("Could not update privacy statement file for language {}", privacyStatement.getLanguage());
+            log.error("Could not update privacy statement file for language {} {}", privacyStatement.getLanguage(), e.getMessage());
             throw new InternalServerErrorException("Could not update privacy statement file for language " + privacyStatement.getLanguage());
         }
         return new PrivacyStatement(privacyStatement.getText(), privacyStatement.getLanguage());
@@ -109,7 +118,7 @@ public class PrivacyStatementService {
     }
 
     private Optional<Path> getPrivacyStatementPath(PrivacyStatementLanguage language, boolean isUpdate) {
-        var path = Path.of(BASE_PATH, PRIVACY_STATEMENT_FILE_NAME + language.getShortName() + PRIVACY_STATEMENT_FILE_EXTENSION);
+        var path = Path.of(legalDirBasePath, PRIVACY_STATEMENT_FILE_NAME + language.getShortName() + PRIVACY_STATEMENT_FILE_EXTENSION);
         if (Files.exists(path)) {
             return Optional.of(path);
         }
