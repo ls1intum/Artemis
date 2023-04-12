@@ -21,14 +21,14 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
     @ViewChild('dateInput', { static: false }) dateInput: ElementRef;
     @Input() labelName: string;
     @Input() labelTooltip: string;
-    @Input() value0: any;
+    @Input() value: any;
     @Input() disabled: boolean;
     @Input() error: boolean;
     @Input() startAt: dayjs.Dayjs = dayjs().startOf('minutes'); // Default selected date. By default this sets it to the current time without seconds or milliseconds;
     @Input() min: dayjs.Dayjs; // Dates before this date are not selectable.
     @Input() max: dayjs.Dayjs; // Dates after this date are not selectable.
     @Input() shouldDisplayTimeZoneWarning = true; // Displays a warning that the current time zone might differ from the participants'.
-    @Output() valueChange = new EventEmitter();
+    @Output() valueChange: EventEmitter<boolean> = new EventEmitter();
     @Output() invalidDate = new EventEmitter();
 
     invalidD = false;
@@ -47,8 +47,8 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
     /**
      * Emits the value change from component.
      */
-    valueChanged() {
-        this.valueChange.emit();
+    valueChanged(invalidD: boolean) {
+        this.valueChange.emit(invalidD);
     }
 
     /**
@@ -83,9 +83,9 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
     writeValue(value: any) {
         // convert dayjs to date, because owl-date-time only works correctly with date objects
         if (dayjs.isDayjs(value)) {
-            this.value0 = (value as dayjs.Dayjs).toDate();
+            this.value = (value as dayjs.Dayjs).toDate();
         } else {
-            this.value0 = value;
+            this.value = value;
         }
     }
 
@@ -108,32 +108,16 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
         this._onChange = fn;
     }
 
-    /**
-     * updates the value, if a valid Dayjs value is passed
-     * @param newValue used to update value
-     */
-    updateField0(newValue: any) {
-        if (dayjs.isDayjs(newValue) || isDate(newValue)) {
-            this.invalidD = false;
-            this.value0 = newValue.toDate();
-            this._onChange(dayjs(this.value0));
-            alert(this.value0);
-        }
-    }
-
     updateField(newValue: any, ok: string) {
-        const str = (<HTMLInputElement>document.getElementById('date-input-field')).value;
-        console.log(newValue);
-        console.log('str: ' + ok);
-        //todo: this does not work :(
         if (newValue != null || ok == '') {
             this.invalidD = false;
+            this.value = newValue;
         } else {
             this.invalidD = true;
+            this.value = null;
         }
-        this.value0 = newValue;
-        this._onChange(dayjs(this.value0));
-        this.valueChanged();
+        this._onChange(dayjs(this.value));
+        this.valueChanged(this.invalidD);
     }
 
     /**
@@ -142,55 +126,4 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
     get currentTimeZone(): string {
         return Intl.DateTimeFormat().resolvedOptions().timeZone;
     }
-
-    updateFieldTest(newValue: Date) {
-        if (newValue == null) {
-            alert('new value is null :p');
-        }
-
-        this.value0 = newValue;
-        this._onChange(dayjs(this.value0));
-        this.valueChanged();
-    }
-
-    validate(event: Event) {
-        const val = (event.target as HTMLInputElement).value;
-
-        if (val == '') {
-            this.invalidD = false;
-            this.value0 = null;
-            this._onChange(dayjs(this.value0));
-            this.valueChanged();
-        } else if (dayjs(val).isValid()) {
-            this.invalidD = false;
-            this.value0 = new Date(val);
-            this._onChange(dayjs(this.value0));
-            this.valueChanged();
-        } else {
-            this.invalidD = true;
-        }
-    }
-
-    all() {
-        const str = (<HTMLInputElement>document.getElementById('date-input-field')).value;
-        alert('DEBUG: ' + str);
-    }
-
-    public myFilter = (d: any): boolean => {
-        console.log(d);
-
-        if (isDate(d)) {
-            if (isNaN(d.getTime())) {
-                alert('d is NAN');
-                return false;
-            }
-
-            const day = d.getDay();
-            // Prevent Saturday and Sunday from being selected.
-
-            return day !== 0 && day !== 6;
-        } else {
-            return false;
-        }
-    };
 }

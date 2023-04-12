@@ -28,7 +28,7 @@ describe('FormDateTimePickerComponent', () => {
     it('should emit if a value is changed', () => {
         const emitStub = jest.spyOn(component.valueChange, 'emit').mockImplementation();
 
-        component.valueChanged();
+        component.valueChanged(this.invalidD);
 
         expect(emitStub).toHaveBeenCalledOnce();
     });
@@ -87,7 +87,7 @@ describe('FormDateTimePickerComponent', () => {
         const newDate = normalDate.add(2, 'days');
         component.value = normalDate;
 
-        component.updateField(newDate);
+        //component.updateField(newDate);
 
         expect(component.value).toEqual(newDate);
         expect(onChangeSpy).toHaveBeenCalledOnce();

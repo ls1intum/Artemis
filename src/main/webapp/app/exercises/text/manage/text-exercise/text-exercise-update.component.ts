@@ -169,6 +169,29 @@ export class TextExerciseUpdateComponent implements OnInit {
         this.exerciseService.validateDate(this.textExercise);
     }
 
+    validateReleaseDate(invalidDate: boolean) {
+        this.textExercise.releaseInvalidDate = invalidDate;
+        this.exerciseService.validateDate(this.textExercise);
+    }
+    validateStartDate(invalidDate: boolean) {
+        this.textExercise.startInvalidDate = invalidDate;
+        this.exerciseService.validateDate(this.textExercise);
+    }
+
+    validateDueDate(invalidDate: boolean) {
+        this.textExercise.dueInvalidDate = invalidDate;
+        this.exerciseService.validateDate(this.textExercise);
+    }
+    validateAssessmentDueDate(invalidDate: boolean) {
+        this.textExercise.assessmentInvalidDate = invalidDate;
+        this.exerciseService.validateDate(this.textExercise);
+    }
+
+    validateExamplePublicationDate(invalidDate: boolean) {
+        this.textExercise.exampleSolutionInvalidDate = invalidDate;
+        this.exerciseService.validateDate(this.textExercise);
+    }
+
     /**
      * Updates the exercise categories
      * @param categories list of exercise categories

@@ -8,24 +8,25 @@
     <fa-icon [icon]="faGlobe" stackItemSize="1x" class="text-lightgrey"></fa-icon>
     <fa-icon [icon]="faClock" stackItemSize="1x" transform="shrink-6 down-5 right-5" class="text-secondary"></fa-icon>
 </fa-stack>
-<div class="d-flex">
-    <input
-        #dateInput
-        class="form-control position-relative ps-5"
-        id="date-input-field"
-        [ngClass]="{ 'is-invalid': error }"
-        [ngModel]="value0"
-        [disabled]="disabled"
-        [min]="convert(min)"
-        [max]="convert(max)"
-        (ngModelChange)="updateField($event, dateInput.value)"
-        [owlDateTime]="dt"
-        name="datePicker"
-    />
-    <button [owlDateTimeTrigger]="dt" class="btn position-absolute" type="button">
-        <fa-icon [icon]="faCalendarAlt"></fa-icon>
-    </button>
-
-    <owl-date-time [startAt]="convert(startAt)" #dt></owl-date-time>
+<div>
+    <div class="d-flex">
+        <input
+            #datePicker
+            class="form-control position-relative ps-5"
+            id="date-input-field"
+            [ngClass]="{ 'is-invalid': error || invalidD }"
+            [ngModel]="value"
+            [disabled]="disabled"
+            [min]="convert(min)"
+            [max]="convert(max)"
+            (ngModelChange)="updateField($event, datePicker.value)"
+            [owlDateTime]="dt"
+            name="datePicker"
+        />
+        <button [owlDateTimeTrigger]="dt" class="btn position-absolute" type="button">
+            <fa-icon [icon]="faCalendarAlt"></fa-icon>
+        </button>
+        <owl-date-time [startAt]="convert(startAt)" #dt></owl-date-time>
+    </div>
+    <span *ngIf="invalidD" class="invalid-feedback">{{ 'artemisApp.exercise.assessmentDueDateError' | artemisTranslate }}</span>
 </div>
-<span *ngIf="invalidD" class="invalid-feedback">{{ 'artemisApp.exercise.assessmentDueDateError' | artemisTranslate }}</span>
