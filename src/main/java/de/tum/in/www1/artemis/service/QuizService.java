@@ -80,7 +80,7 @@ public abstract class QuizService<T extends QuizConfiguration> {
 
         // if an answerOption was removed then remove the associated AnswerCounters implicitly
         Set<AnswerCounter> answerCounterToDelete = new HashSet<>();
-        addToBeRemovedComponent(quizQuestionStatistic.getAnswerCounters(), answerCounter -> {
+        findTobeDeletedComponent(quizQuestionStatistic.getAnswerCounters(), answerCounter -> {
             if (!(mcQuestion.getAnswerOptions().contains(answerCounter.getAnswer()))) {
                 answerCounter.setAnswer(null);
                 answerCounterToDelete.add(answerCounter);
@@ -104,7 +104,7 @@ public abstract class QuizService<T extends QuizConfiguration> {
 
         // if a dropLocation was removed then remove the associated AnswerCounters implicitly
         Set<DropLocationCounter> dropLocationCounterToDelete = new HashSet<>();
-        addToBeRemovedComponent(quizQuestionStatistic.getDropLocationCounters(), dropLocationCounter -> {
+        findTobeDeletedComponent(quizQuestionStatistic.getDropLocationCounters(), dropLocationCounter -> {
             if (!(dndQuestion.getDropLocations().contains(dropLocationCounter.getDropLocation()))) {
                 dropLocationCounter.setDropLocation(null);
                 dropLocationCounterToDelete.add(dropLocationCounter);
@@ -132,7 +132,7 @@ public abstract class QuizService<T extends QuizConfiguration> {
 
         // if a spot was removed then remove the associated spotCounters implicitly
         Set<ShortAnswerSpotCounter> spotCounterToDelete = new HashSet<>();
-        addToBeRemovedComponent(quizQuestionStatistic.getShortAnswerSpotCounters(), spotCounter -> {
+        findTobeDeletedComponent(quizQuestionStatistic.getShortAnswerSpotCounters(), spotCounter -> {
             if (!(saQuestion.getSpots().contains(spotCounter.getSpot()))) {
                 spotCounter.setSpot(null);
                 spotCounterToDelete.add(spotCounter);
@@ -145,7 +145,13 @@ public abstract class QuizService<T extends QuizConfiguration> {
         saveCorrectMappingsInIndicesShortAnswer(saQuestion);
     }
 
-    private <T1 extends QuizQuestionStatisticComponent<T2, T3, T4>, T2 extends QuizQuestionStatistic, T3 extends QuizQuestionComponent<T4>, T4 extends QuizQuestion> void addToBeRemovedComponent(
+    /**
+     * Call the given deleteCallback for each given component where id is not null
+     *
+     * @param components     the components for which the given deleteCallback to be applied to
+     * @param deleteCallback the callback to be called for each component
+     */
+    private <T1 extends QuizQuestionStatisticComponent<T2, T3, T4>, T2 extends QuizQuestionStatistic, T3 extends QuizQuestionComponent<T4>, T4 extends QuizQuestion> void findTobeDeletedComponent(
             Collection<T1> components, Function<T1, Void> deleteCallback) {
         for (T1 component : components) {
             if (component.getId() != null) {
