@@ -118,6 +118,7 @@
                             labelName="{{ 'artemisApp.course.startDate' | artemisTranslate }}"
                             formControlName="startDate"
                             [(ngModel)]="course.startDate"
+                            (valueChange)="course.startInvalidDate = $event"
                             [error]="!isValidDate"
                         ></jhi-date-time-picker>
                         <span *ngIf="!isValidDate" class="invalid-feedback"> {{ 'artemisApp.course.form.startDate.invalid' | artemisTranslate }}</span>
@@ -128,6 +129,7 @@
                             labelName="{{ 'artemisApp.course.endDate' | artemisTranslate }}"
                             formControlName="endDate"
                             [(ngModel)]="course.endDate"
+                            (valueChange)="course.endInvalidDate = $event"
                             [error]="!isValidDate"
                         ></jhi-date-time-picker>
                         <span *ngIf="!isValidDate" class="invalid-feedback"> {{ 'artemisApp.course.form.endDate.invalid' | artemisTranslate }}</span>
@@ -431,7 +433,12 @@
                     <ng-container *ngTemplateOutlet="saveButtonTpl"></ng-container>
                 </span>
                 <ng-template #saveButtonTpl>
-                    <button type="submit" class="btn btn-primary ms-2" id="save-entity" [disabled]="courseForm.invalid || isSaving || !isValidConfiguration">
+                    <button
+                        type="submit"
+                        class="btn btn-primary ms-2"
+                        id="save-entity"
+                        [disabled]="courseForm.invalid || isSaving || course.startInvalidDate || course.endInvalidDate || !isValidConfiguration"
+                    >
                         <fa-icon [icon]="faSave"></fa-icon>
                         <span jhiTranslate="entity.action.save">Save</span>
                     </button>

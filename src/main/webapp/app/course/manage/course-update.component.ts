@@ -57,6 +57,7 @@ export class CourseUpdateComponent implements OnInit {
     presentationScorePattern = /^[0-9]{0,4}$/; // makes sure that the presentation score is a positive natural integer greater than 0 and not too large
     courseOrganizations: Organization[];
     isAdmin = false;
+
     // Icons
     faSave = faSave;
     faBan = faBan;
