@@ -41,7 +41,7 @@
                     id="pick-releaseDate"
                     labelName="{{ 'artemisApp.exercise.releaseDate' | artemisTranslate }}"
                     [(ngModel)]="fileUploadExercise.releaseDate"
-                    (valueChange)="validateDate()"
+                    (valueChange)="validateReleaseDate($event)"
                     [error]="false"
                     name="releaseDate"
                 ></jhi-date-time-picker>
@@ -53,7 +53,7 @@
                     name="startDate"
                     [error]="!!fileUploadExercise.startDateError"
                     labelName="{{ 'artemisApp.exercise.startDate' | artemisTranslate }}"
-                    (valueChange)="validateDate()"
+                    (valueChange)="validateStartDate($event)"
                     [(ngModel)]="fileUploadExercise.startDate"
                 ></jhi-date-time-picker>
                 <span *ngIf="fileUploadExercise.startDateError" class="invalid-feedback">{{ 'artemisApp.exercise.startDateError' | artemisTranslate }}</span>
@@ -67,7 +67,7 @@
                     name="dueDate"
                     [error]="!!fileUploadExercise.dueDateError"
                     labelName="{{ 'artemisApp.exercise.dueDate' | artemisTranslate }}"
-                    (valueChange)="validateDate()"
+                    (valueChange)="validateDueDate($event)"
                     [(ngModel)]="fileUploadExercise.dueDate"
                 ></jhi-date-time-picker>
                 <span *ngIf="fileUploadExercise.dueDateError" class="invalid-feedback">{{ 'artemisApp.exercise.dueDateError' | artemisTranslate }}</span>
@@ -79,7 +79,7 @@
                     name="assessmentDueDate"
                     [error]="!!fileUploadExercise.assessmentDueDateError"
                     labelName="{{ 'artemisApp.exercise.assessmentDueDate' | artemisTranslate }}"
-                    (valueChange)="validateDate()"
+                    (valueChange)="validateAssessmentDueDate($event)"
                     [(ngModel)]="fileUploadExercise.assessmentDueDate"
                 ></jhi-date-time-picker>
                 <span *ngIf="fileUploadExercise.assessmentDueDateError" class="invalid-feedback">{{ 'artemisApp.exercise.assessmentDueDateError' | artemisTranslate }}</span>
@@ -175,7 +175,7 @@
                 labelName="{{ 'artemisApp.exercise.exampleSolutionPublicationDate' | artemisTranslate }}"
                 [(ngModel)]="fileUploadExercise.exampleSolutionPublicationDate"
                 [error]="fileUploadExercise.exampleSolutionPublicationDateError!"
-                (valueChange)="validateDate()"
+                (valueChange)="validateExamplePublicationDate($event)"
             ></jhi-date-time-picker>
             <span *ngIf="fileUploadExercise.exampleSolutionPublicationDateError" class="invalid-feedback">{{
                 'artemisApp.exercise.exampleSolutionPublicationDateError' | artemisTranslate
@@ -213,7 +213,12 @@
                 fileUploadExercise.startDateError ||
                 fileUploadExercise.dueDateError ||
                 fileUploadExercise.assessmentDueDateError ||
-                fileUploadExercise.exampleSolutionPublicationDateError
+                fileUploadExercise.exampleSolutionPublicationDateError ||
+                fileUploadExercise.releaseInvalidDate ||
+                fileUploadExercise.startInvalidDate ||
+                fileUploadExercise.dueInvalidDate ||
+                fileUploadExercise.assessmentInvalidDate ||
+                fileUploadExercise.exampleSolutionInvalidDate
             "
             class="btn btn-primary"
         >

@@ -187,6 +187,28 @@ export class ModelingExerciseUpdateComponent implements OnInit {
     validateDate(): void {
         this.exerciseService.validateDate(this.modelingExercise);
     }
+    validateReleaseDate(invalidDate: boolean) {
+        this.modelingExercise.releaseInvalidDate = invalidDate;
+        this.exerciseService.validateDate(this.modelingExercise);
+    }
+    validateStartDate(invalidDate: boolean) {
+        this.modelingExercise.startInvalidDate = invalidDate;
+        this.exerciseService.validateDate(this.modelingExercise);
+    }
+
+    validateDueDate(invalidDate: boolean) {
+        this.modelingExercise.dueInvalidDate = invalidDate;
+        this.exerciseService.validateDate(this.modelingExercise);
+    }
+    validateAssessmentDueDate(invalidDate: boolean) {
+        this.modelingExercise.assessmentInvalidDate = invalidDate;
+        this.exerciseService.validateDate(this.modelingExercise);
+    }
+
+    validateExamplePublicationDate(invalidDate: boolean) {
+        this.modelingExercise.exampleSolutionInvalidDate = invalidDate;
+        this.exerciseService.validateDate(this.modelingExercise);
+    }
 
     save() {
         this.modelingExercise.exampleSolutionModel = JSON.stringify(this.modelingEditor?.getCurrentModel());

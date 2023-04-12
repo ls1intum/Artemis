@@ -178,6 +178,28 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
     validateDate() {
         this.exerciseService.validateDate(this.fileUploadExercise);
     }
+    validateReleaseDate(invalidDate: boolean) {
+        this.fileUploadExercise.releaseInvalidDate = invalidDate;
+        this.exerciseService.validateDate(this.fileUploadExercise);
+    }
+    validateStartDate(invalidDate: boolean) {
+        this.fileUploadExercise.startInvalidDate = invalidDate;
+        this.exerciseService.validateDate(this.fileUploadExercise);
+    }
+
+    validateDueDate(invalidDate: boolean) {
+        this.fileUploadExercise.dueInvalidDate = invalidDate;
+        this.exerciseService.validateDate(this.fileUploadExercise);
+    }
+    validateAssessmentDueDate(invalidDate: boolean) {
+        this.fileUploadExercise.assessmentInvalidDate = invalidDate;
+        this.exerciseService.validateDate(this.fileUploadExercise);
+    }
+
+    validateExamplePublicationDate(invalidDate: boolean) {
+        this.fileUploadExercise.exampleSolutionInvalidDate = invalidDate;
+        this.exerciseService.validateDate(this.fileUploadExercise);
+    }
     /**
      * Updates categories for file upload exercise
      * @param categories list of exercise categories
