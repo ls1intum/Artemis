@@ -176,6 +176,45 @@ public abstract class QuizService<T extends QuizConfiguration> {
     }
 
     /**
+     * remove solutions and spots from correct mappings and set solutionIndex and spotIndex instead
+     *
+     * @param shortAnswerQuestion the question for which to perform these actions
+     */
+    private void saveCorrectMappingsInIndicesShortAnswer(ShortAnswerQuestion shortAnswerQuestion) {
+        List<ShortAnswerMapping> mappingsToBeRemoved = new ArrayList<>();
+        for (ShortAnswerMapping mapping : shortAnswerQuestion.getCorrectMappings()) {
+            // check for NullPointers
+            if (mapping.getSolution() == null || mapping.getSpot() == null) {
+                mappingsToBeRemoved.add(mapping);
+                continue;
+            }
+
+            // solution index
+            boolean solutionFound = findComponent(shortAnswerQuestion.getSolutions(), mapping.getSolution(), questionSolution -> {
+                mapping.setShortAnswerSolutionIndex(shortAnswerQuestion.getSolutions().indexOf(questionSolution));
+                mapping.setSolution(null);
+                return null;
+            });
+
+            // replace spot
+            boolean spotFound = findComponent(shortAnswerQuestion.getSpots(), mapping.getSpot(), questionSpot -> {
+                mapping.setShortAnswerSpotIndex(shortAnswerQuestion.getSpots().indexOf(questionSpot));
+                mapping.setSpot(null);
+                return null;
+            });
+
+            // if one of them couldn't be found, remove the mapping entirely
+            if (!solutionFound || !spotFound) {
+                mappingsToBeRemoved.add(mapping);
+            }
+        }
+
+        for (ShortAnswerMapping mapping : mappingsToBeRemoved) {
+            shortAnswerQuestion.removeCorrectMapping(mapping);
+        }
+    }
+
+    /**
      * Find the given componentToBeSearched in components. If found, apply the given foundCallback.
      *
      * @param components            the collection of QuizQuestionComponent to be searched from
@@ -192,55 +231,6 @@ public abstract class QuizService<T extends QuizConfiguration> {
             }
         }
         return false;
-    }
-
-    /**
-     * remove solutions and spots from correct mappings and set solutionIndex and spotIndex instead
-     *
-     * @param shortAnswerQuestion the question for which to perform these actions
-     */
-    private void saveCorrectMappingsInIndicesShortAnswer(ShortAnswerQuestion shortAnswerQuestion) {
-        List<ShortAnswerMapping> mappingsToBeRemoved = new ArrayList<>();
-        for (ShortAnswerMapping mapping : shortAnswerQuestion.getCorrectMappings()) {
-            // check for NullPointers
-            if (mapping.getSolution() == null || mapping.getSpot() == null) {
-                mappingsToBeRemoved.add(mapping);
-                continue;
-            }
-
-            // solution index
-            ShortAnswerSolution solution = mapping.getSolution();
-            boolean solutionFound = false;
-            for (ShortAnswerSolution questionSolution : shortAnswerQuestion.getSolutions()) {
-                if (solution.equals(questionSolution)) {
-                    solutionFound = true;
-                    mapping.setShortAnswerSolutionIndex(shortAnswerQuestion.getSolutions().indexOf(questionSolution));
-                    mapping.setSolution(null);
-                    break;
-                }
-            }
-
-            // replace spot
-            ShortAnswerSpot spot = mapping.getSpot();
-            boolean spotFound = false;
-            for (ShortAnswerSpot questionSpot : shortAnswerQuestion.getSpots()) {
-                if (spot.equals(questionSpot)) {
-                    spotFound = true;
-                    mapping.setShortAnswerSpotIndex(shortAnswerQuestion.getSpots().indexOf(questionSpot));
-                    mapping.setSpot(null);
-                    break;
-                }
-            }
-
-            // if one of them couldn't be found, remove the mapping entirely
-            if (!solutionFound || !spotFound) {
-                mappingsToBeRemoved.add(mapping);
-            }
-        }
-
-        for (ShortAnswerMapping mapping : mappingsToBeRemoved) {
-            shortAnswerQuestion.removeCorrectMapping(mapping);
-        }
     }
 
     /**
