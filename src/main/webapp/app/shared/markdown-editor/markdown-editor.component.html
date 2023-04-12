@@ -65,7 +65,6 @@
                     <button
                         *ngFor="let command of defaultCommands | negatedTypeCheck : MultiOptionCommand"
                         type="button"
-                        type="button"
                         class="btn btn-sm"
                         (click)="command.execute()"
                         [ngbTooltip]="command.buttonTranslationString | artemisTranslate"
