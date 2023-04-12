@@ -179,16 +179,16 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
         this.exerciseService.validateDate(this.fileUploadExercise);
     }
     validateReleaseDate(invalidDate: boolean) {
-        this.fileUploadExercise.releaseInvalidDate = invalidDate;
+        this.fileUploadExercise.invalidReleaseDate = invalidDate;
         this.exerciseService.validateDate(this.fileUploadExercise);
     }
     validateStartDate(invalidDate: boolean) {
-        this.fileUploadExercise.startInvalidDate = invalidDate;
+        this.fileUploadExercise.invalidStartDate = invalidDate;
         this.exerciseService.validateDate(this.fileUploadExercise);
     }
 
     validateDueDate(invalidDate: boolean) {
-        this.fileUploadExercise.dueInvalidDate = invalidDate;
+        this.fileUploadExercise.invalidDueDate = invalidDate;
         this.exerciseService.validateDate(this.fileUploadExercise);
     }
     validateAssessmentDueDate(invalidDate: boolean) {
@@ -197,7 +197,7 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
     }
 
     validateExamplePublicationDate(invalidDate: boolean) {
-        this.fileUploadExercise.exampleSolutionInvalidDate = invalidDate;
+        this.fileUploadExercise.invalidExampleSolutionDate = invalidDate;
         this.exerciseService.validateDate(this.fileUploadExercise);
     }
     /**

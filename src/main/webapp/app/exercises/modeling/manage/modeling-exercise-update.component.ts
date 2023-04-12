@@ -188,16 +188,16 @@ export class ModelingExerciseUpdateComponent implements OnInit {
         this.exerciseService.validateDate(this.modelingExercise);
     }
     validateReleaseDate(invalidDate: boolean) {
-        this.modelingExercise.releaseInvalidDate = invalidDate;
+        this.modelingExercise.invalidReleaseDate = invalidDate;
         this.exerciseService.validateDate(this.modelingExercise);
     }
     validateStartDate(invalidDate: boolean) {
-        this.modelingExercise.startInvalidDate = invalidDate;
+        this.modelingExercise.invalidStartDate = invalidDate;
         this.exerciseService.validateDate(this.modelingExercise);
     }
 
     validateDueDate(invalidDate: boolean) {
-        this.modelingExercise.dueInvalidDate = invalidDate;
+        this.modelingExercise.invalidDueDate = invalidDate;
         this.exerciseService.validateDate(this.modelingExercise);
     }
     validateAssessmentDueDate(invalidDate: boolean) {
@@ -206,7 +206,7 @@ export class ModelingExerciseUpdateComponent implements OnInit {
     }
 
     validateExamplePublicationDate(invalidDate: boolean) {
-        this.modelingExercise.exampleSolutionInvalidDate = invalidDate;
+        this.modelingExercise.invalidExampleSolutionDate = invalidDate;
         this.exerciseService.validateDate(this.modelingExercise);
     }
 

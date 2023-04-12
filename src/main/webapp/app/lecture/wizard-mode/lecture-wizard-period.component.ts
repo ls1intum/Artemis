@@ -10,7 +10,7 @@ export class LectureUpdateWizardPeriodComponent {
     @Input() lecture: Lecture;
     @Input() validateDatesFunction: () => void;
     @Input() isEndDateBeforeStartDate: boolean;
-    @Output() invalidChange = new EventEmitter();
+    @Output() invalidChange: EventEmitter<boolean> = new EventEmitter();
 
     constructor() {}
 

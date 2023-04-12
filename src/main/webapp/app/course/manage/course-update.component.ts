@@ -57,6 +57,8 @@ export class CourseUpdateComponent implements OnInit {
     presentationScorePattern = /^[0-9]{0,4}$/; // makes sure that the presentation score is a positive natural integer greater than 0 and not too large
     courseOrganizations: Organization[];
     isAdmin = false;
+    invalidStartDate: boolean;
+    invalidEndDate: boolean;
 
     // Icons
     faSave = faSave;
@@ -526,7 +528,7 @@ export class CourseUpdateComponent implements OnInit {
     }
 
     get isValidConfiguration(): boolean {
-        return this.isValidDate;
+        return this.isValidDate && !this.invalidStartDate && !this.invalidEndDate;
     }
 
     /**

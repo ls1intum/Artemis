@@ -170,16 +170,16 @@ export class TextExerciseUpdateComponent implements OnInit {
     }
 
     validateReleaseDate(invalidDate: boolean) {
-        this.textExercise.releaseInvalidDate = invalidDate;
+        this.textExercise.invalidReleaseDate = invalidDate;
         this.exerciseService.validateDate(this.textExercise);
     }
     validateStartDate(invalidDate: boolean) {
-        this.textExercise.startInvalidDate = invalidDate;
+        this.textExercise.invalidStartDate = invalidDate;
         this.exerciseService.validateDate(this.textExercise);
     }
 
     validateDueDate(invalidDate: boolean) {
-        this.textExercise.dueInvalidDate = invalidDate;
+        this.textExercise.invalidDueDate = invalidDate;
         this.exerciseService.validateDate(this.textExercise);
     }
     validateAssessmentDueDate(invalidDate: boolean) {
@@ -188,7 +188,7 @@ export class TextExerciseUpdateComponent implements OnInit {
     }
 
     validateExamplePublicationDate(invalidDate: boolean) {
-        this.textExercise.exampleSolutionInvalidDate = invalidDate;
+        this.textExercise.invalidExampleSolutionDate = invalidDate;
         this.exerciseService.validateDate(this.textExercise);
     }
 

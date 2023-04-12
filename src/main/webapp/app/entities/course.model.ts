@@ -80,9 +80,6 @@ export class Course implements BaseEntity {
     public numberOfTeachingAssistants?: number;
     public numberOfEditors?: number;
     public numberOfInstructors?: number;
-    public startInvalidDate?: boolean;
-    public endInvalidDate?: boolean;
-
     public exercises?: Exercise[];
     public lectures?: Lecture[];
     public learningGoals?: LearningGoal[];
@@ -121,8 +118,6 @@ export class Course implements BaseEntity {
         this.maxRequestMoreFeedbackTimeDays = 7; // default value
         this.accuracyOfScores = 1; // default value
         this.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.DISABLED; // default value
-        this.startInvalidDate = false;
-        this.endInvalidDate = false;
     }
 
     /**
