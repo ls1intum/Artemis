@@ -24,6 +24,7 @@ import de.tum.in.www1.artemis.exception.localvc.LocalVCBadRequestException;
 import de.tum.in.www1.artemis.exception.localvc.LocalVCException;
 import de.tum.in.www1.artemis.exception.localvc.LocalVCForbiddenException;
 import de.tum.in.www1.artemis.exception.localvc.LocalVCInternalException;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
@@ -32,7 +33,6 @@ import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.RepositoryAccessService;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUrl;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
-import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.AccessUnauthorizedException;
@@ -53,7 +53,7 @@ public class LocalVCFilterService {
 
     private final UserRepository userRepository;
 
-    private final ProgrammingExerciseService programmingExerciseService;
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     private final TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
 
@@ -73,14 +73,14 @@ public class LocalVCFilterService {
      */
     public static final String AUTHORIZATION_HEADER = "Authorization";
 
-    public LocalVCFilterService(AuthenticationManagerBuilder authenticationManagerBuilder, UserRepository userRepository, ProgrammingExerciseService programmingExerciseService,
-            TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
+    public LocalVCFilterService(AuthenticationManagerBuilder authenticationManagerBuilder, UserRepository userRepository,
+            ProgrammingExerciseRepository programmingExerciseRepository, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, RepositoryAccessService repositoryAccessService,
             AuthorizationCheckService authorizationCheckService) {
         this.authenticationManagerBuilder = authenticationManagerBuilder;
         this.userRepository = userRepository;
-        this.programmingExerciseService = programmingExerciseService;
+        this.programmingExerciseRepository = programmingExerciseRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
@@ -128,7 +128,7 @@ public class LocalVCFilterService {
         ProgrammingExercise exercise;
 
         try {
-            exercise = programmingExerciseService.findOneByProjectKey(projectKey, true);
+            exercise = programmingExerciseRepository.findOneByProjectKeyOrThrow(projectKey, true);
         }
         catch (EntityNotFoundException e) {
             throw new LocalVCInternalException("Could not find single programming exercise with project key " + projectKey, e);

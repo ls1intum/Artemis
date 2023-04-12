@@ -86,6 +86,28 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     List<ProgrammingExercise> findWithSubmissionPolicyByProjectKey(String projectKey);
 
     /**
+     * Finds one programming exercise including its submission policy by the exercise's project key.
+     *
+     * @param projectKey           the project key of the programming exercise.
+     * @param withSubmissionPolicy whether the submission policy should be included in the result.
+     * @return the programming exercise.
+     * @throws EntityNotFoundException if no programming exercise or multiple exercises with the given project key exist.
+     */
+    default ProgrammingExercise findOneByProjectKeyOrThrow(String projectKey, boolean withSubmissionPolicy) throws EntityNotFoundException {
+        List<ProgrammingExercise> exercises;
+        if (withSubmissionPolicy) {
+            exercises = findWithSubmissionPolicyByProjectKey(projectKey);
+        }
+        else {
+            exercises = findByProjectKey(projectKey);
+        }
+        if (exercises.size() != 1) {
+            throw new EntityNotFoundException("No exercise or multiple exercises found for the given project key: " + projectKey);
+        }
+        return exercises.get(0);
+    }
+
+    /**
      * Returns all programming exercises with its test cases
      *
      * @return all programming exercises

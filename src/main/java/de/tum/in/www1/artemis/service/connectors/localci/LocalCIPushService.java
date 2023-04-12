@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.service.connectors.localci;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Path;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -115,17 +114,10 @@ public class LocalCIPushService {
         ProgrammingExercise exercise;
 
         try {
-            List<ProgrammingExercise> exercises;
-            exercises = programmingExerciseRepository.findByProjectKey(projectKey);
-
-            if (exercises.size() != 1) {
-                throw new EntityNotFoundException("No exercise or multiple exercises found for the given project key: " + projectKey);
-            }
-
-            exercise = exercises.get(0);
+            exercise = programmingExerciseRepository.findOneByProjectKeyOrThrow(projectKey, false);
         }
         catch (EntityNotFoundException e) {
-            // This should never happen, as the unambiguous exercise is already retrieved in the LocalVCPushFilter.
+            // This should never happen, as the exercise is already retrieved in the LocalVCPushFilter.
             log.error("No exercise or multiple exercises found for the given project key: {}", projectKey);
             return;
         }

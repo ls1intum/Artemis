@@ -2,10 +2,17 @@ package de.tum.in.www1.artemis.service;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.UUID;
 
 import javax.annotation.Nonnull;
 
@@ -167,5 +174,40 @@ public class ResourceLoaderService {
 
     private boolean isOverrideAllowed(final Path path) {
         return ALLOWED_OVERRIDE_PREFIXES.stream().anyMatch(path::startsWith);
+    }
+
+    /**
+     * Get the path to a file in the 'resources' folder.
+     * If the file is in the file system, the path to the file is returned. If the file is in a jar file, the file is extracted to a temporary file and the path to the temporary
+     * file is returned.
+     *
+     * @param path the path to the file in the 'resources' folder.
+     * @return the path to the file in the file system or in the jar file.
+     */
+    public Path getResourceFilePath(Path path) throws IOException, URISyntaxException {
+
+        Resource resource = getResource(path);
+
+        if (!resource.exists()) {
+            throw new IOException("Resource does not exist: " + path);
+        }
+
+        URL resourceUrl = resource.getURL();
+
+        if (resourceUrl.getProtocol().equals("file")) {
+            // Resource is in the file system.
+            return Paths.get(resourceUrl.toURI());
+        }
+        else if (resourceUrl.getProtocol().equals("jar")) {
+            // Resource is in a jar file.
+            InputStream resourceInputStream = getResource(path).getInputStream();
+
+            Path resourcePath = Files.createTempFile(UUID.randomUUID().toString(), "");
+            Files.copy(resourceInputStream, resourcePath, StandardCopyOption.REPLACE_EXISTING);
+            // Delete the temporary file when the JVM exits.
+            resourcePath.toFile().deleteOnExit();
+            return resourcePath;
+        }
+        throw new IllegalArgumentException("Unsupported protocol: " + resourceUrl.getProtocol());
     }
 }

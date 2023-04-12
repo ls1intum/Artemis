@@ -321,14 +321,20 @@ public class LocalVCLocalCITestService {
         }
     }
 
-    public void testLastestSubmission(Long participationId, String expectedCommitHash, int expectedSuccessfulTestCases) {
-        // Assert that the latest submission has the correct commit hash and the correct result.
-        ProgrammingSubmission programmingSubmission = programmingSubmissionRepository.findFirstByParticipationIdOrderBySubmissionDateDesc(participationId).orElseThrow();
+    /**
+     * Assert that the latest submission has the correct commit hash and the correct result.
+     *
+     * @param participationId                 of the participation to check the latest submission for.
+     * @param expectedCommitHash              the commit hash of the commit that triggered the creation of the submission and is thus expected to be seved in the submission.
+     * @param expectedSuccessfulTestCaseCount the expected number or passed test cases.
+     */
+    public void testLastestSubmission(Long participationId, String expectedCommitHash, int expectedSuccessfulTestCaseCount) {
+        ProgrammingSubmission programmingSubmission = programmingSubmissionRepository.findFirstByParticipationIdOrderByLegalSubmissionDateDesc(participationId).orElseThrow();
         assertThat(programmingSubmission.getCommitHash()).isEqualTo(expectedCommitHash);
         Result result = programmingSubmission.getLatestResult();
         assertThat(result).isNotNull();
         assertThat(result.getTestCaseCount()).isEqualTo(13);
-        assertThat(result.getPassedTestCaseCount()).isEqualTo(expectedSuccessfulTestCases);
+        assertThat(result.getPassedTestCaseCount()).isEqualTo(expectedSuccessfulTestCaseCount);
     }
 
     public void testPushThrowsException(Git repositoryHandle, String username, String projectKey, String repositorySlug, String expectedMessage) {
@@ -349,6 +355,11 @@ public class LocalVCLocalCITestService {
         pushCommand.call();
     }
 
+    /**
+     * Close repository handles and delete temporary directories of a LocalRepository instance.
+     *
+     * @param repository to close and delete.
+     */
     public void removeRepository(LocalRepository repository) {
         repository.localGit.close();
         repository.originGit.close();

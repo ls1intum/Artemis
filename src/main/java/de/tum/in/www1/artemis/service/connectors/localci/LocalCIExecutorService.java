@@ -1,14 +1,9 @@
 package de.tum.in.www1.artemis.service.connectors.localci;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
-import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 
@@ -16,7 +11,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
-import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
@@ -104,48 +98,12 @@ public class LocalCIExecutorService {
         Path resourcePath = Path.of("templates", "localci", "java", "build_and_run_tests.sh");
         Path scriptPath;
         try {
-            scriptPath = getResourceFilePath(resourcePath);
+            scriptPath = resourceLoaderService.getResourceFilePath(resourcePath);
         }
         catch (IOException | URISyntaxException e) {
             throw new LocalCIException("Could not retrieve build script.", e);
         }
 
         return scriptPath;
-    }
-
-    /**
-     * Get the path to a file in the 'resources' folder.
-     * If the file is in the file system, the path to the file is returned. If the file is in a jar file, the file is extracted to a temporary file and the path to the temporary
-     * file is returned.
-     *
-     * @param path the path to the file in the 'resources' folder.
-     * @return the path to the file in the file system or in the jar file.
-     */
-    // TODO: Move to ResourceLoaderService.
-    private Path getResourceFilePath(Path path) throws IOException, URISyntaxException {
-
-        Resource resource = resourceLoaderService.getResource(path);
-
-        if (!resource.exists()) {
-            throw new IOException("Resource does not exist: " + path);
-        }
-
-        URL resourceUrl = resource.getURL();
-
-        if (resourceUrl.getProtocol().equals("file")) {
-            // Resource is in the file system.
-            return Paths.get(resourceUrl.toURI());
-        }
-        else if (resourceUrl.getProtocol().equals("jar")) {
-            // Resource is in a jar file.
-            InputStream resourceInputStream = resourceLoaderService.getResource(path).getInputStream();
-
-            Path resourcePath = Files.createTempFile(UUID.randomUUID().toString(), "");
-            Files.copy(resourceInputStream, resourcePath, StandardCopyOption.REPLACE_EXISTING);
-            // Delete the temporary file when the JVM exits.
-            resourcePath.toFile().deleteOnExit();
-            return resourcePath;
-        }
-        throw new IllegalArgumentException("Unsupported protocol: " + resourceUrl.getProtocol());
     }
 }

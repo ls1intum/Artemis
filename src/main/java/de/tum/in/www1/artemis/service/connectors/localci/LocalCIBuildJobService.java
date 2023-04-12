@@ -86,8 +86,8 @@ public class LocalCIBuildJobService {
         HostConfig volumeConfig = createVolumeConfig(assignmentRepositoryPath, testRepositoryPath, scriptPath);
 
         ProjectType projectType = participation.getProgrammingExercise().getProjectType();
-        if (projectType == null || (!projectType.isMaven() && !projectType.isGradle())) {
-            throw new LocalCIException("Project type must be either Maven or Gradle.");
+        if (projectType == null || !projectType.isGradle()) {
+            throw new LocalCIException("Project type must be Gradle.");
         }
 
         String branch = versionControlService.orElseThrow().getOrRetrieveBranchOfParticipation(participation);
@@ -121,7 +121,7 @@ public class LocalCIBuildJobService {
 
         // When Gradle is used as the build tool, the test results are located in /repositories/test-repository/build/test-results/test/TEST-*.xml.
         // When Maven is used as the build tool, the test results are located in /repositories/test-repository/target/surefire-reports/TEST-*.xml.
-        String testResultsPath = getTestResultsPath(projectType);
+        String testResultsPath = "/repositories/test-repository/build/test-results/test";
 
         // Get an input stream of the test result files.
         TarArchiveInputStream testResultsTarInputStream;
@@ -154,18 +154,6 @@ public class LocalCIBuildJobService {
         return buildResult;
     }
 
-    private String getTestResultsPath(ProjectType projectType) {
-        if (projectType.isGradle()) {
-            return "/repositories/test-repository/build/test-results/test";
-        }
-        else if (projectType.isMaven()) {
-            return "/repositories/test-repository/target/surefire-reports";
-        }
-        else {
-            throw new LocalCIException("Unknown build tool: " + projectType);
-        }
-    }
-
     private String getCommitHashOfBranch(String containerId, String repositoryName, String branchName) throws IOException {
         // Get an input stream of the file in .git folder of the repository that contains the current commit hash of the branch.
         TarArchiveInputStream repositoryTarInputStream = new TarArchiveInputStream(
@@ -184,7 +172,6 @@ public class LocalCIBuildJobService {
 
         // Start the command and wait for it to complete.
         final CountDownLatch latch = new CountDownLatch(1);
-
         dockerClient.execStartCmd(execCreateCmdResponse.getId()).exec(new ResultCallback.Adapter<>() {
 
             @Override
@@ -245,8 +232,8 @@ public class LocalCIBuildJobService {
         // Create a file "stop_container.txt" in the root directory of the container to indicate that the test results have been extracted or that the container should be stopped
         // for some other reason.
         // The container's main process is waiting for this file to appear and then stops the main process, thus stopping and removing the container.
-        ExecCreateCmdResponse createResultsExtractedFileCmdResponse = dockerClient.execCreateCmd(containerId).withCmd("touch", "stop_container.txt").exec();
-        dockerClient.execStartCmd(createResultsExtractedFileCmdResponse.getId()).exec(new ResultCallback.Adapter<>());
+        ExecCreateCmdResponse createStopContainerFileCmdResponse = dockerClient.execCreateCmd(containerId).withCmd("touch", "stop_container.txt").exec();
+        dockerClient.execStartCmd(createStopContainerFileCmdResponse.getId()).exec(new ResultCallback.Adapter<>());
 
         // If the script was created as a temporary file, delete it.
         Path tempDir = Paths.get(System.getProperty("java.io.tmpdir"));

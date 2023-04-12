@@ -25,6 +25,7 @@ import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.in.www1.artemis.util.LocalRepository;
 
@@ -32,7 +33,7 @@ import de.tum.in.www1.artemis.util.LocalRepository;
  * This class contains integration tests for the base repositories (template, solution, tests) and the different types of assignment repositories (student assignment, teaching
  * assistant assignment, instructor assignment).
  */
-class LocalVCLocalCIAssignmentIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
+class LocalVCLocalCIIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
     @Autowired
     private DockerClient mockDockerClient;
@@ -207,13 +208,14 @@ class LocalVCLocalCIAssignmentIntegrationTest extends AbstractSpringIntegrationL
         localVCLocalCITestService.testFetchThrowsException(assignmentRepository.localGit, student2Login, projectKey1, assignmentRepositorySlug, notAuthorized);
         localVCLocalCITestService.testPushThrowsException(assignmentRepository.localGit, student2Login, projectKey1, assignmentRepositorySlug, notAuthorized);
 
-        // Before the start date of the exercise, students should not be able to fetch and push. Teaching assistants should be able to fetch and instructors should be able to fetch
-        // and push.
+        // Before the start date of the exercise, students are able to fetch if (as in this case) their repository already exists. This is consistent with the behaviour of
+        // Bitbucket and GitLab. Usually, the exercise will be configured with a start date in the future and students will not be able to create a repository before that.
+        // Teaching assistants should be able to fetch and instructors should be able to fetch and push.
         programmingExercise.setStartDate(ZonedDateTime.now().plusHours(1));
         programmingExerciseRepository.save(programmingExercise);
 
         // Student
-        localVCLocalCITestService.testFetchThrowsException(assignmentRepository.localGit, student1Login, projectKey1, assignmentRepositorySlug, forbidden);
+        localVCLocalCITestService.testFetchSuccessful(assignmentRepository.localGit, student1Login, projectKey1, assignmentRepositorySlug);
         localVCLocalCITestService.testPushThrowsException(assignmentRepository.localGit, student1Login, projectKey1, assignmentRepositorySlug, forbidden);
 
         // Teaching assistant
@@ -252,8 +254,7 @@ class LocalVCLocalCIAssignmentIntegrationTest extends AbstractSpringIntegrationL
         database.addSubmissionPolicyToExercise(lockRepositoryPolicy, programmingExercise);
         localVCLocalCITestService.testPushThrowsException(assignmentRepository.localGit, student1Login, projectKey1, assignmentRepositorySlug, forbidden);
 
-        // Teaching assistants and instructors should still be able to push
-        localVCLocalCITestService.testPushSuccessful(assignmentRepository.localGit, tutor1Login, projectKey1, assignmentRepositorySlug);
+        // Instructors should still be able to push
         localVCLocalCITestService.testPushSuccessful(assignmentRepository.localGit, instructor1Login, projectKey1, assignmentRepositorySlug);
     }
 
@@ -308,8 +309,8 @@ class LocalVCLocalCIAssignmentIntegrationTest extends AbstractSpringIntegrationL
         programmingExercise.setStartDate(ZonedDateTime.now().plusMinutes(1));
         programmingExerciseRepository.save(programmingExercise);
 
-        // Student should not be able to read or write.
-        localVCLocalCITestService.testFetchThrowsException(teamLocalRepository.localGit, student1Login, projectKey1, teamRepositorySlug, forbidden);
+        // Student is able to read before the start date if the repository already exists.
+        localVCLocalCITestService.testFetchSuccessful(teamLocalRepository.localGit, student1Login, projectKey1, teamRepositorySlug);
         localVCLocalCITestService.testPushThrowsException(teamLocalRepository.localGit, student1Login, projectKey1, teamRepositorySlug, forbidden);
 
         // Teaching assistant should be able to read but not write.
@@ -510,7 +511,11 @@ class LocalVCLocalCIAssignmentIntegrationTest extends AbstractSpringIntegrationL
         StudentExam instructorExam = database.addStudentExam(exam);
         instructorExam.setUser(instructor1);
         instructorExam.setExercises(List.of(programmingExercise));
+        instructorExam.setTestRun(true);
         studentExamRepository.save(instructorExam);
+        ProgrammingExerciseStudentParticipation instructorTestRunParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, instructor1Login);
+        instructorTestRunParticipation.setTestRun(true);
+        programmingExerciseStudentParticipationRepository.save(instructorTestRunParticipation);
 
         // Add repository
         String repositorySlug = projectKey1.toLowerCase() + "-" + instructor1Login;
@@ -529,5 +534,144 @@ class LocalVCLocalCIAssignmentIntegrationTest extends AbstractSpringIntegrationL
         // Instructor should be able to fetch and push.
         localVCLocalCITestService.testFetchSuccessful(instructorExamTestRunRepository.localGit, instructor1Login, projectKey1, repositorySlug);
         localVCLocalCITestService.testPushSuccessful(instructorExamTestRunRepository.localGit, instructor1Login, projectKey1, repositorySlug);
+
+        // Start test run
+        instructorExam.setStarted(true);
+        studentExamRepository.save(instructorExam);
+
+        // Student should not able to fetch or push.
+        localVCLocalCITestService.testFetchThrowsException(instructorExamTestRunRepository.localGit, student1Login, projectKey1, repositorySlug, notAuthorized);
+        localVCLocalCITestService.testPushThrowsException(instructorExamTestRunRepository.localGit, student1Login, projectKey1, repositorySlug, notAuthorized);
+
+        // Tutor should be able to fetch but not push.
+        localVCLocalCITestService.testFetchSuccessful(instructorExamTestRunRepository.localGit, tutor1Login, projectKey1, repositorySlug);
+        localVCLocalCITestService.testPushThrowsException(instructorExamTestRunRepository.localGit, tutor1Login, projectKey1, repositorySlug, notAuthorized);
+
+        // Instructor should be able to fetch and push.
+        localVCLocalCITestService.testFetchSuccessful(instructorExamTestRunRepository.localGit, instructor1Login, projectKey1, repositorySlug);
+        localVCLocalCITestService.testPushSuccessful(instructorExamTestRunRepository.localGit, instructor1Login, projectKey1, repositorySlug);
+    }
+
+    // ---- Tests for practice repositories ----
+
+    @Test
+    void testFetchPush_studentPracticeRepository() throws Exception {
+
+        // Practice repositories can be created after the due date of an exercise.
+        programmingExercise.setDueDate(ZonedDateTime.now().minusMinutes(1));
+
+        // Create a new practice repository.
+        String practiceRepositorySlug = projectKey1.toLowerCase() + "-practice-" + student1Login;
+        Path remoteRepositoryFolder = localVCLocalCITestService.createRepositoryFolderInTempDirectory(projectKey1, practiceRepositorySlug);
+        LocalRepository practiceRepository = new LocalRepository(defaultBranch);
+        practiceRepository.configureRepos("localPracticeRepository", remoteRepositoryFolder);
+
+        // Test without participation.
+        localVCLocalCITestService.testFetchThrowsException(practiceRepository.localGit, student1Login, projectKey1, practiceRepositorySlug, internalServerError);
+        localVCLocalCITestService.testPushThrowsException(practiceRepository.localGit, student1Login, projectKey1, practiceRepositorySlug, internalServerError);
+
+        // Create practice participation.
+        ProgrammingExerciseStudentParticipation practiceParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, student1Login);
+        practiceParticipation.setTestRun(true);
+        programmingExerciseStudentParticipationRepository.save(practiceParticipation);
+
+        // Students should be able to fetch and push, teaching assistants should be able fetch but not push and editors and higher should be able to fetch and push.
+
+        // Student1
+        localVCLocalCITestService.testFetchSuccessful(practiceRepository.localGit, student1Login, projectKey1, practiceRepositorySlug);
+        localVCLocalCITestService.testPushSuccessful(practiceRepository.localGit, student1Login, projectKey1, practiceRepositorySlug);
+
+        // Teaching assistant
+        localVCLocalCITestService.testFetchSuccessful(practiceRepository.localGit, tutor1Login, projectKey1, practiceRepositorySlug);
+        localVCLocalCITestService.testPushThrowsException(practiceRepository.localGit, tutor1Login, projectKey1, practiceRepositorySlug, notAuthorized);
+
+        // Instructor
+        localVCLocalCITestService.testFetchSuccessful(practiceRepository.localGit, instructor1Login, projectKey1, practiceRepositorySlug);
+        localVCLocalCITestService.testPushSuccessful(practiceRepository.localGit, instructor1Login, projectKey1, practiceRepositorySlug);
+
+        // Student2 should not be able to access the repository of student1.
+        localVCLocalCITestService.testFetchThrowsException(practiceRepository.localGit, student2Login, projectKey1, practiceRepositorySlug, notAuthorized);
+        localVCLocalCITestService.testPushThrowsException(practiceRepository.localGit, student2Login, projectKey1, practiceRepositorySlug, notAuthorized);
+
+        // Cleanup
+        localVCLocalCITestService.removeRepository(practiceRepository);
+    }
+
+    @Test
+    void testFetchPush_teachingAssistantPracticeRepository() throws Exception {
+
+        // Practice repositories can be created after the due date of an exercise.
+        programmingExercise.setDueDate(ZonedDateTime.now().minusMinutes(1));
+
+        // Create a new practice repository.
+        String practiceRepositorySlug = projectKey1.toLowerCase() + "-practice-" + tutor1Login;
+        Path remoteRepositoryFolder = localVCLocalCITestService.createRepositoryFolderInTempDirectory(projectKey1, practiceRepositorySlug);
+        LocalRepository practiceRepository = new LocalRepository(defaultBranch);
+        practiceRepository.configureRepos("localPracticeRepository", remoteRepositoryFolder);
+
+        // Test without participation.
+        localVCLocalCITestService.testFetchThrowsException(practiceRepository.localGit, tutor1Login, projectKey1, practiceRepositorySlug, internalServerError);
+        localVCLocalCITestService.testPushThrowsException(practiceRepository.localGit, tutor1Login, projectKey1, practiceRepositorySlug, internalServerError);
+
+        // Create practice participation.
+        ProgrammingExerciseStudentParticipation practiceParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, tutor1Login);
+        practiceParticipation.setTestRun(true);
+        programmingExerciseStudentParticipationRepository.save(practiceParticipation);
+
+        // Students should not be able to access, teaching assistants should be able to fetch and push and editors and higher should be able to fetch and push.
+
+        // Student
+        localVCLocalCITestService.testFetchThrowsException(practiceRepository.localGit, student1Login, projectKey1, practiceRepositorySlug, notAuthorized);
+        localVCLocalCITestService.testPushThrowsException(practiceRepository.localGit, student1Login, projectKey1, practiceRepositorySlug, notAuthorized);
+
+        // Teaching assistant
+        localVCLocalCITestService.testFetchSuccessful(practiceRepository.localGit, tutor1Login, projectKey1, practiceRepositorySlug);
+        localVCLocalCITestService.testPushSuccessful(practiceRepository.localGit, tutor1Login, projectKey1, practiceRepositorySlug);
+
+        // Instructor
+        localVCLocalCITestService.testFetchSuccessful(practiceRepository.localGit, instructor1Login, projectKey1, practiceRepositorySlug);
+        localVCLocalCITestService.testPushSuccessful(practiceRepository.localGit, instructor1Login, projectKey1, practiceRepositorySlug);
+
+        // Cleanup
+        localVCLocalCITestService.removeRepository(practiceRepository);
+    }
+
+    @Test
+    void testFetchPush_instructorPracticeRepository() throws Exception {
+
+        // Practice repositories can be created after the due date of an exercise.
+        programmingExercise.setDueDate(ZonedDateTime.now().minusMinutes(1));
+
+        // Create a new practice repository.
+        String practiceRepositorySlug = projectKey1.toLowerCase() + "-practice-" + instructor1Login;
+        Path remoteRepositoryFolder = localVCLocalCITestService.createRepositoryFolderInTempDirectory(projectKey1, practiceRepositorySlug);
+        LocalRepository practiceRepository = new LocalRepository(defaultBranch);
+        practiceRepository.configureRepos("localPracticeRepository", remoteRepositoryFolder);
+
+        // Test without participation.
+        localVCLocalCITestService.testFetchThrowsException(practiceRepository.localGit, instructor1Login, projectKey1, practiceRepositorySlug, internalServerError);
+        localVCLocalCITestService.testPushThrowsException(practiceRepository.localGit, instructor1Login, projectKey1, practiceRepositorySlug, internalServerError);
+
+        // Create practice participation.
+        ProgrammingExerciseStudentParticipation practiceParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, instructor1Login);
+        practiceParticipation.setTestRun(true);
+        programmingExerciseStudentParticipationRepository.save(practiceParticipation);
+
+        // Students should not be able to access, teaching assistants should be able to fetch, and editors and higher should be able to fetch and push.
+
+        // Student
+        localVCLocalCITestService.testFetchThrowsException(practiceRepository.localGit, student1Login, projectKey1, practiceRepositorySlug, notAuthorized);
+        localVCLocalCITestService.testPushThrowsException(practiceRepository.localGit, student1Login, projectKey1, practiceRepositorySlug, notAuthorized);
+
+        // Teaching assistant
+        localVCLocalCITestService.testFetchSuccessful(practiceRepository.localGit, tutor1Login, projectKey1, practiceRepositorySlug);
+        localVCLocalCITestService.testPushThrowsException(practiceRepository.localGit, tutor1Login, projectKey1, practiceRepositorySlug, notAuthorized);
+
+        // Instructor
+        localVCLocalCITestService.testFetchSuccessful(practiceRepository.localGit, instructor1Login, projectKey1, practiceRepositorySlug);
+        localVCLocalCITestService.testPushSuccessful(practiceRepository.localGit, instructor1Login, projectKey1, practiceRepositorySlug);
+
+        // Cleanup
+        localVCLocalCITestService.removeRepository(practiceRepository);
     }
 }
