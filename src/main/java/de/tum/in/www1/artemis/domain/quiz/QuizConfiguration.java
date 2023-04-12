@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
+import java.util.Collection;
 import java.util.List;
 
 public interface QuizConfiguration {
@@ -29,81 +30,61 @@ public interface QuizConfiguration {
                 setQuestionParent(quizQuestion);
                 // reconnect QuestionStatistics
                 if (quizQuestion.getQuizQuestionStatistic() != null) {
-                    quizQuestion.getQuizQuestionStatistic().setQuizQuestion(quizQuestion);
+                    setQuizQuestion(quizQuestion.getQuizQuestionStatistic(), quizQuestion);
                 }
                 // do the same for answerOptions (if quizQuestion is multiple choice)
                 if (quizQuestion instanceof MultipleChoiceQuestion mcQuestion) {
                     MultipleChoiceQuestionStatistic mcStatistic = (MultipleChoiceQuestionStatistic) mcQuestion.getQuizQuestionStatistic();
                     // reconnect answerCounters
-                    for (AnswerCounter answerCounter : mcStatistic.getAnswerCounters()) {
-                        if (answerCounter.getId() != null) {
-                            answerCounter.setMultipleChoiceQuestionStatistic(mcStatistic);
-                        }
-                    }
+                    setQuizQuestionStatistics(mcStatistic.getAnswerCounters(), mcQuestion, mcStatistic);
                     // reconnect answerOptions
-                    for (AnswerOption answerOption : mcQuestion.getAnswerOptions()) {
-                        if (answerOption.getId() != null) {
-                            answerOption.setQuestion(mcQuestion);
-                        }
-                    }
+                    setQuizQuestions(mcQuestion.getAnswerOptions(), mcQuestion);
                 }
                 if (quizQuestion instanceof DragAndDropQuestion dragAndDropQuestion) {
                     DragAndDropQuestionStatistic dragAndDropStatistic = (DragAndDropQuestionStatistic) dragAndDropQuestion.getQuizQuestionStatistic();
                     // reconnect dropLocations
-                    for (DropLocation dropLocation : dragAndDropQuestion.getDropLocations()) {
-                        if (dropLocation.getId() != null) {
-                            dropLocation.setQuestion(dragAndDropQuestion);
-                        }
-                    }
+                    setQuizQuestions(dragAndDropQuestion.getDropLocations(), dragAndDropQuestion);
                     // reconnect dragItems
-                    for (DragItem dragItem : dragAndDropQuestion.getDragItems()) {
-                        if (dragItem.getId() != null) {
-                            dragItem.setQuestion(dragAndDropQuestion);
-                        }
-                    }
+                    setQuizQuestions(dragAndDropQuestion.getDragItems(), dragAndDropQuestion);
                     // reconnect correctMappings
-                    for (DragAndDropMapping mapping : dragAndDropQuestion.getCorrectMappings()) {
-                        if (mapping.getId() != null) {
-                            mapping.setQuestion(dragAndDropQuestion);
-                        }
-                    }
+                    setQuizQuestions(dragAndDropQuestion.getCorrectMappings(), dragAndDropQuestion);
                     // reconnect dropLocationCounters
-                    for (DropLocationCounter dropLocationCounter : dragAndDropStatistic.getDropLocationCounters()) {
-                        if (dropLocationCounter.getId() != null) {
-                            dropLocationCounter.setDragAndDropQuestionStatistic(dragAndDropStatistic);
-                            dropLocationCounter.getDropLocation().setQuestion(dragAndDropQuestion);
-                        }
-                    }
+                    setQuizQuestionStatistics(dragAndDropStatistic.getDropLocationCounters(), dragAndDropQuestion, dragAndDropStatistic);
                 }
                 if (quizQuestion instanceof ShortAnswerQuestion shortAnswerQuestion) {
                     ShortAnswerQuestionStatistic shortAnswerStatistic = (ShortAnswerQuestionStatistic) shortAnswerQuestion.getQuizQuestionStatistic();
                     // reconnect spots
-                    for (ShortAnswerSpot spot : shortAnswerQuestion.getSpots()) {
-                        if (spot.getId() != null) {
-                            spot.setQuestion(shortAnswerQuestion);
-                        }
-                    }
+                    setQuizQuestions(shortAnswerQuestion.getSpots(), shortAnswerQuestion);
                     // reconnect solutions
-                    for (ShortAnswerSolution solution : shortAnswerQuestion.getSolutions()) {
-                        if (solution.getId() != null) {
-                            solution.setQuestion(shortAnswerQuestion);
-                        }
-                    }
+                    setQuizQuestions(shortAnswerQuestion.getSolutions(), shortAnswerQuestion);
                     // reconnect correctMappings
-                    for (ShortAnswerMapping mapping : shortAnswerQuestion.getCorrectMappings()) {
-                        if (mapping.getId() != null) {
-                            mapping.setQuestion(shortAnswerQuestion);
-                        }
-                    }
+                    setQuizQuestions(shortAnswerQuestion.getCorrectMappings(), shortAnswerQuestion);
                     // reconnect spotCounters
-                    for (ShortAnswerSpotCounter shortAnswerSpotCounter : shortAnswerStatistic.getShortAnswerSpotCounters()) {
-                        if (shortAnswerSpotCounter.getId() != null) {
-                            shortAnswerSpotCounter.setShortAnswerQuestionStatistic(shortAnswerStatistic);
-                            shortAnswerSpotCounter.getSpot().setQuestion(shortAnswerQuestion);
-                        }
-                    }
+                    setQuizQuestionStatistics(shortAnswerStatistic.getShortAnswerSpotCounters(), shortAnswerQuestion, shortAnswerStatistic);
                 }
             }
+        }
+    }
+
+    default <T1 extends QuizQuestionComponent<T2>, T2 extends QuizQuestion> void setQuizQuestions(Collection<T1> components, T2 quizQuestion) {
+        for (QuizQuestionComponent<T2> mapping : components) {
+            setQuizQuestion(mapping, quizQuestion);
+        }
+    }
+
+    default <T1 extends QuizQuestionStatisticComponent<T2, T3, T4>, T2 extends QuizQuestionStatistic, T3 extends QuizQuestionComponent<T4>, T4 extends QuizQuestion> void setQuizQuestionStatistics(
+            Collection<T1> statisticComponents, T4 quizQuestion, T2 quizQuestionStatistic) {
+        for (T1 statisticComponent : statisticComponents) {
+            if (statisticComponent.getId() != null) {
+                statisticComponent.setQuizQuestionStatistic(quizQuestionStatistic);
+                setQuizQuestion(statisticComponent.getQuizQuestionComponent(), quizQuestion);
+            }
+        }
+    }
+
+    default <T extends QuizQuestion> void setQuizQuestion(QuizQuestionComponent<T> component, T quizQuestion) {
+        if (component != null && component.getId() != null) {
+            component.setQuestion(quizQuestion);
         }
     }
 }

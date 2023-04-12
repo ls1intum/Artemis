@@ -11,7 +11,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @Entity
 @DiscriminatorValue(value = "AC")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class AnswerCounter extends QuizStatisticCounter {
+public class AnswerCounter extends QuizStatisticCounter implements QuizQuestionStatisticComponent<MultipleChoiceQuestionStatistic, AnswerOption, MultipleChoiceQuestion> {
 
     @ManyToOne
     @JsonIgnore
@@ -35,6 +35,18 @@ public class AnswerCounter extends QuizStatisticCounter {
 
     public void setAnswer(AnswerOption answerOption) {
         this.answer = answerOption;
+    }
+
+    @Override
+    @JsonIgnore
+    public void setQuizQuestionStatistic(MultipleChoiceQuestionStatistic quizQuestionStatistic) {
+        setMultipleChoiceQuestionStatistic(quizQuestionStatistic);
+    }
+
+    @Override
+    @JsonIgnore
+    public AnswerOption getQuizQuestionComponent() {
+        return null;
     }
 
     @Override
