@@ -1,6 +1,7 @@
 import { Component, ElementRef, EventEmitter, Input, Output, ViewChild, forwardRef } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { faCalendarAlt, faClock, faGlobe, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import { FormControl } from '@angular/forms';
 import dayjs from 'dayjs/esm';
 import { isDate } from 'app/shared/util/utils';
 
@@ -20,7 +21,7 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
     @ViewChild('dateInput', { static: false }) dateInput: ElementRef;
     @Input() labelName: string;
     @Input() labelTooltip: string;
-    @Input() value: any;
+    @Input() value0: any;
     @Input() disabled: boolean;
     @Input() error: boolean;
     @Input() startAt: dayjs.Dayjs = dayjs().startOf('minutes'); // Default selected date. By default this sets it to the current time without seconds or milliseconds;
@@ -31,6 +32,8 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
     @Output() invalidDate = new EventEmitter();
 
     invalidD = false;
+
+    public nameControl = new FormControl();
 
     // Icons
     faCalendarAlt = faCalendarAlt;
@@ -80,10 +83,14 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
     writeValue(value: any) {
         // convert dayjs to date, because owl-date-time only works correctly with date objects
         if (dayjs.isDayjs(value)) {
-            this.value = (value as dayjs.Dayjs).toDate();
+            this.value0 = (value as dayjs.Dayjs).toDate();
         } else {
-            this.value = value;
+            this.value0 = value;
         }
+    }
+
+    isValidDate(date: any) {
+        return date && Object.prototype.toString.call(date) === '[object Date]' && !isNaN(date);
     }
 
     /**
@@ -105,16 +112,28 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
      * updates the value, if a valid Dayjs value is passed
      * @param newValue used to update value
      */
-    updateField(newValue: dayjs.Dayjs) {
-        alert(newValue);
+    updateField0(newValue: any) {
         if (dayjs.isDayjs(newValue) || isDate(newValue)) {
-            alert('updateField!!');
             this.invalidD = false;
-            this.value = newValue.toDate();
-            this._onChange(dayjs(this.value));
-            this.valueChanged();
-            alert(this.value);
+            this.value0 = newValue.toDate();
+            this._onChange(dayjs(this.value0));
+            alert(this.value0);
         }
+    }
+
+    updateField(newValue: any, ok: string) {
+        const str = (<HTMLInputElement>document.getElementById('date-input-field')).value;
+        console.log(newValue);
+        console.log('str: ' + ok);
+        //todo: this does not work :(
+        if (newValue != null || ok == '') {
+            this.invalidD = false;
+        } else {
+            this.invalidD = true;
+        }
+        this.value0 = newValue;
+        this._onChange(dayjs(this.value0));
+        this.valueChanged();
     }
 
     /**
@@ -129,8 +148,8 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
             alert('new value is null :p');
         }
 
-        this.value = newValue;
-        this._onChange(dayjs(this.value));
+        this.value0 = newValue;
+        this._onChange(dayjs(this.value0));
         this.valueChanged();
     }
 
@@ -139,13 +158,13 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
 
         if (val == '') {
             this.invalidD = false;
-            this.value = null;
-            this._onChange(dayjs(this.value));
+            this.value0 = null;
+            this._onChange(dayjs(this.value0));
             this.valueChanged();
         } else if (dayjs(val).isValid()) {
             this.invalidD = false;
-            this.value = new Date(val);
-            this._onChange(dayjs(this.value));
+            this.value0 = new Date(val);
+            this._onChange(dayjs(this.value0));
             this.valueChanged();
         } else {
             this.invalidD = true;
@@ -156,4 +175,22 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
         const str = (<HTMLInputElement>document.getElementById('date-input-field')).value;
         alert('DEBUG: ' + str);
     }
+
+    public myFilter = (d: any): boolean => {
+        console.log(d);
+
+        if (isDate(d)) {
+            if (isNaN(d.getTime())) {
+                alert('d is NAN');
+                return false;
+            }
+
+            const day = d.getDay();
+            // Prevent Saturday and Sunday from being selected.
+
+            return day !== 0 && day !== 6;
+        } else {
+            return false;
+        }
+    };
 }
