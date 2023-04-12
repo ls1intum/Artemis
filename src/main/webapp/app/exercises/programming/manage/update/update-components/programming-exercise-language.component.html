@@ -195,12 +195,7 @@
         </div>
     </div>
 
-    <div
-        *ngIf="
-            programmingExerciseUpdateService.config.programmingExercise.programmingLanguage === ProgrammingLanguage.JAVA ||
-            programmingExerciseUpdateService.config.programmingExercise.programmingLanguage === ProgrammingLanguage.KOTLIN
-        "
-    >
+    <div *ngIf="programmingExerciseUpdateService.config.testwiseCoverageAnalysisSupported">
         <div class="form-check">
             <label class="form-check-label" for="field_testwiseCoverageEnabled">
                 <input

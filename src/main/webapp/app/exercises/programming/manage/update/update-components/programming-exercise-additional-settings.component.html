@@ -12,7 +12,7 @@
     <jhi-programming-exercise-plans-and-repositories-preview
         [programmingExercise]="programmingExerciseUpdateService.config.programmingExercise"
     ></jhi-programming-exercise-plans-and-repositories-preview>
-    <div *ngIf="!programmingExerciseUpdateService.config.isImport" class="form-group">
+    <div *ngIf="!programmingExerciseUpdateService.config.isImport && programmingExerciseUpdateService.config.auxiliaryRepositoriesSupported" class="form-group">
         <ngx-datatable
             id="auxiliaryRepositoryTable"
             class="bootstrap"
@@ -160,7 +160,7 @@
     </div>
 </div>
 
-<div class="form-group mb-0">
+<div class="form-group mb-0" *ngIf="programmingExerciseUpdateService.config.publishBuildPlanUrlAllowed">
     <div class="form-check">
         <label class="form-check-label" for="field_publishBuildPlanUrl">
             <input

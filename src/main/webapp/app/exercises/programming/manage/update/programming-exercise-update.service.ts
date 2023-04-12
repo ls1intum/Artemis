@@ -49,6 +49,10 @@ interface ExerciseUpdateConfig {
 
     isEdit: boolean;
     shouldHidePreview: boolean;
+
+    publishBuildPlanUrlAllowed: boolean;
+    testwiseCoverageAnalysisSupported: boolean;
+    auxiliaryRepositoriesSupported: boolean;
 }
 
 export class ProgrammingExerciseUpdateService {

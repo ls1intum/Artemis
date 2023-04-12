@@ -512,6 +512,10 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             recreateBuildPlans: this.recreateBuildPlans,
             onRecreateBuildPlanOrUpdateTemplateChange: this.onRecreateBuildPlanOrUpdateTemplateChange,
             updateTemplate: this.updateTemplate,
+
+            publishBuildPlanUrlAllowed: this.publishBuildPlanUrlAllowed,
+            testwiseCoverageAnalysisSupported: this.testwiseCoverageAnalysisSupported,
+            auxiliaryRepositoriesSupported: this.auxiliaryRepositoriesSupported,
         });
     }
 
