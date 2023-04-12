@@ -7,10 +7,7 @@ import static de.tum.in.www1.artemis.security.Role.STUDENT;
 
 import java.time.Instant;
 import java.time.ZonedDateTime;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -484,6 +481,23 @@ public class UserService {
         userRepository.delete(user);
         clearUserCaches(user);
         userRepository.flush();
+    }
+
+    /**
+     * Sets the properties of the user to random or dummy values, making it impossible to identify the user.
+     * Intended to serve a soft delete for users.
+     *
+     * @param user the user that should be anonymized
+     */
+    protected void anonymizeUser(User user) {
+        user.setFirstName("Anonymous");
+        user.setLastName("User");
+        user.setLogin(RandomUtil.generateRandomAlphanumericString());
+        user.setPassword(RandomUtil.generatePassword());
+        user.setEmail("mail@user.anonymous");
+        user.setRegistrationNumber("");
+        user.setImageUrl("");
+        user.setActivated(false);
     }
 
     /**
