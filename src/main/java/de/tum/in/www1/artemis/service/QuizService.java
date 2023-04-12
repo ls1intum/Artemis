@@ -1,9 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.function.Function;
 
 import org.springframework.stereotype.Service;
 
@@ -153,28 +151,18 @@ public abstract class QuizService<T extends QuizConfiguration> {
             }
 
             // drag item index
-            DragItem dragItem = mapping.getDragItem();
-            boolean dragItemFound = false;
-            for (DragItem questionDragItem : dragAndDropQuestion.getDragItems()) {
-                if (dragItem.equals(questionDragItem)) {
-                    dragItemFound = true;
-                    mapping.setDragItemIndex(dragAndDropQuestion.getDragItems().indexOf(questionDragItem));
-                    mapping.setDragItem(null);
-                    break;
-                }
-            }
+            boolean dragItemFound = findComponent(dragAndDropQuestion.getDragItems(), mapping.getDragItem(), questionDragItem -> {
+                mapping.setDragItemIndex(dragAndDropQuestion.getDragItems().indexOf(questionDragItem));
+                mapping.setDragItem(null);
+                return null;
+            });
 
             // drop location index
-            DropLocation dropLocation = mapping.getDropLocation();
-            boolean dropLocationFound = false;
-            for (DropLocation questionDropLocation : dragAndDropQuestion.getDropLocations()) {
-                if (dropLocation.equals(questionDropLocation)) {
-                    dropLocationFound = true;
-                    mapping.setDropLocationIndex(dragAndDropQuestion.getDropLocations().indexOf(questionDropLocation));
-                    mapping.setDropLocation(null);
-                    break;
-                }
-            }
+            boolean dropLocationFound = findComponent(dragAndDropQuestion.getDropLocations(), mapping.getDropLocation(), questionDropLocation -> {
+                mapping.setDropLocationIndex(dragAndDropQuestion.getDropLocations().indexOf(questionDropLocation));
+                mapping.setDropLocation(null);
+                return null;
+            });
 
             // if one of them couldn't be found, remove the mapping entirely
             if (!dragItemFound || !dropLocationFound) {
@@ -185,6 +173,25 @@ public abstract class QuizService<T extends QuizConfiguration> {
         for (DragAndDropMapping mapping : mappingsToBeRemoved) {
             dragAndDropQuestion.removeCorrectMapping(mapping);
         }
+    }
+
+    /**
+     * Find the given componentToBeSearched in components. If found, apply the given foundCallback.
+     *
+     * @param components            the collection of QuizQuestionComponent to be searched from
+     * @param componentToBeSearched the QuizQuestionComponent to be searched
+     * @param foundCallback         the callback to be applied if the given componentToBeSearched is found
+     * @return true if the given componentToBeSearched is found or false otherwise
+     */
+    private <T1 extends QuizQuestionComponent<T2>, T2 extends QuizQuestion> boolean findComponent(Collection<T1> components, T1 componentToBeSearched,
+            Function<T1, Void> foundCallback) {
+        for (T1 component : components) {
+            if (componentToBeSearched.equals(component)) {
+                foundCallback.apply(component);
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
