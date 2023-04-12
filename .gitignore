@@ -191,7 +191,7 @@ repos-download/
 /src/test/cypress/build
 
 ######################
-# Artemis configs
+# Artemis resources
 ######################
 /src/main/resources/config/application-local*.yml
 /src/main/resources/id_*

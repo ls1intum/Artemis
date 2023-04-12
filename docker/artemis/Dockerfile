@@ -22,7 +22,7 @@ ARG WAR_FILE_STAGE="builder"
 #-----------------------------------------------------------------------------------------------------------------------
 # build stage
 #-----------------------------------------------------------------------------------------------------------------------
-FROM docker.io/library/eclipse-temurin:17-jdk as builder
+FROM --platform=$BUILDPLATFORM docker.io/library/eclipse-temurin:17-jdk as builder
 
 WORKDIR /opt/artemis
 # so far just using the .dockerignore to define what isn't necessary here

@@ -116,9 +116,8 @@ jobs:
       uses: docker/build-push-action@v3
       if: ${{ steps.compute-tag.outputs.result != 'FALSE' }}
       with:
-        # TODO: maybe even add arm/v7 for older DevBoards and arm64 for Mac M1 and new DevBoards
-        # TODO: add arm64 support by first building the .war file in a amd64 step then creating the runtime env
-        platforms: amd64
+        # TODO: maybe even add arm/v7 for older DevBoards
+        platforms: linux/amd64,linux/arm64
         file: ./docker/artemis/Dockerfile
         context: .
         tags: ghcr.io/ls1intum/artemis:${{ steps.compute-tag.outputs.result }}
