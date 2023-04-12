@@ -33,6 +33,14 @@ export class ExamUpdateComponent implements OnInit {
     isImportInSameCourse = false;
     // Expose enums to the template
     exerciseType = ExerciseType;
+    invalidVisibleDate = false;
+    invalidStartDate = false;
+    invalidEndDate = false;
+    invalidPublishResultsDate = false;
+    invalidStudentReviewStart = false;
+    invalidStudentReviewEnd = false;
+    invalidExampleSolutionPublicationDate = false;
+
     // Link to the component enabling the selection of exercise groups and exercises for import
     @ViewChild(ExamExerciseImportComponent) examExerciseImportComponent: ExamExerciseImportComponent;
 
@@ -153,13 +161,22 @@ export class ExamUpdateComponent implements OnInit {
         const examMaxPointsValid = this.isValidMaxPoints;
         const examValidWorkingTime = this.validateWorkingTime;
         const examValidExampleSolutionPublicationDate = this.isValidExampleSolutionPublicationDate;
+        const allDatesValid =
+            !this.invalidVisibleDate &&
+            !this.invalidStartDate &&
+            !this.invalidEndDate &&
+            !this.invalidPublishResultsDate &&
+            !this.invalidStudentReviewEnd &&
+            !this.invalidStudentReviewStart &&
+            !this.invalidStudentReviewStart;
         return (
             examConductionDatesValid &&
             examReviewDatesValid &&
             examNumberOfCorrectionsValid &&
             examMaxPointsValid &&
             examValidWorkingTime &&
-            examValidExampleSolutionPublicationDate
+            examValidExampleSolutionPublicationDate &&
+            allDatesValid
         );
     }
 

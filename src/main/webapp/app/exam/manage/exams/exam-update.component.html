@@ -70,6 +70,7 @@
                         labelName="{{ 'artemisApp.examManagement.visibleDate' | artemisTranslate }}"
                         labelTooltip="{{ 'artemisApp.examManagement.visibleDateTooltip' | artemisTranslate }}"
                         [(ngModel)]="exam.visibleDate"
+                        (valueChange)="invalidVisibleDate = $event"
                         [error]="!isValidVisibleDate"
                         name="visibleDate"
                         id="visibleDate"
@@ -81,7 +82,7 @@
                         labelTooltip="{{ 'artemisApp.examManagement.startDateTooltip' | artemisTranslate }}"
                         [(ngModel)]="exam.startDate"
                         [error]="!isValidStartDate"
-                        (valueChange)="calculateMaxWorkingTime()"
+                        (valueChange)="calculateMaxWorkingTime(); invalidStartDate = $event"
                         name="startDate"
                         id="startDate"
                     ></jhi-date-time-picker>
@@ -92,7 +93,7 @@
                         labelTooltip="{{ 'artemisApp.examManagement.endDateTooltip' | artemisTranslate }}"
                         [(ngModel)]="exam.endDate"
                         [error]="!isValidEndDate"
-                        (valueChange)="calculateMaxWorkingTime()"
+                        (valueChange)="calculateMaxWorkingTime(); invalidEndDate = $event"
                         name="endDate"
                         id="endDate"
                     ></jhi-date-time-picker>
@@ -176,6 +177,7 @@
                         <jhi-date-time-picker
                             labelName="{{ 'artemisApp.examManagement.publishResultsDate' | artemisTranslate }}"
                             [(ngModel)]="exam.publishResultsDate"
+                            (valueChange)="invalidPublishResultsDate = $event"
                             [error]="!isValidPublishResultsDate"
                             name="publishResultsDate"
                             id="publishResultsDate"
@@ -188,6 +190,7 @@
                             labelName="{{ 'artemisApp.examManagement.examStudentReviewStart' | artemisTranslate }}"
                             [(ngModel)]="exam.examStudentReviewStart"
                             [error]="!isValidExamStudentReviewStart"
+                            (valueChange)="invalidStudentReviewStart = $event"
                             name="examStudentReviewStart"
                             id="examStudentReviewStart"
                         ></jhi-date-time-picker>
@@ -197,6 +200,7 @@
                             labelName="{{ 'artemisApp.examManagement.examStudentReviewEnd' | artemisTranslate }}"
                             [(ngModel)]="exam.examStudentReviewEnd"
                             [error]="!isValidExamStudentReviewEnd"
+                            (valueChange)="invalidStudentReviewEnd = $event"
                             name="examStudentReviewEnd"
                             id="examStudentReviewEnd"
                         ></jhi-date-time-picker>
@@ -214,6 +218,7 @@
                         labelName="{{ 'artemisApp.exam.exampleSolutionPublicationDate' | artemisTranslate }}"
                         labelTooltip="{{ 'artemisApp.examManagement.exampleSolutionPublicationDateTooltip' | artemisTranslate }}"
                         [(ngModel)]="exam.exampleSolutionPublicationDate"
+                        (valueChange)="invalidExampleSolutionPublicationDate = $event"
                         [error]="!isValidExampleSolutionPublicationDate"
                     ></jhi-date-time-picker>
                 </div>
