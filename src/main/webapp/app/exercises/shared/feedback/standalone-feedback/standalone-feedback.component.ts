@@ -18,8 +18,8 @@ export class StandaloneFeedbackComponent implements OnInit {
 
     isTemplateStatusMissing = false;
     showMissingAutomaticFeedbackInformation = false;
-    messageKey?: string = undefined;
-    exerciseType?: ExerciseType = undefined;
+    messageKey?: string;
+    exerciseType?: ExerciseType;
 
     latestDueDate?: dayjs.Dayjs;
 
