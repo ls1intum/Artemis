@@ -39,83 +39,13 @@ public abstract class QuizService<T extends QuizConfiguration> {
         // fix references in all questions (step 1/2)
         for (var quizQuestion : quizConfiguration.getQuizQuestions()) {
             if (quizQuestion instanceof MultipleChoiceQuestion mcQuestion) {
-                var quizQuestionStatistic = (MultipleChoiceQuestionStatistic) mcQuestion.getQuizQuestionStatistic();
-                if (quizQuestionStatistic == null) {
-                    quizQuestionStatistic = new MultipleChoiceQuestionStatistic();
-                    mcQuestion.setQuizQuestionStatistic(quizQuestionStatistic);
-                    quizQuestionStatistic.setQuizQuestion(mcQuestion);
-                }
-
-                for (var answerOption : mcQuestion.getAnswerOptions()) {
-                    quizQuestionStatistic.addAnswerOption(answerOption);
-                }
-
-                // if an answerOption was removed then remove the associated AnswerCounters implicitly
-                Set<AnswerCounter> answerCounterToDelete = new HashSet<>();
-                for (AnswerCounter answerCounter : quizQuestionStatistic.getAnswerCounters()) {
-                    if (answerCounter.getId() != null) {
-                        if (!(mcQuestion.getAnswerOptions().contains(answerCounter.getAnswer()))) {
-                            answerCounter.setAnswer(null);
-                            answerCounterToDelete.add(answerCounter);
-                        }
-                    }
-                }
-                quizQuestionStatistic.getAnswerCounters().removeAll(answerCounterToDelete);
+                fixReferenceMultipleChoice(mcQuestion);
             }
             else if (quizQuestion instanceof DragAndDropQuestion dndQuestion) {
-                var quizQuestionStatistic = (DragAndDropQuestionStatistic) dndQuestion.getQuizQuestionStatistic();
-                if (quizQuestionStatistic == null) {
-                    quizQuestionStatistic = new DragAndDropQuestionStatistic();
-                    dndQuestion.setQuizQuestionStatistic(quizQuestionStatistic);
-                    quizQuestionStatistic.setQuizQuestion(dndQuestion);
-                }
-
-                for (var dropLocation : dndQuestion.getDropLocations()) {
-                    quizQuestionStatistic.addDropLocation(dropLocation);
-                }
-
-                // if a dropLocation was removed then remove the associated AnswerCounters implicitly
-                Set<DropLocationCounter> dropLocationCounterToDelete = new HashSet<>();
-                for (DropLocationCounter dropLocationCounter : quizQuestionStatistic.getDropLocationCounters()) {
-                    if (dropLocationCounter.getId() != null) {
-                        if (!(dndQuestion.getDropLocations().contains(dropLocationCounter.getDropLocation()))) {
-                            dropLocationCounter.setDropLocation(null);
-                            dropLocationCounterToDelete.add(dropLocationCounter);
-                        }
-                    }
-                }
-                quizQuestionStatistic.getDropLocationCounters().removeAll(dropLocationCounterToDelete);
-
-                // save references as index to prevent Hibernate Persistence problem
-                saveCorrectMappingsInIndices(dndQuestion);
+                fixReferenceDragAndDrop(dndQuestion);
             }
             else if (quizQuestion instanceof ShortAnswerQuestion saQuestion) {
-                var quizQuestionStatistic = (ShortAnswerQuestionStatistic) saQuestion.getQuizQuestionStatistic();
-                if (quizQuestionStatistic == null) {
-                    quizQuestionStatistic = new ShortAnswerQuestionStatistic();
-                    saQuestion.setQuizQuestionStatistic(quizQuestionStatistic);
-                    quizQuestionStatistic.setQuizQuestion(quizQuestion);
-                }
-
-                for (var spot : saQuestion.getSpots()) {
-                    spot.setQuestion(saQuestion);
-                    quizQuestionStatistic.addSpot(spot);
-                }
-
-                // if a spot was removed then remove the associated spotCounters implicitly
-                Set<ShortAnswerSpotCounter> spotCounterToDelete = new HashSet<>();
-                for (ShortAnswerSpotCounter spotCounter : quizQuestionStatistic.getShortAnswerSpotCounters()) {
-                    if (spotCounter.getId() != null) {
-                        if (!(saQuestion.getSpots().contains(spotCounter.getSpot()))) {
-                            spotCounter.setSpot(null);
-                            spotCounterToDelete.add(spotCounter);
-                        }
-                    }
-                }
-                quizQuestionStatistic.getShortAnswerSpotCounters().removeAll(spotCounterToDelete);
-
-                // save references as index to prevent Hibernate Persistence problem
-                saveCorrectMappingsInIndicesShortAnswer(saQuestion);
+                fixReferenceShortAnswer(saQuestion);
             }
         }
 
@@ -134,6 +64,94 @@ public abstract class QuizService<T extends QuizConfiguration> {
         }
 
         return savedQuizConfiguration;
+    }
+
+    private void fixReferenceMultipleChoice(MultipleChoiceQuestion mcQuestion) {
+        var quizQuestionStatistic = (MultipleChoiceQuestionStatistic) mcQuestion.getQuizQuestionStatistic();
+        if (quizQuestionStatistic == null) {
+            quizQuestionStatistic = new MultipleChoiceQuestionStatistic();
+            mcQuestion.setQuizQuestionStatistic(quizQuestionStatistic);
+            quizQuestionStatistic.setQuizQuestion(mcQuestion);
+        }
+
+        for (var answerOption : mcQuestion.getAnswerOptions()) {
+            quizQuestionStatistic.addAnswerOption(answerOption);
+        }
+
+        // if an answerOption was removed then remove the associated AnswerCounters implicitly
+        Set<AnswerCounter> answerCounterToDelete = new HashSet<>();
+        addToBeRemovedComponent(quizQuestionStatistic.getAnswerCounters(), answerCounter -> {
+            if (!(mcQuestion.getAnswerOptions().contains(answerCounter.getAnswer()))) {
+                answerCounter.setAnswer(null);
+                answerCounterToDelete.add(answerCounter);
+            }
+            return null;
+        });
+        quizQuestionStatistic.getAnswerCounters().removeAll(answerCounterToDelete);
+    }
+
+    private void fixReferenceDragAndDrop(DragAndDropQuestion dndQuestion) {
+        var quizQuestionStatistic = (DragAndDropQuestionStatistic) dndQuestion.getQuizQuestionStatistic();
+        if (quizQuestionStatistic == null) {
+            quizQuestionStatistic = new DragAndDropQuestionStatistic();
+            dndQuestion.setQuizQuestionStatistic(quizQuestionStatistic);
+            quizQuestionStatistic.setQuizQuestion(dndQuestion);
+        }
+
+        for (var dropLocation : dndQuestion.getDropLocations()) {
+            quizQuestionStatistic.addDropLocation(dropLocation);
+        }
+
+        // if a dropLocation was removed then remove the associated AnswerCounters implicitly
+        Set<DropLocationCounter> dropLocationCounterToDelete = new HashSet<>();
+        addToBeRemovedComponent(quizQuestionStatistic.getDropLocationCounters(), dropLocationCounter -> {
+            if (!(dndQuestion.getDropLocations().contains(dropLocationCounter.getDropLocation()))) {
+                dropLocationCounter.setDropLocation(null);
+                dropLocationCounterToDelete.add(dropLocationCounter);
+            }
+            return null;
+        });
+        quizQuestionStatistic.getDropLocationCounters().removeAll(dropLocationCounterToDelete);
+
+        // save references as index to prevent Hibernate Persistence problem
+        saveCorrectMappingsInIndices(dndQuestion);
+    }
+
+    private void fixReferenceShortAnswer(ShortAnswerQuestion saQuestion) {
+        var quizQuestionStatistic = (ShortAnswerQuestionStatistic) saQuestion.getQuizQuestionStatistic();
+        if (quizQuestionStatistic == null) {
+            quizQuestionStatistic = new ShortAnswerQuestionStatistic();
+            saQuestion.setQuizQuestionStatistic(quizQuestionStatistic);
+            quizQuestionStatistic.setQuizQuestion(saQuestion);
+        }
+
+        for (var spot : saQuestion.getSpots()) {
+            spot.setQuestion(saQuestion);
+            quizQuestionStatistic.addSpot(spot);
+        }
+
+        // if a spot was removed then remove the associated spotCounters implicitly
+        Set<ShortAnswerSpotCounter> spotCounterToDelete = new HashSet<>();
+        addToBeRemovedComponent(quizQuestionStatistic.getShortAnswerSpotCounters(), spotCounter -> {
+            if (!(saQuestion.getSpots().contains(spotCounter.getSpot()))) {
+                spotCounter.setSpot(null);
+                spotCounterToDelete.add(spotCounter);
+            }
+            return null;
+        });
+        quizQuestionStatistic.getShortAnswerSpotCounters().removeAll(spotCounterToDelete);
+
+        // save references as index to prevent Hibernate Persistence problem
+        saveCorrectMappingsInIndicesShortAnswer(saQuestion);
+    }
+
+    private <T1 extends QuizQuestionStatisticComponent<T2, T3, T4>, T2 extends QuizQuestionStatistic, T3 extends QuizQuestionComponent<T4>, T4 extends QuizQuestion> void addToBeRemovedComponent(
+            Collection<T1> components, Function<T1, Void> deleteCallback) {
+        for (T1 component : components) {
+            if (component.getId() != null) {
+                deleteCallback.apply(component);
+            }
+        }
     }
 
     /**
