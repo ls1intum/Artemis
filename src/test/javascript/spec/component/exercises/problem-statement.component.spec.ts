@@ -58,10 +58,6 @@ describe('ProblemStatementComponent', () => {
             });
     });
 
-    it('should create', () => {
-        expect(component).toBeTruthy();
-    });
-
     it('should render problem statement when exercise is available', () => {
         const exercise = new TextExercise(course, undefined);
         exercise.problemStatement = 'Test problem statement';

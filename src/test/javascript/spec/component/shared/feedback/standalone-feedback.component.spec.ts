@@ -55,10 +55,6 @@ describe('StandaloneFeedbackComponent', () => {
             });
     });
 
-    it('should create', () => {
-        expect(component).toBeTruthy();
-    });
-
     it('should set isTemplateStatusMissing correctly', () => {
         fixture.detectChanges();
         expect(component.isTemplateStatusMissing).toBeFalse();

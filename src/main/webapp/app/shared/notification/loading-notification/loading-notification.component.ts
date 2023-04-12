@@ -23,6 +23,6 @@ export class LoadingNotificationComponent implements OnInit, OnDestroy {
     }
 
     ngOnDestroy() {
-        this.loadingSubscription?.unsubscribe();
+        this.loadingSubscription.unsubscribe();
     }
 }
