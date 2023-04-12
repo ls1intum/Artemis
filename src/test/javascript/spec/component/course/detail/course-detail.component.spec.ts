@@ -134,8 +134,7 @@ describe('Course Management Detail Component', () => {
     });
 
     it('should broadcast course modification on delete', () => {
-        let componentTabBar: CourseManagementTabBarComponent;
-        componentTabBar = TestBed.createComponent(CourseManagementTabBarComponent).componentInstance;
+        const componentTabBar = TestBed.createComponent(CourseManagementTabBarComponent).componentInstance;
         const broadcastSpy = jest.spyOn(eventManager, 'broadcast');
         const deleteStub = jest.spyOn(courseAdminService, 'delete');
         deleteStub.mockReturnValue(of(new HttpResponse<void>()));
