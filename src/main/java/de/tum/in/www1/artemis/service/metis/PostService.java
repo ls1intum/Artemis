@@ -249,11 +249,11 @@ public class PostService extends PostingService {
             postsInCourse = new PageImpl<>(this.getAllPlagiarismCasePosts(postContextFilter));
         }
         // filter by all other contexts
-        else if (postContextFilter.getPlagiarismCaseId() != null) {
+        else if (postContextFilter.getPlagiarismCaseId() == null) {
             postsInCourse = this.getCoursePosts(postContextFilter, pagingEnabled, pageable);
         }
         else {
-            throw new BadRequestAlertException("A post cannot be associated with more than one context", METIS_POST_ENTITY_NAME, "ambiguousContext");
+            throw new BadRequestAlertException("A post cannot be associated with more than one context if plagiarismCaseId is set", METIS_POST_ENTITY_NAME, "ambiguousContext");
         }
 
         setAuthorRoleOfPostings(postsInCourse.getContent());
@@ -284,58 +284,6 @@ public class PostService extends PostingService {
         coursePosts.stream().map(Post::getExercise).filter(Objects::nonNull).forEach(Exercise::filterSensitiveInformation);
 
         return coursePosts;
-    }
-
-    /**
-     * Checks course, user, exercise and post validity,
-     * retrieves and filters posts for an exercise by its id
-     * and ensures that sensitive information is filtered out
-     *
-     * @param postContextFilter filter object
-     * @param pagingEnabled
-     * @param pageable
-     * @return page of posts that belong to the exercise
-     */
-    public Page<Post> getAllExercisePosts(PostContextFilter postContextFilter, boolean pagingEnabled, Pageable pageable) {
-        final User user = userRepository.getUserWithGroupsAndAuthorities();
-
-        // checks
-        preCheckUserAndCourseForCommunication(user, postContextFilter.getCourseId());
-        preCheckExercise(user, postContextFilter.getCourseId(), postContextFilter.getExerciseId());
-
-        // retrieve posts
-        Page<Post> exercisePosts = postRepository.findPosts(postContextFilter, user.getId(), pagingEnabled, pageable);
-
-        // protect sample solution, grading instructions, etc.
-        exercisePosts.forEach(post -> post.getExercise().filterSensitiveInformation());
-
-        return exercisePosts;
-    }
-
-    /**
-     * Checks course, user, lecture and post validity,
-     * retrieves and filters posts for a lecture by its id
-     * and ensures that sensitive information is filtered out
-     *
-     * @param postContextFilter filter object
-     * @param pagingEnabled
-     * @param pageable
-     * @return page of posts that belong to the lecture
-     */
-    public Page<Post> getAllLecturePosts(PostContextFilter postContextFilter, boolean pagingEnabled, Pageable pageable) {
-        final User user = userRepository.getUserWithGroupsAndAuthorities();
-
-        // checks
-        preCheckUserAndCourseForCommunication(user, postContextFilter.getCourseId());
-        preCheckLecture(user, postContextFilter.getCourseId(), postContextFilter.getLectureId());
-
-        // retrieve posts
-        Page<Post> lecturePosts = postRepository.findPosts(postContextFilter, user.getId(), pagingEnabled, pageable);
-
-        // protect sample solution, grading instructions, etc.
-        lecturePosts.stream().map(Post::getExercise).filter(Objects::nonNull).forEach(Exercise::filterSensitiveInformation);
-
-        return lecturePosts;
     }
 
     /**

@@ -161,7 +161,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         checkCreatedPost(postToSave, createdPost);
 
         PostContextFilter postContextFilter = new PostContextFilter();
-        postContextFilter.setExerciseId(exerciseId);
+        postContextFilter.setExerciseId(new Long[] { exerciseId });
         assertThat(existingExercisePosts).hasSize(postRepository.findPosts(postContextFilter, null, false, null).getSize() - 1);
         verify(groupNotificationService, times(1)).notifyAllGroupsAboutNewPostForExercise(createdPost, course);
     }
@@ -192,7 +192,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         assertThat(notCreatedPost).isNull();
         PostContextFilter postContextFilter = new PostContextFilter();
-        postContextFilter.setExerciseId(exerciseId);
+        postContextFilter.setExerciseId(new Long[] { exerciseId });
         assertThat(existingExercisePosts).hasSameSizeAs(postRepository.findPosts(postContextFilter, null, false, null));
 
         // conversation participants should not be notified
@@ -214,7 +214,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         request.postWithResponseBody("/api/courses/" + courseId + "/posts", postToSave, Post.class, HttpStatus.BAD_REQUEST);
 
         PostContextFilter postContextFilter = new PostContextFilter();
-        postContextFilter.setExerciseId(exerciseId);
+        postContextFilter.setExerciseId(new Long[] { exerciseId });
         assertThat(existingExercisePosts).hasSameSizeAs(postRepository.findPosts(postContextFilter, null, false, null));
         verify(groupNotificationService, times(0)).notifyAllGroupsAboutNewPostForExercise(any(), any());
 
@@ -232,7 +232,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         checkCreatedPost(postToSave, createdPost);
 
         PostContextFilter postContextFilter = new PostContextFilter();
-        postContextFilter.setLectureId(lectureId);
+        postContextFilter.setLectureId(new Long[] { lectureId });
         assertThat(existingLecturePosts).hasSize(postRepository.findPosts(postContextFilter, null, false, null).getSize() - 1);
         verify(groupNotificationService, times(1)).notifyAllGroupsAboutNewPostForLecture(createdPost, course);
     }
@@ -265,7 +265,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         PostContextFilter postContextFilter = new PostContextFilter();
         postContextFilter.setCourseId(course.getId());
-        postContextFilter.setCourseWideContext(CourseWideContext.ANNOUNCEMENT);
+        postContextFilter.setCourseWideContext(new CourseWideContext[] { CourseWideContext.ANNOUNCEMENT });
         var numberOfPostsBefore = postRepository.findPosts(postContextFilter, null, false, null).getSize();
 
         Post createdPost = request.postWithResponseBody("/api/courses/" + courseId + "/posts", postToSave, Post.class, HttpStatus.CREATED);
@@ -287,7 +287,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         PostContextFilter postContextFilter = new PostContextFilter();
         postContextFilter.setCourseId(course.getId());
-        postContextFilter.setCourseWideContext(CourseWideContext.ANNOUNCEMENT);
+        postContextFilter.setCourseWideContext(new CourseWideContext[] { CourseWideContext.ANNOUNCEMENT });
         var numberOfPostsBefore = postRepository.findPosts(postContextFilter, null, false, null).getSize();
 
         request.postWithResponseBody("/api/courses/" + courseId + "/posts", postToSave, Post.class, HttpStatus.FORBIDDEN);
@@ -698,7 +698,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         // request param courseWideContext will fetch all course posts that match this context filter
         var params = new LinkedMultiValueMap<String, String>();
         params.add("lectureId", lectureId.toString());
-        params.add("exerciseId", exerciseId.toString());
+        params.add("plagiarismCaseId", plagiarismCaseId.toString());
 
         List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.BAD_REQUEST, Post.class, params);
         // get amount of posts with that certain course-wide context

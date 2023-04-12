@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.repository.specs;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import javax.persistence.criteria.*;
@@ -22,7 +23,7 @@ public class PostSpecs {
      * @param exerciseId id of exercise the posts belong to
      * @return specification used to chain DB operations
      */
-    public static Specification<Post> getCourseSpecification(Long courseId, Long lectureId, Long exerciseId) {
+    public static Specification<Post> getCourseSpecification(Long courseId, Long[] lectureId, Long[] exerciseId) {
         return (root, query, criteriaBuilder) -> {
             if (lectureId != null || exerciseId != null) {
                 // if lectureId or exerciseId is provided, lecture/exercise specifications will be activated to fetch lecture/exercise posts
@@ -46,13 +47,13 @@ public class PostSpecs {
      * @param lectureId id of the lecture the Posts belong to
      * @return specification used to chain DB operations
      */
-    public static Specification<Post> getLectureSpecification(Long lectureId) {
+    public static Specification<Post> getLectureSpecification(Long[] lectureId) {
         return ((root, query, criteriaBuilder) -> {
             if (lectureId == null) {
                 return null;
             }
             else {
-                return criteriaBuilder.equal(root.get(Post_.LECTURE).get(Lecture_.ID), lectureId);
+                return root.get(Post_.LECTURE).get(Lecture_.ID).in(Arrays.asList(lectureId));
             }
         });
     }
@@ -63,13 +64,13 @@ public class PostSpecs {
      * @param exerciseId id of the exercise the Posts belong to
      * @return specification used to chain DB operations
      */
-    public static Specification<Post> getExerciseSpecification(Long exerciseId) {
+    public static Specification<Post> getExerciseSpecification(Long[] exerciseId) {
         return ((root, query, criteriaBuilder) -> {
             if (exerciseId == null) {
                 return null;
             }
             else {
-                return criteriaBuilder.equal(root.get(Post_.EXERCISE).get(Exercise_.ID), exerciseId);
+                return root.get(Post_.EXERCISE).get(Exercise_.ID).in(Arrays.asList(exerciseId));
             }
         });
     }
@@ -80,13 +81,13 @@ public class PostSpecs {
      * @param courseWideContext context of the Posts within the current course
      * @return specification used to chain DB operations
      */
-    public static Specification<Post> getCourseWideContextSpecification(CourseWideContext courseWideContext) {
+    public static Specification<Post> getCourseWideContextSpecification(CourseWideContext[] courseWideContext) {
         return ((root, query, criteriaBuilder) -> {
             if (courseWideContext == null) {
                 return null;
             }
             else {
-                return criteriaBuilder.equal(root.get(Post_.COURSE_WIDE_CONTEXT), courseWideContext);
+                return root.get(Post_.COURSE_WIDE_CONTEXT).in(Arrays.asList(courseWideContext));
             }
         });
     }
