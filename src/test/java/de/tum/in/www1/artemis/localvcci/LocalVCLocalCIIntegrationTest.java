@@ -14,10 +14,7 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
-
-import com.github.dockerjava.api.DockerClient;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationLocalCILocalVCTest;
 import de.tum.in.www1.artemis.domain.Team;
@@ -34,9 +31,6 @@ import de.tum.in.www1.artemis.util.LocalRepository;
  * assistant assignment, instructor assignment).
  */
 class LocalVCLocalCIIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
-
-    @Autowired
-    private DockerClient mockDockerClient;
 
     // ---- Repository handles ----
     private String templateRepositorySlug;

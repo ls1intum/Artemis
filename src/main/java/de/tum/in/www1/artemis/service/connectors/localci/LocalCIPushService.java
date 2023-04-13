@@ -256,6 +256,9 @@ public class LocalCIPushService {
 
         try {
             ObjectId objectId = repository.resolve(commitHash);
+            if (objectId == null) {
+                throw new LocalCIException("Unable to resolve commit hash to an ObjectId");
+            }
             revCommit = repository.parseCommit(objectId);
 
             // Get the branch name.
@@ -268,7 +271,7 @@ public class LocalCIPushService {
             }
             git.close();
         }
-        catch (IOException | GitAPIException e) {
+        catch (IOException | GitAPIException | LocalCIException e) {
             log.error("Could not resolve commit hash {} to a commit.", commitHash, e);
         }
 

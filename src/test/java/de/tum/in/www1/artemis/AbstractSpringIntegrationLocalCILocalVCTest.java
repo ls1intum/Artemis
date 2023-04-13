@@ -27,6 +27,8 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
+import com.github.dockerjava.api.DockerClient;
+
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.Team;
@@ -87,6 +89,9 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
 
     @Autowired
     protected LocalVCLocalCITestService localVCLocalCITestService;
+
+    @Autowired
+    protected DockerClient mockDockerClient;
 
     @Autowired
     protected ProgrammingExerciseRepository programmingExerciseRepository;
