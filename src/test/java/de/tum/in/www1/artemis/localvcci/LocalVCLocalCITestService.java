@@ -95,7 +95,7 @@ public class LocalVCLocalCITestService {
     /**
      * Mocks the InputStream returned by dockerClient.copyArchiveFromContainerCmd(String containerId, String resource).exec()
      *
-     * @param mockDockerClient     the mocked DockerClient.
+     * @param dockerClient         the DockerClient to be mocked.
      * @param resourceRegexPattern the regex pattern that the resource path must match. The resource path is the path of the file or directory inside the container.
      * @param dataToReturn         the data to return inside the InputStream in form of a map. Each entry of the map will be one TarArchiveEntry with the key denoting the
      *                                 tarArchiveEntry.getName() and the value being the content of the TarArchiveEntry. There can be multiple dataToReturn entries, in which case
@@ -103,11 +103,11 @@ public class LocalVCLocalCITestService {
      * @throws IOException if the InputStream cannot be created.
      */
     @SafeVarargs
-    public final void mockInputStreamReturnedFromContainer(DockerClient mockDockerClient, String resourceRegexPattern, Map<String, String>... dataToReturn) throws IOException {
+    public final void mockInputStreamReturnedFromContainer(DockerClient dockerClient, String resourceRegexPattern, Map<String, String>... dataToReturn) throws IOException {
         // Mock dockerClient.copyArchiveFromContainerCmd(String containerId, String resource).exec()
         CopyArchiveFromContainerCmd copyArchiveFromContainerCmd = mock(CopyArchiveFromContainerCmd.class);
         ArgumentMatcher<String> expectedPathMatcher = path -> path.matches(resourceRegexPattern);
-        doReturn(copyArchiveFromContainerCmd).when(mockDockerClient).copyArchiveFromContainerCmd(anyString(), argThat(expectedPathMatcher));
+        doReturn(copyArchiveFromContainerCmd).when(dockerClient).copyArchiveFromContainerCmd(anyString(), argThat(expectedPathMatcher));
 
         if (dataToReturn.length == 0) {
             throw new IllegalArgumentException("At least one dataToReturn entry must be provided.");
@@ -128,7 +128,7 @@ public class LocalVCLocalCITestService {
         }
     }
 
-    private BufferedInputStream createInputStreamForTarArchiveFromMap(Map<String, String> dataMap) throws IOException {
+    public BufferedInputStream createInputStreamForTarArchiveFromMap(Map<String, String> dataMap) throws IOException {
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         TarArchiveOutputStream tarArchiveOutputStream = new TarArchiveOutputStream(byteArrayOutputStream);
 
@@ -328,12 +328,14 @@ public class LocalVCLocalCITestService {
      * @param expectedCommitHash              the commit hash of the commit that triggered the creation of the submission and is thus expected to be seved in the submission.
      * @param expectedSuccessfulTestCaseCount the expected number or passed test cases.
      */
-    public void testLastestSubmission(Long participationId, String expectedCommitHash, int expectedSuccessfulTestCaseCount) {
+    public void testLastestSubmission(Long participationId, String expectedCommitHash, int expectedSuccessfulTestCaseCount, boolean buildFailed) {
         ProgrammingSubmission programmingSubmission = programmingSubmissionRepository.findFirstByParticipationIdOrderByLegalSubmissionDateDesc(participationId).orElseThrow();
         assertThat(programmingSubmission.getCommitHash()).isEqualTo(expectedCommitHash);
+        assertThat(programmingSubmission.isBuildFailed()).isEqualTo(buildFailed);
         Result result = programmingSubmission.getLatestResult();
         assertThat(result).isNotNull();
-        assertThat(result.getTestCaseCount()).isEqualTo(13);
+        int expectedTestCaseCount = buildFailed ? 0 : 13;
+        assertThat(result.getTestCaseCount()).isEqualTo(expectedTestCaseCount);
         assertThat(result.getPassedTestCaseCount()).isEqualTo(expectedSuccessfulTestCaseCount);
     }
 

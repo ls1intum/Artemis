@@ -24,6 +24,7 @@ import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
+import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.LocalCIException;
@@ -41,6 +42,7 @@ import de.tum.in.www1.artemis.service.programming.ProgrammingSubmissionService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingTriggerService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import de.tum.in.www1.artemis.web.websocket.programmingSubmission.BuildTriggerWebsocketError;
 
 /**
  * Service for further processing authenticated and authorized pushes in the local CI system.
@@ -100,10 +102,6 @@ public class LocalCIPushService {
     public void processNewPush(String commitHash, Repository repository) {
         long timeNanoStart = System.nanoTime();
 
-        if (commitHash == null) {
-            commitHash = getLatestCommitHash(repository);
-        }
-
         Path repositoryFolderPath = repository.getDirectory().toPath();
 
         LocalVCRepositoryUrl localVCRepositoryUrl = getLocalVCRepositoryUrl(repositoryFolderPath);
@@ -118,20 +116,47 @@ public class LocalCIPushService {
         }
         catch (EntityNotFoundException e) {
             // This should never happen, as the exercise is already retrieved in the LocalVCPushFilter.
-            log.error("No exercise or multiple exercises found for the given project key: {}", projectKey);
-            return;
+            throw new LocalCIException("Programming exercise with project key " + projectKey + " not found");
         }
 
-        // Retrieve the user from the commit.
-        Commit commit = extractCommitInfo(commitHash, repository);
+        ProgrammingExerciseParticipation participation;
 
         if (repositoryTypeOrUserName.equals(RepositoryType.TESTS.getName())) {
-            processNewPushToTestsRepository(exercise, commitHash, localVCRepositoryUrl);
-            return;
+            // For pushes to the tests repository, the solution repository is built first.
+            participation = getParticipation(RepositoryType.SOLUTION.toString(), exercise, localVCRepositoryUrl);
+        }
+        else {
+            participation = getParticipation(repositoryTypeOrUserName, exercise, localVCRepositoryUrl);
         }
 
-        // Process push to any repository other than the tests repository.
-        processNewPushToRepository(repositoryTypeOrUserName, exercise, localVCRepositoryUrl, commit);
+        try {
+            if (commitHash == null) {
+                commitHash = getLatestCommitHash(repository);
+            }
+
+            // Retrieve the user from the commit.
+            Commit commit = extractCommitInfo(commitHash, repository);
+
+            if (repositoryTypeOrUserName.equals(RepositoryType.TESTS.getName())) {
+                processNewPushToTestsRepository(exercise, commitHash, (SolutionProgrammingExerciseParticipation) participation);
+                return;
+            }
+
+            // Process push to any repository other than the tests repository.
+            processNewPushToRepository(participation, commit);
+
+        }
+        catch (Exception e) {
+            // In case anything goes wrong, notify the user.
+            // Throwing an exception here would lead to the Git client request getting stuck.
+            // Instead, the user can see in the UI that creating the submission failed.
+            log.error("Exception encountered when trying to process a new push to the repository {} with the following commit: {}", repository.getDirectory().getName(), commitHash,
+                    e);
+            BuildTriggerWebsocketError error = new BuildTriggerWebsocketError(e.getMessage(), participation.getId());
+            // This cast to Participation is safe as the participation is either a ProgrammingExerciseStudentParticipation, a TemplateProgrammingExerciseParticipation, or a
+            // SolutionProgrammingExerciseParticipation, which all extend Participation.
+            programmingMessagingService.notifyUserAboutSubmissionError((Participation) participation, error);
+        }
 
         log.info("New push processed to repository {} in {}.", localVCRepositoryUrl.getURI(), TimeLogUtil.formatDurationFrom(timeNanoStart));
     }
@@ -141,6 +166,7 @@ public class LocalCIPushService {
             return new LocalVCRepositoryUrl(repositoryFolderPath, localVCBaseUrl);
         }
         catch (LocalVCException e) {
+            // This means something is misconfigured.
             throw new LocalCIException("Could not create valid repository URL from path " + repositoryFolderPath, e);
         }
     }
@@ -162,7 +188,7 @@ public class LocalCIPushService {
      * @param exercise   the exercise for which the push was made.
      * @param commitHash the hash of the last commit to the tests repository.
      */
-    private void processNewPushToTestsRepository(ProgrammingExercise exercise, String commitHash, LocalVCRepositoryUrl localVCRepositoryUrl) {
+    private void processNewPushToTestsRepository(ProgrammingExercise exercise, String commitHash, SolutionProgrammingExerciseParticipation participation) {
         // Create a new submission for the solution repository.
         ProgrammingSubmission submission = programmingSubmissionService.createSolutionParticipationSubmissionWithTypeTest(exercise.getId(), commitHash);
         programmingMessagingService.notifyUserAboutSubmission(submission);
@@ -170,13 +196,15 @@ public class LocalCIPushService {
         // Set a flag to inform the instructor that the student results are now outdated.
         programmingTriggerService.setTestCasesChanged(exercise.getId(), true);
 
-        // Retrieve the solution participation.
-        SolutionProgrammingExerciseParticipation participation = (SolutionProgrammingExerciseParticipation) getParticipation(RepositoryType.SOLUTION.toString(), exercise,
-                localVCRepositoryUrl);
-
         // Trigger a build of the solution repository.
         CompletableFuture<LocalCIBuildResult> futureSolutionBuildResult = localCIExecutorService.addBuildJobToQueue(participation);
-        futureSolutionBuildResult.thenAccept(buildResult -> {
+        futureSolutionBuildResult.whenComplete((buildResult, exception) -> {
+            if (exception != null) {
+                log.error("Exception encountered when trying to process a new push to the tests repository of exercise {} with the following commit: {}", exercise.getId(),
+                        commitHash, exception);
+                return;
+            }
+
             // The 'user' is not properly logged into Artemis, this leads to an issue when accessing custom repository methods.
             // Therefore, a mock auth object has to be created.
             SecurityUtils.setAuthorizationObject();
@@ -197,35 +225,25 @@ public class LocalCIPushService {
                 programmingTriggerService.triggerTemplateBuildAndNotifyUser(exercise.getId(), submission.getCommitHash(), SubmissionType.TEST);
             }
             catch (EntityNotFoundException e) {
-                log.error("No template participation found for exercise with id {}.", exercise.getId());
+                log.error("Could not trigger the template build for exercise with id {} because no template participation was found.", exercise.getId());
             }
-        });
+        }).join(); // Wait for the completion and rethrow any exceptions.
     }
 
     /**
      * Process a new push to a student's repository or to the template or solution repository of the exercise.
      */
-    private void processNewPushToRepository(String repositoryTypeOrUserName, ProgrammingExercise exercise, LocalVCRepositoryUrl localVCRepositoryUrl, Commit commit) {
-        // Retrieve participation for the repository.
-        ProgrammingExerciseParticipation participation = getParticipation(repositoryTypeOrUserName, exercise, localVCRepositoryUrl);
+    private void processNewPushToRepository(ProgrammingExerciseParticipation participation, Commit commit) {
+        // The 'user' is not properly logged into Artemis, this leads to an issue when accessing custom repository methods.
+        // Therefore, a mock auth object has to be created.
+        SecurityUtils.setAuthorizationObject();
+        ProgrammingSubmission submission = programmingSubmissionService.processNewProgrammingSubmission(participation, commit);
+        // Remove unnecessary information from the new submission.
+        submission.getParticipation().setSubmissions(null);
+        programmingMessagingService.notifyUserAboutSubmission(submission);
 
-        try {
-            // The 'user' is not properly logged into Artemis, this leads to an issue when accessing custom repository methods.
-            // Therefore, a mock auth object has to be created.
-            SecurityUtils.setAuthorizationObject();
-            ProgrammingSubmission submission = programmingSubmissionService.processNewProgrammingSubmission(participation, commit);
-            // Remove unnecessary information from the new submission.
-            submission.getParticipation().setSubmissions(null);
-            programmingMessagingService.notifyUserAboutSubmission(submission);
-
-            // Trigger the build for the new submission on the local CI system.
-            localCITriggerService.triggerBuild(participation);
-        }
-        catch (Exception ex) {
-            log.error("Exception encountered when trying to create a new submission for participation {} with the following commit: {}", participation.getId(), commit, ex);
-            // Throwing an exception here would lead to the Git client request getting stuck.
-            // Instead, the user can see in the UI that creating the submission failed.
-        }
+        // Trigger the build for the new submission on the local CI system.
+        localCITriggerService.triggerBuild(participation);
     }
 
     private ProgrammingExerciseParticipation getParticipation(String repositoryTypeOrUserName, ProgrammingExercise exercise, LocalVCRepositoryUrl localVCRepositoryUrl) {
@@ -246,12 +264,13 @@ public class LocalCIPushService {
                     localVCRepositoryUrl.isPracticeRepository(), true);
         }
         catch (EntityNotFoundException e) {
+            // This should never happen as the participation is already retrieved in the LocalVCFilterService that the request runs through before it is further processed here.
             throw new LocalCIException("No participation found for the given repository: " + localVCRepositoryUrl.getURI(), e);
         }
     }
 
     private Commit extractCommitInfo(String commitHash, Repository repository) {
-        RevCommit revCommit = null;
+        RevCommit revCommit;
         String branch = null;
 
         try {
@@ -270,17 +289,21 @@ public class LocalCIPushService {
                 branch = objectIdBranchNameMap.get(objectId);
             }
             git.close();
+
+            if (revCommit == null || branch == null) {
+                throw new LocalCIException("Something went wrong retrieving the revCommit or the branch.");
+            }
         }
-        catch (IOException | GitAPIException | LocalCIException e) {
-            log.error("Could not resolve commit hash {} to a commit.", commitHash, e);
+        catch (IOException | GitAPIException e) {
+            throw new LocalCIException("Could not resolve commit hash " + commitHash + " to a commit.", e);
         }
 
         Commit commit = new Commit();
         commit.setCommitHash(commitHash);
-        commit.setAuthorName(revCommit != null ? revCommit.getAuthorIdent().getName() : null);
-        commit.setAuthorEmail(revCommit != null ? revCommit.getAuthorIdent().getEmailAddress() : null);
+        commit.setAuthorName(revCommit.getAuthorIdent().getName());
+        commit.setAuthorEmail(revCommit.getAuthorIdent().getEmailAddress());
         commit.setBranch(branch);
-        commit.setMessage(revCommit != null ? revCommit.getFullMessage() : null);
+        commit.setMessage(revCommit.getFullMessage());
 
         return commit;
     }

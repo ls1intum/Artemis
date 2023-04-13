@@ -56,11 +56,17 @@ public class LocalCIBuildResult extends AbstractBuildResultNotificationDTO {
 
     @Override
     public Optional<String> getCommitHashFromAssignmentRepo() {
+        if (assignmentRepoCommitHash.length() == 0) {
+            return Optional.empty();
+        }
         return Optional.of(assignmentRepoCommitHash);
     }
 
     @Override
     public Optional<String> getCommitHashFromTestsRepo() {
+        if (testsRepoCommitHash.length() == 0) {
+            return Optional.empty();
+        }
         return Optional.of(testsRepoCommitHash);
     }
 

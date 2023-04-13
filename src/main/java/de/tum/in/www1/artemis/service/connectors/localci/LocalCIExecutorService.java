@@ -5,6 +5,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Path;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutorService;
 
 import org.slf4j.Logger;
@@ -71,18 +72,17 @@ public class LocalCIExecutorService {
         // Get script file out of resources.
         Path scriptPath = getBuildScriptPath(programmingExercise.getProgrammingLanguage());
 
-        CompletableFuture<LocalCIBuildResult> futureResult = new CompletableFuture<>();
-        executorService.submit(() -> {
+        CompletableFuture<LocalCIBuildResult> futureResult = CompletableFuture.supplyAsync(() -> {
             LocalCIBuildResult buildResult;
             try {
                 buildResult = localCIBuildJobService.runBuildJob(participation, assignmentRepositoryPath, testRepositoryPath, scriptPath);
-                futureResult.complete(buildResult);
             }
             catch (LocalCIException e) {
                 log.error("Error while running build job", e);
-                futureResult.completeExceptionally(e);
+                throw new CompletionException(e);
             }
-        });
+            return buildResult;
+        }, executorService);
 
         // Add "_QUEUED" to the build plan id to indicate that the build job is queued.
         localCIBuildPlanService.updateBuildPlanStatus(participation, ContinuousIntegrationService.BuildStatus.QUEUED);
@@ -100,7 +100,7 @@ public class LocalCIExecutorService {
         try {
             scriptPath = resourceLoaderService.getResourceFilePath(resourcePath);
         }
-        catch (IOException | URISyntaxException e) {
+        catch (IOException | URISyntaxException | IllegalArgumentException e) {
             throw new LocalCIException("Could not retrieve build script.", e);
         }
 

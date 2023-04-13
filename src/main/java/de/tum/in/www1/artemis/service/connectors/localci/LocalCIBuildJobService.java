@@ -112,7 +112,7 @@ public class LocalCIBuildJobService {
             assignmentRepoCommitHash = getCommitHashOfBranch(container.getId(), "assignment-repository", branch);
             testsRepoCommitHash = getCommitHashOfBranch(container.getId(), "test-repository", branch);
         }
-        catch (IOException e) {
+        catch (NotFoundException | IOException e) {
             // Could not read commit hash from .git folder. Stop the container and return a build result that indicates that the build failed (empty list for failed tests and
             // empty list for successful tests).
             stopContainer(container.getId(), scriptPath);
