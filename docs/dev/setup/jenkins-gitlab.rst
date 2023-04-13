@@ -153,7 +153,7 @@ tokens instead of the predefined ones.
         GITLAB_ROOT_PASSWORD=QLzq3QvpD1Zbq7A1VWvw docker compose -f docker/<Jenkins setup to be launched>.yml up --build -d gitlab
 
    If you want to generate a random password for the ``root`` user, remove the part before ``docker compose`` from
-   the command. By default GitLab passwords must not contain commonly used combinations of words and letters.
+   the command. GitLab passwords must not contain commonly used combinations of words and letters.
 
    The file uses the ``GITLAB_OMNIBUS_CONFIG`` environment variable to configure the Gitlab instance after the container
    is started.
