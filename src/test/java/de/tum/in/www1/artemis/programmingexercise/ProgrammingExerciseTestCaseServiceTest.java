@@ -68,12 +68,13 @@ class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegrationBa
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void shouldResetTestWeights() throws Exception {
+    void shouldResetTestCases() throws Exception {
         String dummyHash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
         when(gitService.getLastCommitHash(any())).thenReturn(ObjectId.fromString(dummyHash));
         database.addProgrammingParticipationWithResultForExercise(programmingExercise, TEST_PREFIX + "student1");
         new ArrayList<>(testCaseRepository.findByExerciseId(programmingExercise.getId())).get(0).weight(50.0);
-        // After a test case reset, the solution and template repository should be build, so the ContinuousIntegrationService needs to be triggered
+
+        // After a test case reset, the solution and template repository should be built, so the ContinuousIntegrationService needs to be triggered
         bambooRequestMockProvider.mockTriggerBuild(programmingExercise.getSolutionParticipation());
         bambooRequestMockProvider.mockTriggerBuild(programmingExercise.getTemplateParticipation());
 
@@ -84,8 +85,15 @@ class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegrationBa
         Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(programmingExercise.getId());
         ProgrammingExercise updatedProgrammingExercise = programmingExerciseRepository
                 .findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExercise.getId()).get();
-        assertThat(testCases.stream().mapToDouble(ProgrammingExerciseTestCase::getWeight).sum()).isEqualTo(testCases.size());
+
+        for (ProgrammingExerciseTestCase testCase : testCases) {
+            assertThat(testCase.getWeight()).isEqualTo(1.0);
+            assertThat(testCase.getBonusMultiplier()).isEqualTo(1.0);
+            assertThat(testCase.getBonusPoints()).isEqualTo(0.0);
+            assertThat(testCase.getVisibility()).isEqualTo(Visibility.ALWAYS);
+        }
         assertThat(updatedProgrammingExercise.getTestCasesChanged()).isTrue();
+
         verify(groupNotificationService, times(1)).notifyEditorAndInstructorGroupsAboutChangedTestCasesForProgrammingExercise(updatedProgrammingExercise);
         verify(websocketMessagingService, times(1)).sendMessage("/topic/programming-exercises/" + programmingExercise.getId() + "/test-cases-changed", true);
     }

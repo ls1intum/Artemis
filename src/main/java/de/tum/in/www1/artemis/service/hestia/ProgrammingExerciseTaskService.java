@@ -126,6 +126,43 @@ public class ProgrammingExerciseTaskService {
     }
 
     /**
+     * Gets all tasks of an exercise
+     *
+     * @param exerciseId of the programming exercise
+     * @return Set of all tasks and its test cases
+     */
+    public Set<ProgrammingExerciseTask> getTasks(long exerciseId) {
+        return programmingExerciseTaskRepository.findByExerciseIdWithTestCaseAndSolutionEntriesElseThrow(exerciseId);
+    }
+
+    /**
+     * Gets all tasks of an exercise including the test cases assigned to those tasks.
+     * Additionally, adds a new task for all test cases with no manually assigned task and adds all tests to that task
+     *
+     * @param exerciseId of the programming exercise
+     * @return Set of all tasks including one for not manually assigned tests
+     */
+    public Set<ProgrammingExerciseTask> getTasksWithUnassignedTestCases(long exerciseId) {
+        Set<ProgrammingExerciseTask> tasks = getTasks(exerciseId);
+
+        Set<ProgrammingExerciseTestCase> testsWithTasks = tasks.stream().flatMap(task -> task.getTestCases().stream()).collect(Collectors.toSet());
+
+        // Additionally add all tests that are not manually assigned to a task
+        Set<ProgrammingExerciseTestCase> testsWithoutTasks = programmingExerciseTestCaseRepository.findByExerciseId(exerciseId).stream()
+                .filter(test -> !testsWithTasks.contains(test)).collect(Collectors.toSet());
+
+        if (!testsWithoutTasks.isEmpty()) {
+            ProgrammingExerciseTask unassignedTask = new ProgrammingExerciseTask();
+            unassignedTask.setTaskName("Not assigned to task");
+            unassignedTask.setTestCases(testsWithoutTasks);
+
+            tasks.add(unassignedTask);
+        }
+
+        return tasks;
+    }
+
+    /**
      * Returns the extracted tasks and test cases from the problem statement markdown and
      * maps the tasks to the corresponding test cases for a programming exercise.
      *
