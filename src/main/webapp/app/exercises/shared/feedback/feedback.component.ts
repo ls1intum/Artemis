@@ -1,7 +1,7 @@
 import { Component, Injector, Input, OnInit } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { catchError, switchMap, tap } from 'rxjs/operators';
+import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { of, throwError } from 'rxjs';
 import { BuildLogEntry, BuildLogEntryArray, BuildLogType } from 'app/entities/build-log.model';
 import { Feedback, checkSubsequentFeedbackInAssessment } from 'app/entities/feedback.model';
@@ -176,7 +176,7 @@ export class FeedbackComponent implements OnInit {
                         feedbacks.forEach((feedback) => (feedback.result = this.result));
                         return of(feedbacks);
                     } else {
-                        return this.resultService.getFeedbackDetailsForResult(this.result.participation!.id!, this.result);
+                        return this.resultService.getFeedbackDetailsForResult(this.result.participation!.id!, this.result).pipe(map((response) => response.body));
                     }
                 }),
                 switchMap((feedbacks: Feedback[] | undefined | null) => {
