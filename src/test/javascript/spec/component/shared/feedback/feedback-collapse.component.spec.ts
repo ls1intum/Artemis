@@ -46,7 +46,14 @@ describe('FeedbackCollapseComponent', () => {
         expect(component.previewText).toBe('Multi');
     });
 
-    const getFeedbackItem = (text: string): FeedbackItem => {
+    it('should always set the preview text if the feedback has long feedback', () => {
+        component.feedback = getFeedbackItem('Truncated text [...]', true);
+        component.ngOnInit();
+
+        expect(component.previewText).toBe('Truncated text [...]');
+    });
+
+    const getFeedbackItem = (text: string, hasLongFeedbackText = false): FeedbackItem => {
         return {
             credits: undefined,
             name: 'ignored',
@@ -55,7 +62,7 @@ describe('FeedbackCollapseComponent', () => {
             feedbackReference: {
                 id: 1,
                 result: { id: 2 },
-                hasLongFeedbackText: false,
+                hasLongFeedbackText,
             },
         };
     };

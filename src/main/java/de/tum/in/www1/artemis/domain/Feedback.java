@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.domain;
 
 import static de.tum.in.www1.artemis.config.Constants.FEEDBACK_DETAIL_TEXT_MAX_CHARACTERS;
+import static de.tum.in.www1.artemis.config.Constants.FEEDBACK_PREVIEW_TEXT_MAX_CHARACTERS;
 import static de.tum.in.www1.artemis.config.Constants.LONG_FEEDBACK_MAX_LENGTH;
 
 import java.util.*;
@@ -156,7 +157,7 @@ public class Feedback extends DomainObject {
     }
 
     private String trimDetailText(final String detailText) {
-        final int maxLength = FEEDBACK_DETAIL_TEXT_MAX_CHARACTERS - DETAIL_TEXT_TRIMMED_MARKER.length();
+        final int maxLength = FEEDBACK_PREVIEW_TEXT_MAX_CHARACTERS - DETAIL_TEXT_TRIMMED_MARKER.length();
         return StringUtils.truncate(detailText, maxLength) + DETAIL_TEXT_TRIMMED_MARKER;
     }
 

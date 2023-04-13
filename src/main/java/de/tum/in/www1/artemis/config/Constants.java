@@ -126,6 +126,11 @@ public final class Constants {
     public static final int FEEDBACK_DETAIL_TEXT_MAX_CHARACTERS = 5000;
 
     /**
+     * Maximum length for feedback detail text that is trimmed and moved to a connected long feedback instead.
+     */
+    public static final int FEEDBACK_PREVIEW_TEXT_MAX_CHARACTERS = 300;
+
+    /**
      * Arbitrary limit that is unlikely to be reached by real feedback in practice.
      * Avoids filling the DB with huge text blobs, e.g. in case an infinite loop in a test case outputs a lot of text.
      */
