@@ -108,14 +108,14 @@ export abstract class Exercise implements BaseEntity {
     public isAtLeastInstructor?: boolean;
     public teamMode?: boolean;
     public assessmentDueDateError?: boolean;
-    public assessmentInvalidDate?: boolean;
+    public isInvalidAssessmentDueDate?: boolean;
     public dueDateError?: boolean;
-    public invalidDueDate?: boolean;
+    public isInvalidDueDate?: boolean;
     public startDateError?: boolean;
-    public invalidStartDate?: boolean;
-    public invalidReleaseDate?: boolean;
+    public isInvalidStartDate?: boolean;
+    public isInvalidReleaseDate?: boolean;
     public exampleSolutionPublicationDateError?: boolean;
-    public invalidExampleSolutionDate?: boolean;
+    public isInvalidExampleSolutionDate?: boolean;
     public exampleSolutionPublicationDateWarning?: boolean;
     public loading?: boolean;
     public numberOfParticipationsWithRatedResult?: number;
@@ -139,11 +139,11 @@ export abstract class Exercise implements BaseEntity {
         this.presentationScoreEnabled = false; // default value;
         this.allowComplaintsForAutomaticAssessments = false; // default value;
         this.allowManualFeedbackRequests = false; // default value;
-        this.assessmentInvalidDate = false;
-        this.invalidDueDate = false;
-        this.invalidStartDate = false;
-        this.invalidReleaseDate = false;
-        this.invalidExampleSolutionDate = false;
+        this.isInvalidAssessmentDueDate = false;
+        this.isInvalidDueDate = false;
+        this.isInvalidStartDate = false;
+        this.isInvalidReleaseDate = false;
+        this.isInvalidExampleSolutionDate = false;
     }
 
     /**

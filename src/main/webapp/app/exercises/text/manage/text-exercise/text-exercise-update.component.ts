@@ -169,26 +169,28 @@ export class TextExerciseUpdateComponent implements OnInit {
         this.exerciseService.validateDate(this.textExercise);
     }
 
-    validateReleaseDate(invalidDate: boolean) {
-        this.textExercise.invalidReleaseDate = invalidDate;
-        this.exerciseService.validateDate(this.textExercise);
-    }
-    validateStartDate(invalidDate: boolean) {
-        this.textExercise.invalidStartDate = invalidDate;
+    validateReleaseDate(isInvalidDate: boolean) {
+        this.textExercise.isInvalidReleaseDate = isInvalidDate;
         this.exerciseService.validateDate(this.textExercise);
     }
 
-    validateDueDate(invalidDate: boolean) {
-        this.textExercise.invalidDueDate = invalidDate;
-        this.exerciseService.validateDate(this.textExercise);
-    }
-    validateAssessmentDueDate(invalidDate: boolean) {
-        this.textExercise.assessmentInvalidDate = invalidDate;
+    validateStartDate(isInvalidDate: boolean) {
+        this.textExercise.isInvalidStartDate = isInvalidDate;
         this.exerciseService.validateDate(this.textExercise);
     }
 
-    validateExamplePublicationDate(invalidDate: boolean) {
-        this.textExercise.invalidExampleSolutionDate = invalidDate;
+    validateDueDate(isInvalidDate: boolean) {
+        this.textExercise.isInvalidDueDate = isInvalidDate;
+        this.exerciseService.validateDate(this.textExercise);
+    }
+
+    validateAssessmentDueDate(isInvalidDate: boolean) {
+        this.textExercise.isInvalidAssessmentDueDate = isInvalidDate;
+        this.exerciseService.validateDate(this.textExercise);
+    }
+
+    validateExamplePublicationDate(isInvalidDate: boolean) {
+        this.textExercise.isInvalidExampleSolutionDate = isInvalidDate;
         this.exerciseService.validateDate(this.textExercise);
     }
 

@@ -178,26 +178,29 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
     validateDate() {
         this.exerciseService.validateDate(this.fileUploadExercise);
     }
-    validateReleaseDate(invalidDate: boolean) {
-        this.fileUploadExercise.invalidReleaseDate = invalidDate;
-        this.exerciseService.validateDate(this.fileUploadExercise);
-    }
-    validateStartDate(invalidDate: boolean) {
-        this.fileUploadExercise.invalidStartDate = invalidDate;
+
+    validateReleaseDate(isInvalidDate: boolean) {
+        this.fileUploadExercise.isInvalidReleaseDate = isInvalidDate;
         this.exerciseService.validateDate(this.fileUploadExercise);
     }
 
-    validateDueDate(invalidDate: boolean) {
-        this.fileUploadExercise.invalidDueDate = invalidDate;
+    validateStartDate(isInvalidDate: boolean) {
+        this.fileUploadExercise.isInvalidStartDate = isInvalidDate;
         this.exerciseService.validateDate(this.fileUploadExercise);
     }
+
+    validateDueDate(isInvalidDate: boolean) {
+        this.fileUploadExercise.isInvalidDueDate = isInvalidDate;
+        this.exerciseService.validateDate(this.fileUploadExercise);
+    }
+
     validateAssessmentDueDate(isInvalidDate: boolean) {
-        this.fileUploadExercise.assessmentInvalidDate = isInvalidDate;
+        this.fileUploadExercise.isInvalidAssessmentDueDate = isInvalidDate;
         this.exerciseService.validateDate(this.fileUploadExercise);
     }
 
-    validateExamplePublicationDate(invalidDate: boolean) {
-        this.fileUploadExercise.invalidExampleSolutionDate = invalidDate;
+    validateExamplePublicationDate(isInvalidDate: boolean) {
+        this.fileUploadExercise.isInvalidExampleSolutionDate = isInvalidDate;
         this.exerciseService.validateDate(this.fileUploadExercise);
     }
 

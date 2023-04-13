@@ -187,26 +187,29 @@ export class ModelingExerciseUpdateComponent implements OnInit {
     validateDate(): void {
         this.exerciseService.validateDate(this.modelingExercise);
     }
-    validateReleaseDate(invalidDate: boolean) {
-        this.modelingExercise.invalidReleaseDate = invalidDate;
-        this.exerciseService.validateDate(this.modelingExercise);
-    }
-    validateStartDate(invalidDate: boolean) {
-        this.modelingExercise.invalidStartDate = invalidDate;
+
+    validateReleaseDate(isInvalidDate: boolean) {
+        this.modelingExercise.isInvalidReleaseDate = isInvalidDate;
         this.exerciseService.validateDate(this.modelingExercise);
     }
 
-    validateDueDate(invalidDate: boolean) {
-        this.modelingExercise.invalidDueDate = invalidDate;
-        this.exerciseService.validateDate(this.modelingExercise);
-    }
-    validateAssessmentDueDate(invalidDate: boolean) {
-        this.modelingExercise.assessmentInvalidDate = invalidDate;
+    validateStartDate(isInvalidDate: boolean) {
+        this.modelingExercise.isInvalidStartDate = isInvalidDate;
         this.exerciseService.validateDate(this.modelingExercise);
     }
 
-    validateExamplePublicationDate(invalidDate: boolean) {
-        this.modelingExercise.invalidExampleSolutionDate = invalidDate;
+    validateDueDate(isInvalidDate: boolean) {
+        this.modelingExercise.isInvalidDueDate = isInvalidDate;
+        this.exerciseService.validateDate(this.modelingExercise);
+    }
+
+    validateAssessmentDueDate(isInvalidDate: boolean) {
+        this.modelingExercise.isInvalidAssessmentDueDate = isInvalidDate;
+        this.exerciseService.validateDate(this.modelingExercise);
+    }
+
+    validateExamplePublicationDate(isInvalidDate: boolean) {
+        this.modelingExercise.isInvalidExampleSolutionDate = isInvalidDate;
         this.exerciseService.validateDate(this.modelingExercise);
     }
 
