@@ -72,10 +72,10 @@ public class LongFeedbackText implements Serializable {
     }
 
     /**
-     * this method checks for database equality based on the id
+     * Checks for database equality based on the id.
      *
-     * @param obj another object
-     * @return whether this and the other object are equal based on the database id
+     * @param obj Another object.
+     * @return Whether this and the other object are equal based on the database id.
      */
     @Override
     public boolean equals(Object obj) {

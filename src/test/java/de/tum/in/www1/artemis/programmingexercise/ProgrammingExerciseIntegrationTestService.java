@@ -75,7 +75,7 @@ import de.tum.in.www1.artemis.web.websocket.dto.ProgrammingExerciseTestCaseState
 @Service
 class ProgrammingExerciseIntegrationTestService {
 
-    private static final String NON_EXISTING_ID = Integer.toString(1_000_000);
+    private static final String NON_EXISTING_ID = Integer.toString(Integer.MAX_VALUE);
 
     private String userPrefix;
 

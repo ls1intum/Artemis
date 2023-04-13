@@ -25,7 +25,6 @@ public class LongFeedbackTextResource {
 
     public LongFeedbackTextResource(LongFeedbackTextRepository longFeedbackTextRepository, ParticipationAuthorizationCheckService participationAuthorizationCheckService) {
         this.longFeedbackTextRepository = longFeedbackTextRepository;
-
         this.participationAuthorizationCheckService = participationAuthorizationCheckService;
     }
 
