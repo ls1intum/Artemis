@@ -8,9 +8,8 @@ import { admin, instructor } from '../../support/users';
 
 describe('Lecture management', () => {
     let course: Course;
-    let lecture: Lecture;
 
-    before(() => {
+    before('Create course', () => {
         cy.login(admin);
         courseManagementRequest.createCourse().then((response) => {
             course = convertModelAfterMultiPart(response);
@@ -30,7 +29,6 @@ describe('Lecture management', () => {
         lectureCreation.setStartDate(dayjs());
         lectureCreation.setEndDate(dayjs().add(1, 'hour'));
         lectureCreation.save().then((lectureResponse) => {
-            lecture = lectureResponse.response!.body;
             expect(lectureResponse.response!.statusCode).to.eq(201);
         });
     });
@@ -47,10 +45,19 @@ describe('Lecture management', () => {
     });
 
     describe('Handle existing lecture', () => {
-        before('Create a lecture', () => {
+        let lecture: Lecture;
+
+        beforeEach('Create a lecture', () => {
             cy.login(instructor, '/course-management/' + course.id + '/lectures');
             courseManagementRequest.createLecture(course).then((lectureResponse) => {
                 lecture = lectureResponse.body;
+            });
+        });
+
+        it('Deletes an existing lecture', () => {
+            lectureManagement.deleteLecture(lecture).then((resp) => {
+                expect(resp.response!.statusCode).to.eq(200);
+                lectureManagement.getLecture(lecture.id!).should('not.exist');
             });
         });
 
@@ -74,7 +81,7 @@ describe('Lecture management', () => {
         });
     });
 
-    after(() => {
+    after('Delete course', () => {
         if (course) {
             cy.login(admin);
             courseManagementRequest.deleteCourse(course.id!);

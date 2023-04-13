@@ -39,7 +39,7 @@ describe('Exam creation/deletion', () => {
     let course: Course;
     let examId: number;
 
-    before(() => {
+    before('Create course', () => {
         cy.login(admin);
         courseManagementRequest.createCourse().then((response) => {
             course = convertModelAfterMultiPart(response);
@@ -170,8 +170,9 @@ describe('Exam creation/deletion', () => {
         });
     });
 
-    after(() => {
+    after('Delete course', () => {
         if (course) {
+            cy.login(admin);
             courseManagementRequest.deleteCourse(course.id!);
         }
     });

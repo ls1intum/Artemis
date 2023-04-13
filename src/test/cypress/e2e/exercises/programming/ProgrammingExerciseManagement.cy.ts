@@ -10,11 +10,10 @@ import { admin } from '../../../support/users';
 describe('Programming Exercise Management', () => {
     let course: Course;
 
-    before(() => {
+    before('Create course', () => {
         cy.login(admin);
         courseManagementRequest.createCourse(true).then((response) => {
             course = convertModelAfterMultiPart(response);
-            expect(course).property('id').to.be.a('number');
         });
     });
 
@@ -72,8 +71,9 @@ describe('Programming Exercise Management', () => {
         });
     });
 
-    after(() => {
+    after('Delete course', () => {
         if (course) {
+            cy.login(admin);
             courseManagementRequest.deleteCourse(course.id!);
         }
     });

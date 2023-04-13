@@ -7,9 +7,6 @@ import { Course } from 'app/entities/course.model';
 import day from 'dayjs/esm';
 import { admin, studentOne } from '../../support/users';
 
-// Selectors
-const modalDeleteButton = '#delete';
-
 // Common primitives
 const courseData = {
     title: '',
@@ -90,7 +87,8 @@ describe('Course management', () => {
 
         after(() => {
             if (course) {
-                courseManagementRequest.deleteCourse(course.id!).its('status').should('eq', 200);
+                cy.login(admin);
+                courseManagementRequest.deleteCourse(course.id!);
             }
         });
     });
@@ -213,7 +211,7 @@ describe('Course management', () => {
     });
 
     describe('Course edit', () => {
-        let courseId: number;
+        let course: Course;
         const uid = generateUUID();
         editedCourseData.title = 'Cypress course' + uid;
         editedCourseData.shortName = 'cypress' + uid;
@@ -231,11 +229,10 @@ describe('Course management', () => {
             courseCreation.setTestCourse(editedCourseData.testCourse);
 
             courseCreation.update().then((request: Interception) => {
-                const courseBody = request.response!.body;
-                courseId = courseBody.id!;
-                expect(courseBody.title).to.eq(editedCourseData.title);
-                expect(courseBody.shortName).to.eq(courseData.shortName);
-                expect(courseBody.testCourse).to.eq(editedCourseData.testCourse);
+                course = request.response!.body;
+                expect(course.title).to.eq(editedCourseData.title);
+                expect(course.shortName).to.eq(courseData.shortName);
+                expect(course.testCourse).to.eq(editedCourseData.testCourse);
             });
             courseManagement.getCourseHeaderTitle().contains(editedCourseData.title).should('be.visible');
             courseManagement.getCourseTitle().contains(editedCourseData.title);
@@ -243,9 +240,10 @@ describe('Course management', () => {
             courseManagement.getCourseTestCourse().contains(convertBooleanToYesNo(editedCourseData.testCourse));
         });
 
-        after(() => {
-            if (courseId) {
-                courseManagementRequest.deleteCourse(courseId).its('status').should('eq', 200);
+        after('Delete course', () => {
+            if (course) {
+                cy.login(admin);
+                courseManagementRequest.deleteCourse(course.id!);
             }
         });
     });
@@ -259,9 +257,9 @@ describe('Course management', () => {
             navigationBar.openCourseManagement();
             courseManagement.openCourse(courseData.shortName);
             cy.get('#delete-course').click();
-            cy.get(modalDeleteButton).should('be.disabled');
+            cy.get('#delete').should('be.disabled');
             cy.get('#confirm-exercise-name').type(courseData.title);
-            cy.get(modalDeleteButton).should('not.be.disabled').click();
+            cy.get('#delete').should('not.be.disabled').click();
             courseManagement.getCourseCard(courseData.shortName).should('not.exist');
         });
     });

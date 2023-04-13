@@ -8,12 +8,21 @@ import { convertModelAfterMultiPart } from '../../../support/requests/CourseMana
 import { courseManagementRequest, programmingExerciseEditor } from '../../../support/artemis';
 import { admin, studentOne, studentThree, studentTwo } from '../../../support/users';
 
-describe('Programming exercise participations', () => {
+describe('Programming exercise participation', () => {
     let course: Course;
     let exercise: ProgrammingExercise;
 
-    before(() => {
-        setupCourseAndProgrammingExercise();
+    before('Create course', () => {
+        cy.login(admin, '/');
+        courseManagementRequest.createCourse(true).then((response) => {
+            course = convertCourseAfterMultiPart(response);
+            courseManagementRequest.addStudentToCourse(course, studentOne);
+            courseManagementRequest.addStudentToCourse(course, studentTwo);
+            courseManagementRequest.addStudentToCourse(course, studentThree);
+            courseManagementRequest.createProgrammingExercise({ course }).then((exerciseResponse) => {
+                exercise = exerciseResponse.body;
+            });
+        });
     });
 
     it('Makes a failing submission', () => {
@@ -31,7 +40,7 @@ describe('Programming exercise participations', () => {
         makeSubmission(exercise, allSuccessful);
     });
 
-    after(() => {
+    after('Delete course', () => {
         if (course) {
             cy.login(admin);
             courseManagementRequest.deleteCourse(course.id!);
@@ -63,3 +72,12 @@ describe('Programming exercise participations', () => {
         });
     }
 });
+
+/**
+ * Makes a submission, which fails the CI build and asserts that this is highlighted in the UI.
+ */
+function makeSubmission(exercise: ProgrammingExercise, submission: ProgrammingExerciseSubmission) {
+    programmingExerciseEditor.makeSubmissionAndVerifyResults(exercise.id!, exercise.packageName!, submission, () => {
+        programmingExerciseEditor.getResultScore().contains(submission.expectedResult).and('be.visible');
+    });
+}

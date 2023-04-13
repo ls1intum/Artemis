@@ -14,14 +14,13 @@ import { admin, instructor } from '../../support/users';
 const textFixture = 'loremIpsum.txt';
 const examTitle = 'exam' + generateUUID();
 
-let exerciseArray: Array<Exercise> = [];
-
 describe('Exam test run', () => {
     let course: Course;
     let exam: Exam;
     let testRun: any;
+    let exerciseArray: Array<Exercise> = [];
 
-    before(() => {
+    before('Create course', () => {
         cy.login(admin);
         courseManagementRequest.createCourse(true).then((response) => {
             course = convertModelAfterMultiPart(response);
@@ -144,7 +143,7 @@ describe('Exam test run', () => {
         examTestRun.getTestRun(testRun.id).should('not.exist');
     });
 
-    after(() => {
+    after('Delete course', () => {
         if (course) {
             cy.login(admin);
             courseManagementRequest.deleteCourse(course.id!);

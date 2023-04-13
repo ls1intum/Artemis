@@ -11,7 +11,7 @@ describe('Exam date verification', () => {
     let course: Course;
     let examTitle: string;
 
-    before(() => {
+    before('Create course', () => {
         cy.login(admin);
         courseManagementRequest.createCourse().then((response) => {
             course = convertModelAfterMultiPart(response);
@@ -124,14 +124,9 @@ describe('Exam date verification', () => {
                 });
             });
         });
-
-        afterEach(() => {
-            cy.login(admin);
-            courseManagementRequest.deleteExam(exam);
-        });
     });
 
-    after(() => {
+    after('Delete course', () => {
         if (course) {
             cy.login(admin);
             courseManagementRequest.deleteCourse(course.id!);

@@ -6,22 +6,16 @@ import { courseManagementRequest, courseOverview, quizExerciseMultipleChoice, qu
 import { convertModelAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
 import { admin, studentOne } from '../../../support/users';
 
-// Common primitives
-let course: Course;
-let quizExercise: QuizExercise;
-
 describe('Quiz Exercise Participation', () => {
-    before('Set up course', () => {
+    let course: Course;
+    let quizExercise: QuizExercise;
+
+    before('Create course', () => {
         cy.login(admin);
         courseManagementRequest.createCourse().then((response) => {
             course = convertModelAfterMultiPart(response);
             courseManagementRequest.addStudentToCourse(course, studentOne);
         });
-    });
-
-    after('Delete Course', () => {
-        cy.login(admin);
-        courseManagementRequest.deleteCourse(course.id!);
     });
 
     describe('Quiz exercise participation', () => {
@@ -101,4 +95,11 @@ describe('Quiz Exercise Participation', () => {
     //         quizExerciseDragAndDropQuiz.submit();
     //     });
     // });
+
+    after('Delete course', () => {
+        if (course) {
+            cy.login(admin);
+            courseManagementRequest.deleteCourse(course.id!);
+        }
+    });
 });

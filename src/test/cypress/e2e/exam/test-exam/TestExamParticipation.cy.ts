@@ -14,10 +14,10 @@ import { Interception } from 'cypress/types/net-stubbing';
 
 // Common primitives
 const textFixture = 'loremIpsum.txt';
-let exerciseArray: Array<Exercise> = [];
 
 describe('Test exam participation', () => {
     let course: Course;
+    let exerciseArray: Array<Exercise> = [];
 
     before('Create course', () => {
         cy.login(admin);

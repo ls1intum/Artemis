@@ -20,7 +20,7 @@ import { admin } from '../../../support/users';
 describe('Text exercise management', () => {
     let course: Course;
 
-    before(() => {
+    before('Create course', () => {
         cy.login(admin);
         courseManagementRequest.createCourse().then((response) => {
             course = convertModelAfterMultiPart(response);
@@ -91,7 +91,7 @@ describe('Text exercise management', () => {
         });
     });
 
-    after(() => {
+    after('Delete course', () => {
         if (course) {
             cy.login(admin);
             courseManagementRequest.deleteCourse(course.id!);

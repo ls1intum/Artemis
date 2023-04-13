@@ -20,14 +20,14 @@ import { admin, instructor, studentOne } from '../../../support/users';
 // Common primitives
 const uid = generateUUID();
 const examTitle = 'test-exam' + uid;
-let groupCount = 0;
-let createdGroup: ExerciseGroup;
 
 describe('Test Exam management', () => {
     let course: Course;
     let exam: Exam;
+    let createdGroup: ExerciseGroup;
+    let groupCount = 0;
 
-    before(() => {
+    before('Create course', () => {
         cy.login(admin);
         courseManagementRequest.createCourse(true).then((response) => {
             course = convertModelAfterMultiPart(response);
@@ -150,7 +150,7 @@ describe('Test Exam management', () => {
         });
     });
 
-    after(() => {
+    after('Delete course', () => {
         if (course) {
             cy.login(admin);
             courseManagementRequest.deleteCourse(course.id!);

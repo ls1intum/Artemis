@@ -6,13 +6,10 @@ import { admin } from '../../support/users';
 import { generateUUID } from '../../support/utils';
 import { QuizExercise } from '../../../../main/webapp/app/entities/quiz/quiz-exercise.model';
 
-// Common primitives
-let courseName: string;
-let courseShortName: string;
-
 describe('Course Exercise', () => {
     let course: Course;
-    let courseId: number;
+    let courseName: string;
+    let courseShortName: string;
 
     before('Create course', () => {
         cy.login(admin);
@@ -21,7 +18,6 @@ describe('Course Exercise', () => {
         courseShortName = 'cypress' + uid;
         courseManagementRequest.createCourse(false, courseName, courseShortName).then((response) => {
             course = convertModelAfterMultiPart(response);
-            courseId = course.id!;
         });
     });
 
@@ -60,9 +56,10 @@ describe('Course Exercise', () => {
         });
     });
 
-    after('Delete Course', () => {
-        if (courseId) {
-            courseManagementRequest.deleteCourse(courseId).its('status').should('eq', 200);
+    after('Delete course', () => {
+        if (course) {
+            cy.login(admin);
+            courseManagementRequest.deleteCourse(course.id!);
         }
     });
 });

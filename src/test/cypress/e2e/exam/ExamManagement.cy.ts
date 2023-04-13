@@ -22,14 +22,14 @@ import { admin, instructor, studentOne } from '../../support/users';
 // Common primitives
 const uid = generateUUID();
 const examTitle = 'exam' + uid;
-let groupCount = 0;
-let createdGroup: ExerciseGroup;
 
 describe('Exam management', () => {
     let course: Course;
     let exam: Exam;
+    let createdGroup: ExerciseGroup;
+    let groupCount = 0;
 
-    before(() => {
+    before('Create course', () => {
         cy.login(admin);
         courseManagementRequest.createCourse(true).then((response) => {
             course = convertModelAfterMultiPart(response);
@@ -175,7 +175,7 @@ describe('Exam management', () => {
         });
     });
 
-    after(() => {
+    after('Delete course', () => {
         if (course) {
             cy.login(admin);
             courseManagementRequest.deleteCourse(course.id!);

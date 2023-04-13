@@ -8,19 +8,14 @@ import { courseManagement, courseManagementExercises, courseManagementRequest, q
 import { convertModelAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
 import { admin } from '../../../support/users';
 
-// Common primitives
-let course: Course;
-
 describe('Quiz Exercise Management', () => {
-    before('Set up course', () => {
+    let course: Course;
+
+    before('Create course', () => {
         cy.login(admin);
         courseManagementRequest.createCourse().then((response) => {
             course = convertModelAfterMultiPart(response);
         });
-    });
-
-    after('Delete Course', () => {
-        courseManagementRequest.deleteCourse(course.id!);
     });
 
     describe('Quiz Exercise Creation', () => {
@@ -45,7 +40,7 @@ describe('Quiz Exercise Management', () => {
             quizExerciseCreation.addShortAnswerQuestion(title);
             quizExerciseCreation.saveQuiz().then((quizResponse: Interception) => {
                 cy.visit('/course-management/' + course.id + '/quiz-exercises/' + quizResponse.response!.body.id + '/preview');
-                cy.contains(title).should('be.visible');
+                cy.contains(quizQuestionTitle).should('be.visible');
             });
         });
 
@@ -80,5 +75,12 @@ describe('Quiz Exercise Management', () => {
                 expect(deleteResponse?.response?.statusCode).to.eq(200);
             });
         });
+    });
+
+    after('Delete course', () => {
+        if (course) {
+            cy.login(admin);
+            courseManagementRequest.deleteCourse(course.id!);
+        }
     });
 });

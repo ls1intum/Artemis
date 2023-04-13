@@ -13,10 +13,10 @@ import { admin, instructor, studentOne, studentThree, studentTwo, tutor, users }
 // Common primitives
 const textFixture = 'loremIpsum.txt';
 const textFixtureAlternative = 'loremIpsum-alternative.txt';
-let exerciseArray: Array<Exercise> = [];
 
 describe('Exam participation', () => {
     let course: Course;
+    let exerciseArray: Array<Exercise> = [];
     let studentOneName: string;
     let studentTwoName: string;
     let studentThreeName: string;
