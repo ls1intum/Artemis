@@ -85,16 +85,20 @@ public class LearningGoalService {
     /**
      * Checks if the provided learning goals and relations between them contain a cycle
      *
-     * @param learningGoals     The set of learning goals that get checked for cycles
-     * @param relations         The set of relations that get checked for cycles
+     * @param learningGoals The set of learning goals that get checked for cycles
+     * @param relations     The set of relations that get checked for cycles
      * @return A boolean that states whether the provided learning goals and relations contain a cycle
      */
     public boolean doesCreateCircularRelation(Set<LearningGoal> learningGoals, Set<LearningGoalRelation> relations) {
         // Inner class Vertex is only used in this method for cycle detection
         class Vertex {
+
             private final String label;
+
             private boolean beingVisited;
+
             private boolean visited;
+
             private final List<Vertex> adjacencyList;
 
             public Vertex(String label) {
@@ -129,6 +133,7 @@ public class LearningGoalService {
 
         // Inner class Graph is only used in this method for cycle detection
         class Graph {
+
             private final List<Vertex> vertices;
 
             public Graph() {
@@ -160,7 +165,8 @@ public class LearningGoalService {
                     if (neighbor.isBeingVisited()) {
                         // backward edge exists
                         return true;
-                    } else if (!neighbor.isVisited() && vertexIsPartOfCycle(neighbor)) {
+                    }
+                    else if (!neighbor.isVisited() && vertexIsPartOfCycle(neighbor)) {
                         return true;
                     }
                 }
@@ -171,7 +177,7 @@ public class LearningGoalService {
         }
 
         var graph = new Graph();
-        for(LearningGoal learningGoal : learningGoals) {
+        for (LearningGoal learningGoal : learningGoals) {
             graph.addVertex(new Vertex(learningGoal.getTitle()));
         }
         for (LearningGoalRelation relation : relations) {

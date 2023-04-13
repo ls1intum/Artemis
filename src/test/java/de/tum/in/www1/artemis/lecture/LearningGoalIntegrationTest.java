@@ -534,8 +534,8 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         relation.setType(LearningGoalRelation.RelationType.EXTENDS);
         learningGoalRelationRepository.save(relation);
 
-        request.post("/api/courses/" + idOfCourse + "/learning-goals/" + idOfOtherLearningGoal + "/relations/" + idOfLearningGoal + "?type=" + "LearningGoalRelation.RelationType.EXTENDS.name()", null,
-            HttpStatus.BAD_REQUEST);
+        request.post("/api/courses/" + idOfCourse + "/learning-goals/" + idOfOtherLearningGoal + "/relations/" + idOfLearningGoal + "?type="
+                + "LearningGoalRelation.RelationType.EXTENDS.name()", null, HttpStatus.BAD_REQUEST);
     }
 
     @Test
