@@ -9,7 +9,6 @@ import org.eclipse.jgit.transport.PostReceiveHook;
 import org.eclipse.jgit.transport.ReceiveCommand;
 import org.eclipse.jgit.transport.ReceivePack;
 
-import de.tum.in.www1.artemis.exception.localvc.LocalVCBadRequestException;
 import de.tum.in.www1.artemis.service.connectors.localci.LocalCIPushService;
 
 /**
@@ -24,7 +23,7 @@ public class LocalVCPostPushHook implements PostReceiveHook {
     }
 
     @Override
-    public void onPostReceive(ReceivePack rp, Collection<ReceiveCommand> commands) throws LocalVCBadRequestException {
+    public void onPostReceive(ReceivePack rp, Collection<ReceiveCommand> commands) {
         Iterator<ReceiveCommand> iterator = commands.iterator();
 
         // There should at least be one command.

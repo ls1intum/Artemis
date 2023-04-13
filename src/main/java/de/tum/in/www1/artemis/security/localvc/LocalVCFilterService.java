@@ -20,7 +20,6 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.localvc.LocalVCAuthException;
-import de.tum.in.www1.artemis.exception.localvc.LocalVCBadRequestException;
 import de.tum.in.www1.artemis.exception.localvc.LocalVCException;
 import de.tum.in.www1.artemis.exception.localvc.LocalVCForbiddenException;
 import de.tum.in.www1.artemis.exception.localvc.LocalVCInternalException;
@@ -255,9 +254,6 @@ public class LocalVCFilterService {
         }
         else if (e instanceof LocalVCForbiddenException) {
             return HttpStatus.FORBIDDEN.value();
-        }
-        else if (e instanceof LocalVCBadRequestException) {
-            return HttpStatus.BAD_REQUEST.value();
         }
         else if (e instanceof LocalVCInternalException) {
             log.error("Internal server error while trying to access repository {}: {}", repositoryUrl, e.getMessage());
