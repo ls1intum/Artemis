@@ -1,3 +1,5 @@
+.. _privacy-statement:
+
 Privacy Statement
 ----------------------
 
@@ -9,9 +11,6 @@ If you add a file for each language, the file will be shown depending on the use
 
 
 In the following, the documentation provides a template in English and German for the privacy statement with placeholders that have to be replaced with the actual content.
-
-.. warning::
-   These are only templates that are used similarly at TUM and need to be adapted to your needs. Make sure to consult your data protection officer before making the privacy statement publicly available.
 
 
 German version
