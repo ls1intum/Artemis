@@ -174,7 +174,7 @@ describe('CourseLectureDetails', () => {
         expect(courseLecturesDetailsComponent.hasPdfLectureUnit).toBeFalse();
     }));
 
-    it('should display manage button', fakeAsync(() => {
+    it('should display manage button when user is at least tutor', fakeAsync(() => {
         lecture.course!.isAtLeastTutor = true;
         fixture.detectChanges();
 
@@ -182,7 +182,7 @@ describe('CourseLectureDetails', () => {
         expect(manageLectureButton).not.toBeNull();
     }));
 
-    it('should not display manage button', fakeAsync(() => {
+    it('should not display manage button when user is a student', fakeAsync(() => {
         lecture.course!.isAtLeastTutor = false;
         fixture.detectChanges();
 
