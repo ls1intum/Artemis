@@ -33,12 +33,6 @@ public class LocalVCPostPushHook implements PostReceiveHook {
 
         ReceiveCommand command = iterator.next();
 
-        // There should only be one command.
-        if (iterator.hasNext()) {
-            command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, "There should only be one command.");
-            return;
-        }
-
         if (command.getType() != ReceiveCommand.Type.UPDATE) {
             // The command can also be of type CREATE (e.g. when creating a new branch). This will never lead to a new submission.
             // Pushes for submissions must come from the default branch, which can only be updated and not created by the student.
