@@ -6,7 +6,7 @@
             <jhi-date-time-picker
                 labelName="{{ 'artemisApp.lecture.startDate' | artemisTranslate }}"
                 [(ngModel)]="lecture.startDate"
-                (valueChange)="validateDatesFunction(); emitInvalidDateConfiguration($event)"
+                (valueChange)="validateDatesFunction(); emitDateConfiguration($event)"
                 [error]="isEndDateBeforeStartDate"
                 name="startDate"
                 id="start-date"
@@ -17,7 +17,7 @@
             <jhi-date-time-picker
                 labelName="{{ 'artemisApp.lecture.endDate' | artemisTranslate }}"
                 [(ngModel)]="lecture.endDate"
-                (valueChange)="validateDatesFunction(); emitInvalidDateConfiguration($event)"
+                (valueChange)="validateDatesFunction(); emitDateConfiguration($event)"
                 [error]="isEndDateBeforeStartDate"
                 name="endDate"
                 id="end-date"

@@ -22,7 +22,7 @@ export class LectureUpdateWizardComponent implements OnInit {
     @Input() startDate: string;
     @Input() endDate: string;
     @Input() isEndDateBeforeStartDate: boolean;
-    public invalidDate?: boolean;
+    public invalidDate: boolean;
 
     @ViewChild(LectureUpdateWizardUnitsComponent, { static: false }) unitsComponent: LectureUpdateWizardUnitsComponent;
     @ViewChild(LectureUpdateWizardLearningGoalsComponent, { static: false }) learningGoalsComponent: LectureUpdateWizardLearningGoalsComponent;

@@ -35,6 +35,8 @@ export class LectureUpdateComponent implements OnInit {
     processUnitMode: boolean;
     isShowingWizardMode: boolean;
     isEndDateBeforeStartDate: boolean;
+    isInvalidStartDate: boolean;
+    isInvalidEndDate: boolean;
 
     courses: Course[];
     startDate: string;
@@ -78,6 +80,8 @@ export class LectureUpdateComponent implements OnInit {
         this.isProcessing = false;
         this.isShowingWizardMode = false;
         this.isEndDateBeforeStartDate = false;
+        this.isInvalidStartDate = false;
+        this.isInvalidEndDate = false;
         this.activatedRoute.parent!.data.subscribe((data) => {
             // Create a new lecture to use unless we fetch an existing lecture
             const lecture = data['lecture'];
@@ -212,5 +216,13 @@ export class LectureUpdateComponent implements OnInit {
      */
     validateDate() {
         this.isEndDateBeforeStartDate = !!this.lecture.startDate && !!this.lecture.endDate && dayjs(this.lecture.endDate).isBefore(this.lecture.startDate);
+    }
+
+    onIsInvalidStartDateChange(invalidDate: boolean) {
+        this.isInvalidStartDate = invalidDate;
+    }
+
+    onIsInvalidEndDateChange(invalidDate: boolean) {
+        this.isInvalidEndDate = invalidDate;
     }
 }

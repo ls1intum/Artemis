@@ -109,6 +109,12 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
 
     documentationType = DocumentationType.Quiz;
 
+    isInvalidDate = false;
+    isInvalidReleaseDate = false;
+    isInvalidStartDate = false;
+    isInvalidDueDate = false;
+    isInvalidBachModeStartTime = false;
+
     // Icons
     faPlus = faPlus;
     faXmark = faXmark;
@@ -290,6 +296,7 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
      */
     validateDate() {
         this.exerciseService.validateDate(this.quizExercise);
+        this.isInvalidDate = this.isInvalidReleaseDate && this.isInvalidStartDate && this.isInvalidDueDate && this.isInvalidBachModeStartTime;
         const dueDate = this.quizExercise.quizMode === QuizMode.SYNCHRONIZED ? null : this.quizExercise.dueDate;
         this.quizExercise?.quizBatches?.forEach((batch) => {
             const startTime = dayjs(batch.startTime);
@@ -1067,10 +1074,34 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
 
     isSaveDisabled(): boolean {
         // eslint-disable-next-line max-len
-        return this.isSaving || !this.pendingChangesCache || !this.quizIsValid || this.hasSavedQuizStarted || this.quizExercise.dueDateError || this.hasErrorInQuizBatches();
+        return (
+            this.isSaving ||
+            !this.pendingChangesCache ||
+            !this.quizIsValid ||
+            this.hasSavedQuizStarted ||
+            this.quizExercise.dueDateError ||
+            this.hasErrorInQuizBatches() ||
+            this.isInvalidDate
+        );
     }
 
     hasErrorInQuizBatches(): boolean {
         return !!this.quizExercise?.quizBatches?.some((batch) => batch.startTimeError);
+    }
+
+    onIsInvalidReleaseDateChange(isInvalidDate: boolean) {
+        this.isInvalidReleaseDate = isInvalidDate;
+    }
+
+    onIsInvalidStartDateChange(isInvalidDate: boolean) {
+        this.isInvalidStartDate = isInvalidDate;
+    }
+
+    onIsInvalidDueDateChange(isInvalidDate: boolean) {
+        this.isInvalidDueDate = isInvalidDate;
+    }
+
+    onIsInvalidBachModeStartTimeChange(isInvalidDate: boolean) {
+        this.isInvalidBachModeStartTime = isInvalidDate;
     }
 }

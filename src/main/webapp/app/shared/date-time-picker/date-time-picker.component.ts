@@ -40,7 +40,7 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
     faQuestionCircle = faQuestionCircle;
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    _onChange = (val: any) => {};
+    _onChange = (val: dayjs.Dayjs) => {};
 
     /**
      * Emits the value change from component.
@@ -92,7 +92,7 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
 
     /**
      * updates the value with the passed newValue. It is checked if the field is empty or the newValue is not null. Then
-     * the passed date is valid, invalidDate can be set to false. Otherwise the date is invalid.
+     * the passed date is valid, invalidDate can be set to false. Otherwise, the date is invalid.
      * @param newValue a valid date object or null
      * @param inputValue the string value of #datePicker, the field is empty when inputValue == ''
      */
