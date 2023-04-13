@@ -170,7 +170,8 @@ describe('Exercise Lecture Attachment Reference Commands', () => {
 
         comp.aceEditorContainer.getEditor().setValue('');
 
-        const referenceRouterLinkToLecture = `[attachment]${metisLecture.attachments?.first()?.name}(${metisLecture.attachments?.first()?.link})[/attachment]`;
+        const shortLink = metisLecture.attachments?.first() ? metisLecture.attachments?.first()?.link!.split('attachments/')[1] : '';
+        const referenceRouterLinkToLecture = `[attachment]${metisLecture.attachments?.first()?.name}(${shortLink})[/attachment]`;
         lectureReferenceCommand.execute(metisLecture.id!.toString(), ReferenceType.ATTACHMENT, metisLecture.attachments?.first()?.id!.toString());
         expect(comp.aceEditorContainer.getEditor().getValue()).toBe(referenceRouterLinkToLecture);
     });
@@ -187,7 +188,8 @@ describe('Exercise Lecture Attachment Reference Commands', () => {
 
         // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
         const selectedUnit: AttachmentUnit = metisLecture3.lectureUnits?.first() as AttachmentUnit;
-        const referenceRouterLinkToLectureUnit = `[lecture-unit]${metisLecture3.lectureUnits?.first()?.name}(${selectedUnit?.attachment?.link})[/lecture-unit]`;
+        const shortLink = selectedUnit?.attachment ? selectedUnit?.attachment?.link!.split('attachments/')[1] : '';
+        const referenceRouterLinkToLectureUnit = `[lecture-unit]${metisLecture3.lectureUnits?.first()?.name}(${shortLink})[/lecture-unit]`;
         lectureReferenceCommand.execute(metisLecture3.id!.toString(), ReferenceType.ATTACHMENT_UNITS, undefined, selectedUnit?.id!.toString());
         expect(comp.aceEditorContainer.getEditor().getValue()).toBe(referenceRouterLinkToLectureUnit);
     });
@@ -205,7 +207,10 @@ describe('Exercise Lecture Attachment Reference Commands', () => {
         // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
         const selectedUnit: AttachmentUnit = metisLecture3.lectureUnits?.first() as AttachmentUnit;
         const selectedSlide: Slide = selectedUnit.slides?.first() as Slide;
-        const referenceRouterLinkToSlide = `[slide]${metisLecture3.lectureUnits?.first()?.name}_SLIDE_${selectedSlide.slideNumber}(${selectedSlide?.slideImagePath})[/slide]`;
+        const shortLink = selectedSlide.slideImagePath!.split('attachments/')[1];
+        // Use a regular expression and the replace() method to remove the file name and last slash
+        const shortLinkWithoutFileName: string = shortLink.replace(new RegExp(`[^/]*${'.png'}`), '').replace(/\/$/, '');
+        const referenceRouterLinkToSlide = `[slide]${metisLecture3.lectureUnits?.first()?.name} Slide ${selectedSlide.slideNumber}(${shortLinkWithoutFileName})[/slide]`;
         lectureReferenceCommand.execute(metisLecture3.id!.toString(), ReferenceType.ATTACHMENT_UNITS, undefined, selectedUnit?.id!.toString(), selectedSlide?.id!.toString());
         expect(comp.aceEditorContainer.getEditor().getValue()).toBe(referenceRouterLinkToSlide);
     });

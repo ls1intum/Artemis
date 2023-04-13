@@ -37,7 +37,7 @@ import { MultiOptionCommand } from 'app/shared/markdown-editor/commands/multiOpt
 import { v4 as uuid } from 'uuid';
 import { MultipleChoiceVisualQuestionComponent } from 'app/exercises/quiz/shared/questions/multiple-choice-question/multiple-choice-visual-question.component';
 import { ExerciseReferenceCommand } from 'app/shared/markdown-editor/commands/courseArtifactReferenceCommands/exerciseReferenceCommand';
-import { MatMenuTrigger } from '@angular/material/menu';
+import { faAngleDown } from '@fortawesome/free-solid-svg-icons';
 
 export enum MarkdownEditorHeight {
     INLINE = 100,
@@ -175,6 +175,7 @@ export class MarkdownEditorComponent implements AfterViewInit {
     faQuestionCircle = faQuestionCircle;
     faGripLines = faGripLines;
     faAngleRight = faAngleRight;
+    faAngleDown = faAngleDown;
 
     uniqueMarkdownEditorId: string;
 

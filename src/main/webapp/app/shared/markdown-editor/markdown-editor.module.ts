@@ -6,10 +6,9 @@ import { ArtemisColorSelectorModule } from 'app/shared/color-selector/color-sele
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
 
 @NgModule({
-    imports: [ArtemisSharedModule, AceEditorModule, FormsModule, ArtemisColorSelectorModule, MatMenuModule, MatButtonModule, MatIconModule],
+    imports: [ArtemisSharedModule, AceEditorModule, FormsModule, ArtemisColorSelectorModule, MatMenuModule, MatButtonModule],
     declarations: [MarkdownEditorComponent],
     exports: [MarkdownEditorComponent],
 })

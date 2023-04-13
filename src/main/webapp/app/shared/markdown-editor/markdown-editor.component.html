@@ -80,7 +80,7 @@
                         <div>
                             <button mat-button [matMenuTriggerFor]="isTypeOfExerciseReferenceCommand(command) ? subMenuExercise : subMenuLecture" type="button" class="ml-1">
                                 <span>{{ command.buttonTranslationString | artemisTranslate }}</span>
-                                <mat-icon iconPositionEnd>keyboard_arrow_down</mat-icon>
+                                <fa-icon [icon]="faAngleDown" class="ms-1"></fa-icon>
                             </button>
                             <mat-menu #subMenuExercise="matMenu" type="button">
                                 <button

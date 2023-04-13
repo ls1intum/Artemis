@@ -16,6 +16,8 @@ html {
 
     .mat-mdc-menu-panel {
         background-color: $neutral-dark-l-5;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.2); /* Shadow effect */
     }
 
     .mat-mdc-button:disabled {
@@ -186,33 +188,6 @@ html {
         color: white !important;
     }
 }
-
-/* Styling for mat-menu */
-::ng-deep .mat-menu {
-    background-color: #222222; /* Background color for menu */
-    color: #ffffff; /* Text color for menu items */
-}
-
-/* Styling for mat-menu-item */
-::ng-deep .mat-menu-item {
-    color: #ffffff; /* Text color for menu items */
-    background-color: #333333; /* Background color for menu items */
-    &:hover {
-        background-color: #444444; /* Background color for menu items on hover */
-    }
-}
-
-/* Styling for mat-menu-button */
-::ng-deep .mat-menu-button {
-    .mat-icon-button {
-        color: #ffffff; /* Icon color for menu button */
-        background-color: #222222; /* Background color for menu button */
-        &:hover {
-            background-color: #333333; /* Background color for menu button on hover */
-        }
-    }
-}
-
 .bg-light {
     background: transparentize(white, 0.95) !important;
 }

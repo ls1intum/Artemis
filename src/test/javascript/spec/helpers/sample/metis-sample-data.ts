@@ -13,8 +13,8 @@ import { Conversation } from 'app/entities/metis/conversation/conversation.model
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { Slide } from 'app/entities/lecture-unit/slide.model';
 
-export const metisSlide1 = { id: 1, slideNumber: 1, slideImagePath: 'directory/Metis-Slide-1.pdf' } as Slide;
-export const metisAttachment = { id: 1, name: 'Metis Attachment', link: 'directory/Metis-Attachment.pdf' } as Attachment;
+export const metisSlide1 = { id: 1, slideNumber: 1, slideImagePath: 'directory/attachments/slides/Metis-Slide-1.pdf' } as Slide;
+export const metisAttachment = { id: 1, name: 'Metis Attachment', link: 'directory/attachments/Metis-Attachment.pdf' } as Attachment;
 export const metisAttachmentUnit = { id: 1, name: 'Metis Attachment Unit', attachment: metisAttachment, slides: [metisSlide1] } as AttachmentUnit;
 export const metisLecture = { id: 1, title: 'Metis  Lecture', attachments: [metisAttachment] } as Lecture;
 export const metisLecture2 = { id: 2, title: 'Second Metis  Lecture' } as Lecture;
