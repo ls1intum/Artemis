@@ -1,7 +1,7 @@
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { Course } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam.model';
-import { CypressExamBuilder, convertCourseAfterMultiPart } from '../../support/requests/CourseManagementRequests';
+import { ExamBuilder, convertCourseAfterMultiPart } from '../../support/requests/CourseManagementRequests';
 import dayjs from 'dayjs/esm';
 import { generateUUID } from '../../support/utils';
 import { courseManagementRequest, courseOverview, examNavigation, examStartEnd, textExerciseEditor } from '../../support/artemis';
@@ -27,7 +27,7 @@ describe('Exam date verification', () => {
     describe('Exam timing', () => {
         let exam: Exam;
         it('Does not show exam before visible date', () => {
-            const examContent = new CypressExamBuilder(course)
+            const examContent = new ExamBuilder(course)
                 .title(examTitle)
                 .visibleDate(dayjs().add(1, 'day'))
                 .startDate(dayjs().add(2, 'days'))
@@ -44,7 +44,7 @@ describe('Exam date verification', () => {
         });
 
         it('Shows after visible date', () => {
-            const examContent = new CypressExamBuilder(course)
+            const examContent = new ExamBuilder(course)
                 .title(examTitle)
                 .visibleDate(dayjs().subtract(5, 'days'))
                 .startDate(dayjs().add(2, 'days'))
@@ -63,7 +63,7 @@ describe('Exam date verification', () => {
 
         it('Student can start after start Date', () => {
             let exerciseGroup: ExerciseGroup;
-            const examContent = new CypressExamBuilder(course)
+            const examContent = new ExamBuilder(course)
                 .title(examTitle)
                 .visibleDate(dayjs().subtract(3, 'days'))
                 .startDate(dayjs().subtract(2, 'days'))
@@ -96,12 +96,7 @@ describe('Exam date verification', () => {
         it('Exam ends after end time', () => {
             let exerciseGroup: ExerciseGroup;
             const examEnd = dayjs().add(30, 'seconds');
-            const examContent = new CypressExamBuilder(course)
-                .title(examTitle)
-                .visibleDate(dayjs().subtract(3, 'days'))
-                .startDate(dayjs().subtract(2, 'days'))
-                .endDate(examEnd)
-                .build();
+            const examContent = new ExamBuilder(course).title(examTitle).visibleDate(dayjs().subtract(3, 'days')).startDate(dayjs().subtract(2, 'days')).endDate(examEnd).build();
             courseManagementRequest.createExam(examContent).then((examResponse) => {
                 exam = examResponse.body;
                 courseManagementRequest.registerStudentForExam(exam, studentOne);

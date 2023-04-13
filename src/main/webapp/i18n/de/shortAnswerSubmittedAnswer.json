@@ -3,8 +3,7 @@
         "shortAnswerSubmittedAnswer": {
             "home": {
                 "title": "Short Answer Submitted Answers",
-                "createLabel": "Short Answer Submitted Answer erstellen",
-                "createOrEditLabel": "Short Answer Submitted Answer erstellen oder bearbeiten"
+                "createLabel": "Short Answer Submitted Answer erstellen"
             },
             "created": "Short Answer Submitted Answer erstellt mit ID {{ param }}",
             "updated": "Short Answer Submitted Answer aktualisiert mit ID {{ param }}",

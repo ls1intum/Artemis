@@ -3,8 +3,7 @@
         "quizStatistic": {
             "home": {
                 "title": "Statistics",
-                "createLabel": "Statistic erstellen",
-                "createOrEditLabel": "Statistic erstellen oder bearbeiten"
+                "createLabel": "Statistic erstellen"
             },
             "created": "Statistic erstellt mit ID {{ param }}",
             "updated": "Statistic aktualisiert mit ID {{ param }}",

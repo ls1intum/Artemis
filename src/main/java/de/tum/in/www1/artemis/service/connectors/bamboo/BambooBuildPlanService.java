@@ -2,10 +2,10 @@ package de.tum.in.www1.artemis.service.connectors.bamboo;
 
 import static de.tum.in.www1.artemis.config.Constants.*;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.Charset;
+import java.nio.file.Path;
 import java.util.*;
 
 import javax.annotation.Nullable;
@@ -13,7 +13,6 @@ import javax.annotation.Nullable;
 import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
-import org.springframework.core.env.Environment;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
@@ -58,7 +57,6 @@ import de.tum.in.www1.artemis.exception.ContinuousIntegrationBuildPlanException;
 import de.tum.in.www1.artemis.service.ResourceLoaderService;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService.RepositoryCheckoutPath;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
-import tech.jhipster.config.JHipsterConstants;
 
 @Service
 @Profile("bamboo")
@@ -82,15 +80,12 @@ public class BambooBuildPlanService {
 
     private final BambooServer bambooServer;
 
-    private final Environment env;
-
     private final Optional<VersionControlService> versionControlService;
 
-    public BambooBuildPlanService(ResourceLoaderService resourceLoaderService, BambooServer bambooServer, Environment env, Optional<VersionControlService> versionControlService,
+    public BambooBuildPlanService(ResourceLoaderService resourceLoaderService, BambooServer bambooServer, Optional<VersionControlService> versionControlService,
             ProgrammingLanguageConfiguration programmingLanguageConfiguration) {
         this.resourceLoaderService = resourceLoaderService;
         this.bambooServer = bambooServer;
-        this.env = env;
         this.versionControlService = versionControlService;
         this.programmingLanguageConfiguration = programmingLanguageConfiguration;
     }
@@ -167,14 +162,8 @@ public class BambooBuildPlanService {
         Stage defaultStage = new Stage("Default Stage");
         Job defaultJob = new Job("Default Job", new BambooKey("JOB1")).cleanWorkingDirectory(true);
 
-        /*
-         * We need the profiles to not run the jobs within Docker containers in the dev-setup as the Bamboo server itself runs in a Docker container when developing.
-         */
-        Collection<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
-
-        // Do not run the builds in extra docker containers if the dev-profile is active
         // Xcode has no dockerfile, it only runs on agents (e.g. sb2-agent-0050562fddde)
-        if (!activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT) && !ProjectType.XCODE.equals(projectType)) {
+        if (!ProjectType.XCODE.equals(projectType)) {
             defaultJob.dockerConfiguration(dockerConfigurationFor(programmingLanguage, Optional.ofNullable(projectType)));
         }
         switch (programmingLanguage) {
@@ -218,7 +207,8 @@ public class BambooBuildPlanService {
             }
             case C -> {
                 // Default tasks:
-                var tasks = readScriptTasksFromTemplate(programmingLanguage, File.separator + projectType.name().toLowerCase(), sequentialBuildRuns, false, null);
+                final Optional<Path> projectTypeSubdirectory = Optional.of(Path.of(projectType.name().toLowerCase()));
+                final var tasks = readScriptTasksFromTemplate(programmingLanguage, projectTypeSubdirectory, null, sequentialBuildRuns, false);
                 tasks.add(0, checkoutTask);
                 defaultJob.tasks(tasks.toArray(new Task[0]));
 
@@ -228,11 +218,11 @@ public class BambooBuildPlanService {
 
                 if (Boolean.TRUE.equals(staticCodeAnalysisEnabled)) {
                     // Create artifacts and a final task for the execution of static code analysis
-                    List<StaticCodeAnalysisTool> staticCodeAnalysisTools = StaticCodeAnalysisTool.getToolsForProgrammingLanguage(ProgrammingLanguage.C);
-                    Artifact[] artifacts = staticCodeAnalysisTools.stream()
+                    final List<StaticCodeAnalysisTool> staticCodeAnalysisTools = StaticCodeAnalysisTool.getToolsForProgrammingLanguage(ProgrammingLanguage.C);
+                    final Artifact[] artifacts = staticCodeAnalysisTools.stream()
                             .map(tool -> new Artifact().name(tool.getArtifactLabel()).location("target").copyPattern(tool.getFilePattern()).shared(false)).toArray(Artifact[]::new);
                     defaultJob.artifacts(artifacts);
-                    var scaTasks = readScriptTasksFromTemplate(programmingLanguage, "", false, true, null);
+                    final var scaTasks = readScriptTasksFromTemplate(programmingLanguage, Optional.empty(), null, false, true);
                     defaultJob.finalTasks(scaTasks.toArray(new Task[0]));
                 }
 
@@ -253,29 +243,29 @@ public class BambooBuildPlanService {
                 return createDefaultStage(programmingLanguage, sequentialBuildRuns, checkoutTask, defaultStage, defaultJob, "**/result.xml");
             }
             case SWIFT -> {
-                var isXcodeProject = ProjectType.XCODE.equals(projectType);
-                var subDirectory = isXcodeProject ? "/xcode" : "";
+                final var isXcodeProject = ProjectType.XCODE.equals(projectType);
+                final Optional<Path> subDirectory = isXcodeProject ? Optional.of(Path.of("xcode")) : Optional.empty();
                 Map<String, String> replacements = Map.of("${packageName}", packageName);
                 var testParserTask = new TestParserTask(TestParserTaskProperties.TestType.JUNIT).resultDirectories("**/tests.xml");
                 if (isXcodeProject) {
                     testParserTask = new TestParserTask(TestParserTaskProperties.TestType.JUNIT).resultDirectories("**/report.junit");
                     replacements = Map.of("${appName}", packageName);
                 }
-                var tasks = readScriptTasksFromTemplate(programmingLanguage, subDirectory, sequentialBuildRuns, false, replacements);
+                final var tasks = readScriptTasksFromTemplate(programmingLanguage, subDirectory, replacements, sequentialBuildRuns, false);
                 tasks.add(0, checkoutTask);
                 defaultJob.tasks(tasks.toArray(new Task[0])).finalTasks(testParserTask);
                 if (Boolean.TRUE.equals(staticCodeAnalysisEnabled)) {
                     // Create artifacts and a final task for the execution of static code analysis
-                    List<StaticCodeAnalysisTool> staticCodeAnalysisTools = StaticCodeAnalysisTool.getToolsForProgrammingLanguage(ProgrammingLanguage.SWIFT);
-                    Artifact[] artifacts = staticCodeAnalysisTools.stream()
+                    final List<StaticCodeAnalysisTool> staticCodeAnalysisTools = StaticCodeAnalysisTool.getToolsForProgrammingLanguage(ProgrammingLanguage.SWIFT);
+                    final Artifact[] artifacts = staticCodeAnalysisTools.stream()
                             .map(tool -> new Artifact().name(tool.getArtifactLabel()).location("target").copyPattern(tool.getFilePattern()).shared(false)).toArray(Artifact[]::new);
                     defaultJob.artifacts(artifacts);
-                    var scaTasks = readScriptTasksFromTemplate(programmingLanguage, subDirectory, false, true, null);
+                    final var scaTasks = readScriptTasksFromTemplate(programmingLanguage, subDirectory, null, false, true);
                     defaultJob.finalTasks(scaTasks.toArray(new Task[0]));
                 }
                 if (isXcodeProject) {
                     // add a requirement to be able to run the Xcode build tasks using fastlane
-                    var requirement = new Requirement("system.builder.fastlane.fastlane");
+                    final var requirement = new Requirement("system.builder.fastlane.fastlane");
                     defaultJob.requirements(requirement);
                 }
                 return defaultStage.jobs(defaultJob);
@@ -384,7 +374,7 @@ public class BambooBuildPlanService {
     private Stage createDefaultStage(ProgrammingLanguage programmingLanguage, boolean sequentialBuildRuns, VcsCheckoutTask checkoutTask, Stage defaultStage, Job defaultJob,
             String resultDirectories) {
         final var testParserTask = new TestParserTask(TestParserTaskProperties.TestType.JUNIT).resultDirectories(resultDirectories);
-        var tasks = readScriptTasksFromTemplate(programmingLanguage, "", sequentialBuildRuns, false, null);
+        final var tasks = readScriptTasksFromTemplate(programmingLanguage, Optional.empty(), null, sequentialBuildRuns, false);
         tasks.add(0, checkoutTask);
         return defaultStage.jobs(defaultJob.tasks(tasks.toArray(new Task[0])).finalTasks(testParserTask));
     }
@@ -468,13 +458,13 @@ public class BambooBuildPlanService {
         return new PlanPermissions(new PlanIdentifier(bambooProjectKey, bambooPlanKey)).permissions(permissions);
     }
 
-    private List<Task<?, ?>> readScriptTasksFromTemplate(final ProgrammingLanguage programmingLanguage, String subDirectory, final boolean sequentialBuildRuns,
-            final boolean getScaTasks, Map<String, String> replacements) {
-        final var directoryPattern = "templates/bamboo/" + programmingLanguage.name().toLowerCase() + subDirectory
-                + (getScaTasks ? "/staticCodeAnalysisRuns/" : sequentialBuildRuns ? "/sequentialRuns/" : "/regularRuns/") + "*.sh";
+    private List<Task<?, ?>> readScriptTasksFromTemplate(final ProgrammingLanguage programmingLanguage, final Optional<Path> projectTypeSubDirectory,
+            final Map<String, String> replacements, final boolean sequentialBuildRuns, final boolean getScaTasks) {
+        final Path scriptBasePath = getScriptPattern(programmingLanguage, projectTypeSubDirectory, sequentialBuildRuns, getScaTasks);
+
         try {
             List<Task<?, ?>> tasks = new ArrayList<>();
-            final var scriptResources = Arrays.asList(resourceLoaderService.getResources(directoryPattern));
+            final var scriptResources = Arrays.asList(resourceLoaderService.getResources(scriptBasePath, "*.sh"));
             scriptResources.sort(Comparator.comparing(Resource::getFilename));
             for (final var resource : scriptResources) {
                 // 1_some_description.sh --> "some description"
@@ -501,6 +491,40 @@ public class BambooBuildPlanService {
         catch (IOException e) {
             throw new ContinuousIntegrationBuildPlanException("Unable to load template build plans", e);
         }
+    }
+
+    /**
+     * Returns a path pattern that matches all shell scripts that define the build plan steps.
+     * <p>
+     * The name and number of scripts is different for each exercise type.
+     * Therefore, a pattern is returned that matches all {@code sh}-scripts in the specific template directory depending on the exercise features.
+     * A resource loader can then load all matching scripts in one go, rather than loading the files individually.
+     *
+     * @param programmingLanguage     The programming language of the exercise for which a build plan is set up.
+     * @param projectTypeSubDirectory The subdirectory where the template files are stored based on the project type of the exercise.
+     * @param sequentialBuildRuns     If sequential build runs are enabled for the exercise.
+     * @param getScaTasks             If static code analysis is enabled for the exercise.
+     * @return A path pattern that matches all shell scripts needed for the build steps in Bamboo.
+     */
+    private static Path getScriptPattern(final ProgrammingLanguage programmingLanguage, final Optional<Path> projectTypeSubDirectory, final boolean sequentialBuildRuns,
+            final boolean getScaTasks) {
+        Path pattern = Path.of("templates", "bamboo", programmingLanguage.name().toLowerCase());
+        if (projectTypeSubDirectory.isPresent()) {
+            pattern = pattern.resolve(projectTypeSubDirectory.get());
+        }
+
+        final String projectTypeDir;
+        if (getScaTasks) {
+            projectTypeDir = "staticCodeAnalysisRuns";
+        }
+        else if (sequentialBuildRuns) {
+            projectTypeDir = "sequentialRuns";
+        }
+        else {
+            projectTypeDir = "regularRuns";
+        }
+
+        return pattern.resolve(projectTypeDir);
     }
 
     /**

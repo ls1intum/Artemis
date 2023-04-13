@@ -3,8 +3,7 @@
         "multipleChoiceSubmittedAnswer": {
             "home": {
                 "title": "Multiple Choice Submitted Answers",
-                "createLabel": "Create a new Multiple Choice Submitted Answer",
-                "createOrEditLabel": "Create or edit a Multiple Choice Submitted Answer"
+                "createLabel": "Create a new Multiple Choice Submitted Answer"
             },
             "created": "Created new Multiple Choice Submitted Answer with identifier {{ param }}",
             "updated": "Updated Multiple Choice Submitted Answer with identifier {{ param }}",

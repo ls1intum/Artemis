@@ -3,8 +3,7 @@
         "feedback": {
             "home": {
                 "title": "Feedbacks",
-                "createLabel": "Feedback erstellen",
-                "createOrEditLabel": "Feedback erstellen oder bearbeiten"
+                "createLabel": "Feedback erstellen"
             },
             "created": "Feedback erstellt mit ID {{ param }}",
             "updated": "Feedback aktualisiert mit ID {{ param }}",
@@ -22,6 +21,12 @@
             "modal": {
                 "submitted": "Abgegeben",
                 "linkedToCommit": "verknüpft mit Commit"
+            },
+            "group": {
+                "wrong": "Falsch",
+                "warning": "Warnung",
+                "info": "Info",
+                "correct": "Korrekt"
             }
         }
     }
