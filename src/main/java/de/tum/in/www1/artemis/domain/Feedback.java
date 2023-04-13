@@ -428,7 +428,9 @@ public class Feedback extends DomainObject {
 
         feedback.setHasLongFeedbackText(getHasLongFeedbackText());
         if (feedback.getHasLongFeedbackText()) {
-            feedback.setLongFeedbackText(getLongFeedbackText().copy());
+            final var copiedLongFeedback = getLongFeedbackText().copy();
+            copiedLongFeedback.setFeedback(feedback);
+            feedback.setLongFeedbackText(copiedLongFeedback);
         }
 
         return feedback;
