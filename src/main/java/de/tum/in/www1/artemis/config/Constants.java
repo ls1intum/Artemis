@@ -125,6 +125,10 @@ public final class Constants {
 
     public static final int FEEDBACK_DETAIL_TEXT_MAX_CHARACTERS = 5000;
 
+    /**
+     * Arbitrary limit that is unlikely to be reached by real feedback in practice.
+     * Avoids filling the DB with huge text blobs, e.g. in case an infinite loop in a test case outputs a lot of text.
+     */
     public static final int LONG_FEEDBACK_MAX_LENGTH = 10_000_000;
 
     // This value limits the amount of characters allowed for a complaint response text.
