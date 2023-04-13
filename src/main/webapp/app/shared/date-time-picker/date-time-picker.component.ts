@@ -3,7 +3,6 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { faCalendarAlt, faClock, faGlobe, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { FormControl } from '@angular/forms';
 import dayjs from 'dayjs/esm';
-import { isDate } from 'app/shared/util/utils';
 
 @Component({
     selector: 'jhi-date-time-picker',
@@ -95,24 +94,14 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
      * updates the value with the passed newValue. It is checked if the field is empty or the newValue is not null. Then
      * the passed date is valid, invalidDate can be set to false. Otherwise, the date is invalid.
      * @param newValue a valid date object or null
-     * @param inputValue the string value of #datePicker, the field is empty when inputValue == ''
      */
-    updateField(newValue: any, inputValue: string) {
+    updateField(newValue: any) {
         if (this.value != newValue && newValue != '') {
-            console.log('newValue' + newValue + 'newValue');
-            console.log('inputValue ' + inputValue);
-            if (newValue != null || inputValue == '') {
-                this.invalidDate = false;
-            } else {
-                this.invalidDate = true;
-                console.log('invalid date!');
-            }
+            this.invalidDate = false;
             this.value = newValue;
             this._onChange(this.value);
             this.valueChanged(this.invalidDate);
             this.writeValue(this.value);
-        } else {
-            console.log('THE SAME');
         }
     }
 
