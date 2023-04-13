@@ -81,4 +81,107 @@ public class LearningGoalService {
         }
         return new SearchResultPageDTO<>(lecturePage.getContent(), lecturePage.getTotalPages());
     }
+
+    /**
+     * Checks if the provided learning goals and relations between them contain a cycle
+     *
+     * @param learningGoals     The set of learning goals that get checked for cycles
+     * @param relations         The set of relations that get checked for cycles
+     * @return A boolean that states whether the provided learning goals and relations contain a cycle
+     */
+    public boolean doesCreateCircularRelation(Set<LearningGoal> learningGoals, Set<LearningGoalRelation> relations) {
+        // Inner class Vertex is only used in this method for cycle detection
+        class Vertex {
+            private final String label;
+            private boolean beingVisited;
+            private boolean visited;
+            private final List<Vertex> adjacencyList;
+
+            public Vertex(String label) {
+                this.label = label;
+                this.adjacencyList = new ArrayList<>();
+            }
+
+            public List<Vertex> getAdjacencyList() {
+                return adjacencyList;
+            }
+
+            public void addNeighbor(Vertex adjacent) {
+                this.adjacencyList.add(adjacent);
+            }
+
+            public boolean isBeingVisited() {
+                return beingVisited;
+            }
+
+            public void setBeingVisited(boolean beingVisited) {
+                this.beingVisited = beingVisited;
+            }
+
+            public boolean isVisited() {
+                return visited;
+            }
+
+            public void setVisited(boolean visited) {
+                this.visited = visited;
+            }
+        }
+
+        // Inner class Graph is only used in this method for cycle detection
+        class Graph {
+            private final List<Vertex> vertices;
+
+            public Graph() {
+                this.vertices = new ArrayList<>();
+            }
+
+            public void addVertex(Vertex vertex) {
+                this.vertices.add(vertex);
+            }
+
+            public void addEdge(Vertex from, Vertex to) {
+                from.addNeighbor(to);
+            }
+
+            // Checks all vertices of the graph if they are part of a cycle.
+            // This is necessary because otherwise we would not traverse the complete graph if it is not connected
+            public boolean hasCycle() {
+                for (Vertex vertex : vertices) {
+                    if (!vertex.isVisited() && vertexIsPartOfCycle(vertex)) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+
+            public boolean vertexIsPartOfCycle(Vertex sourceVertex) {
+                sourceVertex.setBeingVisited(true);
+                for (Vertex neighbor : sourceVertex.getAdjacencyList()) {
+                    if (neighbor.isBeingVisited()) {
+                        // backward edge exists
+                        return true;
+                    } else if (!neighbor.isVisited() && vertexIsPartOfCycle(neighbor)) {
+                        return true;
+                    }
+                }
+                sourceVertex.setBeingVisited(false);
+                sourceVertex.setVisited(true);
+                return false;
+            }
+        }
+
+        var graph = new Graph();
+        for(LearningGoal learningGoal : learningGoals) {
+            graph.addVertex(new Vertex(learningGoal.getTitle()));
+        }
+        for (LearningGoalRelation relation : relations) {
+            var headVertex = graph.vertices.stream().filter(vertex -> vertex.label.equals(relation.getHeadLearningGoal().getTitle())).findFirst().orElseThrow();
+            var tailVertex = graph.vertices.stream().filter(vertex -> vertex.label.equals(relation.getTailLearningGoal().getTitle())).findFirst().orElseThrow();
+            // Only EXTENDS and ASSUMES are included in the generated graph as other relations are no problem if they are circular
+            switch (relation.getType()) {
+                case EXTENDS, ASSUMES -> graph.addEdge(tailVertex, headVertex);
+            }
+        }
+        return graph.hasCycle();
+    }
 }
