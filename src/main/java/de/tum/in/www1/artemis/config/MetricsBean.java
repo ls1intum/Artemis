@@ -149,7 +149,7 @@ public class MetricsBean {
 
             Gauge.builder("artemis.scheduled.exercises.due.student_multiplier.active.14",
                     () -> this.getUpcomingDueExercisesCountWithActiveStudentMultiplier(range, exerciseType, 14)).strongReference(true).tag("range", String.valueOf(range))
-                    .tag("exerciseType", exerciseType.toString()).description("Number of exercises ending within the next minutes multiplied with students in the course")
+                    .tag("exerciseType", exerciseType.toString()).description("Number of exercises ending within the next minutes multiplied with students in the course that have been active in the past 14 days")
                     .register(meterRegistry);
 
             Gauge.builder("artemis.scheduled.exercises.release.count", () -> this.getUpcomingReleasedExercisesCount(range, exerciseType)).strongReference(true)
@@ -162,7 +162,7 @@ public class MetricsBean {
 
             Gauge.builder("artemis.scheduled.exercises.release.student_multiplier.active.14",
                     () -> this.getUpcomingReleasedExercisesCountWithActiveStudentMultiplier(range, exerciseType, 14)).strongReference(true).tag("range", String.valueOf(range))
-                    .tag("exerciseType", exerciseType.toString()).description("Number of exercises starting within the next minutes multiplied with students in the course")
+                    .tag("exerciseType", exerciseType.toString()).description("Number of exercises starting within the next minutes multiplied with students in the course that have been active in the past 14 days")
                     .register(meterRegistry);
         }
     }

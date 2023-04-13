@@ -23,16 +23,6 @@ public enum ExerciseType {
     }
 
     /**
-     * The discriminator value can be used to filter polymorphic relations, e.g. by using `exercise.class = "P"` to select only programming exercises from the exercises table.
-     *
-     * @return the discriminator value for the exercise type (e.g. "P" for ExerciseType.PROGRAMMING)
-     */
-    public String getDiscriminator() {
-        final DiscriminatorValue value = getExerciseClass().getAnnotation(DiscriminatorValue.class);
-        return value.value();
-    }
-
-    /**
      * Used to filter the exercise type using the TYPE-operator.
      *
      * @return the class corresponding to the ExerciseType
