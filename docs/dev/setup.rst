@@ -570,6 +570,8 @@ instead of the TUM defaults:
 * The imprint statement HTML → ``${artemisRunDirectory}/public/content/imprint.html``
 * The contact email address in the ``application-{dev,prod}.yml`` configuration file under the key ``info.contact``
 
+-----------------------------------------------------------------------------------------------------------------------------------------
+
 Privacy Statement
 ----------------------
 
