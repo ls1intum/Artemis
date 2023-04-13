@@ -521,6 +521,24 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createLearningGoalRelation_shouldReturnBadRequest_ForCircularRelations() throws Exception {
+        LearningGoal learningGoal = learningGoalRepository.findByIdElseThrow(idOfLearningGoal);
+        Course course = courseRepository.findByIdElseThrow(idOfCourse);
+        Long idOfOtherLearningGoal = database.createLearningGoal(course).getId();
+        LearningGoal otherLearningGoal = learningGoalRepository.findByIdElseThrow(idOfOtherLearningGoal);
+
+        var relation = new LearningGoalRelation();
+        relation.setTailLearningGoal(learningGoal);
+        relation.setHeadLearningGoal(otherLearningGoal);
+        relation.setType(LearningGoalRelation.RelationType.EXTENDS);
+        learningGoalRelationRepository.save(relation);
+
+        request.post("/api/courses/" + idOfCourse + "/learning-goals/" + idOfOtherLearningGoal + "/relations/" + idOfLearningGoal + "?type=" + "LearningGoalRelation.RelationType.EXTENDS.name()", null,
+            HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "student42", roles = "USER")
     void createLearningGoalRelation_shouldReturnForbidden() throws Exception {
         Course course = courseRepository.findByIdElseThrow(idOfCourse);
