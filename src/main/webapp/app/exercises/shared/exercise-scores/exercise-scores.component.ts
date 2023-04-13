@@ -137,6 +137,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
             forkJoin([findCourse, findExercise]).subscribe(([courseRes, exerciseRes]) => {
                 this.course = courseRes.body!;
                 this.exercise = exerciseRes.body!;
+                // ngFor needs an array to iterate over. This creates an array in the form of [0, 1, ...] up to the correction rounds exclusively (normally 1 or 2)
                 this.correctionRoundIndices = [...Array(this.exercise.exerciseGroup?.exam?.numberOfCorrectionRoundsInExam ?? 1).keys()];
                 this.afterDueDate = !!this.exercise.dueDate && dayjs().isAfter(this.exercise.dueDate);
                 // After both calls are done, the loading flag is removed. If the exercise is not a programming exercise, only the result call is needed.
@@ -180,6 +181,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
             participation.results?.forEach((result, index) => {
                 participation.results![index].durationInMinutes = dayjs(result.completionDate).diff(participation.initializationDate, 'seconds');
             });
+            participation.results?.sort((result1, result2) => (result1.id ?? 0) - (result2.id ?? 0));
         });
         this.filteredParticipations = this.filterByScoreRange(this.participations);
         if (this.exercise.type === ExerciseType.PROGRAMMING) {

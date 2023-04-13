@@ -197,7 +197,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                     OR r.assessmentType <> 'AUTOMATIC'
                     OR r IS NULL)
             """)
-    Set<StudentParticipation> findByExerciseIdWithLatestResults(@Param("exerciseId") Long exerciseId);
+    Set<StudentParticipation> findByExerciseIdWithLatestAndManualResults(@Param("exerciseId") Long exerciseId);
 
     @Query("""
             SELECT DISTINCT p FROM StudentParticipation p

@@ -484,7 +484,7 @@ public class ParticipationResource {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
         Set<StudentParticipation> participations;
         if (withLatestResults) {
-            participations = studentParticipationRepository.findByExerciseIdWithLatestResults(exerciseId);
+            participations = studentParticipationRepository.findByExerciseIdWithLatestAndManualResults(exerciseId);
         }
         else {
             participations = studentParticipationRepository.findByExerciseId(exerciseId);

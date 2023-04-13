@@ -89,6 +89,7 @@
                     "continue": "Continue assessment",
                     "examCorrectionRound": {
                         "open": "Open assessment of correction round {{correctionRound}}",
+                        "cancel": "Cancel assessment of correction round {{correctionRound}}",
                         "assess": "Assess submission in correction round {{correctionRound}}",
                         "continue": "Continue assessment in correction round {{correctionRound}}"
                     }
