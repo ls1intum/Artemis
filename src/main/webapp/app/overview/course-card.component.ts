@@ -50,7 +50,7 @@ export class CourseCardComponent implements OnChanges {
         domain: [GraphColors.GREEN, GraphColors.RED],
     } as Color;
 
-    eProfileToggle = ProfileToggle;
+    ProfileToggle = ProfileToggle;
 
     constructor(
         private router: Router,

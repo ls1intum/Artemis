@@ -65,7 +65,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     faCircleNotch = faCircleNotch;
     FeatureToggle = FeatureToggle;
 
-    eProfileToggle = ProfileToggle;
+    ProfileToggle = ProfileToggle;
 
     readonly isMessagingEnabled = isMessagingEnabled;
     readonly isCommunicationEnabled = isCommunicationEnabled;
