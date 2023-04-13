@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.security.localvc;
 
 import java.io.IOException;
 import java.util.Collection;
-import java.util.Iterator;
 
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.ObjectId;
@@ -28,19 +27,7 @@ public class LocalVCPrePushHook implements PreReceiveHook {
     public void onPreReceive(ReceivePack rp, Collection<ReceiveCommand> commands) {
         Repository repository = rp.getRepository();
 
-        Iterator<ReceiveCommand> iterator = commands.iterator();
-
-        if (!iterator.hasNext()) {
-            return;
-        }
-
-        ReceiveCommand command = iterator.next();
-
-        // There should only be one command.
-        if (iterator.hasNext()) {
-            command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, "There should only be one command.");
-            return;
-        }
+        ReceiveCommand command = commands.iterator().next();
 
         try {
             Git git = new Git(repository);
