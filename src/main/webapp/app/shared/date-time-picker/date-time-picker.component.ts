@@ -3,6 +3,7 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { faCalendarAlt, faClock, faGlobe, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { FormControl } from '@angular/forms';
 import dayjs from 'dayjs/esm';
+import { isDate } from 'app/shared/util/utils';
 
 @Component({
     selector: 'jhi-date-time-picker',
@@ -97,14 +98,22 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
      * @param inputValue the string value of #datePicker, the field is empty when inputValue == ''
      */
     updateField(newValue: any, inputValue: string) {
-        if (newValue != null || inputValue == '') {
-            this.invalidDate = false;
+        if (this.value != newValue && newValue != '') {
+            console.log('newValue' + newValue + 'newValue');
+            console.log('inputValue ' + inputValue);
+            if (newValue != null || inputValue == '') {
+                this.invalidDate = false;
+            } else {
+                this.invalidDate = true;
+                console.log('invalid date!');
+            }
+            this.value = newValue;
+            this._onChange(this.value);
+            this.valueChanged(this.invalidDate);
+            this.writeValue(this.value);
         } else {
-            this.invalidDate = true;
+            console.log('THE SAME');
         }
-        this.value = newValue;
-        this._onChange(this.value);
-        this.valueChanged(this.invalidDate);
     }
 
     /**
@@ -112,5 +121,31 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
      */
     get currentTimeZone(): string {
         return Intl.DateTimeFormat().resolvedOptions().timeZone;
+    }
+
+    validate(event: Event) {
+        const val = (event.target as HTMLInputElement).value;
+        const date = new Date(val);
+
+        if (val == '') {
+            this.invalidDate = false;
+            this.value = null;
+        } else if (dayjs(val).isValid() && this.isValidDate(date)) {
+            this.invalidDate = false;
+            this.value = date;
+        } else {
+            this.invalidDate = true;
+        }
+        this._onChange(this.value);
+        this.valueChanged(this.invalidDate);
+    }
+
+    emptyField(newValue: any, inputValue: string) {
+        if (inputValue == '') {
+            this.value = null;
+            this.invalidDate = false;
+            this._onChange(this.value);
+            this.valueChanged(this.invalidDate);
+        }
     }
 }
