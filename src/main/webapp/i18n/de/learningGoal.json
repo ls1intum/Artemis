@@ -115,6 +115,10 @@
                     "searchLearningGoal": "Nach Kompetenz suchen:",
                     "loading": "Lade..."
                 }
+            },
+            "relation":  {
+                "createsCircularRelation":  "Du kannst keine kreisförmigen Beziehungen zwischen Kompetenzen erstellen.",
+                "selfRelation": "Du kannst keine Beziehung zwischen einer Kompetenz und sich selbst erstellen."
             }
         }
     }

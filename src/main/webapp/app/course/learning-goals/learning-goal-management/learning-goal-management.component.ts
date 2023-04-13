@@ -32,6 +32,7 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
     nodes: Node[] = [];
     edges: Edge[] = [];
     clusters: ClusterNode[] = [];
+    containsCircularRelation = false;
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -67,6 +68,21 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
                 this.loadData();
             }
         });
+    }
+
+    onChange() {
+        if (this.headLearningGoal !== this.tailLearningGoal) {
+            this.containsCircularRelation = !!(
+                this.tailLearningGoal &&
+                this.headLearningGoal &&
+                this.relationType &&
+                this.doesCreateCircularRelation(this.nodes, this.edges, {
+                    source: this.tailLearningGoal! + '',
+                    target: this.headLearningGoal! + '',
+                    label: this.relationType!,
+                } as Edge)
+            );
+        }
     }
 
     identify(index: number, learningGoal: LearningGoal) {
@@ -200,11 +216,6 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
     }
 
     createRelation() {
-        if (
-            this.doesCreateCircularRelation(this.nodes, this.edges, { source: this.tailLearningGoal! + '', target: this.headLearningGoal! + '', label: this.relationType! } as Edge)
-        ) {
-            throw new Error('There will be cycle!');
-        }
         this.learningGoalService
             .createLearningGoalRelation(this.tailLearningGoal!, this.headLearningGoal!, this.relationType!, this.courseId)
             .pipe(
