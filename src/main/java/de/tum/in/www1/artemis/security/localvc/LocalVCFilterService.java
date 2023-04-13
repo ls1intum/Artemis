@@ -185,7 +185,7 @@ public class LocalVCFilterService {
     }
 
     private void authorizeUser(String repositoryTypeOrUserName, User user, ProgrammingExercise exercise, boolean isPracticeRepository, RepositoryActionType repositoryActionType)
-            throws LocalVCAuthException, LocalVCForbiddenException, LocalVCInternalException {
+            throws LocalVCAuthException, LocalVCForbiddenException {
 
         if (repositoryTypeOrUserName.equals(RepositoryType.TESTS.toString())) {
             try {
@@ -208,9 +208,6 @@ public class LocalVCFilterService {
         }
         catch (AccessForbiddenException e) {
             throw new LocalVCForbiddenException(e);
-        }
-        catch (IllegalArgumentException e) {
-            throw new LocalVCInternalException(e);
         }
     }
 

@@ -6,10 +6,6 @@ package de.tum.in.www1.artemis.exception.localvc;
  */
 public class LocalVCInternalException extends LocalVCException {
 
-    public LocalVCInternalException(Throwable cause) {
-        super(cause);
-    }
-
     public LocalVCInternalException(String message, Throwable e) {
         super(message, e);
     }
