@@ -29,7 +29,7 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
     @Input() shouldDisplayTimeZoneWarning = true; // Displays a warning that the current time zone might differ from the participants'.
     @Output() valueChange: EventEmitter<boolean> = new EventEmitter();
 
-    invalidDate = false;
+    isInvalidDate = false;
 
     public nameControl = new FormControl();
 
@@ -45,8 +45,8 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
     /**
      * Emits the value change from component.
      */
-    valueChanged(invalidD: boolean) {
-        this.valueChange.emit(invalidD);
+    valueChanged() {
+        this.valueChange.emit(this.isInvalidDate);
     }
 
     /**
@@ -71,8 +71,12 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
         }
     }
 
+    /**
+     * validates a date object
+     * @param date to be validated
+     */
     isValidDate(date: any) {
-        return date && Object.prototype.toString.call(date) === '[object Date]' && !isNaN(date);
+        return date && date instanceof Date && !isNaN(date.getDate());
     }
 
     /**
@@ -91,16 +95,16 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
     }
 
     /**
-     * updates the value with the passed newValue. It is checked if the field is empty or the newValue is not null. Then
-     * the passed date is valid, invalidDate can be set to false. Otherwise, the date is invalid.
-     * @param newValue a valid date object or null
+     * updates the value with the passed newValue date. The date picked using the calendar is always valid.
+     * In case the calendar was opened and no date was selected, the value does not get updated
+     * @param newValue the date picked with the date picker or '' in case the date picker was opened and save was not pressed
      */
     updateField(newValue: any) {
         if (this.value != newValue && newValue != '') {
-            this.invalidDate = false;
+            this.isInvalidDate = false;
             this.value = newValue;
             this._onChange(this.value);
-            this.valueChanged(this.invalidDate);
+            this.valueChanged();
             this.writeValue(this.value);
         }
     }
@@ -112,29 +116,38 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
         return Intl.DateTimeFormat().resolvedOptions().timeZone;
     }
 
-    validate(event: Event) {
+    /**
+     * validates the value from the input field, if it is a date value. In case it is invalid, isInvalidDate is set to true.
+     * An empty input field is considered valid, in this case the value is assigned null
+     * @param event the change event
+     */
+    validateAndUpdateField(event: Event) {
         const val = (event.target as HTMLInputElement).value;
         const date = new Date(val);
 
         if (val == '') {
-            this.invalidDate = false;
+            this.isInvalidDate = false;
             this.value = null;
         } else if (dayjs(val).isValid() && this.isValidDate(date)) {
-            this.invalidDate = false;
+            this.isInvalidDate = false;
             this.value = date;
         } else {
-            this.invalidDate = true;
+            this.isInvalidDate = true;
         }
         this._onChange(this.value);
-        this.valueChanged(this.invalidDate);
+        this.valueChanged();
     }
 
-    emptyField(newValue: any, inputValue: string) {
+    /**
+     * directly updates the value (and removes the invalidDate error message) if the input field has been cleared
+     * @param inputValue the string value from the input field
+     */
+    emptyField(inputValue: string) {
         if (inputValue == '') {
             this.value = null;
-            this.invalidDate = false;
+            this.isInvalidDate = false;
             this._onChange(this.value);
-            this.valueChanged(this.invalidDate);
+            this.valueChanged();
         }
     }
 }

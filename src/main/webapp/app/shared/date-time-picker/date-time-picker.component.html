@@ -14,13 +14,13 @@
             #datePicker
             class="form-control position-relative ps-5"
             id="date-input-field"
-            [ngClass]="{ 'is-invalid': error || invalidDate }"
+            [ngClass]="{ 'is-invalid': error || isInvalidDate }"
             [ngModel]="value"
             [disabled]="disabled"
             [min]="convert(min)"
             [max]="convert(max)"
-            (change)="validate($event)"
-            (ngModelChange)="emptyField($event, datePicker.value)"
+            (change)="validateAndUpdateField($event)"
+            (ngModelChange)="emptyField(datePicker.value)"
             [owlDateTime]="dt"
             name="datePicker"
         />
@@ -29,5 +29,5 @@
         </button>
         <owl-date-time [startAt]="convert(startAt)" (afterPickerClosed)="updateField($event)" #dt></owl-date-time>
     </div>
-    <span *ngIf="invalidDate" class="invalid-feedback">{{ 'entity.validation.invalidDate' | artemisTranslate }}</span>
+    <span *ngIf="isInvalidDate" class="invalid-feedback">{{ 'entity.validation.invalidDate' | artemisTranslate }}</span>
 </div>
