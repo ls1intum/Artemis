@@ -70,7 +70,7 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
         });
     }
 
-    onChange() {
+    updateContainsCircularRelation() {
         if (this.headLearningGoal !== this.tailLearningGoal) {
             this.containsCircularRelation = !!(
                 this.tailLearningGoal &&
@@ -216,6 +216,9 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
     }
 
     createRelation() {
+        if (this.containsCircularRelation) {
+            throw new TypeError('Creation of circular relations is not allowed.');
+        }
         this.learningGoalService
             .createLearningGoalRelation(this.tailLearningGoal!, this.headLearningGoal!, this.relationType!, this.courseId)
             .pipe(
@@ -239,24 +242,30 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
         });
     }
 
+    /**
+     * Checks if adding an edge would create a circular relation
+     * @param   {Node[]} nodes an array of all existing nodes of a graph
+     * @param   {Edge[]} edges an array of all existing edges of a graph
+     * @param   {Edge} edgeToAdd the edge that you try to add to the graph
+     *
+     * @returns {boolean} whether or not adding the provided edge would result in a circle in the graph
+     */
     private doesCreateCircularRelation(nodes: Node[], edges: Edge[], edgeToAdd: Edge): boolean {
-        let edgesWithNewEdge = JSON.parse(JSON.stringify(edges));
+        const edgesWithNewEdge = JSON.parse(JSON.stringify(edges));
         edgesWithNewEdge.push(edgeToAdd);
         const graph = new Graph();
         for (const node of nodes) {
             graph.addVertex(new Vertex(node.id));
         }
         for (const edge of edgesWithNewEdge) {
-            let headVertex = graph.vertices.find((vertex: Vertex) => vertex.getLabel() === edge.target);
-            let tailVertex = graph.vertices.find((vertex: Vertex) => vertex.getLabel() === edge.source);
+            const headVertex = graph.vertices.find((vertex: Vertex) => vertex.getLabel() === edge.target);
+            const tailVertex = graph.vertices.find((vertex: Vertex) => vertex.getLabel() === edge.source);
             if (headVertex === undefined || tailVertex === undefined) {
                 throw new TypeError('Every edge needs a source or a target.');
             }
+            // only extends and assumes relations are considered when checking for circles because only they don't make sense
             switch (edge.label) {
-                case 'EXTENDS': {
-                    graph.addEdge(headVertex, tailVertex);
-                    break;
-                }
+                case 'EXTENDS':
                 case 'ASSUMES': {
                     graph.addEdge(tailVertex, headVertex);
                     break;
@@ -267,6 +276,17 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
     }
 }
 
+/**
+ * A class that represents a vertex in a graph
+ * @class
+ *
+ * @constructor
+ *
+ * @property label          a label to identify the vertex (we use the node id)
+ * @property beingVisited   is the vertex the one that is currently being visited during the graph traversal
+ * @property visited        has this vertex been visited before
+ * @property adjacencyList  an array that contains all adjacent vertices
+ */
 export class Vertex {
     private readonly label: string;
     private beingVisited: boolean;
@@ -278,8 +298,16 @@ export class Vertex {
         this.adjacencyList = [];
     }
 
+    getLabel(): string {
+        return this.label;
+    }
+
     addNeighbor(adjacent: Vertex): void {
         this.adjacencyList.push(adjacent);
+    }
+
+    getAdjacencyList(): Vertex[] {
+        return this.adjacencyList;
     }
 
     isBeingVisited(): boolean {
@@ -297,16 +325,16 @@ export class Vertex {
     setVisited(visited: boolean) {
         this.visited = visited;
     }
-
-    getAdjacencyList(): Vertex[] {
-        return this.adjacencyList;
-    }
-
-    getLabel(): string {
-        return this.label;
-    }
 }
 
+/**
+ * A class that represents a graph
+ * @class
+ *
+ * @constructor
+ *
+ * @property vertices   an array of all vertices in the graph (edges are represented by the adjacent vertices property of each vertex)
+ */
 export class Graph {
     vertices: Vertex[];
 
@@ -322,8 +350,13 @@ export class Graph {
         from.addNeighbor(to);
     }
 
-    // ...
+    /**
+     * Checks if the graph contains a circle
+     *
+     * @returns {boolean} whether or not the graph contains a circle
+     */
     public hasCycle(): boolean {
+        // we have to check for every vertex if it is part of a cycle in case the graph is not connected
         for (const vertex of this.vertices) {
             if (!vertex.isVisited() && this.vertexHasCycle(vertex)) {
                 return true;
@@ -332,6 +365,11 @@ export class Graph {
         return false;
     }
 
+    /**
+     * Checks if a vertex is part of a circle
+     *
+     * @returns {boolean} whether or not the vertex is part of a circle
+     */
     private vertexHasCycle(sourceVertex: Vertex): boolean {
         sourceVertex.setBeingVisited(true);
 

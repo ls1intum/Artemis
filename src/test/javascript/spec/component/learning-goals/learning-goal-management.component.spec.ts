@@ -18,7 +18,7 @@ import { NgbAccordion, NgbModal, NgbModalRef, NgbPanel, NgbProgressbar } from '@
 import { AlertService } from 'app/core/util/alert.service';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { PrerequisiteImportComponent } from 'app/course/learning-goals/learning-goal-management/prerequisite-import.component';
-import { Edge } from '@swimlane/ngx-graph';
+import { Node, Edge } from '@swimlane/ngx-graph';
 import { Component } from '@angular/core';
 
 // eslint-disable-next-line @angular-eslint/component-selector
@@ -185,6 +185,26 @@ describe('LearningGoalManagementComponent', () => {
         component.createRelation();
         expect(createLearningGoalRelationSpy).toHaveBeenCalledOnce();
         expect(createLearningGoalRelationSpy).toHaveBeenCalledWith(123, 456, 'assumes', 1);
+    });
+
+    it('should detect circles on relations', () => {
+        const node1 = { id: '16', label: 'learningGoal1' } as Node;
+        const node2 = { id: '17', label: 'learningGoal2' } as Node;
+        const nodes = [node1, node2];
+        const edge = { id: 'edge1', source: '16', target: '17', label: 'EXTENDS' } as Edge;
+        const edges = [edge];
+        component.tailLearningGoal = 17;
+        component.headLearningGoal = 16;
+        component.relationType = 'EXTENDS';
+
+        expect(
+            // @ts-ignore
+            component.doesCreateCircularRelation(nodes, edges, {
+                source: '17',
+                target: '16',
+                label: 'EXTENDS',
+            } as Edge),
+        ).toBe(true);
     });
 
     it('should remove learning goal relation', () => {
