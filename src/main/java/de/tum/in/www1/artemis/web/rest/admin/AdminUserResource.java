@@ -229,7 +229,7 @@ public class AdminUserResource {
         if (userRepository.isCurrentUser(login)) {
             throw new BadRequestAlertException("You cannot delete yourself", "userManagement", "cannotDeleteYourself");
         }
-        userService.deleteUser(login);
+        userService.softDeleteUser(login);
         return ResponseEntity.ok().headers(HeaderUtil.createAlert(applicationName, "artemisApp.userManagement.deleted", login)).build();
     }
 
@@ -252,7 +252,7 @@ public class AdminUserResource {
         for (String login : logins) {
             try {
                 if (!userRepository.isCurrentUser(login)) {
-                    userService.deleteUser(login);
+                    userService.softDeleteUser(login);
                     deletedUsers.add(login);
                 }
             }
@@ -265,22 +265,4 @@ public class AdminUserResource {
         return ResponseEntity.ok().headers(HeaderUtil.createAlert(applicationName, "artemisApp.userManagement.batch.deleted", String.valueOf(deletedUsers.size())))
                 .body(deletedUsers);
     }
-
-    // TODO: complete the method below
-    // /**
-    // * DELETE users/:login : anonymize the "login" User.
-    // *
-    // * @param login the login of the user to anoymize
-    // * @return the ResponseEntity with status 200 (OK)
-    // */
-    // @DeleteMapping("users/{login:" + Constants.LOGIN_REGEX + "}" + "/")
-    // @EnforceAdmin
-    // public ResponseEntity<Void> anonymizeUser(@PathVariable String login) {
-    // log.debug("REST request to delete User: {}", login);
-    // if (userRepository.isCurrentUser(login)) {
-    // throw new BadRequestAlertException("You cannot delete yourself", "userManagement", "cannotDeleteYourself");
-    // }
-    // userService.deleteUser(login);
-    // return ResponseEntity.ok().headers(HeaderUtil.createAlert(applicationName, "artemisApp.userManagement.deleted", login)).build();
-    // }
 }

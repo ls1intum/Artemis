@@ -89,6 +89,12 @@ public final class Constants {
     // Used as a value for <sourceDirectory> for the Java template pom.xml
     public static final String STUDENT_WORKING_DIRECTORY = ASSIGNMENT_DIRECTORY + "src";
 
+    public static final String USER_FIRST_NAME_AFTER_SOFT_DELETE = "Anonymous";
+
+    public static final String USER_LAST_NAME_AFTER_SOFT_DELETE = "User";
+
+    public static final String USER_EMAIL_AFTER_SOFT_DELETE = "mail@user.anonymous";
+
     // TODO: the following numbers should be configurable in the yml files
 
     public static final long MAX_NUMBER_OF_LOCKED_SUBMISSIONS_PER_TUTOR = 10;

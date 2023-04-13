@@ -79,6 +79,10 @@ public class User extends AbstractAuditingEntity implements Participant {
     @Column(nullable = false)
     private boolean activated = false;
 
+    @NotNull
+    @Column(nullable = false)
+    private boolean isDeleted = false; // default value // TODO: Liquibase changelog
+
     @Size(min = 2, max = 6)
     @Column(name = "lang_key", length = 6)
     private String langKey;
@@ -404,6 +408,14 @@ public class User extends AbstractAuditingEntity implements Participant {
 
     public void setInternal(boolean internal) {
         isInternal = internal;
+    }
+
+    public boolean isDeleted() {
+        return isDeleted;
+    }
+
+    public void setDeleted(boolean deleted) {
+        isDeleted = deleted;
     }
 
     @Nullable

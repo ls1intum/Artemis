@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Authority;
 import de.tum.in.www1.artemis.domain.GuidedTourSetting;
 import de.tum.in.www1.artemis.domain.User;
@@ -449,6 +450,19 @@ public class UserService {
         });
     }
 
+    /**
+     * Performs soft-delete on the user based on login string
+     *
+     * @param login user login string
+     */
+    public void softDeleteUser(String login) {
+        userRepository.findOneByLogin(login).ifPresent(user -> {
+            user.setDeleted(true);
+            anonymizeUser(user);
+            log.warn("Soft Deleted User: {}", user);
+        });
+    }
+
     @Transactional // ok because of delete
     protected void deleteUser(User user) {
         // TODO: before we can delete the user, we need to make sure that all associated objects are deleted as well (or the connection to user is set to null)
@@ -485,19 +499,22 @@ public class UserService {
 
     /**
      * Sets the properties of the user to random or dummy values, making it impossible to identify the user.
-     * Intended to serve a soft delete for users.
      *
      * @param user the user that should be anonymized
      */
     protected void anonymizeUser(User user) {
-        user.setFirstName("Anonymous");
-        user.setLastName("User");
+        user.setFirstName(Constants.USER_FIRST_NAME_AFTER_SOFT_DELETE);
+        user.setLastName(Constants.USER_LAST_NAME_AFTER_SOFT_DELETE);
         user.setLogin(RandomUtil.generateRandomAlphanumericString());
         user.setPassword(RandomUtil.generatePassword());
-        user.setEmail("mail@user.anonymous");
+        user.setEmail(Constants.USER_EMAIL_AFTER_SOFT_DELETE);
         user.setRegistrationNumber("");
         user.setImageUrl("");
         user.setActivated(false);
+
+        userRepository.save(user);
+        clearUserCaches(user);
+        userRepository.flush();
     }
 
     /**
