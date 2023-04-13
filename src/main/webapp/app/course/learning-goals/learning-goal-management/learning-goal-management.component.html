@@ -27,7 +27,7 @@
                         <div class="col">
                             <div class="form-group">
                                 <label for="tail">Tail Learning Goal</label>
-                                <select [ngClass]="{'red-border': containsCircularRelation}" class="form-select" id="tail" name="tail" [(ngModel)]="tailLearningGoal" (change)="updateContainsCircularRelation()">
+                                <select [ngClass]="{'border-danger': containsCircularRelation}" class="form-select" id="tail" name="tail" [(ngModel)]="tailLearningGoal" (change)="updateContainsCircularRelation()">
                                     <option *ngFor="let learningGoal of learningGoals" [value]="learningGoal.id">{{ learningGoal.title }}</option>
                                 </select>
                             </div>
@@ -35,7 +35,7 @@
                         <div class="col">
                             <div class="form-group">
                                 <label for="type">Relation Type</label>
-                                <select [ngClass]="{'red-border': containsCircularRelation}" class="form-select" id="type" name="type" [(ngModel)]="relationType" (change)="updateContainsCircularRelation()">>
+                                <select [ngClass]="{'border-danger': containsCircularRelation}" class="form-select" id="type" name="type" [(ngModel)]="relationType" (change)="updateContainsCircularRelation()">>
                                     <option value="RELATES" selected>Relates</option>
                                     <option value="ASSUMES">Assumes</option>
                                     <option value="EXTENDS">Extends</option>
@@ -46,7 +46,7 @@
                         <div class="col">
                             <div class="form-group">
                                 <label for="head">Head Learning Goal</label>
-                                <select [ngClass]="{'red-border': containsCircularRelation}" class="form-select" id="head" name="head" [(ngModel)]="headLearningGoal" (ngModelChange)="updateContainsCircularRelation()">
+                                <select [ngClass]="{'border-danger': containsCircularRelation}" class="form-select" id="head" name="head" [(ngModel)]="headLearningGoal" (ngModelChange)="updateContainsCircularRelation()">
                                     <option *ngFor="let learningGoal of learningGoals" [value]="learningGoal.id">{{ learningGoal.title }}</option>
                                 </select>
                             </div>
