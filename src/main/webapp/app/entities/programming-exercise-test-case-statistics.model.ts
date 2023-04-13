@@ -9,6 +9,6 @@ export type IssuesMap = { [issues: string]: number };
 export type CategoryIssuesMap = { [category: string]: IssuesMap };
 
 export class TestCaseStats {
-    numPassed?: number;
-    numFailed?: number;
+    numPassed = 0;
+    numFailed = 0;
 }
