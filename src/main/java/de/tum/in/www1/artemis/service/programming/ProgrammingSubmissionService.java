@@ -29,7 +29,6 @@ import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.service.exam.ExamSubmissionService;
 import de.tum.in.www1.artemis.service.hestia.ProgrammingExerciseGitDiffReportService;
-import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 // TODO: this class has too many dependencies to other services. We should reduce this
@@ -50,8 +49,6 @@ public class ProgrammingSubmissionService extends SubmissionService {
 
     private final ProgrammingMessagingService programmingMessagingService;
 
-    private final ResultRepository resultRepository;
-
     private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
     private final ExamSubmissionService examSubmissionService;
@@ -66,6 +63,8 @@ public class ProgrammingSubmissionService extends SubmissionService {
 
     private final ProgrammingExerciseGitDiffReportService programmingExerciseGitDiffReportService;
 
+    private final ParticipationAuthorizationCheckService participationAuthCheckService;
+
     public ProgrammingSubmissionService(ProgrammingSubmissionRepository programmingSubmissionRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             SubmissionRepository submissionRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             ProgrammingMessagingService programmingMessagingService, Optional<VersionControlService> versionControlService, ResultRepository resultRepository,
@@ -74,7 +73,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
             StudentParticipationRepository studentParticipationRepository, FeedbackRepository feedbackRepository, ExamDateService examDateService,
             ExerciseDateService exerciseDateService, CourseRepository courseRepository, ParticipationRepository participationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ComplaintRepository complaintRepository,
-            ProgrammingExerciseGitDiffReportService programmingExerciseGitDiffReportService) {
+            ProgrammingExerciseGitDiffReportService programmingExerciseGitDiffReportService, ParticipationAuthorizationCheckService participationAuthCheckService) {
         super(submissionRepository, userRepository, authCheckService, resultRepository, studentParticipationRepository, participationService, feedbackRepository, examDateService,
                 exerciseDateService, courseRepository, participationRepository, complaintRepository);
         this.programmingSubmissionRepository = programmingSubmissionRepository;
@@ -85,9 +84,9 @@ public class ProgrammingSubmissionService extends SubmissionService {
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.examSubmissionService = examSubmissionService;
         this.gitService = gitService;
-        this.resultRepository = resultRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.programmingExerciseGitDiffReportService = programmingExerciseGitDiffReportService;
+        this.participationAuthCheckService = participationAuthCheckService;
     }
 
     /**
@@ -234,9 +233,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
         if (!(participation instanceof ProgrammingExerciseParticipation programmingExerciseParticipation)) {
             throw new IllegalArgumentException("Participation with id " + participationId + " is not a programming exercise participation!");
         }
-        if (!programmingExerciseParticipationService.canAccessParticipation(programmingExerciseParticipation)) {
-            throw new AccessForbiddenException("Participation with id " + participationId + " can't be accessed by user " + SecurityUtils.getCurrentUserLogin());
-        }
+        participationAuthCheckService.checkCanAccessParticipationElseThrow(programmingExerciseParticipation);
 
         return findLatestPendingSubmissionForParticipation(participationId, filterGraded);
     }

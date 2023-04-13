@@ -78,6 +78,8 @@ public class ParticipationResource {
 
     private final AuthorizationCheckService authCheckService;
 
+    private final ParticipationAuthorizationCheckService participationAuthCheckService;
+
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
 
     private final UserRepository userRepository;
@@ -115,8 +117,9 @@ public class ParticipationResource {
     public ParticipationResource(ParticipationService participationService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
             CourseRepository courseRepository, QuizExerciseRepository quizExerciseRepository, ExerciseRepository exerciseRepository,
             ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService,
-            Optional<ContinuousIntegrationService> continuousIntegrationService, UserRepository userRepository, StudentParticipationRepository studentParticipationRepository,
-            AuditEventRepository auditEventRepository, GuidedTourConfiguration guidedTourConfiguration, TeamRepository teamRepository, FeatureToggleService featureToggleService,
+            ParticipationAuthorizationCheckService participationAuthCheckService, Optional<ContinuousIntegrationService> continuousIntegrationService,
+            UserRepository userRepository, StudentParticipationRepository studentParticipationRepository, AuditEventRepository auditEventRepository,
+            GuidedTourConfiguration guidedTourConfiguration, TeamRepository teamRepository, FeatureToggleService featureToggleService,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, SubmissionRepository submissionRepository,
             ResultRepository resultRepository, ExerciseDateService exerciseDateService, InstanceMessageSendService instanceMessageSendService, QuizBatchService quizBatchService,
             QuizScheduleService quizScheduleService, SubmittedAnswerRepository submittedAnswerRepository, GroupNotificationService groupNotificationService,
@@ -128,6 +131,7 @@ public class ParticipationResource {
         this.exerciseRepository = exerciseRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.authCheckService = authCheckService;
+        this.participationAuthCheckService = participationAuthCheckService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.userRepository = userRepository;
         this.auditEventRepository = auditEventRepository;
@@ -571,7 +575,8 @@ public class ParticipationResource {
     public ResponseEntity<StudentParticipation> getParticipationWithLatestResult(@PathVariable Long participationId) {
         log.debug("REST request to get Participation : {}", participationId);
         StudentParticipation participation = studentParticipationRepository.findByIdWithResultsElseThrow(participationId);
-        authCheckService.canAccessParticipation(participation);
+        participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
+
         Result result = participation.getExercise().findLatestResultWithCompletionDate(participation);
         Set<Result> results = new HashSet<>();
         if (result != null) {
