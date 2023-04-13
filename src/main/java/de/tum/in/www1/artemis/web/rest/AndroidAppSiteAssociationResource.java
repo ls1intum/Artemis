@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.web.rest;
 
 import java.util.List;
 
-import de.tum.in.www1.artemis.security.annotations.ManualConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -10,6 +9,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import de.tum.in.www1.artemis.security.annotations.ManualConfig;
 
 /**
  * REST controller for the android assetlink.json
