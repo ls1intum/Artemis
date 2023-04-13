@@ -337,7 +337,7 @@
                                         !value.results[0].completionDate &&
                                         value.results[0].assessmentType !== AssessmentType.AUTOMATIC
                                     "
-                                            (click)="cancelAssessment(value.results[0].submission)"
+                                            (click)="cancelAssessment(value.results[0])"
                                             [disabled]="isLoading"
                                             class="btn btn-danger btn-sm mb-1"
                                         >
@@ -347,10 +347,7 @@
                                 </ng-container>
                             </ng-container>
                             <ng-template #singleCorrectionRound>
-                                <div
-                                    *ngIf="(newManualResultAllowed || (value.results?.[0]?.assessmentType && value.results[0].assessmentType !== AssessmentType.AUTOMATIC)) &&
-                                        value.results?.[0]?.submission"
-                                >
+                                <div *ngIf="(newManualResultAllowed || (value.results?.[0]?.assessmentType && value.results[0].assessmentType !== AssessmentType.AUTOMATIC))">
                                     <a
                                         [routerLink]="getAssessmentLink(value)"
                                         class="btn btn-sm me-1"
@@ -372,11 +369,11 @@
                                     <button
                                         *ngIf="
                                             newManualResultAllowed &&
-                                            value.results[0]?.assessmentType &&
+                                            value.results?.[0]?.assessmentType &&
                                             !value.results[0].completionDate &&
                                             value.results[0].assessmentType !== AssessmentType.AUTOMATIC
                                         "
-                                        (click)="cancelAssessment(value.results[0].submission)"
+                                        (click)="cancelAssessment(value.results[0])"
                                         [disabled]="isLoading"
                                         class="btn btn-danger btn-sm mb-1"
                                     >
