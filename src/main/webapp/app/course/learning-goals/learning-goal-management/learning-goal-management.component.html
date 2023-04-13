@@ -21,12 +21,12 @@
     <div *ngIf="showRelations" class="container mt-3 mb-3">
         <ngb-accordion [closeOthers]="true">
             <ngb-panel id="panel-1">
-                <ng-template ngbPanelTitle>Competency Relations <span class="badge rounded-pill text-bg-warning ms-1">BETA</span> </ng-template>
+                <ng-template ngbPanelTitle>{{ 'artemisApp.learningGoal.relation.competencyRelations' | artemisTranslate }}<span class="badge rounded-pill text-bg-warning ms-1">BETA</span> </ng-template>
                 <ng-template ngbPanelContent>
                     <form class="row p-3 g-3 align-items-center">
                         <div class="col">
                             <div class="form-group">
-                                <label for="tail">Tail Learning Goal</label>
+                                <label for="tail">{{ 'artemisApp.learningGoal.relation.tailLearningGoal' | artemisTranslate }}</label>
                                 <select class="form-select" id="tail" name="tail" [(ngModel)]="tailLearningGoal">
                                     <option *ngFor="let learningGoal of learningGoals" [value]="learningGoal.id">{{ learningGoal.title }}</option>
                                 </select>
@@ -34,18 +34,18 @@
                         </div>
                         <div class="col">
                             <div class="form-group">
-                                <label for="type">Relation Type</label>
+                                <label for="type">{{ 'artemisApp.learningGoal.relation.relationType' | artemisTranslate }}</label>
                                 <select class="form-select" id="type" name="type" [(ngModel)]="relationType">
-                                    <option value="RELATES" selected>Relates</option>
-                                    <option value="ASSUMES">Assumes</option>
-                                    <option value="EXTENDS">Extends</option>
-                                    <option value="MATCHES">Matches</option>
+                                    <option value="RELATES" selected>{{ 'artemisApp.learningGoal.relation.relates' | artemisTranslate }}</option>
+                                    <option value="ASSUMES">{{ 'artemisApp.learningGoal.relation.assumes' | artemisTranslate }}</option>
+                                    <option value="EXTENDS">{{ 'artemisApp.learningGoal.relation.extends' | artemisTranslate }}</option>
+                                    <option value="MATCHES">{{ 'artemisApp.learningGoal.relation.matches' | artemisTranslate }}</option>
                                 </select>
                             </div>
                         </div>
                         <div class="col">
                             <div class="form-group">
-                                <label for="head">Head Learning Goal</label>
+                                <label for="head">{{ 'artemisApp.learningGoal.relation.headLearningGoal' | artemisTranslate }}</label>
                                 <select class="form-select" id="head" name="head" [(ngModel)]="headLearningGoal">
                                     <option *ngFor="let learningGoal of learningGoals" [value]="learningGoal.id">{{ learningGoal.title }}</option>
                                 </select>
@@ -55,7 +55,7 @@
                             <input
                                 type="button"
                                 class="btn btn-primary"
-                                value="Create Relation"
+                                value="{{ 'artemisApp.learningGoal.relation.createRelation' | artemisTranslate }}"
                                 (click)="createRelation()"
                                 [disabled]="!headLearningGoal || !tailLearningGoal || !relationType || headLearningGoal == tailLearningGoal"
                             />
@@ -97,7 +97,7 @@
                                 <svg:path class="line" stroke-width="2" marker-end="url(#arrow)"></svg:path>
                                 <svg:text class="edge-label" text-anchor="middle">
                                     <textPath class="text-path" [attr.href]="'#' + link.id" [style.dominant-baseline]="link.dominantBaseline" startOffset="50%">
-                                        {{ link.label }}
+                                        {{ ('artemisApp.learningGoal.relation.' + link.label.toLowerCase() | artemisTranslate).toUpperCase() }}
                                     </textPath>
                                 </svg:text>
                             </svg:g>
