@@ -21,7 +21,9 @@
     <div *ngIf="showRelations" class="container mt-3 mb-3">
         <ngb-accordion [closeOthers]="true">
             <ngb-panel id="panel-1">
-                <ng-template ngbPanelTitle>{{ 'artemisApp.learningGoal.relation.competencyRelations' | artemisTranslate }}<span class="badge rounded-pill text-bg-warning ms-1">BETA</span> </ng-template>
+                <ng-template ngbPanelTitle
+                    >{{ 'artemisApp.learningGoal.relation.competencyRelations' | artemisTranslate }}<span class="badge rounded-pill text-bg-warning ms-1">BETA</span>
+                </ng-template>
                 <ng-template ngbPanelContent>
                     <form class="row p-3 g-3 align-items-center">
                         <div class="col">
