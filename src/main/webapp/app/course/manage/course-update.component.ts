@@ -57,8 +57,9 @@ export class CourseUpdateComponent implements OnInit {
     presentationScorePattern = /^[0-9]{0,4}$/; // makes sure that the presentation score is a positive natural integer greater than 0 and not too large
     courseOrganizations: Organization[];
     isAdmin = false;
-    invalidStartDate: boolean;
-    invalidEndDate: boolean;
+    isInvalidStartDate: boolean;
+    isInvalidEndDate: boolean;
+    areInvalidDates: boolean;
 
     // Icons
     faSave = faSave;
@@ -96,6 +97,9 @@ export class CourseUpdateComponent implements OnInit {
     ngOnInit() {
         this.timeZones = (Intl as any).supportedValuesOf('timeZone');
         this.isSaving = false;
+        this.isInvalidStartDate = false;
+        this.isInvalidEndDate = false;
+        this.areInvalidDates = false;
         // create a new course, and only overwrite it if we fetch a course to edit
         this.course = new Course();
         this.activatedRoute.parent!.data.subscribe(({ course }) => {
@@ -510,12 +514,13 @@ export class CourseUpdateComponent implements OnInit {
      * Returns whether the dates are valid or not
      * @return true if the dats are valid
      */
-    get isValidDate(): boolean {
+    validateDates() {
         // allow instructors to set startDate and endDate later
         if (this.atLeastOneDateNotExisting()) {
-            return true;
+            this.areInvalidDates = false;
+        } else {
+            this.areInvalidDates = !dayjs(this.course.startDate).isBefore(this.course.endDate);
         }
-        return dayjs(this.course.startDate).isBefore(this.course.endDate);
     }
 
     /**
@@ -524,11 +529,11 @@ export class CourseUpdateComponent implements OnInit {
      */
     private atLeastOneDateNotExisting(): boolean {
         // we need to take into account that the date is only deleted by the user, which leads to a invalid state of the date
-        return !this.course.startDate || !this.course.endDate || !this.course.startDate.isValid() || !this.course.endDate.isValid();
+        return !this.course.startDate || !this.course.endDate;
     }
 
     get isValidConfiguration(): boolean {
-        return this.isValidDate && !this.invalidStartDate && !this.invalidEndDate;
+        return !this.areInvalidDates && !this.isInvalidStartDate && !this.isInvalidEndDate;
     }
 
     /**
@@ -538,6 +543,16 @@ export class CourseUpdateComponent implements OnInit {
         this.course.courseIcon = undefined;
         this.croppedImage = undefined;
         this.courseForm.controls['courseIcon'].setValue(undefined);
+    }
+
+    validateStartDate(isInvalidDate: boolean) {
+        this.isInvalidStartDate = isInvalidDate;
+        this.validateDates();
+    }
+
+    validateEndDate(isInvalidDate: boolean) {
+        this.isInvalidEndDate = isInvalidDate;
+        this.validateDates();
     }
 }
 

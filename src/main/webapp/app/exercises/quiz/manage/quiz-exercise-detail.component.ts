@@ -1089,19 +1089,23 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
         return !!this.quizExercise?.quizBatches?.some((batch) => batch.startTimeError);
     }
 
-    onIsInvalidReleaseDateChange(isInvalidDate: boolean) {
+    validateReleaseDate(isInvalidDate: boolean) {
         this.isInvalidReleaseDate = isInvalidDate;
+        this.cacheValidation();
     }
 
-    onIsInvalidStartDateChange(isInvalidDate: boolean) {
+    validateStartDate(isInvalidDate: boolean) {
         this.isInvalidStartDate = isInvalidDate;
+        this.cacheValidation();
     }
 
-    onIsInvalidDueDateChange(isInvalidDate: boolean) {
+    validateDueDate(isInvalidDate: boolean) {
         this.isInvalidDueDate = isInvalidDate;
+        this.cacheValidation();
     }
 
-    onIsInvalidBachModeStartTimeChange(isInvalidDate: boolean) {
+    validateBachModeStartTime(isInvalidDate: boolean) {
         this.isInvalidBachModeStartTime = isInvalidDate;
+        this.cacheValidation();
     }
 }

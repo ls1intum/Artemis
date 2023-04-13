@@ -438,14 +438,14 @@ describe('Course Management Update Component', () => {
             comp.course = new Course();
             comp.course.startDate = dayjs().subtract(1, 'day');
             comp.course.endDate = dayjs().add(1, 'day');
-            expect(comp.isValidDate).toBeTrue();
+            expect(comp.validateDates).toBeTrue();
         });
 
         it('should handle invalid dates', () => {
             comp.course = new Course();
             comp.course.startDate = dayjs().add(1, 'day');
             comp.course.endDate = dayjs().subtract(1, 'day');
-            expect(comp.isValidDate).toBeFalse();
+            expect(comp.validateDates).toBeFalse();
         });
     });
 
