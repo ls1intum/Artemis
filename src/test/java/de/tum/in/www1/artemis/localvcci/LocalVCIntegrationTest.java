@@ -204,4 +204,17 @@ class LocalVCIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest
         secondLocalGit.close();
         FileUtils.deleteDirectory(tempDirectory.toFile());
     }
+
+    @Test
+    void testUserCreatesNewBranch() throws GitAPIException {
+        // Users can create new branches, but pushing them should not result in a new submission.
+        assignmentRepository.localGit.branchCreate().setName("new-branch").setStartPoint("refs/heads/" + defaultBranch).call();
+        String repositoryUrl = localVCLocalCITestService.constructLocalVCUrl(student1Login, projectKey1, assignmentRepositorySlug);
+
+        PushResult pushResult = assignmentRepository.localGit.push().setRemote(repositoryUrl).setRefSpecs(new RefSpec("refs/heads/new-branch:refs/heads/new-branch")).call()
+                .iterator().next();
+        RemoteRefUpdate remoteRefUpdate = pushResult.getRemoteUpdates().iterator().next();
+        assertThat(remoteRefUpdate.getStatus()).isEqualTo(RemoteRefUpdate.Status.REJECTED_OTHER_REASON);
+        assertThat(remoteRefUpdate.getMessage()).isEqualTo("Only update commands are taken into consideration for submissions.");
+    }
 }

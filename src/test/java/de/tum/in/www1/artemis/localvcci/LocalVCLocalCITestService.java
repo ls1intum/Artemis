@@ -317,7 +317,7 @@ public class LocalVCLocalCITestService {
             performPush(repositoryHandle, username, password, projectKey, repositorySlug);
         }
         catch (GitAPIException e) {
-            fail("Fetching was not successful: " + e.getMessage());
+            fail("Pushing was not successful: " + e.getMessage());
         }
     }
 
