@@ -122,10 +122,10 @@
                 "relationType": "Beziehungstyp",
                 "headLearningGoal": "Kopflernziel",
                 "relates": "Bezieht sich auf",
-                "assumes":  "Setzt voraus",
+                "assumes": "Setzt voraus",
                 "extends": "Erweitert",
                 "matches": "Stimmt überein mit",
-                "createRelation":  "Beziehung erstellen"
+                "createRelation": "Beziehung erstellen"
             }
         }
     }
