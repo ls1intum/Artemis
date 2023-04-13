@@ -27,7 +27,14 @@
                         <div class="col">
                             <div class="form-group">
                                 <label for="tail">Tail Learning Goal</label>
-                                <select [ngClass]="{'border-danger': containsCircularRelation}" class="form-select" id="tail" name="tail" [(ngModel)]="tailLearningGoal" (change)="updateContainsCircularRelation()">
+                                <select
+                                    [ngClass]="{ 'border-danger': containsCircularRelation }"
+                                    class="form-select"
+                                    id="tail"
+                                    name="tail"
+                                    [(ngModel)]="tailLearningGoal"
+                                    (change)="updateContainsCircularRelation()"
+                                >
                                     <option *ngFor="let learningGoal of learningGoals" [value]="learningGoal.id">{{ learningGoal.title }}</option>
                                 </select>
                             </div>
@@ -35,7 +42,15 @@
                         <div class="col">
                             <div class="form-group">
                                 <label for="type">Relation Type</label>
-                                <select [ngClass]="{'border-danger': containsCircularRelation}" class="form-select" id="type" name="type" [(ngModel)]="relationType" (change)="updateContainsCircularRelation()">>
+                                <select
+                                    [ngClass]="{ 'border-danger': containsCircularRelation }"
+                                    class="form-select"
+                                    id="type"
+                                    name="type"
+                                    [(ngModel)]="relationType"
+                                    (change)="updateContainsCircularRelation()"
+                                >
+                                    >
                                     <option value="RELATES" selected>Relates</option>
                                     <option value="ASSUMES">Assumes</option>
                                     <option value="EXTENDS">Extends</option>
@@ -46,7 +61,14 @@
                         <div class="col">
                             <div class="form-group">
                                 <label for="head">Head Learning Goal</label>
-                                <select [ngClass]="{'border-danger': containsCircularRelation}" class="form-select" id="head" name="head" [(ngModel)]="headLearningGoal" (ngModelChange)="updateContainsCircularRelation()">
+                                <select
+                                    [ngClass]="{ 'border-danger': containsCircularRelation }"
+                                    class="form-select"
+                                    id="head"
+                                    name="head"
+                                    [(ngModel)]="headLearningGoal"
+                                    (ngModelChange)="updateContainsCircularRelation()"
+                                >
                                     <option *ngFor="let learningGoal of learningGoals" [value]="learningGoal.id">{{ learningGoal.title }}</option>
                                 </select>
                             </div>
@@ -59,10 +81,20 @@
                                 (click)="createRelation()"
                                 [disabled]="!headLearningGoal || !tailLearningGoal || !relationType || headLearningGoal == tailLearningGoal || containsCircularRelation"
                             />
-                            <span jhiTranslate="artemisApp.learningGoal.relation.createsCircularRelation" *ngIf="containsCircularRelation && headLearningGoal !== tailLearningGoal" id="circularRelationFeedback" class="invalid-feedback">
+                            <span
+                                jhiTranslate="artemisApp.learningGoal.relation.createsCircularRelation"
+                                *ngIf="containsCircularRelation && headLearningGoal !== tailLearningGoal"
+                                id="circularRelationFeedback"
+                                class="invalid-feedback"
+                            >
                                 You can not create circular relations between competencies.
                             </span>
-                            <span jhiTranslate="artemisApp.learningGoal.relation.selfRelation" *ngIf="headLearningGoal && tailLearningGoal && relationType && headLearningGoal == tailLearningGoal" id="selfRelationFeedback" class="invalid-feedback">
+                            <span
+                                jhiTranslate="artemisApp.learningGoal.relation.selfRelation"
+                                *ngIf="headLearningGoal && tailLearningGoal && relationType && headLearningGoal == tailLearningGoal"
+                                id="selfRelationFeedback"
+                                class="invalid-feedback"
+                            >
                                 You can not create a relation between a competency and itself.
                             </span>
                         </div>

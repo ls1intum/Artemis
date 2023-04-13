@@ -115,8 +115,8 @@
                     "loading": "Loading..."
                 }
             },
-            "relation":  {
-                "createsCircularRelation":  "You can not create circular relations between competencies.",
+            "relation": {
+                "createsCircularRelation": "You can not create circular relations between competencies.",
                 "selfRelation": "You can not create a relation between a competency and itself."
             }
         }
