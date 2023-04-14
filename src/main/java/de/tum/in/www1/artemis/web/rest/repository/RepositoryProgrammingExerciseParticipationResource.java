@@ -8,7 +8,6 @@ import javax.servlet.http.HttpServletRequest;
 import org.eclipse.jgit.api.errors.CheckoutConflictException;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.WrongRepositoryStateException;
-import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -21,11 +20,11 @@ import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.BuildLogEntryService;
+import de.tum.in.www1.artemis.service.ParticipationAuthorizationCheckService;
 import de.tum.in.www1.artemis.service.RepositoryAccessService;
 import de.tum.in.www1.artemis.service.RepositoryService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
-import de.tum.in.www1.artemis.service.connectors.localci.LocalCIPushService;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
@@ -44,6 +43,8 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @PreAuthorize("hasRole('USER')")
 public class RepositoryProgrammingExerciseParticipationResource extends RepositoryResource {
 
+    private final ParticipationAuthorizationCheckService participationAuthCheckService;
+
     private final ProgrammingExerciseParticipationService participationService;
 
     private final BuildLogEntryService buildLogService;
@@ -54,14 +55,18 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
 
     private final SubmissionPolicyRepository submissionPolicyRepository;
 
-    public RepositoryProgrammingExerciseParticipationResource(Environment environment, UserRepository userRepository, AuthorizationCheckService authCheckService,
-            GitService gitService, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
-            RepositoryService repositoryService, ProgrammingExerciseParticipationService participationService, ProgrammingExerciseRepository programmingExerciseRepository,
-            ParticipationRepository participationRepository, BuildLogEntryService buildLogService, ProgrammingSubmissionRepository programmingSubmissionRepository,
-            RepositoryAccessService repositoryAccessService, SubmissionPolicyRepository submissionPolicyRepository, Optional<LocalCIPushService> localCIPushService) {
-        super(environment, userRepository, authCheckService, gitService, continuousIntegrationService, repositoryService, versionControlService, programmingExerciseRepository,
-                repositoryAccessService, localCIPushService);
+    public RepositoryProgrammingExerciseParticipationResource(UserRepository userRepository, AuthorizationCheckService authCheckService,
+            ParticipationAuthorizationCheckService participationAuthCheckService, GitService gitService, Optional<ContinuousIntegrationService> continuousIntegrationService,
+            Optional<VersionControlService> versionControlService, RepositoryService repositoryService, ProgrammingExerciseParticipationService participationService,
+            ProgrammingExerciseRepository programmingExerciseRepository, ParticipationRepository participationRepository, ExamSubmissionService examSubmissionService,
+            BuildLogEntryService buildLogService, ProgrammingSubmissionRepository programmingSubmissionRepository, SubmissionPolicyRepository submissionPolicyRepository,
+            RepositoryAccessService repositoryAccessService) {
+        super(userRepository, authCheckService, gitService, continuousIntegrationService, repositoryService, versionControlService, programmingExerciseRepository,
+                repositoryAccessService);
+
+        this.participationAuthCheckService = participationAuthCheckService;
         this.participationService = participationService;
+        this.examSubmissionService = examSubmissionService;
         this.buildLogService = buildLogService;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.participationRepository = participationRepository;
@@ -122,10 +127,12 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     @Override
     boolean canAccessRepository(Long participationId) throws IllegalArgumentException {
         Participation participation = participationRepository.findByIdElseThrow(participationId);
-        if (!(participation instanceof ProgrammingExerciseParticipation)) {
+        if (participation instanceof ProgrammingExerciseParticipation programmingExerciseParticipation) {
+            return participationAuthCheckService.canAccessParticipation(programmingExerciseParticipation);
+        }
+        else {
             throw new IllegalArgumentException();
         }
-        return participationService.canAccessParticipation((ProgrammingExerciseParticipation) participation);
     }
 
     @Override
@@ -343,10 +350,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         log.debug("REST request to get build log : {}", participationId);
 
         ProgrammingExerciseParticipation participation = participationService.findProgrammingExerciseParticipationWithLatestSubmissionAndResult(participationId);
-
-        if (!participationService.canAccessParticipation(participation)) {
-            throw new AccessForbiddenException("Participation", participationId);
-        }
+        participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
 
         ProgrammingSubmission programmingSubmission = (ProgrammingSubmission) participation.getSubmissions().stream().findFirst().orElse(null);
         // If a resultId is specified and the ID does not belong to the latest result, find the corresponding submission. Otherwise use the latest submission.

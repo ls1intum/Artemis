@@ -22,11 +22,11 @@ import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ExerciseDateService;
+import de.tum.in.www1.artemis.service.ParticipationAuthorizationCheckService;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
-import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingMessagingService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingSubmissionService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingTriggerService;
@@ -57,7 +57,7 @@ public class ProgrammingSubmissionResource {
 
     private final AuthorizationCheckService authCheckService;
 
-    private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
+    private final ParticipationAuthorizationCheckService participationAuthCheckService;
 
     private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
 
@@ -75,11 +75,10 @@ public class ProgrammingSubmissionResource {
 
     public ProgrammingSubmissionResource(ProgrammingSubmissionService programmingSubmissionService, ProgrammingTriggerService programmingTriggerService,
             ProgrammingMessagingService programmingMessagingService, ExerciseRepository exerciseRepository, ParticipationRepository participationRepository,
-            AuthorizationCheckService authCheckService, ProgrammingExerciseRepository programmingExerciseRepository,
-            ProgrammingExerciseParticipationService programmingExerciseParticipationService,
-            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, Optional<VersionControlService> versionControlService,
-            UserRepository userRepository, Optional<ContinuousIntegrationService> continuousIntegrationService, GradingCriterionRepository gradingCriterionRepository,
-            SubmissionRepository submissionRepository, ExerciseDateService exerciseDateService) {
+            AuthorizationCheckService authCheckService, ParticipationAuthorizationCheckService participationAuthCheckService,
+            ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
+            Optional<VersionControlService> versionControlService, UserRepository userRepository, Optional<ContinuousIntegrationService> continuousIntegrationService,
+            GradingCriterionRepository gradingCriterionRepository, SubmissionRepository submissionRepository, ExerciseDateService exerciseDateService) {
         this.programmingSubmissionService = programmingSubmissionService;
         this.programmingTriggerService = programmingTriggerService;
         this.programmingMessagingService = programmingMessagingService;
@@ -87,7 +86,7 @@ public class ProgrammingSubmissionResource {
         this.participationRepository = participationRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.authCheckService = authCheckService;
-        this.programmingExerciseParticipationService = programmingExerciseParticipationService;
+        this.participationAuthCheckService = participationAuthCheckService;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.versionControlService = versionControlService;
         this.userRepository = userRepository;
@@ -168,9 +167,7 @@ public class ProgrammingSubmissionResource {
             throw new EntityNotFoundException("Participation is not a ProgrammingExerciseParticipation");
         }
 
-        if (!programmingExerciseParticipationService.canAccessParticipation(programmingExerciseParticipation)) {
-            throw new AccessForbiddenException();
-        }
+        participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
 
         // The editor is allowed to trigger an instructor build for template and solution participations,
         // but not for student participations. The instructor however, might trigger student participations.
@@ -209,9 +206,8 @@ public class ProgrammingSubmissionResource {
         if (!(participation instanceof ProgrammingExerciseParticipation programmingExerciseParticipation)) {
             throw new EntityNotFoundException("Participation is not a ProgrammingExerciseParticipation");
         }
-        if (!programmingExerciseParticipationService.canAccessParticipation(programmingExerciseParticipation)) {
-            throw new AccessForbiddenException();
-        }
+        participationAuthCheckService.checkCanAccessParticipationElseThrow(programmingExerciseParticipation);
+
         ProgrammingSubmission submission = programmingSubmissionService.getLatestPendingSubmission(participationId, lastGraded)
                 .orElseThrow(() -> new EntityNotFoundException("No latest pending programming submission found for participationId " + participationId));
 

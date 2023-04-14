@@ -515,33 +515,6 @@ public class AuthorizationCheckService {
     }
 
     /**
-     * Check if a participation can be accessed with the current user.
-     *
-     * @param participation to access
-     * @return can user access participation
-     */
-    public boolean canAccessParticipation(StudentParticipation participation) {
-        return Optional.ofNullable(participation).isPresent() && userHasPermissionsToAccessParticipation(participation);
-    }
-
-    /**
-     * Check if a user has permissions to access a certain participation. This includes not only the owner of the participation but also the TAs and instructors of the course.
-     *
-     * @param participation to access
-     * @return does user has permissions to access participation
-     */
-    private boolean userHasPermissionsToAccessParticipation(StudentParticipation participation) {
-        if (isOwnerOfParticipation(participation)) {
-            return true;
-        }
-        // if the user is not the owner of the participation, the user can only see it in case they are
-        // a teaching assistant, an editor or an instructor of the course, or in case they are an admin
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        Course course = participation.getExercise().getCourseViaExerciseGroupOrCourseMember();
-        return isAtLeastTeachingAssistantInCourse(course, user);
-    }
-
-    /**
      * Tutors of an exercise are allowed to assess the submissions, but only instructors are allowed to assess with a specific result
      *
      * @param exercise Exercise of the submission
