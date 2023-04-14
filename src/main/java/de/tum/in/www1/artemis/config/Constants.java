@@ -18,9 +18,9 @@ public final class Constants {
 
     public static int COMPLAINT_LOCK_DURATION_IN_MINUTES = 24 * 60; // 24h; Same as in artemisApp.locks.acquired
 
-    public static int SECONDS_BEFORE_RELEASE_DATE_FOR_COMBINING_TEMPLATE_COMMITS = 15;
+    public static final int SECONDS_BEFORE_RELEASE_DATE_FOR_COMBINING_TEMPLATE_COMMITS = 15;
 
-    public static int SECONDS_AFTER_RELEASE_DATE_FOR_UNLOCKING_STUDENT_EXAM_REPOS = 5;
+    public static final int SECONDS_AFTER_RELEASE_DATE_FOR_UNLOCKING_STUDENT_EXAM_REPOS = 5;
 
     // Regex for acceptable logins
     public static final String LOGIN_REGEX = "^[_'.@A-Za-z0-9-]*$";
@@ -123,12 +123,20 @@ public final class Constants {
 
     public static final String PROGRAMMING_EXERCISE_SUCCESSFUL_UNLOCK_OPERATION_NOTIFICATION = "The student repositories for this programming exercise were unlocked successfully.";
 
-    public static final int FEEDBACK_DETAIL_TEXT_MAX_CHARACTERS = 5000;
+    /**
+     * Maximum length in the database for the feedback detail text.
+     */
+    public static final int FEEDBACK_DETAIL_TEXT_DATABASE_MAX_LENGTH = 5000;
+
+    /**
+     * Maximum length of feedback detail texts before a long feedback is created.
+     */
+    public static final int FEEDBACK_DETAIL_TEXT_SOFT_MAX_LENGTH = 1000;
 
     /**
      * Maximum length for feedback detail text that is trimmed and moved to a connected long feedback instead.
      */
-    public static final int FEEDBACK_PREVIEW_TEXT_MAX_CHARACTERS = 300;
+    public static final int FEEDBACK_PREVIEW_TEXT_MAX_LENGTH = 300;
 
     /**
      * Arbitrary limit that is unlikely to be reached by real feedback in practice.

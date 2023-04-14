@@ -88,7 +88,7 @@ class LongFeedbackResourceIntegrationTest extends AbstractSpringIntegrationBambo
 
     private Feedback addLongFeedbackToResult(final Result result) {
         final Feedback feedback = new Feedback();
-        feedback.setDetailText("a".repeat(Constants.FEEDBACK_DETAIL_TEXT_MAX_CHARACTERS + 10));
+        feedback.setDetailText("a".repeat(Constants.FEEDBACK_DETAIL_TEXT_DATABASE_MAX_LENGTH + 10));
 
         database.addFeedbackToResult(feedback, result);
 

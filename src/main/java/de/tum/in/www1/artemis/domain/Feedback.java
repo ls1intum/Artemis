@@ -1,7 +1,8 @@
 package de.tum.in.www1.artemis.domain;
 
-import static de.tum.in.www1.artemis.config.Constants.FEEDBACK_DETAIL_TEXT_MAX_CHARACTERS;
-import static de.tum.in.www1.artemis.config.Constants.FEEDBACK_PREVIEW_TEXT_MAX_CHARACTERS;
+import static de.tum.in.www1.artemis.config.Constants.FEEDBACK_DETAIL_TEXT_DATABASE_MAX_LENGTH;
+import static de.tum.in.www1.artemis.config.Constants.FEEDBACK_DETAIL_TEXT_SOFT_MAX_LENGTH;
+import static de.tum.in.www1.artemis.config.Constants.FEEDBACK_PREVIEW_TEXT_MAX_LENGTH;
 import static de.tum.in.www1.artemis.config.Constants.LONG_FEEDBACK_MAX_LENGTH;
 
 import java.util.*;
@@ -43,8 +44,8 @@ public class Feedback extends DomainObject {
     @Column(name = "text", length = 500)
     private String text;
 
-    @Size(max = FEEDBACK_DETAIL_TEXT_MAX_CHARACTERS)   // this ensures that the detail_text can be stored, even for long feedback
-    @Column(name = "detail_text", length = FEEDBACK_DETAIL_TEXT_MAX_CHARACTERS)
+    @Size(max = FEEDBACK_DETAIL_TEXT_DATABASE_MAX_LENGTH)   // this ensures that the detail_text can be stored, even for long feedback
+    @Column(name = "detail_text", length = FEEDBACK_DETAIL_TEXT_DATABASE_MAX_LENGTH)
     private String detailText;
 
     @Column(name = "has_long_feedback_text")
@@ -137,12 +138,33 @@ public class Feedback extends DomainObject {
     }
 
     /**
+     * Sets the detail text by cutting it off at the maximum length the database can store.
+     * <p>
+     * If you want to store longer feedback, use {@link #setDetailText(String)} instead.
+     *
+     * @param detailText The detail text for this feedback.
+     */
+    public void setDetailTextTruncated(@Nullable final String detailText) {
+        this.detailText = StringUtils.truncate(detailText, FEEDBACK_DETAIL_TEXT_DATABASE_MAX_LENGTH);
+        this.longFeedbackText = null;
+        this.hasLongFeedbackText = false;
+    }
+
+    /**
      * Sets the detail text of the feedback.
+     * <p>
+     * Always stores the whole detail text.
+     * In case the feedback is shorter than {@link de.tum.in.www1.artemis.config.Constants#FEEDBACK_DETAIL_TEXT_SOFT_MAX_LENGTH},
+     * the feedback is stored directly in the detail text.
+     * Otherwise, an associated {@link LongFeedbackText} is attached that holds the full feedback.
+     * In this case the actual detail text stored in this feedback only contains a short preview.
+     * <p>
+     * If you do <emph>not</emph> want a long feedback to be created, use {@link #setDetailTextTruncated(String)} instead.
      *
      * @param detailText the new detail text for the feedback, can be null
      */
     public void setDetailText(@Nullable final String detailText) {
-        if (detailText == null || detailText.length() <= FEEDBACK_DETAIL_TEXT_MAX_CHARACTERS) {
+        if (detailText == null || detailText.length() <= FEEDBACK_DETAIL_TEXT_SOFT_MAX_LENGTH) {
             this.detailText = detailText;
             setLongFeedbackText(null);
             setHasLongFeedbackText(false);
@@ -157,7 +179,7 @@ public class Feedback extends DomainObject {
     }
 
     private String trimDetailText(final String detailText) {
-        final int maxLength = FEEDBACK_PREVIEW_TEXT_MAX_CHARACTERS - DETAIL_TEXT_TRIMMED_MARKER.length();
+        final int maxLength = FEEDBACK_PREVIEW_TEXT_MAX_LENGTH - DETAIL_TEXT_TRIMMED_MARKER.length();
         return StringUtils.truncate(detailText, maxLength) + DETAIL_TEXT_TRIMMED_MARKER;
     }
 
