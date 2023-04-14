@@ -20,7 +20,7 @@ import de.tum.in.www1.artemis.domain.enumeration.GroupNotificationType;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.notification.GroupNotification;
 import de.tum.in.www1.artemis.domain.notification.Notification;
-import de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants;
+import de.tum.in.www1.artemis.domain.notification.NotificationConstants;
 import de.tum.in.www1.artemis.domain.notification.SingleUserNotification;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.util.ModelFactory;
@@ -188,11 +188,11 @@ class NotificationResourceIntegrationTest extends AbstractSpringIntegrationBambo
         notificationSettingRepository.save(blockedSetting);
 
         GroupNotification allowedNotification = ModelFactory.generateGroupNotification(ZonedDateTime.now(), course1, GroupNotificationType.STUDENT);
-        allowedNotification.setTitle(NotificationTitleTypeConstants.findCorrespondingNotificationTitle(allowedType));
+        allowedNotification.setTitle(NotificationConstants.findCorrespondingNotificationTitle(allowedType));
         notificationRepository.save(allowedNotification);
 
         GroupNotification blockedNotification = ModelFactory.generateGroupNotification(ZonedDateTime.now(), course1, GroupNotificationType.STUDENT);
-        blockedNotification.setTitle(NotificationTitleTypeConstants.findCorrespondingNotificationTitle(blockedType));
+        blockedNotification.setTitle(NotificationConstants.findCorrespondingNotificationTitle(blockedType));
         notificationRepository.save(blockedNotification);
 
         List<Notification> notifications = request.getList("/api/notifications", HttpStatus.OK, Notification.class);

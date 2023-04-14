@@ -40,6 +40,100 @@
             "created": "Created new system notification with identifier {{ param }}",
             "updated": "Updated system notification with identifier {{ param }}",
             "deleted": "Deleted system notification with identifier {{ param }}"
+        },
+        "groupNotification": {
+            "title": {
+                "attachmentChange": "Attachment updated",
+                "exerciseReleased": "Exercise released",
+                "exercisePractice": "Exercise open for practice",
+                "quizExerciseStarted": "Quiz started",
+                "liveExamExerciseUpdate": "Live Exam Exercise Update",
+                "exerciseUpdated": "Exercise updated",
+                "programmingTestCasesChanged": "Test cases for programming exercise changed",
+                "newManualFeedbackRequest": "A new manual feedback request has been submitted",
+                "duplicateTestCase": "Duplicate test case was found.",
+                "illegalSubmission": "Illegal submission of a student.",
+                "newExercisePost": "New exercise post",
+                "newLecturePost": "New lecture post",
+                "newCoursePost": "New course-wide post",
+                "newAnnouncementPost": "New announcement",
+                "newReplyForExercisePost": "New reply for exercise post",
+                "newReplyForLecturePost": "New reply for lecture post",
+                "newReplyForCoursePost": "New reply for course-wide post",
+                "courseArchiveStarted": "Course archival started",
+                "courseArchiveFinished": "Course archival finished",
+                "courseArchiveFailed": "Course archival failed",
+                "examArchiveStarted": "Exam archival started",
+                "examArchiveFinished": "Exam archival finished",
+                "examArchiveFailed": "Exam archival failed"
+            },
+            "text": {
+                "attachmentChange": "The attachment \"{{ placeholderValues.1 }}\" of \"{{ placeholderValues.2 }}\" in the course \"{{ placeholderValues.0 }}\" was updated.",
+                "exerciseReleased": "A new exercise \"{{ placeholderValues.1 }}\" got released.",
+                "exercisePractice": "The exercise \"{{ placeholderValues.1 }}\" is now open for practice.",
+                "quizExerciseStarted": "The quiz \"{{ placeholderValues.1 }}\" just started.",
+                "liveExamExerciseUpdate": "The exam Exercise \"{{ placeholderValues.1 }}\" got updated.",
+                "exerciseUpdated": "The exercise \"{{ placeholderValues.1 }}\" in course \"{{ placeholderValues.0 }}\" got updated.",
+                "programmingTestCasesChanged": "The test cases of the programming exercise \"{{ placeholderValues.1 }}\" in the course \"{{ placeholderValues.0 }}\" were updated. The students' submissions should be rebuilt and tested in order to create new results.",
+                "newManualFeedbackRequest": "The programming exercise \"{{ placeholderValues.1 }}\" in the course \"{{ placeholderValues.0 }}\" has a new manual feedback request. Please assess the feedback before the deadline.",
+                "illegalSubmission": "The exercise \"{{ placeholderValues.1 }}\" has illegal submissions of students.",
+                "newExercisePost": "The exercise \"{{ placeholderValues.8 }}\" in the course \"{{ placeholderValues.0 }}\" got a new post: \"{{ placeholderValues.2 }}\"",
+                "newLecturePost": "The lecture \"{{ placeholderValues.8 }}\" in the course \"{{ placeholderValues.0 }}\" got a new post: \"{{ placeholderValues.2 }}\"",
+                "newCoursePost": "The course \"{{ placeholderValues.0 }}\" got a new course-wide post: \"{{ placeholderValues.2 }}\"",
+                "newAnnouncementPost": "The course \"{{ placeholderValues.0 }}\" got a new announcement: \"{{ placeholderValues.2 }}\"",
+                "newReplyForExercisePost": "A post from {{ placeholderValues.4 }} regarding exercise \"{{ placeholderValues.8 }}\" in the course \"{{ placeholderValues.0 }}\" got a new reply: \"{{ placeholderValues.5 }}\"",
+                "newReplyForLecturePost": "A post from {{ placeholderValues.4 }} regarding lecture \"{{ placeholderValues.8 }}\" in the course \"{{ placeholderValues.0 }}\" got a new reply: \"{{ placeholderValues.5 }}\"",
+                "newReplyForCoursePost": "A course-wide post from {{ placeholderValues.4 }} in the course \"{{ placeholderValues.0 }}\" got a new reply: \"{{ placeholderValues.5 }}\"",
+                "courseArchiveStarted": "The course \"{{ placeholderValues.0 }}\" is being archived.",
+                "courseArchiveFinishedWithoutErrors": "The course \"{{ placeholderValues.0 }}\" has been archived.",
+                "courseArchiveFinishedWithErrors": "The course \"{{ placeholderValues.0 }}\" has been archived. Some exercises couldn't be included in the archive:<br/><br/> {{ placeholderValues.1 }}",
+                "courseArchiveFailed": "There was a problem archiving course \"{{ placeholderValues.0 }}\": <br/><br/>",
+                "examArchiveStarted": "The exam \"{{ placeholderValues.1 }}\" is being archived.",
+                "examArchiveFinishedWithoutErrors": "The exam \"{{ placeholderValues.1 }}\" has been archived.",
+                "examArchiveFinishedWithErrors": "The exam \"{{ placeholderValues.1 }}\" has been archived. Some exercises couldn't be included in the archive:<br/><br/> {{ placeholderValues.1 }}",
+                "examArchiveFailed": "There was a problem archiving exam \"{{ placeholderValues.1 }}\": <br/><br/> {{ placeholderValues.2 }}"
+            }
+        },
+        "singleUserNotification": {
+            "title": {
+                "exerciseSubmissionAssessed": "Exercise Submission Assessed",
+                "fileSubmissionSuccessful": "File submission successful",
+                "newPlagiarismCaseStudent": "New plagiarism case",
+                "plagiarismCaseVerdictStudent": "Verdict for your plagiarism case",
+                "tutorialGroupRegistrationStudent": "You have been registered to a tutorial group",
+                "tutorialGroupDeregistrationStudent": "You have been deregistered from a tutorial group",
+                "tutorialGroupRegistrationTutor": "A student has been registered to your tutorial group",
+                "tutorialGroupDeregistrationTutor": "A student has been deregistered from your tutorial group",
+                "tutorialGroupMultipleRegistrationTutor": "Multiple students have been registered to your tutorial group",
+                "tutorialGroupAssigned": "You have been assigned to lead a tutorial group",
+                "tutorialGroupUnassigned": "You have been unassigned from leading a tutorial group"
+            },
+            "text": {
+                "newReplyForExercisePost": "Your post regarding exercise \"{{ placeholderValues.8 }}\" in the course \"{{ placeholderValues.0 }}\" got a new reply: \"{{ placeholderValues.5 }}\"",
+                "newReplyForLecturePost": "Your post regarding lecture \"{{ placeholderValues.8 }}\" in the course \"{{ placeholderValues.0 }}\" got a new reply: \"{{ placeholderValues.5 }}\"",
+                "newReplyForCoursePost": "Your post in the course \"{{ placeholderValues.0 }}\" got a new reply: \"{{ placeholderValues.5 }}\"",
+                "exerciseSubmissionAssessed": "Your submission for the {{ placeholderValues.1 }} exercise \"{{ placeholderValues.2 }}\" in the course \"{{ placeholderValues.0 }}\" has been assessed.",
+                "fileSubmissionSuccessful": "Your file for the exercise \"{{ placeholderValues.1 }}\" was successfully submitted.",
+                "newPlagiarismCaseStudent": "New plagiarism case concerning the {{ placeholderValues.1 }} exercise \"{{ placeholderValues.2 }}\".",
+                "plagiarismCaseVerdictStudent": "Your plagiarism case concerning the {{ placeholderValues.1 }} exercise \"{{ placeholderValues.2 }}\" has a verdict.",
+                "tutorialGroupRegistrationStudent": "You have been registered to the tutorial group {{ placeholderValues.1 }} by {{ placeholderValues.2 }}.",
+                "tutorialGroupDeregistrationStudent": "You have been deregistered from the tutorial group {{ placeholderValues.1 }} by {{ placeholderValues.2 }}.",
+                "tutorialGroupRegistrationTutor": "The student {{ placeholderValues.1 }} has been registered to your tutorial group {{ placeholderValues.2 }} by {{ placeholderValues.3 }}.",
+                "tutorialGroupDeregistrationTutor": "The student {{ placeholderValues.1 }} has been deregistered from your tutorial group {{ placeholderValues.2 }} by {{ placeholderValues.3 }}.",
+                "tutorialGroupMultipleRegistrationTutor": "{{ placeholderValues.1 }} students have been registered to your tutorial group {{ placeholderValues.2 }} by {{ placeholderValues.3 }}.",
+                "tutorialGroupAssigned": "You have been assigned to lead the tutorial group {{ placeholderValues.1 }} by {{ placeholderValues.2 }}.",
+                "tutorialGroupUnassigned": "You have been unassigned from leading the tutorial group {{ placeholderValues.1 }} by {{ placeholderValues.2 }}."
+            }
+        },
+        "tutorialGroupNotification": {
+            "title": {
+                "tutorialGroupDeleted": "Tutorial Group deleted",
+                "tutorialGroupUpdated": "Tutorial Group updated"
+            },
+            "text": {
+                "tutorialGroupDeleted": "The tutorial group {{ placeholderValues.1 }} has been deleted.",
+                "tutorialGroupUpdated": "The tutorial group {{ placeholderValues.1 }} has been updated."
+            }
         }
     }
 }
