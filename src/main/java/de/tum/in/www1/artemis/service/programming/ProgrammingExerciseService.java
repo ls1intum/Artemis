@@ -170,7 +170,6 @@ public class ProgrammingExerciseService {
      * <li>VCS webhooks</li>
      * <li>Bamboo build plans</li>
      * </ul>
-     * <p>
      * The exercise gets set up in the following order:
      * <ol>
      * <li>Create all repositories for the new exercise</li>
@@ -286,7 +285,6 @@ public class ProgrammingExerciseService {
         }
         else if (programmingExercise.getProjectType() != null) {
             throw new BadRequestAlertException("The project type is set but not supported", "Exercise", "projectTypeSet");
-
         }
     }
 

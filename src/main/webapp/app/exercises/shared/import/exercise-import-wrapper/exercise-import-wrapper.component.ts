@@ -21,9 +21,10 @@ export class ExerciseImportWrapperComponent implements OnInit {
     ngOnInit(): void {
         if (this.programmingLanguage) {
             this.titleKey = 'artemisApp.programmingExercise.configureGrading.categories.importLabel';
+        } else if (this.exerciseType === ExerciseType.FILE_UPLOAD) {
+            this.titleKey = 'artemisApp.fileUploadExercise.home.importLabel';
         } else {
-            this.titleKey =
-                this.exerciseType === ExerciseType.FILE_UPLOAD ? `artemisApp.fileUploadExercise.home.importLabel` : `artemisApp.${this.exerciseType}Exercise.home.importLabel`;
+            this.titleKey = `artemisApp.${this.exerciseType}Exercise.home.importLabel`;
         }
     }
 

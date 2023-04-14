@@ -81,7 +81,7 @@ public class ProgrammingExerciseImportFromFileService {
         checkRepositoriesExist(importExerciseDir);
         var oldShortName = getProgrammingExerciseFromDetailsFile(importExerciseDir).getShortName();
         programmingExerciseService.validateNewProgrammingExerciseSettings(programmingExerciseForImport, course);
-        ProgrammingExercise importedProgrammingExercise = programmingExerciseService.createProgrammingExercise(programmingExerciseForImport);
+        var importedProgrammingExercise = programmingExerciseService.createProgrammingExercise(programmingExerciseForImport);
         if (Boolean.TRUE.equals(programmingExerciseForImport.isStaticCodeAnalysisEnabled())) {
             staticCodeAnalysisService.createDefaultCategories(importedProgrammingExercise);
         }
@@ -104,7 +104,6 @@ public class ProgrammingExerciseImportFromFileService {
         gitService.commitAndPush(templateRepo, "Import template from file", true, null);
         gitService.commitAndPush(solutionRepo, "Import solution from file", true, null);
         gitService.commitAndPush(testRepo, "Import tests from file", true, null);
-
     }
 
     private void replaceImportedExerciseShortName(Map<String, String> replacements, Repository... repositories) throws IOException {
@@ -123,7 +122,7 @@ public class ProgrammingExerciseImportFromFileService {
     }
 
     /**
-     * copies everything from the extracted zip file to the repository, except the .git folder
+     * Copies everything from the extracted zip file to the repository, except the .git folder
      *
      * @param repository     the repository to which the content should be copied
      * @param repositoryType the type of the repository
@@ -150,17 +149,18 @@ public class ProgrammingExerciseImportFromFileService {
     }
 
     private void checkRepositoriesExist(Path path) throws IOException {
-        List<String> result;
+        checkRepositoryForTypeExists(path, RepositoryType.TEMPLATE);
+        checkRepositoryForTypeExists(path, RepositoryType.SOLUTION);
+        checkRepositoryForTypeExists(path, RepositoryType.TESTS);
+    }
+
+    private void checkRepositoryForTypeExists(Path path, RepositoryType repoType) throws IOException {
         try (Stream<Path> stream = Files.walk(path)) {
-            result = stream.filter(Files::isDirectory).map(f -> f.getFileName().toString())
-                    .filter(name -> name.endsWith("-exercise") || name.endsWith("-tests") || name.endsWith("-solution")).toList();
+            if (stream.filter(Files::isDirectory).map(f -> f.getFileName().toString()).filter(name -> name.endsWith("-" + repoType.getName())).count() != 1) {
+                throw new BadRequestAlertException("The zip file doesn't contain the " + repoType.getName() + " repository or it does not follow the naming scheme.",
+                        "programmingExercise", "repositoriesInZipNotValid");
+            }
         }
-
-        if (result.size() != 3) {
-            throw new BadRequestAlertException("The zip file doesn't contain the template, solution or tests repository or they do not follow the naming scheme.",
-                    "programmingExercise", "repositoriesInZipNotValid");
-        }
-
     }
 
     private Path retrieveRepositoryDirectoryPath(Path dirPath, String repoType) {
@@ -190,7 +190,7 @@ public class ProgrammingExerciseImportFromFileService {
         }
 
         if (result.size() != 1) {
-            throw new BadRequestAlertException("There are either no or more than one json file in the directory!", "programmingExercise", "exerciseJsonNotValidOrFound");
+            throw new BadRequestAlertException("There are either no JSON files or more than one JSON file in the directory!", "programmingExercise", "exerciseJsonNotValidOrFound");
         }
         return result.get(0);
     }

@@ -7,7 +7,10 @@ import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_PRODUCTION;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.*;
+import java.time.DayOfWeek;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.IsoFields;
@@ -51,7 +54,10 @@ import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.service.tutorialgroups.TutorialGroupService;
 import de.tum.in.www1.artemis.service.user.UserService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
-import de.tum.in.www1.artemis.web.rest.dto.*;
+import de.tum.in.www1.artemis.web.rest.dto.CourseManagementDetailViewDTO;
+import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
+import de.tum.in.www1.artemis.web.rest.dto.StatsForDashboardDTO;
+import de.tum.in.www1.artemis.web.rest.dto.TutorLeaderboardDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
