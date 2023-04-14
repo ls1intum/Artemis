@@ -1,7 +1,6 @@
 import { Component, ElementRef, EventEmitter, Input, Output, ViewChild, forwardRef } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { faCalendarAlt, faClock, faGlobe, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
-import { FormControl } from '@angular/forms';
 import dayjs from 'dayjs/esm';
 
 @Component({
@@ -30,8 +29,6 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
     @Output() valueChange: EventEmitter<boolean> = new EventEmitter();
 
     isInvalidDate = false;
-
-    public nameControl = new FormControl();
 
     // Icons
     faCalendarAlt = faCalendarAlt;
