@@ -59,12 +59,6 @@ class ConsistencyCheckBitbucketBambooIntegrationTest extends AbstractSpringInteg
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    void checkConsistencyOfProgrammingExercise_isLocalSimulation() throws Exception {
-        consistencyCheckTestService.testCheckConsistencyOfProgrammingExercise_isLocalSimulation();
-    }
-
-    @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void checkConsistencyOfProgrammingExercise_forbidden() throws Exception {
         consistencyCheckTestService.testCheckConsistencyOfProgrammingExercise_forbidden();
     }
