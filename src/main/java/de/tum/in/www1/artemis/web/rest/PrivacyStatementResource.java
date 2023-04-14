@@ -30,9 +30,10 @@ public class PrivacyStatementResource {
      * @return the privacy statement
      */
     @GetMapping("/privacy-statement")
-    public PrivacyStatement getPrivacyStatement(@RequestParam(value = "language") String language) {
-        if (!"de".equalsIgnoreCase(language) && !"en".equalsIgnoreCase(language))
+    public PrivacyStatement getPrivacyStatement(@RequestParam("language") String language) {
+        if (!PrivacyStatementLanguage.isValidShortName(language)) {
             throw new BadRequestException("Language not supported");
+        }
         return privacyStatementService.getPrivacyStatement(PrivacyStatementLanguage.fromLanguageShortName(language));
     }
 
@@ -46,8 +47,9 @@ public class PrivacyStatementResource {
     @GetMapping("/privacy-statement-for-update")
     @PreAuthorize("hasRole('ADMIN')")
     public PrivacyStatement getPrivacyStatementForUpdate(@RequestParam("language") String language) {
-        if (!"de".equalsIgnoreCase(language) && !"en".equalsIgnoreCase(language))
+        if (!PrivacyStatementLanguage.isValidShortName(language)) {
             throw new BadRequestException("Language not supported");
+        }
         return privacyStatementService.getPrivacyStatementForUpdate(PrivacyStatementLanguage.fromLanguageShortName(language));
     }
 
@@ -60,9 +62,6 @@ public class PrivacyStatementResource {
     @PutMapping("/privacy-statement")
     @PreAuthorize("hasRole('ADMIN')")
     public PrivacyStatement updatePrivacyStatement(@RequestBody PrivacyStatement privacyStatement) {
-        if (PrivacyStatementLanguage.ENGLISH != privacyStatement.getLanguage() && PrivacyStatementLanguage.GERMAN != privacyStatement.getLanguage()) {
-            throw new BadRequestException("Language not supported");
-        }
         return privacyStatementService.updatePrivacyStatement(privacyStatement);
     }
 }

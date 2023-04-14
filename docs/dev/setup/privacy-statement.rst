@@ -1,6 +1,6 @@
 Privacy
 ^^^^^^^
-The privacy statement is stored in the ``./legal``  directory by default. You can override this value by setting the ``legal-path`` value in the ``application-artemis.yml``.
+The privacy statement is stored in the ``./legal``  directory by default. You can override this value by setting the ``artemis.legal-path`` value in the ``application-artemis.yml``.
 The privacy statement is stored as markdown file. Currently, English and German as languages are supported.
 The privacy statement file has to follow the naming convention ``privacy_statement_<de|en>.md``.
 In case, you add only a file for one language, this file will always be shown regardless of the user's language setting.
@@ -15,7 +15,7 @@ In the following, the documentation provides a template in English and German fo
    We do not take any responsibility for the content of the privacy statement.
 
 German template
-""""""""""""""
+"""""""""""""""
 .. code-block:: none
 
    # Datenschutz
@@ -138,7 +138,7 @@ German template
 
 
 English template
-"""""""""""""""
+""""""""""""""""
 .. code-block:: none
 
    # Privacy

@@ -5,26 +5,24 @@ public enum PrivacyStatementLanguage {
     GERMAN, ENGLISH;
 
     public static PrivacyStatementLanguage fromLanguageShortName(String languageShortName) {
-        if ("de".equals(languageShortName)) {
-            return GERMAN;
-        }
-        else if ("en".equals(languageShortName)) {
-            return ENGLISH;
-        }
-        else {
-            throw new IllegalArgumentException("Language not supported");
-        }
+        return switch (languageShortName) {
+            case "de" -> GERMAN;
+            case "en" -> ENGLISH;
+            default -> throw new IllegalArgumentException("Language not supported");
+        };
+    }
+
+    public static boolean isValidShortName(String language) {
+        return switch (language.toLowerCase()) {
+            case "de", "en" -> true;
+            default -> false;
+        };
     }
 
     public String getShortName() {
-        if (this == GERMAN) {
-            return "de";
-        }
-        else if (this == ENGLISH) {
-            return "en";
-        }
-        else {
-            throw new IllegalArgumentException("Language not supported");
-        }
+        return switch (this) {
+            case GERMAN -> "de";
+            case ENGLISH -> "en";
+        };
     }
 }

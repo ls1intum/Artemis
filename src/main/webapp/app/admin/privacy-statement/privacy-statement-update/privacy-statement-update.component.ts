@@ -62,7 +62,8 @@ export class PrivacyStatementUpdateComponent implements OnInit {
             this.showWarning(privacyStatementLanguage);
         } else {
             this.currentLanguage = privacyStatementLanguage;
-            this.privacyStatementService.getPrivacyStatementForUpdate(privacyStatementLanguage).subscribe((statement) => (this.privacyStatement = statement));
+            this.markdownEditor.markdown = '';
+            this.privacyStatementService.getPrivacyStatementForUpdate(this.currentLanguage).subscribe((statement) => (this.privacyStatement = statement));
         }
     }
 

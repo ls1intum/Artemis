@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.mockStatic;
-import static org.mockito.Mockito.times;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -218,7 +217,7 @@ class PrivacyStatementResourceIntegrationTest extends AbstractSpringIntegrationB
             mockedFiles.verify(() -> Files.writeString(argThat(path -> path.toString().contains("_de")), anyString(), eq(StandardOpenOption.CREATE),
                     eq(StandardOpenOption.TRUNCATE_EXISTING)));
             // we explicitly check the method calls to ensure createDirectories is not called when the directory exists
-            mockedFiles.verify(() -> Files.exists(any()), times(2));
+            mockedFiles.verify(() -> Files.exists(any()));
             mockedFiles.verifyNoMoreInteractions();
 
         }
