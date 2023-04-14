@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.domain.notification;
 
+import static de.tum.in.www1.artemis.domain.notification.NotificationConstants.*;
 import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFactory.createTutorialGroupTarget;
-import static de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants.findCorrespondingNotificationTitleOrThrow;
 
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
@@ -19,11 +19,12 @@ public class TutorialGroupNotificationFactory {
         var title = findCorrespondingNotificationTitleOrThrow(notificationType);
         var text = "";
         switch (notificationType) {
-            case TUTORIAL_GROUP_DELETED -> text = "The tutorial group " + tutorialGroup.getTitle() + " has been deleted.";
+            case TUTORIAL_GROUP_DELETED -> text = TUTORIAL_GROUP_DELETED_TEXT;
 
-            case TUTORIAL_GROUP_UPDATED -> text = "The tutorial group " + tutorialGroup.getTitle() + " has been updated.";
+            case TUTORIAL_GROUP_UPDATED -> text = TUTORIAL_GROUP_UPDATED_TEXT;
         }
-        var notification = new TutorialGroupNotification(tutorialGroup, title, text, notificationType);
+        var placeholderValues = new String[] { tutorialGroup.getCourse().getTitle(), tutorialGroup.getTitle() };
+        var notification = new TutorialGroupNotification(tutorialGroup, title, text, true, placeholderValues, notificationType);
         setNotificationTarget(notification);
         return notification;
     }
@@ -38,7 +39,7 @@ public class TutorialGroupNotificationFactory {
      */
     public static TutorialGroupNotification createTutorialGroupNotification(TutorialGroup tutorialGroup, NotificationType notificationType, String notificationText) {
         var title = findCorrespondingNotificationTitleOrThrow(notificationType);
-        var notification = new TutorialGroupNotification(tutorialGroup, title, notificationText, notificationType);
+        var notification = new TutorialGroupNotification(tutorialGroup, title, notificationText, false, new String[] { tutorialGroup.getCourse().getTitle() }, notificationType);
         setNotificationTarget(notification);
         return notification;
     }
