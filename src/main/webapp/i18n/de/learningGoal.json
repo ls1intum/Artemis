@@ -117,6 +117,15 @@
                 }
             },
             "relation": {
+                "competencyRelations": "Beziehungen zwischen Kompetenzen",
+                "tailLearningGoal": "Schwanzlernziel",
+                "relationType": "Beziehungstyp",
+                "headLearningGoal": "Kopflernziel",
+                "relates": "Bezieht sich auf",
+                "assumes": "Setzt voraus",
+                "extends": "Erweitert",
+                "matches": "Stimmt überein mit",
+                "createRelation": "Beziehung erstellen"
                 "createsCircularRelation": "Du kannst keine kreisförmigen Beziehungen zwischen Kompetenzen erstellen.",
                 "selfRelation": "Du kannst keine Beziehung zwischen einer Kompetenz und sich selbst erstellen."
             }

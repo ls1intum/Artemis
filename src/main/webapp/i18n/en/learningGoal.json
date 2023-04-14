@@ -116,6 +116,15 @@
                 }
             },
             "relation": {
+                "competencyRelations": "Competency Relations",
+                "tailLearningGoal": "Tail Learning Goal",
+                "relationType": "Relation Type",
+                "headLearningGoal": "Head Learning Goal",
+                "relates": "Relates",
+                "assumes": "Assumes",
+                "extends": "Extends",
+                "matches": "Matches",
+                "createRelation": "Create Relation"
                 "createsCircularRelation": "You can not create circular relations between competencies.",
                 "selfRelation": "You can not create a relation between a competency and itself."
             }
