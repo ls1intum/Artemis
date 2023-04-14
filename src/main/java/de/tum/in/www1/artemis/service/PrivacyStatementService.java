@@ -99,9 +99,9 @@ public class PrivacyStatementService {
         }
         try {
             var baseDirAsPath = Path.of(legalDirBasePath);
-            // if we do not create the directory, if it doesn't exist, the file cannot be created
+            // if we do not create the directory, if it doesn't exist, writeString fails
             if (!Files.exists(baseDirAsPath)) {
-                Files.createDirectory(baseDirAsPath);
+                Files.createDirectories(baseDirAsPath);
             }
             Files.writeString(getPrivacyStatementPath(privacyStatement.getLanguage(), true).get(), privacyStatement.getText(), StandardOpenOption.CREATE,
                     StandardOpenOption.TRUNCATE_EXISTING);
