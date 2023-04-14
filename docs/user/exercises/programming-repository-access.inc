@@ -33,101 +33,100 @@ The different points in time are:
 Read access **(R)** includes ``git fetch``, ``git clone``, and ``git pull``, if you are using your local Git client to access the repository.
 Write access **(W)** corresponds to ``git push`` if you are using your local Git client.
 
-+--------------------------+------+---------------+--------+
-| Repository type          | Role | Point in time | Access |
-+==========================+======+===============+========+
-|                          | S    | all           | none   |
-|                          +------+---------------+--------+
-| Base                     | TA   | all           | R      |
-|                          +------+---------------+--------+
-|                          | I    | all           | R/W    |
-+--------------------------+------+---------------+--------+
-|                          | S    | Before start  | none   |
-|                          +------+---------------+--------+
-|                          | S    | Working time  | R/W    |
-|                          +------+---------------+--------+
-| Student Assignment       | S    | After due     | R      |
-|                          +------+---------------+--------+
-|                          | TA   | all           | R      |
-|                          +------+---------------+--------+
-|                          | I    | all           | R/W    |
-+--------------------------+------+---------------+--------+
-|                          | S    | all           | none   |
-|                          +------+---------------+--------+
-|                          | TA   | Before start  | R      |
-|                          +------+---------------+--------+
-| TA Assignment            | TA   | Working time  | R/W    |
-|                          +------+---------------+--------+
-|                          | TA   | After due     | R      |
-|                          +------+---------------+--------+
-|                          | I    | all           | R/W    |
-+--------------------------+------+---------------+--------+
-|                          | S    | all           | none   |
-|                          +------+---------------+--------+
-| Instructor Assignment    | TA   | all           | R      |
-|                          +------+---------------+--------+
-|                          | I    | all           | R/W    |
-+--------------------------+------+---------------+--------+
-|                          | S    | Before start  | none   |
-|                          +------+---------------+--------+
-|                          | S    | Working time  | none   |
-|                          +------+---------------+--------+
-|                          | S    | After due     | R/W    |
-|                          +------+---------------+--------+
-|                          | TA   | Before start  | none   |
-|                          +------+---------------+--------+
-| Student Practice         | TA   | Working time  | none   |
-|                          +------+---------------+--------+
-|                          | TA   | After due     | R      |
-|                          +------+---------------+--------+
-|                          | I    | Before start  | none   |
-|                          +------+---------------+--------+
-|                          | I    | Working time  | none   |
-|                          +------+---------------+--------+
-|                          | I    | After due     | R/W    |
-+--------------------------+------+---------------+--------+
-|                          | S    | all           | none   |
-|                          +------+---------------+--------+
-|                          | TA   | Before start  | none   |
-|                          +------+---------------+--------+
-|                          | TA   | Working time  | none   |
-|                          +------+---------------+--------+
-| TA Practice              | TA   | After due     | R/W    |
-|                          +------+---------------+--------+
-|                          | I    | Before start  | none   |
-|                          +------+---------------+--------+
-|                          | I    | Working time  | none   |
-|                          +------+---------------+--------+
-|                          | I    | After due     | R/W    |
-+--------------------------+------+---------------+--------+
-|                          | S    | all           | none   |
-|                          +------+---------------+--------+
-|                          | TA   | Before start  | none   |
-|                          +------+---------------+--------+
-|                          | TA   | Working time  | none   |
-|                          +------+---------------+--------+
-| Instructor Practice      | TA   | After due     | R      |
-|                          +------+---------------+--------+
-|                          | I    | Before start  | none   |
-|                          +------+---------------+--------+
-|                          | I    | Working time  | none   |
-|                          +------+---------------+--------+
-|                          | I    | After due     | R/W    |
-+--------------------------+------+---------------+--------+
-|                          | S    | all           | none   |
-|                          +------+---------------+--------+
-| Instructor Exam Test Run | TA   | all           | R      |
-|                          +------+---------------+--------+
-|                          | I    | all           | R/W    |
-+--------------------------+------+---------------+--------+
++--------------------------+------+---------------+--------------+
+| Repository type          | Role | Point in time | Access       |
++==========================+======+===============+==============+
+|                          | S    | all           | none         |
+|                          +------+---------------+--------------+
+| Base                     | TA   | all           | R            |
+|                          +------+---------------+--------------+
+|                          | I    | all           | R/W          |
++--------------------------+------+---------------+--------------+
+|                          | S    | Before start  | none         |
+|                          +------+---------------+--------------+
+|                          | S    | Working time  | R/W          |
+|                          +------+---------------+--------------+
+| Student Assignment       | S    | After due     | R :sup:`1`   |
+|                          +------+---------------+--------------+
+|                          | TA   | all           | R            |
+|                          +------+---------------+--------------+
+|                          | I    | all           | R/W          |
++--------------------------+------+---------------+--------------+
+|                          | S    | all           | none         |
+|                          +------+---------------+--------------+
+|                          | TA   | Before start  | R            |
+|                          +------+---------------+--------------+
+| TA Assignment            | TA   | Working time  | R/W          |
+|                          +------+---------------+--------------+
+|                          | TA   | After due     | R            |
+|                          +------+---------------+--------------+
+|                          | I    | all           | R/W          |
++--------------------------+------+---------------+--------------+
+|                          | S    | all           | none         |
+|                          +------+---------------+--------------+
+| Instructor Assignment    | TA   | all           | R            |
+|                          +------+---------------+--------------+
+|                          | I    | all           | R/W :sup:`2` |
++--------------------------+------+---------------+--------------+
+|                          | S    | Before start  | none         |
+|                          +------+---------------+--------------+
+|                          | S    | Working time  | none         |
+|                          +------+---------------+--------------+
+|                          | S    | After due     | R/W          |
+|                          +------+---------------+--------------+
+|                          | TA   | Before start  | none         |
+|                          +------+---------------+--------------+
+| Student Practice         | TA   | Working time  | none         |
+|                          +------+---------------+--------------+
+|                          | TA   | After due     | R            |
+|                          +------+---------------+--------------+
+|                          | I    | Before start  | none         |
+|                          +------+---------------+--------------+
+|                          | I    | Working time  | none         |
+|                          +------+---------------+--------------+
+|                          | I    | After due     | R/W          |
++--------------------------+------+---------------+--------------+
+|                          | S    | all           | none         |
+|                          +------+---------------+--------------+
+|                          | TA   | Before start  | none         |
+|                          +------+---------------+--------------+
+|                          | TA   | Working time  | none         |
+|                          +------+---------------+--------------+
+| TA Practice              | TA   | After due     | R/W          |
+|                          +------+---------------+--------------+
+|                          | I    | Before start  | none         |
+|                          +------+---------------+--------------+
+|                          | I    | Working time  | none         |
+|                          +------+---------------+--------------+
+|                          | I    | After due     | R/W          |
++--------------------------+------+---------------+--------------+
+|                          | S    | all           | none         |
+|                          +------+---------------+--------------+
+|                          | TA   | Before start  | none         |
+|                          +------+---------------+--------------+
+|                          | TA   | Working time  | none         |
+|                          +------+---------------+--------------+
+| Instructor Practice      | TA   | After due     | R            |
+|                          +------+---------------+--------------+
+|                          | I    | Before start  | none         |
+|                          +------+---------------+--------------+
+|                          | I    | Working time  | none         |
+|                          +------+---------------+--------------+
+|                          | I    | After due     | R/W          |
++--------------------------+------+---------------+--------------+
+|                          | S    | all           | none         |
+|                          +------+---------------+--------------+
+| Instructor Exam Test Run | TA   | all           | R            |
+|                          +------+---------------+--------------+
+|                          | I    | all           | R/W          |
++--------------------------+------+---------------+--------------+
 
-.. note:: The Practice repositories in the table above only exist for course exercises.
+1) Only valid for course exercises.
+Students cannot read their repository for exam exercises after the due date.
 
-.. note::
-  If the exercise belongs to a course, it might happen that the instructor decides to add a start date after publishing the exercise.
-  In this case, students can read the repository before the start date, if they had started the exercise earlier. In case the exercise is an exam exercise, students can never read the repository before the start date!
+2) The instructor can access the Instructor Assignment repository using the online editor either from the *Edit in editor* view accessed via the Course Management (-> Exercises -> Edit in editor)  or from the Course Overview (clicking on the course card -> Open code editor).
+After the due date of the exercise has passed, the instructor can push to the repository only via the online editor reached from the Course Management or using their local Git client.
+The online editor accessible from the Course Overview will show that the repository is locked, as it does for all students taking part in the course.
 
-.. note::
-  The instructor can access the Instructor Assignment repository using the online editor either from the *Edit in editor* view accessed via the Course Management (-> Exercises -> Edit in editor)  or from the Course Overview (clicking on the course card -> Open code editor).
-  After the due date of the exercise has passed, the instructor can push to the repository only via the online editor reached from the Course Management or using their local Git client.
-  The online editor accessible from the Course Overview will show that the repository is locked, as it does for all students taking part in the course.
+.. note:: The Practice repositories as well as the TA assignment repository and the instructor assignment repository in the table above only exist for course exercises.
+

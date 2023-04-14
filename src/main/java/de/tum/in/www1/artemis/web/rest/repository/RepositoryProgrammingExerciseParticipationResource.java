@@ -26,7 +26,6 @@ import de.tum.in.www1.artemis.service.RepositoryAccessService;
 import de.tum.in.www1.artemis.service.RepositoryService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
-import de.tum.in.www1.artemis.service.connectors.localci.LocalCIPushService;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
@@ -61,10 +60,10 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
             ParticipationAuthorizationCheckService participationAuthCheckService, GitService gitService, Optional<ContinuousIntegrationService> continuousIntegrationService,
             Optional<VersionControlService> versionControlService, RepositoryService repositoryService, ProgrammingExerciseParticipationService participationService,
             ProgrammingExerciseRepository programmingExerciseRepository, ParticipationRepository participationRepository, BuildLogEntryService buildLogService,
-            ProgrammingSubmissionRepository programmingSubmissionRepository, SubmissionPolicyRepository submissionPolicyRepository, RepositoryAccessService repositoryAccessService,
-            Optional<LocalCIPushService> localCIPushService) {
-        super(environment, userRepository, authCheckService, gitService, continuousIntegrationService, repositoryService, versionControlService, programmingExerciseRepository,
-                repositoryAccessService, localCIPushService);
+            ProgrammingSubmissionRepository programmingSubmissionRepository, SubmissionPolicyRepository submissionPolicyRepository,
+            RepositoryAccessService repositoryAccessService) {
+        super(userRepository, authCheckService, gitService, continuousIntegrationService, repositoryService, versionControlService, programmingExerciseRepository,
+                repositoryAccessService);
 
         this.participationAuthCheckService = participationAuthCheckService;
         this.participationService = participationService;
@@ -265,24 +264,22 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     @PutMapping(value = "/repository/{participationId}/files")
     public ResponseEntity<Map<String, String>> updateParticipationFiles(@PathVariable("participationId") Long participationId, @RequestBody List<FileSubmission> submissions,
             @RequestParam(defaultValue = "false") boolean commit) {
-        Participation participation;
-        try {
-            participation = participationRepository.findByIdElseThrow(participationId);
-        }
-        catch (EntityNotFoundException ex) {
-            FileSubmissionError error = new FileSubmissionError(participationId, "participationNotFound");
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, error.getMessage(), error);
-        }
-        if (!(participation instanceof final ProgrammingExerciseParticipation programmingExerciseParticipation)) {
-            FileSubmissionError error = new FileSubmissionError(participationId, "notAProgrammingExerciseParticipation");
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, error.getMessage(), error);
-        }
 
         // Git repository must be available to update a file
         Repository repository;
         try {
             // Get the repository and also conduct access checks.
-            repository = getRepository(programmingExerciseParticipation.getId(), RepositoryActionType.WRITE, true);
+            repository = getRepository(participationId, RepositoryActionType.WRITE, true);
+        }
+        catch (EntityNotFoundException e) {
+            // Participation was not found.
+            FileSubmissionError error = new FileSubmissionError(participationId, "participationNotFound");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, error.getMessage(), error);
+        }
+        catch (IllegalArgumentException e) {
+            // Participation is not instance of ProgrammingExerciseParticipation.
+            FileSubmissionError error = new FileSubmissionError(participationId, "notAProgrammingExerciseParticipation");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, error.getMessage(), error);
         }
         catch (CheckoutConflictException | WrongRepositoryStateException ex) {
             FileSubmissionError error = new FileSubmissionError(participationId, "checkoutConflict");
