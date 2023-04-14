@@ -70,7 +70,7 @@
                         labelName="{{ 'artemisApp.examManagement.visibleDate' | artemisTranslate }}"
                         labelTooltip="{{ 'artemisApp.examManagement.visibleDateTooltip' | artemisTranslate }}"
                         [(ngModel)]="exam.visibleDate"
-                        (valueChange)="invalidVisibleDate = $event"
+                        (valueChange)="validateVisibleDate($event)"
                         [error]="!isValidVisibleDate"
                         name="visibleDate"
                         id="visibleDate"
@@ -82,7 +82,7 @@
                         labelTooltip="{{ 'artemisApp.examManagement.startDateTooltip' | artemisTranslate }}"
                         [(ngModel)]="exam.startDate"
                         [error]="!isValidStartDate"
-                        (valueChange)="calculateMaxWorkingTime(); invalidStartDate = $event"
+                        (valueChange)="validateStartDate($event)"
                         name="startDate"
                         id="startDate"
                     ></jhi-date-time-picker>
@@ -93,7 +93,7 @@
                         labelTooltip="{{ 'artemisApp.examManagement.endDateTooltip' | artemisTranslate }}"
                         [(ngModel)]="exam.endDate"
                         [error]="!isValidEndDate"
-                        (valueChange)="calculateMaxWorkingTime(); invalidEndDate = $event"
+                        (valueChange)="validateEndDate($event)"
                         name="endDate"
                         id="endDate"
                     ></jhi-date-time-picker>
@@ -177,7 +177,7 @@
                         <jhi-date-time-picker
                             labelName="{{ 'artemisApp.examManagement.publishResultsDate' | artemisTranslate }}"
                             [(ngModel)]="exam.publishResultsDate"
-                            (valueChange)="invalidPublishResultsDate = $event"
+                            (valueChange)="validatePublishResultsDate($event)"
                             [error]="!isValidPublishResultsDate"
                             name="publishResultsDate"
                             id="publishResultsDate"
@@ -190,7 +190,7 @@
                             labelName="{{ 'artemisApp.examManagement.examStudentReviewStart' | artemisTranslate }}"
                             [(ngModel)]="exam.examStudentReviewStart"
                             [error]="!isValidExamStudentReviewStart"
-                            (valueChange)="invalidStudentReviewStart = $event"
+                            (valueChange)="validateStudentReviewStartDate($event)"
                             name="examStudentReviewStart"
                             id="examStudentReviewStart"
                         ></jhi-date-time-picker>
@@ -200,7 +200,7 @@
                             labelName="{{ 'artemisApp.examManagement.examStudentReviewEnd' | artemisTranslate }}"
                             [(ngModel)]="exam.examStudentReviewEnd"
                             [error]="!isValidExamStudentReviewEnd"
-                            (valueChange)="invalidStudentReviewEnd = $event"
+                            (valueChange)="validateStudentReviewEndDate($event)"
                             name="examStudentReviewEnd"
                             id="examStudentReviewEnd"
                         ></jhi-date-time-picker>

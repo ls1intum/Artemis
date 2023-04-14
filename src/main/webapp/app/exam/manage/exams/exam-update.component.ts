@@ -33,12 +33,12 @@ export class ExamUpdateComponent implements OnInit {
     isImportInSameCourse = false;
     // Expose enums to the template
     exerciseType = ExerciseType;
-    invalidVisibleDate = false;
-    invalidStartDate = false;
-    invalidEndDate = false;
-    invalidPublishResultsDate = false;
-    invalidStudentReviewStart = false;
-    invalidStudentReviewEnd = false;
+    isInvalidVisibleDate = false;
+    isInvalidStartDate = false;
+    isInvalidEndDate = false;
+    isInvalidPublishResultsDate = false;
+    isInvalidStudentReviewStartDate = false;
+    isInvalidStudentReviewEndDate = false;
     invalidExampleSolutionPublicationDate = false;
 
     // Link to the component enabling the selection of exercise groups and exercises for import
@@ -162,13 +162,13 @@ export class ExamUpdateComponent implements OnInit {
         const examValidWorkingTime = this.validateWorkingTime;
         const examValidExampleSolutionPublicationDate = this.isValidExampleSolutionPublicationDate;
         const allDatesValid =
-            !this.invalidVisibleDate &&
-            !this.invalidStartDate &&
-            !this.invalidEndDate &&
-            !this.invalidPublishResultsDate &&
-            !this.invalidStudentReviewEnd &&
-            !this.invalidStudentReviewStart &&
-            !this.invalidStudentReviewStart;
+            !this.isInvalidVisibleDate &&
+            !this.isInvalidStartDate &&
+            !this.isInvalidEndDate &&
+            !this.isInvalidPublishResultsDate &&
+            !this.isInvalidStudentReviewEndDate &&
+            !this.isInvalidStudentReviewStartDate &&
+            !this.isInvalidStudentReviewStartDate;
         return (
             examConductionDatesValid &&
             examReviewDatesValid &&
@@ -181,7 +181,7 @@ export class ExamUpdateComponent implements OnInit {
     }
 
     get isValidVisibleDate(): boolean {
-        return this.exam.visibleDate !== undefined;
+        return this.exam.visibleDate !== undefined && this.exam.visibleDate !== null;
     }
 
     get isValidNumberOfCorrectionRounds(): boolean {
@@ -217,7 +217,7 @@ export class ExamUpdateComponent implements OnInit {
      * Validates the EndDate inputted by the user.
      */
     get isValidEndDate(): boolean {
-        return this.exam.endDate !== undefined && dayjs(this.exam.endDate).isAfter(this.exam.startDate);
+        return this.exam.endDate !== undefined && this.exam.endDate !== null && dayjs(this.exam.endDate).isAfter(this.exam.startDate);
     }
 
     /**
@@ -287,7 +287,7 @@ export class ExamUpdateComponent implements OnInit {
             return true;
         }
         // check for undefined because undefined is otherwise treated as the now dayjs
-        return this.exam.endDate !== undefined && dayjs(this.exam.publishResultsDate).isAfter(this.exam.endDate);
+        return this.exam.endDate !== undefined && this.exam.endDate !== null && dayjs(this.exam.publishResultsDate).isAfter(this.exam.endDate);
     }
 
     get isValidExamStudentReviewStart(): boolean {
@@ -296,7 +296,7 @@ export class ExamUpdateComponent implements OnInit {
             return true;
         }
         // check for undefined because undefined is otherwise treated as the now dayjs
-        return this.exam.publishResultsDate !== undefined && dayjs(this.exam.examStudentReviewStart).isAfter(this.exam.publishResultsDate);
+        return this.exam.publishResultsDate !== undefined && this.exam.publishResultsDate !== null && dayjs(this.exam.examStudentReviewStart).isAfter(this.exam.publishResultsDate);
     }
 
     get isValidExamStudentReviewEnd(): boolean {
@@ -305,7 +305,11 @@ export class ExamUpdateComponent implements OnInit {
             return !this.exam.examStudentReviewStart || !this.exam.examStudentReviewStart.isValid();
         }
         // check for undefined because undefined is otherwise treated as the now dayjs
-        return this.exam.examStudentReviewStart !== undefined && dayjs(this.exam.examStudentReviewEnd).isAfter(this.exam.examStudentReviewStart);
+        return (
+            this.exam.examStudentReviewStart !== undefined &&
+            this.exam.publishResultsDate !== null &&
+            dayjs(this.exam.examStudentReviewEnd).isAfter(this.exam.examStudentReviewStart)
+        );
     }
 
     get isValidExampleSolutionPublicationDate(): boolean {
@@ -318,6 +322,32 @@ export class ExamUpdateComponent implements OnInit {
             dayjs(this.exam.exampleSolutionPublicationDate).isBefore(this.exam.visibleDate || null) ||
             dayjs(this.exam.exampleSolutionPublicationDate).isBefore(this.exam.endDate || null)
         );
+    }
+
+    validateVisibleDate(isInvalidDate: boolean) {
+        this.isInvalidVisibleDate = isInvalidDate;
+    }
+
+    validateStartDate(isInvalidDate: boolean) {
+        this.isInvalidStartDate = isInvalidDate;
+        this.calculateMaxWorkingTime();
+    }
+
+    validateEndDate(isInvalidDate: boolean) {
+        this.isInvalidEndDate = isInvalidDate;
+        this.calculateMaxWorkingTime();
+    }
+
+    validatePublishResultsDate(isInvalidDate: boolean) {
+        this.isInvalidPublishResultsDate = isInvalidDate;
+    }
+
+    validateStudentReviewStartDate(isInvalidDate: boolean) {
+        this.isInvalidStudentReviewStartDate = isInvalidDate;
+    }
+
+    validateStudentReviewEndDate(isInvalidDate: boolean) {
+        this.isInvalidStudentReviewEndDate = isInvalidDate;
     }
 
     /**
