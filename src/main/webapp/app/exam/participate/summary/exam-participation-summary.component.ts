@@ -15,6 +15,9 @@ import { ExamParticipationService } from 'app/exam/participate/exam-participatio
 import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
 import { PlagiarismCaseInfo } from 'app/exercises/shared/plagiarism/types/PlagiarismCaseInfo';
 import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/PlagiarismVerdict';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
+import { PROFILE_LOCALVC } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-exam-participation-summary',
@@ -72,6 +75,8 @@ export class ExamParticipationSummaryComponent implements OnInit {
 
     examWithOnlyIdAndStudentReviewPeriod: Exam;
 
+    localVCEnabled = false;
+
     // Icons
     faFolderOpen = faFolderOpen;
     faInfoCircle = faInfoCircle;
@@ -85,6 +90,7 @@ export class ExamParticipationSummaryComponent implements OnInit {
         private themeService: ThemeService,
         private examParticipationService: ExamParticipationService,
         private plagiarismCasesService: PlagiarismCasesService,
+        private profileService: ProfileService,
     ) {}
 
     /**
@@ -114,6 +120,10 @@ export class ExamParticipationSummaryComponent implements OnInit {
         }
 
         this.setExamWithOnlyIdAndStudentReviewPeriod();
+
+        this.profileService.getProfileInfo().subscribe((profileInfo: ProfileInfo) => {
+            this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
+        });
     }
 
     private tryLoadPlagiarismCaseInfosForStudent() {

@@ -17,5 +17,8 @@ export class ProgrammingExamSummaryComponent {
     @Input()
     submission: ProgrammingSubmission;
 
+    @Input()
+    localVCEnabled = false;
+
     constructor() {}
 }

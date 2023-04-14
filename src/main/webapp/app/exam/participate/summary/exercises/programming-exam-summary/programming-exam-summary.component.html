@@ -1,5 +1,14 @@
-<jhi-clone-repo-button [smallButtons]="true" [repositoryUrl]="participation?.userIndependentRepositoryUrl || ''"></jhi-clone-repo-button>
-<h6 class="mt-2">
+<h6>
+    <ng-container *ngIf="!localVCEnabled; else cloneRepoButton">
+        <span>Repository Link:</span>
+        <span>
+            <a href="{{ participation?.userIndependentRepositoryUrl }}" target="_blank" rel="noopener noreferrer">{{ participation?.userIndependentRepositoryUrl || 'n.a' }}</a>
+        </span>
+    </ng-container>
+    <ng-template #cloneRepoButton>
+        <jhi-clone-repo-button [smallButtons]="true" [repositoryUrl]="participation?.userIndependentRepositoryUrl || ''"></jhi-clone-repo-button>
+    </ng-template>
+    <br />
     <span>{{ 'artemisApp.exam.examSummary.lastCommitHash' | artemisTranslate }}:</span>
     <span [title]="submission?.commitHash">{{ (submission?.commitHash | slice : 0 : 7) || ('artemisApp.exam.examSummary.noCommitHash' | artemisTranslate) }}</span>
 </h6>
