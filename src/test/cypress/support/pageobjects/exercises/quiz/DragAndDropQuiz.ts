@@ -2,6 +2,13 @@ import { EXERCISE_BASE, POST } from '../../../constants';
 import { MODELING_EDITOR_CANVAS } from '../modeling/ModelingEditor';
 
 export class DragAndDropQuiz {
+    createDnDQuiz(title: string) {
+        cy.get('#create-dd-quiz').should('be.visible').click();
+        cy.get('#create-apollon-diagram').should('be.visible').click();
+        cy.get('#field_title').type(title);
+        cy.get('#save-dnd-quiz').click();
+    }
+
     dragItemIntoDragArea(itemIndex: number) {
         cy.get('#drag-item-' + itemIndex).drag('#drop-location');
     }
@@ -52,6 +59,15 @@ export class DragAndDropQuiz {
 
     markElementAsInteractive(nthElementOnCanvas: number, nthChildOfElement: number) {
         cy.get(MODELING_EDITOR_CANVAS).children().children().children().eq(nthElementOnCanvas).children().eq(0).children().eq(nthChildOfElement).click();
+    }
+
+    generateQuizExercise() {
+        cy.get('#generate-quiz-exercise').click();
+        cy.get('#generate-quiz-exercise-save').click();
+    }
+
+    previewQuiz() {
+        cy.get('#preview-quiz').click();
     }
 
     submit() {
