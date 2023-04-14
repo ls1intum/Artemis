@@ -22,6 +22,10 @@ export class SystemNotificationManagementUpdateComponent implements OnInit {
 
     form: FormGroup;
 
+    isInvalidNotificationDate = false;
+    isInvalidExpireDate = false;
+    isDatesError = false;
+
     // Icons
     faSave = faSave;
     faBan = faBan;
@@ -60,7 +64,7 @@ export class SystemNotificationManagementUpdateComponent implements OnInit {
         const notificationDate = this.form?.get('notificationDate')?.value as dayjs.Dayjs | null;
         const expireDate = this.form?.get('expireDate')?.value as dayjs.Dayjs | null;
 
-        if (!notificationDate || !expireDate || expireDate.isAfter(notificationDate)) {
+        if (!notificationDate || !expireDate || dayjs(expireDate).isAfter(notificationDate)) {
             [notificationDateControl, expireDateControl].forEach((control) => {
                 const errors = { ...(control?.errors ?? {}) };
                 delete errors.expireMustBeAfterNotification;
@@ -115,5 +119,15 @@ export class SystemNotificationManagementUpdateComponent implements OnInit {
 
     private onSaveError() {
         this.isSaving = false;
+    }
+
+    validateNotificationDate(isInvalidDate: boolean) {
+        this.isInvalidNotificationDate = isInvalidDate;
+        this.validateDates();
+    }
+
+    validateExpireDate(isInvalidDate: boolean) {
+        this.isInvalidExpireDate = isInvalidDate;
+        this.validateDates();
     }
 }

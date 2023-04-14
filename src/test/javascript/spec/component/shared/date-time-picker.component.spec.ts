@@ -106,7 +106,7 @@ describe('FormDateTimePickerComponent', () => {
             component.updateField(newDate);
 
             expect(component.value).toEqual(newDate);
-            expect(component.isInvalidDate).toBeTrue();
+            expect(component.isInvalidDate).toBeFalse();
             expect(onChangeSpy).not.toHaveBeenCalled();
             expect(onChangeSpy).not.toHaveBeenCalled();
             expect(valueChangedStub).not.toHaveBeenCalled();

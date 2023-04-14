@@ -27,6 +27,8 @@
                         [labelName]="'artemisApp.systemNotification.notificationDate' | artemisTranslate"
                         formControlName="notificationDate"
                         [shouldDisplayTimeZoneWarning]="false"
+                        (valueChange)="validateNotificationDate($event)"
+                        [error]="isDatesError"
                         name="notificationDate"
                     ></jhi-date-time-picker>
                 </div>
@@ -35,6 +37,8 @@
                         [labelName]="'artemisApp.systemNotification.expireDate' | artemisTranslate"
                         formControlName="expireDate"
                         [shouldDisplayTimeZoneWarning]="false"
+                        (valueChange)="validateExpireDate($event)"
+                        [error]="isDatesError"
                         name="expireDate"
                     ></jhi-date-time-picker>
                     <span *ngIf="expireDate?.errors?.expireMustBeAfterNotification" class="text-danger">{{
@@ -46,7 +50,12 @@
                 <button id="cancelButton" type="button" class="btn btn-secondary" (click)="goToOverview()">
                     <fa-icon [icon]="faBan"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
                 </button>
-                <button id="saveButton" type="submit" [disabled]="editForm.form.invalid || isSaving" class="btn btn-primary">
+                <button
+                    id="saveButton"
+                    type="submit"
+                    [disabled]="editForm.form.invalid || isSaving || isInvalidExpireDate || isInvalidNotificationDate || isDatesError"
+                    class="btn btn-primary"
+                >
                     <fa-icon [icon]="faSave"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>
                 </button>
             </div>

@@ -100,8 +100,6 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
      * @param newValue the date picked with the date picker or '' in case the date picker was opened and save was not pressed
      */
     updateField(newValue: any) {
-        console.log('value: ' + this.value);
-        console.log('newValue: ' + newValue);
         if (newValue != '') {
             this.isInvalidDate = false;
             if (this.value != newValue) {

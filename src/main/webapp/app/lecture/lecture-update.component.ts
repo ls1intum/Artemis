@@ -218,11 +218,13 @@ export class LectureUpdateComponent implements OnInit {
         this.isEndDateBeforeStartDate = !!this.lecture.startDate && !!this.lecture.endDate && dayjs(this.lecture.endDate).isBefore(this.lecture.startDate);
     }
 
-    onIsInvalidStartDateChange(invalidDate: boolean) {
+    validateStartDate(invalidDate: boolean) {
         this.isInvalidStartDate = invalidDate;
+        this.validateDate();
     }
 
-    onIsInvalidEndDateChange(invalidDate: boolean) {
+    validateEndDate(invalidDate: boolean) {
         this.isInvalidEndDate = invalidDate;
+        this.validateDate();
     }
 }
