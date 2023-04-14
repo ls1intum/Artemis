@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Optional;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
@@ -18,14 +19,20 @@ import org.eclipse.jgit.transport.RemoteRefUpdate;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationLocalCILocalVCTest;
+import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
+import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.util.LocalRepository;
 
 /**
  * This class contains integration tests for edge cases pertaining to the local VC system.
  */
 class LocalVCIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
+
+    @Autowired
+    ProgrammingSubmissionRepository programmingSubmissionRepository;
 
     private LocalRepository assignmentRepository;
 
@@ -211,10 +218,8 @@ class LocalVCIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest
         assignmentRepository.localGit.branchCreate().setName("new-branch").setStartPoint("refs/heads/" + defaultBranch).call();
         String repositoryUrl = localVCLocalCITestService.constructLocalVCUrl(student1Login, projectKey1, assignmentRepositorySlug);
 
-        PushResult pushResult = assignmentRepository.localGit.push().setRemote(repositoryUrl).setRefSpecs(new RefSpec("refs/heads/new-branch:refs/heads/new-branch")).call()
-                .iterator().next();
-        RemoteRefUpdate remoteRefUpdate = pushResult.getRemoteUpdates().iterator().next();
-        assertThat(remoteRefUpdate.getStatus()).isEqualTo(RemoteRefUpdate.Status.REJECTED_OTHER_REASON);
-        assertThat(remoteRefUpdate.getMessage()).isEqualTo("Only update commands are taken into consideration for submissions.");
+        assignmentRepository.localGit.push().setRemote(repositoryUrl).setRefSpecs(new RefSpec("refs/heads/new-branch:refs/heads/new-branch")).call().iterator().next();
+        Optional<ProgrammingSubmission> submission = programmingSubmissionRepository.findFirstByParticipationIdOrderBySubmissionDateDesc(studentParticipation.getId());
+        assertThat(submission).isNotPresent();
     }
 }
