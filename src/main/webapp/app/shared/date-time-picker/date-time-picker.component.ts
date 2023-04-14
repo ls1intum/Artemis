@@ -105,7 +105,7 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
             this.value = newValue;
             this._onChange(this.value);
             this.valueChanged();
-            this.writeValue(this.value);
+            //this.writeValue(this.value);
         }
     }
 
@@ -142,7 +142,7 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
      * directly updates the value (and removes the invalidDate error message) if the input field has been cleared
      * @param inputValue the string value from the input field
      */
-    emptyField(inputValue: string) {
+    updateEmptyField(inputValue: string) {
         if (inputValue == '') {
             this.value = null;
             this.isInvalidDate = false;

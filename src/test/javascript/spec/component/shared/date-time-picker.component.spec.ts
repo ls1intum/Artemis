@@ -27,8 +27,9 @@ describe('FormDateTimePickerComponent', () => {
 
     it('should emit if a value is changed', () => {
         const emitStub = jest.spyOn(component.valueChange, 'emit').mockImplementation();
+        component.isInvalidDate = true;
 
-        component.valueChanged(true);
+        component.valueChanged();
 
         expect(emitStub).toHaveBeenCalledOnceWith(true);
     });
@@ -83,38 +84,83 @@ describe('FormDateTimePickerComponent', () => {
         const onChangeSpy = jest.spyOn(component, '_onChange');
         const newDate = normalDate.add(2, 'days');
         component.value = normalDate;
+        component.isInvalidDate = false;
 
-        component.updateField(newDate, '');
+        component.updateField(newDate);
 
         expect(component.value).toEqual(newDate);
+        expect(component.isInvalidDate).toBeFalse();
         expect(onChangeSpy).toHaveBeenCalledOnce();
         expect(onChangeSpy).toHaveBeenCalledWith(newDate);
-        expect(valueChangedStub).toHaveBeenCalledOnceWith(false);
+        expect(valueChangedStub).toHaveBeenCalledOnce();
     });
+
+    it('should not update field with same date', () => {
+        const valueChangedStub = jest.spyOn(component, 'valueChanged').mockImplementation();
+        const onChangeSpy = jest.spyOn(component, '_onChange');
+        const newDate = normalDate.add(2, 'days');
+        component.value = newDate;
+        component.isInvalidDate = true;
+
+        component.updateField(newDate);
+
+        expect(component.value).toEqual(newDate);
+        expect(component.isInvalidDate).toBeTrue();
+        expect(onChangeSpy).not.toHaveBeenCalled();
+        expect(onChangeSpy).not.toHaveBeenCalled();
+        expect(valueChangedStub).not.toHaveBeenCalled();
+    });
+
     it('should update field with invalid date', () => {
         const valueChangedStub = jest.spyOn(component, 'valueChanged').mockImplementation();
         const onChangeSpy = jest.spyOn(component, '_onChange');
         component.value = normalDate;
 
         const newValue = null;
-        component.updateField(newValue, 'b');
+        component.updateField(newValue);
 
         expect(component.value).toBeNull();
-        expect(onChangeSpy).toHaveBeenCalledOnce();
-        expect(onChangeSpy).toHaveBeenCalledWith(newValue);
-        expect(valueChangedStub).toHaveBeenCalledOnceWith(true);
+        expect(onChangeSpy).toHaveBeenCalledOnceWith(newValue);
+        expect(valueChangedStub).toHaveBeenCalledOnce();
     });
-    it('clear field', () => {
+
+    it('updates value on empty field', () => {
         const valueChangedStub = jest.spyOn(component, 'valueChanged').mockImplementation();
         const onChangeSpy = jest.spyOn(component, '_onChange');
         component.value = normalDate;
+        component.isInvalidDate = true;
 
-        const newValue = null;
-        component.updateField(newValue, '');
+        const inputValue = '';
+        component.updateEmptyField(inputValue);
 
         expect(component.value).toBeNull();
+        expect(component.isInvalidDate).toBeFalse();
         expect(onChangeSpy).toHaveBeenCalledOnce();
-        expect(onChangeSpy).toHaveBeenCalledWith(newValue);
-        expect(valueChangedStub).toHaveBeenCalledOnceWith(false);
+        expect(onChangeSpy).toHaveBeenCalledOnceWith(null);
+        expect(valueChangedStub).toHaveBeenCalledOnce();
+    });
+
+    it('not empty field stays unchanged', () => {
+        const valueChangedStub = jest.spyOn(component, 'valueChanged').mockImplementation();
+        const onChangeSpy = jest.spyOn(component, '_onChange');
+        component.value = normalDate;
+        component.isInvalidDate = true;
+
+        const inputValue = 'a';
+        component.updateEmptyField(inputValue);
+
+        expect(component.value).toEqual(normalDate);
+        expect(component.isInvalidDate).toBeTrue();
+        expect(onChangeSpy).not.toHaveBeenCalled();
+        expect(valueChangedStub).not.toHaveBeenCalled();
+    });
+
+    it('checks if an object is a valid date', () => {
+        expect(component.isValidDate(normalDateAsDateObject)).toBeTrue();
+    });
+
+    it('checks if an object is an invalid valid', () => {
+        const invalidDate = new Date('some text, definetly not a date');
+        expect(component.isValidDate(invalidDate)).toBeFalse();
     });
 });

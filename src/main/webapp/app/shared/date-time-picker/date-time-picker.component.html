@@ -20,7 +20,7 @@
             [min]="convert(min)"
             [max]="convert(max)"
             (change)="validateAndUpdateField($event)"
-            (ngModelChange)="emptyField(datePicker.value)"
+            (ngModelChange)="updateEmptyField(datePicker.value)"
             [owlDateTime]="dt"
             name="datePicker"
         />
