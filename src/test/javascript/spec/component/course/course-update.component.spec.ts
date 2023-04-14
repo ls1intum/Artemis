@@ -453,6 +453,30 @@ describe('Course Management Update Component', () => {
 
             expect(comp.areInvalidDates).toBeTrue();
         });
+
+        it('should handle invalid startDate', () => {
+            comp.course = new Course();
+            comp.course.startDate = dayjs().add(1, 'day');
+            comp.course.endDate = undefined;
+            comp.isInvalidEndDate = false;
+
+            comp.validateStartDate(true);
+            expect(comp.isInvalidStartDate).toBeTrue();
+            expect(comp.isInvalidEndDate).toBeFalse();
+            expect(comp.areInvalidDates).toBeFalse();
+        });
+
+        it('should handle invalid endDate', () => {
+            comp.course = new Course();
+            comp.course.startDate = dayjs().add(1, 'day');
+            comp.course.endDate = dayjs().subtract(1, 'day');
+            comp.isInvalidEndDate = false;
+
+            comp.validateEndDate(false);
+            expect(comp.isInvalidStartDate).toBeFalse();
+            expect(comp.isInvalidEndDate).toBeFalse();
+            expect(comp.areInvalidDates).toBeTrue();
+        });
     });
 
     describe('removeOrganizationFromCourse', () => {

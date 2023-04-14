@@ -112,7 +112,7 @@ describe('FormDateTimePickerComponent', () => {
             expect(valueChangedStub).not.toHaveBeenCalled();
         });
 
-        it('should update field with invalid date', () => {
+        it('should update field with null', () => {
             const valueChangedStub = jest.spyOn(component, 'valueChanged').mockImplementation();
             const onChangeSpy = jest.spyOn(component, '_onChange');
             component.value = normalDate;
@@ -138,7 +138,6 @@ describe('FormDateTimePickerComponent', () => {
 
             expect(component.value).toBeNull();
             expect(component.isInvalidDate).toBeFalse();
-            expect(onChangeSpy).toHaveBeenCalledOnce();
             expect(onChangeSpy).toHaveBeenCalledOnceWith(null);
             expect(valueChangedStub).toHaveBeenCalledOnce();
         });
