@@ -1,6 +1,6 @@
 import { AfterViewInit, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { PrivacyStatementService } from 'app/shared/service/privacy-statement.service';
+import { LegalDocumentService } from 'app/shared/service/legal-document.service';
 import { Subscription } from 'rxjs';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { LegalDocumentLanguage } from 'app/entities/legal-document.model';
@@ -13,7 +13,7 @@ export class PrivacyComponent implements AfterViewInit, OnInit, OnDestroy {
     privacyStatement: string;
     private languageChangeSubscription?: Subscription;
 
-    constructor(private route: ActivatedRoute, private privacyStatementService: PrivacyStatementService, private languageHelper: JhiLanguageHelper) {}
+    constructor(private route: ActivatedRoute, private privacyStatementService: LegalDocumentService, private languageHelper: JhiLanguageHelper) {}
 
     /**
      * On init get the privacy statement file from the Artemis server and set up a subscription to fetch the file again if the language was changed.
@@ -21,7 +21,6 @@ export class PrivacyComponent implements AfterViewInit, OnInit, OnDestroy {
     ngOnInit(): void {
         // Update the view if the language was changed
         this.languageChangeSubscription = this.languageHelper.language.subscribe((lang) => {
-            console.log('lang', lang);
             this.privacyStatementService.getPrivacyStatement(lang as LegalDocumentLanguage).subscribe((statement) => (this.privacyStatement = statement.text));
         });
     }

@@ -1,16 +1,15 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 
+import { LegalDocumentUpdateComponent } from 'app/admin/legal/legal-document-update.component';
 import { Authority } from 'app/shared/constants/authority.constants';
-import { ImprintUpdateComponent } from 'app/admin/legal/imprint/imprint-update.component';
 
 const routes: Routes = [
     {
         path: '',
-        component: ImprintUpdateComponent,
+        component: LegalDocumentUpdateComponent,
         data: {
             authorities: [Authority.ADMIN],
-            pageTitle: 'artemisApp.imprint.updateImprint',
         },
     },
 ];
@@ -19,4 +18,4 @@ const routes: Routes = [
     imports: [RouterModule.forChild(routes)],
     exports: [RouterModule],
 })
-export class ImprintUpdateRoutingModule {}
+export class LegalDocumentUpdateRoutingModule {}

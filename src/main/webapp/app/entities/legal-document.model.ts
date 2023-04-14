@@ -8,8 +8,8 @@ export enum LegalDocumentType {
     IMPRINT = 'imprint',
 }
 
-export abstract class LegalDocument {
-    protected constructor(type: LegalDocumentType, language: LegalDocumentLanguage) {
+export class LegalDocument {
+    constructor(type: LegalDocumentType, language: LegalDocumentLanguage) {
         this.language = language;
     }
 

@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.LegalDocumentLanguage;
 import de.tum.in.www1.artemis.domain.PrivacyStatement;
-import de.tum.in.www1.artemis.service.PrivacyStatementService;
+import de.tum.in.www1.artemis.service.LegalDocumentService;
 
 /**
  * REST controller for managing and retrieving the Privacy Statement.
@@ -16,10 +16,10 @@ import de.tum.in.www1.artemis.service.PrivacyStatementService;
 @RequestMapping("/api")
 public class PrivacyStatementResource {
 
-    private final PrivacyStatementService privacyStatementService;
+    private final LegalDocumentService legalDocumentService;
 
-    public PrivacyStatementResource(PrivacyStatementService privacyStatementService) {
-        this.privacyStatementService = privacyStatementService;
+    public PrivacyStatementResource(LegalDocumentService legalDocumentService) {
+        this.legalDocumentService = legalDocumentService;
     }
 
     /**
@@ -33,7 +33,7 @@ public class PrivacyStatementResource {
     public PrivacyStatement getPrivacyStatement(@RequestParam(value = "language") String language) {
         if (!"de".equalsIgnoreCase(language) && !"en".equalsIgnoreCase(language))
             throw new BadRequestException("Language not supported");
-        return privacyStatementService.getPrivacyStatement(LegalDocumentLanguage.fromLanguageShortName(language));
+        return legalDocumentService.getPrivacyStatement(LegalDocumentLanguage.fromLanguageShortName(language));
     }
 
     /**
@@ -48,7 +48,7 @@ public class PrivacyStatementResource {
     public PrivacyStatement getPrivacyStatementForUpdate(@RequestParam("language") String language) {
         if (!"de".equalsIgnoreCase(language) && !"en".equalsIgnoreCase(language))
             throw new BadRequestException("Language not supported");
-        return privacyStatementService.getPrivacyStatementForUpdate(LegalDocumentLanguage.fromLanguageShortName(language));
+        return legalDocumentService.getPrivacyStatementForUpdate(LegalDocumentLanguage.fromLanguageShortName(language));
     }
 
     /**
@@ -63,6 +63,6 @@ public class PrivacyStatementResource {
         if (LegalDocumentLanguage.ENGLISH != privacyStatement.getLanguage() && LegalDocumentLanguage.GERMAN != privacyStatement.getLanguage()) {
             throw new BadRequestException("Language not supported");
         }
-        return privacyStatementService.updatePrivacyStatement(privacyStatement);
+        return legalDocumentService.updatePrivacyStatement(privacyStatement);
     }
 }

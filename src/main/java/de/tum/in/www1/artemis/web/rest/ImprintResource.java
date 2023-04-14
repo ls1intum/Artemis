@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.Imprint;
 import de.tum.in.www1.artemis.domain.LegalDocumentLanguage;
-import de.tum.in.www1.artemis.service.ImprintService;
+import de.tum.in.www1.artemis.service.LegalDocumentService;
 
 /**
  * REST controller for managing and retrieving the Privacy Statement.
@@ -16,10 +16,10 @@ import de.tum.in.www1.artemis.service.ImprintService;
 @RequestMapping("/api")
 public class ImprintResource {
 
-    private final ImprintService imprintService;
+    private final LegalDocumentService legalDocumentService;
 
-    public ImprintResource(ImprintService imprintService) {
-        this.imprintService = imprintService;
+    public ImprintResource(LegalDocumentService legalDocumentService) {
+        this.legalDocumentService = legalDocumentService;
     }
 
     /**
@@ -33,7 +33,7 @@ public class ImprintResource {
     public Imprint getImprint(@RequestParam(value = "language") String language) {
         if (!"de".equalsIgnoreCase(language) && !"en".equalsIgnoreCase(language))
             throw new BadRequestException("Language not supported");
-        return imprintService.getImprint(LegalDocumentLanguage.fromLanguageShortName(language));
+        return legalDocumentService.getImprint(LegalDocumentLanguage.fromLanguageShortName(language));
     }
 
     /**
@@ -48,7 +48,7 @@ public class ImprintResource {
     public Imprint getImprintForUpdate(@RequestParam("language") String language) {
         if (!"de".equalsIgnoreCase(language) && !"en".equalsIgnoreCase(language))
             throw new BadRequestException("Language not supported");
-        return imprintService.getImprintForUpdate(LegalDocumentLanguage.fromLanguageShortName(language));
+        return legalDocumentService.getImprintForUpdate(LegalDocumentLanguage.fromLanguageShortName(language));
     }
 
     /**
@@ -63,6 +63,6 @@ public class ImprintResource {
         if (LegalDocumentLanguage.ENGLISH != imprint.getLanguage() && LegalDocumentLanguage.GERMAN != imprint.getLanguage()) {
             throw new BadRequestException("Language not supported");
         }
-        return imprintService.updateImprint(imprint);
+        return legalDocumentService.updateImprint(imprint);
     }
 }

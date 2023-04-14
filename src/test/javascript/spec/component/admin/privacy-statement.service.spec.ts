@@ -1,12 +1,12 @@
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 
-import { PrivacyStatementService } from 'app/shared/service/privacy-statement.service';
+import { LegalDocumentService } from 'app/shared/service/legal-document.service';
 import { PrivacyStatement } from 'app/entities/privacy-statement.model';
 import { LegalDocumentLanguage } from 'app/entities/legal-document.model';
 
 describe('PrivacyStatementService', () => {
-    let service: PrivacyStatementService;
+    let service: LegalDocumentService;
     const resourceUrl = SERVER_API_URL + 'api';
     let httpMock: HttpTestingController;
 
@@ -14,7 +14,7 @@ describe('PrivacyStatementService', () => {
         TestBed.configureTestingModule({
             imports: [HttpClientTestingModule],
         });
-        service = TestBed.inject(PrivacyStatementService);
+        service = TestBed.inject(LegalDocumentService);
         httpMock = TestBed.inject(HttpTestingController);
     });
 

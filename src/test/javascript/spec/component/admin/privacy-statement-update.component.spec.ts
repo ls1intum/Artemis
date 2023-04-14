@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { PrivacyStatementUpdateComponent } from 'app/admin/legal/privacy-statement/privacy-statement-update.component';
+import { LegalDocumentUpdateComponent } from 'app/admin/legal/legal-document-update.component';
 import { MockComponent, MockDirective } from 'ng-mocks';
 import { UnsavedChangesWarningComponent } from 'app/admin/legal/unsaved-changes-warning/unsaved-changes-warning.component';
 import { ButtonComponent } from 'app/shared/components/button.component';
@@ -12,20 +12,20 @@ import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.
 import { MockLanguageHelper } from '../../helpers/mocks/service/mock-translate.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ModePickerComponent } from 'app/exercises/shared/mode-picker/mode-picker.component';
-import { PrivacyStatementService } from 'app/shared/service/privacy-statement.service';
+import { LegalDocumentService } from 'app/shared/service/legal-document.service';
 import { LegalDocumentLanguage } from 'app/entities/legal-document.model';
 
 describe('PrivacyStatementUpdateComponent', () => {
-    let component: PrivacyStatementUpdateComponent;
-    let fixture: ComponentFixture<PrivacyStatementUpdateComponent>;
+    let component: LegalDocumentUpdateComponent;
+    let fixture: ComponentFixture<LegalDocumentUpdateComponent>;
     let modalService: NgbModal;
-    let privacyStatementService: PrivacyStatementService;
+    let privacyStatementService: LegalDocumentService;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
             declarations: [
-                PrivacyStatementUpdateComponent,
+                LegalDocumentUpdateComponent,
                 MockComponent(UnsavedChangesWarningComponent),
                 MockComponent(ButtonComponent),
                 MockDirective(TranslateDirective),
@@ -38,10 +38,10 @@ describe('PrivacyStatementUpdateComponent', () => {
             ],
         }).compileComponents();
 
-        fixture = TestBed.createComponent(PrivacyStatementUpdateComponent);
+        fixture = TestBed.createComponent(LegalDocumentUpdateComponent);
         component = fixture.componentInstance;
         modalService = TestBed.inject(NgbModal);
-        privacyStatementService = TestBed.inject(PrivacyStatementService);
+        privacyStatementService = TestBed.inject(LegalDocumentService);
         fixture.detectChanges();
     });
 

@@ -7,10 +7,10 @@ import { ImprintService } from 'app/shared/service/imprint.service';
 
 @Component({
     selector: 'jhi-imprint',
-    template: ` <div [innerHTML]="imprintStatement | htmlForMarkdown"></div> `,
+    template: ` <div [innerHTML]="imprint | htmlForMarkdown"></div> `,
 })
 export class ImprintComponent implements AfterViewInit, OnInit, OnDestroy {
-    imprintStatement: string;
+    imprint: string;
     private languageChangeSubscription?: Subscription;
 
     constructor(private route: ActivatedRoute, private imprintService: ImprintService, private languageHelper: JhiLanguageHelper) {}
@@ -21,7 +21,7 @@ export class ImprintComponent implements AfterViewInit, OnInit, OnDestroy {
     ngOnInit(): void {
         // Update the view if the language was changed
         this.languageChangeSubscription = this.languageHelper.language.subscribe((lang) => {
-            this.imprintService.getImprint(lang as LegalDocumentLanguage).subscribe((imprint) => (this.imprintStatement = imprint.text));
+            this.imprintService.getImprint(lang as LegalDocumentLanguage).subscribe((imprint) => (this.imprint = imprint.text));
         });
     }
 
