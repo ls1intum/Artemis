@@ -72,7 +72,7 @@ export class LectureService {
     findAllByCourseId(courseId: number, withLectureUnits = false): Observable<EntityArrayResponseType> {
         const params = new HttpParams().set('withLectureUnits', withLectureUnits ? '1' : '0');
         return this.http
-            .get<Lecture[]>(`api/lectures/course/${courseId}`, {
+            .get<Lecture[]>(`api/courses/${courseId}/lectures`, {
                 params,
                 observe: 'response',
             })
