@@ -707,6 +707,7 @@ German version
 
    Sie haben das Recht, auf schriftlichen Antrag und unentgeltlich Auskunft über die personenbezogenen Daten zu erhalten, die über Sie gespeichert sind. Zusätzlich haben Sie das Recht auf Berichtigung unrichtiger Daten. Den behördlichen Datenschutzbeauftragten der <Universität> erreichen Sie per E-Mail unter <Email Datenschutzbeauftragter> oder über <Link zum Datenschutzbeauftragten>.
 
+
 English version
 ^^^^^^^^
 
@@ -831,6 +832,7 @@ English version
    You have the right, upon written request and free of charge, to obtain information about the personal data stored about you. In addition, you have the right to have incorrect data corrected. You can reach the data protection officer of <University by e-mail at <Email> or via <Website>.
 
 
+------------------------------------------------------------------------------------------------------------------------
 
 .. include:: setup/programming-exercises.rst
 
