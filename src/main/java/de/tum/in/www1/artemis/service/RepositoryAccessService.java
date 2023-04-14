@@ -11,7 +11,6 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.in.www1.artemis.service.exam.ExamSubmissionService;
 import de.tum.in.www1.artemis.service.plagiarism.PlagiarismService;
-import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.AccessUnauthorizedException;
 import de.tum.in.www1.artemis.web.rest.repository.RepositoryActionType;
@@ -22,7 +21,7 @@ import de.tum.in.www1.artemis.web.rest.repository.RepositoryActionType;
 @Service
 public class RepositoryAccessService {
 
-    private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
+    private final ParticipationAuthorizationCheckService participationAuthCheckService;
 
     private final PlagiarismService plagiarismService;
 
@@ -32,9 +31,9 @@ public class RepositoryAccessService {
 
     private final ExamSubmissionService examSubmissionService;
 
-    public RepositoryAccessService(ProgrammingExerciseParticipationService programmingExerciseParticipationService, PlagiarismService plagiarismService,
+    public RepositoryAccessService(ParticipationAuthorizationCheckService participationAuthCheckService, PlagiarismService plagiarismService,
             SubmissionPolicyService submissionPolicyService, AuthorizationCheckService authorizationCheckService, ExamSubmissionService examSubmissionService) {
-        this.programmingExerciseParticipationService = programmingExerciseParticipationService;
+        this.participationAuthCheckService = participationAuthCheckService;
         this.plagiarismService = plagiarismService;
         this.submissionPolicyService = submissionPolicyService;
         this.authorizationCheckService = authorizationCheckService;
@@ -53,7 +52,7 @@ public class RepositoryAccessService {
             RepositoryActionType repositoryActionType) {
 
         // Error case 1: The user does not have permissions to push into the repository and the user is not notified for a related plagiarism case.
-        boolean hasPermissions = programmingExerciseParticipationService.canAccessParticipation(programmingParticipation, user);
+        boolean hasPermissions = participationAuthCheckService.canAccessParticipation(programmingParticipation, user);
         boolean userWasNotifiedAboutPlagiarismCase = plagiarismService.wasUserNotifiedByInstructor(programmingParticipation.getId(), user.getLogin());
         if (!hasPermissions && !userWasNotifiedAboutPlagiarismCase) {
             throw new AccessUnauthorizedException();
