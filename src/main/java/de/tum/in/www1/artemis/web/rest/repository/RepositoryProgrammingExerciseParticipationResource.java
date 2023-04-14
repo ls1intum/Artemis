@@ -20,6 +20,7 @@ import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.BuildLogEntryService;
+import de.tum.in.www1.artemis.service.ParticipationAuthorizationCheckService;
 import de.tum.in.www1.artemis.service.RepositoryAccessService;
 import de.tum.in.www1.artemis.service.RepositoryService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
@@ -42,6 +43,8 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @PreAuthorize("hasRole('USER')")
 public class RepositoryProgrammingExerciseParticipationResource extends RepositoryResource {
 
+    private final ParticipationAuthorizationCheckService participationAuthCheckService;
+
     private final ProgrammingExerciseParticipationService participationService;
 
     private final BuildLogEntryService buildLogService;
@@ -52,13 +55,16 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
 
     private final SubmissionPolicyRepository submissionPolicyRepository;
 
-    public RepositoryProgrammingExerciseParticipationResource(UserRepository userRepository, AuthorizationCheckService authCheckService, GitService gitService,
-            Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService, RepositoryService repositoryService,
-            ProgrammingExerciseParticipationService participationService, ProgrammingExerciseRepository programmingExerciseRepository,
-            ParticipationRepository participationRepository, BuildLogEntryService buildLogService, ProgrammingSubmissionRepository programmingSubmissionRepository,
-            RepositoryAccessService repositoryAccessService, SubmissionPolicyRepository submissionPolicyRepository) {
+    public RepositoryProgrammingExerciseParticipationResource(UserRepository userRepository, AuthorizationCheckService authCheckService,
+            ParticipationAuthorizationCheckService participationAuthCheckService, GitService gitService, Optional<ContinuousIntegrationService> continuousIntegrationService,
+            Optional<VersionControlService> versionControlService, RepositoryService repositoryService, ProgrammingExerciseParticipationService participationService,
+            ProgrammingExerciseRepository programmingExerciseRepository, ParticipationRepository participationRepository, ExamSubmissionService examSubmissionService,
+            BuildLogEntryService buildLogService, ProgrammingSubmissionRepository programmingSubmissionRepository, SubmissionPolicyRepository submissionPolicyRepository,
+            RepositoryAccessService repositoryAccessService) {
         super(userRepository, authCheckService, gitService, continuousIntegrationService, repositoryService, versionControlService, programmingExerciseRepository,
                 repositoryAccessService);
+
+        this.participationAuthCheckService = participationAuthCheckService;
         this.participationService = participationService;
         this.buildLogService = buildLogService;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
@@ -120,10 +126,12 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     @Override
     boolean canAccessRepository(Long participationId) throws IllegalArgumentException {
         Participation participation = participationRepository.findByIdElseThrow(participationId);
-        if (!(participation instanceof ProgrammingExerciseParticipation)) {
+        if (participation instanceof ProgrammingExerciseParticipation programmingExerciseParticipation) {
+            return participationAuthCheckService.canAccessParticipation(programmingExerciseParticipation);
+        }
+        else {
             throw new IllegalArgumentException();
         }
-        return participationService.canAccessParticipation((ProgrammingExerciseParticipation) participation);
     }
 
     @Override
@@ -268,6 +276,15 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, error.getMessage(), error);
         }
 
+        // User must have the necessary permissions to update a file.
+        // When the buildAndTestAfterDueDate is set, the student can't change the repository content anymore after the due date.
+        participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
+        boolean repositoryIsLocked = programmingExerciseParticipation.isLocked();
+        if (repositoryIsLocked) {
+            FileSubmissionError error = new FileSubmissionError(participationId, "noPermissions");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, error.getMessage(), error);
+        }
+
         // Git repository must be available to update a file
         Repository repository;
         try {
@@ -341,10 +358,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         log.debug("REST request to get build log : {}", participationId);
 
         ProgrammingExerciseParticipation participation = participationService.findProgrammingExerciseParticipationWithLatestSubmissionAndResult(participationId);
-
-        if (!participationService.canAccessParticipation(participation)) {
-            throw new AccessForbiddenException("Participation", participationId);
-        }
+        participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
 
         ProgrammingSubmission programmingSubmission = (ProgrammingSubmission) participation.getSubmissions().stream().findFirst().orElse(null);
         // If a resultId is specified and the ID does not belong to the latest result, find the corresponding submission. Otherwise use the latest submission.
