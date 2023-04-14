@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.security.localvc;
 
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.Optional;
 
 import org.eclipse.jgit.lib.Repository;
@@ -33,7 +34,15 @@ public class LocalVCPostPushHook implements PostReceiveHook {
     @Override
     public void onPostReceive(ReceivePack receivePack, Collection<ReceiveCommand> commands) {
 
-        ReceiveCommand command = commands.iterator().next();
+        // The PreReceiveHook already checked that there is exactly one command and rejects the push otherwise.
+        Iterator<ReceiveCommand> iterator = commands.iterator();
+        if (!iterator.hasNext()) {
+            // E.g. no refs were updated during the push operation.
+            // Note: This was already checked in the LocalVCPrePushHook but the request is then just delegated further and is finally stopped here.
+            return;
+        }
+
+        ReceiveCommand command = iterator.next();
 
         if (command.getType() != ReceiveCommand.Type.UPDATE) {
             // The command can also be of type CREATE (e.g. when creating a new branch). This will never lead to a new submission.
