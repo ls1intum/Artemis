@@ -20,7 +20,6 @@ import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -44,14 +43,9 @@ public class ProgrammingExerciseParticipationService {
 
     private final GitService gitService;
 
-    private final UserRepository userRepository;
-
-    private final AuthorizationCheckService authorizationCheckService;
-
     public ProgrammingExerciseParticipationService(SolutionProgrammingExerciseParticipationRepository solutionParticipationRepository,
             TemplateProgrammingExerciseParticipationRepository templateParticipationRepository, ProgrammingExerciseStudentParticipationRepository studentParticipationRepository,
-            ParticipationRepository participationRepository, TeamRepository teamRepository, GitService gitService, Optional<VersionControlService> versionControlService,
-            UserRepository userRepository, AuthorizationCheckService authorizationCheckService) {
+            ParticipationRepository participationRepository, TeamRepository teamRepository, GitService gitService, Optional<VersionControlService> versionControlService) {
         this.studentParticipationRepository = studentParticipationRepository;
         this.solutionParticipationRepository = solutionParticipationRepository;
         this.templateParticipationRepository = templateParticipationRepository;
@@ -59,8 +53,6 @@ public class ProgrammingExerciseParticipationService {
         this.teamRepository = teamRepository;
         this.versionControlService = versionControlService;
         this.gitService = gitService;
-        this.userRepository = userRepository;
-        this.authorizationCheckService = authorizationCheckService;
     }
 
     /**
@@ -98,6 +90,102 @@ public class ProgrammingExerciseParticipationService {
     }
 
     /**
+     * Retrieve the participation (template, solution or student) for the given repository type or username (e.g. "exercise", "solution", or "artemis_test_user_1") in the given
+     * exercise.
+     *
+     * @param repositoryTypeOrUserName the repository type or username (e.g. "exercise", "solution", or "artemis_test_user_1").
+     * @param exercise                 the programming exercise.
+     * @param isTestRun                whether the participation is a test run participation (i.e. either for a practice repository, or for an exam test run).
+     * @param withSubmissions          whether to load the submissions of the participation.
+     * @return the participation.
+     */
+    public ProgrammingExerciseParticipation findParticipationByRepositoryTypeOrUserNameAndExerciseAndTestRunOrThrow(String repositoryTypeOrUserName, ProgrammingExercise exercise,
+            boolean isTestRun, boolean withSubmissions) {
+        if (repositoryTypeOrUserName.equals(RepositoryType.SOLUTION.toString())) {
+            if (withSubmissions) {
+                return solutionParticipationRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseIdElseThrow(exercise.getId());
+            }
+            else {
+                return solutionParticipationRepository.findByProgrammingExerciseIdElseThrow(exercise.getId());
+            }
+        }
+        else if (repositoryTypeOrUserName.equals(RepositoryType.TEMPLATE.toString())) {
+            if (withSubmissions) {
+                return templateParticipationRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseIdElseThrow(exercise.getId());
+            }
+            else {
+                return templateParticipationRepository.findByProgrammingExerciseIdElseThrow(exercise.getId());
+            }
+        }
+
+        if (exercise.isTeamMode()) {
+            // The repositoryTypeOrUserName is the team short name.
+            // For teams, there is no practice participation.
+            return findTeamParticipationByExerciseAndTeamShortNameOrThrow(exercise, repositoryTypeOrUserName, withSubmissions);
+        }
+
+        return findStudentParticipationByExerciseAndStudentLoginAndTestRunOrThrow(exercise, repositoryTypeOrUserName, isTestRun, withSubmissions);
+    }
+
+    /**
+     * Tries to retrieve a team participation for the given exercise and team short name.
+     *
+     * @param exercise        the exercise for which to find a participation.
+     * @param teamShortName   of the team to which the participation belongs.
+     * @param withSubmissions true if the participation should be fetched with its submissions.
+     * @return the participation for the given exercise and team.
+     */
+    private ProgrammingExerciseStudentParticipation findTeamParticipationByExerciseAndTeamShortNameOrThrow(ProgrammingExercise exercise, String teamShortName,
+            boolean withSubmissions) {
+        Team team = teamRepository.findOneByExerciseCourseIdAndShortNameOrThrow(exercise.getCourseViaExerciseGroupOrCourseMember().getId(), teamShortName);
+
+        Optional<ProgrammingExerciseStudentParticipation> participationOptional;
+
+        if (withSubmissions) {
+            participationOptional = studentParticipationRepository.findWithSubmissionsByExerciseIdAndTeamId(exercise.getId(), team.getId());
+        }
+        else {
+            participationOptional = studentParticipationRepository.findByExerciseIdAndTeamId(exercise.getId(), team.getId());
+        }
+
+        if (participationOptional.isEmpty()) {
+            throw new EntityNotFoundException("Participation could not be found by exerciseId " + exercise.getId() + " and team short name " + teamShortName);
+        }
+
+        return participationOptional.get();
+    }
+
+    /**
+     * Tries to retrieve a student participation for the given exercise and username and test run flag.
+     *
+     * @param exercise        the exercise for which to find a participation.
+     * @param username        of the user to which the participation belongs.
+     * @param isTestRun       true if the participation is a test run participation.
+     * @param withSubmissions true if the participation should be loaded with its submissions.
+     * @return the participation for the given exercise and user.
+     * @throws EntityNotFoundException if there is no participation for the given exercise and user.
+     */
+    @NotNull
+    private ProgrammingExerciseStudentParticipation findStudentParticipationByExerciseAndStudentLoginAndTestRunOrThrow(ProgrammingExercise exercise, String username,
+            boolean isTestRun, boolean withSubmissions) {
+
+        Optional<ProgrammingExerciseStudentParticipation> participationOptional;
+
+        if (withSubmissions) {
+            participationOptional = studentParticipationRepository.findWithSubmissionsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), username, isTestRun);
+        }
+        else {
+            participationOptional = studentParticipationRepository.findByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), username, isTestRun);
+        }
+
+        if (participationOptional.isEmpty()) {
+            throw new EntityNotFoundException("Participation could not be found by exerciseId " + exercise.getId() + " and user " + username);
+        }
+
+        return participationOptional.get();
+    }
+
+    /**
      * Tries to retrieve a student participation for the given exercise id and username.
      *
      * @param exercise the exercise for which to find a participation
@@ -119,102 +207,6 @@ public class ProgrammingExerciseParticipationService {
             throw new EntityNotFoundException("participation could not be found by exerciseId " + exercise.getId() + " and user " + username);
         }
         return participation.get();
-    }
-
-    /**
-     * Retrieve the student participation of the given programming exercise and user.
-     *
-     * @param userName             the username of the student or instructor or the login of the team.
-     * @param exercise             the programming exercise for which to retrieve the participation.
-     * @param isPracticeRepository true if the repository is a practice repository (repository URL contains "-practice-"), false otherwise.
-     * @return the ProgrammingExerciseStudentParticipation of the given user and programming exercise.
-     */
-    public ProgrammingExerciseStudentParticipation findStudentParticipationByExerciseAndUserNameAndTestRunOrThrow(ProgrammingExercise exercise, String userName,
-            boolean isPracticeRepository) {
-        if (exercise.isTeamMode()) {
-            return findTeamParticipationByExerciseAndTeamShortNameOrThrow(exercise, userName, true);
-        }
-
-        return findStudentParticipationByExerciseAndStudentLoginAndTestRunOrThrow(exercise, userName, isPracticeRepository, true);
-    }
-
-    /**
-     * Tries to retrieve a student participation for the given exercise and username and test run flag.
-     *
-     * @param exercise             the exercise for which to find a participation.
-     * @param username             of the user to which the participation belongs.
-     * @param isPracticeRepository true if the repository URL contains "-practice-".
-     * @param withSubmissions      true if the participation should be loaded with its submissions.
-     * @return the participation for the given exercise and user.
-     * @throws EntityNotFoundException if there is no participation for the given exercise and user.
-     */
-    @NotNull
-    public ProgrammingExerciseStudentParticipation findStudentParticipationByExerciseAndStudentLoginAndTestRunOrThrow(ProgrammingExercise exercise, String username,
-            boolean isPracticeRepository, boolean withSubmissions) {
-
-        Optional<ProgrammingExerciseStudentParticipation> participationOptional;
-
-        boolean isTestRun = isPracticeRepository || isExamTestRunRepository(exercise, username);
-
-        if (withSubmissions) {
-            participationOptional = studentParticipationRepository.findWithSubmissionsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), username, isTestRun);
-        }
-        else {
-            participationOptional = studentParticipationRepository.findByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), username, isTestRun);
-        }
-
-        if (participationOptional.isEmpty()) {
-            throw new EntityNotFoundException("Participation could not be found by exerciseId " + exercise.getId() + " and user " + username);
-        }
-
-        return participationOptional.get();
-    }
-
-    /**
-     * Check if the participation belongs to an exam test run.
-     *
-     * @param exercise the exercise for which to check if the participation belongs to an exam test run.
-     * @param username the username retrieved from the repository URL.
-     * @return true if the participation belongs to an exam test run.
-     */
-    private boolean isExamTestRunRepository(ProgrammingExercise exercise, String username) {
-
-        if (!exercise.isExamExercise()) {
-            return false;
-        }
-
-        // Try to retrieve the user from the username extracted from the repository URL. The user is needed to check if the repository belongs to an exam test
-        // run. If an editor or higher has a repository for the exam exercise, the repository must belong to the exam test run.
-        User user = userRepository.findOneByLogin(username).orElseThrow(() -> new EntityNotFoundException("User with login " + username + " does not exist"));
-        return authorizationCheckService.isAtLeastEditorForExercise(exercise, user);
-    }
-
-    /**
-     * Tries to retrieve a team participation for the given exercise and team short name.
-     *
-     * @param exercise        the exercise for which to find a participation.
-     * @param teamShortName   of the team to which the participation belongs.
-     * @param withSubmissions true if the participation should be fetched with its submissions.
-     * @return the participation for the given exercise and team.
-     */
-    public ProgrammingExerciseStudentParticipation findTeamParticipationByExerciseAndTeamShortNameOrThrow(ProgrammingExercise exercise, String teamShortName,
-            boolean withSubmissions) {
-        Team team = teamRepository.findOneByExerciseCourseIdAndShortNameOrThrow(exercise.getCourseViaExerciseGroupOrCourseMember().getId(), teamShortName);
-
-        Optional<ProgrammingExerciseStudentParticipation> participationOptional;
-
-        if (withSubmissions) {
-            participationOptional = studentParticipationRepository.findWithSubmissionsByExerciseIdAndTeamId(exercise.getId(), team.getId());
-        }
-        else {
-            participationOptional = studentParticipationRepository.findByExerciseIdAndTeamId(exercise.getId(), team.getId());
-        }
-
-        if (participationOptional.isEmpty()) {
-            throw new EntityNotFoundException("Participation could not be found by exerciseId " + exercise.getId() + " and team short name " + teamShortName);
-        }
-
-        return participationOptional.get();
     }
 
     /**
