@@ -470,7 +470,7 @@ describe('Course Management Update Component', () => {
             comp.course = new Course();
             comp.course.startDate = dayjs().add(1, 'day');
             comp.course.endDate = dayjs().subtract(1, 'day');
-            comp.isInvalidEndDate = false;
+            comp.isInvalidStartDate = false;
 
             comp.validateEndDate(false);
             expect(comp.isInvalidStartDate).toBeFalse();

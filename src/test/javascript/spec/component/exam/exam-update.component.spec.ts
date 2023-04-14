@@ -209,6 +209,51 @@ describe('Exam Update Component', () => {
             expect(component.isValidConfiguration).toBeFalse();
         });
 
+        it('validates visibilityDate correctly', () => {
+            examWithoutExercises.visibleDate = undefined;
+            examWithoutExercises.startDate = dayjs().add(2, 'hours');
+            examWithoutExercises.endDate = dayjs().add(3, 'hours');
+
+            component.ngOnInit();
+            fixture.detectChanges();
+
+            component.validateVisibleDate(true);
+            expect(component.isValidConfiguration).toBeFalse();
+            expect(component.isInvalidVisibleDate).toBeTrue();
+            expect(component.isInvalidStartDate).toBeFalse();
+            expect(component.isInvalidEndDate).toBeFalse();
+        });
+
+        it('validates startDate correctly', () => {
+            examWithoutExercises.visibleDate = dayjs();
+            examWithoutExercises.startDate = dayjs().add(2, 'hours');
+            examWithoutExercises.endDate = dayjs().add(3, 'hours');
+            examWithoutExercises.examStudentReviewEnd = dayjs().add(4, 'hours');
+
+            component.ngOnInit();
+            fixture.detectChanges();
+
+            component.validateStartDate(true);
+            expect(component.isValidConfiguration).toBeFalse();
+            expect(component.isInvalidVisibleDate).toBeFalse();
+            expect(component.isInvalidStartDate).toBeTrue();
+            expect(component.isInvalidEndDate).toBeFalse();
+        });
+
+        it('validates endDate correctly', () => {
+            examWithoutExercises.visibleDate = dayjs();
+            examWithoutExercises.startDate = dayjs().add(1, 'hours');
+            examWithoutExercises.endDate = dayjs().add(3, 'hours');
+
+            fixture.detectChanges();
+            component.validateEndDate(true);
+
+            expect(component.isValidConfiguration).toBeFalse();
+            expect(component.isInvalidVisibleDate).toBeFalse();
+            expect(component.isInvalidStartDate).toBeFalse();
+            expect(component.isInvalidEndDate).toBeTrue();
+        });
+
         it('should validate the example solution publication date correctly', () => {
             const newExamWithoutExercises = new Exam();
             newExamWithoutExercises.id = 2;
