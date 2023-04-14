@@ -18,7 +18,7 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.notification.GroupNotification;
 import de.tum.in.www1.artemis.domain.notification.Notification;
-import de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants;
+import de.tum.in.www1.artemis.domain.notification.NotificationConstants;
 import de.tum.in.www1.artemis.repository.NotificationSettingRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.notifications.NotificationSettingsCommunicationChannel;
@@ -116,15 +116,15 @@ class NotificationSettingsServiceTest extends AbstractSpringIntegrationBambooBit
      */
     @Test
     void testCheckIfNotificationEmailIsAllowedBySettingsForGivenUser() {
-        notification.setTitle(NotificationTitleTypeConstants.findCorrespondingNotificationTitle(ATTACHMENT_CHANGE));
+        notification.setTitle(NotificationConstants.findCorrespondingNotificationTitle(ATTACHMENT_CHANGE));
         assertThat(notificationSettingsService.checkIfNotificationOrEmailIsAllowedBySettingsForGivenUser(notification, student1, EMAIL))
                 .as("Emails with type ATTACHMENT_CHANGE should be allowed for the given user").isTrue();
 
-        notification.setTitle(NotificationTitleTypeConstants.findCorrespondingNotificationTitle(EXERCISE_PRACTICE));
+        notification.setTitle(NotificationConstants.findCorrespondingNotificationTitle(EXERCISE_PRACTICE));
         assertThat(notificationSettingsService.checkIfNotificationOrEmailIsAllowedBySettingsForGivenUser(notification, student1, EMAIL))
                 .as("Emails with type EXERCISE_PRACTICE should be allowed for the given user").isTrue();
 
-        notification.setTitle(NotificationTitleTypeConstants.findCorrespondingNotificationTitle(EXAM_ARCHIVE_STARTED));
+        notification.setTitle(NotificationConstants.findCorrespondingNotificationTitle(EXAM_ARCHIVE_STARTED));
         assertThat(notificationSettingsService.checkIfNotificationOrEmailIsAllowedBySettingsForGivenUser(notification, student1, EMAIL))
                 .as("Emails with type EXAM_ARCHIVE_STARTED should not be allowed for the given user").isFalse();
     }
