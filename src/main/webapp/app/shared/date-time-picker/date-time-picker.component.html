@@ -27,7 +27,7 @@
         <button [owlDateTimeTrigger]="dt" class="btn position-absolute" type="button">
             <fa-icon [icon]="faCalendarAlt"></fa-icon>
         </button>
-        <owl-date-time [startAt]="convert(startAt)" (afterPickerClosed)="updateField($event)" #dt></owl-date-time>
+        <owl-date-time [startAt]="value == undefined || value == null ? convert(startAt) : value" (afterPickerClosed)="updateField($event)" #dt></owl-date-time>
     </div>
     <span *ngIf="isInvalidDate" class="invalid-feedback">{{ 'entity.validation.invalidDate' | artemisTranslate }}</span>
 </div>
