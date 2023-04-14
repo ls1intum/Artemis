@@ -1,21 +1,22 @@
-.. _privacy-statement:
-
-Privacy Statement
-----------------------
-
-The privacy statement is stored in the ``./legal``  directory by default. You can override this value by setting the ``legal-path` value in the `application-artemis.yml`.
+Privacy
+^^^^^^^
+The privacy statement is stored in the ``./legal``  directory by default. You can override this value by setting the ``legal-path`` value in the ``application-artemis.yml``.
 The privacy statement is stored as markdown file. Currently, English and German as languages are supported.
 The privacy statement file has to follow the naming convention ``privacy_statement_<de|en>.md``.
-In case, you add only a file one language, this file will always be shown regardless of the user's language setting.
+In case, you add only a file for one language, this file will always be shown regardless of the user's language setting.
 If you add a file for each language, the file will be shown depending on the user's language setting.
-
 
 In the following, the documentation provides a template in English and German for the privacy statement with placeholders that have to be replaced with the actual content.
 
+.. warning::
 
-German version
-^^^^^^^^^^^^^^
-.. code-block:: sh
+   These are only templates that are used similarly at TUM and need to be adapted to your needs.
+   Make sure to consult your data protection officer before making the privacy statement publicly available.
+   We do not take any responsibility for the content of the privacy statement.
+
+German template
+""""""""""""""
+.. code-block:: none
 
    # Datenschutz
 
@@ -123,7 +124,7 @@ German version
 
    #### Cookies
 
-   Um den Funktionsumfang unseres Internetangebotes zu erweitern und die Nutzung für Sie komfortabler zu gestalten, verwenden wir zum Teil so genannte „Cookies". Mit Hilfe dieser Cookies können bei dem Aufruf unserer Webseite Daten auf Ihrem Rechner gespeichert werden. Sie können das Speichern von Cookies jedoch deaktivieren oder Ihren Browser so einstellen, dass Cookies nur für die Dauer der jeweiligen Verbindung zum Internet gespeichert werden. Hierdurch könnte allerdings der Funktionsumfang unseres Angebotes eingeschränkt werden.
+   Um den Funktionsumfang unseres Internetangebotes zu erweitern und die Nutzung für Sie komfortabler zu gestalten, verwenden wir zum Teil so genannte "Cookies". Mit Hilfe dieser Cookies können bei dem Aufruf unserer Webseite Daten auf Ihrem Rechner gespeichert werden. Sie können das Speichern von Cookies jedoch deaktivieren oder Ihren Browser so einstellen, dass Cookies nur für die Dauer der jeweiligen Verbindung zum Internet gespeichert werden. Hierdurch könnte allerdings der Funktionsumfang unseres Angebotes eingeschränkt werden.
 
    ## Informationen zu einzelnen Verarbeitungen
 
@@ -135,11 +136,10 @@ German version
 
    Sie haben das Recht, auf schriftlichen Antrag und unentgeltlich Auskunft über die personenbezogenen Daten zu erhalten, die über Sie gespeichert sind. Zusätzlich haben Sie das Recht auf Berichtigung unrichtiger Daten. Den behördlichen Datenschutzbeauftragten der <Universität> erreichen Sie per E-Mail unter <Email Datenschutzbeauftragter> oder über <Link zum Datenschutzbeauftragten>.
 
-English version
-^^^^^^^^
 
-
-.. code-block:: sh
+English template
+"""""""""""""""
+.. code-block:: none
 
    # Privacy
 
@@ -257,12 +257,4 @@ English version
    #### Disclosure and rectification
 
    You have the right, upon written request and free of charge, to obtain information about the personal data stored about you. In addition, you have the right to have incorrect data corrected. You can reach the data protection officer of <University by e-mail at <Email> or via <Website>.
-
-
-
-
-
-
-
-
 
