@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.notification;
 
+import static de.tum.in.www1.artemis.domain.notification.NotificationConstants.FILE_SUBMISSION_SUCCESSFUL_TITLE;
 import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFactory.*;
-import static de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants.FILE_SUBMISSION_SUCCESSFUL_TITLE;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 import org.junit.jupiter.api.BeforeAll;

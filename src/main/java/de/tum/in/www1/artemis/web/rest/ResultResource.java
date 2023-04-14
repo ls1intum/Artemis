@@ -18,18 +18,16 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.participation.Participation;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.ParticipationAuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.ResultService;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
-import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
 import de.tum.in.www1.artemis.web.rest.dto.ResultWithPointsPerGradingCriterionDTO;
-import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
@@ -61,9 +59,9 @@ public class ResultResource {
 
     private final AuthorizationCheckService authCheckService;
 
-    private final UserRepository userRepository;
+    private final ParticipationAuthorizationCheckService participationAuthCheckService;
 
-    private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
+    private final UserRepository userRepository;
 
     private final ParticipationRepository participationRepository;
 
@@ -71,7 +69,7 @@ public class ResultResource {
 
     public ResultResource(ResultRepository resultRepository, ParticipationService participationService, ExampleSubmissionRepository exampleSubmissionRepository,
             ResultService resultService, ExamDateService examDateService, ExerciseRepository exerciseRepository, AuthorizationCheckService authCheckService,
-            UserRepository userRepository, ProgrammingExerciseParticipationService programmingExerciseParticipationService, ParticipationRepository participationRepository,
+            ParticipationAuthorizationCheckService participationAuthCheckService, UserRepository userRepository, ParticipationRepository participationRepository,
             StudentParticipationRepository studentParticipationRepository) {
         this.resultRepository = resultRepository;
         this.participationService = participationService;
@@ -80,8 +78,8 @@ public class ResultResource {
         this.examDateService = examDateService;
         this.exerciseRepository = exerciseRepository;
         this.authCheckService = authCheckService;
+        this.participationAuthCheckService = participationAuthCheckService;
         this.userRepository = userRepository;
-        this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.participationRepository = participationRepository;
         this.studentParticipationRepository = studentParticipationRepository;
     }
@@ -147,21 +145,7 @@ public class ResultResource {
                     "participationId", "400");
         }
 
-        // The permission check depends on the participation type (normal participations vs. programming exercise participations).
-        if (participation instanceof StudentParticipation studentParticipation) {
-            if (!authCheckService.canAccessParticipation(studentParticipation)) {
-                throw new AccessForbiddenException("participation", participationId);
-            }
-        }
-        else if (participation instanceof ProgrammingExerciseParticipation programmingExerciseParticipation) {
-            if (!programmingExerciseParticipationService.canAccessParticipation(programmingExerciseParticipation)) {
-                throw new AccessForbiddenException("participation", participationId);
-            }
-        }
-        else {
-            // This would be the case that a new participation type is introduced, without this the user would have access to it regardless of the permissions.
-            throw new AccessForbiddenException("participation", participationId);
-        }
+        participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
 
         return new ResponseEntity<>(resultService.getFeedbacksForResult(result), HttpStatus.OK);
     }

@@ -61,7 +61,7 @@ public class SubmissionPolicyService {
     /**
      * Validates the submission policy of a newly created exercise if it exists.
      * This is only called, when the client posts a new programming exercise either to
-     * the regular programming exercise creation endpoint or the programming exercise simulation creation endpoint.
+     * the regular programming exercise creation endpoint.
      * In this case, the submission policy is activated by default.
      *
      * @param programmingExercise that contains the submission policy that is to be checked
