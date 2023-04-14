@@ -114,6 +114,17 @@
                     "searchLearningGoal": "Search competency:",
                     "loading": "Loading..."
                 }
+            },
+            "relation": {
+                "competencyRelations": "Competency Relations",
+                "tailLearningGoal": "Tail Learning Goal",
+                "relationType": "Relation Type",
+                "headLearningGoal": "Head Learning Goal",
+                "relates": "Relates",
+                "assumes": "Assumes",
+                "extends": "Extends",
+                "matches": "Matches",
+                "createRelation": "Create Relation"
             }
         }
     }

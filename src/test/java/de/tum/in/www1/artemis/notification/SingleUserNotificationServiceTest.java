@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.notification;
 
-import static de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants.*;
+import static de.tum.in.www1.artemis.domain.notification.NotificationConstants.*;
 import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsService.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
@@ -20,6 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.notification.Notification;
 import de.tum.in.www1.artemis.domain.notification.SingleUserNotification;
@@ -67,7 +68,19 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
 
     private Post post;
 
+    private static final String POST_TITLE = "post title";
+
+    private static final String POST_CONTENT = "post content";
+
+    private AnswerPost answerPost;
+
+    private static final String ANSWER_POST_CONTENT = "answer post content";
+
     private Course course;
+
+    private static final String COURSE_TITLE = "course title";
+
+    private static final String LECTURE_TITLE = "lecture title";
 
     private Exercise exercise;
 
@@ -85,6 +98,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
         SecurityUtils.setAuthorizationObject();
 
         course = database.createCourse();
+        course.setTitle(COURSE_TITLE);
 
         database.addUsers(TEST_PREFIX, 3, 0, 0, 0);
         user = database.getUserByLogin(TEST_PREFIX + "student1");
@@ -102,12 +116,25 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
 
         Lecture lecture = new Lecture();
         lecture.setCourse(course);
+        lecture.setTitle(LECTURE_TITLE);
 
         post = new Post();
         post.setExercise(exercise);
         post.setLecture(lecture);
         post.setAuthor(user);
         post.setCourse(course);
+        post.setTitle(POST_TITLE);
+        post.setContent(POST_CONTENT);
+
+        Post answerPostPost = new Post();
+        answerPostPost.setExercise(exercise);
+        answerPostPost.setLecture(lecture);
+        answerPostPost.setAuthor(user);
+        answerPostPost.setCourse(course);
+        answerPost = new AnswerPost();
+        answerPost.setPost(new Post());
+        answerPost.setAuthor(user);
+        answerPost.setContent(ANSWER_POST_CONTENT);
 
         PlagiarismSubmission<TextSubmissionElement> plagiarismSubmission = new PlagiarismSubmission<>();
         plagiarismSubmission.setStudentLogin(user.getLogin());
@@ -154,7 +181,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
         notificationSettingRepository.save(new NotificationSetting(user, false, true, NOTIFICATION__EXERCISE_NOTIFICATION__NEW_REPLY_FOR_EXERCISE_POST));
         assertThat(notificationRepository.findAll()).as("No notifications should be present prior to the method call").isEmpty();
 
-        singleUserNotificationService.notifyUserAboutNewReplyForExercise(post, course);
+        singleUserNotificationService.notifyUserAboutNewReplyForExercise(post, answerPost, course);
 
         assertThat(notificationRepository.findAll()).as("The notification should have been saved to the DB").hasSize(1);
         // no web app notification or email should be sent
@@ -166,7 +193,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
      */
     @Test
     void testNotifyUserAboutNewAnswerForExercise() {
-        singleUserNotificationService.notifyUserAboutNewReplyForExercise(post, course);
+        singleUserNotificationService.notifyUserAboutNewReplyForExercise(post, answerPost, course);
         verifyRepositoryCallWithCorrectNotification(NEW_REPLY_FOR_EXERCISE_POST_TITLE);
     }
 
@@ -175,7 +202,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
      */
     @Test
     void testNotifyUserAboutNewAnswerForLecture() {
-        singleUserNotificationService.notifyUserAboutNewReplyForLecture(post, course);
+        singleUserNotificationService.notifyUserAboutNewReplyForLecture(post, answerPost, course);
         verifyRepositoryCallWithCorrectNotification(NEW_REPLY_FOR_LECTURE_POST_TITLE);
     }
 
@@ -184,7 +211,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
      */
     @Test
     void testNotifyUserAboutNewAnswerForCoursePost() {
-        singleUserNotificationService.notifyUserAboutNewReplyForCoursePost(post, course);
+        singleUserNotificationService.notifyUserAboutNewReplyForCoursePost(post, answerPost, course);
         verifyRepositoryCallWithCorrectNotification(NEW_REPLY_FOR_COURSE_POST_TITLE);
     }
 
