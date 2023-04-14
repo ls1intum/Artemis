@@ -58,8 +58,8 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     public RepositoryProgrammingExerciseParticipationResource(UserRepository userRepository, AuthorizationCheckService authCheckService,
             ParticipationAuthorizationCheckService participationAuthCheckService, GitService gitService, Optional<ContinuousIntegrationService> continuousIntegrationService,
             Optional<VersionControlService> versionControlService, RepositoryService repositoryService, ProgrammingExerciseParticipationService participationService,
-            ProgrammingExerciseRepository programmingExerciseRepository, ParticipationRepository participationRepository, ExamSubmissionService examSubmissionService,
-            BuildLogEntryService buildLogService, ProgrammingSubmissionRepository programmingSubmissionRepository, SubmissionPolicyRepository submissionPolicyRepository,
+            ProgrammingExerciseRepository programmingExerciseRepository, ParticipationRepository participationRepository, BuildLogEntryService buildLogService,
+            ProgrammingSubmissionRepository programmingSubmissionRepository, SubmissionPolicyRepository submissionPolicyRepository,
             RepositoryAccessService repositoryAccessService) {
         super(userRepository, authCheckService, gitService, continuousIntegrationService, repositoryService, versionControlService, programmingExerciseRepository,
                 repositoryAccessService);
@@ -263,33 +263,22 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     @PutMapping(value = "/repository/{participationId}/files")
     public ResponseEntity<Map<String, String>> updateParticipationFiles(@PathVariable("participationId") Long participationId, @RequestBody List<FileSubmission> submissions,
             @RequestParam(defaultValue = "false") boolean commit) {
-        Participation participation;
-        try {
-            participation = participationRepository.findByIdElseThrow(participationId);
-        }
-        catch (EntityNotFoundException ex) {
-            FileSubmissionError error = new FileSubmissionError(participationId, "participationNotFound");
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, error.getMessage(), error);
-        }
-        if (!(participation instanceof final ProgrammingExerciseParticipation programmingExerciseParticipation)) {
-            FileSubmissionError error = new FileSubmissionError(participationId, "notAProgrammingExerciseParticipation");
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, error.getMessage(), error);
-        }
-
-        // User must have the necessary permissions to update a file.
-        // When the buildAndTestAfterDueDate is set, the student can't change the repository content anymore after the due date.
-        participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
-        boolean repositoryIsLocked = programmingExerciseParticipation.isLocked();
-        if (repositoryIsLocked) {
-            FileSubmissionError error = new FileSubmissionError(participationId, "noPermissions");
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, error.getMessage(), error);
-        }
 
         // Git repository must be available to update a file
         Repository repository;
         try {
             // Get the repository and also conduct access checks.
-            repository = getRepository(programmingExerciseParticipation.getId(), RepositoryActionType.WRITE, true);
+            repository = getRepository(participationId, RepositoryActionType.WRITE, true);
+        }
+        catch (EntityNotFoundException e) {
+            // Participation was not found.
+            FileSubmissionError error = new FileSubmissionError(participationId, "participationNotFound");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, error.getMessage(), error);
+        }
+        catch (IllegalArgumentException e) {
+            // Participation is not instance of ProgrammingExerciseParticipation.
+            FileSubmissionError error = new FileSubmissionError(participationId, "notAProgrammingExerciseParticipation");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, error.getMessage(), error);
         }
         catch (CheckoutConflictException | WrongRepositoryStateException ex) {
             FileSubmissionError error = new FileSubmissionError(participationId, "checkoutConflict");
