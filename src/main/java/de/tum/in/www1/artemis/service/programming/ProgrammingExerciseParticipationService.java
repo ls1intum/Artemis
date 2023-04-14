@@ -20,6 +20,7 @@ import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -29,7 +30,7 @@ public class ProgrammingExerciseParticipationService {
 
     private final Logger log = LoggerFactory.getLogger(ProgrammingExerciseParticipationService.class);
 
-    private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
+    private final ProgrammingExerciseStudentParticipationRepository studentParticipationRepository;
 
     private final SolutionProgrammingExerciseParticipationRepository solutionParticipationRepository;
 
@@ -43,9 +44,14 @@ public class ProgrammingExerciseParticipationService {
 
     private final GitService gitService;
 
+    private final UserRepository userRepository;
+
+    private final AuthorizationCheckService authorizationCheckService;
+
     public ProgrammingExerciseParticipationService(SolutionProgrammingExerciseParticipationRepository solutionParticipationRepository,
             TemplateProgrammingExerciseParticipationRepository templateParticipationRepository, ProgrammingExerciseStudentParticipationRepository studentParticipationRepository,
-            ParticipationRepository participationRepository, TeamRepository teamRepository, GitService gitService, Optional<VersionControlService> versionControlService) {
+            ParticipationRepository participationRepository, TeamRepository teamRepository, GitService gitService, Optional<VersionControlService> versionControlService,
+            UserRepository userRepository, AuthorizationCheckService authorizationCheckService) {
         this.studentParticipationRepository = studentParticipationRepository;
         this.solutionParticipationRepository = solutionParticipationRepository;
         this.templateParticipationRepository = templateParticipationRepository;
@@ -53,6 +59,8 @@ public class ProgrammingExerciseParticipationService {
         this.teamRepository = teamRepository;
         this.versionControlService = versionControlService;
         this.gitService = gitService;
+        this.userRepository = userRepository;
+        this.authorizationCheckService = authorizationCheckService;
     }
 
     /**
@@ -102,10 +110,10 @@ public class ProgrammingExerciseParticipationService {
         Optional<ProgrammingExerciseStudentParticipation> participation;
         if (exercise.isTeamMode()) {
             Optional<Team> optionalTeam = teamRepository.findOneByExerciseIdAndUserLogin(exercise.getId(), username);
-            participation = optionalTeam.flatMap(team -> programmingExerciseStudentParticipationRepository.findByExerciseIdAndTeamId(exercise.getId(), team.getId()));
+            participation = optionalTeam.flatMap(team -> studentParticipationRepository.findByExerciseIdAndTeamId(exercise.getId(), team.getId()));
         }
         else {
-            participation = programmingExerciseStudentParticipationRepository.findByExerciseIdAndStudentLogin(exercise.getId(), username);
+            participation = studentParticipationRepository.findByExerciseIdAndStudentLogin(exercise.getId(), username);
         }
         if (participation.isEmpty()) {
             throw new EntityNotFoundException("participation could not be found by exerciseId " + exercise.getId() + " and user " + username);
@@ -149,11 +157,10 @@ public class ProgrammingExerciseParticipationService {
         boolean isTestRun = isPracticeRepository || isExamTestRunRepository(exercise, username);
 
         if (withSubmissions) {
-            participationOptional = programmingExerciseStudentParticipationRepository.findWithSubmissionsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), username,
-                    isTestRun);
+            participationOptional = studentParticipationRepository.findWithSubmissionsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), username, isTestRun);
         }
         else {
-            participationOptional = programmingExerciseStudentParticipationRepository.findByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), username, isTestRun);
+            participationOptional = studentParticipationRepository.findByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), username, isTestRun);
         }
 
         if (participationOptional.isEmpty()) {
@@ -197,10 +204,10 @@ public class ProgrammingExerciseParticipationService {
         Optional<ProgrammingExerciseStudentParticipation> participationOptional;
 
         if (withSubmissions) {
-            participationOptional = programmingExerciseStudentParticipationRepository.findWithSubmissionsByExerciseIdAndTeamId(exercise.getId(), team.getId());
+            participationOptional = studentParticipationRepository.findWithSubmissionsByExerciseIdAndTeamId(exercise.getId(), team.getId());
         }
         else {
-            participationOptional = programmingExerciseStudentParticipationRepository.findByExerciseIdAndTeamId(exercise.getId(), team.getId());
+            participationOptional = studentParticipationRepository.findByExerciseIdAndTeamId(exercise.getId(), team.getId());
         }
 
         if (participationOptional.isEmpty()) {

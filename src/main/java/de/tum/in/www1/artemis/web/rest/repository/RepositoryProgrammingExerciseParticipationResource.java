@@ -8,6 +8,7 @@ import javax.servlet.http.HttpServletRequest;
 import org.eclipse.jgit.api.errors.CheckoutConflictException;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.WrongRepositoryStateException;
+import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -25,6 +26,7 @@ import de.tum.in.www1.artemis.service.RepositoryAccessService;
 import de.tum.in.www1.artemis.service.RepositoryService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
+import de.tum.in.www1.artemis.service.connectors.localci.LocalCIPushService;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
@@ -55,18 +57,17 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
 
     private final SubmissionPolicyRepository submissionPolicyRepository;
 
-    public RepositoryProgrammingExerciseParticipationResource(UserRepository userRepository, AuthorizationCheckService authCheckService,
+    public RepositoryProgrammingExerciseParticipationResource(Environment environment, UserRepository userRepository, AuthorizationCheckService authCheckService,
             ParticipationAuthorizationCheckService participationAuthCheckService, GitService gitService, Optional<ContinuousIntegrationService> continuousIntegrationService,
             Optional<VersionControlService> versionControlService, RepositoryService repositoryService, ProgrammingExerciseParticipationService participationService,
-            ProgrammingExerciseRepository programmingExerciseRepository, ParticipationRepository participationRepository, ExamSubmissionService examSubmissionService,
-            BuildLogEntryService buildLogService, ProgrammingSubmissionRepository programmingSubmissionRepository, SubmissionPolicyRepository submissionPolicyRepository,
-            RepositoryAccessService repositoryAccessService) {
-        super(userRepository, authCheckService, gitService, continuousIntegrationService, repositoryService, versionControlService, programmingExerciseRepository,
-                repositoryAccessService);
+            ProgrammingExerciseRepository programmingExerciseRepository, ParticipationRepository participationRepository, BuildLogEntryService buildLogService,
+            ProgrammingSubmissionRepository programmingSubmissionRepository, SubmissionPolicyRepository submissionPolicyRepository, RepositoryAccessService repositoryAccessService,
+            Optional<LocalCIPushService> localCIPushService) {
+        super(environment, userRepository, authCheckService, gitService, continuousIntegrationService, repositoryService, versionControlService, programmingExerciseRepository,
+                repositoryAccessService, localCIPushService);
 
         this.participationAuthCheckService = participationAuthCheckService;
         this.participationService = participationService;
-        this.examSubmissionService = examSubmissionService;
         this.buildLogService = buildLogService;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.participationRepository = participationRepository;
