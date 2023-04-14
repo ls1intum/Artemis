@@ -40,6 +40,100 @@
             "created": "Eine neue Mitteilung wurde mit ID {{ param }} erstellt",
             "updated": "Eine Mitteilung mit ID {{ param }} wurde geändert",
             "deleted": "Eine Mitteilung mit ID {{ param }} wurde gelöscht"
+        },
+        "groupNotification": {
+            "title": {
+                "attachmentChange": "Anhang aktualisiert",
+                "exerciseReleased": "Aufgabe veröffentlicht",
+                "exercisePractice": "Aufgabe offen zum Üben",
+                "quizExerciseStarted": "Quiz gestartet",
+                "liveExamExerciseUpdate": "Klausuraufgabe aktualisiert",
+                "exerciseUpdated": "Aufgabe aktualisiert",
+                "programmingTestCasesChanged": "Testfälle für Programmieraufgaben geändert",
+                "newManualFeedbackRequest": "Eine neue Anfrage zu manuellem Feedback wurde eingereicht",
+                "duplicateTestCase": "Doppelte Testfälle wurden gefunden.",
+                "illegalSubmission": "Unzulässige Einreichung eines Studenten",
+                "newExercisePost": "Neuer Aufgabenbeitrag",
+                "newLecturePost": "Neuer Vorlesungsbeitrag",
+                "newCoursePost": "Neuer kursweiter Beitrag",
+                "newAnnouncementPost": "Neue Ankündigung",
+                "newReplyForExercisePost": "Neue Antwort auf Aufgabenbeitrag",
+                "newReplyForLecturePost": "Neue Antwort auf Vorlesungsbeitrag",
+                "newReplyForCoursePost": "Neue Antwort auf Kursbeitrag",
+                "courseArchiveStarted": "Kursarchivierung gestartet",
+                "courseArchiveFinished": "Kursarchivierung beendet",
+                "courseArchiveFailed": "Kursarchivierung fehlgeschlagen",
+                "examArchiveStarted": "Klausurarchivierung gestartet",
+                "examArchiveFinished": "Klausurarchivierung beendet",
+                "examArchiveFailed": "Klausurarchivierung fehlgeschlagen"
+            },
+            "text": {
+                "attachmentChange": "Der Anhang \"{{ placeholderValues.1 }}\" von \"{{ placeholderValues.2 }}\" im Kurs \"{{ placeholderValues.0}}\" wurde aktualisiert.",
+                "exerciseReleased": "Eine neue Aufgabe \"{{ placeholderValues.1 }}\" wurde veröffentlicht.",
+                "exercisePractice": "Die Aufgabe \"{{ placeholderValues.1 }}\" ist jetzt offen zum Üben.",
+                "quizExerciseStarted": "Das Quiz \"{{ placeholderValues.1 }}\" hat gerade begonnen.",
+                "liveExamExerciseUpdate": "Die Klausuraufgabe \"{{ placeholderValues.1 }}\" wurde aktualisiert.",
+                "exerciseUpdated": "Die Aufgabe \"{{ placeholderValues.1 }}\" im Kurs \"{{ placeholderValues.0 }}\" wurde aktualisiert.",
+                "programmingTestCasesChanged": "Die Testfälle der Programmieraufgabe \"{{ placeholderValues.1 }}\" im Kurs \"{{ placeholderValues.0 }}\" wurden aktualisiert. Die Abgaben der Studenten sollten erneut gebaut und getestet werden, um neue Ergebnisse zu erstellen.",
+                "newManualFeedbackRequest": "Die Programmieraufgabe \"{{ placeholderValues.1 }}\" im Kurs \"{{ placeholderValues.0 }}\" hat eine neue manuelle Feedbackanfrage. Bitte bewerte das Feedback vor der Deadline.",
+                "illegalSubmission": "Die Aufgabe \"{{ placeholderValues.1 }}\" im Kurs \"{{ placeholderValues.0 }}\" hat illegale Abgaben von Studenten.",
+                "newExercisePost": "Die Aufgabe \"{{ placeholderValues.8 }}\" im Kurs \"{{ placeholderValues.0 }}\" hat einen neuen Beitrag: \"{{ placeholderValues.2 }}\"",
+                "newLecturePost": "Die Vorlesung \"{{ placeholderValues.8 }}\" im Kurs \"{{ placeholderValues.0 }}\" hat einen neuen Beitrag: \"{{ placeholderValues.2 }}\".",
+                "newCoursePost": "Der Kurs \"{{ placeholderValues.0 }}\" hat einen neuen kursweiten Beitrag: \"{{ placeholderValues.2 }}\"",
+                "newAnnouncementPost": "Der Kurs \"{{ placeholderValues.0 }}\" hat eine neue Ankündigung: \"{{ placeholderValues.2 }}\"",
+                "newReplyForExercisePost": "Ein Beitrag von {{ placeholderValues.4 }} zur Aufgabe \"{{ placeholderValues.8 }}\" im Kurs \"{{ placeholderValues.0 }}\" hat eine neue Antwort: \"{{ placeholderValues.5 }}\"",
+                "newReplyForLecturePost": "Ein Beitrag von {{ placeholderValues.4 }} zur Vorlesung \"{{ placeholderValues.8 }}\" im Kurs \"{{ placeholderValues.0 }}\" hat eine neue Antwort: \"{{ placeholderValues.5 }}\"",
+                "newReplyForCoursePost": "Ein kursweiter Beitrag von {{ placeholderValues.4 }} im Kurs \"{{ placeholderValues.0 }}\" hat eine neue Antwort: \"{{ placeholderValues.5 }}\"",
+                "courseArchiveStarted": "Der Kurs \"{{ placeholderValues.0 }}\" wird archiviert.",
+                "courseArchiveFinishedWithoutErrors": "Der Kurs \"{{ placeholderValues.0 }}\" wurde archiviert.",
+                "courseArchiveFinishedWithErrors": "Der Kurs \"{{ placeholderValues.0 }}\" wurde archiviert. Einige Aufgaben konnten nicht in das Archiv aufgenommen werden:<br/><br/> {{ placeholderValues.1 }}",
+                "courseArchiveFailed": "Es gab ein Problem beim Archivieren des Kurses \"{{ placeholderValues.0 }}\": <br/><br/> {{ placeholderValues.1 }}",
+                "examArchiveStarted": "Die Klausur \"{{ placeholderValues.1 }}\" wird archiviert.",
+                "examArchiveFinishedWithoutErrors": "Die Klausur \"{{ placeholderValues.1 }}\" wurde archiviert.",
+                "examArchiveFinishedWithErrors": "Die Klausur \"{{ placeholderValues.1 }}\" wurde archiviert. Einige Aufgaben konnten nicht in das Archiv aufgenommen werden:<br/><br/> {{ placeholderValues.2 }}",
+                "examArchiveFailed": "Es gab ein Problem beim Archivieren der Klausur \"{{ placeholderValues.1 }}\": <br/><br/>  {{ placeholderValues.2 }}"
+            }
+        },
+        "singleUserNotification": {
+            "title": {
+                "exerciseSubmissionAssessed": "Übungsabgabe bewertet",
+                "fileSubmissionSuccessful": "Dateiabgabe erfolgreich",
+                "newPlagiarismCaseStudent": "Neuer Plagiatsfall",
+                "plagiarismCaseVerdictStudent": "Urteil zu deinem Plagiatsfall",
+                "tutorialGroupRegistrationStudent": "Du wurdest für eine Übungsgruppe registriert",
+                "tutorialGroupDeregistrationStudent": "Du wurdest von einer Übungsgruppe abgemeldet",
+                "tutorialGroupRegistrationTutor": "Ein Student wurde für deine Übungsgruppe registriert",
+                "tutorialGroupDeregistrationTutor": "Ein Student wurde von deiner Übungsgruppe abgemeldet",
+                "tutorialGroupMultipleRegistrationTutor": "Mehrere Studenten wurden zu deiner Übungsgruppe registriert",
+                "tutorialGroupAssigned": "Du wurdest zugeteilt eine Übungsgruppe zu leiten",
+                "tutorialGroupUnassigned": "Dir wurde die Leitung einer Übungsgruppe entzogen"
+            },
+            "text": {
+                "newReplyForExercisePost": "Auf deinen Beitrag zur Aufgabe \"{{ placeholderValues.8 }}\" im Kurs \"{{ placeholderValues.0 }}\" wurde geantwortet: \"{{ placeholderValues.5 }}\"",
+                "newReplyForLecturePost": "Auf deinen Beitrag zur Vorlesung \"{{ placeholderValues.8 }}\" im Kurs \"{{ placeholderValues.0 }}\" wurde geantwortet: \"{{ placeholderValues.5 }}\"",
+                "newReplyForCoursePost": "Auf deinen kursweiten Beitrag im Kurs \"{{ placeholderValues.0 }}\" wurde geantwortet: \"{{ placeholderValues.5 }}\"",
+                "exerciseSubmissionAssessed": "Deine Abgabe für die {{ placeholderValues.1 }} Aufgabe \"{{ placeholderValues.2 }}\" im Kurs \"{{ placeholderValues.0 }}\" wurde bewertet.",
+                "fileSubmissionSuccessful": "Deine Datei für die Aufgabe \"{{ placeholderValues.1 }}\" wurde erfolgreich eingereicht.",
+                "newPlagiarismCaseStudent": "Neuer Plagiatsfall für die {{ placeholderValues.1 }} Aufgabe \"{{ placeholderValues.2 }}\".",
+                "plagiarismCaseVerdictStudent": "Dein Plagiatsfall für die {{ placeholderValues.1 }} Aufgabe \"{{ placeholderValues.2 }}\" hat ein Urteil.",
+                "tutorialGroupRegistrationStudent": "Du wurdest für die Übungsgruppe {{ placeholderValues.1 }} von {{ placeholderValues.2 }} registriert.",
+                "tutorialGroupDeregistrationStudent": "Du wurdest von der Übungsgruppe {{ placeholderValues.1 }} von {{ placeholderValues.2 }} abgemeldet.",
+                "tutorialGroupRegistrationTutor": "Der Student {{ placeholderValues.1 }} wurde zu deiner Übungsgruppe {{ placeholderValues.2 }} von {{ placeholderValues.3 }} registriert.",
+                "tutorialGroupDeregistrationTutor": "Der Student {{ placeholderValues.1 }} wurde von deiner Übungsgruppe {{ placeholderValues.2 }} von {{ placeholderValues.3 }} abgemeldet.",
+                "tutorialGroupMultipleRegistrationTutor": "{{ placeholderValues.1 }} Studenten wurden für deine Übungsgruppe {{ placeholderValues.2 }} von {{ placeholderValues.3 }} registriert.",
+                "tutorialGroupAssigned": "Du wurdest von {{ placeholderValues.2 }} zugeteilt die Übungsgruppe {{ placeholderValues.1 }} zu leiten.",
+                "tutorialGroupUnassigned": "Dir wurde die Leitung von Übungsgruppe {{ placeholderValues.1 }} von {{ placeholderValues.2 }} entzogen."
+            }
+        },
+        "tutorialGroupNotification": {
+            "title": {
+                "tutorialGroupDeleted": "Übungsgruppe gelöscht",
+                "tutorialGroupUpdated": "Übungsgruppe aktualisiert"
+            },
+            "text": {
+                "tutorialGroupDeleted": "Die Übungsgruppe {{ placeholderValues.1 }} wurde gelöscht.",
+                "tutorialGroupUpdated": "Die Übungsgruppe {{ placeholderValues.1 }} wurde aktualisiert."
+            }
         }
     }
 }
