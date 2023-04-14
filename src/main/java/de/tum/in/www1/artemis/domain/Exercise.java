@@ -678,6 +678,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
      *
      * @return boolean
      */
+    @JsonIgnore
     public boolean isReleased() {
         ZonedDateTime releaseDate = getParticipationStartDate();
         return releaseDate == null || releaseDate.isBefore(ZonedDateTime.now());
