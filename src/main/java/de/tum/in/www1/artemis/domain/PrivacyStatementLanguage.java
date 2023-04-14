@@ -5,10 +5,10 @@ public enum PrivacyStatementLanguage {
     GERMAN, ENGLISH;
 
     public static PrivacyStatementLanguage fromLanguageShortName(String languageShortName) {
-        if (("de").equals(languageShortName)) {
+        if ("de".equals(languageShortName)) {
             return GERMAN;
         }
-        else if (("en").equals(languageShortName)) {
+        else if ("en".equals(languageShortName)) {
             return ENGLISH;
         }
         else {
