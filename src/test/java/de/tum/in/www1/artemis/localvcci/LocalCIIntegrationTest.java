@@ -63,7 +63,7 @@ class LocalCIIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest
         localVCLocalCITestService.mockTestResults(dockerClient, partlySuccessfulTestResultsPath);
         // Mock dockerClient.copyArchiveFromContainerCmd() such that it returns a dummy commit hash for the tests repository.
         localVCLocalCITestService.mockInputStreamReturnedFromContainer(dockerClient, "/repositories/test-repository/.git/refs/heads/[^/]+",
-                Map.of("testCommitHash", dummyCommitHash), Map.of("testCommitHash", dummyCommitHash));
+                Map.of("testCommitHash", DUMMY_COMMIT_HASH), Map.of("testCommitHash", DUMMY_COMMIT_HASH));
     }
 
     @AfterEach
@@ -153,7 +153,7 @@ class LocalCIIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest
     @Test
     void testNoExceptionWhenResolvingWrongCommitHash() {
         // Call processNewPush with a wrong commit hash. This should not throw an exception, but the notifyUserAboutSubmissionError() method should have been called.
-        localCIPushService.processNewPush(dummyCommitHash, studentAssignmentRepository.originGit.getRepository());
+        localCIPushService.processNewPush(DUMMY_COMMIT_HASH, studentAssignmentRepository.originGit.getRepository());
         verifyUserNotification(studentParticipation, "Unable to resolve commit hash to an ObjectId");
     }
 

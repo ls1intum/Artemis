@@ -285,7 +285,7 @@ public class LocalCIBuildJobService {
             while (xmlStreamReader.hasNext()) {
                 xmlStreamReader.next();
 
-                if (!xmlStreamReader.isStartElement() || !xmlStreamReader.getLocalName().equals("testcase")) {
+                if (!xmlStreamReader.isStartElement() || !("testcase".equals(xmlStreamReader.getLocalName()))) {
                     continue;
                 }
 
@@ -301,7 +301,7 @@ public class LocalCIBuildJobService {
                 while (!(xmlStreamReader.isEndElement() || xmlStreamReader.isStartElement())) {
                     xmlStreamReader.next();
                 }
-                if (xmlStreamReader.isStartElement() && xmlStreamReader.getLocalName().equals("failure")) {
+                if (xmlStreamReader.isStartElement() && "failure".equals(xmlStreamReader.getLocalName())) {
                     // Extract the message attribute from the "failure" node.
                     String error = xmlStreamReader.getAttributeValue(null, "message");
 

@@ -137,16 +137,16 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     @LocalServerPort
     protected int port;
 
-    protected static final String dummyCommitHash = "1234567890abcdef";
+    protected static final String DUMMY_COMMIT_HASH = "1234567890abcdef";
 
     // The error messages returned by JGit contain these Strings that correspond to the HTTP status codes.
-    protected static final String notFound = "not found";
+    protected static final String NOT_FOUND = "not found";
 
-    protected static final String notAuthorized = "not authorized";
+    protected static final String NOT_AUTHORIZED = "not authorized";
 
-    protected static final String internalServerError = "500";
+    protected static final String INTERNAL_SERVER_ERROR = "500";
 
-    protected static final String forbidden = "not permitted";
+    protected static final String FORBIDDEN = "not permitted";
 
     protected Course course;
 
@@ -320,7 +320,7 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
 
     @Override
     public void mockConnectorRequestsForStartParticipation(ProgrammingExercise exercise, String username, Set<User> users, boolean ltiUserExists) {
-
+        // Not implemented for local VC and local CI
     }
 
     @Override

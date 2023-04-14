@@ -176,7 +176,7 @@ public class LocalVCFilterService {
 
         String[] basicAuthCredentialsEncoded = authorizationHeader.split(" ");
 
-        if (!basicAuthCredentialsEncoded[0].equals("Basic")) {
+        if (!("Basic".equals(basicAuthCredentialsEncoded[0]))) {
             throw new LocalVCAuthException();
         }
 

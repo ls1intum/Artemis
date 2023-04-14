@@ -57,12 +57,12 @@ public class LocalVCRepositoryUrl extends VcsRepositoryUrl {
 
         Path urlPath = Paths.get(urlString.replaceFirst(localVCBaseUrl.toString(), ""));
 
-        if (!urlPath.getName(0).toString().equals("git") || !urlPath.getName(2).toString().endsWith(".git")) {
+        if (!("git".equals(urlPath.getName(0).toString())) || !urlPath.getName(2).toString().endsWith(".git")) {
             throw new LocalVCException("Invalid local VC Repository URL: " + urlString);
         }
 
-        String projectKey = urlPath.getName(1).toString();
-        String repositorySlug = urlPath.getName(2).toString().replace(".git", "");
+        this.projectKey = urlPath.getName(1).toString();
+        this.repositorySlug = urlPath.getName(2).toString().replace(".git", "");
         if (!repositorySlug.toLowerCase().startsWith(projectKey.toLowerCase())) {
             throw new LocalVCException("Invalid repository URL: " + urlString);
         }
@@ -74,8 +74,6 @@ public class LocalVCRepositoryUrl extends VcsRepositoryUrl {
             throw new LocalVCException("Could not create local VC Repository URL", e);
         }
 
-        this.projectKey = projectKey;
-        this.repositorySlug = repositorySlug;
         this.repositoryTypeOrUserName = getRepositoryTypeOrUserName(repositorySlug, projectKey);
         this.isPracticeRepository = getIsPracticeRepository(repositorySlug, projectKey);
     }
@@ -87,7 +85,7 @@ public class LocalVCRepositoryUrl extends VcsRepositoryUrl {
      * @param localVCServerUrl the base URL of the local VC server defined in an environment variable.
      */
     public LocalVCRepositoryUrl(Path repositoryPath, URL localVCServerUrl) {
-        if (repositoryPath.getFileName().toString().equals(".git")) {
+        if (".git".equals(repositoryPath.getFileName().toString())) {
             // This is the case when a local repository path is passed instead of a path to a remote repository in the "local-vcs-repos" folder.
             // In this case we remove the ".git" suffix.
             repositoryPath = repositoryPath.getParent();

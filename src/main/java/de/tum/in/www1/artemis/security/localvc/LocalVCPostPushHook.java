@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.security.localvc;
 
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.Optional;
 
 import org.eclipse.jgit.lib.Repository;
@@ -22,16 +21,19 @@ public class LocalVCPostPushHook implements PostReceiveHook {
         this.localCIPushService = localCIPushService;
     }
 
+    /**
+     * Called by JGit after a push has been received (i.e. after the pushed files were successfully written to disk).
+     *
+     * @param receivePack
+     *                        the process handling the current receive. Hooks may obtain
+     *                        details about the destination repository through this handle.
+     * @param commands
+     *                        unmodifiable set of successfully completed commands.
+     */
     @Override
-    public void onPostReceive(ReceivePack rp, Collection<ReceiveCommand> commands) {
-        Iterator<ReceiveCommand> iterator = commands.iterator();
+    public void onPostReceive(ReceivePack receivePack, Collection<ReceiveCommand> commands) {
 
-        // There should at least be one command.
-        if (!iterator.hasNext()) {
-            return;
-        }
-
-        ReceiveCommand command = iterator.next();
+        ReceiveCommand command = commands.iterator().next();
 
         if (command.getType() != ReceiveCommand.Type.UPDATE) {
             // The command can also be of type CREATE (e.g. when creating a new branch). This will never lead to a new submission.
@@ -41,7 +43,7 @@ public class LocalVCPostPushHook implements PostReceiveHook {
 
         String commitHash = command.getNewId().name();
 
-        Repository repository = rp.getRepository();
+        Repository repository = receivePack.getRepository();
 
         localCIPushService.orElseThrow().processNewPush(commitHash, repository);
     }

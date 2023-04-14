@@ -194,11 +194,11 @@ public class ResourceLoaderService {
 
         URL resourceUrl = resource.getURL();
 
-        if (resourceUrl.getProtocol().equals("file")) {
+        if ("file".equals(resourceUrl.getProtocol())) {
             // Resource is in the file system.
             return Paths.get(resourceUrl.toURI());
         }
-        else if (resourceUrl.getProtocol().equals("jar")) {
+        else if ("jar".equals(resourceUrl.getProtocol())) {
             // Resource is in a jar file.
             InputStream resourceInputStream = getResource(path).getInputStream();
 

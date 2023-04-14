@@ -20,12 +20,12 @@ public class LocalVCPrePushHook implements PreReceiveHook {
     /**
      * Called by JGit before a push is received (i.e. before the pushed files are written to disk but after the authorization check was successful).
      *
-     * @param rp       the process handling the current receive. Hooks may obtain details about the destination repository through this handle.
-     * @param commands unmodifiable set of valid commands still pending execution. May be the empty set.
+     * @param receivePack the process handling the current receive. Hooks may obtain details about the destination repository through this handle.
+     * @param commands    unmodifiable set of valid commands still pending execution.
      */
     @Override
-    public void onPreReceive(ReceivePack rp, Collection<ReceiveCommand> commands) {
-        Repository repository = rp.getRepository();
+    public void onPreReceive(ReceivePack receivePack, Collection<ReceiveCommand> commands) {
+        Repository repository = receivePack.getRepository();
 
         ReceiveCommand command = commands.iterator().next();
 

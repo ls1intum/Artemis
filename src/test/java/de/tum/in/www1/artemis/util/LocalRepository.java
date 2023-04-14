@@ -53,6 +53,15 @@ public class LocalRepository {
         this.localGit.remoteAdd().setName("origin").setUri(new URIish(String.valueOf(this.originRepoFile))).call();
     }
 
+    /**
+     * Configures the local and origin repositories instantiating the origin repository as a bare repository and making sure the default branch name is set correctly.
+     *
+     * @param localRepoFileName      name of the local repository to be used as the prefix for the temporary folder
+     * @param originRepositoryFolder path to the origin repository folder already created
+     * @throws IOException        if e.g. creating the temporary directory fails
+     * @throws GitAPIException    if e.g. initializing the remote repository fails
+     * @throws URISyntaxException if creating a URI from the origin repository folder fails
+     */
     public void configureRepos(String localRepoFileName, Path originRepositoryFolder) throws IOException, GitAPIException, URISyntaxException {
 
         Path localRepoPath = Files.createTempDirectory(localRepoFileName);
