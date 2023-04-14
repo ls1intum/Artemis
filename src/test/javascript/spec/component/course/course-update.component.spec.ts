@@ -456,11 +456,14 @@ describe('Course Management Update Component', () => {
 
         it('should handle invalid startDate', () => {
             comp.course = new Course();
+            //one of the dates is undefined, which is allowed => areInvalidDates should be false
             comp.course.startDate = dayjs().add(1, 'day');
             comp.course.endDate = undefined;
             comp.isInvalidEndDate = false;
 
+            //the boolean passed in this method tells us if the user input could be converted into a date or not
             comp.validateStartDate(true);
+
             expect(comp.isInvalidStartDate).toBeTrue();
             expect(comp.isInvalidEndDate).toBeFalse();
             expect(comp.areInvalidDates).toBeFalse();
@@ -468,13 +471,16 @@ describe('Course Management Update Component', () => {
 
         it('should handle invalid endDate', () => {
             comp.course = new Course();
+            //the start date is after the end date of the course => areInvalidDates should be true
             comp.course.startDate = dayjs().add(1, 'day');
             comp.course.endDate = dayjs().subtract(1, 'day');
-            comp.isInvalidStartDate = false;
+            comp.isInvalidStartDate = true;
 
-            comp.validateEndDate(false);
-            expect(comp.isInvalidStartDate).toBeFalse();
-            expect(comp.isInvalidEndDate).toBeFalse();
+            //the boolean passed in this method tells us if the user input could be converted into a date or not
+            comp.validateEndDate(true);
+
+            expect(comp.isInvalidStartDate).toBeTrue();
+            expect(comp.isInvalidEndDate).toBeTrue();
             expect(comp.areInvalidDates).toBeTrue();
         });
     });

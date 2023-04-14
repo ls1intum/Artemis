@@ -125,7 +125,8 @@
             <div class="d-flex">
                 <div class="flex-grow-1">
                     <button type="button" id="cancel-save" class="btn btn-secondary" (click)="previousState()">
-                        <fa-icon [icon]="faBan"></fa-icon><span jhiTranslate="entity.action.cancel">Cancel</span>
+                        <fa-icon [icon]="faBan"></fa-icon>
+                        <span jhiTranslate="entity.action.cancel">Cancel</span>
                     </button>
                     <button
                         type="submit"
@@ -133,7 +134,8 @@
                         [disabled]="editForm.form.invalid || isSaving || processUnitMode || isEndDateBeforeStartDate || isInvalidStartDate || isInvalidEndDate"
                         class="btn btn-primary"
                     >
-                        <fa-icon [icon]="faSave"></fa-icon><span jhiTranslate="entity.action.save">Save</span>
+                        <fa-icon [icon]="faSave"></fa-icon>
+                        <span jhiTranslate="entity.action.save">Save</span>
                     </button>
                 </div>
                 <div *ngIf="processUnitMode" class="flex-grow-1 ms-3">
