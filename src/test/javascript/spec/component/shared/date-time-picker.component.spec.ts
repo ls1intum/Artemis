@@ -83,46 +83,55 @@ describe('FormDateTimePickerComponent', () => {
         it('should update field with valid date', () => {
             const valueChangedStub = jest.spyOn(component, 'valueChanged').mockImplementation();
             const onChangeSpy = jest.spyOn(component, '_onChange');
-            const newDate = normalDate.add(2, 'days');
-            component.value = normalDate;
-            component.isInvalidDate = false;
+            component.value = normalDate.subtract(2, 'days');
+            component.isInvalidDate = true;
 
-            component.updateField(newDate);
+            component.updateField(normalDateAsDateObject);
 
-            expect(component.value).toEqual(newDate);
+            expect(component.value).toEqual(normalDateAsDateObject);
+            expect(component.value).not.toEqual(normalDate);
             expect(component.isInvalidDate).toBeFalse();
-            expect(onChangeSpy).toHaveBeenCalledOnce();
-            expect(onChangeSpy).toHaveBeenCalledWith(newDate);
+            expect(onChangeSpy).toHaveBeenCalledOnceWith(normalDateAsDateObject);
             expect(valueChangedStub).toHaveBeenCalledOnce();
         });
 
-        it('should not update field with same date', () => {
+        it('should not update field with an invalid date object', () => {
             const valueChangedStub = jest.spyOn(component, 'valueChanged').mockImplementation();
             const onChangeSpy = jest.spyOn(component, '_onChange');
-            const newDate = normalDate.add(2, 'days');
-            component.value = newDate;
-            component.isInvalidDate = true;
+            component.value = normalDateAsDateObject;
+            component.isInvalidDate = false;
 
-            component.updateField(newDate);
+            component.updateField(new Date('invalid string'));
 
-            expect(component.value).toEqual(newDate);
+            expect(component.value).toEqual(normalDateAsDateObject);
             expect(component.isInvalidDate).toBeFalse();
-            expect(onChangeSpy).not.toHaveBeenCalled();
             expect(onChangeSpy).not.toHaveBeenCalled();
             expect(valueChangedStub).not.toHaveBeenCalled();
         });
 
-        it('should update field with null', () => {
+        it('should not update field with null', () => {
             const valueChangedStub = jest.spyOn(component, 'valueChanged').mockImplementation();
             const onChangeSpy = jest.spyOn(component, '_onChange');
-            component.value = normalDate;
+            component.value = normalDateAsDateObject;
 
-            const newValue = null;
+            component.updateField(null);
+
+            expect(component.value).toBe(normalDateAsDateObject);
+            expect(onChangeSpy).not.toHaveBeenCalled();
+            expect(valueChangedStub).not.toHaveBeenCalledOnce();
+        });
+
+        it('should not update field with dayJS', () => {
+            const valueChangedStub = jest.spyOn(component, 'valueChanged').mockImplementation();
+            const onChangeSpy = jest.spyOn(component, '_onChange');
+            component.value = normalDateAsDateObject;
+
+            const newValue = normalDate.add(1, 'day');
             component.updateField(newValue);
 
-            expect(component.value).toBeNull();
-            expect(onChangeSpy).toHaveBeenCalledOnceWith(newValue);
-            expect(valueChangedStub).toHaveBeenCalledOnce();
+            expect(component.value).toBe(normalDateAsDateObject);
+            expect(onChangeSpy).not.toHaveBeenCalled();
+            expect(valueChangedStub).not.toHaveBeenCalled();
         });
     });
 
@@ -164,7 +173,7 @@ describe('FormDateTimePickerComponent', () => {
         });
 
         it('checks if an object is an invalid valid', () => {
-            const invalidDate = new Date('some text, definetly not a date');
+            const invalidDate = new Date('some text, definitely not a date');
             expect(component.isValidDate(invalidDate)).toBeFalse();
         });
     });

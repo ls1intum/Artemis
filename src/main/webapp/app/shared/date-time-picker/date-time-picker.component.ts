@@ -94,7 +94,8 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
     /**
      * updates the value with the passed newValue date. The date picked using the calendar is always valid.
      * In case the calendar was opened and no date was selected, the value does not get updated
-     * @param newValue the date picked with the date picker or '' in case the date picker was opened and save was not pressed
+     * @param newValue the date picked with the date picker or another object that is not date in case an invalid value
+     * is selected in the user input
      */
     updateField(newValue: any) {
         if (this.isValidDate(newValue)) {
