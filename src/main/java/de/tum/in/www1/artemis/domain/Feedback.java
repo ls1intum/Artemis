@@ -476,8 +476,7 @@ public class Feedback extends DomainObject {
 
     @Override
     public String toString() {
-        return "Feedback{" + "text='" + text + '\'' + ", detailText='" + detailText + '\'' + ", hasLongFeedbackText=" + hasLongFeedbackText + ", longFeedbackText="
-                + longFeedbackText + ", reference='" + reference + '\'' + ", credits=" + credits + ", positive=" + positive + ", type=" + type + ", visibility=" + visibility
-                + ", result=" + result + '}';
+        return "Feedback{" + "text='" + text + '\'' + ", detailText='" + detailText + '\'' + ", hasLongFeedbackText=" + hasLongFeedbackText + ", reference='" + reference + '\''
+                + ", credits=" + credits + ", positive=" + positive + ", type=" + type + ", visibility=" + visibility + '}';
     }
 }
