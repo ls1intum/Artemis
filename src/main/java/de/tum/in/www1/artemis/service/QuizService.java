@@ -80,13 +80,14 @@ public abstract class QuizService<T extends QuizConfiguration> {
 
         // if an answerOption was removed then remove the associated AnswerCounters implicitly
         Set<AnswerCounter> answerCounterToDelete = new HashSet<>();
-        findTobeDeletedComponent(quizQuestionStatistic.getAnswerCounters(), answerCounter -> {
-            if (!(mcQuestion.getAnswerOptions().contains(answerCounter.getAnswer()))) {
-                answerCounter.setAnswer(null);
-                answerCounterToDelete.add(answerCounter);
+        for (AnswerCounter answerCounter : quizQuestionStatistic.getAnswerCounters()) {
+            if (answerCounter.getId() != null) {
+                if (!(mcQuestion.getAnswerOptions().contains(answerCounter.getAnswer()))) {
+                    answerCounter.setAnswer(null);
+                    answerCounterToDelete.add(answerCounter);
+                }
             }
-            return null;
-        });
+        }
         quizQuestionStatistic.getAnswerCounters().removeAll(answerCounterToDelete);
     }
 
@@ -104,13 +105,14 @@ public abstract class QuizService<T extends QuizConfiguration> {
 
         // if a dropLocation was removed then remove the associated AnswerCounters implicitly
         Set<DropLocationCounter> dropLocationCounterToDelete = new HashSet<>();
-        findTobeDeletedComponent(quizQuestionStatistic.getDropLocationCounters(), dropLocationCounter -> {
-            if (!(dndQuestion.getDropLocations().contains(dropLocationCounter.getDropLocation()))) {
-                dropLocationCounter.setDropLocation(null);
-                dropLocationCounterToDelete.add(dropLocationCounter);
+        for (DropLocationCounter dropLocationCounter : quizQuestionStatistic.getDropLocationCounters()) {
+            if (dropLocationCounter.getId() != null) {
+                if (!(dndQuestion.getDropLocations().contains(dropLocationCounter.getDropLocation()))) {
+                    dropLocationCounter.setDropLocation(null);
+                    dropLocationCounterToDelete.add(dropLocationCounter);
+                }
             }
-            return null;
-        });
+        }
         quizQuestionStatistic.getDropLocationCounters().removeAll(dropLocationCounterToDelete);
 
         // save references as index to prevent Hibernate Persistence problem
@@ -132,32 +134,18 @@ public abstract class QuizService<T extends QuizConfiguration> {
 
         // if a spot was removed then remove the associated spotCounters implicitly
         Set<ShortAnswerSpotCounter> spotCounterToDelete = new HashSet<>();
-        findTobeDeletedComponent(quizQuestionStatistic.getShortAnswerSpotCounters(), spotCounter -> {
-            if (!(saQuestion.getSpots().contains(spotCounter.getSpot()))) {
-                spotCounter.setSpot(null);
-                spotCounterToDelete.add(spotCounter);
+        for (ShortAnswerSpotCounter spotCounter : quizQuestionStatistic.getShortAnswerSpotCounters()) {
+            if (spotCounter.getId() != null) {
+                if (!(saQuestion.getSpots().contains(spotCounter.getSpot()))) {
+                    spotCounter.setSpot(null);
+                    spotCounterToDelete.add(spotCounter);
+                }
             }
-            return null;
-        });
+        }
         quizQuestionStatistic.getShortAnswerSpotCounters().removeAll(spotCounterToDelete);
 
         // save references as index to prevent Hibernate Persistence problem
         saveCorrectMappingsInIndicesShortAnswer(saQuestion);
-    }
-
-    /**
-     * Call the given deleteCallback for each given component where id is not null
-     *
-     * @param components     the components for which the given deleteCallback to be applied to
-     * @param deleteCallback the callback to be called for each component
-     */
-    private <T1 extends QuizQuestionStatisticComponent<T2, T3, T4>, T2 extends QuizQuestionStatistic, T3 extends QuizQuestionComponent<T4>, T4 extends QuizQuestion> void findTobeDeletedComponent(
-            Collection<T1> components, Function<T1, Void> deleteCallback) {
-        for (T1 component : components) {
-            if (component.getId() != null) {
-                deleteCallback.apply(component);
-            }
-        }
     }
 
     /**
