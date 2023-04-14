@@ -8,16 +8,32 @@ import { Lecture } from 'app/entities/lecture.model';
 export class LectureUpdateWizardPeriodComponent {
     @Input() currentStep: number;
     @Input() lecture: Lecture;
-    @Input() validateDatesFunction: () => void;
     @Input() isEndDateBeforeStartDate: boolean;
-    @Output() invalidChange: EventEmitter<boolean> = new EventEmitter();
+    @Output() valueChange: EventEmitter<boolean> = new EventEmitter();
+
+    isInvalidStartDate = false;
+    isInvalidEndDate = false;
 
     constructor() {}
 
     /**
      * emits in case the end date is set before the start date, informing the parent component about this invalid change
      */
-    emitDateConfiguration(invalidDate: boolean) {
-        this.invalidChange.emit(invalidDate);
+    emitDateConfiguration() {
+        if (this.isInvalidStartDate || this.isInvalidEndDate) {
+            this.valueChange.emit(true);
+        } else {
+            this.valueChange.emit(false);
+        }
+    }
+
+    validateStartDate(isInvalidDate: boolean) {
+        this.isInvalidStartDate = isInvalidDate;
+        this.emitDateConfiguration();
+    }
+
+    validateEndDate(isInvalidDate: boolean) {
+        this.isInvalidEndDate = isInvalidDate;
+        this.emitDateConfiguration();
     }
 }

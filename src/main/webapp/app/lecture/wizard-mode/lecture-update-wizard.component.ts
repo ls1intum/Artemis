@@ -111,4 +111,9 @@ export class LectureUpdateWizardComponent implements OnInit {
             this.router.navigate(['course-management', this.lecture.course!.id, 'lectures', this.lecture.id]);
         }
     }
+
+    validateDates(areInvalidDates: boolean) {
+        this.invalidDate = areInvalidDates;
+        this.validateDatesFunction();
+    }
 }
