@@ -545,13 +545,9 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
      * @private
      */
     private retrieveScoreByExerciseTypeAndScoreType(exerciseType: ExerciseType, scoreType: ScoreType): number {
-        if (exerciseType !== undefined && scoreType !== undefined) {
-            const scoresPerExerciseTypeForCourse: ScoresPerExerciseType | undefined = this.scoresStorageService.getStoredScoresPerExerciseType(this.courseId);
-            if (scoresPerExerciseTypeForCourse && scoresPerExerciseTypeForCourse.get(exerciseType)) {
-                return scoresPerExerciseTypeForCourse.get(exerciseType)!.getScoreByScoreType(scoreType);
-            }
-        }
-        return NaN;
+        const scoresPerExerciseTypeForCourse: ScoresPerExerciseType | undefined = this.scoresStorageService.getStoredScoresPerExerciseType(this.courseId);
+        const scoresOfExerciseType: CourseScores | undefined = scoresPerExerciseTypeForCourse ? scoresPerExerciseTypeForCourse.get(exerciseType) : undefined;
+        return this.getScoreByScoreType(scoresOfExerciseType, scoreType);
     }
 
     /**
@@ -562,7 +558,31 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
      */
     private retrieveScoreForTotalScoresOfType(scoreType: ScoreType): number {
         const totalScores: CourseScores | undefined = this.scoresStorageService.getStoredTotalScores(this.courseId);
-        return totalScores?.getScoreByScoreType(scoreType) ?? NaN;
+        return this.getScoreByScoreType(totalScores, scoreType);
+    }
+
+    // Retrieve the score for a specific ScoreType from the CourseScores object.
+    // The MAX_POINTS and REACHABLE_POINTS belong to the course.
+    // All other ScoreTypes inform about the student's personal score and are stored in the StudentScores object.
+    private getScoreByScoreType(scores: CourseScores | undefined, scoreType: ScoreType): number {
+        if (!scores) {
+            return NaN;
+        }
+
+        switch (scoreType) {
+            case ScoreType.MAX_POINTS:
+                return scores.maxPoints;
+            case ScoreType.REACHABLE_POINTS:
+                return scores.reachablePoints;
+            case ScoreType.ABSOLUTE_SCORE:
+                return scores.studentScores.absoluteScore;
+            case ScoreType.RELATIVE_SCORE:
+                return scores.studentScores.relativeScore;
+            case ScoreType.CURRENT_RELATIVE_SCORE:
+                return scores.studentScores.currentRelativeScore;
+            case ScoreType.PRESENTATION_SCORE:
+                return scores.studentScores.presentationScore;
+        }
     }
 
     calculateAndFilterNotIncludedInScore() {
