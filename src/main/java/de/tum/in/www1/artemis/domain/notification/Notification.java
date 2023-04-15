@@ -135,6 +135,7 @@ public abstract class Notification extends DomainObject {
      */
     public void setPlaceholderValues(String[] notificationTextValues) {
         transientPlaceholderValues = notificationTextValues;
+
         if (notificationTextValues == null || notificationTextValues.length == 0) {
             this.placeholderValues = null;
         }
