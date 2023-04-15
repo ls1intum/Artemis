@@ -1,5 +1,5 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
-import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faCheckCircle, faCircleNotch, faExclamationTriangle, faSave } from '@fortawesome/free-solid-svg-icons';
 import { PrivacyStatementService } from 'app/shared/service/privacy-statement.service';
 import { PrivacyStatement, PrivacyStatementLanguage } from 'app/entities/privacy-statement.model';
 import { MarkdownEditorComponent, MarkdownEditorHeight } from 'app/shared/markdown-editor/markdown-editor.component';
@@ -17,6 +17,9 @@ export class PrivacyStatementUpdateComponent implements OnInit {
     unsavedChanges = false;
     faBan = faBan;
     faSave = faSave;
+    faExclamationTriangle = faExclamationTriangle;
+    faCheckCircle = faCheckCircle;
+    faCircleNotch = faCircleNotch;
     isSaving = false;
     @ViewChild(MarkdownEditorComponent, { static: false }) markdownEditor: MarkdownEditorComponent;
     readonly languageOptions = this.supportedLanguages.map((language) => ({
