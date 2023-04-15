@@ -21,6 +21,12 @@
             "modal": {
                 "submitted": "Submitted",
                 "linkedToCommit": "linked to commit"
+            },
+            "group": {
+                "wrong": "Wrong",
+                "warning": "Warning",
+                "info": "Info",
+                "correct": "Correct"
             }
         }
     }
