@@ -8,7 +8,13 @@
             "language": {
                 "de": "Deutsch",
                 "en": "Englisch"
-            }
+            },
+            "unsaved": "Ungespeichert",
+            "saved": "Gespeichert",
+            "saving": "Wird gespeichert",
+            "unsavedTooltip": "Die Änderungen wurden noch nicht gespeichert. Bitte speichere deine Änderungen, bevor du die Sprache wechselst oder die Seite verlässt.",
+            "savedTooltip": "Die Änderungen sind gespeichert.",
+            "savingTooltip": "Die Änderungen werden gespeichert."
         }
     }
 }

@@ -15,6 +15,20 @@
             [minHeightEditor]="700"
             class="markdown-editor"
         ></jhi-markdown-editor>
+        <div class="instructions-status">
+            <div *ngIf="!unsavedChanges && !isSaving">
+                <fa-icon [icon]="faCheckCircle" class="text-success me-1" ngbTooltip="{{ 'artemisApp.privacyStatement.savedTooltip' | artemisTranslate }}"></fa-icon>
+                <span class="text-info" jhiTranslate="artemisApp.privacyStatement.saved">Saved.</span>
+            </div>
+            <div *ngIf="unsavedChanges && !isSaving">
+                <fa-icon [icon]="faExclamationTriangle" class="text-warning me-1" ngbTooltip="{{ 'artemisApp.privacyStatement.unsavedTooltip' | artemisTranslate }}"></fa-icon>
+                <span class="text-info" jhiTranslate="artemisApp.privacyStatement.unsaved">Unsaved.</span>
+            </div>
+            <div *ngIf="isSaving">
+                <fa-icon [icon]="faCircleNotch" class="me-1" ngbTooltip="{{ 'artemisApp.privacyStatement.savingTooltip' | artemisTranslate }}"></fa-icon>
+                <span class="text-info" jhiTranslate="artemisApp.privacyStatement.saving">Saving...</span>
+            </div>
+        </div>
         <div class="btn-below-editor">
             <jhi-button
                 id="update-privacy-statement-btn"
@@ -23,7 +37,6 @@
                 [disabled]="!markdownEditor?.markdown || markdownEditor?.markdown?.trim() === ''"
                 [title]="'entity.action.save'"
                 [icon]="faSave"
-                [ngStyle]="{ 'marginRight.px': 10 }"
                 >Save
             </jhi-button>
             <jhi-mode-picker [options]="languageOptions" [value]="currentLanguage" (valueChange)="onLanguageChange($event!)"></jhi-mode-picker>
