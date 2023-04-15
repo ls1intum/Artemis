@@ -43,6 +43,8 @@ public class ProgrammingExerciseRepositoryService {
 
     private static final String PACKAGE_NAME_PLACEHOLDER = "${packageName}";
 
+    private static final String APP_NAME_PLACEHOLDER = "${appName}";
+
     private final Logger log = LoggerFactory.getLogger(ProgrammingExerciseRepositoryService.class);
 
     private final FileService fileService;
@@ -561,7 +563,7 @@ public class ProgrammingExerciseRepositoryService {
 
         switch (programmingLanguage) {
             case JAVA, KOTLIN -> {
-                fileService.replaceVariablesInDirectoryName(repository.getLocalPath().toAbsolutePath().toString(), PACKAGE_NAME_FOLDER_PLACEHOLDER,
+                fileService.replaceVariablesInDirectoryName(getRepoAbsoluteLocalPath(repository).toString(), PACKAGE_NAME_FOLDER_PLACEHOLDER,
                         programmingExercise.getPackageFolderName());
                 replacements.put(PACKAGE_NAME_PLACEHOLDER, programmingExercise.getPackageName());
             }
@@ -587,7 +589,6 @@ public class ProgrammingExerciseRepositoryService {
      * @throws IOException Thrown if accessing repository files fails.
      */
     private void replaceSwiftPlaceholders(final Map<String, String> replacements, final ProgrammingExercise programmingExercise, final Repository repository) throws IOException {
-        final String appNamePlaceholder = "${appName}";
         final String repositoryLocalPath = getRepoAbsoluteLocalPath(repository).toString();
         final String packageName = programmingExercise.getPackageName();
 
@@ -598,10 +599,10 @@ public class ProgrammingExerciseRepositoryService {
             replacements.put(PACKAGE_NAME_PLACEHOLDER, packageName);
         }
         else if (ProjectType.XCODE.equals(programmingExercise.getProjectType())) {
-            fileService.replaceVariablesInDirectoryName(repositoryLocalPath, appNamePlaceholder, packageName);
-            fileService.replaceVariablesInFileName(repositoryLocalPath, appNamePlaceholder, packageName);
+            fileService.replaceVariablesInDirectoryName(repositoryLocalPath, APP_NAME_PLACEHOLDER, packageName);
+            fileService.replaceVariablesInFileName(repositoryLocalPath, APP_NAME_PLACEHOLDER, packageName);
 
-            replacements.put(appNamePlaceholder, packageName);
+            replacements.put(APP_NAME_PLACEHOLDER, packageName);
         }
     }
 
