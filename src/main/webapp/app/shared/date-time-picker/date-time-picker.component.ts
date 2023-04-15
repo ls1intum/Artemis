@@ -72,7 +72,7 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
      * validates a date object
      * @param date to be validated
      */
-    isValidDate(date: any) {
+    isValidDate(date: object) {
         return date && date instanceof Date && !Number.isNaN(date.getTime());
     }
 
@@ -94,10 +94,11 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
     /**
      * updates the value with the passed newValue date. The date picked using the calendar is always valid.
      * In case the calendar was opened and no date was selected, the value does not get updated
-     * @param newValue the date picked with the date picker or another object that is not date in case an invalid value
-     * is selected in the user input
+     * @param newValue the date picked with the date picker or another object in case an invalid value
+     * is selected in the user input and the calendar was exited without saving
      */
-    updateField(newValue: any) {
+    updateField(newValue: Date) {
+        console.log(newValue);
         if (this.isValidDate(newValue)) {
             this.isInvalidDate = false;
             this.value = newValue;
