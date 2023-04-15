@@ -86,11 +86,11 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
 
     protected static final String TEST_PREFIX = "localvclocalciintegration";
 
-    protected static final Path allFailTestResultsPath = Paths.get("src", "test", "resources", "test-data", "test-results", "java-gradle", "all-fail");
+    protected static final Path ALL_FAIL_TEST_RESULTS_PATH = Paths.get("src", "test", "resources", "test-data", "test-results", "java-gradle", "all-fail");
 
-    protected static final Path partlySuccessfulTestResultsPath = Paths.get("src", "test", "resources", "test-data", "test-results", "java-gradle", "partly-successful");
+    protected static final Path PARTLY_SUCCESSFUL_TEST_RESULTS_PATH = Paths.get("src", "test", "resources", "test-data", "test-results", "java-gradle", "partly-successful");
 
-    protected static final Path allSucceedTestResultsPath = Paths.get("src", "test", "resources", "test-data", "test-results", "java-gradle", "all-succeed");
+    protected static final Path ALL_SUCCEED_TEST_RESULTS_PATH = Paths.get("src", "test", "resources", "test-data", "test-results", "java-gradle", "all-succeed");
 
     @Value("${artemis.version-control.url}")
     protected String localVCSBaseUrl;

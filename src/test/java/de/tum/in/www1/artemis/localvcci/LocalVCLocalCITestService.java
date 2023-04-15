@@ -415,12 +415,8 @@ public class LocalVCLocalCITestService {
      * @param repositorySlug   the repository slug of the repository.
      */
     public void testPushSuccessful(Git repositoryHandle, String username, String projectKey, String repositorySlug) {
-        testPushSuccessful(repositoryHandle, username, USER_PASSWORD, projectKey, repositorySlug);
-    }
-
-    private void testPushSuccessful(Git repositoryHandle, String username, String password, String projectKey, String repositorySlug) {
         try {
-            performPush(repositoryHandle, username, password, projectKey, repositorySlug);
+            performPush(repositoryHandle, username, USER_PASSWORD, projectKey, repositorySlug);
         }
         catch (GitAPIException e) {
             fail("Pushing was not successful: " + e.getMessage());
@@ -433,6 +429,7 @@ public class LocalVCLocalCITestService {
      * @param participationId                 of the participation to check the latest submission for.
      * @param expectedCommitHash              the commit hash of the commit that triggered the creation of the submission and is thus expected to be seved in the submission.
      * @param expectedSuccessfulTestCaseCount the expected number or passed test cases.
+     * @param buildFailed                     whether the build should have failed or not.
      */
     public void testLastestSubmission(Long participationId, String expectedCommitHash, int expectedSuccessfulTestCaseCount, boolean buildFailed) {
         ProgrammingSubmission programmingSubmission = programmingSubmissionRepository.findFirstByParticipationIdOrderByLegalSubmissionDateDesc(participationId).orElseThrow();
