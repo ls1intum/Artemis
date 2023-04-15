@@ -4,8 +4,14 @@ public enum PrivacyStatementLanguage {
 
     GERMAN, ENGLISH;
 
+    /**
+     * Returns the PrivacyStatementLanguage for the given language short name.
+     *
+     * @param languageShortName the short name of the language
+     * @return the PrivacyStatementLanguage for the given language short name
+     */
     public static PrivacyStatementLanguage fromLanguageShortName(String languageShortName) {
-        return switch (languageShortName) {
+        return switch (languageShortName.toLowerCase()) {
             case "de" -> GERMAN;
             case "en" -> ENGLISH;
             default -> throw new IllegalArgumentException("Language not supported");
