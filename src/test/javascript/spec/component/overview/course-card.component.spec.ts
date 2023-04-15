@@ -64,11 +64,7 @@ describe('CourseCardComponent', () => {
     });
 
     it('should display the total course scores returned from the scores storage service', () => {
-        const mockCourseScores: CourseScores = {
-            maxPoints: 0,
-            reachablePoints: 20,
-            studentScores: { absoluteScore: 4, relativeScore: 0.3, currentRelativeScore: 0.2, presentationScore: 0 },
-        };
+        const mockCourseScores: CourseScores = new CourseScores(0, 20, { absoluteScore: 4, relativeScore: 0.3, currentRelativeScore: 0.2, presentationScore: 0 });
         jest.spyOn(scoresStorageService, 'getStoredTotalScores').mockReturnValue(mockCourseScores);
 
         fixture.detectChanges();
