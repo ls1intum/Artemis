@@ -297,7 +297,13 @@
                                         <jhi-clone-repo-button class="me-1" [smallButtons]="true" [repositoryUrl]="getRepositoryLink(value) || ''"></jhi-clone-repo-button>
                                     </ng-template>
                                 </ng-container>
-                                <a *ngIf="buildPlanId(value)" target="_blank" rel="noreferrer" href="{{ value.buildPlanUrl }}" class="btn btn-primary btn-sm me-1">
+                                <a
+                                    *ngIf="buildPlanId(value) && !localVCEnabled"
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    href="{{ value.buildPlanUrl }}"
+                                    class="btn btn-primary btn-sm me-1"
+                                >
                                     <fa-icon class="me-1" [icon]="farFileCode"></fa-icon>
                                     Build plan
                                 </a>

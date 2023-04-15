@@ -48,7 +48,7 @@
             </ng-container>
         </div>
     </div>
-    <div *ngIf="displayTemplateUrls">
+    <div *ngIf="displayTemplateUrls && !localVCEnabled">
         <span *ngIf="programmingExercise.templateParticipation?.buildPlanId"
             ><a target="_blank" rel="noreferrer" href="{{ programmingExercise.templateParticipation!.buildPlanUrl }}">Template</a></span
         >

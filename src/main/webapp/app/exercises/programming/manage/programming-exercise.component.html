@@ -151,13 +151,24 @@
                         </div>
                     </td>
                     <td *jhiExtensionPoint="overrideRepositoryAndBuildPlan">
-                        <!-- TODO get the correct URL from the server instead of hardcoding Bamboo here -->
-                        <span *ngIf="programmingExercise.templateParticipation?.buildPlanId">
-                            <a target="_blank" rel="noreferrer" href="{{ programmingExercise.templateParticipation!.buildPlanUrl }}">Template</a>
-                        </span>
-                        <span *ngIf="programmingExercise.solutionParticipation && programmingExercise.solutionParticipation.buildPlanId">
-                            <a target="_blank" rel="noreferrer" href="{{ programmingExercise.solutionParticipation!.buildPlanUrl }}">Solution</a>
-                        </span>
+                        <ng-container *ngIf="programmingExercise.templateParticipation?.buildPlanId">
+                            <span *ngIf="!localVCEnabled; else plainBuildPlanId">
+                                <!-- TODO get the correct URL from the server instead of hardcoding Bamboo here -->
+                                <a target="_blank" rel="noreferrer" href="{{ programmingExercise.templateParticipation!.buildPlanUrl }}">Template</a>
+                            </span>
+                            <ng-template #plainBuildPlanId>
+                                <span>{{ programmingExercise.templateParticipation!.buildPlanId }}</span>
+                            </ng-template>
+                        </ng-container>
+                        <ng-container *ngIf="programmingExercise.solutionParticipation?.buildPlanId">
+                            <span *ngIf="!localVCEnabled; else plainBuildPlanId">
+                                <!-- TODO get the correct URL from the server instead of hardcoding Bamboo here -->
+                                <a target="_blank" rel="noreferrer" href="{{ programmingExercise.solutionParticipation!.buildPlanUrl }}">Solution</a>
+                            </span>
+                            <ng-template #plainBuildPlanId>
+                                <span>{{ programmingExercise.solutionParticipation!.buildPlanId }}</span>
+                            </ng-template>
+                        </ng-container>
                     </td>
                     <td class="d-md-table-cell">
                         <div class="d-flex justify-content-between">

@@ -18,6 +18,9 @@ import { TranslateService } from '@ngx-translate/core';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import dayjs from 'dayjs/esm';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
+import { PROFILE_LOCALVC } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-exercise-details-student-actions',
@@ -49,6 +52,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     gradedParticipation?: StudentParticipation;
     practiceParticipation?: StudentParticipation;
     programmingExercise?: ProgrammingExercise;
+    localVCEnabled = false;
 
     // Icons
     faComment = faComment;
@@ -66,6 +70,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
         private router: Router,
         private translateService: TranslateService,
         private participationService: ParticipationService,
+        private profileService: ProfileService,
     ) {}
 
     ngOnInit(): void {
@@ -75,6 +80,9 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
             this.quizNotStarted = ArtemisQuizService.notStarted(quizExercise);
         } else if (this.exercise.type === ExerciseType.PROGRAMMING) {
             this.programmingExercise = this.exercise as ProgrammingExercise;
+            this.profileService.getProfileInfo().subscribe((profileInfo: ProfileInfo) => {
+                this.localVCEnabled = profileInfo.activeProfiles?.includes(PROFILE_LOCALVC);
+            });
         }
     }
 
