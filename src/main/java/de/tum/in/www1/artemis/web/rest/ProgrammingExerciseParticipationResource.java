@@ -15,13 +15,13 @@ import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.domain.participation.Participation;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.ParticipationAuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ResultService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingSubmissionService;
@@ -49,12 +49,14 @@ public class ProgrammingExerciseParticipationResource {
 
     private final AuthorizationCheckService authCheckService;
 
+    private final ParticipationAuthorizationCheckService participationAuthCheckService;
+
     private final ResultService resultService;
 
     public ProgrammingExerciseParticipationResource(ProgrammingExerciseParticipationService programmingExerciseParticipationService, ResultRepository resultRepository,
             ParticipationRepository participationRepository, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
             ProgrammingSubmissionService submissionService, ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService,
-            ResultService resultService) {
+            ResultService resultService, ParticipationAuthorizationCheckService participationAuthCheckService) {
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.participationRepository = participationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
@@ -63,6 +65,7 @@ public class ProgrammingExerciseParticipationResource {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.authCheckService = authCheckService;
         this.resultService = resultService;
+        this.participationAuthCheckService = participationAuthCheckService;
     }
 
     /**
@@ -77,9 +80,7 @@ public class ProgrammingExerciseParticipationResource {
         ProgrammingExerciseStudentParticipation participation = programmingExerciseStudentParticipationRepository
                 .findStudentParticipationWithLatestResultAndFeedbacksAndRelatedSubmissions(participationId)
                 .orElseThrow(() -> new EntityNotFoundException("Participation", participationId));
-        if (!programmingExerciseParticipationService.canAccessParticipation(participation)) {
-            throw new AccessForbiddenException("participation", participationId);
-        }
+        participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
 
         // hide details that should not be shown to the students
         resultService.filterSensitiveInformationIfNecessary(participation, participation.getResults());
@@ -99,9 +100,7 @@ public class ProgrammingExerciseParticipationResource {
     public ResponseEntity<Result> getLatestResultWithFeedbacksForProgrammingExerciseParticipation(@PathVariable Long participationId,
             @RequestParam(defaultValue = "false") boolean withSubmission) {
         var participation = participationRepository.findByIdElseThrow(participationId);
-        if (!programmingExerciseParticipationService.canAccessParticipation((ProgrammingExerciseParticipation) participation)) {
-            throw new AccessForbiddenException("participation", participationId);
-        }
+        participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
 
         Optional<Result> result = resultRepository.findLatestResultWithFeedbacksForParticipation(participation.getId(), withSubmission);
         result.ifPresent(value -> resultService.filterSensitiveInformationIfNecessary(participation, value));
@@ -188,7 +187,9 @@ public class ProgrammingExerciseParticipationResource {
         ProgrammingExercise exercise = programmingExerciseRepository.findByStudentParticipationIdWithTemplateParticipation(participationId)
                 .orElseThrow(() -> new EntityNotFoundException("Programming Exercise for Participation", participationId));
         participation.setProgrammingExercise(exercise);
-        if (!programmingExerciseParticipationService.canAccessParticipation(participation) || participation.isLocked()) {
+
+        participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
+        if (participation.isLocked()) {
             throw new AccessForbiddenException("participation", participationId);
         }
         if (exercise.isExamExercise()) {
@@ -198,9 +199,8 @@ public class ProgrammingExerciseParticipationResource {
         VcsRepositoryUrl sourceURL;
         if (gradedParticipationId != null) {
             ProgrammingExerciseStudentParticipation gradedParticipation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(gradedParticipationId);
-            if (!programmingExerciseParticipationService.canAccessParticipation(gradedParticipation)) {
-                throw new AccessForbiddenException("participation", gradedParticipationId);
-            }
+            participationAuthCheckService.checkCanAccessParticipationElseThrow(gradedParticipation);
+
             sourceURL = gradedParticipation.getVcsRepositoryUrl();
         }
         else {

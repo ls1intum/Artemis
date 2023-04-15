@@ -791,6 +791,7 @@ public class Course extends DomainObject {
      *
      * @return true if the dates are valid
      */
+    @JsonIgnore
     public boolean isValidStartAndEndDate() {
         return getStartDate() == null || getEndDate() == null || this.getEndDate().isAfter(this.getStartDate());
     }
