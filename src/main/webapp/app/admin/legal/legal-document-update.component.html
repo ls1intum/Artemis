@@ -1,0 +1,30 @@
+<div class="privacy-statement-container">
+    <div>
+        <h2>
+            <span id="privacy-statement-update-heading" data-cy="privacyStatementPageHeading" jhiTranslate="{{ titleKey }}">Create or edit privacy statement</span>
+        </h2>
+
+        <jhi-markdown-editor
+            [markdown]="legalDocument.text"
+            (markdownChange)="checkUnsavedChanges($event)"
+            [resizableMinHeight]="minHeight"
+            [resizableMaxHeight]="maxHeight"
+            [enableResize]="true"
+            [minHeightEditor]="700"
+            class="markdown-editor"
+        ></jhi-markdown-editor>
+        <div class="btn-below-editor">
+            <jhi-button
+                id="update-privacy-statement-btn"
+                (click)="updateLegalDocument()"
+                [isLoading]="isSaving"
+                [disabled]="!markdownEditor?.markdown || markdownEditor?.markdown?.trim() === ''"
+                [title]="'entity.action.save'"
+                [icon]="faSave"
+                [ngStyle]="{ 'marginRight.px': 10 }"
+                >Save
+            </jhi-button>
+            <jhi-mode-picker [options]="languageOptions" [value]="currentLanguage" (valueChange)="onLanguageChange($event!)"></jhi-mode-picker>
+        </div>
+    </div>
+</div>

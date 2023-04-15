@@ -10,7 +10,7 @@ import de.tum.in.www1.artemis.domain.LegalDocumentLanguage;
 import de.tum.in.www1.artemis.service.LegalDocumentService;
 
 /**
- * REST controller for managing and retrieving the Privacy Statement.
+ * REST controller for managing and retrieving the imprint.
  */
 @RestController
 @RequestMapping("/api")
@@ -30,8 +30,8 @@ public class ImprintResource {
      * @return the imprint
      */
     @GetMapping("/imprint")
-    public Imprint getImprint(@RequestParam(value = "language") String language) {
-        if (!"de".equalsIgnoreCase(language) && !"en".equalsIgnoreCase(language))
+    public Imprint getImprint(@RequestParam("language") String language) {
+        if (!LegalDocumentLanguage.isValidShortName(language))
             throw new BadRequestException("Language not supported");
         return legalDocumentService.getImprint(LegalDocumentLanguage.fromLanguageShortName(language));
     }
@@ -46,8 +46,9 @@ public class ImprintResource {
     @GetMapping("/imprint-for-update")
     @PreAuthorize("hasRole('ADMIN')")
     public Imprint getImprintForUpdate(@RequestParam("language") String language) {
-        if (!"de".equalsIgnoreCase(language) && !"en".equalsIgnoreCase(language))
+        if (!LegalDocumentLanguage.isValidShortName(language)) {
             throw new BadRequestException("Language not supported");
+        }
         return legalDocumentService.getImprintForUpdate(LegalDocumentLanguage.fromLanguageShortName(language));
     }
 
@@ -60,9 +61,6 @@ public class ImprintResource {
     @PutMapping("/imprint")
     @PreAuthorize("hasRole('ADMIN')")
     public Imprint updateImprint(@RequestBody Imprint imprint) {
-        if (LegalDocumentLanguage.ENGLISH != imprint.getLanguage() && LegalDocumentLanguage.GERMAN != imprint.getLanguage()) {
-            throw new BadRequestException("Language not supported");
-        }
         return legalDocumentService.updateImprint(imprint);
     }
 }

@@ -21,7 +21,7 @@ public class LegalDocumentService {
     private final Logger log = LoggerFactory.getLogger(LegalDocumentService.class);
 
     @Value("${artemis.legal-path}")
-    private String legalDocumentsBasePath;
+    private Path legalDocumentsBasePath;
 
     private static final String LEGAL_DOCUMENTS_FILE_EXTENSION = ".md";
 
@@ -98,19 +98,11 @@ public class LegalDocumentService {
      * @return the legal document with the given language and type
      */
     private LegalDocument getLegalDocumentForUpdate(LegalDocumentLanguage language, LegalDocumentType type) {
-        String legalDocumentText = "";
-        if (getLegalDocumentPath(language, type).isEmpty()) {
-            switch (type) {
-                case PRIVACY_STATEMENT -> {
-                    return new PrivacyStatement(legalDocumentText, language);
-                }
-                case IMPRINT -> {
-                    return new Imprint(legalDocumentText, language);
-                }
-                default -> {
-                    throw new IllegalArgumentException("Legal document type not supported");
-                }
-            }
+        if (getLegalDocumentPathIfExists(language, type).isEmpty()) {
+            return switch (type) {
+                case PRIVACY_STATEMENT -> new PrivacyStatement("", language);
+                case IMPRINT -> new Imprint("", language);
+            };
 
         }
         return readLegalDocument(language, type);
@@ -128,13 +120,13 @@ public class LegalDocumentService {
      */
     private LegalDocument getLegalDocument(LegalDocumentLanguage language, LegalDocumentType type) {
         // if it doesn't exist for one language, try to return the other language, and only throw an exception if it doesn't exist for both languages
-        if (getLegalDocumentPath(LegalDocumentLanguage.GERMAN, type).isEmpty() && getLegalDocumentPath(LegalDocumentLanguage.ENGLISH, type).isEmpty()) {
+        if (getLegalDocumentPathIfExists(LegalDocumentLanguage.GERMAN, type).isEmpty() && getLegalDocumentPathIfExists(LegalDocumentLanguage.ENGLISH, type).isEmpty()) {
             throw new BadRequestAlertException("Could not find " + type + " file for any language", type.name(), "noLegalDocumentFile");
         }
-        else if (language == LegalDocumentLanguage.GERMAN && getLegalDocumentPath(language, type).isEmpty()) {
+        else if (language == LegalDocumentLanguage.GERMAN && getLegalDocumentPathIfExists(language, type).isEmpty()) {
             language = LegalDocumentLanguage.ENGLISH;
         }
-        else if (language == LegalDocumentLanguage.ENGLISH && getLegalDocumentPath(language, type).isEmpty()) {
+        else if (language == LegalDocumentLanguage.ENGLISH && getLegalDocumentPathIfExists(language, type).isEmpty()) {
             language = LegalDocumentLanguage.GERMAN;
         }
 
@@ -145,7 +137,7 @@ public class LegalDocumentService {
     private LegalDocument readLegalDocument(LegalDocumentLanguage language, LegalDocumentType type) {
         String legalDocumentText;
         try {
-            legalDocumentText = Files.readString(getLegalDocumentPath(language, type).get());
+            legalDocumentText = Files.readString(getLegalDocumentPath(language, type));
         }
         catch (IOException e) {
             log.error("Could not read {} file for language {}", type, language);
@@ -159,37 +151,32 @@ public class LegalDocumentService {
             throw new BadRequestAlertException("Legal document text cannot be empty", legalDocument.getType().name(), "emptyLegalDocument");
         }
         try {
-            var legalDocumentsBasePathAsPath = Path.of(legalDocumentsBasePath);
+
             // If the directory, doesn't exist, we need to create the directory first, otherwise writeString fails.
-            if (!Files.exists(legalDocumentsBasePathAsPath)) {
-                Files.createDirectories(legalDocumentsBasePathAsPath);
+            if (!Files.exists(legalDocumentsBasePath)) {
+                Files.createDirectories(legalDocumentsBasePath);
             }
-            Files.writeString(getLegalDocumentPath(legalDocument.getLanguage(), legalDocument.getType(), true).get(), legalDocument.getText(), StandardOpenOption.CREATE,
+            Files.writeString(getLegalDocumentPath(legalDocument.getLanguage(), legalDocument.getType()), legalDocument.getText(), StandardOpenOption.CREATE,
                     StandardOpenOption.TRUNCATE_EXISTING);
+            return legalDocument;
         }
         catch (IOException e) {
             log.error("Could not update {} file for language {}", legalDocument.getType(), legalDocument.getLanguage());
             throw new InternalServerErrorException("Could not update " + legalDocument.getType() + " file for language " + legalDocument.getLanguage());
         }
-        return legalDocument;
+
     }
 
-    private Optional<Path> getLegalDocumentPath(LegalDocumentLanguage language, LegalDocumentType type, boolean isUpdate) {
-
-        var filePath = getLegalDocumentPathForTypeAndLanguage(language, type);
-        if (Files.exists(getLegalDocumentPathForTypeAndLanguage(language, type))) {
+    private Optional<Path> getLegalDocumentPathIfExists(LegalDocumentLanguage language, LegalDocumentType type) {
+        var filePath = getLegalDocumentPath(language, type);
+        if (Files.exists(filePath)) {
             return Optional.of(filePath);
         }
-        // if it is an update, we need the path to create the file
-        return isUpdate ? Optional.of(filePath) : Optional.empty();
+        return Optional.empty();
     }
 
-    private Optional<Path> getLegalDocumentPath(LegalDocumentLanguage language, LegalDocumentType type) {
-        return getLegalDocumentPath(language, type, false);
-    }
-
-    private Path getLegalDocumentPathForTypeAndLanguage(LegalDocumentLanguage language, LegalDocumentType type) {
-        return Path.of(legalDocumentsBasePath, type.getFileBaseName() + language.getShortName() + LEGAL_DOCUMENTS_FILE_EXTENSION);
+    private Path getLegalDocumentPath(LegalDocumentLanguage language, LegalDocumentType type) {
+        return legalDocumentsBasePath.resolve(type.getFileBaseName() + language.getShortName() + LEGAL_DOCUMENTS_FILE_EXTENSION);
     }
 
 }

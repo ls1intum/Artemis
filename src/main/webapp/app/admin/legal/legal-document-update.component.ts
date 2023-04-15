@@ -33,27 +33,33 @@ export class LegalDocumentUpdateComponent implements OnInit {
     readonly minHeight = MarkdownEditorHeight.MEDIUM;
     currentLanguage = this.defaultLanguage;
     unsavedChangesWarning: NgbModalRef;
-
+    titleKey: string;
     constructor(private legalDocumentService: LegalDocumentService, private modalService: NgbModal, private route: ActivatedRoute, private languageHelper: JhiLanguageHelper) {}
 
     ngOnInit() {
-        this.route.url.pipe(
-            tap((segments) => (this.legalDocumentType = segments.some((segment) => segment.path === 'imprint') ? LegalDocumentType.IMPRINT : LegalDocumentType.PRIVACY_STATEMENT)),
-        );
-        this.legalDocumentType === LegalDocumentType.IMPRINT
-            ? this.languageHelper.updateTitle('artemisApp.imprint.updateImprint')
-            : this.languageHelper.updateTitle('artemisApp.privacyStatement.updatePrivacyStatement');
+        // Tap the URL to determine, if it's the imprint or the privacy statement
+        // we need the parent URL, because the imprint and privacy statement are children of the admin component and their path is specified there because they are lazy loaded
+        this.route.parent?.url
+            .pipe(
+                tap((segments) => {
+                    this.legalDocumentType = segments.some((segment) => segment.path === 'imprint') ? LegalDocumentType.IMPRINT : LegalDocumentType.PRIVACY_STATEMENT;
+                }),
+            )
+            .subscribe();
+        if (this.legalDocumentType === LegalDocumentType.IMPRINT) {
+            this.languageHelper.updateTitle('artemisApp.imprint.updateImprint');
+            this.titleKey = 'artemisApp.imprint.updateImprint';
+        } else {
+            this.languageHelper.updateTitle('artemisApp.privacyStatement.updatePrivacyStatement');
+            this.titleKey = 'artemisApp.privacyStatement.updatePrivacyStatement';
+        }
         this.legalDocument = new LegalDocument(this.legalDocumentType, this.defaultLanguage);
-        this.getLegalDocumentForUpdate(this.legalDocumentType).subscribe((document) => {
+        this.getLegalDocumentForUpdate(this.legalDocumentType, this.defaultLanguage).subscribe((document) => {
             this.legalDocument = document;
         });
     }
 
-    private getLegalDocumentForUpdate(type: LegalDocumentType): Observable<LegalDocument> {
-        return this.getLegalDocumentWithLanguageForUpdate(type, this.defaultLanguage);
-    }
-
-    private getLegalDocumentWithLanguageForUpdate(type: LegalDocumentType, language: LegalDocumentLanguage): Observable<LegalDocument> {
+    private getLegalDocumentForUpdate(type: LegalDocumentType, language: LegalDocumentLanguage): Observable<LegalDocument> {
         if (type === LegalDocumentType.PRIVACY_STATEMENT) {
             return this.legalDocumentService.getPrivacyStatementForUpdate(language);
         } else {
@@ -88,7 +94,7 @@ export class LegalDocumentUpdateComponent implements OnInit {
             this.showWarning(legalDocumentLanguage);
         } else {
             this.currentLanguage = legalDocumentLanguage;
-            this.getLegalDocumentWithLanguageForUpdate(this.legalDocumentType, legalDocumentLanguage).subscribe((document) => (this.legalDocument = document));
+            this.getLegalDocumentForUpdate(this.legalDocumentType, legalDocumentLanguage).subscribe((document) => (this.legalDocument = document));
         }
     }
 
