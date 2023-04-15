@@ -7,6 +7,7 @@ import static org.mockito.Mockito.mockStatic;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 
 import org.junit.jupiter.api.Test;
@@ -55,13 +56,32 @@ class ImprintResourceIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
-    void testUpdateImprint_cannotWriteFileInternalServerError() throws Exception {
+    void testUpdatePrivacyStatement_cannotWriteFileInternalServerError() throws Exception {
         try (MockedStatic<Files> mockedFiles = mockStatic(Files.class)) {
             mockedFiles.when(() -> Files.exists(argThat(path -> path.toString().contains("_de")))).thenReturn(true);
-            mockedFiles.when(() -> Files.writeString(argThat(path -> path.toString().contains("_de")), any(), eq(StandardOpenOption.WRITE), eq(StandardOpenOption.CREATE)))
+            mockedFiles.when(
+                    () -> Files.writeString(argThat(path -> path.toString().contains("_de")), anyString(), eq(StandardOpenOption.CREATE), eq(StandardOpenOption.TRUNCATE_EXISTING)))
                     .thenThrow(new IOException());
-            request.putWithResponseBody("/api/imprint", new Imprint(LegalDocumentLanguage.GERMAN), Imprint.class, HttpStatus.INTERNAL_SERVER_ERROR);
+            request.putWithResponseBody("/api/imprint", new Imprint("text", LegalDocumentLanguage.GERMAN), Imprint.class, HttpStatus.INTERNAL_SERVER_ERROR);
         }
+
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testUpdatePrivacyStatement_directoryDoesntExist_createsDirectoryAndSavesFile() throws Exception {
+        Imprint response;
+        try (MockedStatic<Files> mockedFiles = mockStatic(Files.class)) {
+            mockedFiles.when(() -> Files.exists(any(Path.class))).thenReturn(false);
+
+            response = request.putWithResponseBody("/api/imprint", new Imprint("updatedText", LegalDocumentLanguage.GERMAN), Imprint.class, HttpStatus.OK);
+            mockedFiles.verify(() -> Files.createDirectories(any()));
+            mockedFiles.verify(() -> Files.writeString(argThat(path -> path.toString().contains("_de")), anyString(), eq(StandardOpenOption.CREATE),
+                    eq(StandardOpenOption.TRUNCATE_EXISTING)));
+
+        }
+        assertThat(response.getText()).isEqualTo("updatedText");
+        assertThat(response.getLanguage()).isEqualTo(LegalDocumentLanguage.GERMAN);
 
     }
 

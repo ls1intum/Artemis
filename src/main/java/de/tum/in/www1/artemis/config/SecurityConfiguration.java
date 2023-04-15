@@ -117,6 +117,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
             .antMatchers("/i18n/**")
             .antMatchers("/content/**")
             .antMatchers(HttpMethod.GET, "/api/privacy-statement")
+            .antMatchers(HttpMethod.GET, "/api/imprint")
             .antMatchers("/api-docs/**")
             .antMatchers("/api.html")
             .antMatchers("/test/**")

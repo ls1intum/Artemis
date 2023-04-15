@@ -3,7 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { LegalDocumentLanguage } from 'app/entities/legal-document.model';
-import { ImprintService } from 'app/shared/service/imprint.service';
+import { LegalDocumentService } from 'app/shared/service/legal-document.service';
 
 @Component({
     selector: 'jhi-imprint',
@@ -13,7 +13,7 @@ export class ImprintComponent implements AfterViewInit, OnInit, OnDestroy {
     imprint: string;
     private languageChangeSubscription?: Subscription;
 
-    constructor(private route: ActivatedRoute, private imprintService: ImprintService, private languageHelper: JhiLanguageHelper) {}
+    constructor(private route: ActivatedRoute, private legalDocumentService: LegalDocumentService, private languageHelper: JhiLanguageHelper) {}
 
     /**
      * On init get the Imprint statement file from the Artemis server and set up a subscription to fetch the file again if the language was changed.
@@ -21,7 +21,7 @@ export class ImprintComponent implements AfterViewInit, OnInit, OnDestroy {
     ngOnInit(): void {
         // Update the view if the language was changed
         this.languageChangeSubscription = this.languageHelper.language.subscribe((lang) => {
-            this.imprintService.getImprint(lang as LegalDocumentLanguage).subscribe((imprint) => (this.imprint = imprint.text));
+            this.legalDocumentService.getImprint(lang as LegalDocumentLanguage).subscribe((imprint) => (this.imprint = imprint.text));
         });
     }
 
