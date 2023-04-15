@@ -64,11 +64,8 @@ public class LocalCIBuildPlanService {
         else if (participation instanceof SolutionProgrammingExerciseParticipation solutionParticipation) {
             solutionProgrammingExerciseParticipationRepository.save(solutionParticipation);
         }
-        else if (participation instanceof ProgrammingExerciseStudentParticipation studentParticipation) {
-            programmingExerciseStudentParticipationRepository.save(studentParticipation);
-        }
         else {
-            throw new LocalCIException("Illegal participation type when updating the build plan status: " + participation.getClass().getName());
+            programmingExerciseStudentParticipationRepository.save((ProgrammingExerciseStudentParticipation) participation);
         }
     }
 }

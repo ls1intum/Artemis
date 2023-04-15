@@ -427,7 +427,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractSpringIntegrationLocalCILoca
 
     // ---- Tests for the exam mode ----
     @Test
-    void testFetchPush_assignmentRepository_examMode() {
+    void testFetchPush_assignmentRepository_examMode() throws Exception {
         Exam exam = database.addExamWithExerciseGroup(course, true);
         ExerciseGroup exerciseGroup = exerciseGroupRepository.findByExamId(exam.getId()).stream().findFirst().orElseThrow();
 
@@ -451,7 +451,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         // tutor1 should be able to fetch but not push.
         localVCLocalCITestService.testFetchSuccessful(assignmentRepository.localGit, tutor1Login, projectKey1, assignmentRepositorySlug);
         localVCLocalCITestService.testPushThrowsException(assignmentRepository.localGit, tutor1Login, projectKey1, assignmentRepositorySlug, NOT_AUTHORIZED);
-        // instructor1 should be ablet to fetch and push.
+        // instructor1 should be able to fetch and push.
         localVCLocalCITestService.testFetchSuccessful(assignmentRepository.localGit, instructor1Login, projectKey1, assignmentRepositorySlug);
         localVCLocalCITestService.testPushSuccessful(assignmentRepository.localGit, instructor1Login, projectKey1, assignmentRepositorySlug);
 
@@ -463,7 +463,12 @@ class LocalVCLocalCIIntegrationTest extends AbstractSpringIntegrationLocalCILoca
 
         // student1 should be able to fetch and push.
         localVCLocalCITestService.testFetchSuccessful(assignmentRepository.localGit, student1Login, projectKey1, assignmentRepositorySlug);
+        String commitHash = localVCLocalCITestService.commitFile(assignmentRepository.localRepoFile.toPath(), programmingExercise.getPackageFolderName(),
+                assignmentRepository.localGit);
+        localVCLocalCITestService.mockCommitHash(dockerClient, commitHash);
+        localVCLocalCITestService.mockTestResults(dockerClient, PARTLY_SUCCESSFUL_TEST_RESULTS_PATH);
         localVCLocalCITestService.testPushSuccessful(assignmentRepository.localGit, student1Login, projectKey1, assignmentRepositorySlug);
+        localVCLocalCITestService.testLastestSubmission(studentParticipation.getId(), commitHash, 1, false);
         // tutor1 should be able to fetch but not push.
         localVCLocalCITestService.testFetchSuccessful(assignmentRepository.localGit, tutor1Login, projectKey1, assignmentRepositorySlug);
         localVCLocalCITestService.testPushThrowsException(assignmentRepository.localGit, tutor1Login, projectKey1, assignmentRepositorySlug, NOT_AUTHORIZED);
@@ -550,7 +555,6 @@ class LocalVCLocalCIIntegrationTest extends AbstractSpringIntegrationLocalCILoca
 
     @Test
     void testFetchPush_studentPracticeRepository() throws Exception {
-
         // Practice repositories can be created after the due date of an exercise.
         programmingExercise.setDueDate(ZonedDateTime.now().minusMinutes(1));
 
@@ -567,13 +571,19 @@ class LocalVCLocalCIIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         // Create practice participation.
         ProgrammingExerciseStudentParticipation practiceParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, student1Login);
         practiceParticipation.setTestRun(true);
+        practiceParticipation.setRepositoryUrl(localVCLocalCITestService.constructLocalVCUrl("", "", projectKey1, practiceRepositorySlug));
         programmingExerciseStudentParticipationRepository.save(practiceParticipation);
 
         // Students should be able to fetch and push, teaching assistants should be able fetch but not push and editors and higher should be able to fetch and push.
 
         // Student1
         localVCLocalCITestService.testFetchSuccessful(practiceRepository.localGit, student1Login, projectKey1, practiceRepositorySlug);
+        String commitHash = localVCLocalCITestService.commitFile(practiceRepository.localRepoFile.toPath(), programmingExercise.getPackageFolderName(),
+                practiceRepository.localGit);
+        localVCLocalCITestService.mockCommitHash(dockerClient, commitHash);
+        localVCLocalCITestService.mockTestResults(dockerClient, PARTLY_SUCCESSFUL_TEST_RESULTS_PATH);
         localVCLocalCITestService.testPushSuccessful(practiceRepository.localGit, student1Login, projectKey1, practiceRepositorySlug);
+        localVCLocalCITestService.testLastestSubmission(practiceParticipation.getId(), commitHash, 1, false);
 
         // Teaching assistant
         localVCLocalCITestService.testFetchSuccessful(practiceRepository.localGit, tutor1Login, projectKey1, practiceRepositorySlug);

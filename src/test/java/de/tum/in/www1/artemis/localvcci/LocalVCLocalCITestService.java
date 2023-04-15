@@ -250,8 +250,18 @@ public class LocalVCLocalCITestService {
         return constructLocalVCUrl(username, USER_PASSWORD, projectKey, repositorySlug);
     }
 
-    private String constructLocalVCUrl(String username, String password, String projectKey, String repositorySlug) {
-        return "http://" + username + (password.length() > 0 ? ":" : "") + password + "@localhost:" + port + "/git/" + projectKey.toUpperCase() + "/" + repositorySlug + ".git";
+    /**
+     * Construct a repository URL that works with the local VC system.
+     *
+     * @param username       the username of the user that tries to access the repository using this URL.
+     * @param password       the password of the user that tries to access the repository using this URL.
+     * @param projectKey     the project key of the repository.
+     * @param repositorySlug the repository slug of the repository.
+     * @return the URL to the repository.
+     */
+    public String constructLocalVCUrl(String username, String password, String projectKey, String repositorySlug) {
+        return "http://" + username + (password.length() > 0 ? ":" : "") + password + (username.length() > 0 ? "@" : "") + "localhost:" + port + "/git/" + projectKey.toUpperCase()
+                + "/" + repositorySlug + ".git";
     }
 
     /**

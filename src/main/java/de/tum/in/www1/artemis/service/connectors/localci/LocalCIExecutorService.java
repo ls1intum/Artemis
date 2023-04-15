@@ -15,7 +15,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.LocalCIException;
 import de.tum.in.www1.artemis.service.ResourceLoaderService;
@@ -70,7 +69,7 @@ public class LocalCIExecutorService {
         Path testRepositoryPath = testRepositoryUrl.getLocalRepositoryPath(localVCBasePath).toAbsolutePath();
 
         // Get script file out of resources.
-        Path scriptPath = getBuildScriptPath(programmingExercise.getProgrammingLanguage());
+        Path scriptPath = getBuildScriptPath();
 
         CompletableFuture<LocalCIBuildResult> futureResult = CompletableFuture.supplyAsync(() -> {
             LocalCIBuildResult buildResult;
@@ -90,11 +89,7 @@ public class LocalCIExecutorService {
         return futureResult;
     }
 
-    private Path getBuildScriptPath(ProgrammingLanguage programmingLanguage) {
-        if (programmingLanguage != ProgrammingLanguage.JAVA) {
-            throw new LocalCIException("Programming language " + programmingLanguage + " is not supported by local CI.");
-        }
-
+    private Path getBuildScriptPath() {
         Path resourcePath = Path.of("templates", "localci", "java", "build_and_run_tests.sh");
         Path scriptPath;
         try {

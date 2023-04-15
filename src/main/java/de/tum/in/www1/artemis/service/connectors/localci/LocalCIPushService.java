@@ -213,6 +213,7 @@ public class LocalCIPushService {
             if (exception != null) {
                 log.error("Exception encountered when trying to process a new push to the tests repository of exercise {} with the following commit: {}", exercise.getId(),
                         commitHash, exception);
+                // Exceptions are rethrown and handled by the caller.
                 return;
             }
 
@@ -223,8 +224,7 @@ public class LocalCIPushService {
             // Process the result.
             Optional<Result> optResult = programmingExerciseGradingService.processNewProgrammingExerciseResult(participation, buildResult);
             if (optResult.isEmpty()) {
-                log.error("No result found for solution repository build of participation {}.", participation.getId());
-                return;
+                throw new LocalCIException("No result found for solution repository build of participation " + participation.getId());
             }
 
             Result result = optResult.get();
@@ -232,12 +232,7 @@ public class LocalCIPushService {
             programmingMessagingService.notifyUserAboutNewResult(result, participation);
 
             // The solution participation received a new result, also trigger a build of the template repository.
-            try {
-                programmingTriggerService.triggerTemplateBuildAndNotifyUser(exercise.getId(), submission.getCommitHash(), SubmissionType.TEST);
-            }
-            catch (EntityNotFoundException e) {
-                log.error("Could not trigger the template build for exercise with id {} because no template participation was found.", exercise.getId());
-            }
+            programmingTriggerService.triggerTemplateBuildAndNotifyUser(exercise.getId(), submission.getCommitHash(), SubmissionType.TEST);
         }).join(); // Wait for the completion and rethrow any exceptions.
     }
 

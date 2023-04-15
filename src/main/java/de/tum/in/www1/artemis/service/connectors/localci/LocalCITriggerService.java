@@ -51,6 +51,8 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         futureResult.whenComplete((buildResult, exception) -> {
             if (exception != null) {
                 log.error("Error while building and testing repository " + participation.getRepositoryUrl(), exception);
+                // Exception is rethrown and handled by the caller.
+                return;
             }
 
             // The 'user' is not properly logged into Artemis, this leads to an issue when accessing custom repository methods.
