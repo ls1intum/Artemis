@@ -120,19 +120,26 @@ public class LocalCIPushService {
 
         ProgrammingExerciseParticipation participation;
 
-        if (repositoryTypeOrUserName.equals(RepositoryType.TESTS.getName())) {
-            // For pushes to the tests repository, the solution repository is built first.
-            participation = programmingExerciseParticipationService.findParticipationByRepositoryTypeOrUserNameAndExerciseAndTestRunOrThrow(RepositoryType.SOLUTION.toString(),
-                    exercise, false, true);
+        try {
+            if (repositoryTypeOrUserName.equals(RepositoryType.TESTS.getName())) {
+                // For pushes to the tests repository, the solution repository is built first.
+                participation = programmingExerciseParticipationService.findParticipationByRepositoryTypeOrUserNameAndExerciseAndTestRunOrThrow(RepositoryType.SOLUTION.toString(),
+                        exercise, false, true);
+            }
+            else {
+                // The repository is a test run repository either if the repository URL contains "-practice-" or if the exercise is an exam exercise and the repository's owner is
+                // at
+                // least an editor (exam test run repository).
+                boolean isTestRunRepository = localVCRepositoryUrl.isPracticeRepository() || (exercise.isExamExercise()
+                        && !repositoryTypeOrUserName.equals(RepositoryType.TEMPLATE.toString()) && !repositoryTypeOrUserName.equals(RepositoryType.SOLUTION.toString())
+                        && authorizationCheckService.isAtLeastEditorForExercise(exercise, userRepository.getUserByLoginElseThrow(repositoryTypeOrUserName)));
+                participation = programmingExerciseParticipationService.findParticipationByRepositoryTypeOrUserNameAndExerciseAndTestRunOrThrow(repositoryTypeOrUserName, exercise,
+                        isTestRunRepository, true);
+            }
         }
-        else {
-            // The repository is a test run repository either if the repository URL contains "-practice-" or if the exercise is an exam exercise and the repository's owner is at
-            // least an editor (exam test run repository).
-            boolean isTestRunRepository = localVCRepositoryUrl.isPracticeRepository() || (exercise.isExamExercise()
-                    && !repositoryTypeOrUserName.equals(RepositoryType.TEMPLATE.toString()) && !repositoryTypeOrUserName.equals(RepositoryType.SOLUTION.toString())
-                    && authorizationCheckService.isAtLeastEditorForExercise(exercise, userRepository.getUserByLoginElseThrow(repositoryTypeOrUserName)));
-            participation = programmingExerciseParticipationService.findParticipationByRepositoryTypeOrUserNameAndExerciseAndTestRunOrThrow(repositoryTypeOrUserName, exercise,
-                    isTestRunRepository, true);
+        catch (EntityNotFoundException e) {
+            // This should never happen, as the participation is already retrieved in the LocalVCPushFilter.
+            throw new LocalCIException("No participation found for the given repository");
         }
 
         try {
