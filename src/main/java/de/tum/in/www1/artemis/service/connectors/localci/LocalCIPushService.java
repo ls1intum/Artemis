@@ -128,8 +128,7 @@ public class LocalCIPushService {
             }
             else {
                 // The repository is a test run repository either if the repository URL contains "-practice-" or if the exercise is an exam exercise and the repository's owner is
-                // at
-                // least an editor (exam test run repository).
+                // at least an editor (exam test run repository).
                 boolean isTestRunRepository = localVCRepositoryUrl.isPracticeRepository() || (exercise.isExamExercise()
                         && !repositoryTypeOrUserName.equals(RepositoryType.TEMPLATE.toString()) && !repositoryTypeOrUserName.equals(RepositoryType.SOLUTION.toString())
                         && authorizationCheckService.isAtLeastEditorForExercise(exercise, userRepository.getUserByLoginElseThrow(repositoryTypeOrUserName)));
