@@ -142,7 +142,7 @@ public class LocalCIBuildJobService {
         try {
             buildResult = parseTestResults(testResultsTarInputStream, projectType, branch, assignmentRepoCommitHash, testsRepoCommitHash, buildCompletedDate);
         }
-        catch (IOException | XMLStreamException e) {
+        catch (IOException | XMLStreamException | IllegalStateException e) {
             throw new LocalCIException("Error while parsing test results", e);
         }
 

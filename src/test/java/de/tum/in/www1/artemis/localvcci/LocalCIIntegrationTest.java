@@ -244,7 +244,7 @@ class LocalCIIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest
     }
 
     @Test
-    void testExceptionWhenParsingTestResults() {
+    void testIOExceptionWhenParsingTestResults() {
         // Return an InputStream from dockerClient.copyArchiveFromContainerCmd().exec() such that repositoryTarInputStream.getNextTarEntry() throws an IOException.
         CopyArchiveFromContainerCmd copyArchiveFromContainerCmd = mock(CopyArchiveFromContainerCmd.class);
         ArgumentMatcher<String> expectedPathMatcher = path -> path.matches("/repositories/test-repository/build/test-results/test");
@@ -258,6 +258,15 @@ class LocalCIIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest
         });
 
         localCIPushService.processNewPush(commitHash, studentAssignmentRepository.originGit.getRepository());
+        // Should notify the user.
+        verifyUserNotification(studentParticipation, "de.tum.in.www1.artemis.exception.LocalCIException: Error while parsing test results");
+    }
+
+    @Test
+    void testFaultyResultFiles() throws IOException {
+        localVCLocalCITestService.mockTestResults(dockerClient, FAULTY_FILES_TEST_RESULTS_PATH);
+        localCIPushService.processNewPush(commitHash, studentAssignmentRepository.originGit.getRepository());
+        // Should notify the user.
         verifyUserNotification(studentParticipation, "de.tum.in.www1.artemis.exception.LocalCIException: Error while parsing test results");
     }
 
