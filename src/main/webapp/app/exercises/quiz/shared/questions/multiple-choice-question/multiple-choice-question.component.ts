@@ -88,7 +88,12 @@ export class MultipleChoiceQuestionComponent {
             return;
         }
         if (this.isAnswerOptionSelected(answerOption)) {
-            this.selectedAnswerOptions = this.selectedAnswerOptions.filter((selectedAnswerOption) => selectedAnswerOption.id !== answerOption.id);
+            this.selectedAnswerOptions = this.selectedAnswerOptions.filter((selectedAnswerOption) => {
+                if (answerOption.id) {
+                    return selectedAnswerOption.id !== answerOption.id;
+                }
+                return selectedAnswerOption !== answerOption;
+            });
         } else if (this.isSingleChoice) {
             this.selectedAnswerOptions = [answerOption];
         } else {
@@ -107,8 +112,11 @@ export class MultipleChoiceQuestionComponent {
      */
     isAnswerOptionSelected(answerOption: AnswerOption): boolean {
         return (
-            this.selectedAnswerOptions.findIndex((selected) => {
-                return selected.id === answerOption.id;
+            this.selectedAnswerOptions.findIndex((selectedAnswerOption) => {
+                if (answerOption.id) {
+                    return selectedAnswerOption.id === answerOption.id;
+                }
+                return selectedAnswerOption === answerOption;
             }) !== -1
         );
     }

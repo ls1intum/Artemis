@@ -12,8 +12,7 @@
                 "SOLUTION_REPO_MISSING": "Fehlendes Lösung-Repository",
                 "TEST_REPO_MISSING": "Fehlendes Test-Repository",
                 "TEMPLATE_BUILD_PLAN_MISSING": "Fehlender Build-Plan für die Vorlage",
-                "SOLUTION_BUILD_PLAN_MISSING": "Fehlender Build-Plan für die Lösung",
-                "IS_LOCAL_SIMULATION": "Ist eine lokale Simulation"
+                "SOLUTION_BUILD_PLAN_MISSING": "Fehlender Build-Plan für die Lösung"
             },
             "noInconsistencies": "Keine Inkonsistenzen gefunden",
             "inconsistenciesFound": "Es wurden folgende Inkonsistenzen gefunden"

@@ -1,8 +1,7 @@
 package de.tum.in.www1.artemis.domain.notification;
 
+import static de.tum.in.www1.artemis.domain.notification.NotificationConstants.*;
 import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFactory.createTutorialGroupTarget;
-import static de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants.TUTORIAL_GROUP_DELETED_TITLE;
-import static de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants.TUTORIAL_GROUP_UPDATED_TITLE;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.BeforeAll;
@@ -51,22 +50,24 @@ class TutorialGroupNotificationFactoryTest {
     @Test
     void createNotification_TutorialGroupDeleted() {
         var notificationFromFactory = TutorialGroupNotificationFactory.createTutorialGroupNotification(tutorialGroup, NotificationType.TUTORIAL_GROUP_DELETED);
-        checkNotification(notificationFromFactory, tutorialGroup, TUTORIAL_GROUP_DELETED_TITLE, "The tutorial group " + TUTORIAL_GROUP_TITLE + " has been deleted.",
+        checkNotification(notificationFromFactory, tutorialGroup, TUTORIAL_GROUP_DELETED_TITLE, TUTORIAL_GROUP_DELETED_TEXT, true, "[null,\"" + TUTORIAL_GROUP_TITLE + "\"]",
                 NotificationType.TUTORIAL_GROUP_DELETED, createTutorialGroupTarget(tutorialGroup, COURSE_ID, false, false));
     }
 
     @Test
     void createNotification_TutorialGroupUpdated() {
         var notificationFromFactory = TutorialGroupNotificationFactory.createTutorialGroupNotification(tutorialGroup, NotificationType.TUTORIAL_GROUP_UPDATED);
-        checkNotification(notificationFromFactory, tutorialGroup, TUTORIAL_GROUP_UPDATED_TITLE, "The tutorial group " + tutorialGroup.getTitle() + " has been updated.",
+        checkNotification(notificationFromFactory, tutorialGroup, TUTORIAL_GROUP_UPDATED_TITLE, TUTORIAL_GROUP_UPDATED_TEXT, true, "[null,\"" + tutorialGroup.getTitle() + "\"]",
                 NotificationType.TUTORIAL_GROUP_UPDATED, createTutorialGroupTarget(tutorialGroup, COURSE_ID, false, true));
     }
 
     private void checkNotification(TutorialGroupNotification tutorialGroupNotification, TutorialGroup expectedTutorialGroup, String expectedTitle, String expectedText,
-            NotificationType expectedNotificationType, NotificationTarget expectedTarget) {
+            boolean expectedTextIsPlaceholder, String expectedPlaceholderValues, NotificationType expectedNotificationType, NotificationTarget expectedTarget) {
         assertThat(tutorialGroupNotification.getTutorialGroup()).isEqualTo(expectedTutorialGroup);
         assertThat(tutorialGroupNotification.getTitle()).isEqualTo(expectedTitle);
         assertThat(tutorialGroupNotification.getText()).isEqualTo(expectedText);
+        assertThat(tutorialGroupNotification.getTextIsPlaceholder()).isEqualTo(expectedTextIsPlaceholder);
+        assertThat(tutorialGroupNotification.getPlaceholderValues()).isEqualTo(expectedPlaceholderValues);
         assertThat(tutorialGroupNotification.notificationType).isEqualTo(expectedNotificationType);
         assertThat(tutorialGroupNotification.getTarget()).isEqualTo(expectedTarget.toJsonString());
     }
