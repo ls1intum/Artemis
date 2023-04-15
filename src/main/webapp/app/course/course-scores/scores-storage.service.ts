@@ -33,7 +33,7 @@ export class ScoresStorageService {
 
     setStoredParticipationResults(participationResults: Result[] | undefined): void {
         if (participationResults !== undefined) {
-            this.participationResults.push(...participationResults);
+            this.participationResults = participationResults;
         }
     }
 }

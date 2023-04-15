@@ -412,8 +412,8 @@ public class CourseResource {
      *
      * @param courseId the courseId for which exercises, lectures, exams and learning goals should be fetched
      * @param refresh  if true, this request was initiated by the user clicking on a refresh button
-     * @return a course with all exercises, lectures, exams, learning goals, etc. visible to the user. In addition, scores per exercise type for each exercise are sent back as an
-     *         optimization.
+     * @return a DTO containing a course with all exercises, lectures, exams, learning goals, etc. visible to the user as well as the total scores for the course, the scores per
+     *         exercise type for each exercise, and the participation result for each participation.
      */
     // TODO: we should rename this into courses/{courseId}/details
     @GetMapping("courses/{courseId}/for-dashboard")
@@ -433,8 +433,9 @@ public class CourseResource {
     /**
      * GET /courses/for-dashboard
      *
-     * @return the list of courses (the user has access to) including all exercises with participation, submission and result, etc. for the user. In addition, scores per exercise
-     *         type for each exercise are sent back as an optimization.
+     * @return a DTO containing a list of courses (the user has access to) including all exercises with participation, submission and result, etc. for the user. In addition, the
+     *         DTO contains the total scores for the course, the scores per exercise
+     *         type for each exercise, and the participation result for each participation.
      */
     @GetMapping("courses/for-dashboard")
     @PreAuthorize("hasRole('USER')")

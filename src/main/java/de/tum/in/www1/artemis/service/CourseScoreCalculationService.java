@@ -52,8 +52,7 @@ public class CourseScoreCalculationService {
     /**
      * Calculates max and reachable max points for the given exercises.
      * Max points are the sum of the points for all included (see {@link #includeIntoScoreCalculation(Exercise)}) exercises, whose due date is over or unset or who are
-     * automatically assessed and
-     * the buildAndTestStudentSubmissionsAfterDueDate is in the past.
+     * automatically assessed and the buildAndTestStudentSubmissionsAfterDueDate is in the past.
      * Reachable max points contain only those points where the exercise's assessmentDueDate is in the past. (see {@link #isAssessmentDone(Exercise)}).
      * Example: An exercise that is is not automatically assessed (e.g. text exercise), that has the dueDate in the past but the assessmentDueDate set in the future is included in
      * the max points calculation,
@@ -179,7 +178,6 @@ public class CourseScoreCalculationService {
         List<StudentParticipation> studentParticipations = new ArrayList<>();
         for (Exercise exercise : course.getExercises()) {
             exercise.setCourse(course);
-            StudentParticipation exerciseParticipation;
             // This method is used in the CourseResource where the course is first fetched with lazy participations, and participations are then fetched separately in the
             // CourseService and added to the course if found.
             // If no participations are found for the course, no value is set to the course's participations and trying to access them here would throw a
@@ -188,7 +186,7 @@ public class CourseScoreCalculationService {
             // TODO: Look into refactoring the fetchParticipationsWithSubmissionsAndResultsForCourses method in the CourseService to always initialize the participations (to an
             // empty list if there aren't any). This way you don't need this very unintuitive check for the initialization state.
             if (Hibernate.isInitialized(exercise.getStudentParticipations())) {
-                exerciseParticipation = exercise.getStudentParticipations().iterator().next();
+                var exerciseParticipation = exercise.getStudentParticipations().iterator().next();
                 exerciseParticipation.setExercise(exercise);
                 studentParticipations.add(exerciseParticipation);
             }
@@ -220,7 +218,7 @@ public class CourseScoreCalculationService {
             if (studentParticipation.getResults() != null && !studentParticipation.getResults().isEmpty()) {
                 Result participationResult = getResultForParticipation(studentParticipation, studentParticipation.getIndividualDueDate());
                 participationResult.setParticipation(studentParticipation);
-                participationResults.add(getResultForParticipation(studentParticipation, studentParticipation.getIndividualDueDate()));
+                participationResults.add(participationResult);
             }
         }
 
