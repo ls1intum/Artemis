@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
-public interface QuizQuestionStatisticComponent<T1 extends QuizQuestionStatistic, T2 extends QuizQuestionComponent<T3>, T3 extends QuizQuestion> {
+public interface QuizQuestionStatisticComponent<S extends QuizQuestionStatistic, C extends QuizQuestionComponent<T3>, Q extends QuizQuestion> {
 
     /**
      * @return the id of the implementor.
