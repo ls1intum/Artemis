@@ -10,12 +10,12 @@ import { SessionStorageService } from 'ngx-webstorage';
 import { of } from 'rxjs';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { ImprintComponent } from 'app/core/legal/imprint.component';
-import { ImprintService } from 'app/shared/service/imprint.service';
+import { LegalDocumentService } from 'app/shared/service/legal-document.service';
 
 describe('ImprintComponent', () => {
     let component: ImprintComponent;
     let fixture: ComponentFixture<ImprintComponent>;
-    let imprintService: ImprintService;
+    let legalDocumentService: LegalDocumentService;
     let languageHelper: JhiLanguageHelper;
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -31,14 +31,14 @@ describe('ImprintComponent', () => {
         }).compileComponents();
         fixture = TestBed.createComponent(ImprintComponent);
         component = fixture.componentInstance;
-        imprintService = TestBed.inject(ImprintService);
+        legalDocumentService = TestBed.inject(LegalDocumentService);
         languageHelper = TestBed.inject(JhiLanguageHelper);
         fixture.detectChanges();
     });
 
     it('should load imprint on init in correct language', () => {
         jest.spyOn(languageHelper, 'language', 'get').mockReturnValue(of('en'));
-        const imprintServiceSpy = jest.spyOn(imprintService, 'getImprint');
+        const imprintServiceSpy = jest.spyOn(legalDocumentService, 'getImprint');
         component.ngOnInit();
         fixture.detectChanges();
         expect(imprintServiceSpy).toHaveBeenCalledOnce();
