@@ -94,7 +94,9 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         if (this.course) {
             // If the course is present but without learning goals or tutorial groups (e.g. loaded in Artemis overview), we only need to fetch those
             if (!this.course.learningGoals || !this.course.prerequisites || !this.course.tutorialGroups || !this.course.tutorialGroupsConfiguration) {
-                this.loadLearningGoalsAndTutorialGroups();
+                if (!isMessagingEnabled(this.course) && this.conversationServiceInstantiated) {
+                    this.loadLearningGoalsAndTutorialGroups();
+                }
             }
             await this.initAfterCourseLoad();
         } else {
@@ -116,6 +118,11 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
                 .pipe(takeUntil(this.ngUnsubscribe))
                 .subscribe({
                     complete: () => {
+                        this.course!.learningGoals = this.metisConversationService.course!.learningGoals;
+                        this.course!.prerequisites = this.metisConversationService.course!.prerequisites;
+                        this.course!.tutorialGroups = this.metisConversationService.course!.tutorialGroups;
+                        this.course!.tutorialGroupsConfiguration = this.metisConversationService.course!.tutorialGroupsConfiguration;
+                        this.courseCalculationService.updateCourse(this.course!);
                         this.conversationServiceInstantiated = true;
                         // service is fully set up, now we can subscribe to the respective observables
                         this.subscribeToHasUnreadMessages();
