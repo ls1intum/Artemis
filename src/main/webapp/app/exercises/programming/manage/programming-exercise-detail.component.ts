@@ -278,6 +278,17 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     }
 
     /**
+     * Resets programming exercise
+     * @param programmingExerciseId the id of the programming exercise that we want to delete
+     */
+    resetProgrammingExercise(programmingExerciseId: number) {
+        this.exerciseService.reset(programmingExerciseId).subscribe({
+            next: () => this.dialogErrorSource.next(''),
+            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+        });
+    }
+
+    /**
      * Deletes the template and solution build plans and recreates them from scratch.
      */
     recreateBuildPlans() {

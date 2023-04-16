@@ -36,6 +36,7 @@ import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.service.programming.*;
 import de.tum.in.www1.artemis.web.rest.dto.BuildLogStatisticsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
+import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseResetOptionsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
@@ -622,6 +623,44 @@ public class ProgrammingExerciseResource {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, user);
         continuousIntegrationService.get().recreateBuildPlansForExercise(programmingExercise);
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * Consolidates the reset functionality for a programming exercise by performing a set of operations
+     * as specified in the ProgrammingExerciseResetOptionsDTO. The available operations include:
+     * 1. Deleting and recreating the BASE and SOLUTION build plans for the exercise.
+     * 2. Deleting all student participations associated with the exercise.
+     * 3. Deleting all student build plans (except BASE/SOLUTION) and optionally deleting and archiving all repositories of the exercise student participations.
+     *
+     * @param exerciseId                         - Id of the programming exercise to reset.
+     * @param programmingExerciseResetOptionsDTO - Data Transfer Object specifying which operations to perform during the exercise reset.
+     * @return ResponseEntity<Void> - The ResponseEntity with status 200 (OK) if the reset was successful.
+     */
+    @PutMapping(RESET)
+    @PreAuthorize("hasRole('INSTRUCTOR')")
+    public ResponseEntity<Void> reset(@PathVariable Long exerciseId, @RequestBody ProgrammingExerciseResetOptionsDTO programmingExerciseResetOptionsDTO) {
+        log.debug("REST request to reset ProgrammingExercise : {}", exerciseId);
+        var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesElseThrow(exerciseId);
+
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, user);
+
+        if (programmingExerciseResetOptionsDTO.isRecreateBuildPlans()) {
+            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, user);
+            continuousIntegrationService.get().recreateBuildPlansForExercise(programmingExercise);
+        }
+
+        if (programmingExerciseResetOptionsDTO.isDeleteStudentParticipationsSubmissionsAndResults()) {
+            exerciseDeletionService.reset(programmingExercise);
+        }
+
+        if (programmingExerciseResetOptionsDTO.isDeleteBuildPlans()) {
+            boolean deleteRepositories = programmingExerciseResetOptionsDTO.isDeleteRepositories();
+            exerciseDeletionService.cleanup(exerciseId, deleteRepositories);
+            log.info("Cleanup build plans was successful for Exercise : {}", exerciseId);
+        }
+
         return ResponseEntity.ok().build();
     }
 

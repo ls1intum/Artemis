@@ -182,64 +182,23 @@
                         <fa-icon [icon]="faExclamationTriangle" class="text-warning"></fa-icon>
                         <span jhiTranslate="artemisApp.programmingExercise.lockAllRepositories">Lock all repositories</span>
                     </button>
-
-                    <span class="dropdown" ngbDropdown>
-                        <button class="btn btn-danger btn-sm dropdown-toggle" ngbDropdownToggle>
-                            <fa-icon [icon]="faScrewdriverWrench"></fa-icon>
-                            <span jhiTranslate="artemisApp.programmingExercise.maintenance">Maintenance</span>
-                        </button>
-                        <div class="dropdown-menu" ngbDropdownMenu>
-                            <button
-                                *ngIf="programmingExercise.isAtLeastEditor"
-                                [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
-                                jhiDeleteButton
-                                [actionType]="ActionType.Reset"
-                                [entityTitle]="programmingExercise.title || ''"
-                                deleteQuestion="artemisApp.programmingExercise.recreateBuildPlans.question"
-                                (delete)="recreateBuildPlans()"
-                                [dialogError]="dialogError$"
-                                deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
-                                [additionalChecks]="{}"
-                                class="dropdown-item mb-1 text-danger danger-dropdown-item"
-                            >
-                                <fa-icon [icon]="faEraser"></fa-icon>
-                                <span jhiTranslate="artemisApp.programmingExercise.recreateBuildPlans.buttonText">Build Plan</span>
-                            </button>
-                            <button
-                                *ngIf="programmingExercise.isAtLeastInstructor"
-                                [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
-                                jhiDeleteButton
-                                [actionType]="ActionType.Cleanup"
-                                [entityTitle]="programmingExercise.title || ''"
-                                deleteQuestion="artemisApp.instructorDashboard.cleanup.question"
-                                (delete)="cleanupProgrammingExercise($event)"
-                                [dialogError]="dialogError$"
-                                deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
-                                [additionalChecks]="{
-                                    deleteRepositories: 'artemisApp.programmingExercise.delete.studentRepos'
-                                }"
-                                class="dropdown-item mb-1 text-danger danger-dropdown-item"
-                            >
-                                <fa-icon [icon]="faEraser"></fa-icon>
-                            </button>
-                            <button
-                                *ngIf="programmingExercise.course != undefined && programmingExercise.isAtLeastInstructor"
-                                jhiDeleteButton
-                                [entityTitle]="programmingExercise.title || ''"
-                                deleteQuestion="artemisApp.programmingExercise.delete.question"
-                                (delete)="deleteProgrammingExercise($event)"
-                                [dialogError]="dialogError$"
-                                deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
-                                [additionalChecks]="{
-                                    deleteStudentReposBuildPlans: 'artemisApp.programmingExercise.delete.studentReposBuildPlans',
-                                    deleteBaseReposBuildPlans: 'artemisApp.programmingExercise.delete.baseReposBuildPlans'
-                                }"
-                                class="dropdown-item mb-0 text-danger danger-dropdown-item"
-                            >
-                                <fa-icon [icon]="faTimes"></fa-icon>
-                            </button>
-                        </div>
-                    </span>
+                    <jhi-programming-exercise-reset [programmingExercise]="programmingExercise" class="me-1"></jhi-programming-exercise-reset>
+                    <button
+                        *ngIf="programmingExercise.course != undefined && programmingExercise.isAtLeastInstructor"
+                        jhiDeleteButton
+                        [entityTitle]="programmingExercise.title || ''"
+                        deleteQuestion="artemisApp.programmingExercise.delete.question"
+                        (delete)="deleteProgrammingExercise($event)"
+                        [dialogError]="dialogError$"
+                        deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
+                        [additionalChecks]="{
+                            deleteStudentReposBuildPlans: 'artemisApp.programmingExercise.delete.studentReposBuildPlans',
+                            deleteBaseReposBuildPlans: 'artemisApp.programmingExercise.delete.baseReposBuildPlans'
+                        }"
+                        class="me-1"
+                    >
+                        <fa-icon [icon]="faTimes"></fa-icon>
+                    </button>
                 </div>
             </div>
             <div *ngIf="!programmingExercise.releaseDate || dayjs(programmingExercise.releaseDate).isBefore(dayjs())" class="mt-3">

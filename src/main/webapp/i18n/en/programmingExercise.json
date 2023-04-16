@@ -25,7 +25,20 @@
                 "successMessageWithRepositories": "Cleanup was successful. All build plans and repositories have been deleted. All participation has been marked as Finished."
             },
             "reset": {
-                "question": "Are you sure you want to reset the exercise <strong>{{ title }}</strong>? This action can NOT be undone! <br> This means that all participation, existing results, student repositories and student build plans will be deleted."
+                "pleaseSelectOperations": "Please select the operations you want to perform for <strong>{{ title }}</strong>:",
+                "deleteBuildPlans": {
+                    "title": "Delete student build plans (on {{ ciPlatform }}).",
+                    "info": "The build plans will be automatically recreated when students submit again."
+                },
+                "deleteStudentRepositories": {
+                    "title": "Delete student repositories (on {{ vcPlatform }}).",
+                    "warning": "Before you activate this option, we recommend that you archive the exercise first."
+                },
+                "deleteStudentParticipationsSubmissionsAndResults": "Delete all student participations, submissions and results (on Artemis).",
+                "artefactsWarning": "Selecting Options 2 or 3 without all previous options may lead to undeleted artifacts on {{ vcPlatform }} and {{ ciPlatform }}. Please ensure this is your intended action before proceeding.",
+                "recreateBuildPlans": "Recreate the exercise build plans (BASE and SOLUTION) again from the latest exercise template, overwriting any previous changes.",
+                "question": "<strong>Warning:</strong> This action can <strong>NOT</strong> be undone!<br>To confirm your selection, please type in the name of the exercise: <strong>{{ title }}</strong>",
+                "successMessage": "Reset operation was successful."
             },
             "detail": {
                 "title": "Programming Exercise",
@@ -415,7 +428,7 @@
             "lockAllRepositoriesModalText": "All repositories will be locked immediately! Students will not be able to push even if the assignment is still running!\n\nThe operation will be performed automatically on the exercise due date if 'Run Tests after Due Date' or 'Manual Review' is enabled. Therefore, use this option only if automatic locking was not performed correctly or if the repositories were unlocked by mistake!",
             "unlockAllRepositoriesSuccess": "The repositories are now being unlocked. Please be patient for a while. You will soon be notified whether the operation was successful.",
             "lockAllRepositoriesSuccess": "The repositories are now being locked. Please be patient for a while. You will soon be notified whether the operation was successful.",
-            "maintenance": "Maintenance",
+            "manage": "Manage",
             "auxiliaryRepository": {
                 "error": "There is a problem with the auxiliary repository.",
                 "addAuxiliaryRepository": "Add Auxiliary Repository",

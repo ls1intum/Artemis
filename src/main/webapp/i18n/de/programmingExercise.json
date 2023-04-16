@@ -25,7 +25,20 @@
                 "successMessageWithRepositories": "Die Bereinigung verlief erfolgreich. Alle Build-Pläne und Repositories wurden gelöscht. Alle Beteiligungen wurden als abgeschlossen gekennzeichnet."
             },
             "reset": {
-                "question": "Soll die Übung <strong>{{ title }}</strong> wirklich zurückgesetzt werden? Diese Aktion kann NICHT rückgängig gemacht werden! <br> Das bedeutet, dass alle Teilnahmen, vorhandenen Ergebnisse, Studierenden-Repositories und Studierenden-Build-Pläne gelöscht werden."
+                "pleaseSelectOperations": "Bitte wählen Sie die durchzuführenden Operationen für <strong>{{ title }}</strong> aus:",
+                "deleteBuildPlans": {
+                    "title": "Lösche Build-Pläne der Studierenden (auf {{ ciPlatform }}).",
+                    "info": "Die Build-Pläne werden automatisch neu erstellt, sobald Studierende erneut abgeben."
+                },
+                "deleteStudentRepositories": {
+                    "title": "Lösche Repositories der Studierenden (auf {{ vcPlatform }}).",
+                    "warning": "Archivierung der Übung vor Aktivierung dieser Option wird empfohlen."
+                },
+                "deleteStudentParticipationsSubmissionsAndResults": "Lösche Teilnahmen, Abgaben und Ergebnisse der Studierenden (in Artemis).",
+                "artefactsWarning": "Das Auswählen der Optionen 2 oder 3 ohne vorherige Optionen kann zu nicht gelöschten Artefakten auf {{ vcPlatform }} und {{ ciPlatform }} führen. Bitte stellen Sie sicher, dass dies die gewünschte Aktion ist, bevor Sie fortfahren.",
+                "recreateBuildPlans": "Erstelle Übungs-Build-Pläne (BASE und SOLUTION) erneut und überschreibe frühere Änderungen.",
+                "question": "<strong>Warnung:</strong> Diese Aktion kann <strong>NICHT</strong> rückgängig gemacht werden!<br>Um Ihre Auswahl zu bestätigen, geben Sie bitte den Namen der Übung ein: <strong>{{ title }}</strong>",
+                "successMessage": "Der Reset-Vorgang war erfolgreich."
             },
             "detail": {
                 "title": "Programmieraufgabe",
@@ -417,7 +430,7 @@
             "lockAllRepositoriesModalText": "Alle Repositories werden sofort gesperrt! Studierende werden nicht mehr pushen können, auch wenn die Aufgabe noch läuft!\n\nDie Operation wird automatisch am Ende der Aufgabe ausgeführt, sofern 'Testlauf nach der Einreichungsfrist' oder 'Manuelle Review' aktiviert ist. Nutze diese Option daher nur, falls das automatische Sperren nicht korrekt ausgeführt wurde oder falls die Repositories versehentlich entsperrt wurden!",
             "unlockAllRepositoriesSuccess": "Die Repositories werden nun entsperrt. Bitte habe ein wenig Geduld. Du erhältst bald eine Benachrichtigung, ob der Vorgang erfolgreich war.",
             "lockAllRepositoriesSuccess": "Die Repositories werden nun gesperrt. Bitte habe ein wenig Geduld. Du erhältst bald eine Benachrichtigung, ob der Vorgang erfolgreich war.",
-            "maintenance": "Wartung",
+            "manage": "Verwalten",
             "auxiliaryRepository": {
                 "error": "Es gibt ein Problem mit den Hilfs-Repositories!",
                 "addAuxiliaryRepository": "Hilfs-Repository anlegen",

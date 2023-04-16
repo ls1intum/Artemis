@@ -1,0 +1,107 @@
+<form *ngIf="!isLoading; else loadingContainer" name="resetForm" role="form" (ngSubmit)="resetProgrammingExercise()" #resetForm="ngForm">
+    <div class="modal-header">
+        <h4 class="modal-title" jhiTranslate="entity.resetProgrammingExercise.title">Exercise Reset</h4>
+        <button type="button" class="btn-close" data-dismiss="modal" (click)="clear()"></button>
+    </div>
+    <div class="modal-body">
+        <p [jhiTranslate]="'artemisApp.programmingExercise.reset.pleaseSelectOperations'" [translateValues]="{ title: programmingExercise.title }">
+            Please select the operations you want to perform for <strong>{{ programmingExercise.title }}</strong
+            >:
+        </p>
+        <ul class="list-unstyled">
+            <li>
+                <div class="checkbox">
+                    <label class="control-label">
+                        <input class="form-check-input" type="checkbox" name="deleteBuildPlans" [(ngModel)]="this.programmingExerciseResetOptions.deleteBuildPlans" />
+                        <span jhiTranslate="artemisApp.programmingExercise.reset.deleteBuildPlans.title" [translateValues]="{ ciPlatform: continuousIntegrationName }">
+                            Delete student build plans (on {{ continuousIntegrationName }})
+                        </span>
+                    </label>
+                </div>
+            </li>
+            <div class="alert alert-info my-2" *ngIf="this.programmingExerciseResetOptions.deleteBuildPlans">
+                <span jhiTranslate="artemisApp.programmingExercise.reset.deleteBuildPlans.info"> The build plans will be automatically recreated when students submit again. </span>
+            </div>
+            <li>
+                <div class="checkbox">
+                    <label class="control-label">
+                        <input
+                            class="form-check-input"
+                            type="checkbox"
+                            name="deleteStudentRepositories"
+                            [(ngModel)]="this.programmingExerciseResetOptions.deleteStudentRepositories"
+                        />
+                        <span jhiTranslate="artemisApp.programmingExercise.reset.deleteStudentRepositories.title" [translateValues]="{ vcPlatform: versionControlName }">
+                            Delete student repositories (on {{ versionControlName }}).
+                        </span>
+                    </label>
+                </div>
+            </li>
+            <li>
+                <div class="checkbox">
+                    <label class="control-label">
+                        <input
+                            class="form-check-input"
+                            type="checkbox"
+                            name="deleteStudentParticipationsSubmissionsAndResults"
+                            [(ngModel)]="this.programmingExerciseResetOptions.deleteStudentParticipationsSubmissionsAndResults"
+                        />
+                        <span jhiTranslate="artemisApp.programmingExercise.reset.deleteStudentParticipationsSubmissionsAndResults"
+                            >Delete all student participations, submissions and results (on Artemis).</span
+                        >
+                    </label>
+                </div>
+            </li>
+            <div class="alert alert-warning my-2" *ngIf="showUndeletedArtifactsWarning()">
+                <span
+                    jhiTranslate="artemisApp.programmingExercise.reset.artefactsWarning"
+                    [translateValues]="{ vcPlatform: versionControlName, ciPlatform: continuousIntegrationName }"
+                >
+                    Selecting Options 2 and 3 without all previous options may lead to undeleted artifacts on {{ 'Bitbucket' }} and {{ 'Bamboo' }}. Please ensure this is your
+                    intended action before proceeding.
+                </span>
+            </div>
+            <li *ngIf="programmingExercise.isAtLeastEditor">
+                <div class="checkbox">
+                    <label class="control-label">
+                        <input class="form-check-input" type="checkbox" name="recreateBuildPlans" [(ngModel)]="this.programmingExerciseResetOptions.recreateBuildPlans" />
+                        <span jhiTranslate="artemisApp.programmingExercise.reset.recreateBuildPlans"
+                            >Recreate the exercise build plans (BASE and SOLUTION) again from the latest exercise template, overwriting any previous changes.</span
+                        >
+                    </label>
+                </div>
+            </li>
+        </ul>
+        <div class="form-group">
+            <label
+                for="confirm-exercise-name"
+                class="text-danger"
+                [jhiTranslate]="'artemisApp.programmingExercise.reset.question'"
+                [translateValues]="{ title: programmingExercise.title }"
+            >
+                Please type in the name to confirm
+            </label>
+            <input id="confirm-exercise-name" type="text" class="form-control" name="confirmExerciseName" [(ngModel)]="confirmText" />
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal" (click)="clear()" [disabled]="resetInProgress">
+            <fa-icon [icon]="faBan"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
+        </button>
+        <button
+            id="confirm"
+            type="submit"
+            class="btn btn-danger"
+            [style.cursor]="resetForm.form.invalid || !areSecurityChecksFulfilled || !hasSelectedOptions || resetInProgress ? 'not-allowed' : 'pointer'"
+            [disabled]="resetForm.form.invalid || !areSecurityChecksFulfilled || !hasSelectedOptions || resetInProgress"
+        >
+            <span *ngIf="resetInProgress"><fa-icon [icon]="faSpinner" [spin]="true">&nbsp;</fa-icon>&nbsp;</span><fa-icon [icon]="faEraser"></fa-icon>&nbsp;
+            <span jhiTranslate="entity.action.reset">Reset</span>
+        </button>
+    </div>
+</form>
+<ng-template #loadingContainer>
+    <div class="d-flex justify-content-center mt-4 mb-4">
+        <fa-icon [icon]="faCircleNotch" [spin]="true"></fa-icon>
+    </div>
+</ng-template>
