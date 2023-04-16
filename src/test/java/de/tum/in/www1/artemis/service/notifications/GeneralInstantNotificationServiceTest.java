@@ -14,8 +14,10 @@ import org.mockito.MockitoAnnotations;
 
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.GroupNotificationType;
+import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.notification.GroupNotification;
 import de.tum.in.www1.artemis.domain.notification.Notification;
+import de.tum.in.www1.artemis.domain.notification.NotificationConstants;
 import de.tum.in.www1.artemis.service.notifications.push_notifications.ApplePushNotificationService;
 import de.tum.in.www1.artemis.service.notifications.push_notifications.FirebasePushNotificationService;
 
@@ -51,10 +53,13 @@ class GeneralInstantNotificationServiceTest {
         student2.setId(2L);
         student2.setLogin("2");
 
-        notification = new GroupNotification(null, "test", "test", false, new String[0], student1, GroupNotificationType.STUDENT);
+        notification = new GroupNotification(null, NotificationConstants.NEW_ANNOUNCEMENT_POST_TITLE, NotificationConstants.NEW_ANNOUNCEMENT_POST_TEXT, false, new String[0],
+                student1, GroupNotificationType.STUDENT);
 
         generalInstantNotificationService = new GeneralInstantNotificationService(applePushNotificationService, firebasePushNotificationService, mailService,
                 notificationSettingsService);
+
+        when(notificationSettingsService.checkNotificationTypeForEmailSupport(any(NotificationType.class))).thenCallRealMethod();
     }
 
     /**
