@@ -29,7 +29,7 @@
         "quizAlreadyOpenForPractice": "Das Quiz ist bereits zur Übung geöffnet.",
         "unknownAction": "Diese Aktion kann nicht durchgeführt werden.",
         "groupNotFound": "Die von dir eingegebene Gruppe wurde nicht gefunden.",
-        "noLegalDocumentFile": "Es konnte kein(e) {{ documentType }} gefunden werden.",
+        "noLegalDocumentFile": "Das angeforderte Dokument konnte nicht gefunden werden.",
         "emptyPrivacyStatement": "Die Datenschutzerklärung darf nicht leer sein.",
         "emptyImprint": "Das Impressum darf nicht leer sein.",
         "studentNotFound": "Studierende:r konnte in diesem Kurs nicht gefunden werden.",

@@ -3,7 +3,6 @@
         "imprint": {
             "title": "Impressum",
             "updateImprint": "Impressum aktualisieren",
-            "createOrEditLabel": "Impressum erstellen oder bearbeiten",
             "unsavedChangesWarning": "Das Impressum enthält ungespeicherte Änderungen. Möchtest du wirklich die Sprache wechseln und alle ungespeicherten Änderungen verwerfen?",
             "language": {
                 "de": "Deutsch",

@@ -1,10 +1,16 @@
 {
-    "legal": {
-        "imprint": {
-            "title": "Imprint"
-        },
-        "privacy": {
-            "title": "Privacy"
+    "artemisApp": {
+        "legal": {
+            "language": {
+                "de": "German",
+                "en": "English"
+            },
+            "unsaved": "Unsaved",
+            "saved": "Saved",
+            "saving": "Saving",
+            "unsavedTooltip": "You have unsaved changes. Please save your changes before you change the language or leave the page.",
+            "savedTooltip": "Your changes are saved.",
+            "savingTooltip": "Your changes are being saved."
         }
     }
 }

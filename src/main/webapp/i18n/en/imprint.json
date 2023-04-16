@@ -3,7 +3,6 @@
         "imprint": {
             "title": "Imprint",
             "updateImprint": "Update Imprint",
-            "createOrEditLabel": "Create or edit imprint",
             "unsavedChangesWarning": "Your imprint contains unsaved changes. Do you really want to change the language and discard all unsaved changes?",
             "language": {
                 "de": "German",
