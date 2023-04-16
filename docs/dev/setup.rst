@@ -358,7 +358,7 @@ You can find the latest Artemis Dockerfile at ``docker/artemis/Dockerfile``.
     * **/opt/artemis/public/content:**
 
       This directory will be used for branding.
-      You can specify a favicon and ``imprint.html`` here.
+      You can specify a favicon here.
 
 * The Dockerfile assumes that the mounted volumes are located on a file system with the following locale settings
   (see `#4439 <https://github.com/ls1intum/Artemis/issues/4439>`__ for more details):
@@ -567,15 +567,13 @@ instead of the TUM defaults:
 
 * The logo next to the “Artemis” heading on the navbar → ``${artemisRunDirectory}/public/images/logo.png``
 * The favicon → ``${artemisRunDirectory}/logo/favicon.svg``
-* The imprint statement HTML → ``${artemisRunDirectory}/public/content/imprint.html``
 * The contact email address in the ``application-{dev,prod}.yml`` configuration file under the key ``info.contact``
 
 ------------------------------------------------------------------------------------------------------------------------
 
-.. include:: setup/privacy-statement.rst
+.. include:: setup/legal-documents.rst
 
-
-------------------------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------------------
 
 .. include:: setup/programming-exercises.rst
 

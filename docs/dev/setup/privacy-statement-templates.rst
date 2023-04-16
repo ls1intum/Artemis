@@ -1,21 +1,5 @@
-Privacy
-^^^^^^^
-The privacy statement is stored in the ``./legal``  directory by default. You can override this value by setting the ``artemis.legal-path`` value in the ``application-artemis.yml``.
-The privacy statement is stored as markdown file. Currently, English and German as languages are supported.
-The privacy statement file has to follow the naming convention ``privacy_statement_<de|en>.md``.
-In case, you add only a file for one language, this file will always be shown regardless of the user's language setting.
-If you add a file for each language, the file will be shown depending on the user's language setting.
-
-In the following, the documentation provides a template in English and German for the privacy statement with placeholders that have to be replaced with the actual content.
-
-.. warning::
-
-   These are only templates that are used similarly at TUM and need to be adapted to your needs.
-   Make sure to consult your data protection officer before making the privacy statement publicly available.
-   We do not take any responsibility for the content of the privacy statement.
-
-German template
-"""""""""""""""
+Privacy Statement German template
+"""""""""""""""""""""""""""""""""
 .. code-block:: none
 
    # Datenschutz
@@ -137,8 +121,8 @@ German template
    Sie haben das Recht, auf schriftlichen Antrag und unentgeltlich Auskunft über die personenbezogenen Daten zu erhalten, die über Sie gespeichert sind. Zusätzlich haben Sie das Recht auf Berichtigung unrichtiger Daten. Den behördlichen Datenschutzbeauftragten der <Universität> erreichen Sie per E-Mail unter <Email Datenschutzbeauftragter> oder über <Link zum Datenschutzbeauftragten>.
 
 
-English template
-""""""""""""""""
+Privacy Statement English template
+""""""""""""""""""""""""""""""""""
 .. code-block:: none
 
    # Privacy
