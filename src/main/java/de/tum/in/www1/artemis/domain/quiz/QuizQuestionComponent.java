@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
-public interface QuizQuestionComponent<T extends QuizQuestion> {
+public interface QuizQuestionComponent<Q extends QuizQuestion> {
 
     /**
      * @return the id of the implementor.
@@ -12,5 +12,5 @@ public interface QuizQuestionComponent<T extends QuizQuestion> {
      *
      * @param quizQuestion the QuizQuestion to be set to
      */
-    void setQuestion(T quizQuestion);
+    void setQuestion(Q quizQuestion);
 }

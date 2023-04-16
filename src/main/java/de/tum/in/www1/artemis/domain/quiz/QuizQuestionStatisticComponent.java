@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
-public interface QuizQuestionStatisticComponent<S extends QuizQuestionStatistic, C extends QuizQuestionComponent<T3>, Q extends QuizQuestion> {
+public interface QuizQuestionStatisticComponent<S extends QuizQuestionStatistic, C extends QuizQuestionComponent<Q>, Q extends QuizQuestion> {
 
     /**
      * @return the id of the implementor.
@@ -12,17 +12,17 @@ public interface QuizQuestionStatisticComponent<S extends QuizQuestionStatistic,
      *
      * @param quizQuestionStatistic the given QuizQuestionStatistic to be set to
      */
-    void setQuizQuestionStatistic(T1 quizQuestionStatistic);
+    void setQuizQuestionStatistic(S quizQuestionStatistic);
 
     /**
      * @return the QuizQuestionComponent that belongs to the implementor
      */
-    T2 getQuizQuestionComponent();
+    C getQuizQuestionComponent();
 
     /**
      * Set the QuizQuestionComponent of the implementor to the given quizQuestionComponent
      *
      * @param quizQuestionComponent the quizQuestionComponent to be set to
      */
-    void setQuizQuestionComponent(T2 quizQuestionComponent);
+    void setQuizQuestionComponent(C quizQuestionComponent);
 }

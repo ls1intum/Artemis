@@ -234,9 +234,8 @@ public abstract class QuizService<T extends QuizConfiguration> {
      * @param foundCallback         the callback to be applied if the given componentToBeSearched is found
      * @return true if the given componentToBeSearched is found or false otherwise
      */
-    private <T1 extends QuizQuestionComponent<T2>, T2 extends QuizQuestion> boolean findComponent(Collection<T1> components, T1 componentToBeSearched,
-            Function<T1, Void> foundCallback) {
-        for (T1 component : components) {
+    private <C extends QuizQuestionComponent<Q>, Q extends QuizQuestion> boolean findComponent(Collection<C> components, C componentToBeSearched, Function<C, Void> foundCallback) {
+        for (C component : components) {
             if (componentToBeSearched.equals(component)) {
                 foundCallback.apply(component);
                 return true;

@@ -66,15 +66,15 @@ public interface QuizConfiguration {
         }
     }
 
-    default <T1 extends QuizQuestionComponent<T2>, T2 extends QuizQuestion> void setQuizQuestions(Collection<T1> components, T2 quizQuestion) {
-        for (QuizQuestionComponent<T2> mapping : components) {
+    default <C extends QuizQuestionComponent<Q>, Q extends QuizQuestion> void setQuizQuestions(Collection<C> components, Q quizQuestion) {
+        for (QuizQuestionComponent<Q> mapping : components) {
             setQuizQuestion(mapping, quizQuestion);
         }
     }
 
-    default <T1 extends QuizQuestionStatisticComponent<T2, T3, T4>, T2 extends QuizQuestionStatistic, T3 extends QuizQuestionComponent<T4>, T4 extends QuizQuestion> void setQuizQuestionStatistics(
-            Collection<T1> statisticComponents, T4 quizQuestion, T2 quizQuestionStatistic) {
-        for (T1 statisticComponent : statisticComponents) {
+    default <SC extends QuizQuestionStatisticComponent<S, C, Q>, S extends QuizQuestionStatistic, C extends QuizQuestionComponent<Q>, Q extends QuizQuestion> void setQuizQuestionStatistics(
+            Collection<SC> statisticComponents, Q quizQuestion, S quizQuestionStatistic) {
+        for (SC statisticComponent : statisticComponents) {
             if (statisticComponent.getId() != null) {
                 statisticComponent.setQuizQuestionStatistic(quizQuestionStatistic);
                 if (!(quizQuestion instanceof MultipleChoiceQuestion)) {
@@ -84,7 +84,7 @@ public interface QuizConfiguration {
         }
     }
 
-    default <T extends QuizQuestion> void setQuizQuestion(QuizQuestionComponent<T> component, T quizQuestion) {
+    default <Q extends QuizQuestion> void setQuizQuestion(QuizQuestionComponent<Q> component, Q quizQuestion) {
         if (component != null && component.getId() != null) {
             component.setQuestion(quizQuestion);
         }
