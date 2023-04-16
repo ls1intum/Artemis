@@ -35,13 +35,15 @@ public class ConversationNotification extends Notification {
         // Empty constructor needed for Jackson.
     }
 
-    public ConversationNotification(User author, Post message, Conversation conversation, String title, String text) {
+    public ConversationNotification(User author, Post message, Conversation conversation, String title, String text, boolean textIsPlaceholder, String[] placeholderValues) {
         this.setMessage(message);
         this.setConversation(conversation);
         this.setNotificationDate(ZonedDateTime.now());
         this.setTitle(title);
         this.setText(text);
         this.setAuthor(author);
+        this.setPlaceholderValues(placeholderValues);
+        this.setTextIsPlaceholder(textIsPlaceholder);
     }
 
     public Post getMessage() {

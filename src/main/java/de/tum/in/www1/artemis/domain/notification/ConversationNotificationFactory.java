@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.domain.notification;
 
+import static de.tum.in.www1.artemis.domain.notification.NotificationConstants.findCorrespondingNotificationTitleOrThrow;
 import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFactory.createConversationMessageTarget;
-import static de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants.findCorrespondingNotificationTitleOrThrow;
 
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.metis.Post;
@@ -16,9 +16,10 @@ public class ConversationNotificationFactory {
      * @param notificationText text of the notification
      * @return the created notification
      */
-    public static ConversationNotification createConversationMessageNotification(Post message, NotificationType notificationType, String notificationText) {
+    public static ConversationNotification createConversationMessageNotification(Post message, NotificationType notificationType, String notificationText,
+            boolean textIsPlaceholder, String[] placeholderValues) {
         String title = findCorrespondingNotificationTitleOrThrow(notificationType);
-        var notification = new ConversationNotification(message.getAuthor(), message, message.getConversation(), title, notificationText);
+        var notification = new ConversationNotification(message.getAuthor(), message, message.getConversation(), title, notificationText, textIsPlaceholder, placeholderValues);
         setNotificationTarget(notification);
         return notification;
     }

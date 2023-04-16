@@ -117,10 +117,15 @@ export class NotificationService {
                 this.navigateToNotificationTarget(targetCourseId, routeComponents, queryParams);
             } else if (
                 notification.title === CONVERSATION_CREATE_GROUP_CHAT_TITLE ||
+                notification.title === 'New group chat' ||
                 notification.title === CONVERSATION_ADD_USER_CHANNEL_TITLE ||
+                notification.title === 'You have been added to a channel' ||
                 notification.title === CONVERSATION_ADD_USER_GROUP_CHAT_TITLE ||
+                notification.title === 'You have been added to a group chat' ||
                 notification.title === CONVERSATION_REMOVE_USER_GROUP_CHAT_TITLE ||
-                notification.title === CONVERSATION_REMOVE_USER_CHANNEL_TITLE
+                notification.title === 'You have been removed from a group chat' ||
+                notification.title === CONVERSATION_REMOVE_USER_CHANNEL_TITLE ||
+                notification.title === 'You have been removed from a channel'
             ) {
                 const queryParams: Params = MetisConversationService.getQueryParamsForConversation(targetConversationId);
                 const routeComponents: RouteComponents = MetisConversationService.getLinkForConversation(targetCourseId);

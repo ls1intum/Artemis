@@ -16,8 +16,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.in.www1.artemis.domain.metis.Post;
-import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
-import de.tum.in.www1.artemis.domain.metis.conversation.GroupChat;
 import de.tum.in.www1.artemis.service.metis.ConversationMessagingService;
 import de.tum.in.www1.artemis.service.notifications.ConversationNotificationService;
 import de.tum.in.www1.artemis.web.rest.dto.PostContextFilter;
@@ -53,20 +51,7 @@ public class ConversationMessageResource {
     public ResponseEntity<Post> createMessage(@PathVariable Long courseId, @Valid @RequestBody Post post) throws URISyntaxException {
         Post createdMessage = conversationMessagingService.createMessage(courseId, post);
         // creation of message posts should not trigger entity creation alert
-
-        String notificationText = "";
-        if (createdMessage.getConversation() instanceof Channel channel) {
-            notificationText = "New message in " + channel.getName() + " channel from " + createdMessage.getAuthor().getName() + " in course (" + channel.getCourse().getTitle()
-                    + ")";
-        }
-        else if (createdMessage.getConversation() instanceof GroupChat groupChat) {
-            notificationText = "New message in group chat from " + createdMessage.getAuthor().getName() + " in course (" + groupChat.getCourse().getTitle() + ")";
-        }
-        else {
-            notificationText = "New direct message from " + createdMessage.getAuthor().getName() + " in course (" + createdMessage.getConversation().getCourse().getTitle() + ")";
-        }
-        conversationNotificationService.notifyAboutNewMessage(createdMessage, notificationText);
-
+        conversationNotificationService.notifyAboutNewMessage(createdMessage);
         return ResponseEntity.created(new URI("/api/courses/" + courseId + "/messages/" + createdMessage.getId())).body(createdMessage);
     }
 

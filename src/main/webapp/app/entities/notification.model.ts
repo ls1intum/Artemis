@@ -99,23 +99,23 @@ export const TUTORIAL_GROUP_ASSIGNED_TITLE = 'artemisApp.singleUserNotification.
 
 export const TUTORIAL_GROUP_UNASSIGNED_TITLE = 'artemisApp.singleUserNotification.title.tutorialGroupUnassigned';
 
-export const NEW_MESSAGE_TITLE = 'New message';
+export const NEW_MESSAGE_TITLE = 'artemisApp.conversationNotification.title.newMessage';
 
-export const NEW_REPLY_MESSAGE_TITLE = 'New message reply in conversation';
+export const NEW_REPLY_MESSAGE_TITLE = 'artemisApp.singleUserNotification.title.messageReply';
 
-export const CONVERSATION_CREATE_ONE_TO_ONE_CHAT_TITLE = 'New one-to-one chat';
+export const CONVERSATION_CREATE_ONE_TO_ONE_CHAT_TITLE = 'artemisApp.singleUserNotification.title.createOneToOneChat';
 
-export const CONVERSATION_CREATE_GROUP_CHAT_TITLE = 'New group chat';
+export const CONVERSATION_CREATE_GROUP_CHAT_TITLE = 'artemisApp.singleUserNotification.title.createGroupChat';
 
-export const CONVERSATION_ADD_USER_CHANNEL_TITLE = 'You have been added to a channel';
+export const CONVERSATION_ADD_USER_CHANNEL_TITLE = 'artemisApp.singleUserNotification.title.addUserChannel';
 
-export const CONVERSATION_ADD_USER_GROUP_CHAT_TITLE = 'You have been added to a group chat';
+export const CONVERSATION_ADD_USER_GROUP_CHAT_TITLE = 'artemisApp.singleUserNotification.title.addUserGroupChat';
 
-export const CONVERSATION_DELETE_CHANNEL_TITLE = 'Channel deleted';
+export const CONVERSATION_DELETE_CHANNEL_TITLE = 'artemisApp.singleUserNotification.title.deleteChannel';
 
-export const CONVERSATION_REMOVE_USER_GROUP_CHAT_TITLE = 'You have been removed from a group chat';
+export const CONVERSATION_REMOVE_USER_GROUP_CHAT_TITLE = 'artemisApp.singleUserNotification.title.removeUserGroupChat';
 
-export const CONVERSATION_REMOVE_USER_CHANNEL_TITLE = 'You have been removed from a channel';
+export const CONVERSATION_REMOVE_USER_CHANNEL_TITLE = 'artemisApp.singleUserNotification.title.removeUserChannel';
 
 // edge case: has no separate notificationType. Is created based on EXERCISE_UPDATED for exam exercises
 export const LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE = 'artemisApp.groupNotification.title.liveExamExerciseUpdate';

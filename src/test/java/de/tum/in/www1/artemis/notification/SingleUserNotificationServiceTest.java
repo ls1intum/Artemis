@@ -8,7 +8,6 @@ import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.CONVERS
 import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.CONVERSATION_REMOVE_USER_CHANNEL;
 import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.CONVERSATION_REMOVE_USER_GROUP_CHAT;
 import static de.tum.in.www1.artemis.domain.notification.NotificationConstants.*;
-import static de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants.*;
 import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsService.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
