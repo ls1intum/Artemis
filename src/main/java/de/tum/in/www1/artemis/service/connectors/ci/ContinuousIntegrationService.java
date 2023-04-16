@@ -165,7 +165,7 @@ public interface ContinuousIntegrationService {
             List<String> triggeredByRepositories);
 
     /**
-     * Reads all notifications on the current build plan and updates old notifications to the current endpoint
+     * Overrides the existing notification URL for build results with the current one in use by Artemis.
      *
      * @param projectKey    The key of the project, e.g. 'EIST16W1', which is normally the programming exercise project key.
      * @param buildPlanKey  The key of the build plan, which is usually the name combined with the project, e.g. 'EIST16W1-GA56HUR'.

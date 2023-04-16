@@ -130,10 +130,10 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
     }
 
     /**
-     * Replaces the current notification URL of the given config with the current one in use
+     * Replaces the current notification URL of the given config document with the current one in use by parsing the config document as string and replacing the URL using a regex.
      *
-     * @param config
-     * @return
+     * @param config the config document
+     * @return the config document with the replaced notification URL
      * @throws TransformerException
      */
     private Document replaceNotificationUrlInJobConfig(Document config) throws TransformerException {

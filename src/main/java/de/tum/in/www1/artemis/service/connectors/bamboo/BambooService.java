@@ -493,7 +493,8 @@ public class BambooService extends AbstractContinuousIntegrationService {
     }
 
     /**
-     * Returns a list of all notification ids for the given build plan for this server
+     * Returns a list of all notification ids for the given build plan for this server.
+     * Bamboo doesn't provide a REST endpoint for this, so we have to parse the HTML page using the admin chain API.
      *
      * @param buildPlanKey The key of the build plan, which is usually the name combined with the project, e.g. 'EIST16W1-GA56HUR'.
      * @return a list of all notification ids
@@ -514,6 +515,7 @@ public class BambooService extends AbstractContinuousIntegrationService {
             return List.of();
         }
         // First column is the event, second column the recipient, third the actions
+        // If there is a URL, the URL is the recipient. In that case we take the notification id from the edit button
         Elements entries = notificationTableBody.select("tr");
         List<Long> notificationIds = new ArrayList<>();
         for (Element entry : entries) {
@@ -538,6 +540,7 @@ public class BambooService extends AbstractContinuousIntegrationService {
 
     /**
      * Deletes the given notification id for the given build plan
+     * Bamboo doesn't provide a REST endpoint for this action, but as we don't need to retrieve anything, it works the same way.
      *
      * @param buildPlanKey         The key of the build plan, which is usually the name combined with the project, e.g. 'EIST16W1-GA56HUR'.
      * @param serverNotificationId the id of the notification to delete
@@ -555,6 +558,7 @@ public class BambooService extends AbstractContinuousIntegrationService {
 
     /**
      * Creates a new notification for the given build plan
+     * Bamboo doesn't provide a REST endpoint for this action, but as we don't need to retrieve anything, it works the same way.
      *
      * @param buildPlanKey          The key of the build plan, which is usually the name combined with the project, e.g. 'EIST16W1-GA56HUR'.
      * @param serverNotificationUrl the url of the endpoint to notify
