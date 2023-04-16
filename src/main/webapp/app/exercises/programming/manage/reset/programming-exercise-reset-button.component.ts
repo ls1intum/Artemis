@@ -3,7 +3,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ProgrammingExerciseResetDialogComponent } from 'app/exercises/programming/manage/reset/programming-exercise-reset-dialog.component';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
-import { faEraser } from '@fortawesome/free-solid-svg-icons';
+import { faTimes } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 
 @Component({
@@ -15,7 +15,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
             [btnSize]="ButtonSize.SMALL"
             [shouldSubmit]="false"
             [featureToggle]="FeatureToggle.ProgrammingExercises"
-            [icon]="faEraser"
+            [icon]="faTimes"
             [title]="'entity.action.reset'"
             (onClick)="openResetDialog($event)"
         ></jhi-button>
@@ -29,7 +29,7 @@ export class ProgrammingExerciseResetButtonComponent {
     @Input() programmingExercise: ProgrammingExercise;
 
     // Icons
-    faEraser = faEraser;
+    faTimes = faTimes;
 
     constructor(private modalService: NgbModal) {}
 
