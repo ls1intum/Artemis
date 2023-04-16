@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { LegalDocumentUpdateComponent } from 'app/admin/legal/legal-document-update.component';
-import { MockComponent, MockDirective } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { UnsavedChangesWarningComponent } from 'app/admin/legal/unsaved-changes-warning/unsaved-changes-warning.component';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -10,13 +10,14 @@ import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-edi
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { MockLanguageHelper } from '../../helpers/mocks/service/mock-translate.service';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ModePickerComponent } from 'app/exercises/shared/mode-picker/mode-picker.component';
 import { LegalDocumentService } from 'app/shared/service/legal-document.service';
 import { LegalDocumentLanguage, LegalDocumentType } from 'app/entities/legal-document.model';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 import { ActivatedRoute, UrlSegment } from '@angular/router';
 import { of } from 'rxjs';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 describe('LegalDocumentUpdateComponent', () => {
     let component: LegalDocumentUpdateComponent;
@@ -27,7 +28,7 @@ describe('LegalDocumentUpdateComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [ArtemisTestModule, MockDirective(NgbTooltip)],
             declarations: [
                 LegalDocumentUpdateComponent,
                 MockComponent(UnsavedChangesWarningComponent),
@@ -35,6 +36,7 @@ describe('LegalDocumentUpdateComponent', () => {
                 MockDirective(TranslateDirective),
                 MockComponent(MarkdownEditorComponent),
                 MockComponent(ModePickerComponent),
+                MockPipe(ArtemisTranslatePipe),
             ],
             providers: [
                 { provide: JhiLanguageHelper, useClass: MockLanguageHelper },
