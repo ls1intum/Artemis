@@ -131,6 +131,9 @@ public class ProgrammingExerciseImportFromFileService {
     private void copyExerciseContentToRepository(Repository repository, RepositoryType repositoryType, Path basePath) throws IOException {
         FileUtils.copyDirectory(retrieveRepositoryDirectoryPath(basePath, repositoryType.getName()).toFile(), repository.getLocalPath().toFile(),
                 new NotFileFilter(new NameFileFilter(".git")));
+        try (var files = Files.walk(repository.getLocalPath())) {
+            files.filter(file -> file.getFileName().endsWith("gradlew")).forEach(file -> file.toFile().setExecutable(true));
+        }
         repository.setContent(null);
     }
 
