@@ -1,7 +1,7 @@
-<div class="privacy-statement-container">
+<div class="legal-document-container">
     <div>
         <h2>
-            <span id="privacy-statement-update-heading" data-cy="privacyStatementPageHeading" jhiTranslate="{{ titleKey }}">Create or edit privacy statement</span>
+            <span id="legal-document-update-heading" data-cy="legalDocumentPageHeading" jhiTranslate="{{ titleKey }}">Update legal document</span>
         </h2>
 
         <jhi-markdown-editor
@@ -13,6 +13,20 @@
             [minHeightEditor]="700"
             class="markdown-editor"
         ></jhi-markdown-editor>
+        <div>
+            <div *ngIf="!unsavedChanges && !isSaving">
+                <fa-icon [icon]="faCheckCircle" class="text-success me-1" ngbTooltip="{{ 'artemisApp.legal.savedTooltip' | artemisTranslate }}"></fa-icon>
+                <span class="text-info" jhiTranslate="artemisApp.legal.saved">Saved.</span>
+            </div>
+            <div *ngIf="unsavedChanges && !isSaving">
+                <fa-icon [icon]="faExclamationTriangle" class="text-warning me-1" ngbTooltip="{{ 'artemisApp.legal.unsavedTooltip' | artemisTranslate }}"></fa-icon>
+                <span class="text-info" jhiTranslate="artemisApp.legal.unsaved">Unsaved.</span>
+            </div>
+            <div *ngIf="isSaving">
+                <fa-icon [icon]="faCircleNotch" class="me-1" ngbTooltip="{{ 'artemisApp.legal.savingTooltip' | artemisTranslate }}"></fa-icon>
+                <span class="text-info" jhiTranslate="artemisApp.legal.saving">Saving...</span>
+            </div>
+        </div>
         <div class="btn-below-editor">
             <jhi-button
                 id="update-legal-document-btn"

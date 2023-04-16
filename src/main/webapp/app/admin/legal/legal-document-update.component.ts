@@ -1,5 +1,5 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
-import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faCheckCircle, faCircleNotch, faExclamationTriangle, faSave } from '@fortawesome/free-solid-svg-icons';
 import { LegalDocumentService } from 'app/shared/service/legal-document.service';
 import { MarkdownEditorComponent, MarkdownEditorHeight } from 'app/shared/markdown-editor/markdown-editor.component';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
@@ -21,11 +21,14 @@ export class LegalDocumentUpdateComponent implements OnInit {
     unsavedChanges = false;
     faBan = faBan;
     faSave = faSave;
+    faExclamationTriangle = faExclamationTriangle;
+    faCheckCircle = faCheckCircle;
+    faCircleNotch = faCircleNotch;
     isSaving = false;
     @ViewChild(MarkdownEditorComponent, { static: false }) markdownEditor: MarkdownEditorComponent;
     readonly languageOptions = this.supportedLanguages.map((language) => ({
         value: language,
-        labelKey: 'artemisApp.privacyStatement.language.' + language,
+        labelKey: 'artemisApp.legal.language.' + language,
         btnClass: 'btn-primary',
     }));
     readonly defaultLanguage = LegalDocumentLanguage.GERMAN;
@@ -34,6 +37,7 @@ export class LegalDocumentUpdateComponent implements OnInit {
     currentLanguage = this.defaultLanguage;
     unsavedChangesWarning: NgbModalRef;
     titleKey: string;
+
     constructor(private legalDocumentService: LegalDocumentService, private modalService: NgbModal, private route: ActivatedRoute, private languageHelper: JhiLanguageHelper) {}
 
     ngOnInit() {

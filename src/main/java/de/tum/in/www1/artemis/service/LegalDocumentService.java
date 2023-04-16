@@ -121,7 +121,7 @@ public class LegalDocumentService {
     private LegalDocument getLegalDocument(LegalDocumentLanguage language, LegalDocumentType type) {
         // if it doesn't exist for one language, try to return the other language, and only throw an exception if it doesn't exist for both languages
         if (getLegalDocumentPathIfExists(LegalDocumentLanguage.GERMAN, type).isEmpty() && getLegalDocumentPathIfExists(LegalDocumentLanguage.ENGLISH, type).isEmpty()) {
-            throw new BadRequestAlertException("Could not find " + type + " file for any language", type.name(), "noLegalDocumentFile");
+            throw new BadRequestAlertException("Could not find " + type + " file for any language", "legalDocument", "noLegalDocumentFile");
         }
         else if (language == LegalDocumentLanguage.GERMAN && getLegalDocumentPathIfExists(language, type).isEmpty()) {
             language = LegalDocumentLanguage.ENGLISH;
