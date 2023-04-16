@@ -59,10 +59,17 @@ export class ProgrammingExerciseResetDialogComponent implements OnInit {
         this.isLoading = false;
     }
 
+    /**
+     * Closes the active modal dialog and dismisses it with a 'cancel' reason
+     */
     clear() {
         this.activeModal.dismiss('cancel');
     }
 
+    /**
+     * Determines whether to show the undeleted artifacts warning message
+     * @returns {boolean} true if the warning message should be displayed, false otherwise
+     */
     showUndeletedArtifactsWarning() {
         const options = [
             this.programmingExerciseResetOptions.deleteBuildPlans,
@@ -72,6 +79,9 @@ export class ProgrammingExerciseResetDialogComponent implements OnInit {
         return (!options[0] && (options[1] || options[2])) || (!options[1] && options[2]);
     }
 
+    /**
+     * Resets the programming exercise with the given reset options
+     */
     resetProgrammingExercise() {
         if (!this.programmingExercise.id) {
             return;
@@ -79,13 +89,15 @@ export class ProgrammingExerciseResetDialogComponent implements OnInit {
 
         this.resetInProgress = true;
         this.programmingExerciseService.reset(this.programmingExercise.id, this.programmingExerciseResetOptions).subscribe({
-            next: () => this.handleResetResponse,
+            next: this.handleResetResponse,
             error: () => {
                 this.resetInProgress = false;
             },
         });
     }
-
+    /**
+     * Handles the reset response by showing a success message, dismissing the active modal dialog, and resetting the resetInProgress flag.
+     */
     handleResetResponse = () => {
         this.alertService.success('artemisApp.programmingExercise.reset.successMessage');
         this.activeModal.dismiss(true);
@@ -95,11 +107,16 @@ export class ProgrammingExerciseResetDialogComponent implements OnInit {
     /**
      * Check if all security checks are fulfilled
      * if the programmingExercise.title and entered confirmation matches
+     * @returns {boolean} true if security checks are fulfilled, false otherwise
      */
     get areSecurityChecksFulfilled(): boolean {
         return this.confirmText === this.programmingExercise.title;
     }
 
+    /**
+     * Check if any reset options are selected
+     * @returns {boolean} true if at least one reset option is selected, false otherwise
+     */
     get hasSelectedOptions(): boolean {
         return (
             this.programmingExerciseResetOptions.deleteBuildPlans ||

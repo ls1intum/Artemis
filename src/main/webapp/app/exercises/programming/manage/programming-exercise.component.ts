@@ -163,17 +163,6 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
         });
     }
 
-    /**
-     * Resets programming exercise
-     * @param programmingExerciseId the id of the programming exercise that we want to delete
-     */
-    resetProgrammingExercise(programmingExerciseId: number) {
-        this.exerciseService.reset(programmingExerciseId).subscribe({
-            next: () => this.dialogErrorSource.next(''),
-            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
-        });
-    }
-
     protected getChangeEventName(): string {
         return 'programmingExerciseListModification';
     }
