@@ -125,9 +125,6 @@ public class ProgrammingExercise extends Exercise {
     @JsonIgnoreProperties("programmingExercise")
     private SubmissionPolicy submissionPolicy;
 
-    @Transient
-    private boolean isLocalSimulationTransient;
-
     @Nullable
     @Column(name = "project_type", table = "programming_exercise_details")
     private ProjectType projectType;
@@ -297,6 +294,7 @@ public class ProgrammingExercise extends Exercise {
         this.branch = branch;
     }
 
+    @JsonIgnore
     public String getBranch() {
         return branch;
     }
@@ -707,31 +705,12 @@ public class ProgrammingExercise extends Exercise {
                 + ", packageName='" + getPackageName() + "'" + ", testCasesChanged='" + testCasesChanged + "'" + "}";
     }
 
-    public boolean getIsLocalSimulation() {
-        return this.isLocalSimulationTransient;
-    }
-
-    public void setIsLocalSimulation(Boolean isLocalSimulationTransient) {
-        this.isLocalSimulationTransient = isLocalSimulationTransient;
-    }
-
     public boolean getCheckoutSolutionRepository() {
         return this.checkoutSolutionRepositoryTransient;
     }
 
     public void setCheckoutSolutionRepository(boolean checkoutSolutionRepository) {
         this.checkoutSolutionRepositoryTransient = checkoutSolutionRepository;
-    }
-
-    /**
-     * Sets the transient attribute "isLocalSimulation" if the exercises is a programming exercise
-     * and the testRepositoryUrl contains the String "artemislocalhost" which is the indicator that the programming exercise has
-     * no connection to a version control and continuous integration server
-     */
-    public void checksAndSetsIfProgrammingExerciseIsLocalSimulation() {
-        if (getTestRepositoryUrl().contains("artemislocalhost")) {
-            setIsLocalSimulation(true);
-        }
     }
 
     /**
