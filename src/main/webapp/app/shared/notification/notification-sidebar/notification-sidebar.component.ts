@@ -16,6 +16,8 @@ import { Setting } from 'app/shared/user-settings/user-settings.model';
 import { faArchive, faBell, faCircleNotch, faCog, faEye, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { SessionStorageService } from 'ngx-webstorage';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
+import { translationNotFoundMessage } from 'app/core/config/translation.config';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 export const reloadNotificationSideBarMessage = 'reloadNotificationsInNotificationSideBar';
 export const LAST_READ_STORAGE_KEY = 'lastNotificationRead';
@@ -39,6 +41,7 @@ export class NotificationSidebarComponent implements OnInit {
     lastNotificationRead?: dayjs.Dayjs;
     page = 0;
     notificationsPerPage = 25;
+    maxNotificationLength = 300;
     error?: string;
 
     // notification settings related
@@ -64,6 +67,7 @@ export class NotificationSidebarComponent implements OnInit {
         private notificationSettingsService: NotificationSettingsService,
         private sessionStorageService: SessionStorageService,
         private changeDetector: ChangeDetectorRef,
+        private artemisTranslatePipe: ArtemisTranslatePipe,
     ) {}
 
     /**
@@ -159,6 +163,48 @@ export class NotificationSidebarComponent implements OnInit {
                 this.updateRecentNotificationCount();
             }, 2000);
         });
+    }
+
+    /**
+     * Returns the translated text for the placeholder of the notification text of the provided notification.
+     * If the notification is a legacy notification and therefor the text is not a placeholder
+     * it just returns the provided text for the notification text
+     * @param notification {Notification}
+     */
+    getNotificationTitleTranslation(notification: Notification): string {
+        const translation = this.artemisTranslatePipe.transform(notification.title);
+        if (translation?.includes(translationNotFoundMessage)) {
+            return notification.title ?? 'No title found';
+        }
+        return translation;
+    }
+
+    /**
+     * Returns the translated text for the placeholder of the notification text of the provided notification.
+     * If the notification is a legacy notification and therefor the text is not a placeholder
+     * it just returns the provided text for the notification text
+     * @param notification {Notification}
+     */
+    getNotificationTextTranslation(notification: Notification): string {
+        if (notification.textIsPlaceholder) {
+            const translation = this.artemisTranslatePipe.transform(notification.text, { placeholderValues: this.getParsedPlaceholderValues(notification) });
+            if (translation?.includes(translationNotFoundMessage)) {
+                return notification.text ?? 'No text found';
+            }
+            if (translation.length > this.maxNotificationLength) {
+                return translation.substring(0, this.maxNotificationLength - 1) + '...';
+            }
+            return translation;
+        } else {
+            return notification.text ?? 'No text found';
+        }
+    }
+
+    private getParsedPlaceholderValues(notification: Notification): string[] {
+        if (notification.placeholderValues) {
+            return JSON.parse(notification.placeholderValues);
+        }
+        return [];
     }
 
     private loadNotifications(): void {

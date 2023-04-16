@@ -12,7 +12,7 @@ import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storag
 import { MockNotificationService } from '../../../helpers/mocks/service/mock-notification.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
-import { LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE, Notification } from 'app/entities/notification.model';
+import { LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE, Notification, QUIZ_EXERCISE_STARTED_TEXT, QUIZ_EXERCISE_STARTED_TITLE } from 'app/entities/notification.model';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockPipe } from 'ng-mocks';
@@ -28,9 +28,16 @@ describe('Notification Popup Component', () => {
     let accountService: AccountService;
     let examExerciseUpdateService: ExamExerciseUpdateService;
     let router: Router;
+    let artemisTranslatePipe: ArtemisTranslatePipe;
 
     const generateQuizNotification = (notificationId: number) => {
-        const generatedNotification = { id: notificationId, title: 'Quiz started', text: 'Quiz "Proxy pattern" just started.' } as Notification;
+        const generatedNotification = {
+            id: notificationId,
+            title: QUIZ_EXERCISE_STARTED_TITLE,
+            text: QUIZ_EXERCISE_STARTED_TEXT,
+            textIsPlaceholder: true,
+            placeholderValues: '["Proxy Pattern"]',
+        } as Notification;
         generatedNotification.target = JSON.stringify({ mainPage: 'courses', course: 1, entity: 'exercise', id: 1 });
         return generatedNotification;
     };
@@ -62,6 +69,7 @@ describe('Notification Popup Component', () => {
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: ExamExerciseUpdateService, useClass: MockExamExerciseUpdateService },
                 { provide: ExamParticipationService, useClass: MockExamParticipationService },
+                { provide: ArtemisTranslatePipe, useClass: ArtemisTranslatePipe },
             ],
         })
             .compileComponents()
@@ -71,6 +79,7 @@ describe('Notification Popup Component', () => {
                 notificationService = TestBed.inject(NotificationService);
                 accountService = TestBed.inject(AccountService);
                 examExerciseUpdateService = TestBed.inject(ExamExerciseUpdateService);
+                artemisTranslatePipe = TestBed.inject(ArtemisTranslatePipe);
                 router = TestBed.inject(Router);
             });
     });

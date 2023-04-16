@@ -34,11 +34,13 @@ public class SingleUserNotification extends Notification {
     public SingleUserNotification() {
     }
 
-    public SingleUserNotification(User recipient, String title, String text) {
+    public SingleUserNotification(User recipient, String title, String text, boolean textIsPlaceholder, String[] placeholderValues) {
         this.setRecipient(recipient);
         this.setNotificationDate(ZonedDateTime.now());
         this.setTitle(title);
         this.setText(text);
+        this.setTextIsPlaceholder(textIsPlaceholder);
+        this.setPlaceholderValues(placeholderValues);
     }
 
     public SingleUserNotification transientAndStringTarget(NotificationTarget transientAndStringTarget) {

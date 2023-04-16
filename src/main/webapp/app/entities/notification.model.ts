@@ -15,6 +15,8 @@ export class Notification implements BaseEntity {
     public notificationType?: NotificationType;
     public title?: string;
     public text?: string;
+    public textIsPlaceholder?: boolean;
+    public placeholderValues?: string;
     public notificationDate?: dayjs.Dayjs;
     public target?: string;
     public author?: User;
@@ -27,73 +29,75 @@ export class Notification implements BaseEntity {
 /**
  * Corresponds to the server-side NotificationTitleTypeConstants(.java) constant Strings
  */
-export const EXERCISE_SUBMISSION_ASSESSED_TITLE = 'Exercise Submission Assessed';
+export const EXERCISE_SUBMISSION_ASSESSED_TITLE = 'artemisApp.singleUserNotification.title.exerciseSubmissionAssessed';
 
-export const ATTACHMENT_CHANGE_TITLE = 'Attachment updated';
+export const ATTACHMENT_CHANGE_TITLE = 'artemisApp.groupNotification.title.attachmentChange';
 
-export const EXERCISE_RELEASED_TITLE = 'Exercise released';
+export const EXERCISE_RELEASED_TITLE = 'artemisApp.groupNotification.title.exerciseReleased';
 
-export const EXERCISE_PRACTICE_TITLE = 'Exercise open for practice';
+export const EXERCISE_PRACTICE_TITLE = 'artemisApp.groupNotification.title.exercisePractice';
 
-export const QUIZ_EXERCISE_STARTED_TITLE = 'Quiz started';
+export const QUIZ_EXERCISE_STARTED_TITLE = 'artemisApp.groupNotification.title.quizExerciseStarted';
 
-export const EXERCISE_UPDATED_TITLE = 'Exercise updated';
+export const EXERCISE_UPDATED_TITLE = 'artemisApp.groupNotification.title.exerciseUpdated';
 
-export const DUPLICATE_TEST_CASE_TITLE = 'Duplicate test case was found.';
+export const DUPLICATE_TEST_CASE_TITLE = 'artemisApp.groupNotification.title.duplicateTestCase';
 
-export const ILLEGAL_SUBMISSION_TITLE = 'Illegal submission of a student.';
+export const ILLEGAL_SUBMISSION_TITLE = 'artemisApp.groupNotification.title.illegalSubmission';
 
-export const NEW_EXERCISE_POST_TITLE = 'New exercise post';
+export const NEW_EXERCISE_POST_TITLE = 'artemisApp.groupNotification.title.newExercisePost';
 
-export const NEW_LECTURE_POST_TITLE = 'New lecture post';
+export const NEW_LECTURE_POST_TITLE = 'artemisApp.groupNotification.title.newLecturePost';
 
-export const NEW_ANNOUNCEMENT_POST_TITLE = 'New announcement';
+export const NEW_ANNOUNCEMENT_POST_TITLE = 'artemisApp.groupNotification.title.newAnnouncementPost';
 
-export const NEW_COURSE_POST_TITLE = 'New course-wide post';
+export const NEW_COURSE_POST_TITLE = 'artemisApp.groupNotification.title.newCoursePost';
 
-export const NEW_REPLY_FOR_EXERCISE_POST_TITLE = 'New reply for exercise post';
+export const NEW_REPLY_FOR_EXERCISE_POST_TITLE = 'artemisApp.groupNotification.title.newReplyForExercisePost';
 
-export const NEW_REPLY_FOR_LECTURE_POST_TITLE = 'New reply for lecture post';
+export const NEW_REPLY_FOR_LECTURE_POST_TITLE = 'artemisApp.groupNotification.title.newReplyForLecturePost';
 
-export const NEW_REPLY_FOR_COURSE_POST_TITLE = 'New reply for course-wide post';
+export const NEW_REPLY_FOR_COURSE_POST_TITLE = 'artemisApp.groupNotification.title.newReplyForCoursePost';
 
-export const FILE_SUBMISSION_SUCCESSFUL_TITLE = 'File submission successful';
+export const FILE_SUBMISSION_SUCCESSFUL_TITLE = 'artemisApp.singleUserNotification.title.fileSubmissionSuccessful';
 
-export const COURSE_ARCHIVE_STARTED_TITLE = 'Course archival started';
+export const COURSE_ARCHIVE_STARTED_TITLE = 'artemisApp.groupNotification.title.courseArchiveStarted';
 
-export const COURSE_ARCHIVE_FINISHED_TITLE = 'Course archival finished';
+export const COURSE_ARCHIVE_FINISHED_TITLE = 'artemisApp.groupNotification.title.courseArchiveFinished';
 
-export const COURSE_ARCHIVE_FAILED_TITLE = 'Course archival failed';
+export const COURSE_ARCHIVE_FAILED_TITLE = 'artemisApp.groupNotification.title.courseArchiveFailed';
 
-export const EXAM_ARCHIVE_STARTED_TITLE = 'Exam archival started';
+export const EXAM_ARCHIVE_STARTED_TITLE = 'artemisApp.groupNotification.title.examArchiveStarted';
 
-export const EXAM_ARCHIVE_FINISHED_TITLE = 'Exam archival finished';
+export const EXAM_ARCHIVE_FINISHED_TITLE = 'artemisApp.groupNotification.title.examArchiveFinished';
 
-export const EXAM_ARCHIVE_FAILED_TITLE = 'Exam archival failed';
+export const EXAM_ARCHIVE_FAILED_TITLE = 'artemisApp.groupNotification.title.examArchiveFailed';
 
-export const PROGRAMMING_TEST_CASES_CHANGED_TITLE = 'Test cases for programming exercise changed';
+export const PROGRAMMING_TEST_CASES_CHANGED_TITLE = 'artemisApp.groupNotification.title.programmingTestCasesChanged';
 
-export const NEW_POSSIBLE_PLAGIARISM_CASE_STUDENT_TITLE = 'New possible plagiarism case';
+export const NEW_MANUAL_FEEDBACK_REQUEST_TITLE = 'artemisApp.groupNotification.title.newManualFeedbackRequest';
 
-export const PLAGIARISM_CASE_FINAL_STATE_STUDENT_TITLE = 'Final state for plagiarism case';
+export const NEW_PLAGIARISM_CASE_STUDENT_TITLE = 'artemisApp.singleUserNotification.title.newPlagiarismCaseStudent';
 
-export const TUTORIAL_GROUP_REGISTRATION_STUDENT_TITLE = 'You have been registered to a tutorial group';
+export const PLAGIARISM_CASE_VERDICT_STUDENT_TITLE = 'artemisApp.singleUserNotification.title.plagiarismCaseVerdictStudent';
 
-export const TUTORIAL_GROUP_DEREGISTRATION_STUDENT_TITLE = 'You have been deregistered from a tutorial group';
+export const TUTORIAL_GROUP_REGISTRATION_STUDENT_TITLE = 'artemisApp.singleUserNotification.title.tutorialGroupRegistrationStudent';
 
-export const TUTORIAL_GROUP_REGISTRATION_TUTOR_TITLE = 'A student has been registered to your tutorial group';
+export const TUTORIAL_GROUP_DEREGISTRATION_STUDENT_TITLE = 'artemisApp.singleUserNotification.title.tutorialGroupDeregistrationStudent';
 
-export const TUTORIAL_GROUP_DEREGISTRATION_TUTOR_TITLE = 'A student has been deregistered from your tutorial group';
+export const TUTORIAL_GROUP_REGISTRATION_TUTOR_TITLE = 'artemisApp.singleUserNotification.title.tutorialGroupRegistrationTutor';
 
-export const TUTORIAL_GROUP_REGISTRATION_MULTIPLE_TUTOR_TITLE = 'Multiple students have been registered to your tutorial group';
+export const TUTORIAL_GROUP_DEREGISTRATION_TUTOR_TITLE = 'artemisApp.singleUserNotification.title.tutorialGroupDeregistrationTutor';
 
-export const TUTORIAL_GROUP_DELETED_TITLE = 'Tutorial Group deleted';
+export const TUTORIAL_GROUP_REGISTRATION_MULTIPLE_TUTOR_TITLE = 'artemisApp.singleUserNotification.title.tutorialGroupRegistrationMultipleTutor';
 
-export const TUTORIAL_GROUP_UPDATED_TITLE = 'Tutorial Group updated';
+export const TUTORIAL_GROUP_DELETED_TITLE = 'artemisApp.tutorialGroupNotification.title.tutorialGroupDeleted';
 
-export const TUTORIAL_GROUP_ASSIGNED_TITLE = 'You have been assigned to lead a tutorial group';
+export const TUTORIAL_GROUP_UPDATED_TITLE = 'artemisApp.tutorialGroupNotification.title.tutorialGroupUpdated';
 
-export const TUTORIAL_GROUP_UNASSIGNED_TITLE = 'You have been unassigned from leading a tutorial group';
+export const TUTORIAL_GROUP_ASSIGNED_TITLE = 'artemisApp.singleUserNotification.title.tutorialGroupAssigned';
+
+export const TUTORIAL_GROUP_UNASSIGNED_TITLE = 'artemisApp.singleUserNotification.title.tutorialGroupUnassigned';
 
 export const NEW_MESSAGE_TITLE = 'New message';
 
@@ -114,4 +118,6 @@ export const CONVERSATION_REMOVE_USER_GROUP_CHAT_TITLE = 'You have been removed 
 export const CONVERSATION_REMOVE_USER_CHANNEL_TITLE = 'You have been removed from a channel';
 
 // edge case: has no separate notificationType. Is created based on EXERCISE_UPDATED for exam exercises
-export const LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE = 'Live Exam Exercise Update';
+export const LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE = 'artemisApp.groupNotification.title.liveExamExerciseUpdate';
+
+export const QUIZ_EXERCISE_STARTED_TEXT = 'artemisApp.groupNotification.text.quizExerciseStarted';
