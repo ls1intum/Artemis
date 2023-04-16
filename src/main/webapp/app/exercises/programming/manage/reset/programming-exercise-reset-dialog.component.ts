@@ -5,7 +5,7 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseResetOptions, ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
-import { faBan, faCircleNotch, faEraser, faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faCircleNotch, faSpinner, faTimes } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-programming-exercise-reset-dialog',
@@ -29,7 +29,7 @@ export class ProgrammingExerciseResetDialogComponent implements OnInit {
     faBan = faBan;
     faCircleNotch = faCircleNotch;
     faSpinner = faSpinner;
-    faEraser = faEraser;
+    faTimes = faTimes;
 
     constructor(
         private alertService: AlertService,

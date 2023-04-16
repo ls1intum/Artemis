@@ -95,7 +95,7 @@
             [style.cursor]="resetForm.form.invalid || !areSecurityChecksFulfilled || !hasSelectedOptions || resetInProgress ? 'not-allowed' : 'pointer'"
             [disabled]="resetForm.form.invalid || !areSecurityChecksFulfilled || !hasSelectedOptions || resetInProgress"
         >
-            <span *ngIf="resetInProgress"><fa-icon [icon]="faSpinner" [spin]="true">&nbsp;</fa-icon>&nbsp;</span><fa-icon [icon]="faEraser"></fa-icon>&nbsp;
+            <span *ngIf="resetInProgress"><fa-icon [icon]="faSpinner" [spin]="true">&nbsp;</fa-icon>&nbsp;</span><fa-icon [icon]="faTimes"></fa-icon>&nbsp;
             <span jhiTranslate="entity.action.reset">Reset</span>
         </button>
     </div>
