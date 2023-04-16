@@ -507,9 +507,9 @@ public class UserService {
         user.setLastName(Constants.USER_LAST_NAME_AFTER_SOFT_DELETE);
         user.setLogin(RandomUtil.generateRandomAlphanumericString());
         user.setPassword(RandomUtil.generatePassword());
-        user.setEmail(Constants.USER_EMAIL_AFTER_SOFT_DELETE);
-        user.setRegistrationNumber("");
-        user.setImageUrl("");
+        user.setEmail(RandomUtil.generateRandomAlphanumericString() + Constants.USER_EMAIL_DOMAIN_AFTER_SOFT_DELETE);
+        user.setRegistrationNumber(null);
+        user.setImageUrl(null);
         user.setActivated(false);
 
         userRepository.save(user);

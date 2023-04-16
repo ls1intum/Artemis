@@ -93,7 +93,7 @@ public final class Constants {
 
     public static final String USER_LAST_NAME_AFTER_SOFT_DELETE = "User";
 
-    public static final String USER_EMAIL_AFTER_SOFT_DELETE = "mail@user.anonymous";
+    public static final String USER_EMAIL_DOMAIN_AFTER_SOFT_DELETE = "@user.anonymous";
 
     // TODO: the following numbers should be configurable in the yml files
 
