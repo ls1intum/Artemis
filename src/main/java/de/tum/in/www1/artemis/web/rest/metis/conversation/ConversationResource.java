@@ -170,11 +170,11 @@ public class ConversationResource extends ConversationManagementResource {
     }
 
     /**
-     * GET /conversations/for-notifications
+     * GET api/courses/conversations-for-notifications : Get all conversations for which the current user should receive notifications
      *
      * @return the list of Conversations for which the current user should receive notifications about
      */
-    @GetMapping("/conversations/for-notifications")
+    @GetMapping("/conversations-for-notifications")
     @PreAuthorize("hasRole('USER')")
     public List<Conversation> getAllConversationsForNotifications() {
         log.debug("REST request to get all tutorial groups for which the current user should receive notifications");

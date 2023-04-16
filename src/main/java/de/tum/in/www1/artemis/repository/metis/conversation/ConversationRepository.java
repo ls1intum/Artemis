@@ -28,20 +28,20 @@ public interface ConversationRepository extends JpaRepository<Conversation, Long
     @Query("""
             SELECT DISTINCT c
             FROM Conversation c
-                LEFT JOIN FETCH c.conversationParticipants conversationParticipants
-                LEFT JOIN FETCH conversationParticipants.user user
+                LEFT JOIN FETCH c.conversationParticipants cp
+                LEFT JOIN FETCH cp.user user
                 LEFT JOIN c.course
-            WHERE (user.id = :userId)
+            WHERE user.id = :userId
             """)
     List<Conversation> findAllWhereUserIsParticipant(@Param("userId") Long userId);
 
     @Query("""
             SELECT DISTINCT c
             FROM Conversation c
-                LEFT JOIN FETCH c.conversationParticipants conversationParticipants
-                LEFT JOIN FETCH conversationParticipants.user user
+                LEFT JOIN FETCH c.conversationParticipants cp
+                LEFT JOIN FETCH cp.user user
                 LEFT JOIN c.course
-            WHERE (user.id = :userId AND conversationParticipants.unreadMessagesCount > 0)
+            WHERE user.id = :userId AND cp.unreadMessagesCount > 0
             """)
     List<Conversation> findAllUnreadConversationsWhereUserIsParticipant(@Param("userId") Long userId);
 }

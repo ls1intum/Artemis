@@ -55,13 +55,12 @@ public class ConversationMessageResource {
         // creation of message posts should not trigger entity creation alert
 
         String notificationText = "";
-        if (createdMessage.getConversation() instanceof Channel) {
-            notificationText = "New message in " + ((Channel) createdMessage.getConversation()).getName() + " channel from " + createdMessage.getAuthor().getName() + " in course ("
-                    + createdMessage.getConversation().getCourse().getTitle() + ")";
-        }
-        else if (createdMessage.getConversation() instanceof GroupChat) {
-            notificationText = "New message in group chat from " + createdMessage.getAuthor().getName() + " in course (" + createdMessage.getConversation().getCourse().getTitle()
+        if (createdMessage.getConversation() instanceof Channel channel) {
+            notificationText = "New message in " + channel.getName() + " channel from " + createdMessage.getAuthor().getName() + " in course (" + channel.getCourse().getTitle()
                     + ")";
+        }
+        else if (createdMessage.getConversation() instanceof GroupChat groupChat) {
+            notificationText = "New message in group chat from " + createdMessage.getAuthor().getName() + " in course (" + groupChat.getCourse().getTitle() + ")";
         }
         else {
             notificationText = "New direct message from " + createdMessage.getAuthor().getName() + " in course (" + createdMessage.getConversation().getCourse().getTitle() + ")";
