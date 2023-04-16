@@ -359,4 +359,18 @@ class FileServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
         final Path expectedTargetFile = targetDir.resolve("jenkins").resolve("Makefile");
         assertThat(expectedTargetFile).exists().isNotEmptyFile();
     }
+
+    @Test
+    void testIgnoreDirectoryFalsePositives(@TempDir Path targetDir) throws IOException {
+        final Path sourceDirectory = overridableBasePath.resolve("package.xcworkspace");
+        Files.createDirectories(sourceDirectory);
+
+        final Resource[] resources = resourceLoaderService.getResources(overridableBasePath);
+        assertThat(resources).isNotEmpty();
+
+        fileService.copyResources(resources, Path.of("templates"), targetDir, true);
+
+        final Path expectedTargetFile = targetDir.resolve("jenkins").resolve("package.xcworkspace");
+        assertThat(expectedTargetFile).doesNotExist();
+    }
 }

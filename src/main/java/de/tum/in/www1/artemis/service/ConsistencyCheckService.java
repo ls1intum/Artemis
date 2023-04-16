@@ -60,16 +60,8 @@ public class ConsistencyCheckService {
      */
     public List<ConsistencyErrorDTO> checkConsistencyOfProgrammingExercise(ProgrammingExercise programmingExercise) {
         List<ConsistencyErrorDTO> result = new ArrayList<>();
-
-        programmingExercise.checksAndSetsIfProgrammingExerciseIsLocalSimulation();
-        if (programmingExercise.getIsLocalSimulation()) {
-            result.add(new ConsistencyErrorDTO(programmingExercise, ConsistencyErrorDTO.ErrorType.IS_LOCAL_SIMULATION));
-            return result;
-        }
-
         result.addAll(checkVCSConsistency(programmingExercise));
         result.addAll(checkCIConsistency(programmingExercise));
-
         return result;
     }
 
