@@ -3,6 +3,8 @@ import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 
 import { LegalDocumentService } from 'app/shared/service/legal-document.service';
 import { LegalDocument, LegalDocumentLanguage, LegalDocumentType } from 'app/entities/legal-document.model';
+import { PrivacyStatement } from 'app/entities/privacy-statement.model';
+import { Imprint } from 'app/entities/imprint.model';
 
 describe('LegalDocumentService', () => {
     let service: LegalDocumentService;
@@ -20,7 +22,12 @@ describe('LegalDocumentService', () => {
     it.each([LegalDocumentType.PRIVACY_STATEMENT, LegalDocumentType.IMPRINT])(
         'should make PUT request to update legal document',
         fakeAsync((documentType: LegalDocumentType) => {
-            const update = new LegalDocument(documentType, LegalDocumentLanguage.ENGLISH);
+            let update: LegalDocument;
+            if (documentType === LegalDocumentType.PRIVACY_STATEMENT) {
+                update = new PrivacyStatement(LegalDocumentLanguage.ENGLISH);
+            } else {
+                update = new Imprint(LegalDocumentLanguage.ENGLISH);
+            }
             update.text = 'updated text';
             let req;
             if (documentType === LegalDocumentType.PRIVACY_STATEMENT) {
@@ -39,7 +46,12 @@ describe('LegalDocumentService', () => {
         'should make GET request to retrieve legal document for update',
         fakeAsync((documentType: LegalDocumentType) => {
             const lang = LegalDocumentLanguage.ENGLISH;
-            const expected = new LegalDocument(documentType, lang);
+            let expected: LegalDocument;
+            if (documentType === LegalDocumentType.PRIVACY_STATEMENT) {
+                expected = new PrivacyStatement(lang);
+            } else {
+                expected = new Imprint(lang);
+            }
             expected.text = 'text';
             let req;
             if (documentType === LegalDocumentType.PRIVACY_STATEMENT) {
@@ -58,7 +70,12 @@ describe('LegalDocumentService', () => {
         'should make GET request to retrieve legal document',
         fakeAsync((documentType: LegalDocumentType) => {
             const lang = LegalDocumentLanguage.GERMAN;
-            const expected = new LegalDocument(documentType, lang);
+            let expected: LegalDocument;
+            if (documentType === LegalDocumentType.PRIVACY_STATEMENT) {
+                expected = new PrivacyStatement(lang);
+            } else {
+                expected = new Imprint(lang);
+            }
             expected.text = 'text';
             let req;
             if (documentType === LegalDocumentType.PRIVACY_STATEMENT) {

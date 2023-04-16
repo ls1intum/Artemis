@@ -13,7 +13,7 @@ import { MockLanguageHelper } from '../../helpers/mocks/service/mock-translate.s
 import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ModePickerComponent } from 'app/exercises/shared/mode-picker/mode-picker.component';
 import { LegalDocumentService } from 'app/shared/service/legal-document.service';
-import { LegalDocumentLanguage, LegalDocumentType } from 'app/entities/legal-document.model';
+import { LegalDocument, LegalDocumentLanguage, LegalDocumentType } from 'app/entities/legal-document.model';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 import { ActivatedRoute, UrlSegment } from '@angular/router';
 import { of } from 'rxjs';
@@ -51,6 +51,7 @@ describe('LegalDocumentUpdateComponent', () => {
         legalDocumentService = TestBed.inject(LegalDocumentService);
         route = TestBed.inject(ActivatedRoute);
         setupRoutes(LegalDocumentType.PRIVACY_STATEMENT);
+
         fixture.detectChanges();
     });
 
@@ -65,29 +66,34 @@ describe('LegalDocumentUpdateComponent', () => {
     });
 
     it.each([LegalDocumentType.PRIVACY_STATEMENT, LegalDocumentType.IMPRINT])('should load legal document in German on init', (documentType: LegalDocumentType) => {
+        const returnValue = new LegalDocument(documentType, LegalDocumentLanguage.GERMAN);
+        returnValue.text = 'text';
         setupRoutes(documentType);
         let loadFile;
         if (documentType === LegalDocumentType.PRIVACY_STATEMENT) {
-            loadFile = jest.spyOn(legalDocumentService, 'getPrivacyStatementForUpdate');
+            loadFile = jest.spyOn(legalDocumentService, 'getPrivacyStatementForUpdate').mockReturnValue(of(returnValue));
         } else {
-            loadFile = jest.spyOn(legalDocumentService, 'getImprintForUpdate');
+            loadFile = jest.spyOn(legalDocumentService, 'getImprintForUpdate').mockReturnValue(of(returnValue));
         }
         component.ngOnInit();
         expect(loadFile).toHaveBeenCalledOnce();
         expect(loadFile).toHaveBeenCalledWith(LegalDocumentLanguage.GERMAN);
+        expect(component.unsavedChanges).toBeFalse();
+        expect(component.legalDocument).toEqual(returnValue);
     });
 
     it.each([LegalDocumentType.PRIVACY_STATEMENT, LegalDocumentType.IMPRINT])(
         'should load legal document in selected language on language change',
         (documentType: LegalDocumentType) => {
-            console.log('documentType', documentType);
+            const returnValue = new LegalDocument(documentType, LegalDocumentLanguage.GERMAN);
+            returnValue.text = 'text';
             setupRoutes(documentType);
             component.ngOnInit();
             let loadFile;
             if (documentType === LegalDocumentType.PRIVACY_STATEMENT) {
-                loadFile = jest.spyOn(legalDocumentService, 'getPrivacyStatementForUpdate');
+                loadFile = jest.spyOn(legalDocumentService, 'getPrivacyStatementForUpdate').mockReturnValue(of(returnValue));
             } else {
-                loadFile = jest.spyOn(legalDocumentService, 'getImprintForUpdate');
+                loadFile = jest.spyOn(legalDocumentService, 'getImprintForUpdate').mockReturnValue(of(returnValue));
             }
             component.currentLanguage = LegalDocumentLanguage.GERMAN;
             component.unsavedChanges = false;
@@ -96,6 +102,7 @@ describe('LegalDocumentUpdateComponent', () => {
             expect(loadFile).toHaveBeenCalledOnce();
             expect(loadFile).toHaveBeenCalledWith(LegalDocumentLanguage.ENGLISH);
             expect(component.currentLanguage).toEqual(LegalDocumentLanguage.ENGLISH);
+            expect(component.unsavedChanges).toBeFalse();
         },
     );
 
@@ -107,20 +114,26 @@ describe('LegalDocumentUpdateComponent', () => {
     });
 
     it.each([LegalDocumentType.PRIVACY_STATEMENT, LegalDocumentType.IMPRINT])('should update legal document when clicking save', (documentType: LegalDocumentType) => {
+        const returnValue = new LegalDocument(documentType, LegalDocumentLanguage.GERMAN);
+        returnValue.text = 'text';
         setupRoutes(documentType);
         component.ngOnInit();
         let updateFile;
         if (documentType === LegalDocumentType.PRIVACY_STATEMENT) {
-            updateFile = jest.spyOn(legalDocumentService, 'updatePrivacyStatement');
+            updateFile = jest.spyOn(legalDocumentService, 'updatePrivacyStatement').mockReturnValue(of(returnValue));
         } else {
-            updateFile = jest.spyOn(legalDocumentService, 'updateImprint');
+            updateFile = jest.spyOn(legalDocumentService, 'updateImprint').mockReturnValue(of(returnValue));
         }
-        component.legalDocument.language = LegalDocumentLanguage.GERMAN;
-        component.legalDocument.text = 'text';
+        component.markdownEditor.markdown = 'text';
         component.unsavedChanges = true;
+        const expected = new LegalDocument(documentType, LegalDocumentLanguage.GERMAN);
+        expected.text = 'text';
         fixture.nativeElement.querySelector('#update-legal-document-btn').click();
+
         expect(updateFile).toHaveBeenCalledOnce();
-        expect(updateFile).toHaveBeenCalledWith(component.legalDocument);
+        expect(updateFile).toHaveBeenCalledWith(expected);
+        expect(component.legalDocument.text).toBe('text');
+        expect(component.unsavedChanges).toBeFalse();
     });
 
     function setupRoutes(documentType: LegalDocumentType) {

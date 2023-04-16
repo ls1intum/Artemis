@@ -45,9 +45,9 @@ export class LegalDocumentService {
         if (type === LegalDocumentType.IMPRINT) {
             resourceUrl = this.resourceUrlImprint;
         }
-        return this.http.get(resourceUrl, {
+        return this.http.get<LegalDocument>(resourceUrl, {
             params: new HttpParams().set('language', language),
-        }) as Observable<LegalDocument>;
+        });
     }
 
     private getRequestForUpdateToResource(language: LegalDocumentLanguage, type: LegalDocumentType): Observable<LegalDocument> {
@@ -55,9 +55,9 @@ export class LegalDocumentService {
         if (type === LegalDocumentType.IMPRINT) {
             resourceUrl = this.resourceUrlImprintForUpdate;
         }
-        return this.http.get(resourceUrl, {
+        return this.http.get<LegalDocument>(resourceUrl, {
             params: new HttpParams().set('language', language),
-        }) as Observable<LegalDocument>;
+        });
     }
 
     private putRequestToResource(legalDocument: LegalDocument, type: LegalDocumentType): Observable<LegalDocument> {
