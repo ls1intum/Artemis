@@ -52,6 +52,12 @@ public class ShortAnswerSpotCounter extends QuizStatisticCounter implements Quiz
     }
 
     @Override
+    @JsonIgnore
+    public void setQuizQuestionComponent(ShortAnswerSpot shortAnswerSpot) {
+        setSpot(shortAnswerSpot);
+    }
+
+    @Override
     public String toString() {
         return "ShortAnswerSpotCounter{" + "id=" + getId() + "}";
     }

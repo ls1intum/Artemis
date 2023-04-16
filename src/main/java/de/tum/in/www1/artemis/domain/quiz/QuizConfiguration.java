@@ -77,7 +77,9 @@ public interface QuizConfiguration {
         for (T1 statisticComponent : statisticComponents) {
             if (statisticComponent.getId() != null) {
                 statisticComponent.setQuizQuestionStatistic(quizQuestionStatistic);
-                setQuizQuestion(statisticComponent.getQuizQuestionComponent(), quizQuestion);
+                if (!(quizQuestion instanceof MultipleChoiceQuestion)) {
+                    setQuizQuestion(statisticComponent.getQuizQuestionComponent(), quizQuestion);
+                }
             }
         }
     }

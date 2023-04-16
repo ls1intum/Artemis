@@ -38,14 +38,18 @@ public abstract class QuizService<T extends QuizConfiguration> {
     public T save(T quizConfiguration) {
         // fix references in all questions (step 1/2)
         for (var quizQuestion : quizConfiguration.getQuizQuestions()) {
-            if (quizQuestion instanceof MultipleChoiceQuestion mcQuestion) {
-                fixReferenceMultipleChoice(mcQuestion);
+            if (quizQuestion.getQuizQuestionStatistic() == null) {
+                quizQuestion.initializeStatistic();
             }
-            else if (quizQuestion instanceof DragAndDropQuestion dndQuestion) {
-                fixReferenceDragAndDrop(dndQuestion);
+
+            if (quizQuestion instanceof MultipleChoiceQuestion multipleChoiceQuestion) {
+                fixReferenceMultipleChoice(multipleChoiceQuestion);
             }
-            else if (quizQuestion instanceof ShortAnswerQuestion saQuestion) {
-                fixReferenceShortAnswer(saQuestion);
+            else if (quizQuestion instanceof DragAndDropQuestion dragAndDropQuestion) {
+                fixReferenceDragAndDrop(dragAndDropQuestion);
+            }
+            else if (quizQuestion instanceof ShortAnswerQuestion shortAnswerQuestion) {
+                fixReferenceShortAnswer(shortAnswerQuestion);
             }
         }
 
@@ -66,86 +70,82 @@ public abstract class QuizService<T extends QuizConfiguration> {
         return savedQuizConfiguration;
     }
 
-    private void fixReferenceMultipleChoice(MultipleChoiceQuestion mcQuestion) {
-        var quizQuestionStatistic = (MultipleChoiceQuestionStatistic) mcQuestion.getQuizQuestionStatistic();
-        if (quizQuestionStatistic == null) {
-            quizQuestionStatistic = new MultipleChoiceQuestionStatistic();
-            mcQuestion.setQuizQuestionStatistic(quizQuestionStatistic);
-            quizQuestionStatistic.setQuizQuestion(mcQuestion);
-        }
-
-        for (var answerOption : mcQuestion.getAnswerOptions()) {
-            quizQuestionStatistic.addAnswerOption(answerOption);
-        }
-
-        // if an answerOption was removed then remove the associated AnswerCounters implicitly
-        Set<AnswerCounter> answerCounterToDelete = new HashSet<>();
-        for (AnswerCounter answerCounter : quizQuestionStatistic.getAnswerCounters()) {
-            if (answerCounter.getId() != null) {
-                if (!(mcQuestion.getAnswerOptions().contains(answerCounter.getAnswer()))) {
-                    answerCounter.setAnswer(null);
-                    answerCounterToDelete.add(answerCounter);
-                }
-            }
-        }
-        quizQuestionStatistic.getAnswerCounters().removeAll(answerCounterToDelete);
+    /**
+     * Fix references of Multiple Choice Question before saving to database
+     *
+     * @param multipleChoiceQuestion the MultipleChoiceQuestion which references are to be fixed
+     */
+    private void fixReferenceMultipleChoice(MultipleChoiceQuestion multipleChoiceQuestion) {
+        MultipleChoiceQuestionStatistic multipleChoiceQuestionStatistic = (MultipleChoiceQuestionStatistic) multipleChoiceQuestion.getQuizQuestionStatistic();
+        fixComponentReference(multipleChoiceQuestion, multipleChoiceQuestion.getAnswerOptions(), answerOption -> {
+            multipleChoiceQuestionStatistic.addAnswerOption(answerOption);
+            return null;
+        });
+        removeCounters(multipleChoiceQuestion.getAnswerOptions(), multipleChoiceQuestionStatistic.getAnswerCounters());
     }
 
-    private void fixReferenceDragAndDrop(DragAndDropQuestion dndQuestion) {
-        var quizQuestionStatistic = (DragAndDropQuestionStatistic) dndQuestion.getQuizQuestionStatistic();
-        if (quizQuestionStatistic == null) {
-            quizQuestionStatistic = new DragAndDropQuestionStatistic();
-            dndQuestion.setQuizQuestionStatistic(quizQuestionStatistic);
-            quizQuestionStatistic.setQuizQuestion(dndQuestion);
-        }
-
-        for (var dropLocation : dndQuestion.getDropLocations()) {
-            quizQuestionStatistic.addDropLocation(dropLocation);
-        }
-
-        // if a dropLocation was removed then remove the associated AnswerCounters implicitly
-        Set<DropLocationCounter> dropLocationCounterToDelete = new HashSet<>();
-        for (DropLocationCounter dropLocationCounter : quizQuestionStatistic.getDropLocationCounters()) {
-            if (dropLocationCounter.getId() != null) {
-                if (!(dndQuestion.getDropLocations().contains(dropLocationCounter.getDropLocation()))) {
-                    dropLocationCounter.setDropLocation(null);
-                    dropLocationCounterToDelete.add(dropLocationCounter);
-                }
-            }
-        }
-        quizQuestionStatistic.getDropLocationCounters().removeAll(dropLocationCounterToDelete);
-
-        // save references as index to prevent Hibernate Persistence problem
-        saveCorrectMappingsInIndices(dndQuestion);
+    /**
+     * Fix references of Drag and Drop Question before saving to database
+     *
+     * @param dragAndDropQuestion the DragAndDropQuestion which references are to be fixed
+     */
+    private void fixReferenceDragAndDrop(DragAndDropQuestion dragAndDropQuestion) {
+        DragAndDropQuestionStatistic dragAndDropQuestionStatistic = (DragAndDropQuestionStatistic) dragAndDropQuestion.getQuizQuestionStatistic();
+        fixComponentReference(dragAndDropQuestion, dragAndDropQuestion.getDropLocations(), dropLocation -> {
+            dragAndDropQuestionStatistic.addDropLocation(dropLocation);
+            return null;
+        });
+        removeCounters(dragAndDropQuestion.getDropLocations(), dragAndDropQuestionStatistic.getDropLocationCounters());
+        saveCorrectMappingsInIndicesDragAndDrop(dragAndDropQuestion);
     }
 
-    private void fixReferenceShortAnswer(ShortAnswerQuestion saQuestion) {
-        var quizQuestionStatistic = (ShortAnswerQuestionStatistic) saQuestion.getQuizQuestionStatistic();
-        if (quizQuestionStatistic == null) {
-            quizQuestionStatistic = new ShortAnswerQuestionStatistic();
-            saQuestion.setQuizQuestionStatistic(quizQuestionStatistic);
-            quizQuestionStatistic.setQuizQuestion(saQuestion);
-        }
+    /**
+     * Fix references of Short Answer Question before saving to database
+     *
+     * @param shortAnswerQuestion the ShortAnswerQuestion which references are to be fixed
+     */
+    private void fixReferenceShortAnswer(ShortAnswerQuestion shortAnswerQuestion) {
+        ShortAnswerQuestionStatistic shortAnswerQuestionStatistic = (ShortAnswerQuestionStatistic) shortAnswerQuestion.getQuizQuestionStatistic();
+        fixComponentReference(shortAnswerQuestion, shortAnswerQuestion.getSpots(), shortAnswerSpot -> {
+            shortAnswerQuestionStatistic.addSpot(shortAnswerSpot);
+            return null;
+        });
+        removeCounters(shortAnswerQuestion.getSpots(), shortAnswerQuestionStatistic.getShortAnswerSpotCounters());
+        saveCorrectMappingsInIndicesShortAnswer(shortAnswerQuestion);
+    }
 
-        for (var spot : saQuestion.getSpots()) {
-            spot.setQuestion(saQuestion);
-            quizQuestionStatistic.addSpot(spot);
+    /**
+     * Fix reference of the given components which belong to the given quizQuestion and apply the callback for each component.
+     *
+     * @param quizQuestion the QuizQuestion of which the given components belong to
+     * @param components   the QuizQuestionComponent of which the references are to be fixed
+     * @param callback     the Function that is applied for each given component
+     */
+    private <C extends QuizQuestionComponent<Q>, Q extends QuizQuestion> void fixComponentReference(Q quizQuestion, Collection<C> components, Function<C, Void> callback) {
+        for (C component : components) {
+            component.setQuestion(quizQuestion);
+            callback.apply(component);
         }
+    }
 
-        // if a spot was removed then remove the associated spotCounters implicitly
-        Set<ShortAnswerSpotCounter> spotCounterToDelete = new HashSet<>();
-        for (ShortAnswerSpotCounter spotCounter : quizQuestionStatistic.getShortAnswerSpotCounters()) {
-            if (spotCounter.getId() != null) {
-                if (!(saQuestion.getSpots().contains(spotCounter.getSpot()))) {
-                    spotCounter.setSpot(null);
-                    spotCounterToDelete.add(spotCounter);
+    /**
+     * Remove statisticComponents that are not associated with any of the given components.
+     *
+     * @param components          the Collection of QuizQuestionComponent to be checked
+     * @param statisticComponents the Collection of QuizQuestionStatisticComponent to be removed
+     */
+    private <C extends QuizQuestionComponent<Q>, Q extends QuizQuestion, SC extends QuizQuestionStatisticComponent<S, C, Q>, S extends QuizQuestionStatistic> void removeCounters(
+            Collection<C> components, Collection<SC> statisticComponents) {
+        Set<SC> toDelete = new HashSet<>();
+        for (SC statisticComponent : statisticComponents) {
+            if (statisticComponent.getId() != null) {
+                if (!(components.contains(statisticComponent.getQuizQuestionComponent()))) {
+                    statisticComponent.setQuizQuestionComponent(null);
+                    toDelete.add(statisticComponent);
                 }
             }
         }
-        quizQuestionStatistic.getShortAnswerSpotCounters().removeAll(spotCounterToDelete);
-
-        // save references as index to prevent Hibernate Persistence problem
-        saveCorrectMappingsInIndicesShortAnswer(saQuestion);
+        statisticComponents.removeAll(toDelete);
     }
 
     /**
@@ -153,7 +153,7 @@ public abstract class QuizService<T extends QuizConfiguration> {
      *
      * @param dragAndDropQuestion the question for which to perform these actions
      */
-    private void saveCorrectMappingsInIndices(DragAndDropQuestion dragAndDropQuestion) {
+    private void saveCorrectMappingsInIndicesDragAndDrop(DragAndDropQuestion dragAndDropQuestion) {
         List<DragAndDropMapping> mappingsToBeRemoved = new ArrayList<>();
         for (DragAndDropMapping mapping : dragAndDropQuestion.getCorrectMappings()) {
             // check for NullPointers

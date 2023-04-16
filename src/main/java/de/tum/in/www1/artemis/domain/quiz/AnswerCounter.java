@@ -46,7 +46,13 @@ public class AnswerCounter extends QuizStatisticCounter implements QuizQuestionS
     @Override
     @JsonIgnore
     public AnswerOption getQuizQuestionComponent() {
-        return null;
+        return getAnswer();
+    }
+
+    @Override
+    @JsonIgnore
+    public void setQuizQuestionComponent(AnswerOption answerOption) {
+        setAnswer(answerOption);
     }
 
     @Override

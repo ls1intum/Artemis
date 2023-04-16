@@ -18,4 +18,11 @@ public interface QuizQuestionStatisticComponent<T1 extends QuizQuestionStatistic
      * @return the QuizQuestionComponent that belongs to the implementor
      */
     T2 getQuizQuestionComponent();
+
+    /**
+     * Set the QuizQuestionComponent of the implementor to the given quizQuestionComponent
+     *
+     * @param quizQuestionComponent the quizQuestionComponent to be set to
+     */
+    void setQuizQuestionComponent(T2 quizQuestionComponent);
 }

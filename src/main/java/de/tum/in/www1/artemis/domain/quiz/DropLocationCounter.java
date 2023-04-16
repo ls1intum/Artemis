@@ -50,6 +50,12 @@ public class DropLocationCounter extends QuizStatisticCounter implements QuizQue
     }
 
     @Override
+    @JsonIgnore
+    public void setQuizQuestionComponent(DropLocation dropLocation) {
+        setDropLocation(dropLocation);
+    }
+
+    @Override
     public String toString() {
         return "DropLocationCounter{" + "id=" + getId() + "}";
     }
