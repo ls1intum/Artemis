@@ -11,7 +11,7 @@ import de.tum.in.www1.artemis.domain.notification.ConversationNotification;
 @Repository
 public interface ConversationNotificationRepository extends JpaRepository<ConversationNotification, Long> {
 
-    @Transactional
+    @Transactional // ok because of delete
     @Modifying
     void deleteAllByMessageId(Long messageId);
 }
