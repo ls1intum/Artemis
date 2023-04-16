@@ -22,5 +22,8 @@ public class GitLabCIBuildPlanLinkInfoContributor implements InfoContributor {
         // TODO: Not defined in https://github.com/ls1intum/Artemis/blob/develop/src/main/webapp/app/exercises/programming/shared/utils/programming-exercise.utils.ts#L24-L28
         final var buildPlanURLTemplate = artemisServerUrl + "/api/programming-exercises/{exerciseId}/build-plan";
         builder.withDetail(Constants.INFO_BUILD_PLAN_URL_DETAIL, buildPlanURLTemplate);
+
+        // Store name of the continuous integration system
+        builder.withDetail(Constants.CONTINUOUS_INTEGRATION_NAME, "GitLab CI");
     }
 }

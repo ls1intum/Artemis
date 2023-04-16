@@ -21,5 +21,8 @@ public class JenkinsBuildPlanLinkInfoContributor implements InfoContributor {
     public void contribute(Info.Builder builder) {
         final var buildPlanURLTemplate = JENKINS_SERVER_URL + "/job/{projectKey}/job/{buildPlanId}";
         builder.withDetail(Constants.INFO_BUILD_PLAN_URL_DETAIL, buildPlanURLTemplate);
+
+        // Store name of the continuous integration system
+        builder.withDetail(Constants.CONTINUOUS_INTEGRATION_NAME, "Jenkins");
     }
 }

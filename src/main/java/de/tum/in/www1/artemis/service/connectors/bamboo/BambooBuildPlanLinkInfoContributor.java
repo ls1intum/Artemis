@@ -21,5 +21,8 @@ public class BambooBuildPlanLinkInfoContributor implements InfoContributor {
     public void contribute(Info.Builder builder) {
         final var buildPlanURLTemplate = bambooServerUrl + "/browse/{buildPlanId}";
         builder.withDetail(Constants.INFO_BUILD_PLAN_URL_DETAIL, buildPlanURLTemplate);
+
+        // Store name of the continuous integration system
+        builder.withDetail(Constants.CONTINUOUS_INTEGRATION_NAME, "Bamboo");
     }
 }
