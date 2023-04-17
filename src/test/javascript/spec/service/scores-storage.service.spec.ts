@@ -1,6 +1,7 @@
 import { ScoresStorageService } from 'app/course/course-scores/scores-storage.service';
 import { Participation } from 'app/entities/participation/participation.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 
 describe('ScoresStorageService', () => {
     it('should filter the correct result from the stored participation results', () => {
@@ -19,9 +20,11 @@ describe('ScoresStorageService', () => {
         expect(scoresStorageService.getStoredParticipationResult(3)).toBeUndefined();
     });
 
-    it('should return an undefined participation result if each result has no participation set', () => {
+    it('should return an undefined participation result if the participation does not exist', () => {
         const scoresStorageService = new ScoresStorageService();
-        scoresStorageService.setStoredParticipationResults([{ successful: true }]);
+        const participation = new StudentParticipation();
+        participation.id = 234;
+        scoresStorageService.setStoredParticipationResults([{ successful: true, participation }]);
         expect(scoresStorageService.getStoredParticipationResult(1)).toBeUndefined();
     });
 });
