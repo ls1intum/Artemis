@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants.MESSAGE_REPLY_IN_CONVERSATION_TITLE;
-import static de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants.NEW_MESSAGE_TITLE;
+import static de.tum.in.www1.artemis.domain.notification.NotificationConstants.MESSAGE_REPLY_IN_CONVERSATION_TITLE;
+import static de.tum.in.www1.artemis.domain.notification.NotificationConstants.NEW_MESSAGE_TITLE;
 
 import java.time.ZonedDateTime;
 import java.util.List;

@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.domain.notification;
 
-import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.*;
-
 import java.time.ZonedDateTime;
 
 import javax.persistence.DiscriminatorValue;

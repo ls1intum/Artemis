@@ -35,22 +35,17 @@ public class ConversationNotificationService {
      */
     public void notifyAboutNewMessage(Post createdMessage) {
 
-        String notificationText = "";
-        String[] placeholders = {};
+        String notificationText;
+        String[] placeholders;
         if (createdMessage.getConversation() instanceof Channel channel) {
-            // notificationText = "New message in " + channel.getName() + " channel from " + createdMessage.getAuthor().getName() + " in course (" + channel.getCourse().getTitle()
-            // + ")";
             notificationText = NEW_MESSAGE_CHANNEL_TEXT;
             placeholders = new String[] { channel.getName(), createdMessage.getAuthor().getName(), channel.getCourse().getTitle() };
         }
         else if (createdMessage.getConversation() instanceof GroupChat groupChat) {
-            // notificationText = "New message in group chat from " + createdMessage.getAuthor().getName() + " in course (" + groupChat.getCourse().getTitle() + ")";
             notificationText = NEW_MESSAGE_GROUP_CHAT_TEXT;
             placeholders = new String[] { createdMessage.getAuthor().getName(), groupChat.getCourse().getTitle() };
         }
         else {
-            // notificationText = "New direct message from " + createdMessage.getAuthor().getName() + " in course (" + createdMessage.getConversation().getCourse().getTitle() +
-            // ")";
             notificationText = NEW_MESSAGE_DIRECT_TEXT;
             placeholders = new String[] { createdMessage.getAuthor().getName(), createdMessage.getConversation().getCourse().getTitle() };
         }

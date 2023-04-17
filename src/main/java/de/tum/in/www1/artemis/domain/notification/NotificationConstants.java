@@ -165,47 +165,45 @@ public class NotificationConstants {
 
     public static final String TUTORIAL_GROUP_UNASSIGNED_TEXT = "artemisApp.singleUserNotification.text.tutorialGroupUnassigned";
 
-    public static final String NEW_MESSAGE_TITLE = "artemisApp.conversationNotification.title.newMessage"; // "New message";
+    public static final String NEW_MESSAGE_TITLE = "artemisApp.conversationNotification.title.newMessage";
 
-    public static final String NEW_MESSAGE_CHANNEL_TEXT = "artemisApp.conversationNotification.text.newMessageChannel"; // "New message";
+    public static final String NEW_MESSAGE_CHANNEL_TEXT = "artemisApp.conversationNotification.text.newMessageChannel";
 
-    public static final String NEW_MESSAGE_GROUP_CHAT_TEXT = "artemisApp.conversationNotification.text.newMessageGroupChat"; // "New message";
+    public static final String NEW_MESSAGE_GROUP_CHAT_TEXT = "artemisApp.conversationNotification.text.newMessageGroupChat";
 
-    public static final String NEW_MESSAGE_DIRECT_TEXT = "artemisApp.conversationNotification.text.newMessageDirect"; // "New message";
+    public static final String NEW_MESSAGE_DIRECT_TEXT = "artemisApp.conversationNotification.text.newMessageDirect";
 
-    public static final String MESSAGE_REPLY_IN_CONVERSATION_TITLE = "artemisApp.singleUserNotification.title.messageReply"; // "New message reply in conversation";
+    public static final String MESSAGE_REPLY_IN_CONVERSATION_TITLE = "artemisApp.singleUserNotification.title.messageReply";
 
-    public static final String MESSAGE_REPLY_IN_CONVERSATION_TEXT = "artemisApp.singleUserNotification.text.messageReply"; // "message Reply";
+    public static final String MESSAGE_REPLY_IN_CONVERSATION_TEXT = "artemisApp.singleUserNotification.text.messageReply";
 
-    public static final String CONVERSATION_CREATE_ONE_TO_ONE_CHAT_TITLE = "artemisApp.singleUserNotification.title.createOneToOneChat"; // "New one-to-one chat";
+    public static final String CONVERSATION_CREATE_ONE_TO_ONE_CHAT_TITLE = "artemisApp.singleUserNotification.title.createOneToOneChat";
 
-    public static final String CONVERSATION_CREATE_ONE_TO_ONE_CHAT_TEXT = "artemisApp.singleUserNotification.text.createOneToOneChat"; // "New one-to-one chat";
+    public static final String CONVERSATION_CREATE_ONE_TO_ONE_CHAT_TEXT = "artemisApp.singleUserNotification.text.createOneToOneChat";
 
-    public static final String CONVERSATION_CREATE_GROUP_CHAT_TITLE = "artemisApp.singleUserNotification.title.createGroupChat"; // "New group chat";
+    public static final String CONVERSATION_CREATE_GROUP_CHAT_TITLE = "artemisApp.singleUserNotification.title.createGroupChat";
 
-    public static final String CONVERSATION_CREATE_GROUP_CHAT_TEXT = "artemisApp.singleUserNotification.text.createGroupChat"; // "New group chat";
+    public static final String CONVERSATION_CREATE_GROUP_CHAT_TEXT = "artemisApp.singleUserNotification.text.createGroupChat";
 
-    public static final String CONVERSATION_ADD_USER_CHANNEL_TITLE = "artemisApp.singleUserNotification.title.addUserChannel"; // "You have been added to a channel";
+    public static final String CONVERSATION_ADD_USER_CHANNEL_TITLE = "artemisApp.singleUserNotification.title.addUserChannel";
 
-    public static final String CONVERSATION_ADD_USER_CHANNEL_TEXT = "artemisApp.singleUserNotification.text.addUserChannel"; // "You have been added to a channel";
+    public static final String CONVERSATION_ADD_USER_CHANNEL_TEXT = "artemisApp.singleUserNotification.text.addUserChannel";
 
-    public static final String CONVERSATION_ADD_USER_GROUP_CHAT_TITLE = "artemisApp.singleUserNotification.title.addUserGroupChat"; // "You have been added to a group chat";
+    public static final String CONVERSATION_ADD_USER_GROUP_CHAT_TITLE = "artemisApp.singleUserNotification.title.addUserGroupChat";
 
-    public static final String CONVERSATION_ADD_USER_GROUP_CHAT_TEXT = "artemisApp.singleUserNotification.text.addUserGroupChat"; // "You have been added to a group chat";
+    public static final String CONVERSATION_ADD_USER_GROUP_CHAT_TEXT = "artemisApp.singleUserNotification.text.addUserGroupChat";
 
-    public static final String CONVERSATION_REMOVE_USER_GROUP_CHAT_TITLE = "artemisApp.singleUserNotification.title.removeUserGroupChat"; // "You have been removed from a group
-                                                                                                                                          // chat";
+    public static final String CONVERSATION_REMOVE_USER_GROUP_CHAT_TITLE = "artemisApp.singleUserNotification.title.removeUserGroupChat";
 
-    public static final String CONVERSATION_REMOVE_USER_GROUP_CHAT_TEXT = "artemisApp.singleUserNotification.text.removeUserGroupChat"; // "You have been removed from a group
-                                                                                                                                        // chat";
+    public static final String CONVERSATION_REMOVE_USER_GROUP_CHAT_TEXT = "artemisApp.singleUserNotification.text.removeUserGroupChat";
 
-    public static final String CONVERSATION_REMOVE_USER_CHANNEL_TITLE = "artemisApp.singleUserNotification.title.removeUserChannel"; // "You have been removed from a channel";
+    public static final String CONVERSATION_REMOVE_USER_CHANNEL_TITLE = "artemisApp.singleUserNotification.title.removeUserChannel";
 
-    public static final String CONVERSATION_REMOVE_USER_CHANNEL_TEXT = "artemisApp.singleUserNotification.text.removeUserChannel"; // "You have been removed from a channel";
+    public static final String CONVERSATION_REMOVE_USER_CHANNEL_TEXT = "artemisApp.singleUserNotification.text.removeUserChannel";
 
-    public static final String CONVERSATION_DELETE_CHANNEL_TITLE = "artemisApp.singleUserNotification.title.deleteChannel"; // "Channel deleted";
+    public static final String CONVERSATION_DELETE_CHANNEL_TITLE = "artemisApp.singleUserNotification.title.deleteChannel";
 
-    public static final String CONVERSATION_DELETE_CHANNEL_TEXT = "artemisApp.singleUserNotification.text.deleteChannel"; // "Channel deleted";
+    public static final String CONVERSATION_DELETE_CHANNEL_TEXT = "artemisApp.singleUserNotification.text.deleteChannel";
 
     // bidirectional map
     private static final BiMap<NotificationType, String> NOTIFICATION_TYPE_AND_TITLE_MAP = new ImmutableBiMap.Builder<NotificationType, String>()
