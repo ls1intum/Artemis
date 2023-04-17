@@ -108,4 +108,72 @@ describe('SystemNotificationManagementUpdateComponent', () => {
         tick();
         expect(saveSpy).toHaveBeenCalledOnce();
     }));
+
+    it('should ensure that notification dates are not empty', fakeAsync(() => {
+        const saveSpy = jest.spyOn(updateComponent, 'save');
+        updateComponentFixture.detectChanges();
+
+        updateComponent.form.controls['notificationDate'].setValue(undefined);
+        updateComponent.form.controls['expireDate'].setValue(undefined);
+
+        updateComponentFixture.detectChanges();
+        const button = updateComponentFixture.debugElement.nativeElement.querySelector('#saveButton');
+        button.click();
+
+        tick();
+        expect(saveSpy).not.toHaveBeenCalled();
+    }));
+
+    it('should ensure that notification a date has not been removed', fakeAsync(() => {
+        const saveSpy = jest.spyOn(updateComponent, 'save');
+        updateComponentFixture.detectChanges();
+
+        updateComponent.form.controls['notificationDate'].setValue(undefined);
+        updateComponent.form.controls['expireDate'].setValue(dayjs());
+
+        updateComponentFixture.detectChanges();
+        const button = updateComponentFixture.debugElement.nativeElement.querySelector('#saveButton');
+        button.click();
+
+        tick();
+        expect(saveSpy).not.toHaveBeenCalled();
+
+        updateComponent.form.controls['notificationDate'].setValue(dayjs());
+        updateComponent.form.controls['expireDate'].setValue(undefined);
+
+        button.click();
+
+        tick();
+        expect(saveSpy).not.toHaveBeenCalled();
+    }));
+
+    it('cannot save when invalid notificationDate is inputed', fakeAsync(() => {
+        const saveSpy = jest.spyOn(updateComponent, 'save');
+        updateComponentFixture.detectChanges();
+
+        updateComponent.form.controls['notificationDate'].setValue('just some text');
+        updateComponent.form.controls['expireDate'].setValue(dayjs().subtract(1, 'hour'));
+
+        updateComponentFixture.detectChanges();
+        const button = updateComponentFixture.debugElement.nativeElement.querySelector('#saveButton');
+        button.click();
+
+        tick();
+        expect(saveSpy).not.toHaveBeenCalled();
+    }));
+
+    it('cannot save when invalid expireDate is inputed', fakeAsync(() => {
+        const saveSpy = jest.spyOn(updateComponent, 'save');
+        updateComponentFixture.detectChanges();
+
+        updateComponent.form.controls['notificationDate'].setValue(dayjs());
+        updateComponent.form.controls['expireDate'].setValue('more invalid text');
+
+        updateComponentFixture.detectChanges();
+        const button = updateComponentFixture.debugElement.nativeElement.querySelector('#saveButton');
+        button.click();
+
+        tick();
+        expect(saveSpy).not.toHaveBeenCalled();
+    }));
 });
