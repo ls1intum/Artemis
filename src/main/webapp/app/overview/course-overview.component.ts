@@ -3,7 +3,7 @@ import { Course, isCommunicationEnabled, isMessagingEnabled } from 'app/entities
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { CourseManagementService } from '../course/manage/course-management.service';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Observable, Subject, Subscription, catchError, forkJoin, map, of, takeUntil, throwError } from 'rxjs';
+import { Observable, Subject, Subscription, catchError, map, of, takeUntil, throwError } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { TeamService } from 'app/exercises/shared/team/team.service';
@@ -91,16 +91,8 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
 
         this.course = this.courseCalculationService.getCourse(this.courseId);
 
-        if (this.course) {
-            // If the course is present but without learning goals or tutorial groups (e.g. loaded in Artemis overview), we only need to fetch those
-            if (!this.course.learningGoals || !this.course.prerequisites || !this.course.tutorialGroups || !this.course.tutorialGroupsConfiguration) {
-                this.loadLearningGoalsAndTutorialGroups();
-            }
-            await this.initAfterCourseLoad();
-        } else {
-            await this.loadCourse().toPromise();
-            await this.initAfterCourseLoad();
-        }
+        await this.loadCourse().toPromise();
+        await this.initAfterCourseLoad();
     }
 
     async initAfterCourseLoad() {
@@ -287,28 +279,6 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
                 }
             });
         }
-    }
-
-    loadLearningGoalsAndTutorialGroups() {
-        forkJoin([
-            this.learningGoalService.getAllForCourse(this.courseId),
-            this.learningGoalService.getAllPrerequisitesForCourse(this.courseId),
-            this.tutorialGroupService.getAllForCourse(this.courseId),
-            this.tutorialGroupsConfigurationService.getOneOfCourse(this.courseId),
-        ]).subscribe({
-            next: ([learningGoals, prerequisites, tutorialGroups, configuration]) => {
-                if (this.course) {
-                    this.course.learningGoals = learningGoals.body!;
-                    this.course.prerequisites = prerequisites.body!;
-                    this.course.tutorialGroups = tutorialGroups.body!;
-                    if (configuration.body) {
-                        this.course.tutorialGroupsConfiguration = configuration.body!;
-                    }
-                    this.courseCalculationService.updateCourse(this.course);
-                }
-            },
-            error: () => {},
-        });
     }
 
     /**
