@@ -21,7 +21,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationLocalCILocalVCTest;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.util.LocalRepository;
@@ -29,7 +28,7 @@ import de.tum.in.www1.artemis.util.LocalRepository;
 /**
  * This class contains integration tests for edge cases pertaining to the local VC system.
  */
-class LocalVCIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
+class LocalVCIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
 
     @Autowired
     ProgrammingSubmissionRepository programmingSubmissionRepository;

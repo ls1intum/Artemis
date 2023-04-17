@@ -48,7 +48,6 @@ import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.vcs.AbstractVersionControlService;
-import de.tum.in.www1.artemis.web.rest.util.StringUtil;
 
 /**
  * Implementation of VersionControlService for the local VC server.
@@ -174,10 +173,8 @@ public class LocalVCService extends AbstractVersionControlService {
      */
     @Override
     public boolean checkIfProjectExists(String projectKey, String projectName) {
-        String projectKeyStripped = StringUtil.stripIllegalCharacters(projectKey);
-
         // Try to find the folder in the file system. If it is not found, return false.
-        Path projectPath = Path.of(localVCBasePath, projectKeyStripped);
+        Path projectPath = Path.of(localVCBasePath, projectKey);
         if (Files.exists(projectPath)) {
             log.warn("Local VC project with key {} already exists: {}", projectKey, projectName);
             return true;
@@ -196,14 +193,12 @@ public class LocalVCService extends AbstractVersionControlService {
      */
     @Override
     public void createProjectForExercise(ProgrammingExercise programmingExercise) throws LocalVCException {
-        String projectKey = StringUtil.stripIllegalCharacters(programmingExercise.getProjectKey());
-
-        log.debug("Creating folder for local git project at {}", Path.of(localVCBasePath, projectKey));
-
+        String projectKey = programmingExercise.getProjectKey();
         try {
-            // Instead of defining a project like would be done for GitLab or Bitbucket, just define a directory that will contain all repositories.
+            // Instead of defining a project like would be done for GitLab or Bitbucket, just create a directory that will contain all repositories.
             Path projectPath = Path.of(localVCBasePath, projectKey);
             Files.createDirectories(projectPath);
+            log.debug("Created folder for local git project at {}", projectPath);
         }
         catch (IOException e) {
             throw new LocalVCException("Error while creating local VC project.", e);
@@ -235,8 +230,6 @@ public class LocalVCService extends AbstractVersionControlService {
 
         Path remoteDirPath = localVCRepositoryUrl.getLocalRepositoryPath(localVCBasePath);
 
-        log.debug("Creating local git repository {} in folder {}", repositorySlug, remoteDirPath);
-
         // Check if the folder for the repository to be created already exists. In that case delete it first.
         if (Files.exists(remoteDirPath)) {
             try {
@@ -260,6 +253,7 @@ public class LocalVCService extends AbstractVersionControlService {
             refUpdate.link("refs/heads/" + defaultBranch);
 
             git.close();
+            log.debug("Created local git repository {} in folder {}", repositorySlug, remoteDirPath);
         }
         catch (GitAPIException | IOException e) {
             log.error("Could not create local git repo {} at location {}", repositorySlug, remoteDirPath, e);

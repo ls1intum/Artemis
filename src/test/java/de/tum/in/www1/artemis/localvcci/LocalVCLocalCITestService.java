@@ -437,13 +437,16 @@ public class LocalVCLocalCITestService {
      * Assert that the latest submission has the correct commit hash and the correct result.
      *
      * @param participationId                 of the participation to check the latest submission for.
-     * @param expectedCommitHash              the commit hash of the commit that triggered the creation of the submission and is thus expected to be seved in the submission.
+     * @param expectedCommitHash              the commit hash of the commit that triggered the creation of the submission and is thus expected to be saved in the submission. Null
+     *                                            if the commit hash should not be checked.
      * @param expectedSuccessfulTestCaseCount the expected number or passed test cases.
      * @param buildFailed                     whether the build should have failed or not.
      */
     public void testLastestSubmission(Long participationId, String expectedCommitHash, int expectedSuccessfulTestCaseCount, boolean buildFailed) {
         ProgrammingSubmission programmingSubmission = programmingSubmissionRepository.findFirstByParticipationIdOrderByLegalSubmissionDateDesc(participationId).orElseThrow();
-        assertThat(programmingSubmission.getCommitHash()).isEqualTo(expectedCommitHash);
+        if (expectedCommitHash != null) {
+            assertThat(programmingSubmission.getCommitHash()).isEqualTo(expectedCommitHash);
+        }
         assertThat(programmingSubmission.isBuildFailed()).isEqualTo(buildFailed);
         Result result = programmingSubmission.getLatestResult();
         assertThat(result).isNotNull();

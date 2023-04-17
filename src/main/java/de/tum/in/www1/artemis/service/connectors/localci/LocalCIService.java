@@ -9,7 +9,6 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
-import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.BambooException;
 import de.tum.in.www1.artemis.exception.LocalCIException;
@@ -46,12 +45,8 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
 
     @Override
     public void recreateBuildPlansForExercise(ProgrammingExercise exercise) {
-        deleteBuildPlan(exercise.getProjectKey(), exercise.getTemplateBuildPlanId());
-        deleteBuildPlan(exercise.getProjectKey(), exercise.getSolutionBuildPlanId());
-        createBuildPlanForExercise(exercise, BuildPlanType.TEMPLATE.getName(), exercise.getVcsTemplateRepositoryUrl(), exercise.getVcsTestRepositoryUrl(),
-                exercise.getVcsSolutionRepositoryUrl());
-        createBuildPlanForExercise(exercise, BuildPlanType.SOLUTION.getName(), exercise.getVcsSolutionRepositoryUrl(), exercise.getVcsTestRepositoryUrl(),
-                exercise.getVcsSolutionRepositoryUrl());
+        // Not implemented for local CI. no build plans must be (re)created, because all the information for building a submission and running tests is contained in the
+        // participation.
     }
 
     @Override
