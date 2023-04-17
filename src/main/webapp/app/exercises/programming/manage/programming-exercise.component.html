@@ -243,7 +243,13 @@
                                 </a>
                             </div>
                             <div class="btn-group-vertical me-1">
-                                <jhi-programming-exercise-reset [programmingExercise]="programmingExercise" class="mb-1"></jhi-programming-exercise-reset>
+                                <jhi-programming-exercise-reset
+                                    [programmingExercise]="programmingExercise"
+                                    [fullWidth]="true"
+                                    [noRoundedCornersBottom]="true"
+                                    class="mb-1"
+                                    style="width: 100%"
+                                ></jhi-programming-exercise-reset>
                                 <button
                                     *ngIf="programmingExercise.isAtLeastInstructor"
                                     [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
@@ -258,6 +264,7 @@
                                         deleteBaseReposBuildPlans: 'artemisApp.programmingExercise.delete.baseReposBuildPlans'
                                     }"
                                     class="mb-1"
+                                    style="border-top-left-radius: 0; border-top-right-radius: 0"
                                     id="delete-exercise"
                                 >
                                     <fa-icon [icon]="faTimes"></fa-icon>
