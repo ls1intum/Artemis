@@ -1,5 +1,5 @@
 import { Injectable, OnDestroy } from '@angular/core';
-import { BehaviorSubject, Observable, Subscriber, Subscription, first } from 'rxjs';
+import { BehaviorSubject, Observable, Subject, Subscriber, Subscription, first } from 'rxjs';
 import SockJS from 'sockjs-client';
 import Stomp, { Client, ConnectionHeaders, Subscription as StompSubscription } from 'webstomp-client';
 
@@ -96,6 +96,8 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
     private socket: any = undefined;
     private subscriptionCounter = 0;
 
+    private webSocketConnected = new Subject<void>();
+
     constructor() {
         this.connectionStateInternal = new BehaviorSubject<ConnectionState>(new ConnectionState(false, false, true));
     }
@@ -182,6 +184,8 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
                 } else {
                     this.alreadyConnectedOnce = true;
                 }
+
+                this.webSocketConnected.next();
             },
             this.stompFailureCallback.bind(this),
         );
@@ -211,6 +215,10 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
 
     public isConnected(): boolean {
         return this.stompClient?.connected || false;
+    }
+
+    public onWebSocketConnected(): Subject<void> {
+        return this.webSocketConnected;
     }
 
     /**

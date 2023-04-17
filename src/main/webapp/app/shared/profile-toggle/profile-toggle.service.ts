@@ -2,7 +2,8 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { distinctUntilChanged, map, tap } from 'rxjs/operators';
-import { HttpClient } from '@angular/common/http';
+import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
+import { HttpClient, HttpResponse } from '@angular/common/http';
 
 /**
  * ProfileToggle, currently only supports LECTURE
@@ -18,12 +19,17 @@ const defaultActiveProfileState: ActiveProfileToggles = Object.values(ProfileTog
 
 @Injectable({ providedIn: 'root' })
 export class ProfileToggleService {
+    private infoUrl = SERVER_API_URL + 'management/info';
+
     private readonly topic = `/topic/management/profile-toggles`;
     private subject: BehaviorSubject<ActiveProfileToggles>;
     private subscriptionInitialized = false;
 
     constructor(private websocketService: JhiWebsocketService, private http: HttpClient) {
         this.subject = new BehaviorSubject<ActiveProfileToggles>(defaultActiveProfileState);
+        this.websocketService.onWebSocketConnected().subscribe(() => {
+            this.reloadActiveProfileTogglesFromServer();
+        });
     }
 
     /**
@@ -89,5 +95,17 @@ export class ProfileToggleService {
             map((activeProfiles) => profiles.every((profile) => activeProfiles.includes(profile))),
             distinctUntilChanged(),
         );
+    }
+
+    /**
+     * Reload the active profile toggles from the server.
+     * This is called after a new WebSocket connection has been established, since the data received from the initial management call
+     * might be outdated (e.g. if the client was connected to an instance that shut down and thus could not send out toggle updates).
+     */
+    reloadActiveProfileTogglesFromServer(): void {
+        this.http.get<ProfileInfo>(this.infoUrl, { observe: 'response' }).subscribe((res: HttpResponse<ProfileInfo>) => {
+            const data = res.body!;
+            this.notifySubscribers(data.combinedProfiles);
+        });
     }
 }

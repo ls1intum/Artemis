@@ -6,7 +6,7 @@ import { ProfileToggle, ProfileToggleService } from 'app/shared/profile-toggle/p
 @Injectable({
     providedIn: 'root',
 })
-export class ProfileAccessService implements CanLoad {
+export class ProfileToggleGuard implements CanLoad {
     constructor(private profileToggleService: ProfileToggleService) {}
 
     canLoad(route: Route): Observable<boolean> {
