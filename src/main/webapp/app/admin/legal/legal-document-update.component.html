@@ -35,7 +35,6 @@
                 [disabled]="!markdownEditor?.markdown || markdownEditor?.markdown?.trim() === ''"
                 [title]="'entity.action.save'"
                 [icon]="faSave"
-                [ngStyle]="{ 'marginRight.px': 10 }"
                 >Save
             </jhi-button>
             <jhi-mode-picker [options]="languageOptions" [value]="currentLanguage" (valueChange)="onLanguageChange($event!)"></jhi-mode-picker>
