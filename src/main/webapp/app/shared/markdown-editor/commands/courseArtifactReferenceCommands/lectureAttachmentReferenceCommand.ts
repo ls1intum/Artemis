@@ -20,48 +20,46 @@ export class LectureAttachmentReferenceCommand extends MultiOptionCommand {
         this.metisService = metisService;
         this.lectureService = lectureService;
 
-        this.metisService.getCourse().lectures?.map((lecture) => {
-            this.lectureService
-                .findWithDetails(lecture.id!)
-                .pipe(map((response: HttpResponse<Lecture>) => response.body!))
-                .subscribe({
-                    next: (lecture: Lecture) => {
-                        this.setValues(
-                            // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
-                            [
-                                ...this.values,
-                                {
-                                    id: lecture.id!.toString(),
-                                    value: lecture.title!,
-                                    type: ReferenceType.LECTURE,
-                                    elements: lecture.attachments?.map((attachment: any) => ({
-                                        id: attachment.id!.toString(),
-                                        value: attachment.name!,
-                                        courseArtifactType: ReferenceType.ATTACHMENT,
-                                    })),
-                                    attachmentUnits: lecture.lectureUnits?.map((unit: any) => {
-                                        return {
-                                            id: unit.id!.toString(),
-                                            value: unit.name!,
-                                            slides: unit.slides
-                                                ?.map((slide: Slide) => {
-                                                    return {
-                                                        id: slide.id!.toString(),
-                                                        slideNumber: slide.slideNumber!,
-                                                        slideImagePath: slide.slideImagePath!,
-                                                        courseArtifactType: ReferenceType.SLIDE,
-                                                    };
-                                                })
-                                                .sort((a: Slide, b: Slide) => a.slideNumber! - b.slideNumber!),
-                                            courseArtifactType: ReferenceType.ATTACHMENT_UNITS,
-                                        };
-                                    }),
-                                },
-                            ],
-                        );
-                    },
+        lectureService
+            .findAllByCourseIdWithSlides(this.metisService.getCourse().id!)
+            .pipe(map((response: HttpResponse<Lecture[]>) => response.body!))
+            .subscribe((lectures: Lecture[]) => {
+                lectures.map((lecture) => {
+                    this.setValues(
+                        // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
+                        [
+                            ...this.values,
+                            {
+                                id: lecture.id!.toString(),
+                                value: lecture.title!,
+                                type: ReferenceType.LECTURE,
+                                elements: lecture.attachments?.map((attachment: any) => ({
+                                    id: attachment.id!.toString(),
+                                    value: attachment.name!,
+                                    courseArtifactType: ReferenceType.ATTACHMENT,
+                                })),
+                                attachmentUnits: lecture.lectureUnits?.map((unit: any) => {
+                                    return {
+                                        id: unit.id!.toString(),
+                                        value: unit.name!,
+                                        slides: unit.slides
+                                            ?.map((slide: Slide) => {
+                                                return {
+                                                    id: slide.id!.toString(),
+                                                    slideNumber: slide.slideNumber!,
+                                                    slideImagePath: slide.slideImagePath!,
+                                                    courseArtifactType: ReferenceType.SLIDE,
+                                                };
+                                            })
+                                            .sort((a: Slide, b: Slide) => a.slideNumber! - b.slideNumber!),
+                                        courseArtifactType: ReferenceType.ATTACHMENT_UNITS,
+                                    };
+                                }),
+                            },
+                        ],
+                    );
                 });
-        });
+            });
     }
 
     /**
@@ -78,7 +76,7 @@ export class LectureAttachmentReferenceCommand extends MultiOptionCommand {
     execute(selectedLectureId: string, type?: ReferenceType, selectedElementId?: string, selectedUnitId?: string, selectedSlideId?: string): void {
         const selectedLecture = this.metisService.getCourse().lectures!.find((value) => value.id!.toString() === selectedLectureId)!;
         this.lectureService
-            .findWithDetails(selectedLecture.id!)
+            .findWithDetailsWithSlides(selectedLecture.id!)
             .pipe(map((response: HttpResponse<Lecture>) => response.body!))
             .subscribe({
                 next: (lecture: Lecture) => {

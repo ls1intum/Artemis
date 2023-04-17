@@ -1,7 +1,7 @@
 import { Component, Input } from '@angular/core';
 import { PostingContentPart, ReferenceType } from '../../metis.util';
 import { FileService } from 'app/shared/http/file.service';
-import { faChalkboardUser, faCheckDouble, faFile, faFileUpload, faFont, faKeyboard, faMessage, faPaperclip, faProjectDiagram } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faChalkboardUser, faCheckDouble, faFile, faFileUpload, faFont, faKeyboard, faMessage, faPaperclip, faProjectDiagram } from '@fortawesome/free-solid-svg-icons';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { EnlargeSlideImageComponent } from 'app/shared/metis/posting-content/enlarge-slide-image/enlarge-slide-image-component';
 import { MatDialog } from '@angular/material/dialog';
@@ -14,12 +14,15 @@ import { MatDialog } from '@angular/material/dialog';
 export class PostingContentPartComponent {
     @Input() postingContentPart: PostingContentPart;
 
+    imageNotFound = false;
+
     // Only allow certain html tags and attributes
     allowedHtmlTags: string[] = ['a', 'b', 'br', 'blockquote', 'code', 'del', 'em', 'i', 'ins', 'li', 'mark', 'ol', 'p', 'pre', 'small', 'span', 'strong', 'sub', 'sup', 'ul'];
     allowedHtmlAttributes: string[] = ['href'];
 
     // icons
     faFile = faFile;
+    faBan = faBan;
 
     constructor(private fileService: FileService, private dialog: MatDialog) {}
 
@@ -30,6 +33,10 @@ export class PostingContentPartComponent {
      */
     openAttachment(attachmentUrl: string): void {
         this.fileService.downloadFile(attachmentUrl);
+    }
+
+    toggleImageNotFound(): void {
+        this.imageNotFound = true;
     }
 
     /**

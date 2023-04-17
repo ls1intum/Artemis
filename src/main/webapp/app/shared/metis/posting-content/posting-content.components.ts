@@ -52,7 +52,6 @@ export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
         this.postsSubscription = this.metisService.posts.subscribe((posts: Post[]) => {
             this.currentlyLoadedPosts = posts;
             const patternMatches: PatternMatch[] = this.getPatternMatches();
-            console.log(patternMatches);
             this.computePostingContentParts(patternMatches);
         });
     }

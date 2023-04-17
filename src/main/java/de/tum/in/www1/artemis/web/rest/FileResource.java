@@ -6,11 +6,11 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLConnection;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -44,7 +44,6 @@ import de.tum.in.www1.artemis.service.ResourceLoaderService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.lecture.AttachmentUnitResource;
-import tech.jhipster.config.JHipsterProperties;
 
 /**
  * REST controller for managing Files.
@@ -54,6 +53,8 @@ import tech.jhipster.config.JHipsterProperties;
 public class FileResource {
 
     private final Logger log = LoggerFactory.getLogger(FileResource.class);
+
+    private final static int DAYS_TO_CACHE = 1;
 
     private final FileService fileService;
 
@@ -79,12 +80,10 @@ public class FileResource {
 
     private final AuthorizationCheckService authorizationCheckService;
 
-    private final JHipsterProperties jHipsterProperties;
-
     public FileResource(SlideRepository slideRepository, AuthorizationCheckService authorizationCheckService, FileService fileService, ResourceLoaderService resourceLoaderService,
             LectureRepository lectureRepository, FileUploadSubmissionRepository fileUploadSubmissionRepository, FileUploadExerciseRepository fileUploadExerciseRepository,
             AttachmentRepository attachmentRepository, AttachmentUnitRepository attachmentUnitRepository, AuthorizationCheckService authCheckService, UserRepository userRepository,
-            ExamUserRepository examUserRepository, JHipsterProperties jHipsterProperties) {
+            ExamUserRepository examUserRepository) {
         this.fileService = fileService;
         this.resourceLoaderService = resourceLoaderService;
         this.lectureRepository = lectureRepository;
@@ -96,7 +95,6 @@ public class FileResource {
         this.userRepository = userRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.examUserRepository = examUserRepository;
-        this.jHipsterProperties = jHipsterProperties;
         this.slideRepository = slideRepository;
     }
 
@@ -488,7 +486,7 @@ public class FileResource {
             }
             var response = ResponseEntity.ok().headers(headers).contentType(MediaType.parseMediaType(mimeType)).header("filename", filename);
             if (cache) {
-                var cacheControl = CacheControl.maxAge(jHipsterProperties.getHttp().getCache().getTimeToLiveInDays(), TimeUnit.DAYS).cachePublic();
+                var cacheControl = CacheControl.maxAge(Duration.ofDays(DAYS_TO_CACHE)).cachePublic();
                 response = response.cacheControl(cacheControl);
             }
             return response.body(file);

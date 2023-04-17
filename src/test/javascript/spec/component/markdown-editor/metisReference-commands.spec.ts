@@ -26,6 +26,7 @@ describe('Exercise Lecture Attachment Reference Commands', () => {
     let metisService: MetisService;
     let lectureService: LectureService;
     let findLectureWithDetailsSpy: jest.SpyInstance;
+    let findAllLecturesWithDetailsSpy: jest.SpyInstance;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -38,7 +39,8 @@ describe('Exercise Lecture Attachment Reference Commands', () => {
                 comp = fixture.componentInstance;
                 metisService = TestBed.inject(MetisService);
                 lectureService = TestBed.inject(LectureService);
-                findLectureWithDetailsSpy = jest.spyOn(lectureService, 'findWithDetails');
+                findLectureWithDetailsSpy = jest.spyOn(lectureService, 'findWithDetailsWithSlides');
+                findAllLecturesWithDetailsSpy = jest.spyOn(lectureService, 'findAllByCourseIdWithSlides');
             });
     });
 
@@ -54,13 +56,11 @@ describe('Exercise Lecture Attachment Reference Commands', () => {
     });
 
     it('should initialize lecture attachment reference command correctly', () => {
-        const returnValue = of(new HttpResponse({ body: metisLecture, status: 200 }));
-        const returnValue2 = of(new HttpResponse({ body: metisLecture2, status: 200 }));
-        const returnValue3 = of(new HttpResponse({ body: metisLecture3, status: 200 }));
+        const returnValue = of(new HttpResponse({ body: [metisLecture, metisLecture2, metisLecture3], status: 200 }));
 
-        findLectureWithDetailsSpy.mockReturnValueOnce(returnValue).mockReturnValueOnce(returnValue2).mockReturnValueOnce(returnValue3);
+        findAllLecturesWithDetailsSpy.mockReturnValue(returnValue);
         lectureReferenceCommand = new LectureAttachmentReferenceCommand(metisService, lectureService);
-        expect(findLectureWithDetailsSpy).toHaveBeenCalledTimes(metisService.getCourse().lectures!.length);
+        expect(findAllLecturesWithDetailsSpy).toHaveBeenCalledOnce();
 
         expect(lectureReferenceCommand.getValues()).toEqual([
             {
@@ -146,9 +146,13 @@ describe('Exercise Lecture Attachment Reference Commands', () => {
     });
 
     it('should insert correct reference link for lecture to markdown editor on execute', () => {
-        const returnValue = of(new HttpResponse({ body: {}, status: 200 }));
-        findLectureWithDetailsSpy.mockReturnValue(returnValue);
+        const returnValue = of(new HttpResponse({ body: [metisLecture], status: 200 }));
+        findAllLecturesWithDetailsSpy.mockReturnValue(returnValue);
         lectureReferenceCommand = new LectureAttachmentReferenceCommand(metisService, lectureService);
+        expect(findAllLecturesWithDetailsSpy).toHaveBeenCalledOnce();
+
+        const returnValueDetail = of(new HttpResponse({ body: metisLecture, status: 200 }));
+        findLectureWithDetailsSpy.mockReturnValue(returnValueDetail);
 
         comp.defaultCommands = [lectureReferenceCommand];
         fixture.detectChanges();
@@ -161,9 +165,13 @@ describe('Exercise Lecture Attachment Reference Commands', () => {
     });
 
     it('should insert correct reference link for attachment to markdown editor on execute', () => {
-        const returnValue = of(new HttpResponse({ body: {}, status: 200 }));
-        findLectureWithDetailsSpy.mockReturnValue(returnValue);
+        const returnValue = of(new HttpResponse({ body: [], status: 200 }));
+        findAllLecturesWithDetailsSpy.mockReturnValue(returnValue);
         lectureReferenceCommand = new LectureAttachmentReferenceCommand(metisService, lectureService);
+        expect(findAllLecturesWithDetailsSpy).toHaveBeenCalledOnce();
+
+        const returnValueDetail = of(new HttpResponse({ body: {}, status: 200 }));
+        findLectureWithDetailsSpy.mockReturnValue(returnValueDetail);
 
         comp.defaultCommands = [lectureReferenceCommand];
         fixture.detectChanges();
@@ -177,9 +185,13 @@ describe('Exercise Lecture Attachment Reference Commands', () => {
     });
 
     it('should insert correct reference link for attachment unit to markdown editor on execute', () => {
-        const returnValue = of(new HttpResponse({ body: metisLecture3, status: 200 }));
-        findLectureWithDetailsSpy.mockReturnValue(returnValue);
+        const returnValue = of(new HttpResponse({ body: [metisLecture3], status: 200 }));
+        findAllLecturesWithDetailsSpy.mockReturnValue(returnValue);
         lectureReferenceCommand = new LectureAttachmentReferenceCommand(metisService, lectureService);
+        expect(findAllLecturesWithDetailsSpy).toHaveBeenCalledOnce();
+
+        const returnValueDetail = of(new HttpResponse({ body: metisLecture3, status: 200 }));
+        findLectureWithDetailsSpy.mockReturnValue(returnValueDetail);
 
         comp.defaultCommands = [lectureReferenceCommand];
         fixture.detectChanges();
@@ -195,8 +207,13 @@ describe('Exercise Lecture Attachment Reference Commands', () => {
     });
 
     it('should insert correct reference link for attachment unit SLIDE to markdown editor on execute', () => {
-        const returnValue = of(new HttpResponse({ body: metisLecture3, status: 200 }));
-        findLectureWithDetailsSpy.mockReturnValue(returnValue);
+        const returnValue = of(new HttpResponse({ body: [metisLecture3], status: 200 }));
+        findAllLecturesWithDetailsSpy.mockReturnValue(returnValue);
+        lectureReferenceCommand = new LectureAttachmentReferenceCommand(metisService, lectureService);
+        expect(findAllLecturesWithDetailsSpy).toHaveBeenCalledOnce();
+
+        const returnValueDetail = of(new HttpResponse({ body: metisLecture3, status: 200 }));
+        findLectureWithDetailsSpy.mockReturnValue(returnValueDetail);
         lectureReferenceCommand = new LectureAttachmentReferenceCommand(metisService, lectureService);
 
         comp.defaultCommands = [lectureReferenceCommand];
