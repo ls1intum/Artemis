@@ -90,6 +90,7 @@ describe('Test exam test run', () => {
     });
 
     // Skip since this functionality is not yet supported
+    // TODO: Activate test as soon as editing test run working times for test exams is possible
     // it.skip('Change test run working time', () => {
     //     const hour = 1;
     //     const minutes = 20;
