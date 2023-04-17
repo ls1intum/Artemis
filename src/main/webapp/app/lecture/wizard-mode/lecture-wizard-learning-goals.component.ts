@@ -155,7 +155,7 @@ export class LectureUpdateWizardLearningGoalsComponent implements OnInit {
 
                     this.learningGoals = this.learningGoals.concat(newLearningGoal);
 
-                    this.alertService.success(`Learning goal ${this.currentlyProcessedLearningGoal.title} was successfully created.`);
+                    this.alertService.success(`Competency ${this.currentlyProcessedLearningGoal.title} was successfully created.`);
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             });
@@ -199,7 +199,7 @@ export class LectureUpdateWizardLearningGoalsComponent implements OnInit {
                         this.learningGoals[index] = editedLearningGoal;
                     }
 
-                    this.alertService.success(`Learning goal ${this.currentlyProcessedLearningGoal.title} was successfully edited.`);
+                    this.alertService.success(`Competency ${this.currentlyProcessedLearningGoal.title} was successfully edited.`);
                     this.currentlyProcessedLearningGoal = new LearningGoal();
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
