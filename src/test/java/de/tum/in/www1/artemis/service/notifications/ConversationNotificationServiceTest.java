@@ -96,5 +96,10 @@ class ConversationNotificationServiceTest extends AbstractSpringIntegrationBambo
         conversationNotificationService.notifyAboutNewMessage(post);
         verify(messagingTemplate, times(1)).convertAndSend(eq("/topic/conversation/" + post.getConversation().getId() + "/notifications"), (Object) any());
         verifyRepositoryCallWithCorrectNotification(NEW_MESSAGE_TITLE);
+
+        // make sure that objects can be deleted after notification is saved
+        conversationMessageRepository.deleteAll();
+        conversationParticipantRepository.deleteAll();
+        conversationRepository.deleteAll();
     }
 }
