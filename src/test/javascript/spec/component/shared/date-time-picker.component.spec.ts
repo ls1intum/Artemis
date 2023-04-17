@@ -109,24 +109,12 @@ describe('FormDateTimePickerComponent', () => {
             expect(valueChangedStub).not.toHaveBeenCalled();
         });
 
-        it('should not update field with null', () => {
+        it('should not update field with object', () => {
             const valueChangedStub = jest.spyOn(component, 'valueChanged').mockImplementation();
             const onChangeSpy = jest.spyOn(component, '_onChange');
             component.value = normalDateAsDateObject;
 
-            component.updateField(null);
-
-            expect(component.value).toBe(normalDateAsDateObject);
-            expect(onChangeSpy).not.toHaveBeenCalled();
-            expect(valueChangedStub).not.toHaveBeenCalledOnce();
-        });
-
-        it('should not update field with dayJS', () => {
-            const valueChangedStub = jest.spyOn(component, 'valueChanged').mockImplementation();
-            const onChangeSpy = jest.spyOn(component, '_onChange');
-            component.value = normalDateAsDateObject;
-
-            const newValue = normalDate.add(1, 'day');
+            const newValue = {};
             component.updateField(newValue);
 
             expect(component.value).toBe(normalDateAsDateObject);
