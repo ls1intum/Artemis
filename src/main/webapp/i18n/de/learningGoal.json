@@ -43,7 +43,7 @@
                 "import": "Kompetenz importieren",
                 "create": "Kompetenz erstellen"
             },
-            "importLearningGoal": {
+            "importCompetency": {
                 "title": "Kompetenz importieren",
                 "search": "Suche nach einer Kompetenz:",
                 "loading": "Lade...",

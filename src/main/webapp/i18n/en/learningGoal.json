@@ -42,9 +42,9 @@
                 "import": "Import competency",
                 "create": "Create competency"
             },
-            "importLearningGoal": {
-                "title": "Import a Learning Goal",
-                "search": "Search for a learning goal:",
+            "importCompetency": {
+                "title": "Import a Competency",
+                "search": "Search for a competency:",
                 "loading": "Loading...",
                 "table": {
                     "title": "Title",

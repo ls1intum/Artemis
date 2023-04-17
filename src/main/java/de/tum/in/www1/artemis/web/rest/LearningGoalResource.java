@@ -217,31 +217,31 @@ public class LearningGoalResource {
     }
 
     /**
-     * POST /courses/:courseId/learning-goals/import : imports a new learning goal.
+     * POST /courses/:courseId/learning-goals/import : imports a new competency.
      *
-     * @param courseId             the id of the course to which the learning goal should be imported to
-     * @param learningGoalToImport the learning goal that should be imported
-     * @return the ResponseEntity with status 201 (Created) and with body containing the imported learning goal
+     * @param courseId           the id of the course to which the learning goal should be imported to
+     * @param competencyToImport the competency that should be imported
+     * @return the ResponseEntity with status 201 (Created) and with body containing the imported competency
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("/courses/{courseId}/learning-goals/import")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<LearningGoal> importLearningGoal(@PathVariable long courseId, @RequestBody LearningGoal learningGoalToImport) throws URISyntaxException {
-        log.info("REST request to import a learning goal: {}", learningGoalToImport.getId());
+    public ResponseEntity<LearningGoal> importCompetency(@PathVariable long courseId, @RequestBody LearningGoal competencyToImport) throws URISyntaxException {
+        log.info("REST request to import a competency: {}", competencyToImport.getId());
 
         var course = courseRepository.findWithEagerLearningGoalsByIdElseThrow(courseId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, learningGoalToImport.getCourse(), null);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, competencyToImport.getCourse(), null);
 
-        if (learningGoalToImport.getCourse().getId().equals(courseId)) {
-            throw new ConflictException("The learning goal is already added to this course", "LearningGoal", "learningGoalCycle");
+        if (competencyToImport.getCourse().getId().equals(courseId)) {
+            throw new ConflictException("The competency is already added to this course", "LearningGoal", "learningGoalCycle");
         }
 
-        learningGoalToImport.setCourse(course);
-        learningGoalToImport.setId(null);
-        learningGoalToImport = learningGoalRepository.save(learningGoalToImport);
+        competencyToImport.setCourse(course);
+        competencyToImport.setId(null);
+        competencyToImport = learningGoalRepository.save(competencyToImport);
 
-        return ResponseEntity.created(new URI("/api/courses/" + courseId + "/learning-goals/" + learningGoalToImport.getId())).body(learningGoalToImport);
+        return ResponseEntity.created(new URI("/api/courses/" + courseId + "/learning-goals/" + competencyToImport.getId())).body(competencyToImport);
     }
 
     /**

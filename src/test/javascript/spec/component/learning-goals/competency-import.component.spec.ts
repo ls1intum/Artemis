@@ -8,34 +8,34 @@ import { of } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { SortDirective } from 'app/shared/sort/sort.directive';
-import { LearningGoalImportComponent } from 'app/course/learning-goals/learning-goal-management/learning-goal-import.component';
+import { CompetencyImportComponent } from 'app/course/learning-goals/learning-goal-management/competency-import.component';
 import { LearningGoalPagingService } from 'app/course/learning-goals/learning-goal-paging.service';
 import { LearningGoal } from 'app/entities/learningGoal.model';
 import { NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 import { TableColumn } from 'app/shared/import/import-component';
 
-describe('LearningGoalImportComponent', () => {
-    let fixture: ComponentFixture<LearningGoalImportComponent>;
-    let comp: LearningGoalImportComponent;
+describe('CompetencyImportComponent', () => {
+    let fixture: ComponentFixture<CompetencyImportComponent>;
+    let comp: CompetencyImportComponent;
     let pagingService: LearningGoalPagingService;
     let sortService: SortService;
-    let searchForLearningGoalsStub: jest.SpyInstance;
+    let searchForCompetenciesStub: jest.SpyInstance;
     let sortByPropertyStub: jest.SpyInstance;
     let searchResult: SearchResult<LearningGoal>;
     let state: PageableSearch;
-    let learningGoal: LearningGoal;
+    let competency: LearningGoal;
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, FormsModule, MockComponent(NgbPagination)],
-            declarations: [LearningGoalImportComponent, MockComponent(ButtonComponent), MockDirective(SortByDirective), MockDirective(SortDirective)],
+            declarations: [CompetencyImportComponent, MockComponent(ButtonComponent), MockDirective(SortByDirective), MockDirective(SortDirective)],
         })
             .compileComponents()
             .then(() => {
-                fixture = TestBed.createComponent(LearningGoalImportComponent);
+                fixture = TestBed.createComponent(CompetencyImportComponent);
                 comp = fixture.componentInstance;
                 pagingService = TestBed.inject(LearningGoalPagingService);
                 sortService = TestBed.inject(SortService);
-                searchForLearningGoalsStub = jest.spyOn(pagingService, 'searchForLearningGoals');
+                searchForCompetenciesStub = jest.spyOn(pagingService, 'searchForLearningGoals');
                 sortByPropertyStub = jest.spyOn(sortService, 'sortByProperty');
             });
     });
@@ -46,9 +46,9 @@ describe('LearningGoalImportComponent', () => {
 
     beforeEach(() => {
         fixture.detectChanges();
-        learningGoal = new LearningGoal();
-        learningGoal.id = 1;
-        searchResult = { numberOfPages: 3, resultsOnPage: [learningGoal] };
+        competency = new LearningGoal();
+        competency.id = 1;
+        searchResult = { numberOfPages: 3, resultsOnPage: [competency] };
         state = {
             page: 1,
             pageSize: 10,
@@ -57,7 +57,7 @@ describe('LearningGoalImportComponent', () => {
             sortedColumn: TableColumn.ID,
             ...searchResult,
         };
-        searchForLearningGoalsStub.mockReturnValue(of(searchResult));
+        searchForCompetenciesStub.mockReturnValue(of(searchResult));
     });
 
     const setStateAndCallOnInit = (middleExpectation: () => void) => {
@@ -74,7 +74,7 @@ describe('LearningGoalImportComponent', () => {
         setStateAndCallOnInit(() => {
             comp.listSorting = true;
             tick(10);
-            expect(searchForLearningGoalsStub).toHaveBeenCalledWith({ ...state, sortingOrder: SortingOrder.ASCENDING });
+            expect(searchForCompetenciesStub).toHaveBeenCalledWith({ ...state, sortingOrder: SortingOrder.ASCENDING });
             expect(comp.listSorting).toBeTrue();
         });
     }));
@@ -84,7 +84,7 @@ describe('LearningGoalImportComponent', () => {
         setStateAndCallOnInit(() => {
             comp.onPageChange(5);
             tick(10);
-            expect(searchForLearningGoalsStub).toHaveBeenCalledWith({ ...state, page: 5 });
+            expect(searchForCompetenciesStub).toHaveBeenCalledWith({ ...state, page: 5 });
             expect(comp.page).toBe(5);
         });
     }));
@@ -95,9 +95,9 @@ describe('LearningGoalImportComponent', () => {
             const givenSearchTerm = 'givenSearchTerm';
             comp.searchTerm = givenSearchTerm;
             tick(10);
-            expect(searchForLearningGoalsStub).not.toHaveBeenCalled();
+            expect(searchForCompetenciesStub).not.toHaveBeenCalled();
             tick(290);
-            expect(searchForLearningGoalsStub).toHaveBeenCalledWith({ ...state, searchTerm: givenSearchTerm });
+            expect(searchForCompetenciesStub).toHaveBeenCalledWith({ ...state, searchTerm: givenSearchTerm });
             expect(comp.searchTerm).toEqual(givenSearchTerm);
         });
     }));
@@ -107,12 +107,12 @@ describe('LearningGoalImportComponent', () => {
         setStateAndCallOnInit(() => {
             comp.sortedColumn = TableColumn.TITLE;
             tick(10);
-            expect(searchForLearningGoalsStub).toHaveBeenCalledWith({ ...state, sortedColumn: TableColumn.TITLE });
+            expect(searchForCompetenciesStub).toHaveBeenCalledWith({ ...state, sortedColumn: TableColumn.TITLE });
             expect(comp.sortedColumn).toEqual(TableColumn.TITLE);
         });
     }));
 
-    it('should return learning goal id', () => {
-        expect(comp.trackId(0, learningGoal)).toEqual(learningGoal.id);
+    it('should return competency id', () => {
+        expect(comp.trackId(0, competency)).toEqual(competency.id);
     });
 });

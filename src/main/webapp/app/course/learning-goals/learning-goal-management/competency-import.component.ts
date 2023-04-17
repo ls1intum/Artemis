@@ -5,10 +5,10 @@ import { Subject } from 'rxjs';
 import { LearningGoal } from 'app/entities/learningGoal.model';
 
 @Component({
-    selector: 'jhi-learning-goal-import',
-    templateUrl: './learning-goal-import.component.html',
+    selector: 'jhi-competency-import',
+    templateUrl: './competency-import.component.html',
 })
-export class LearningGoalImportComponent extends ImportComponent<LearningGoal> {
+export class CompetencyImportComponent extends ImportComponent<LearningGoal> {
     override performSearch(searchSubject: Subject<void>, debounce: number) {
         searchSubject
             .pipe(

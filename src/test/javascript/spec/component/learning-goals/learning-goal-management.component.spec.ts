@@ -19,7 +19,7 @@ import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.
 import { PrerequisiteImportComponent } from 'app/course/learning-goals/learning-goal-management/prerequisite-import.component';
 import { Edge } from '@swimlane/ngx-graph';
 import { Component } from '@angular/core';
-import { LearningGoalImportComponent } from 'app/course/learning-goals/learning-goal-management/learning-goal-import.component';
+import { CompetencyImportComponent } from 'app/course/learning-goals/learning-goal-management/competency-import.component';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock-has-any-authority.directive';
 import { By } from '@angular/platform-browser';
@@ -188,7 +188,7 @@ describe('LearningGoalManagementComponent', () => {
         importButton.nativeElement.click();
 
         expect(modalService.open).toHaveBeenCalledOnce();
-        expect(modalService.open).toHaveBeenCalledWith(LearningGoalImportComponent, { size: 'lg', backdrop: 'static' });
+        expect(modalService.open).toHaveBeenCalledWith(CompetencyImportComponent, { size: 'lg', backdrop: 'static' });
         expect(modalRef.componentInstance.disabledIds).toBeArrayOfSize(3);
         expect(modalRef.componentInstance.disabledIds).toContainAllValues([1, 5, 3]);
     });

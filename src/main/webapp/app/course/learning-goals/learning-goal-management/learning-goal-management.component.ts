@@ -13,7 +13,7 @@ import { PrerequisiteImportComponent } from 'app/course/learning-goals/learning-
 import { ClusterNode, Edge, Node } from '@swimlane/ngx-graph';
 import { AccountService } from 'app/core/auth/account.service';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
-import { LearningGoalImportComponent } from 'app/course/learning-goals/learning-goal-management/learning-goal-import.component';
+import { CompetencyImportComponent } from 'app/course/learning-goals/learning-goal-management/competency-import.component';
 
 @Component({
     selector: 'jhi-learning-goal-management',
@@ -204,7 +204,7 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
      * Opens a modal for selecting a learning goal to import to the current course.
      */
     openImportModal() {
-        const modalRef = this.modalService.open(LearningGoalImportComponent, { size: 'lg', backdrop: 'static' });
+        const modalRef = this.modalService.open(CompetencyImportComponent, { size: 'lg', backdrop: 'static' });
         modalRef.componentInstance.disabledIds = this.learningGoals.concat(this.prerequisites).map((learningGoal) => learningGoal.id);
         modalRef.result.then((selectedLearningGoal: LearningGoal) => {
             this.learningGoalService
