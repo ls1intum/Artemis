@@ -171,8 +171,7 @@ public class LectureResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
 
         Set<Lecture> lectures = lectureRepository.findAllByCourseIdWithAttachmentsAndLectureUnitsAndSlides(courseId);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        lectures.forEach(lecture -> lectureService.filterActiveLectureUnits(lecture, user));
+        lectures.forEach(lecture -> lectureService.filterActiveLectureUnits(lecture));
         return ResponseEntity.ok().body(lectures);
     }
 
@@ -252,7 +251,7 @@ public class LectureResource {
      */
     @GetMapping("/lectures/{lectureId}/details-with-slides")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<Lecture> getLectureWithSlides(@PathVariable Long lectureId) {
+    public ResponseEntity<Lecture> getLectureWithDetailsAndSlides(@PathVariable Long lectureId) {
         log.debug("REST request to get lecture {} with details with slides ", lectureId);
         Lecture lecture = lectureRepository.findByIdWithLectureUnitsAndWithSlidesElseThrow(lectureId);
         Course course = lecture.getCourse();
@@ -261,7 +260,7 @@ public class LectureResource {
         }
         User user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
-        lectureService.filterActiveLectureUnits(lecture, user);
+        lectureService.filterActiveLectureUnits(lecture);
         lectureService.filterActiveAttachments(lecture, user);
 
         return ResponseEntity.ok(lecture);

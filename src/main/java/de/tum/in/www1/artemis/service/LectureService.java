@@ -52,14 +52,9 @@ public class LectureService {
      * Returns lecture with only active lectureUnits
      *
      * @param lectureWithLectureUnits lecture that has lectureUnits
-     * @param user                    the user for which this call should filter
      * @return lecture with filtered lectureUnits
      */
-    public Lecture filterActiveLectureUnits(Lecture lectureWithLectureUnits, User user) {
-        Course course = lectureWithLectureUnits.getCourse();
-        if (authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
-            return lectureWithLectureUnits;
-        }
+    public Lecture filterActiveLectureUnits(Lecture lectureWithLectureUnits) {
 
         List<LectureUnit> filteredLectureUnits = new ArrayList<>();
         for (LectureUnit units : lectureWithLectureUnits.getLectureUnits()) {
