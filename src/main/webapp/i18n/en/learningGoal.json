@@ -129,9 +129,9 @@
             },
             "relation": {
                 "competencyRelations": "Competency Relations",
-                "tailLearningGoal": "Tail Learning Goal",
+                "tailLearningGoal": "Tail Competency",
                 "relationType": "Relation Type",
-                "headLearningGoal": "Head Learning Goal",
+                "headLearningGoal": "Head Competency",
                 "relates": "Relates",
                 "assumes": "Assumes",
                 "extends": "Extends",
