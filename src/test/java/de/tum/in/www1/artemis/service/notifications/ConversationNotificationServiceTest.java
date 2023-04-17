@@ -56,7 +56,7 @@ class ConversationNotificationServiceTest extends AbstractSpringIntegrationBambo
 
     @BeforeEach
     void setUp() {
-        this.database.addUsers(TEST_PREFIX, 5, 1, 0, 1);
+        this.database.addUsers(TEST_PREFIX, 2, 1, 0, 1);
         Course course = this.database.createCourse();
         user1 = userRepository.findOneByLogin(TEST_PREFIX + "student1").get();
         User user2 = userRepository.findOneByLogin(TEST_PREFIX + "tutor1").get();
