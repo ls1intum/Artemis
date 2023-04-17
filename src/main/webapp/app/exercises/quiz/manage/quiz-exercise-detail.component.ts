@@ -296,7 +296,7 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
      */
     validateDate() {
         this.exerciseService.validateDate(this.quizExercise);
-        this.isInvalidDate = this.isInvalidReleaseDate && this.isInvalidStartDate && this.isInvalidDueDate && this.isInvalidBachModeStartTime;
+        this.isInvalidDate = this.isInvalidReleaseDate || this.isInvalidStartDate || this.isInvalidDueDate || this.isInvalidBachModeStartTime;
         const dueDate = this.quizExercise.quizMode === QuizMode.SYNCHRONIZED ? null : this.quizExercise.dueDate;
         this.quizExercise?.quizBatches?.forEach((batch) => {
             const startTime = dayjs(batch.startTime);
