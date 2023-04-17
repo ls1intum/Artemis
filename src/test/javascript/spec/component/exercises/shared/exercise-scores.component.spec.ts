@@ -182,6 +182,7 @@ describe('Exercise Scores Component', () => {
         expect(getParticipationsMock).toHaveBeenCalledOnce();
         expect(getParticipationsMock).toHaveBeenCalledWith(2, true);
         expect(component.filteredParticipations).toEqual(participationsToFilter);
+        expect(component.correctionRoundIndices).toEqual([0]);
     }));
 
     it('should get exercise participation link for exercise without an exercise group', () => {
@@ -347,5 +348,18 @@ describe('Exercise Scores Component', () => {
 
         expect(component.rangeFilter).toBeUndefined();
         expect(component.filteredParticipations).toEqual([participation]);
+    });
+
+    it.each([
+        [{}, ['/course-management', '43', 'programming-exercises', '42', 'submissions', 'new', 'assessment']],
+        [{ results: [{ assessmentType: AssessmentType.AUTOMATIC }] }, ['/course-management', '43', 'programming-exercises', '42', 'submissions', 'new', 'assessment']],
+        [
+            { results: [{ assessmentType: AssessmentType.MANUAL, submission: { id: 44 } }] },
+            ['/course-management', '43', 'programming-exercises', '42', 'submissions', '44', 'assessment'],
+        ],
+    ])('getAssessmentLink should correctly determine if new assessment', (participation: StudentParticipation, expectedLink: string[]) => {
+        component.exercise = { type: ExerciseType.PROGRAMMING, id: 42 } as ProgrammingExercise;
+        component.course = { id: 43 };
+        expect(component.getAssessmentLink(participation)).toEqual(expectedLink);
     });
 });

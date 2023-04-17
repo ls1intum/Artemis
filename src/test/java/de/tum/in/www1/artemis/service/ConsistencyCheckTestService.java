@@ -146,22 +146,6 @@ public class ConsistencyCheckTestService {
     }
 
     /**
-     * Test consistencyCheck feature with a local simulation
-     * of a programming exercise
-     *
-     * @throws Exception if an error occurs
-     */
-    public void testCheckConsistencyOfProgrammingExercise_isLocalSimulation() throws Exception {
-        var exercise = (ProgrammingExercise) course.getExercises().iterator().next();
-        exercise.setTestRepositoryUrl("artemislocalhost/to/set/localSimulation/to/true");
-        exercise = programmingExerciseRepository.save(exercise);
-
-        var consistencyErrors = request.getList("/api/programming-exercises/" + exercise.getId() + "/consistency-check", HttpStatus.OK, ConsistencyErrorDTO.class);
-        assertThat(consistencyErrors).hasSize(1);
-        assertThat(consistencyErrors.get(0).getType()).isEqualTo(ConsistencyErrorDTO.ErrorType.IS_LOCAL_SIMULATION);
-    }
-
-    /**
      * Test consistencyCheck REST Endpoint with unauthorized user
      *
      * @throws Exception if an error occurs

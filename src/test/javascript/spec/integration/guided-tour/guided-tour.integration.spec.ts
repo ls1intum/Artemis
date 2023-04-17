@@ -102,6 +102,7 @@ describe('Guided tour integration', () => {
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: MetisService, useClass: MockMetisService },
+                { provide: ArtemisTranslatePipe, useClass: ArtemisTranslatePipe },
             ],
         })
             .compileComponents()
