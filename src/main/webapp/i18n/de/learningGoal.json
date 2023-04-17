@@ -118,9 +118,9 @@
             },
             "relation": {
                 "competencyRelations": "Beziehungen zwischen Kompetenzen",
-                "tailLearningGoal": "Schwanzlernziel",
+                "tailLearningGoal": "Kompetenz Schluss",
                 "relationType": "Beziehungstyp",
-                "headLearningGoal": "Kopflernziel",
+                "headLearningGoal": "Kompetenz Start",
                 "relates": "Bezieht sich auf",
                 "assumes": "Setzt voraus",
                 "extends": "Erweitert",
