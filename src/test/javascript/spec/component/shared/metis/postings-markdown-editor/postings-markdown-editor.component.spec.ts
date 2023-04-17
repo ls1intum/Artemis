@@ -49,8 +49,8 @@ describe('PostingsMarkdownEditor', () => {
                 debugElement = fixture.debugElement;
                 metisService = TestBed.inject(MetisService);
                 lectureService = TestBed.inject(LectureService);
-                findLectureWithDetailsSpy = jest.spyOn(lectureService, 'findWithDetails');
-                const returnValue = of(new HttpResponse({ body: {}, status: 200 }));
+                findLectureWithDetailsSpy = jest.spyOn(lectureService, 'findAllByCourseIdWithSlides');
+                const returnValue = of(new HttpResponse({ body: [], status: 200 }));
                 findLectureWithDetailsSpy.mockReturnValue(returnValue);
                 fixture.autoDetectChanges();
                 const mockMarkdownEditorElement = fixture.debugElement.query(By.directive(MockMarkdownEditorDirective));
