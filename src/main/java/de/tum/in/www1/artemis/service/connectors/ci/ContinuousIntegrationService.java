@@ -165,15 +165,6 @@ public interface ContinuousIntegrationService {
             List<String> triggeredByRepositories);
 
     /**
-     * Overrides the existing notification URL for build results with the current one in use by Artemis.
-     *
-     * @param projectKey    The key of the project, e.g. 'EIST16W1', which is normally the programming exercise project key.
-     * @param buildPlanKey  The key of the build plan, which is usually the name combined with the project, e.g. 'EIST16W1-GA56HUR'.
-     * @param repositoryUrl the URL of the assignment repository
-     */
-    void overrideBuildPlanNotification(String projectKey, String buildPlanKey, VcsRepositoryUrl repositoryUrl);
-
-    /**
      * Gives overall roles permissions for the defined project. A role can e.g. be all logged-in users
      *
      * @param projectKey  The key of the project to grant permissions to

@@ -22,6 +22,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
+import de.tum.in.www1.artemis.service.connectors.ci.CIMigrationService;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationTriggerService;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
@@ -34,6 +35,8 @@ public class ProgrammingExerciseImportService {
     private final Optional<VersionControlService> versionControlService;
 
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
+
+    private final Optional<CIMigrationService> ciMigrationService;
 
     private final Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService;
 
@@ -54,11 +57,13 @@ public class ProgrammingExerciseImportService {
     private final ProgrammingExerciseImportBasicService programmingExerciseImportBasicService;
 
     public ProgrammingExerciseImportService(Optional<VersionControlService> versionControlService, Optional<ContinuousIntegrationService> continuousIntegrationService,
-            Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService, ProgrammingExerciseService programmingExerciseService, GitService gitService,
-            FileService fileService, UserRepository userRepository, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, UrlService urlService,
-            TemplateUpgradePolicy templateUpgradePolicy, ProgrammingExerciseImportBasicService programmingExerciseImportBasicService) {
+            Optional<CIMigrationService> ciMigrationService, Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService,
+            ProgrammingExerciseService programmingExerciseService, GitService gitService, FileService fileService, UserRepository userRepository,
+            AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, UrlService urlService, TemplateUpgradePolicy templateUpgradePolicy,
+            ProgrammingExerciseImportBasicService programmingExerciseImportBasicService) {
         this.versionControlService = versionControlService;
         this.continuousIntegrationService = continuousIntegrationService;
+        this.ciMigrationService = ciMigrationService;
         this.continuousIntegrationTriggerService = continuousIntegrationTriggerService;
         this.programmingExerciseService = programmingExerciseService;
         this.gitService = gitService;
@@ -175,10 +180,10 @@ public class ProgrammingExerciseImportService {
                 targetExerciseProjectKey, newExercise);
 
         // update notifications of all base build plans
-        continuousIntegrationService.get().overrideBuildPlanNotification(targetExerciseProjectKey, solutionParticipation.getBuildPlanId(),
-                newExercise.getVcsTemplateRepositoryUrl());
-        continuousIntegrationService.get().overrideBuildPlanNotification(targetExerciseProjectKey, templateParticipation.getBuildPlanId(),
-                newExercise.getVcsTemplateRepositoryUrl());
+        ciMigrationService.ifPresent(
+                service -> service.overrideBuildPlanNotification(targetExerciseProjectKey, solutionParticipation.getBuildPlanId(), newExercise.getVcsTemplateRepositoryUrl()));
+        ciMigrationService.ifPresent(
+                service -> service.overrideBuildPlanNotification(targetExerciseProjectKey, templateParticipation.getBuildPlanId(), newExercise.getVcsTemplateRepositoryUrl()));
     }
 
     private void updateAuxiliaryRepositoriesForNewExercise(List<AuxiliaryRepository> newRepositories, List<AuxiliaryRepository> oldRepositories,

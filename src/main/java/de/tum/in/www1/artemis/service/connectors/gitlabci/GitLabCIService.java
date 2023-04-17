@@ -295,18 +295,6 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
     }
 
     @Override
-    public void overrideBuildPlanNotification(String projectKey, String buildPlanKey, VcsRepositoryUrl repositoryUrl) {
-        try {
-            updateVariable(urlService.getRepositoryPathFromRepositoryUrl(repositoryUrl), VARIABLE_NOTIFICATION_URL_NAME,
-                    artemisServerUrl.toExternalForm() + NEW_RESULT_RESOURCE_API_PATH);
-        }
-        catch (GitLabApiException e) {
-            log.error("Error while updating the notification url for the build plan " + buildPlanKey, e);
-            throw new GitLabCIException(e);
-        }
-    }
-
-    @Override
     public void giveProjectPermissions(String projectKey, List<String> groups, List<CIPermission> permissions) {
         log.error("Unsupported action: GitLabCIService.giveProjectPermissions()");
     }

@@ -1,13 +1,11 @@
 package de.tum.in.www1.artemis.service.connectors.bamboo;
 
 import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_REPO_NAME;
-import static de.tum.in.www1.artemis.config.Constants.NEW_RESULT_RESOURCE_API_PATH;
 import static de.tum.in.www1.artemis.config.Constants.SETUP_COMMIT_MESSAGE;
 
 import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -17,9 +15,6 @@ import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -70,9 +65,6 @@ public class BambooService extends AbstractContinuousIntegrationService {
 
     @Value("${artemis.continuous-integration.empty-commit-necessary}")
     private Boolean isEmptyCommitNecessary;
-
-    @Value("${server.url}")
-    private String artemisServerUrl;
 
     private final GitService gitService;
 
@@ -490,107 +482,6 @@ public class BambooService extends AbstractContinuousIntegrationService {
             String newBranch, List<String> triggeredByRepositories) throws BambooException {
         final var vcsRepoName = urlService.getRepositorySlugFromRepositoryUrlString(newRepoUrl);
         continuousIntegrationUpdateService.get().updatePlanRepository(buildProjectKey, buildPlanKey, ciRepoName, repoProjectKey, vcsRepoName, newBranch, triggeredByRepositories);
-    }
-
-    /**
-     * Returns a list of all notification ids for the given build plan for this server.
-     * Bamboo doesn't provide a REST endpoint for this, so we have to parse the HTML page using the admin chain API.
-     *
-     * @param buildPlanKey The key of the build plan, which is usually the name combined with the project, e.g. 'EIST16W1-GA56HUR'.
-     * @return a list of all notification ids
-     */
-    private List<Long> getAllArtemisBuildPlanServerNotificationIds(String buildPlanKey) {
-        MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
-        parameters.add("buildKey", buildPlanKey);
-        String requestUrl = serverUrl + "/chain/admin/config/defaultChainNotification.action";
-        UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(requestUrl).queryParams(parameters);
-
-        var response = restTemplate.exchange(builder.build().toUri(), HttpMethod.GET, null, String.class);
-        var html = response.getBody();
-        if (html == null) {
-            return List.of();
-        }
-        Element notificationTableBody = Jsoup.parse(html).selectFirst("table#notificationTable tbody");
-        if (notificationTableBody == null) {
-            return List.of();
-        }
-        // First column is the event, second column the recipient, third the actions
-        // If there is a URL, the URL is the recipient. In that case we take the notification id from the edit button
-        Elements entries = notificationTableBody.select("tr");
-        List<Long> notificationIds = new ArrayList<>();
-        for (Element entry : entries) {
-            Elements columns = entry.select("td");
-            if (columns.size() != 3) {
-                continue;
-            }
-            String recipient = columns.get(1).text();
-            String actions = columns.get(2).toString();
-            Pattern editNotificationIdPattern = Pattern.compile(".*?id=\"editNotification:(\\d+)\".*?");
-            if (recipient.trim().startsWith(artemisServerUrl)) {
-                Matcher matcher = editNotificationIdPattern.matcher(actions);
-                if (matcher.find()) {
-                    String notificationIdString = matcher.group(1);
-                    notificationIds.add(Long.parseLong(notificationIdString));
-                }
-            }
-        }
-
-        return notificationIds;
-    }
-
-    /**
-     * Deletes the given notification id for the given build plan
-     * Bamboo doesn't provide a REST endpoint for this action, but as we don't need to retrieve anything, it works the same way.
-     *
-     * @param buildPlanKey         The key of the build plan, which is usually the name combined with the project, e.g. 'EIST16W1-GA56HUR'.
-     * @param serverNotificationId the id of the notification to delete
-     */
-    private void deleteBuildPlanServerNotificationId(String buildPlanKey, Long serverNotificationId) {
-        MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
-        parameters.add("buildKey", buildPlanKey);
-        parameters.add("notificationId", serverNotificationId.toString());
-
-        String requestUrl = serverUrl + "/chain/admin/config/deleteChainNotification.action";
-        UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(requestUrl).queryParams(parameters);
-
-        restTemplate.exchange(builder.build().toUri(), HttpMethod.POST, null, String.class);
-    }
-
-    /**
-     * Creates a new notification for the given build plan
-     * Bamboo doesn't provide a REST endpoint for this action, but as we don't need to retrieve anything, it works the same way.
-     *
-     * @param buildPlanKey          The key of the build plan, which is usually the name combined with the project, e.g. 'EIST16W1-GA56HUR'.
-     * @param serverNotificationUrl the url of the endpoint to notify
-     */
-    private void createBuildPlanServerNotification(String buildPlanKey, String serverNotificationUrl) {
-        MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
-        body.add("conditionKey", "com.atlassian.bamboo.plugin.system.notifications:chainCompleted.allBuilds");
-        body.add("selectFields", "conditionKey");
-        body.add("notificationRecipientType", "de.tum.in.www1.bamboo-server:recipient.server");
-        body.add("selectFields", "notificationRecipientType");
-        body.add("webhookUrl", serverNotificationUrl);
-        body.add("buildKey", buildPlanKey);
-        MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
-        headers.add("Content-Type", "application/x-www-form-urlencoded");
-
-        String requestUrl = serverUrl + "/chain/admin/config/configureChainNotification.action";
-        UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(requestUrl);
-
-        HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(body, headers);
-
-        restTemplate.exchange(builder.build().toUri(), HttpMethod.POST, request, String.class);
-    }
-
-    @Override
-    public void overrideBuildPlanNotification(String projectKey, String buildPlanKey, VcsRepositoryUrl vcsRepositoryUrl) {
-        List<Long> notificationIds = getAllArtemisBuildPlanServerNotificationIds(buildPlanKey);
-
-        for (var id : notificationIds) {
-            deleteBuildPlanServerNotificationId(buildPlanKey, id);
-        }
-
-        createBuildPlanServerNotification(buildPlanKey, artemisServerUrl + NEW_RESULT_RESOURCE_API_PATH);
     }
 
     /**

@@ -1,16 +1,10 @@
 package de.tum.in.www1.artemis.service.connectors.jenkins;
 
-import static de.tum.in.www1.artemis.config.Constants.NEW_RESULT_RESOURCE_API_PATH;
-
 import java.io.IOException;
 import java.net.URL;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import javax.xml.transform.TransformerException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,7 +14,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
-import org.w3c.dom.Document;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.offbytwo.jenkins.JenkinsServer;
@@ -42,7 +35,6 @@ import de.tum.in.www1.artemis.service.connectors.ci.CIPermission;
 import de.tum.in.www1.artemis.service.connectors.ci.notification.dto.TestResultsDTO;
 import de.tum.in.www1.artemis.service.connectors.jenkins.jobs.JenkinsJobService;
 import de.tum.in.www1.artemis.service.hestia.TestwiseCoverageService;
-import de.tum.in.www1.artemis.service.util.XmlFileUtils;
 
 @Profile("jenkins")
 @Service
@@ -55,9 +47,6 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
 
     @Value("${jenkins.use-crumb:#{true}}")
     private boolean useCrumb;
-
-    @Value("${server.url}")
-    private String artemisServerUrl;
 
     private final JenkinsBuildPlanService jenkinsBuildPlanService;
 
@@ -127,35 +116,6 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
     public void updatePlanRepository(String buildProjectKey, String buildPlanKey, String ciRepoName, String repoProjectKey, String newRepoUrl, String existingRepoUrl,
             String newDefaultBranch, List<String> triggeredByRepositories) {
         jenkinsBuildPlanService.updateBuildPlanRepositories(buildProjectKey, buildPlanKey, newRepoUrl, existingRepoUrl);
-    }
-
-    /**
-     * Replaces the current notification URL of the given config document with the current one in use by parsing the config document as string and replacing the URL using a regex.
-     *
-     * @param config the config document
-     * @return the config document with the replaced notification URL
-     * @throws TransformerException
-     */
-    private Document replaceNotificationUrlInJobConfig(Document config) throws TransformerException {
-        String stringConfig = XmlFileUtils.writeToString(config);
-        // Pattern captures the current notification URL and additionally everything around in order to replace the URL
-        Pattern pattern = Pattern.compile("(.*?notificationUrl: ')(.+?)('.*?)");
-        Matcher matcher = pattern.matcher(stringConfig);
-        String newStringConfig = matcher.replaceAll("$1" + artemisServerUrl + NEW_RESULT_RESOURCE_API_PATH + "$3");
-        return XmlFileUtils.readFromString(newStringConfig);
-    }
-
-    @Override
-    public void overrideBuildPlanNotification(String projectKey, String buildPlanKey, VcsRepositoryUrl repositoryUrl) {
-        try {
-            Document currentConfig = jenkinsJobService.getJobConfig(projectKey, buildPlanKey);
-            Document newConfig = replaceNotificationUrlInJobConfig(currentConfig);
-            jenkinsJobService.updateJob(projectKey, buildPlanKey, newConfig);
-        }
-        catch (IOException | TransformerException e) {
-            log.error("Could not fix build plan notification for build plan " + buildPlanKey + " in project " + projectKey, e);
-            throw new JenkinsException(e);
-        }
     }
 
     @Override
