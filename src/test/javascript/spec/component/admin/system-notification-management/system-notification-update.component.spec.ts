@@ -142,7 +142,6 @@ describe('SystemNotificationManagementUpdateComponent', () => {
         updateComponent.form.controls['expireDate'].setValue(undefined);
 
         button.click();
-
         tick();
         expect(saveSpy).not.toHaveBeenCalled();
     }));
@@ -151,8 +150,7 @@ describe('SystemNotificationManagementUpdateComponent', () => {
         const saveSpy = jest.spyOn(updateComponent, 'save');
         updateComponentFixture.detectChanges();
 
-        updateComponent.form.controls['notificationDate'].setValue('just some text');
-        updateComponent.form.controls['expireDate'].setValue(dayjs().subtract(1, 'hour'));
+        updateComponent.validateNotificationDate(true);
 
         updateComponentFixture.detectChanges();
         const button = updateComponentFixture.debugElement.nativeElement.querySelector('#saveButton');
@@ -166,8 +164,7 @@ describe('SystemNotificationManagementUpdateComponent', () => {
         const saveSpy = jest.spyOn(updateComponent, 'save');
         updateComponentFixture.detectChanges();
 
-        updateComponent.form.controls['notificationDate'].setValue(dayjs());
-        updateComponent.form.controls['expireDate'].setValue('more invalid text');
+        updateComponent.validateExpireDate(true);
 
         updateComponentFixture.detectChanges();
         const button = updateComponentFixture.debugElement.nativeElement.querySelector('#saveButton');
