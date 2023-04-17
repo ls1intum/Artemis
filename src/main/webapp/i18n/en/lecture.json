@@ -51,7 +51,7 @@
                 "notificationPlaceholder": "Optional: Notification about changes",
                 "chooseFile": "Choose File",
                 "error": "The file {{ fileName }} is too large. The maximum file size is 10MB.",
-                "fileLimitation": "Max. file size 10 MB",
+                "fileLimitation": "Max. file size 20 MB",
                 "fileLimitationTooltip": "Supported types: {{ extensions }}"
             },
             "import": {
