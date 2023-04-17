@@ -8,7 +8,8 @@ updates:
       day: "tuesday"
       time: "08:30"
     reviewers:
-      - "jpbernius"
+      - "bassner"
+      - "Mtze"
     open-pull-requests-limit: 2
     labels:
       - "ready for review"

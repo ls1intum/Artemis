@@ -549,7 +549,7 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void getAllParticipationsForExercise_withLatestResult() throws Exception {
+    void getAllParticipationsForExercise_withLatestResults() throws Exception {
         database.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student1");
         var participation = database.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student2");
         database.addResultToParticipation(null, null, participation);
@@ -559,13 +559,39 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         testParticipation.setTestRun(true);
         participationRepo.save(testParticipation);
         final var params = new LinkedMultiValueMap<String, String>();
-        params.add("withLatestResult", "true");
+        params.add("withLatestResults", "true");
         var participations = request.getList("/api/exercises/" + textExercise.getId() + "/participations", HttpStatus.OK, StudentParticipation.class, params);
         assertThat(participations).as("Exactly 3 participations are returned").hasSize(3).as("Only participation that has student are returned")
                 .allMatch(p -> p.getStudent().isPresent()).as("No submissions should exist for participations")
                 .allMatch(p -> p.getSubmissionCount() == null || p.getSubmissionCount() == 0);
         var participationWithResult = participations.stream().filter(p -> p.getParticipant().equals(database.getUserByLogin(TEST_PREFIX + "student2"))).findFirst().get();
         assertThat(participationWithResult.getResults()).hasSize(1).contains(result);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void getAllParticipationsForExercise_withLatestResults_multipleAssessments() throws Exception {
+        var participation1 = database.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student1");
+        var participation2 = database.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student2");
+        var participation3 = database.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student3");
+        database.addResultToParticipation(AssessmentType.AUTOMATIC, null, participation1);
+        database.addResultToParticipation(AssessmentType.MANUAL, null, participation1);
+        database.addResultToParticipation(AssessmentType.MANUAL, null, participation2);
+        database.addResultToParticipation(AssessmentType.MANUAL, null, participation2);
+        database.addResultToParticipation(AssessmentType.MANUAL, null, participation3);
+        database.addResultToParticipation(AssessmentType.AUTOMATIC, null, participation3);
+        final var params = new LinkedMultiValueMap<String, String>();
+        params.add("withLatestResults", "true");
+        var participations = request.getList("/api/exercises/" + textExercise.getId() + "/participations", HttpStatus.OK, StudentParticipation.class, params);
+        assertThat(participations).as("Exactly 3 participations are returned").hasSize(3).as("Only participation that has student are returned")
+                .allMatch(p -> p.getStudent().isPresent()).as("No submissions should exist for participations")
+                .allMatch(p -> p.getSubmissionCount() == null || p.getSubmissionCount() == 0);
+        var recievedParticipation1 = participations.stream().filter(participation -> participation.getParticipant().equals(participation1.getParticipant())).findAny();
+        var recievedParticipation2 = participations.stream().filter(participation -> participation.getParticipant().equals(participation2.getParticipant())).findAny();
+        var recievedParticipation3 = participations.stream().filter(participation -> participation.getParticipant().equals(participation3.getParticipant())).findAny();
+        assertThat(recievedParticipation1).hasValueSatisfying(participation -> assertThat(participation.getResults()).hasSize(1));
+        assertThat(recievedParticipation2).hasValueSatisfying(participation -> assertThat(participation.getResults()).hasSize(2));
+        assertThat(recievedParticipation3).hasValueSatisfying(participation -> assertThat(participation.getResults()).hasSize(2));
     }
 
     @Test
