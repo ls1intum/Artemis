@@ -47,11 +47,15 @@ export enum MetisPostAction {
     NEW_MESSAGE = 'NEW_MESSAGE',
 }
 
-export interface PostContextFilter {
+export class PostContextFilter {
     courseId?: number;
     courseWideContext?: CourseWideContext;
     exerciseId?: number;
     lectureId?: number;
+
+    courseWideContexts?: CourseWideContext[];
+    exerciseIds?: number[];
+    lectureIds?: number[];
     plagiarismCaseId?: number;
     searchText?: string;
     conversationId?: number;

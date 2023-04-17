@@ -31,33 +31,34 @@
                         <span>{{ 'artemisApp.metis.overview.postContextFilter' | artemisTranslate }}</span>
                     </div>
                     <div class="col-auto p-0">
-                        <select
-                            formControlName="context"
-                            id="filter-context"
-                            class="form-select course-discussion-select"
-                            [compareWith]="compareContextFilterOptionFn"
-                            (change)="onSelectContext()"
-                            name="context"
-                        >
-                            <option [ngValue]="{ courseId: course.id }">
-                                {{ course.title + ' ' + ('artemisApp.metis.overview.courseFilterExplanation' | artemisTranslate) }}
-                            </option>
-                            <optgroup [label]="'artemisApp.metis.post.courseWideContext' | artemisTranslate">
-                                <option *ngFor="let context of CourseWideContext | keyvalue" [ngValue]="{ courseWideContext: context.value }">
-                                    {{ 'artemisApp.metis.overview.' + context.value | artemisTranslate }}
-                                </option>
-                            </optgroup>
-                            <optgroup *ngIf="lectures !== undefined && lectures!.length > 0" [label]="'artemisApp.metis.post.lectures' | artemisTranslate">
-                                <option *ngFor="let lecture of lectures" [ngValue]="{ lectureId: lecture.id }">
-                                    {{ lecture.title }}
-                                </option>
-                            </optgroup>
-                            <optgroup *ngIf="exercises !== undefined && exercises!.length > 0" [label]="'artemisApp.metis.post.exercises' | artemisTranslate">
-                                <option *ngFor="let exercise of exercises" [ngValue]="{ exerciseId: exercise.id }">
-                                    {{ exercise.title }}
-                                </option>
-                            </optgroup>
-                        </select>
+                        <mat-form-field>
+                            <mat-select
+                                formControlName="context"
+                                id="filter-context"
+                                class="form-select course-discussion-select"
+                                (change)="onSelectContext()"
+                                (openedChange)="$event === false ? onSelectContext() : null"
+                                name="context"
+                                placeholder="{{ course.title + ' ' + ('artemisApp.metis.overview.courseFilterExplanation' | artemisTranslate) }}"
+                                multiple
+                            >
+                                <mat-optgroup [label]="'artemisApp.metis.post.courseWideContext' | artemisTranslate">
+                                    <mat-option *ngFor="let context of CourseWideContext | keyvalue" [value]="{ courseWideContext: context.value }">
+                                        {{ 'artemisApp.metis.overview.' + context.value | artemisTranslate }}
+                                    </mat-option>
+                                </mat-optgroup>
+                                <mat-optgroup *ngIf="lectures !== undefined && lectures!.length > 0" [label]="'artemisApp.metis.post.lectures' | artemisTranslate">
+                                    <mat-option *ngFor="let lecture of lectures" [value]="{ lectureId: lecture.id }">
+                                        {{ lecture.title }}
+                                    </mat-option>
+                                </mat-optgroup>
+                                <mat-optgroup *ngIf="exercises !== undefined && exercises!.length > 0" [label]="'artemisApp.metis.post.exercises' | artemisTranslate">
+                                    <mat-option *ngFor="let exercise of exercises" [value]="{ exerciseId: exercise.id }">
+                                        {{ exercise.title }}
+                                    </mat-option>
+                                </mat-optgroup>
+                            </mat-select>
+                        </mat-form-field>
                     </div>
                 </div>
             </div>

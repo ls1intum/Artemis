@@ -172,9 +172,7 @@ export class MetisService implements OnDestroy {
             forceUpdate ||
             postContextFilter?.courseId !== this.currentPostContextFilter?.courseId ||
             postContextFilter?.conversationId !== this.currentPostContextFilter?.conversationId ||
-            postContextFilter?.courseWideContext !== this.currentPostContextFilter?.courseWideContext ||
-            postContextFilter?.lectureId !== this.currentPostContextFilter?.lectureId ||
-            postContextFilter?.exerciseId !== this.currentPostContextFilter?.exerciseId ||
+            this.hasDifferentContexts(postContextFilter) ||
             postContextFilter?.plagiarismCaseId !== this.currentPostContextFilter?.plagiarismCaseId ||
             postContextFilter?.page !== this.currentPostContextFilter?.page
         ) {
@@ -517,5 +515,21 @@ export class MetisService implements OnDestroy {
             const updatedTags = Array.from(new Set([...this.tags$.getValue(), ...tags]));
             this.tags$.next(updatedTags);
         }
+    }
+
+    private hasDifferentContexts(other: PostContextFilter): boolean {
+        this.currentPostContextFilter.courseWideContexts?.sort();
+        this.currentPostContextFilter.exerciseIds?.sort((a, b) => a - b);
+        this.currentPostContextFilter.lectureIds?.sort((a, b) => a - b);
+
+        other.courseWideContexts?.sort();
+        other.exerciseIds?.sort((a, b) => a - b);
+        other.lectureIds?.sort((a, b) => a - b);
+
+        return (
+            this.currentPostContextFilter.courseWideContexts?.toString() !== other.courseWideContexts?.toString() ||
+            this.currentPostContextFilter.exerciseIds?.toString() !== other.exerciseIds?.toString() ||
+            this.currentPostContextFilter.lectureIds?.toString() !== other.lectureIds?.toString()
+        );
     }
 }

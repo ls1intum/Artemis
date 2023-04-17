@@ -102,7 +102,7 @@ export class CourseDiscussionComponent extends CourseDiscussionDirective impleme
      */
     resetFormGroup(): void {
         this.formGroup = this.formBuilder.group({
-            context: [this.currentPostContextFilter],
+            context: [[]],
             sortBy: [PostSortCriterion.CREATION_DATE],
             filterToUnresolved: false,
             filterToOwn: false,
@@ -131,6 +131,29 @@ export class CourseDiscussionComponent extends CourseDiscussionDirective impleme
         this.page = 1;
         // will scroll to the top of the posts
         this.forceReload = true;
+
+        const lectureIds: number[] = [];
+        const exerciseIds: number[] = [];
+        const courseWideContexts: CourseWideContext[] = [];
+        let courseId: number | undefined = undefined;
+
+        for (const context of this.formGroup.get('context')?.value || []) {
+            if (context.lectureId) {
+                lectureIds.push(context.lectureId);
+            } else if (context.exerciseId) {
+                exerciseIds.push(context.exerciseId);
+            } else if (context.courseWideContext) {
+                courseWideContexts.push(context.courseWideContext);
+            } else if (context.courseId) {
+                courseId = context.courseId;
+            }
+        }
+
+        this.currentPostContextFilter.courseId = courseId;
+        this.currentPostContextFilter.lectureIds = lectureIds;
+        this.currentPostContextFilter.exerciseIds = exerciseIds;
+        this.currentPostContextFilter.courseWideContexts = courseWideContexts;
+
         super.onSelectContext();
     }
 
@@ -206,11 +229,11 @@ export class CourseDiscussionComponent extends CourseDiscussionDirective impleme
      */
     setFilterAndSort(): void {
         this.currentPostContextFilter = {
+            ...this.currentPostContextFilter,
             courseId: undefined,
             courseWideContext: undefined,
             exerciseId: undefined,
             lectureId: undefined,
-            ...this.formGroup.get('context')?.value,
             searchText: this.searchText,
             pagingEnabled: this.pagingEnabled,
             page: this.page - 1,
