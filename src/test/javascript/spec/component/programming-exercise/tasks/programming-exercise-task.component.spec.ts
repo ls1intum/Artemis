@@ -18,7 +18,7 @@ describe('ProgrammingExerciseTaskComponent', () => {
     beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [MockComponent(ProgrammingExerciseTaskComponent), MockComponent(TestCasePassedBuildsChartComponent), MockPipe(ArtemisTranslatePipe)],
+            declarations: [ProgrammingExerciseTaskComponent, MockComponent(TestCasePassedBuildsChartComponent), MockPipe(ArtemisTranslatePipe)],
             providers: [ProgrammingExerciseTaskService, { provide: TranslateService, useClass: MockTranslateService }],
         })
             .compileComponents()
