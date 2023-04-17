@@ -91,6 +91,11 @@ The online editor displays only visible files, to avoid showing for example ``.g
 This also means that other config files, like SwiftLint's ``.swiftlint.yml`` file, are not shown. Those files currently
 can only be accessed via your own IDE.
 
+Repository Access
+-----------------
+
+.. include:: programming-repository-access.inc
+
 Testing with Ares
 --------------------------------------
 
