@@ -37,7 +37,7 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
-    documentationType = DocumentationType.LearningGoals;
+    documentationType = DocumentationType.Competencies;
 
     getIcon = getIcon;
     getIconTooltip = getIconTooltip;
