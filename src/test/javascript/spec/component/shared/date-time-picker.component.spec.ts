@@ -164,13 +164,17 @@ describe('FormDateTimePickerComponent', () => {
             const invalidDate = new Date('some text, definitely not a date');
             expect(component.isValidDate(invalidDate)).toBeFalse();
         });
+
+        it('checks if an empty object is an invalid valid', () => {
+            const invalidDate = {};
+            expect(component.isValidDate(invalidDate)).toBeFalse();
+        });
     });
 
     it('validateAndUpdateField gets called on input change', () => {
         const validateAndUpdateFieldStub = jest.spyOn(component, 'validateAndUpdateField').mockImplementation();
-        fixture.debugElement.nativeElement.querySelector('#datePicker');
-
         const nativeElement = fixture.nativeElement;
+
         return fixture.whenStable().then(() => {
             const input = nativeElement.querySelector('input');
 
@@ -185,7 +189,6 @@ describe('FormDateTimePickerComponent', () => {
 
         return fixture.whenStable().then(() => {
             const input = nativeElement.querySelector('input');
-            input.dispatchEvent(new Event('input'));
 
             input.dispatchEvent(new Event('input'));
             expect(validateAndUpdateFieldStub).not.toHaveBeenCalled();

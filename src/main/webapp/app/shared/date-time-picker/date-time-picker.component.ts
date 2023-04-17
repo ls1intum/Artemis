@@ -98,7 +98,6 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
      * is selected in the user input and the calendar was exited without saving
      */
     updateField(newValue: Date | object) {
-        console.log(newValue);
         if (this.isValidDate(newValue)) {
             this.isInvalidDate = false;
             this.value = newValue;
