@@ -203,7 +203,7 @@ describe('Notification Service', () => {
         });
 
         it('should navigate to notification target', () => {
-            jest.spyOn(router, 'navigate').mockImplementation();
+            jest.spyOn(router, 'navigate').mockReturnValue(Promise.resolve(true));
 
             notificationService.interpretNotification(quizNotification);
 
