@@ -9,8 +9,8 @@ export class CourseStorageService {
 
     private readonly courseUpdateSubscriptions: Map<number, SubjectObservablePair<Course>> = new Map();
 
-    setCourses(courses: Course[]) {
-        this.storedCourses = courses;
+    setCourses(courses: Course[] | null) {
+        this.storedCourses = courses ?? [];
     }
 
     getCourse(courseId: number) {

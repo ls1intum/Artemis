@@ -9,7 +9,7 @@ export class ScoresStorageService {
 
     private storedScoresPerExerciseType: Map<number, ScoresPerExerciseType> = new Map();
 
-    private participationResults: Result[] = [];
+    private storedParticipationResults: Map<number, Result> = new Map();
 
     getStoredTotalScores(courseId: number): CourseScores | undefined {
         return this.storedTotalScores.get(courseId);
@@ -28,12 +28,12 @@ export class ScoresStorageService {
     }
 
     getStoredParticipationResult(participationId: number): Result | undefined {
-        return this.participationResults.find((result: Result) => result.participation?.id === participationId);
+        return this.storedParticipationResults.get(participationId);
     }
 
     setStoredParticipationResults(participationResults: Result[] | undefined): void {
-        if (participationResults !== undefined) {
-            this.participationResults = participationResults;
+        for (const result of participationResults ?? []) {
+            this.storedParticipationResults.set(result.participation!.id!, result);
         }
     }
 }

@@ -167,7 +167,6 @@ describe('CoursesComponent', () => {
 
         it('should load courses on init', () => {
             const findAllForDashboardSpy = jest.spyOn(courseService, 'findAllForDashboard');
-            const courseStorageServiceSpy = jest.spyOn(courseStorageService, 'setCourses');
             const serverDateServiceSpy = jest.spyOn(serverDateService, 'now');
             const findNextRelevantExerciseSpy = jest.spyOn(component, 'findNextRelevantExercise');
             findAllForDashboardSpy.mockReturnValue(of(new HttpResponse({ body: courses, headers: new HttpHeaders() })));
@@ -178,7 +177,6 @@ describe('CoursesComponent', () => {
             expect(findAllForDashboardSpy).toHaveBeenCalledOnce();
             expect(findNextRelevantExerciseSpy).toHaveBeenCalledOnce();
             expect(component.courses).toEqual(courses);
-            expect(courseStorageServiceSpy).toHaveBeenCalledOnce();
             expect(component.exams).toEqual([exam1, exam2]);
             expect(component.nextRelevantExams).toHaveLength(1);
             expect(component.nextRelevantExams?.[0]).toEqual(exam1);
@@ -194,7 +192,7 @@ describe('CoursesComponent', () => {
             expect(findAllForDashboardSpy).toHaveBeenCalledOnce();
             req.flush(null);
             expect(component.courses).toBeUndefined();
-            expect(courseStorageServiceSpy).not.toHaveBeenCalled();
+            expect(courseStorageServiceSpy).toHaveBeenCalledOnceWith(null);
         });
 
         it('should load exercises on init', () => {
@@ -288,7 +286,6 @@ describe('CoursesComponent', () => {
         const coursesWithTestExam = [course1, course2, course6];
 
         const findAllForDashboardSpy = jest.spyOn(courseService, 'findAllForDashboard');
-        const courseStorageServiceSpy = jest.spyOn(courseStorageService, 'setCourses');
         const serverDateServiceSpy = jest.spyOn(serverDateService, 'now');
         const findNextRelevantExerciseSpy = jest.spyOn(component, 'findNextRelevantExercise');
         findAllForDashboardSpy.mockReturnValue(
@@ -307,7 +304,6 @@ describe('CoursesComponent', () => {
         expect(findAllForDashboardSpy).toHaveBeenCalledOnce();
         expect(findNextRelevantExerciseSpy).toHaveBeenCalledOnce();
         expect(component.courses).toEqual(coursesWithTestExam);
-        expect(courseStorageServiceSpy).toHaveBeenCalledOnce();
         expect(component.exams).toEqual([exam1, exam2, testExam1]);
         expect(component.nextRelevantExams).toEqual([exam1]);
     }));

@@ -251,7 +251,7 @@ describe('CourseOverviewComponent', () => {
 
         await component.ngOnInit();
 
-        expect(getCourseStub).toHaveBeenCalledTimes(2);
+        expect(getCourseStub).toHaveBeenCalledOnce();
         expect(subscribeForQuizChangesStub).toHaveBeenCalledOnce();
         expect(subscribeToTeamAssignmentUpdatesStub).toHaveBeenCalledOnce();
     });

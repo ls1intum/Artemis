@@ -229,8 +229,9 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         this.refreshingCourse = refresh;
         return this.courseService.findOneForDashboard(this.courseId, refresh).pipe(
             map((res: HttpResponse<Course>) => {
-                this.courseStorageService.updateCourse(res.body!);
-                this.course = this.courseStorageService.getCourse(this.courseId);
+                if (res.body) {
+                    this.course = res.body;
+                }
 
                 this.setUpConversationService();
 

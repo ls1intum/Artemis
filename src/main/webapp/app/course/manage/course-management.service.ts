@@ -155,6 +155,7 @@ export class CourseManagementService {
             }),
             map((res: EntityArrayResponseType) => this.processCourseEntityArrayResponseType(res)),
             map((res: EntityArrayResponseType) => this.setCoursesForNotifications(res)),
+            tap((res: EntityArrayResponseType) => this.courseStorageService.setCourses(res.body)),
         );
     }
 

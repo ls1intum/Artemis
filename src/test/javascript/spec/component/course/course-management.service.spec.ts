@@ -97,6 +97,9 @@ describe('Course Management Service', () => {
         scoresPerExerciseTypeMap.set(ExerciseType.TEXT, courseScores);
         scoresPerExerciseTypeMap.set(ExerciseType.FILE_UPLOAD, courseScores);
         participationResult = new Result();
+        const participation = new StudentParticipation();
+        participation.id = 432;
+        participationResult.participation = participation;
         courseForDashboard.participationResults = [participationResult];
         onlineCourseConfiguration = new OnlineCourseConfiguration();
         onlineCourseConfiguration.id = 234;
@@ -188,11 +191,15 @@ describe('Course Management Service', () => {
     }));
 
     it('should find all courses for dashboard', fakeAsync(() => {
+        const courseStorageServiceSpy = jest.spyOn(courseStorageService, 'setCourses');
         returnedFromService = [{ ...courseForDashboard }];
         courseManagementService
             .findAllForDashboard()
             .pipe(take(1))
-            .subscribe((res) => expect(res.body).toEqual([{ ...course }]));
+            .subscribe((res) => {
+                expect(res.body).toEqual([{ ...course }]);
+                expect(courseStorageServiceSpy).toHaveBeenCalledOnce();
+            });
         requestAndExpectDateConversion('GET', `${resourceUrl}/for-dashboard`, returnedFromService, course);
         tick();
     }));
