@@ -1,6 +1,7 @@
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { BaseEntity } from 'app/shared/model/base-entity';
 import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programming-exercise-solution-entry.model';
+import { TestCaseStats } from './programming-exercise-test-case-statistics.model';
 
 export enum Visibility {
     Always = 'ALWAYS',
@@ -25,4 +26,10 @@ export class ProgrammingExerciseTestCase implements BaseEntity {
     exercise?: ProgrammingExercise;
     type?: ProgrammingExerciseTestCaseType;
     solutionEntries?: ProgrammingExerciseSolutionEntry[];
+
+    // Utility information that is not actually part of the object stored on the server
+    resultingPoints?: number;
+    resultingPointsPercent?: number;
+    testCaseStats?: TestCaseStats;
+    changed?: boolean;
 }

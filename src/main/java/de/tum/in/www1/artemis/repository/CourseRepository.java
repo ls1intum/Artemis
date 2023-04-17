@@ -4,7 +4,9 @@ import static de.tum.in.www1.artemis.domain.enumeration.AssessmentType.AUTOMATIC
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
@@ -17,6 +19,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.CourseInformationSharingConfiguration;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.statistics.StatisticsEntry;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -48,6 +51,14 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
 
     @Query("select distinct course from Course course where course.studentGroupName like :name")
     Course findCourseByStudentGroupName(@Param("name") String name);
+
+    @Query("""
+            SELECT CASE WHEN (count(c) > 0) THEN true ELSE false END
+            FROM Course c
+            WHERE c.id = :#{#courseId}
+                AND c.courseInformationSharingConfiguration IN :#{#values}
+            """)
+    boolean informationSharingConfigurationIsOneOf(@Param("courseId") long courseId, @Param("values") Set<CourseInformationSharingConfiguration> values);
 
     @Query("""
             SELECT DISTINCT c FROM Course c
@@ -127,10 +138,33 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     @EntityGraph(type = LOAD, attributePaths = { "exercises", "lectures", "lectures.lectureUnits", "learningGoals", "prerequisites" })
     Optional<Course> findWithEagerExercisesAndLecturesAndLectureUnitsAndLearningGoalsById(long courseId);
 
-    @Query("select distinct course from Course course left join fetch course.organizations organizations left join fetch course.prerequisites prerequisites where (course.startDate is null or course.startDate <= :now) and (course.endDate is null or course.endDate >= :now) and course.onlineCourse = false and course.registrationEnabled = true")
-    List<Course> findAllCurrentlyActiveNotOnlineAndRegistrationEnabledWithOrganizationsAndPrerequisites(@Param("now") ZonedDateTime now);
+    @Query("""
+                SELECT course
+                FROM Course course
+                    LEFT JOIN FETCH course.organizations organizations
+                    LEFT JOIN FETCH course.prerequisites prerequisites
+                WHERE course.id = :courseId
+            """)
+    Optional<Course> findSingleWithOrganizationsAndPrerequisites(@Param("courseId") long courseId);
 
-    @Query("select course from Course course left join fetch course.organizations co where course.id = :courseId")
+    @Query("""
+                SELECT DISTINCT course
+                FROM Course course
+                    LEFT JOIN FETCH course.organizations organizations
+                    LEFT JOIN FETCH course.prerequisites prerequisites
+                WHERE (course.startDate IS NULL OR course.startDate <= :now)
+                    AND (course.endDate IS NULL OR course.endDate >= :now)
+                    AND course.onlineCourse = false
+                    AND course.registrationEnabled = true
+            """)
+    List<Course> findAllActiveNotOnlineAndRegistrationEnabledWithOrganizationsAndPrerequisites(@Param("now") ZonedDateTime now);
+
+    @Query("""
+                SELECT course
+                FROM Course course
+                    LEFT JOIN FETCH course.organizations co
+                WHERE course.id = :courseId
+            """)
     Optional<Course> findWithEagerOrganizations(@Param("courseId") long courseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "onlineCourseConfiguration", "tutorialGroupsConfiguration" })
@@ -277,23 +311,23 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     }
 
     /**
-     * Get all the courses to register with eagerly loaded organizations and prerequisites.
+     * Get a single course to register with eagerly loaded organizations and prerequisites.
      *
-     * @return the list of course entities
+     * @param courseId the id of the course
+     * @return the course entity
      */
-    default List<Course> findAllCurrentlyActiveNotOnlineAndRegistrationEnabledWithOrganizationsAndPrerequisites() {
-        return findAllCurrentlyActiveNotOnlineAndRegistrationEnabledWithOrganizationsAndPrerequisites(ZonedDateTime.now());
+    default Course findSingleWithOrganizationsAndPrerequisitesElseThrow(long courseId) {
+        return findSingleWithOrganizationsAndPrerequisites(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
     }
 
     /**
-     * Get one course by id with lectures and exams. If the course cannot be found throw an exception
+     * Get all the courses to register with eagerly loaded organizations and prerequisites.
+     * Online courses are not included, as they are not meant to be registered for.
      *
-     * @param courseId the id of the entity
-     * @return the entity
+     * @return the list of course entities
      */
-    @NotNull
-    default Course findByIdWithLecturesAndExamsElseThrow(long courseId) {
-        return findWithLecturesAndExamsById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
+    default List<Course> findAllActiveNotOnlineAndRegistrationEnabledWithOrganizationsAndPrerequisites() {
+        return findAllActiveNotOnlineAndRegistrationEnabledWithOrganizationsAndPrerequisites(ZonedDateTime.now());
     }
 
     /**
@@ -352,6 +386,28 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     @NotNull
     default Course findWithEagerLearningGoalsByIdElseThrow(long courseId) {
         return findWithEagerLearningGoalsById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
+    }
+
+    /**
+     * Checks if the messaging feature is enabled for a course.
+     *
+     * @param courseId the id of the course
+     * @return true if the messaging feature is enabled for the course, false otherwise
+     */
+    default boolean isMessagingEnabled(long courseId) {
+        return informationSharingConfigurationIsOneOf(courseId,
+                Set.of(CourseInformationSharingConfiguration.MESSAGING_ONLY, CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING));
+    }
+
+    /**
+     * Checks if the communication feature is enabled for a course.
+     *
+     * @param courseId the id of the course
+     * @return true if the communication feature is enabled for the course, false otherwise
+     */
+    default boolean isCommunicationEnabled(long courseId) {
+        return informationSharingConfigurationIsOneOf(courseId,
+                Set.of(CourseInformationSharingConfiguration.COMMUNICATION_ONLY, CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING));
     }
 
     /**

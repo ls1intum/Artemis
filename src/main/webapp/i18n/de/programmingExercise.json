@@ -3,12 +3,10 @@
         "programmingExercise": {
             "home": {
                 "title": "Programmieraufgaben",
-                "createLabel": "Neue Programmieraufgabe erstellen",
+                "createLabel": "Programmieraufgabe erstellen",
                 "editLabel": "Programmieraufgabe bearbeiten",
-                "generateLabel": "Neue Programmieraufgabe generieren",
                 "importLabel": "Programmieraufgabe importieren",
                 "linkLabel": "Neue Programmieraufgabe verlinken",
-                "createOrEditLabel": "Programmieraufgabe erstellen oder bearbeiten",
                 "switchToGuidedModeLabel": "Zum geführten Modus wechseln",
                 "switchToTraditionalModeLabel": "Zum normalen Modus wechseln",
                 "nextStepLabel": "Weiter"
@@ -283,14 +281,38 @@
                 "downloadExercise": "Programmierübung herunterladen",
                 "downloadAllStudents": "Oder lade die Repositories aller Studierenden herunter",
                 "downloadAllTeams": "Oder lade die Repositories aller Teams herunter",
-                "filterLateSubmissions": "Verspätete Abgaben herausfiltern",
-                "filterLateSubmissionsDate": "Datum zum Filtern verspäteter Abgaben (standardmäßig Einreichungsfrist der Aufgabe)",
-                "addStudentName": "Namen der Studierenden zum Projekt hinzufügen (erlaubt es mehrere Projekte gleichzeitig in Eclipse zu importieren)",
-                "addTeamName": "Namen der Teams zum Projekt hinzufügen (erlaubt es mehrere Projekte gleichzeitig in Eclipse zu importieren)",
-                "addTeamOrStudentName": "Namen der Teams/Studierenden zum Projekt hinzufügen (erlaubt es mehrere Projekte gleichzeitig in Eclipse zu importieren)",
-                "combineStudentCommits": "Alle Änderungen von Studierenden in einem Commit zusammenfassen (um das Review zu vereinfachen)",
-                "anonymizeStudentCommits": "Alle Änderungen von Studierenden anonymisieren",
-                "normalizeCodeStyle": "Code-Style normalisieren (Zeilenumbrüche, Kodierung)",
+                "filterLateSubmissions": {
+                    "title": "Verspätete Abgaben herausfiltern",
+                    "tooltip": "Alle Abgaben und Commits nach einem bestimmten Datum ausschließen"
+                },
+                "filterLateSubmissionsDate": {
+                    "title": "Datum zum Filtern verspäteter Abgaben",
+                    "tooltip": "Standardmäßig das Abgabedatum der Aufgabe, falls kein Datum gesetzt"
+                },
+                "excludePracticeSubmissions": {
+                    "title": "Abgaben aus dem Übungsmodus ausschließen",
+                    "tooltip": "Ignoriere als Übung markierte Abgaben und behalte nur benotete Abgaben"
+                },
+                "addToProject": {
+                    "title": {
+                        "student": "Namen der Studierenden zum Projekt hinzufügen",
+                        "team": "Namen der Teams zum Projekt hinzufügen",
+                        "teamOrStudent": "Namen der Teams/Studierenden zum Projekt hinzufügen"
+                    },
+                    "tooltip": "Erlaubt das gleichzeitige Importieren mehrerer Projekte in Eclipse"
+                },
+                "combineStudentCommits": {
+                    "title": "Alle Änderungen in einem Commit zusammenfassen",
+                    "tooltip": "Fasst alle Commits eines Studierenden in einem einzigen Commit für leichtere Korrektur zusammen"
+                },
+                "anonymizeStudentCommits": {
+                    "title": "Alle Änderungen von Studierenden anonymisieren",
+                    "tooltip": "Verberge die Namen der Studierenden in Commits für eine unvoreingenommene Bewertung"
+                },
+                "normalizeCodeStyle": {
+                    "title": "Code-Style normalisieren",
+                    "tooltip": "Standardisiere Zeilenumbrüche und Kodierung für Konsistenz"
+                },
                 "successMessageRepos": "Die Repositories wurden erfolgreich exportiert. Die generierte zip-Datei wird jetzt heruntergeladen.",
                 "successMessageExercise": "Die Programmierübung wurde erfolgreich exportiert. Die generierte zip-Datei wird jetzt heruntergeladen."
             },

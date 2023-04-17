@@ -3,8 +3,7 @@
         "answerCounter": {
             "home": {
                 "title": "Answer Counters",
-                "createLabel": "Answer Counter erstellen",
-                "createOrEditLabel": "Answer Counter erstellen oder bearbeiten"
+                "createLabel": "Answer Counter erstellen"
             },
             "created": "Answer Counter erstellt mit ID {{ param }}",
             "updated": "Answer Counter aktualisiert mit ID {{ param }}",

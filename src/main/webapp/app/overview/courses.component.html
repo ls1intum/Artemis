@@ -37,10 +37,10 @@
         <h3 class="fw-medium" jhiTranslate="artemisApp.studentDashboard.title">Your current courses</h3>
     </div>
     <div class="col-sm-auto d-flex">
-        <a class="btn btn-primary" [routerLink]="['/courses/register']">{{ 'artemisApp.studentDashboard.register.signUp' | artemisTranslate }}</a>
+        <a class="btn btn-primary" [routerLink]="['/courses/register']">{{ 'artemisApp.studentDashboard.register.title' | artemisTranslate }}</a>
     </div>
 </div>
 <div class="row">
-    <jhi-overview-course-card *ngFor="let course of courses" class="col-12 col-lg-6 col-xl-4 pe-2 ps-2 mb-2" [course]="course" [hasGuidedTour]="course === courseForGuidedTour">
+    <jhi-overview-course-card *ngFor="let course of courses" class="col-12 col-lg-6 col-xl-4 pe-2 ps-2 mb-3" [course]="course" [hasGuidedTour]="course === courseForGuidedTour">
     </jhi-overview-course-card>
 </div>

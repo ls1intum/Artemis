@@ -10,7 +10,9 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 import org.apache.commons.io.FileUtils;
@@ -53,6 +55,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismComparisonRepository;
+import de.tum.in.www1.artemis.service.BuildLogEntryService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
 import de.tum.in.www1.artemis.util.GitUtilService;
 import de.tum.in.www1.artemis.util.LocalRepository;
@@ -90,6 +93,9 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
     @Autowired
     private PostRepository postRepository;
+
+    @Autowired
+    private BuildLogEntryService buildLogEntryService;
 
     private ProgrammingExercise programmingExercise;
 
@@ -580,6 +586,32 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testSaveFilesAfterDueDateAsInstructor() throws Exception {
+        // Instructors should be able to push to their personal assignment repository after the due date of the exercise has passed.
+        programmingExercise.setDueDate(ZonedDateTime.now().minusHours(1));
+
+        // Create assignment repository and participation for the instructor.
+        LocalRepository instructorAssignmentRepository = new LocalRepository(defaultBranch);
+        instructorAssignmentRepository.configureRepos("localInstructorAssignmentRepo", "remoteInstructorAssignmentRepo");
+        var instructorAssignmentRepoUrl = new GitUtilService.MockFileRepositoryUrl(instructorAssignmentRepository.localRepoFile);
+        ProgrammingExerciseStudentParticipation instructorAssignmentParticipation = database.addStudentParticipationForProgrammingExerciseForLocalRepo(programmingExercise,
+                TEST_PREFIX + "instructor1", instructorAssignmentRepoUrl.getURI());
+        doReturn(defaultBranch).when(versionControlService).getOrRetrieveBranchOfStudentParticipation(instructorAssignmentParticipation);
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(instructorAssignmentRepository.localRepoFile.toPath(), null)).when(gitService)
+                .getOrCheckoutRepository(instructorAssignmentParticipation.getVcsRepositoryUrl(), true, defaultBranch);
+
+        request.put(studentRepoBaseUrl + instructorAssignmentParticipation.getId() + "/files?commit=true", List.of(), HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
+    void testUpdateParticipationFiles_cannotAccessParticipation() throws Exception {
+        // student2 should not have access to student1's participation.
+        request.put(studentRepoBaseUrl + participation.getId() + "/files", List.of(), HttpStatus.FORBIDDEN);
+    }
+
+    @Test
     @DisabledOnOs(OS.WINDOWS) // git file locking issues
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testPullChanges() throws Exception {
@@ -701,28 +733,42 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testBuildLogsWithManualResult() throws Exception {
         var submission = database.createProgrammingSubmission(participation, true);
-        doReturn(logs).when(continuousIntegrationService).getLatestBuildLogs(submission);
+        var buildLogEntries = buildLogEntryService.saveBuildLogs(logs, submission);
+        submission.setBuildLogEntries(buildLogEntries);
         database.addResultToSubmission(submission, AssessmentType.SEMI_AUTOMATIC);
         var receivedLogs = request.getList(studentRepoBaseUrl + participation.getId() + "/buildlogs", HttpStatus.OK, BuildLogEntry.class);
         assertThat(receivedLogs).hasSize(2);
-        assertThat(receivedLogs.get(0).getTime()).isEqualTo(logs.get(0).getTime());
-        // due to timezone assertThat isEqualTo issues, we compare those directly first and ignore them afterwards
-        assertThat(receivedLogs).usingRecursiveFieldByFieldElementComparatorIgnoringFields("time", "id").isEqualTo(logs);
+        assertLogsContent(receivedLogs);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testBuildLogs() throws Exception {
         var submission = database.createProgrammingSubmission(participation, true);
-
-        doReturn(logs).when(continuousIntegrationService).getLatestBuildLogs(submission);
-
+        var buildLogEntries = buildLogEntryService.saveBuildLogs(logs, submission);
+        submission.setBuildLogEntries(buildLogEntries);
         database.addResultToSubmission(submission, AssessmentType.AUTOMATIC);
         var receivedLogs = request.getList(studentRepoBaseUrl + participation.getId() + "/buildlogs", HttpStatus.OK, BuildLogEntry.class);
         assertThat(receivedLogs).hasSize(2);
-        assertThat(receivedLogs.get(0).getTime()).isEqualTo(logs.get(0).getTime());
-        // due to timezone assertThat isEqualTo issues, we compare those directly first and ignore them afterwards
-        assertThat(receivedLogs).usingRecursiveFieldByFieldElementComparatorIgnoringFields("time", "id").isEqualTo(logs);
+        assertLogsContent(receivedLogs);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
+    void testGetBuildLogs_cannotAccessParticipation() throws Exception {
+        // student2 should not have access to student1's participation.
+        request.getList(studentRepoBaseUrl + participation.getId() + "/buildlogs", HttpStatus.FORBIDDEN, BuildLogEntry.class);
+    }
+
+    private void assertLogsContent(List<BuildLogEntry> receivedLogs) {
+        for (int i = 0; i < receivedLogs.size(); i++) {
+            assertThat(receivedLogs.get(i).getLog()).isEqualTo(logs.get(i).getLog());
+            // When serializing and deserializing the logs, the time of each BuildLogEntry is converted to UTC.
+            // Convert the time in the logs set up above to UTC and round it to milliseconds for comparison.
+            ZonedDateTime expectedTime = ZonedDateTime.ofInstant(logs.get(i).getTime().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC"));
+            ZonedDateTime actualTime = receivedLogs.get(i).getTime().truncatedTo(ChronoUnit.MILLIS);
+            assertThat(actualTime).isEqualTo(expectedTime);
+        }
     }
 
     @Test
@@ -964,120 +1010,6 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         // Check the logs
         List<ILoggingEvent> logsList = listAppender.list;
         assertThat(logsList.get(0).getLevel()).isEqualTo(Level.ERROR);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testCanAccessParticipation_asInstructor() {
-        // Set solution and template participation
-        database.addSolutionParticipationForProgrammingExercise(programmingExercise);
-        database.addTemplateParticipationForProgrammingExercise(programmingExercise);
-
-        checkCanAccessParticipation(programmingExercise, participation, true, true);
-    }
-
-    void checkCanAccessParticipation(ProgrammingExercise programmingExercise, ProgrammingExerciseStudentParticipation participation, boolean shouldBeAllowed,
-            boolean shouldBeAllowedTemplateSolution) {
-        var isAllowed = programmingExerciseParticipationService.canAccessParticipation(participation);
-        assertThat(isAllowed).isEqualTo(shouldBeAllowed);
-
-        var isAllowedSolution = programmingExerciseParticipationService.canAccessParticipation(programmingExercise.getSolutionParticipation());
-        assertThat(isAllowedSolution).isEqualTo(shouldBeAllowedTemplateSolution);
-
-        var isAllowedTemplate = programmingExerciseParticipationService.canAccessParticipation(programmingExercise.getTemplateParticipation());
-        assertThat(isAllowedTemplate).isEqualTo(shouldBeAllowedTemplateSolution);
-
-        var responseOther = programmingExerciseParticipationService.canAccessParticipation(null);
-        assertThat(responseOther).isFalse();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testCanAccessParticipation_asInstructor_edgeCase_exercise_null() {
-        // Set solution and template participation
-        database.addSolutionParticipationForProgrammingExercise(programmingExercise);
-        database.addTemplateParticipationForProgrammingExercise(programmingExercise);
-
-        // Check with exercise null
-        participation.setExercise(null);
-        programmingExercise.getSolutionParticipation().setExercise(null);
-        programmingExercise.getTemplateParticipation().setExercise(null);
-
-        checkCanAccessParticipation(programmingExercise, participation, true, true);
-
-        // Check with exercise and programmingExercise null (and set everything again)
-        participation.setExercise(null);
-        programmingExercise.getSolutionParticipation().setExercise(null);
-        programmingExercise.getTemplateParticipation().setExercise(null);
-        // Note that in the current implementation, setProgrammingExercise is equivalent to setExercise only for the ProgrammingExerciseStudentParticipation
-        participation.setProgrammingExercise(null);
-        programmingExercise.getSolutionParticipation().setProgrammingExercise(null);
-        programmingExercise.getTemplateParticipation().setProgrammingExercise(null);
-
-        checkCanAccessParticipation(programmingExercise, participation, true, true);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testCanAccessParticipation_asInstructor_edgeCase_programmingExercise_null() {
-        // Set solution and template participation
-        database.addSolutionParticipationForProgrammingExercise(programmingExercise);
-        database.addTemplateParticipationForProgrammingExercise(programmingExercise);
-
-        // Check with programmingExercise only null
-        participation.setProgrammingExercise(null);
-        programmingExercise.getSolutionParticipation().setProgrammingExercise(null);
-        programmingExercise.getTemplateParticipation().setProgrammingExercise(null);
-
-        checkCanAccessParticipation(programmingExercise, participation, true, true);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testCanAccessParticipation_asInstructor_edgeCase_programmingExercise_unknownId() {
-        // Set solution and template participation
-        database.addSolutionParticipationForProgrammingExercise(programmingExercise);
-        database.addTemplateParticipationForProgrammingExercise(programmingExercise);
-
-        // Check with programmingExercise null and a non-existent participation id
-        participation.setProgrammingExercise(null);
-        participation.setId(123456L);
-        programmingExercise.getSolutionParticipation().setProgrammingExercise(null);
-        programmingExercise.getSolutionParticipation().setId(123456L);
-        programmingExercise.getTemplateParticipation().setProgrammingExercise(null);
-        programmingExercise.getTemplateParticipation().setId(123456L);
-
-        checkCanAccessParticipation(programmingExercise, participation, false, false);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testCanAccessParticipation_asStudent() {
-        // Set solution and template participation
-        database.addSolutionParticipationForProgrammingExercise(programmingExercise);
-        database.addTemplateParticipationForProgrammingExercise(programmingExercise);
-
-        checkCanAccessParticipation(programmingExercise, participation, true, false);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void testCanAccessParticipation_asTutor() {
-        // Set solution and template participation
-        database.addSolutionParticipationForProgrammingExercise(programmingExercise);
-        database.addTemplateParticipationForProgrammingExercise(programmingExercise);
-
-        checkCanAccessParticipation(programmingExercise, participation, true, true);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
-    void testCanAccessParticipation_asEditor() {
-        // Set solution and template participation
-        database.addSolutionParticipationForProgrammingExercise(programmingExercise);
-        database.addTemplateParticipationForProgrammingExercise(programmingExercise);
-
-        checkCanAccessParticipation(programmingExercise, participation, true, true);
     }
 
     @Test

@@ -8,8 +8,8 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
-import de.tum.in.www1.artemis.service.connectors.VersionControlService;
+import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
+import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.in.www1.artemis.service.dto.ConsistencyErrorDTO;
 
 /**
@@ -60,16 +60,8 @@ public class ConsistencyCheckService {
      */
     public List<ConsistencyErrorDTO> checkConsistencyOfProgrammingExercise(ProgrammingExercise programmingExercise) {
         List<ConsistencyErrorDTO> result = new ArrayList<>();
-
-        programmingExercise.checksAndSetsIfProgrammingExerciseIsLocalSimulation();
-        if (programmingExercise.getIsLocalSimulation()) {
-            result.add(new ConsistencyErrorDTO(programmingExercise, ConsistencyErrorDTO.ErrorType.IS_LOCAL_SIMULATION));
-            return result;
-        }
-
         result.addAll(checkVCSConsistency(programmingExercise));
         result.addAll(checkCIConsistency(programmingExercise));
-
         return result;
     }
 

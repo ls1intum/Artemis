@@ -1,9 +1,6 @@
 package de.tum.in.www1.artemis.domain;
 
-import static de.tum.in.www1.artemis.config.Constants.ARTEMIS_GROUP_DEFAULT_PREFIX;
-import static de.tum.in.www1.artemis.config.Constants.COMPLAINT_RESPONSE_TEXT_LIMIT;
-import static de.tum.in.www1.artemis.config.Constants.COMPLAINT_TEXT_LIMIT;
-import static de.tum.in.www1.artemis.config.Constants.SHORT_NAME_PATTERN;
+import static de.tum.in.www1.artemis.config.Constants.*;
 
 import java.time.ZonedDateTime;
 import java.util.HashSet;
@@ -16,9 +13,13 @@ import org.hibernate.Hibernate;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
-import com.fasterxml.jackson.annotation.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonView;
 
 import de.tum.in.www1.artemis.config.Constants;
+import de.tum.in.www1.artemis.domain.enumeration.CourseInformationSharingConfiguration;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.exam.Exam;
@@ -109,6 +110,11 @@ public class Course extends DomainObject {
     @JoinColumn(name = "online_course_configuration_id")
     private OnlineCourseConfiguration onlineCourseConfiguration;
 
+    @Enumerated(EnumType.ORDINAL)
+    @Column(name = "info_sharing_config", nullable = false)
+    @JsonView(QuizView.Before.class)
+    private CourseInformationSharingConfiguration courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING; // default value
+
     @Column(name = "max_complaints", nullable = false)
     @JsonView(QuizView.Before.class)
     private Integer maxComplaints = 3;  // default value
@@ -132,10 +138,6 @@ public class Course extends DomainObject {
     @Column(name = "max_complaint_response_text_limit")
     @JsonView(QuizView.Before.class)
     private int maxComplaintResponseTextLimit = 2000;
-
-    @Column(name = "posts_enabled")
-    @JsonView(QuizView.Before.class)
-    private boolean postsEnabled;
 
     @OneToMany(mappedBy = "course", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
@@ -320,6 +322,17 @@ public class Course extends DomainObject {
         this.endDate = endDate;
     }
 
+    /**
+     * Determine whether the current date is within the course period (after start, before end).
+     *
+     * @return true if the current date is within the course period, false otherwise
+     */
+    @JsonIgnore
+    public boolean isActive() {
+        ZonedDateTime now = ZonedDateTime.now();
+        return (getStartDate() == null || getStartDate().isBefore(now)) && (getEndDate() == null || getEndDate().isAfter(now));
+    }
+
     public String getSemester() {
         return semester;
     }
@@ -413,14 +426,6 @@ public class Course extends DomainObject {
         // and then either maxComplaints, maxTeamComplaints is larger than zero
         // See CourseResource for more details on the validation
         return this.maxComplaintTimeDays > 0;
-    }
-
-    public boolean getPostsEnabled() {
-        return postsEnabled;
-    }
-
-    public void setPostsEnabled(boolean postsEnabled) {
-        this.postsEnabled = postsEnabled;
     }
 
     public Set<Post> getPosts() {
@@ -786,6 +791,7 @@ public class Course extends DomainObject {
      *
      * @return true if the dates are valid
      */
+    @JsonIgnore
     public boolean isValidStartAndEndDate() {
         return getStartDate() == null || getEndDate() == null || this.getEndDate().isAfter(this.getStartDate());
     }
@@ -814,4 +820,13 @@ public class Course extends DomainObject {
     public void setTutorialGroupsConfiguration(TutorialGroupsConfiguration tutorialGroupsConfiguration) {
         this.tutorialGroupsConfiguration = tutorialGroupsConfiguration;
     }
+
+    public CourseInformationSharingConfiguration getCourseInformationSharingConfiguration() {
+        return courseInformationSharingConfiguration;
+    }
+
+    public void setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration courseInformationSharingConfiguration) {
+        this.courseInformationSharingConfiguration = courseInformationSharingConfiguration;
+    }
+
 }

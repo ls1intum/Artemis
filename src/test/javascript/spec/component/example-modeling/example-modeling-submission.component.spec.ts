@@ -351,7 +351,6 @@ describe('Example Modeling Submission Component', () => {
         comp.showAssessment();
         fixture.detectChanges();
         const resultFeedbacksSetterSpy = jest.spyOn(comp.assessmentEditor, 'resultFeedbacks', 'set');
-
         comp.markAllFeedbackToCorrect();
         fixture.detectChanges();
 
@@ -372,10 +371,8 @@ describe('Example Modeling Submission Component', () => {
         comp.showAssessment();
         fixture.detectChanges();
         const resultFeedbacksSetterSpy = jest.spyOn(comp.assessmentEditor, 'resultFeedbacks', 'set');
-
         comp.markWrongFeedback([mockFeedbackCorrectionError]);
         fixture.detectChanges();
-
         // THEN
         expect(comp.referencedFeedback[0].correctionStatus).toBe(mockFeedbackCorrectionError.type);
         expect(resultFeedbacksSetterSpy).toHaveBeenCalledOnce();

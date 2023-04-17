@@ -161,8 +161,7 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         LectureUnit firstLectureUnit = lecture.getLectureUnits().stream().findFirst().get();
         request.delete("/api/lectures/" + lecture1.getId() + "/lecture-units/" + firstLectureUnit.getId(), HttpStatus.OK);
         lecture = lectureRepository.findByIdWithLectureUnitsAndLearningGoalsElseThrow(lecture1.getId());
-        assertThat(lecture.getLectureUnits()).hasSize(2);
-        assertThat(lecture.getLectureUnits().stream().anyMatch(Objects::isNull)).isFalse();
+        assertThat(lecture.getLectureUnits()).hasSize(2).noneMatch(Objects::isNull);
     }
 
     @Test

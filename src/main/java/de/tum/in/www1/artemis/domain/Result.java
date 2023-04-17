@@ -494,7 +494,7 @@ public class Result extends DomainObject implements Comparable<Result> {
     }
 
     /**
-     * Remove all feedbacks marked with visibility never.
+     * Removes all feedback details that should not be passed to the student.
      *
      * @param isBeforeDueDate if feedbacks marked with visibility 'after due date' should also be removed.
      */
@@ -504,9 +504,11 @@ public class Result extends DomainObject implements Comparable<Result> {
         if (isBeforeDueDate) {
             feedbacks.removeIf(Feedback::isAfterDueDate);
         }
+
         // TODO: this is not good code!
-        setTestCaseCount((int) feedbacks.stream().filter(Feedback::isTestFeedback).count());
-        setPassedTestCaseCount((int) feedbacks.stream().filter(Feedback::isTestFeedback).filter(feedback -> Boolean.TRUE.equals(feedback.isPositive())).count());
+        var testCaseFeedback = feedbacks.stream().filter(Feedback::isTestFeedback).toList();
+        setTestCaseCount(testCaseFeedback.size());
+        setPassedTestCaseCount((int) testCaseFeedback.stream().filter(feedback -> Boolean.TRUE.equals(feedback.isPositive())).count());
     }
 
     /**

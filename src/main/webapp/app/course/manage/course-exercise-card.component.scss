@@ -6,16 +6,7 @@
     background: var(--course-exercise-card-background);
 
     &:first-of-type {
-        margin-top: 18px;
-    }
-
-    .question-card-header {
-        padding: 15px 5px 5px 5px;
-    }
-
-    .question-collapse {
-        margin-top: -15px;
-        width: 3.25rem;
+        margin-top: 1rem;
     }
 
     .question-title {

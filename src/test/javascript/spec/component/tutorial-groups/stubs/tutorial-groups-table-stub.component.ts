@@ -16,6 +16,10 @@ export class TutorialGroupsTableStubComponent {
     @Input()
     showIdColumn = false;
 
+    tutorialGroupsSplitAcrossMultipleCampuses = false;
+    mixOfOfflineAndOfflineTutorialGroups = false;
+    mifOfDifferentLanguages = false;
+
     @Input()
     showChannelColumn = false;
 
@@ -54,6 +58,13 @@ export class TutorialGroupsTableStubComponent {
 export class TutorialGroupRowStubComponent {
     @Input()
     showIdColumn = false;
+
+    @Input()
+    tutorialGroupsSplitAcrossMultipleCampuses = false;
+    @Input()
+    mixOfOfflineAndOfflineTutorialGroups = false;
+    @Input()
+    mifOfDifferentLanguages = false;
 
     @Input()
     showChannelColumn = false;

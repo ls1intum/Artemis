@@ -73,7 +73,7 @@ Ace Editor
     }
 
     .ace_gutter-cell.gutter-diff-newLine {
-        transition: background 0s;
-        background: var(--code-editor-gutter-newline-background);
+        transition: background-color 0s;
+        background-color: var(--code-editor-gutter-newline-background);
     }
 }

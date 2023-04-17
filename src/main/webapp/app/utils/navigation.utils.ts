@@ -111,11 +111,11 @@ export const getLinkToSubmissionAssessment = (
     exerciseId: number,
     participationId: number | undefined,
     submissionId: number | 'new',
-    examId: number,
-    exerciseGroupId: number,
+    examId: number | undefined,
+    exerciseGroupId: number | undefined,
     resultId?: number,
 ): string[] => {
-    if (examId > 0) {
+    if (examId && exerciseGroupId) {
         let route;
         if (exerciseType === ExerciseType.TEXT && submissionId !== 'new' && participationId !== undefined) {
             route = [
@@ -180,24 +180,6 @@ export const getExerciseDashboardLink = (courseId: number, exerciseId: number, e
     return examId > 0
         ? ['/course-management', courseId.toString(), 'exams', examId.toString(), 'assessment-dashboard', exerciseId.toString()]
         : ['/course-management', courseId.toString(), 'assessment-dashboard', exerciseId.toString()];
-};
-
-export const getExerciseSubmissionsLink = (exerciseType: ExerciseType, courseId: number, exerciseId: number, examId = 0, exerciseGroupId = 0): string[] => {
-    if (examId > 0 && exerciseGroupId > 0) {
-        return [
-            '/course-management',
-            courseId.toString(),
-            'exams',
-            examId.toString(),
-            'exercise-groups',
-            exerciseGroupId.toString(),
-            exerciseType + '-exercises',
-            exerciseId.toString(),
-            'submissions',
-        ];
-    }
-
-    return ['/course-management', courseId.toString(), exerciseType + '-exercises', exerciseId.toString(), 'submissions'];
 };
 
 /**

@@ -10,13 +10,15 @@
             "cardNoExerciseLabel": "No exercise planned",
             "cardExerciseLabel": "Next Exercise:",
             "register": {
-                "signUp": "Register for a course",
+                "title": "Course Registration",
                 "registerSuccessful": "Registration successful",
-                "signUpForCourse": "Register",
+                "registerForCourse": "Register",
+                "notInCourseButCanRegister": "You are not registered for this course, but you can register yourself.",
                 "cancel": "Cancel",
                 "coursePrerequisites": "Prerequisites",
                 "noCourse": "No courses available for registration",
-                "courseLoading": "Courses are loading...",
+                "courseLoading": "Course is loading...",
+                "coursesLoading": "Courses are loading...",
                 "courseSignupConfirmationTitle": "Confirm Course Registration"
             },
             "course": "Course"
@@ -174,7 +176,6 @@
                     "title": "Instructor actions:",
                     "titleTutor": "Tutor actions:",
                     "scores": "Scores",
-                    "submissions": "Submissions",
                     "statistics": "Statistics"
                 },
                 "notParticipated": "Not participated",

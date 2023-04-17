@@ -59,7 +59,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
-import de.tum.in.www1.artemis.service.connectors.VersionControlService;
+import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.in.www1.artemis.util.*;
 import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints;
 import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseTestCaseResource;
@@ -236,9 +236,9 @@ class ProgrammingExerciseIntegrationTestService {
 
         ProgrammingExerciseTestCaseStateDTO releaseStateDTO = request.get("/api/programming-exercises/" + programmingExercise.getId() + "/test-case-state", HttpStatus.OK,
                 ProgrammingExerciseTestCaseStateDTO.class);
-        assertThat(releaseStateDTO.isReleased()).isTrue();
-        assertThat(releaseStateDTO.isHasStudentResult()).isTrue();
-        assertThat(releaseStateDTO.isTestCasesChanged()).isFalse();
+        assertThat(releaseStateDTO.released()).isTrue();
+        assertThat(releaseStateDTO.hasStudentResult()).isTrue();
+        assertThat(releaseStateDTO.testCasesChanged()).isFalse();
     }
 
     void testProgrammingExerciseIsReleased_IsNotReleasedAndHasResults() throws Exception {
@@ -249,9 +249,9 @@ class ProgrammingExerciseIntegrationTestService {
 
         ProgrammingExerciseTestCaseStateDTO releaseStateDTO = request.get("/api/programming-exercises/" + programmingExercise.getId() + "/test-case-state", HttpStatus.OK,
                 ProgrammingExerciseTestCaseStateDTO.class);
-        assertThat(releaseStateDTO.isReleased()).isFalse();
-        assertThat(releaseStateDTO.isHasStudentResult()).isTrue();
-        assertThat(releaseStateDTO.isTestCasesChanged()).isFalse();
+        assertThat(releaseStateDTO.released()).isFalse();
+        assertThat(releaseStateDTO.hasStudentResult()).isTrue();
+        assertThat(releaseStateDTO.testCasesChanged()).isFalse();
     }
 
     void checkIfProgrammingExerciseIsReleased_IsReleasedAndHasNoResults() throws Exception {
@@ -261,13 +261,54 @@ class ProgrammingExerciseIntegrationTestService {
 
         ProgrammingExerciseTestCaseStateDTO releaseStateDTO = request.get("/api/programming-exercises/" + programmingExercise.getId() + "/test-case-state", HttpStatus.OK,
                 ProgrammingExerciseTestCaseStateDTO.class);
-        assertThat(releaseStateDTO.isReleased()).isTrue();
-        assertThat(releaseStateDTO.isHasStudentResult()).isFalse();
-        assertThat(releaseStateDTO.isTestCasesChanged()).isTrue();
+        assertThat(releaseStateDTO.released()).isTrue();
+        assertThat(releaseStateDTO.hasStudentResult()).isFalse();
+        assertThat(releaseStateDTO.testCasesChanged()).isTrue();
     }
 
     void testProgrammingExerciseIsReleased_forbidden() throws Exception {
         request.get("/api/programming-exercises/" + programmingExercise.getId() + "/test-case-state", HttpStatus.FORBIDDEN, Boolean.class);
+    }
+
+    List<Path> exportSubmissionsWithPracticeSubmissionByParticipationIds(boolean excludePracticeSubmissions) throws Exception {
+        var repository1 = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoFile.toPath(), null);
+        var repository2 = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoFile2.toPath(), null);
+        doReturn(repository1).when(gitService).getOrCheckoutRepository(eq(participation1.getVcsRepositoryUrl()), anyString(), anyBoolean());
+        doReturn(repository2).when(gitService).getOrCheckoutRepository(eq(participation2.getVcsRepositoryUrl()), anyString(), anyBoolean());
+
+        // Set one of the participations to practice mode
+        participation1.setTestRun(false);
+        participation2.setTestRun(true);
+        final var participations = List.of(participation1, participation2);
+        programmingExerciseStudentParticipationRepository.saveAll(participations);
+
+        // Export with excludePracticeSubmissions
+        var participationIds = programmingExerciseStudentParticipationRepository.findAll().stream().map(participation -> participation.getId().toString()).toList();
+        final var path = ROOT + EXPORT_SUBMISSIONS_BY_PARTICIPATIONS.replace("{exerciseId}", String.valueOf(programmingExercise.getId())).replace("{participationIds}",
+                String.join(",", participationIds));
+        var exportOptions = new RepositoryExportOptionsDTO();
+        exportOptions.setExcludePracticeSubmissions(excludePracticeSubmissions);
+
+        downloadedFile = request.postWithResponseBodyFile(path, exportOptions, HttpStatus.OK);
+        assertThat(downloadedFile).exists();
+
+        return unzipExportedFile();
+    }
+
+    void testExportSubmissionsByParticipationIds_excludePracticeSubmissions() throws Exception {
+        List<Path> entries = exportSubmissionsWithPracticeSubmissionByParticipationIds(true);
+
+        // Make sure that the practice submission is not included
+        assertThat(entries).anyMatch(entry -> entry.toString().endsWith(Path.of("student1", ".git").toString()))
+                .noneMatch(entry -> entry.toString().matches(".*practice-[^\\/]*student2.*.git$"));
+    }
+
+    void testExportSubmissionsByParticipationIds_includePracticeSubmissions() throws Exception {
+        List<Path> entries = exportSubmissionsWithPracticeSubmissionByParticipationIds(false);
+
+        // Make sure that the practice submission is included
+        assertThat(entries).anyMatch(entry -> entry.toString().endsWith(Path.of("student1", ".git").toString()))
+                .anyMatch(entry -> entry.toString().matches(".*practice-[^\\/]*student2.*.git$"));
     }
 
     void testExportSubmissionsByParticipationIds_addParticipantIdentifierToProjectName() throws Exception {
@@ -464,6 +505,7 @@ class ProgrammingExerciseIntegrationTestService {
     private RepositoryExportOptionsDTO getOptions() {
         final var repositoryExportOptions = new RepositoryExportOptionsDTO();
         repositoryExportOptions.setFilterLateSubmissions(true);
+        repositoryExportOptions.setExcludePracticeSubmissions(false);
         repositoryExportOptions.setCombineStudentCommits(true);
         repositoryExportOptions.setAnonymizeStudentCommits(true);
         repositoryExportOptions.setAddParticipantName(true);
@@ -1167,6 +1209,16 @@ class ProgrammingExerciseIntegrationTestService {
         programmingExercise.setMaxPoints(10.0);
         programmingExercise.setBonusPoints(1.0);
         programmingExercise.setIncludedInOverallScore(IncludedInOverallScore.NOT_INCLUDED);
+        request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
+    }
+
+    void createProgrammingExercise_testwiseCoverageAnalysisNotSupported_badRequest(ProgrammingLanguage programmingLanguage) throws Exception {
+        programmingExercise.setId(null);
+        programmingExercise.setProjectType(null);
+        programmingExercise.setTitle("New title");
+        programmingExercise.setShortName("NewShortname");
+        programmingExercise.setProgrammingLanguage(programmingLanguage);
+        programmingExercise.setTestwiseCoverageEnabled(true);
         request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
