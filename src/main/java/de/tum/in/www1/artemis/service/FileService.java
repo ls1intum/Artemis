@@ -15,7 +15,6 @@ import java.util.concurrent.*;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
@@ -97,7 +96,7 @@ public class FileService implements DisposableBean {
     /**
      * These directories get falsely marked as files and should be ignored during copying.
      */
-    private static final List<Path> IGNORED_DIRECTORIES = Stream.of(".xcassets", ".colorset", ".appiconset", ".xcworkspace", ".xcodeproj", ".swiftpm").map(Path::of).toList();
+    private static final List<String> IGNORED_DIRECTORY_SUFFIXES = List.of(".xcassets", ".colorset", ".appiconset", ".xcworkspace", ".xcodeproj", ".swiftpm");
 
     @Override
     public void destroy() {
@@ -628,7 +627,8 @@ public class FileService implements DisposableBean {
      * @return True, if the path is assumed to be a file but actually points to a directory.
      */
     private boolean isIgnoredDirectory(final Path filePath) {
-        return IGNORED_DIRECTORIES.stream().anyMatch(filePath::endsWith);
+        final String filename = filePath.getFileName().toString();
+        return IGNORED_DIRECTORY_SUFFIXES.stream().anyMatch(filename::endsWith);
     }
 
     /**

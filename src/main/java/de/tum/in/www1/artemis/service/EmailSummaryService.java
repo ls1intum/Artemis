@@ -4,7 +4,6 @@ import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsS
 
 import java.time.Duration;
 import java.time.ZonedDateTime;
-import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -82,7 +81,7 @@ public class EmailSummaryService {
      */
     private void prepareEmailSummaryForUser(User user, Set<Exercise> allPossiblyRelevantExercisesForSummary) {
         // Get all courses with exercises, lectures and exams (filtered for given user)
-        List<Course> courses = courseService.findAllActiveForUser(user);
+        Set<Course> courses = courseService.findAllActiveForUser(user);
 
         // Filter out the relevant exercises for this individual user's summary
         Set<Exercise> relevantExercisesForThisUser = allPossiblyRelevantExercisesForSummary.stream()

@@ -20,7 +20,7 @@
             </a>
             <a *ngIf="course.isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'goal-management']" class="tab-item btn btn-primary btn-md ms-1">
                 <fa-icon [icon]="faFlag"></fa-icon>
-                <span jhiTranslate="artemisApp.learningGoal.learningGoalButton">Learning Goals</span>
+                <span jhiTranslate="artemisApp.learningGoal.learningGoalButton">Competency</span>
             </a>
             <a
                 [jhiFeatureToggleLink]="FeatureToggle.TutorialGroups"
