@@ -50,7 +50,9 @@ class LocalVCLocalCIParticipationIntegrationTest extends AbstractSpringIntegrati
         assertThat(participation).isNotNull();
         assertThat(participation.isTestRun()).isFalse();
         assertThat(participation.getStudent()).contains(user);
-        LocalVCRepositoryUrl studentAssignmentRepository = new LocalVCRepositoryUrl(projectKey, projectKey.toLowerCase() + "-" + TEST_PREFIX + "student1", localVCBaseUrl);
-        assertThat(Files.exists(studentAssignmentRepository.getLocalRepositoryPath(localVCBasePath))).isTrue();
+        LocalVCRepositoryUrl studentAssignmentRepositoryUrl = new LocalVCRepositoryUrl(projectKey, projectKey.toLowerCase() + "-" + TEST_PREFIX + "student1", localVCBaseUrl);
+        assertThat(Files.exists(studentAssignmentRepositoryUrl.getLocalRepositoryPath(localVCBasePath))).isTrue();
+
+        templateRepository.resetLocalRepo();
     }
 }

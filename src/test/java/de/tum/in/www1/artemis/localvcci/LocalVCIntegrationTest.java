@@ -40,7 +40,7 @@ class LocalVCIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
     private LocalRepository solutionRepository;
 
     @BeforeEach
-    void initRepository() throws GitAPIException, IOException, URISyntaxException {
+    void initRepositories() throws GitAPIException, IOException, URISyntaxException {
         // Create assignment repository
         Path remoteAssignmentRepositoryFolder = localVCLocalCITestService.createRepositoryFolderInTempDirectory(projectKey1, assignmentRepositorySlug);
         assignmentRepository = new LocalRepository(defaultBranch);
@@ -107,18 +107,12 @@ class LocalVCIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
         Path remoteRepositoryFolder = localVCLocalCITestService.createRepositoryFolderInTempDirectory(projectKey, repositorySlug);
         LocalRepository someRepository = new LocalRepository(defaultBranch);
         someRepository.configureRepos("localRepository", remoteRepositoryFolder);
-        Git remoteGit = someRepository.originGit;
-        Path localRepositoryFolder = someRepository.localRepoFile.toPath();
-        Git localGit = someRepository.localGit;
 
-        localVCLocalCITestService.testFetchThrowsException(localGit, student1Login, projectKey, repositorySlug, INTERNAL_SERVER_ERROR);
-        localVCLocalCITestService.testPushThrowsException(localGit, student1Login, projectKey, repositorySlug, INTERNAL_SERVER_ERROR);
+        localVCLocalCITestService.testFetchThrowsException(someRepository.localGit, student1Login, projectKey, repositorySlug, INTERNAL_SERVER_ERROR);
+        localVCLocalCITestService.testPushThrowsException(someRepository.localGit, student1Login, projectKey, repositorySlug, INTERNAL_SERVER_ERROR);
 
         // Cleanup
-        localGit.close();
-        FileUtils.deleteDirectory(localRepositoryFolder.toFile());
-        remoteGit.close();
-        FileUtils.deleteDirectory(remoteRepositoryFolder.toFile());
+        someRepository.resetLocalRepo();
     }
 
     @Test
