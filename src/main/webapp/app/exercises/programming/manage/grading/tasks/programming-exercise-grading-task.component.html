@@ -94,7 +94,7 @@
         *ngFor="let task of tasks; index as i"
         [index]="i"
         [task]="task"
-        [open]="allTasksExpanded"
+        [openSubject]="allTasksExpandedSubject"
         (updateTasksEvent)="updateTasks()"
     ></jhi-programming-exercise-task>
 </form>

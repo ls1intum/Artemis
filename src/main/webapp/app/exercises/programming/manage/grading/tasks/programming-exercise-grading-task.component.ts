@@ -5,7 +5,7 @@ import { Course } from 'app/entities/course.model';
 import { faAngleDown, faAngleRight, faAsterisk, faMedal, faQuestionCircle, faScaleUnbalanced } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseGradingStatistics } from 'app/entities/programming-exercise-test-case-statistics.model';
 import { ProgrammingExerciseTask } from './programming-exercise-task';
-import { Observable } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
 
 @Component({
     selector: 'jhi-programming-exercise-grading-task',
@@ -27,7 +27,7 @@ export class ProgrammingExerciseGradingTaskComponent implements OnInit {
 
     isSaving = false;
     tasks: ProgrammingExerciseTask[];
-    allTasksExpanded: boolean;
+    allTasksExpandedSubject: Subject<boolean>;
 
     get ignoreInactive() {
         return this.taskService.ignoreInactive;
@@ -36,6 +36,7 @@ export class ProgrammingExerciseGradingTaskComponent implements OnInit {
     constructor(private taskService: ProgrammingExerciseTaskService) {}
 
     ngOnInit(): void {
+        this.allTasksExpandedSubject = new Subject();
         this.gradingStatisticsObservable.subscribe((gradingStatistics) => {
             this.taskService.configure(this.exercise, this.course, gradingStatistics).subscribe(this.updateTasks);
         });
@@ -64,10 +65,6 @@ export class ProgrammingExerciseGradingTaskComponent implements OnInit {
     };
 
     toggleAllTasksExpanded = (value: boolean) => {
-        // Force change detection in angular
-        this.allTasksExpanded = !value;
-        setTimeout(() => {
-            this.allTasksExpanded = value;
-        }, 10);
+        this.allTasksExpandedSubject.next(value);
     };
 }
