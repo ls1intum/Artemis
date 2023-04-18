@@ -19,9 +19,17 @@ import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
+import de.tum.in.www1.artemis.domain.metis.Post;
+import de.tum.in.www1.artemis.domain.metis.conversation.GroupChat;
+import de.tum.in.www1.artemis.domain.metis.conversation.OneToOneChat;
 import de.tum.in.www1.artemis.domain.notification.SingleUserNotification;
 import de.tum.in.www1.artemis.programmingexercise.MockDelegate;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
+import de.tum.in.www1.artemis.repository.metis.PostRepository;
+import de.tum.in.www1.artemis.repository.metis.conversation.ConversationRepository;
+import de.tum.in.www1.artemis.repository.metis.conversation.OneToOneChatRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.connectors.ci.CIUserManagementService;
 import de.tum.in.www1.artemis.service.connectors.lti.LtiService;
@@ -70,6 +78,18 @@ public class UserTestService {
     @Autowired
     private SingleUserNotificationRepository singleUserNotificationRepository;
 
+    @Autowired
+    private PostRepository postRepository;
+
+    @Autowired
+    private ConversationRepository conversationRepository;
+
+    @Autowired
+    private ConversationParticipantRepository conversationParticipantRepository;
+
+    @Autowired
+    private OneToOneChatRepository oneToOneChatRepository;
+
     private String TEST_PREFIX;
 
     private MockDelegate mockDelegate;
@@ -110,13 +130,63 @@ public class UserTestService {
         student.setInternal(true);
         userRepository.save(student);
         mockDelegate.mockDeleteUserInUserManagement(student, true, false, false);
-        var notification = singleUserNotificationRepository.save(new SingleUserNotification(student, "title", "text"));
+        var notification = singleUserNotificationRepository.save(new SingleUserNotification(student, "title", "text", false, null));
 
+        // Creating conversation-related objects
+        var post = new Post();
+        var post2 = new Post();
+        var oneToOneChatPost = new Post();
+        var conversationParticipant = new ConversationParticipant();
+        var conversationParticipant2 = new ConversationParticipant();
+        var conversationParticipant3 = new ConversationParticipant();
+        var conversation = new GroupChat();
+        var oneToOneChat = new OneToOneChat();
+
+        User student2 = userRepository.getUserByLoginElseThrow(TEST_PREFIX + "student2");
+
+        conversationParticipant.setUser(student);
+        conversationParticipant2.setUser(student2);
+        conversationParticipant3.setUser(student);
+
+        conversation.setConversationParticipants(Collections.singleton(conversationParticipant));
+        conversation.setCreator(student);
+        oneToOneChat.setConversationParticipants(Set.of(conversationParticipant2, conversationParticipant3));
+        oneToOneChat.setCreator(student2);
+
+        conversationParticipant.setConversation(conversation);
+        conversationParticipant2.setConversation(oneToOneChat);
+        conversationParticipant3.setConversation(oneToOneChat);
+
+        post.setAuthor(student);
+        post.setConversation(conversation);
+        post2.setAuthor(student2);
+        post2.setConversation(conversation);
+        oneToOneChatPost.setAuthor(student2);
+        oneToOneChatPost.setConversation(oneToOneChat);
+
+        conversationRepository.save(conversation);
+        oneToOneChatRepository.save(oneToOneChat);
+        postRepository.save(post);
+        postRepository.save(post2);
+        postRepository.save(oneToOneChatPost);
+        conversationParticipantRepository.save(conversationParticipant);
+        conversationParticipantRepository.save(conversationParticipant2);
+        conversationParticipantRepository.save(conversationParticipant3);
+
+        // Sending delete request
         request.delete("/api/admin/users/" + student.getLogin(), HttpStatus.OK);
 
+        // Assertions
         var deletedUser = userRepository.findById(student.getId());
         assertThat(deletedUser).isEmpty();
         assertThat(singleUserNotificationRepository.findById(notification.getId())).isEmpty();
+        assertThat(postRepository.findById(post.getId())).isEmpty();
+        assertThat(postRepository.findById(post2.getId())).isEmpty();
+        assertThat(conversationParticipantRepository.findById(conversationParticipant.getId())).isEmpty();
+        assertThat(conversationParticipantRepository.findById(conversationParticipant3.getId())).isEmpty();
+        assertThat(postRepository.findById(post.getId())).isEmpty();
+        assertThat(conversationRepository.findById(conversation.getId())).isEmpty();
+        assertThat(oneToOneChatRepository.findById(oneToOneChat.getId())).isEmpty();
     }
 
     // Test

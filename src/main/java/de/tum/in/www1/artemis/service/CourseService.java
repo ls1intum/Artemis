@@ -1,12 +1,16 @@
 package de.tum.in.www1.artemis.service;
 
-import static de.tum.in.www1.artemis.domain.enumeration.ComplaintType.*;
+import static de.tum.in.www1.artemis.domain.enumeration.ComplaintType.COMPLAINT;
+import static de.tum.in.www1.artemis.domain.enumeration.ComplaintType.MORE_FEEDBACK;
 import static de.tum.in.www1.artemis.service.util.RoundingUtil.roundScoreSpecifiedByCourseSettings;
-import static tech.jhipster.config.JHipsterConstants.*;
+import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_PRODUCTION;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.*;
+import java.time.DayOfWeek;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.IsoFields;
@@ -54,7 +58,6 @@ import de.tum.in.www1.artemis.web.rest.dto.CourseManagementDetailViewDTO;
 import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 import de.tum.in.www1.artemis.web.rest.dto.StatsForDashboardDTO;
 import de.tum.in.www1.artemis.web.rest.dto.TutorLeaderboardDTO;
-import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 /**
@@ -217,9 +220,6 @@ public class CourseService {
      */
     public Course findOneWithExercisesAndLecturesAndExamsAndLearningGoalsAndTutorialGroupsForUser(Long courseId, User user, boolean refresh) {
         Course course = courseRepository.findByIdWithLecturesElseThrow(courseId);
-        if (!authCheckService.isAtLeastStudentInCourse(course, user)) {
-            throw new AccessForbiddenException();
-        }
         // Load exercises with categories separately because this is faster than loading them with lectures and exam above (the query would become too complex)
         course.setExercises(exerciseRepository.findByCourseIdWithCategories(course.getId()));
         course.setExercises(exerciseService.filterExercisesForCourse(course, user));
@@ -240,10 +240,10 @@ public class CourseService {
      * Get all courses for the given user
      *
      * @param user the user entity
-     * @return an unmodifiable list of all courses for the user
+     * @return an unmodifiable set of all courses for the user
      */
-    public List<Course> findAllActiveForUser(User user) {
-        return courseRepository.findAllActive(ZonedDateTime.now()).stream().filter(course -> isCourseVisibleForUser(user, course)).toList();
+    public Set<Course> findAllActiveForUser(User user) {
+        return courseRepository.findAllActive(ZonedDateTime.now()).stream().filter(course -> isCourseVisibleForUser(user, course)).collect(Collectors.toSet());
     }
 
     /**
@@ -413,12 +413,13 @@ public class CourseService {
     }
 
     /**
-     * Registers a user in a course by adding him to the student group of the course
+     * Registers a user in a course by adding them to the student group of the course
      *
      * @param user   The user that should get added to the course
      * @param course The course to which the user should get added to
      */
-    public void registerUserForCourse(User user, Course course) {
+    public void registerUserForCourseOrThrow(User user, Course course) {
+        authCheckService.checkUserAllowedToSelfRegisterForCourseElseThrow(user, course);
         userService.addUserToGroup(user, course.getStudentGroupName(), Role.STUDENT);
         final var auditEvent = new AuditEvent(user.getLogin(), Constants.REGISTER_FOR_COURSE, "course=" + course.getTitle());
         auditEventRepository.add(auditEvent);
