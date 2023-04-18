@@ -127,7 +127,7 @@ public class LearningGoalProgressService {
      * @param users          A list of users for which to update the progress
      */
     public void updateProgressByLearningObject(LearningObject learningObject, @NotNull Set<User> users) {
-        logger.debug("Updating learning goal progress for {} users.", users.size());
+        logger.debug("Updating competency progress for {} users.", users.size());
         try {
             Set<LearningGoal> learningGoals;
             if (learningObject instanceof Exercise exercise) {
@@ -142,7 +142,7 @@ public class LearningGoalProgressService {
 
             if (learningGoals == null) {
                 // Learning goals couldn't be loaded, the exercise/lecture unit might have already been deleted
-                logger.debug("Learning goals could not be fetched, skipping.");
+                logger.debug("Competencies could not be fetched, skipping.");
                 return;
             }
 
@@ -153,7 +153,7 @@ public class LearningGoalProgressService {
             });
         }
         catch (Exception e) {
-            logger.error("Exception while updating progress for learning goal", e);
+            logger.error("Exception while updating progress for competency", e);
         }
     }
 
@@ -168,7 +168,7 @@ public class LearningGoalProgressService {
         var learningGoal = learningGoalRepository.findByIdWithExercisesAndLectureUnitsAndCompletions(learningGoalId).orElse(null);
 
         if (user == null || learningGoal == null) {
-            logger.debug("User or learning goal no longer exist, skipping.");
+            logger.debug("User or competency no longer exist, skipping.");
             return null;
         }
 
@@ -177,7 +177,7 @@ public class LearningGoalProgressService {
         if (learningGoalProgress.isPresent()) {
             var lastModified = learningGoalProgress.get().getLastModifiedDate();
             if (lastModified != null && lastModified.isAfter(Instant.now().minusSeconds(1))) {
-                logger.debug("Learning goal progress has been updated very recently, skipping.");
+                logger.debug("Competency progress has been updated very recently, skipping.");
                 return learningGoalProgress.get();
             }
         }
@@ -214,7 +214,7 @@ public class LearningGoalProgressService {
             // This fails the SQL unique constraint and throws an exception. We can safely ignore it.
         }
 
-        logger.debug("Updated progress for user {} in learning goal {} to {} / {}.", user.getLogin(), learningGoal.getId(), studentProgress.getProgress(),
+        logger.debug("Updated progress for user {} in competency {} to {} / {}.", user.getLogin(), learningGoal.getId(), studentProgress.getProgress(),
                 studentProgress.getConfidence());
         return studentProgress;
     }

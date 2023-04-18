@@ -41,13 +41,16 @@ public class TutorialGroupNotification extends Notification {
         // Empty constructor needed for Jackson.
     }
 
-    public TutorialGroupNotification(TutorialGroup tutorialGroup, String title, String text, NotificationType notificationType) {
+    public TutorialGroupNotification(TutorialGroup tutorialGroup, String title, String text, boolean textIsPlaceholder, String[] placeholderValues,
+            NotificationType notificationType) {
         verifySupportedNotificationType(notificationType);
         this.notificationType = notificationType;
         this.setTutorialGroup(tutorialGroup);
         this.setNotificationDate(ZonedDateTime.now());
         this.setTitle(title);
         this.setText(text);
+        this.setTextIsPlaceholder(textIsPlaceholder);
+        this.setPlaceholderValues(placeholderValues);
     }
 
     public TutorialGroup getTutorialGroup() {

@@ -14,7 +14,7 @@ export enum DocumentationType {
     Text = <any>'exercises/textual/',
     FileUpload = <any>'exercises/file-upload/',
     Notifications = <any>'notifications/',
-    LearningGoals = <any>'lectures/#learning-goals',
+    Competencies = <any>'learning-analytics/#id3',
     Communications = <any>'communication/',
     Exams = <any>'exam_mode/',
     PlagiarismChecks = <any>'plagiarism-check/',

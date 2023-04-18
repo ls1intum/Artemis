@@ -112,7 +112,7 @@ public class LearningGoalResource {
     @GetMapping("/courses/{courseId}/learning-goals")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<List<LearningGoal>> getLearningGoals(@PathVariable Long courseId) {
-        log.debug("REST request to get learning goals for course with id: {}", courseId);
+        log.debug("REST request to get competencies for course with id: {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
@@ -177,7 +177,7 @@ public class LearningGoalResource {
 
         if (learningGoal.getLectureUnits().size() != existingLearningGoal.getLectureUnits().size()
                 || !existingLearningGoal.getLectureUnits().containsAll(learningGoal.getLectureUnits())) {
-            log.debug("Linked lecture units changed, updating student progress for learning goal...");
+            log.debug("Linked lecture units changed, updating student progress for competency...");
             learningGoalProgressService.updateProgressByLearningGoalAsync(persistedLearningGoal);
         }
 
@@ -234,7 +234,7 @@ public class LearningGoalResource {
 
         var relations = learningGoalRelationRepository.findAllByLearningGoalId(learningGoal.getId());
         if (!relations.isEmpty()) {
-            throw new BadRequestException("Can not delete a learning goal that has active relations");
+            throw new BadRequestException("Can not delete a competency that has active relations");
         }
 
         learningGoalProgressRepository.deleteAllByLearningGoalId(learningGoal.getId());
@@ -265,7 +265,7 @@ public class LearningGoalResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<LearningGoalProgress> getLearningGoalStudentProgress(@PathVariable Long courseId, @PathVariable Long learningGoalId,
             @RequestParam(defaultValue = "false") Boolean refresh) {
-        log.debug("REST request to get student progress for learning goal: {}", learningGoalId);
+        log.debug("REST request to get student progress for competency: {}", learningGoalId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
         var course = courseRepository.findByIdElseThrow(courseId);
         var learningGoal = learningGoalRepository.findByIdElseThrow(learningGoalId);
@@ -292,7 +292,7 @@ public class LearningGoalResource {
     @GetMapping("/courses/{courseId}/learning-goals/{learningGoalId}/course-progress")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<CourseLearningGoalProgressDTO> getLearningGoalCourseProgress(@PathVariable Long courseId, @PathVariable Long learningGoalId) {
-        log.debug("REST request to get course progress for learning goal: {}", learningGoalId);
+        log.debug("REST request to get course progress for competency: {}", learningGoalId);
         var course = courseRepository.findByIdElseThrow(courseId);
         var learningGoal = learningGoalRepository.findByIdWithLectureUnitsAndCompletionsElseThrow(learningGoalId);
         checkAuthorizationForLearningGoal(Role.INSTRUCTOR, course, learningGoal);
@@ -338,7 +338,7 @@ public class LearningGoalResource {
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<LearningGoalRelation> createLearningGoalRelation(@PathVariable Long courseId, @PathVariable Long tailLearningGoalId,
             @PathVariable Long headLearningGoalId, @RequestParam(defaultValue = "") String type) {
-        log.info("REST request to create a relation between learning goals {} and {}", tailLearningGoalId, headLearningGoalId);
+        log.info("REST request to create a relation between competencies {} and {}", tailLearningGoalId, headLearningGoalId);
         var course = courseRepository.findByIdElseThrow(courseId);
         var tailLearningGoal = learningGoalRepository.findByIdElseThrow(tailLearningGoalId);
         checkAuthorizationForLearningGoal(Role.INSTRUCTOR, course, tailLearningGoal);
@@ -372,14 +372,14 @@ public class LearningGoalResource {
     @DeleteMapping("/courses/{courseId}/learning-goals/{learningGoalId}/relations/{learningGoalRelationId}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Void> removeLearningGoalRelation(@PathVariable Long learningGoalId, @PathVariable Long courseId, @PathVariable Long learningGoalRelationId) {
-        log.info("REST request to remove a learning goal relation: {}", learningGoalId);
+        log.info("REST request to remove a competency relation: {}", learningGoalId);
         var course = courseRepository.findByIdElseThrow(courseId);
         var learningGoal = learningGoalRepository.findByIdElseThrow(learningGoalId);
         checkAuthorizationForLearningGoal(Role.INSTRUCTOR, course, learningGoal);
 
         var relation = learningGoalRelationRepository.findById(learningGoalRelationId).orElseThrow();
         if (!relation.getTailLearningGoal().getId().equals(learningGoal.getId())) {
-            throw new BadRequestException("The relation does not belong to the specified learning goal");
+            throw new BadRequestException("The relation does not belong to the specified competency");
         }
 
         learningGoalRelationRepository.delete(relation);
@@ -427,7 +427,7 @@ public class LearningGoalResource {
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, learningGoal.getCourse(), null);
 
         if (learningGoal.getCourse().getId().equals(courseId)) {
-            throw new ConflictException("The learning goal of a course can not be a prerequisite to the same course", "LearningGoal", "learningGoalCycle");
+            throw new ConflictException("The competency of a course can not be a prerequisite to the same course", "Competency", "competencyCycle");
         }
 
         course.addPrerequisite(learningGoal);
@@ -449,7 +449,7 @@ public class LearningGoalResource {
         var course = courseRepository.findWithEagerLearningGoalsByIdElseThrow(courseId);
         var learningGoal = learningGoalRepository.findByIdWithConsecutiveCoursesElseThrow(learningGoalId);
         if (!learningGoal.getConsecutiveCourses().stream().map(Course::getId).toList().contains(courseId)) {
-            throw new ConflictException("The learning goal is not a prerequisite of the given course", "LearningGoal", "prerequisiteWrongCourse");
+            throw new ConflictException("The competency is not a prerequisite of the given course", "Competency", "prerequisiteWrongCourse");
         }
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, learningGoal.getCourse(), null);
@@ -501,10 +501,10 @@ public class LearningGoalResource {
      */
     private void checkAuthorizationForLearningGoal(Role role, @NotNull Course course, @NotNull LearningGoal learningGoal) {
         if (learningGoal.getCourse() == null) {
-            throw new ConflictException("A learning goal must belong to a course", "LearningGoal", "learningGoalNoCourse");
+            throw new ConflictException("A competency must belong to a course", "Competency", "competencyNoCourse");
         }
         if (!learningGoal.getCourse().getId().equals(course.getId())) {
-            throw new ConflictException("The learning goal does not belong to the correct course", "LearningGoal", "learningGoalWrongCourse");
+            throw new ConflictException("The competency does not belong to the correct course", "Competency", "competencyWrongCourse");
         }
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(role, course, null);
     }
