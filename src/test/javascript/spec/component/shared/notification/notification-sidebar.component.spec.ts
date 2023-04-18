@@ -21,7 +21,6 @@ import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-router-link.directive';
 import { UserSettingsService } from 'app/shared/user-settings/user-settings.service';
-import { MockUserSettingsService } from '../../../helpers/mocks/service/mock-user-settings.service';
 import { NotificationSetting } from 'app/shared/user-settings/notification-settings/notification-settings-structure';
 import { SettingId } from 'app/shared/constants/user-settings.constants';
 import { NotificationSettingsService } from 'app/shared/user-settings/notification-settings/notification-settings.service';
@@ -135,6 +134,39 @@ describe('Notification Sidebar Component', () => {
             jest.spyOn(notificationService, 'subscribeToNotificationUpdates');
             notificationSidebarComponent.ngOnInit();
             expect(notificationService.subscribeToNotificationUpdates).toHaveBeenCalledOnce();
+        });
+    });
+
+    describe('Notification Texts', () => {
+        it('should display the correct text for a notification with text', () => {
+            // Set up the component with a notification that has text
+            const notificationWithText = { id: 3, notificationDate: dayjs(), text: 'Test Notification' } as Notification;
+            notificationSidebarComponent.sortedNotifications = [notificationWithText];
+
+            // Trigger change detection to update the view
+            notificationSidebarComponentFixture.detectChanges();
+
+            // Find the notification element in the view
+            const notificationElement = notificationSidebarComponentFixture.debugElement.nativeElement.querySelector('.notification-text');
+            expect(notificationElement).not.toBeNull();
+            // Expect the notification text to be displayed correctly
+            expect(notificationElement?.textContent).toContain(notificationWithText.text);
+        });
+
+        it('should display No text found for a notification without text', () => {
+            // Set up the component with a notification that does not have text
+            const notificationWithoutText = { id: 4, notificationDate: dayjs() } as Notification;
+            const notTextFoundText = 'No text found';
+            notificationSidebarComponent.sortedNotifications = [notificationWithoutText];
+
+            // Trigger change detection to update the view
+            notificationSidebarComponentFixture.detectChanges();
+
+            // Find the notification element in the view
+            const notificationElement = notificationSidebarComponentFixture.debugElement.nativeElement.querySelector('.notification-text');
+            expect(notificationElement).not.toBeNull();
+            // Expect the notification text to be No text found if no text is found
+            expect(notificationElement.textContent).toBe(notTextFoundText);
         });
     });
 
