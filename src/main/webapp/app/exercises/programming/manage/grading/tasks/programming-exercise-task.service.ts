@@ -171,6 +171,8 @@ export class ProgrammingExerciseTaskService {
         } else {
             this.currentTasks = tasksCopy;
         }
+
+        this.currentTasks.forEach(this.initializeTask);
     };
 
     private getTasksByExercise = (exercise: Exercise): Observable<ProgrammingExerciseServerSideTask[]> => {
