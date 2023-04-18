@@ -15,7 +15,6 @@ import { of } from 'rxjs';
 import { StatisticsAverageScoreGraphComponent } from 'app/shared/statistics-graph/statistics-average-score-graph.component';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
-import { CourseManagementTabBarComponent } from 'app/shared/course-management-tab-bar/course-management-tab-bar.component';
 
 describe('CourseManagementStatisticsComponent', () => {
     let fixture: ComponentFixture<CourseManagementStatisticsComponent>;
@@ -41,7 +40,6 @@ describe('CourseManagementStatisticsComponent', () => {
                 MockDirective(MockHasAnyAuthorityDirective),
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDatePipe),
-                MockComponent(CourseManagementTabBarComponent),
             ],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },

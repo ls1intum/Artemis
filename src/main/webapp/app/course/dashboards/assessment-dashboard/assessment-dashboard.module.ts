@@ -12,7 +12,6 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
 import { ArtemisSidePanelModule } from 'app/shared/side-panel/side-panel.module';
 import { PieChartModule } from '@swimlane/ngx-charts';
 import { ExamAssessmentButtonsComponent } from './exam-assessment-buttons/exam-assessment-buttons.component';
-import { CourseManagementTabBarModule } from 'app/shared/course-management-tab-bar/course-management-tab-bar.module';
 
 const ENTITY_STATES = [...assessmentDashboardRoute];
 
@@ -27,7 +26,6 @@ const ENTITY_STATES = [...assessmentDashboardRoute];
         ArtemisExerciseAssessmentDashboardModule,
         ArtemisSharedComponentModule,
         PieChartModule,
-        CourseManagementTabBarModule,
     ],
     declarations: [AssessmentDashboardComponent, AssessmentDashboardInformationComponent, ExamAssessmentButtonsComponent],
 })

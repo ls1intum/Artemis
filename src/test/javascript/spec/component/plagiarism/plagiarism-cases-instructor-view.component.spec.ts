@@ -14,7 +14,6 @@ import * as DownloadUtil from 'app/shared/util/download.util';
 import dayjs from 'dayjs/esm';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 import { MockComponent } from 'ng-mocks';
-import { CourseManagementTabBarComponent } from 'app/shared/course-management-tab-bar/course-management-tab-bar.component';
 
 jest.mock('app/shared/util/download.util', () => ({
     downloadFile: jest.fn(),
@@ -87,7 +86,7 @@ describe('Plagiarism Cases Instructor View Component', () => {
 
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, TranslateTestingModule],
-            declarations: [PlagiarismCasesInstructorViewComponent, MockComponent(DocumentationButtonComponent), MockComponent(CourseManagementTabBarComponent)],
+            declarations: [PlagiarismCasesInstructorViewComponent, MockComponent(DocumentationButtonComponent)],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
                 { provide: TranslateService, useClass: MockTranslateService },

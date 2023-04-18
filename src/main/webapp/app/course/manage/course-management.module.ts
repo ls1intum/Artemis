@@ -60,7 +60,6 @@ import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.mo
 import { CourseLtiConfigurationComponent } from 'app/course/manage/course-lti-configuration/course-lti-configuration.component';
 import { EditCourseLtiConfigurationComponent } from 'app/course/manage/course-lti-configuration/edit-course-lti-configuration.component';
 import { ExerciseCategoriesModule } from 'app/shared/exercise-categories/exercise-categories.module';
-import { CourseManagementTabBarModule } from 'app/shared/course-management-tab-bar/course-management-tab-bar.module';
 
 @NgModule({
     imports: [
@@ -109,7 +108,6 @@ import { CourseManagementTabBarModule } from 'app/shared/course-management-tab-b
         ArtemisCourseGroupModule,
         FeatureToggleModule,
         ExerciseCategoriesModule,
-        CourseManagementTabBarModule,
     ],
     declarations: [
         CourseManagementComponent,

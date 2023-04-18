@@ -11,7 +11,6 @@ import { GradingSystemComponent } from 'app/grading-system/grading-system.compon
 import { BaseGradingSystemComponent } from 'app/grading-system/base-grading-system/base-grading-system.component';
 import { RouterTestingModule } from '@angular/router/testing';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
-import { CourseManagementTabBarComponent } from 'app/shared/course-management-tab-bar/course-management-tab-bar.component';
 
 describe('Grading System Component', () => {
     let comp: GradingSystemComponent;
@@ -29,7 +28,6 @@ describe('Grading System Component', () => {
                 MockComponent(DocumentationButtonComponent),
                 MockComponent(GradingSystemInfoModalComponent),
                 MockPipe(ArtemisTranslatePipe),
-                MockComponent(CourseManagementTabBarComponent),
             ],
             providers: [{ provide: ActivatedRoute, useValue: route }],
         })

@@ -18,7 +18,6 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CourseManagementExercisesSearchComponent } from 'app/course/manage/course-management-exercises-search.component';
 import { of } from 'rxjs';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
-import { CourseManagementTabBarComponent } from 'app/shared/course-management-tab-bar/course-management-tab-bar.component';
 
 describe('Course Management Exercises Component', () => {
     let comp: CourseManagementExercisesComponent;
@@ -46,7 +45,6 @@ describe('Course Management Exercises Component', () => {
                 MockComponent(TextExerciseComponent),
                 MockComponent(CourseManagementExercisesSearchComponent),
                 MockComponent(DocumentationButtonComponent),
-                MockComponent(CourseManagementTabBarComponent),
             ],
             providers: [
                 MockProvider(CourseManagementService),

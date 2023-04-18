@@ -27,7 +27,6 @@ import { SortDirective } from 'app/shared/sort/sort.directive';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { MockNgbModalService } from '../../../helpers/mocks/service/mock-ngb-modal.service';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
-import { CourseManagementTabBarComponent } from 'app/shared/course-management-tab-bar/course-management-tab-bar.component';
 
 describe('Exam Management Component', () => {
     const course = { id: 456 } as Course;
@@ -58,7 +57,6 @@ describe('Exam Management Component', () => {
                 MockDirective(SortDirective),
                 MockPipe(DurationPipe),
                 MockDirective(DeleteButtonDirective),
-                MockComponent(CourseManagementTabBarComponent),
             ],
             providers: [
                 { provide: SessionStorageService, useClass: MockSyncStorage },

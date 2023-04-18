@@ -14,7 +14,6 @@ import { LoadingIndicatorContainerStubComponent } from '../../../../../helpers/s
 import { MockRouterLinkDirective } from '../../../../../helpers/mocks/directive/mock-router-link.directive';
 import { TutorialGroupsConfigurationService } from 'app/course/tutorial-groups/services/tutorial-groups-configuration.service';
 import { generateExampleTutorialGroupsConfiguration } from '../../../helpers/tutorialGroupsConfigurationExampleModels';
-import { CourseManagementTabBarComponent } from 'app/shared/course-management-tab-bar/course-management-tab-bar.component';
 
 describe('TutorialGroupsChecklistComponent', () => {
     let fixture: ComponentFixture<TutorialGroupsChecklistComponent>;
@@ -35,7 +34,6 @@ describe('TutorialGroupsChecklistComponent', () => {
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(FaIconComponent),
                 MockRouterLinkDirective,
-                MockComponent(CourseManagementTabBarComponent),
             ],
             providers: [
                 MockProvider(CourseManagementService),

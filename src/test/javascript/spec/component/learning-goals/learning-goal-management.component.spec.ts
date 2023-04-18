@@ -20,7 +20,6 @@ import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.
 import { PrerequisiteImportComponent } from 'app/course/learning-goals/learning-goal-management/prerequisite-import.component';
 import { Edge } from '@swimlane/ngx-graph';
 import { Component } from '@angular/core';
-import { CourseManagementTabBarComponent } from 'app/shared/course-management-tab-bar/course-management-tab-bar.component';
 
 // eslint-disable-next-line @angular-eslint/component-selector
 @Component({ selector: 'ngx-graph', template: '' })
@@ -50,7 +49,6 @@ describe('LearningGoalManagementComponent', () => {
                 MockDirective(NgbPanel),
                 MockComponent(NgbProgressbar),
                 MockComponent(NgbAccordion),
-                MockComponent(CourseManagementTabBarComponent),
             ],
             providers: [
                 MockProvider(AccountService),

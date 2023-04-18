@@ -83,7 +83,6 @@ describe('Course Management Detail Component', () => {
                 MockComponent(FullscreenComponent),
                 MockComponent(HeaderCourseComponent),
                 MockDirective(FeatureToggleLinkDirective),
-                MockComponent(CourseManagementTabBarComponent),
             ],
             providers: [
                 {
