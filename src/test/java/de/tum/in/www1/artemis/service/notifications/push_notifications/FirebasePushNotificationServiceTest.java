@@ -43,7 +43,7 @@ public class FirebasePushNotificationServiceTest {
     private Notification notification;
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         MockitoAnnotations.openMocks(this);
 
         student = new User();
@@ -64,7 +64,7 @@ public class FirebasePushNotificationServiceTest {
     }
 
     @Test
-    public void sendNotificationRequestsToEndpoint_shouldSendNotifications() throws InterruptedException {
+    void sendNotificationRequestsToEndpoint_shouldSendNotifications() throws InterruptedException {
         // Given
         RelayNotificationRequest request = new RelayNotificationRequest("", "", "");
 
@@ -79,7 +79,7 @@ public class FirebasePushNotificationServiceTest {
     }
 
     @Test
-    public void scheduleSendBatch_shouldRetryOnRestClientException() throws InterruptedException {
+    void scheduleSendBatch_shouldRetryOnRestClientException() throws InterruptedException {
         RelayNotificationRequest request = new RelayNotificationRequest("", "", "");
 
         when(restTemplateMock.postForObject(anyString(), any(HttpEntity.class), any())).thenThrow(new RestClientException(""));
@@ -93,7 +93,7 @@ public class FirebasePushNotificationServiceTest {
     }
 
     @Test
-    public void getDeviceType_shouldReturnFirebase() {
+    void getDeviceType_shouldReturnFirebase() {
         // When
         PushNotificationDeviceType deviceType = firebasePushNotificationService.getDeviceType();
 
@@ -102,7 +102,7 @@ public class FirebasePushNotificationServiceTest {
     }
 
     @Test
-    public void getRepository_shouldReturnRepository() {
+    void getRepository_shouldReturnRepository() {
         // When
         PushNotificationDeviceConfigurationRepository repository = firebasePushNotificationService.getRepository();
 

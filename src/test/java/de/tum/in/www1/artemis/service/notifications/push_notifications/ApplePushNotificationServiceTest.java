@@ -46,7 +46,7 @@ class ApplePushNotificationServiceTest {
     private User student;
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         MockitoAnnotations.openMocks(this);
 
         student = new User();
@@ -67,7 +67,7 @@ class ApplePushNotificationServiceTest {
     }
 
     @Test
-    public void sendNotificationRequestsToEndpoint_shouldSendNotifications() throws InterruptedException {
+    void sendNotificationRequestsToEndpoint_shouldSendNotifications() throws InterruptedException {
         // Given
         RelayNotificationRequest request = new RelayNotificationRequest("", "", "");
 
@@ -82,7 +82,7 @@ class ApplePushNotificationServiceTest {
     }
 
     @Test
-    public void scheduleSendBatch_shouldRetryOnRestClientException() throws InterruptedException {
+    void scheduleSendBatch_shouldRetryOnRestClientException() throws InterruptedException {
         RelayNotificationRequest request = new RelayNotificationRequest("", "", "");
 
         when(restTemplateMock.postForObject(anyString(), any(HttpEntity.class), any())).thenThrow(new RestClientException(""));
@@ -96,7 +96,7 @@ class ApplePushNotificationServiceTest {
     }
 
     @Test
-    public void getDeviceType_shouldReturnAPNS() {
+    void getDeviceType_shouldReturnAPNS() {
         // When
         PushNotificationDeviceType deviceType = applePushNotificationService.getDeviceType();
 
@@ -105,7 +105,7 @@ class ApplePushNotificationServiceTest {
     }
 
     @Test
-    public void getRepository_shouldReturnRepository() {
+    void getRepository_shouldReturnRepository() {
         // When
         PushNotificationDeviceConfigurationRepository repository = applePushNotificationService.getRepository();
 
