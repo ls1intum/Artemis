@@ -14,7 +14,7 @@ import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultNot
 import de.tum.in.www1.artemis.service.connectors.localci.LocalCIResultService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
-public class LocalCIResultServiceTest extends AbstractLocalCILocalVCIntegrationTest {
+class LocalCIResultServiceTest extends AbstractLocalCILocalVCIntegrationTest {
 
     @Autowired
     private LocalCIResultService localCIResultService;

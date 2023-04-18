@@ -76,10 +76,9 @@ import de.tum.in.www1.artemis.util.InvalidExamExerciseDatesArgumentProvider.Inva
 import de.tum.in.www1.artemis.web.rest.dto.BuildLogStatisticsDTO;
 
 /**
- * Note: this class should be independent of the actual VCS and CIS and contains common test logic for all three scenarios:
+ * Note: this class should be independent of the actual VCS and CIS and contains common test logic for both scenarios:
  * 1) Bamboo + Bitbucket
  * 2) Jenkins + Gitlab
- * 3) Local CIS + Local VCS
  */
 @Service
 public class ProgrammingExerciseTestService {

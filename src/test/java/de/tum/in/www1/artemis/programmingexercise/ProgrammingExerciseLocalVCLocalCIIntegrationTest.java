@@ -29,9 +29,9 @@ import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUrl;
 import de.tum.in.www1.artemis.util.LocalRepository;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
-public class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
+class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
-    private static final String TEST_PREFIX = "localvclocalciprogex";
+    private static final String TEST_PREFIX = "progexlocalvclocalci";
 
     @BeforeEach
     void setup() throws Exception {

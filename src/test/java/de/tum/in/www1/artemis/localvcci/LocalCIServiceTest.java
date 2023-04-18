@@ -2,26 +2,26 @@ package de.tum.in.www1.artemis.localvcci;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.time.ZonedDateTime;
-
 import org.junit.jupiter.api.Test;
+import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationLocalCILocalVCTest;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService.BuildStatus;
-import de.tum.in.www1.artemis.util.ModelFactory;
 
-public class LocalCIServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
+class LocalCIServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
+
+    private static final String TEST_PREFIX = "localciservice";
 
     @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testReturnCorrectBuildStatus() {
-        ProgrammingExercise exercise = ModelFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1), new Course());
-        User user = ModelFactory.generateActivatedUser("student1");
-        ProgrammingExerciseStudentParticipation participation = ModelFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INITIALIZED, exercise, user);
+        database.addUsers(TEST_PREFIX, 1, 0, 0, 1);
+        Course course = database.addCourseWithOneProgrammingExercise();
+        ProgrammingExercise exercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        ProgrammingExerciseStudentParticipation participation = database.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
         assertThat(continuousIntegrationService.getBuildStatus(participation)).isEqualTo(BuildStatus.INACTIVE);
 
         participation.setBuildPlanId("MY-PLAN_QUEUED");
