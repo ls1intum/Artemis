@@ -92,12 +92,7 @@ export class NotificationPopupComponent implements OnInit {
 
         if (notification.title === LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE) {
             this.examExerciseUpdateService.navigateToExamExercise(target.exercise);
-        } else if (
-            notification.title === NEW_REPLY_MESSAGE_TITLE ||
-            notification.title === NEW_MESSAGE_TITLE ||
-            notification.title === 'New message' ||
-            notification.title === 'New message reply in conversation'
-        ) {
+        } else if (notification.title === NEW_REPLY_MESSAGE_TITLE || notification.title === NEW_MESSAGE_TITLE) {
             const queryParams: Params = MetisConversationService.getQueryParamsForConversation(targetConversationId);
             const routeComponents: RouteComponents = MetisConversationService.getLinkForConversation(targetCourseId);
             // check if component reload is needed
@@ -180,12 +175,7 @@ export class NotificationPopupComponent implements OnInit {
             if (notification.title === LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE) {
                 this.checkIfNotificationAffectsCurrentStudentExamExercises(notification);
             }
-            if (
-                notification.title === NEW_MESSAGE_TITLE ||
-                notification.title === NEW_REPLY_MESSAGE_TITLE ||
-                notification.title === 'New message' ||
-                notification.title === 'New message reply in conversation'
-            ) {
+            if (notification.title === NEW_MESSAGE_TITLE || notification.title === NEW_REPLY_MESSAGE_TITLE) {
                 if (this.notificationSettingsService.isNotificationAllowedBySettings(notification, this.notificationTitleActivationMap)) {
                     this.addMessageNotification(notification);
                     this.setRemovalTimeout(notification);

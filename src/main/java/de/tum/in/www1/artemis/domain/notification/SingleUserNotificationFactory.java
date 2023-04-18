@@ -210,7 +210,9 @@ public class SingleUserNotificationFactory {
         if (notificationType != NotificationType.CONVERSATION_NEW_REPLY_MESSAGE) {
             throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
         }
-        String[] placeholders = new String[] { responsibleForAction.getName(), answerPost.getPost().getConversation().getCourse().getTitle() };
+        String[] placeholders = new String[] { answerPost.getPost().getConversation().getCourse().getTitle(), answerPost.getPost().getContent(),
+                answerPost.getPost().getCreationDate().toString(), answerPost.getPost().getAuthor().getName(), answerPost.getContent(), answerPost.getCreationDate().toString(),
+                answerPost.getAuthor().getName() };
         SingleUserNotification notification = new SingleUserNotification(user, title, MESSAGE_REPLY_IN_CONVERSATION_TEXT, true, placeholders);
         notification.setTransientAndStringTarget(createMessageReplyTarget(answerPost, answerPost.getPost().getConversation().getCourse().getId()));
         notification.setAuthor(responsibleForAction);
@@ -238,30 +240,30 @@ public class SingleUserNotificationFactory {
                         .transientAndStringTarget(createConversationCreationTarget(conversation, conversation.getCourse().getId()));
             }
             case CONVERSATION_CREATE_GROUP_CHAT, CONVERSATION_ADD_USER_GROUP_CHAT -> {
-                String[] placeholders = new String[] { responsibleForAction.getName(), conversation.getCourse().getTitle() };
+                String[] placeholders = new String[] { conversation.getCourse().getTitle(), responsibleForAction.getName() };
                 yield new SingleUserNotification(user, title, CONVERSATION_ADD_USER_GROUP_CHAT_TEXT, true, placeholders)
                         .transientAndStringTarget(createConversationCreationTarget(conversation, conversation.getCourse().getId()));
             }
             case CONVERSATION_ADD_USER_CHANNEL -> {
                 var channel = (Channel) conversation;
-                String[] placeholders = new String[] { channel.getName(), responsibleForAction.getName(), channel.getCourse().getTitle() };
+                String[] placeholders = new String[] { channel.getCourse().getTitle(), channel.getName(), responsibleForAction.getName() };
                 yield new SingleUserNotification(user, title, CONVERSATION_ADD_USER_CHANNEL_TEXT, true, placeholders)
                         .transientAndStringTarget(createConversationCreationTarget(channel, channel.getCourse().getId()));
             }
             case CONVERSATION_REMOVE_USER_CHANNEL -> {
                 var channel = (Channel) conversation;
-                String[] placeholders = new String[] { channel.getName(), responsibleForAction.getName(), channel.getCourse().getTitle() };
+                String[] placeholders = new String[] { channel.getCourse().getTitle(), channel.getName(), responsibleForAction.getName() };
                 yield new SingleUserNotification(user, title, CONVERSATION_REMOVE_USER_CHANNEL_TEXT, true, placeholders)
                         .transientAndStringTarget(createConversationDeletionTarget(channel, channel.getCourse().getId()));
             }
             case CONVERSATION_REMOVE_USER_GROUP_CHAT -> {
-                String[] placeholders = new String[] { responsibleForAction.getName(), conversation.getCourse().getTitle() };
+                String[] placeholders = new String[] { conversation.getCourse().getTitle(), responsibleForAction.getName() };
                 yield new SingleUserNotification(user, title, CONVERSATION_REMOVE_USER_GROUP_CHAT_TEXT, true, placeholders)
                         .transientAndStringTarget(createConversationDeletionTarget(conversation, conversation.getCourse().getId()));
             }
             case CONVERSATION_DELETE_CHANNEL -> {
                 var channel = (Channel) conversation;
-                String[] placeholders = new String[] { channel.getName(), responsibleForAction.getName(), channel.getCourse().getTitle() };
+                String[] placeholders = new String[] { channel.getCourse().getTitle(), channel.getName(), responsibleForAction.getName() };
                 yield new SingleUserNotification(user, title, CONVERSATION_DELETE_CHANNEL_TEXT, true, placeholders)
                         .transientAndStringTarget(createConversationDeletionTarget(channel, channel.getCourse().getId()));
             }

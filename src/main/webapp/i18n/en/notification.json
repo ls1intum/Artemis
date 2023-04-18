@@ -130,13 +130,13 @@
                 "tutorialGroupMultipleRegistrationTutor": "{{ placeholderValues.1 }} students have been registered to your tutorial group {{ placeholderValues.2 }} by {{ placeholderValues.3 }}.",
                 "tutorialGroupAssigned": "You have been assigned to lead the tutorial group {{ placeholderValues.1 }} by {{ placeholderValues.2 }}.",
                 "tutorialGroupUnassigned": "You have been unassigned from leading the tutorial group {{ placeholderValues.1 }} by {{ placeholderValues.2 }}.",
-                "messageReply": "You have new reply in a message by {{ placeholderValues.0 }} in course {{ placeholderValues.1 }}.",
-                "deleteChannel": "{{ placeholderValues.0 }} channel has been deleted by {{ placeholderValues.1 }} in course {{ placeholderValues.2 }}.",
-                "removeUserChannel": "You have been removed from channel {{ placeholderValues.0 }} by {{ placeholderValues.1 }} in course {{ placeholderValues.2 }}.",
-                "addUserChannel": "You have been added to channel {{ placeholderValues.0 }} by {{ placeholderValues.1 }} in course {{ placeholderValues.2 }}.",
-                "removeUserGroupChat": "You have been removed from group chat by {{ placeholderValues.0 }} in course {{ placeholderValues.1 }}.",
-                "addUserGroupChat": "You have been added to a new group chat by {{ placeholderValues.0 }} in course {{ placeholderValues.1 }}.",
-                "createGroupChat": "You have been added to a new group chat by {{ placeholderValues.0 }} in course {{ placeholderValues.1 }}."
+                "messageReply": "You have new reply in a message by {{ placeholderValues.6 }} in course {{ placeholderValues.0 }}.",
+                "deleteChannel": "{{ placeholderValues.1 }} channel has been deleted by {{ placeholderValues.2 }} in course {{ placeholderValues.0 }}.",
+                "removeUserChannel": "You have been removed from channel {{ placeholderValues.1 }} by {{ placeholderValues.2 }} in course {{ placeholderValues.0 }}.",
+                "addUserChannel": "You have been added to channel {{ placeholderValues.1 }} by {{ placeholderValues.2 }} in course {{ placeholderValues.0 }}.",
+                "removeUserGroupChat": "You have been removed from group chat by {{ placeholderValues.1 }} in course {{ placeholderValues.0 }}.",
+                "addUserGroupChat": "You have been added to a new group chat by {{ placeholderValues.1 }} in course {{ placeholderValues.0 }}.",
+                "createGroupChat": "You have been added to a new group chat by {{ placeholderValues.1 }} in course {{ placeholderValues.0 }}."
             }
         },
         "tutorialGroupNotification": {
@@ -154,9 +154,9 @@
                 "newMessage": "New message"
             },
             "text": {
-                "newMessageChannel": "New message in {{ placeholderValues.0 }} channel from {{ placeholderValues.1 }} in course {{ placeholderValues.2 }}.",
-                "newMessageGroupChat": "New message in group chat from {{ placeholderValues.0 }} in course {{ placeholderValues.1 }}.",
-                "newMessageDirect": "New direct message from {{ placeholderValues.0 }} in course {{ placeholderValues.1 }}."
+                "newMessageChannel": "New message in {{ placeholderValues.3 }} channel from {{ placeholderValues.4 }} in course {{ placeholderValues.0 }}.",
+                "newMessageGroupChat": "New message in group chat from {{ placeholderValues.3 }} in course {{ placeholderValues.0 }}.",
+                "newMessageDirect": "New direct message from {{ placeholderValues.3 }} in course {{ placeholderValues.0 }}."
             }
         }
     }
