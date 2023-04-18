@@ -13,7 +13,7 @@ export class CourseConversationsNotificationsService {
 
     getConversationsForNotifications(): Observable<Conversation[]> {
         if (!this.coursesForNotifications$) {
-            this.coursesForNotifications$ = this.http.get<Conversation[]>(`${this.resourceUrl}/conversations/for-notifications`, { observe: 'response' }).pipe(
+            this.coursesForNotifications$ = this.http.get<Conversation[]>(`${this.resourceUrl}/conversations-for-notifications`, { observe: 'response' }).pipe(
                 map((res: HttpResponse<Conversation[]>) => {
                     return res.body!;
                 }),
