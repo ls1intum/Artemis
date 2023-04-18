@@ -95,7 +95,7 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractSpringInt
         assignmentRepository.configureRepos("localAssignment", remoteAssignmentRepositoryFolder);
 
         // Check that the repository folders were created in the file system for all base repositories.
-        localVCLocalCITestService.verifyRepositoryFoldersExist(programmingExercise);
+        localVCLocalCITestService.verifyRepositoryFoldersExist(programmingExercise, localVCBasePath);
     }
 
     @AfterEach
@@ -126,7 +126,7 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractSpringInt
         ProgrammingExercise createdExercise = request.postWithResponseBody(ROOT + SETUP, exercise, ProgrammingExercise.class, HttpStatus.CREATED);
 
         // Check that the repository folders were created in the file system for the template, solution, and tests repository.
-        localVCLocalCITestService.verifyRepositoryFoldersExist(createdExercise);
+        localVCLocalCITestService.verifyRepositoryFoldersExist(createdExercise, localVCBasePath);
 
         // Also check that the template and solution repositories were built successfully.
         localVCLocalCITestService.testLastestSubmission(createdExercise.getTemplateParticipation().getId(), null, 0, false);
@@ -174,6 +174,6 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractSpringInt
 
         // Assert that the repositories were correctly created for the imported exercise.
         ProgrammingExercise importedExerciseWithParticipations = programmingExerciseRepository.findWithAllParticipationsById(importedExercise.getId()).orElseThrow();
-        localVCLocalCITestService.verifyRepositoryFoldersExist(importedExerciseWithParticipations);
+        localVCLocalCITestService.verifyRepositoryFoldersExist(importedExerciseWithParticipations, localVCBasePath);
     }
 }

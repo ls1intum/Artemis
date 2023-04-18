@@ -68,9 +68,6 @@ public class LocalVCLocalCITestService {
     @Value("${artemis.version-control.url}")
     private URL localVCBaseUrl;
 
-    @Value("${artemis.version-control.local-vcs-repo-path}")
-    private String localVCBasePath;
-
     // Cannot inject {local.server.port} here, because it is not available at the time this class is instantiated.
     private int port;
 
@@ -499,7 +496,7 @@ public class LocalVCLocalCITestService {
         pushCommand.call();
     }
 
-    public void verifyRepositoryFoldersExist(ProgrammingExercise programmingExercise) {
+    public void verifyRepositoryFoldersExist(ProgrammingExercise programmingExercise, String localVCBasePath) {
         LocalVCRepositoryUrl templateRepositoryUrl = new LocalVCRepositoryUrl(programmingExercise.getTemplateRepositoryUrl(), localVCBaseUrl);
         assertThat(Files.exists(templateRepositoryUrl.getLocalRepositoryPath(localVCBasePath))).isTrue();
         LocalVCRepositoryUrl solutionRepositoryUrl = new LocalVCRepositoryUrl(programmingExercise.getSolutionRepositoryUrl(), localVCBaseUrl);
