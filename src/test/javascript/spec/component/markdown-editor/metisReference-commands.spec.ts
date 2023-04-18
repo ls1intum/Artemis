@@ -56,6 +56,14 @@ describe('Exercise Lecture Attachment Reference Commands', () => {
     });
 
     it('should initialize lecture attachment reference command correctly', () => {
+        const attachmentUnit = new AttachmentUnit();
+        attachmentUnit.id = 3;
+        const slide = new Slide();
+        slide.id = 3;
+        slide.slideNumber = 3;
+        slide.slideImagePath = 'directory/attachments/slides/Metis-Slide-3.png';
+        attachmentUnit.slides?.push(slide);
+        metisLecture3.lectureUnits?.push(attachmentUnit);
         const returnValue = of(new HttpResponse({ body: [metisLecture, metisLecture2, metisLecture3], status: 200 }));
 
         findAllLecturesWithDetailsSpy.mockReturnValue(returnValue);
