@@ -90,18 +90,18 @@ public class LocalRepository {
     }
 
     public void resetLocalRepo() throws IOException {
-        if (this.localRepoFile != null && this.localRepoFile.exists()) {
-            FileUtils.deleteDirectory(this.localRepoFile);
-        }
         if (this.localGit != null) {
             this.localGit.close();
         }
-
-        if (this.originRepoFile != null && this.originRepoFile.exists()) {
-            FileUtils.deleteDirectory(this.originRepoFile);
+        if (this.localRepoFile != null && this.localRepoFile.exists()) {
+            FileUtils.deleteDirectory(this.localRepoFile);
         }
+
         if (this.originGit != null) {
             this.originGit.close();
+        }
+        if (this.originRepoFile != null && this.originRepoFile.exists()) {
+            FileUtils.deleteDirectory(this.originRepoFile);
         }
     }
 

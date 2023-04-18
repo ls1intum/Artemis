@@ -8,11 +8,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.Map;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
@@ -37,6 +39,14 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractSpringInt
     private Course course;
 
     private ProgrammingExercise programmingExercise;
+
+    LocalRepository templateRepository;
+
+    LocalRepository solutionRepository;
+
+    LocalRepository testsRepository;
+
+    LocalRepository assignmentRepository;
 
     @BeforeEach
     void setup() throws Exception {
@@ -69,23 +79,31 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractSpringInt
 
         // Prepare the repositories.
         Path remoteTemplateRepositoryFolder = localVCLocalCITestService.createRepositoryFolderInTempDirectory(projectKey, templateRepositorySlug);
-        LocalRepository templateRepository = new LocalRepository(defaultBranch);
+        templateRepository = new LocalRepository(defaultBranch);
         templateRepository.configureRepos("localTemplate", remoteTemplateRepositoryFolder);
 
         Path remoteTestsRepositoryFolder = localVCLocalCITestService.createRepositoryFolderInTempDirectory(projectKey, projectKey.toLowerCase() + "-tests");
-        LocalRepository testsRepository = new LocalRepository(defaultBranch);
+        testsRepository = new LocalRepository(defaultBranch);
         testsRepository.configureRepos("localTests", remoteTestsRepositoryFolder);
 
         Path remoteSolutionRepositoryFolder = localVCLocalCITestService.createRepositoryFolderInTempDirectory(projectKey, solutionRepositorySlug);
-        LocalRepository solutionRepository = new LocalRepository(defaultBranch);
+        solutionRepository = new LocalRepository(defaultBranch);
         solutionRepository.configureRepos("localSolution", remoteSolutionRepositoryFolder);
 
         Path remoteAssignmentRepositoryFolder = localVCLocalCITestService.createRepositoryFolderInTempDirectory(projectKey, assignmentRepositorySlug);
-        LocalRepository assignmentRepository = new LocalRepository(defaultBranch);
+        assignmentRepository = new LocalRepository(defaultBranch);
         assignmentRepository.configureRepos("localAssignment", remoteAssignmentRepositoryFolder);
 
         // Check that the repository folders were created in the file system for all base repositories.
         localVCLocalCITestService.verifyRepositoryFoldersExist(programmingExercise);
+    }
+
+    @AfterEach
+    void tearDown() throws IOException {
+        templateRepository.resetLocalRepo();
+        solutionRepository.resetLocalRepo();
+        testsRepository.resetLocalRepo();
+        assignmentRepository.resetLocalRepo();
     }
 
     @Test
