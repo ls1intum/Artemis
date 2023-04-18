@@ -72,8 +72,8 @@ public class PushNotificationResource {
         User user = userRepository.getUser();
 
         // DB CALL INSERT OR UPDATE
-        pushNotificationDeviceConfigurationRepository.save(new PushNotificationDeviceConfiguration(pushNotificationRegisterBody.getToken(),
-                pushNotificationRegisterBody.getDeviceType(), expirationDate, newKey.getEncoded(), user));
+        pushNotificationDeviceConfigurationRepository.save(new PushNotificationDeviceConfiguration(pushNotificationRegisterBody.token(), pushNotificationRegisterBody.deviceType(),
+                expirationDate, newKey.getEncoded(), user));
 
         var encodedKey = Base64.getEncoder().encodeToString(newKey.getEncoded());
 

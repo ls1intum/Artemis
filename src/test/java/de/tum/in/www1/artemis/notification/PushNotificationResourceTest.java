@@ -61,7 +61,7 @@ class PushNotificationResourceTest extends AbstractSpringIntegrationBambooBitbuc
         PushNotificationRegisterBody body = new PushNotificationRegisterBody(fakeFirebaseToken, PushNotificationDeviceType.FIREBASE);
         PushNotificationRegisterDTO response = request.postWithResponseBody("/api/push_notification/register", body, PushNotificationRegisterDTO.class);
 
-        assertThat(response.getSecretKey()).isNotEmpty();
+        assertThat(response.secretKey()).isNotEmpty();
         List<PushNotificationDeviceConfiguration> deviceConfigurations = pushNotificationDeviceConfigurationRepository.findByUserIn(Collections.singletonList(user),
                 PushNotificationDeviceType.FIREBASE);
 
@@ -82,7 +82,7 @@ class PushNotificationResourceTest extends AbstractSpringIntegrationBambooBitbuc
         List<PushNotificationDeviceConfiguration> deviceConfigurations = pushNotificationDeviceConfigurationRepository.findByUserIn(Collections.singletonList(user),
                 PushNotificationDeviceType.FIREBASE);
 
-        assertThat(deviceConfigurations).hasSize(0);
+        assertThat(deviceConfigurations).isEmpty();
     }
 
     @Test

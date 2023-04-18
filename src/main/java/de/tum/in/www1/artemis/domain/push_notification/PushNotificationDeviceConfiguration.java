@@ -92,12 +92,14 @@ public class PushNotificationDeviceConfiguration {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o)
+    public boolean equals(Object object) {
+        if (this == object) {
             return true;
-        if (o == null || getClass() != o.getClass())
+        }
+        if (object == null || getClass() != object.getClass()) {
             return false;
-        PushNotificationDeviceConfiguration that = (PushNotificationDeviceConfiguration) o;
+        }
+        PushNotificationDeviceConfiguration that = (PushNotificationDeviceConfiguration) object;
         return token.equals(that.token) && deviceType == that.deviceType && expirationDate.equals(that.expirationDate) && Arrays.equals(secretKey, that.secretKey)
                 && owner.equals(that.owner);
     }

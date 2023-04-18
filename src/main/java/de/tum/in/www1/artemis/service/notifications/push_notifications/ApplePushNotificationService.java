@@ -21,8 +21,6 @@ import org.springframework.web.client.RestTemplate;
 
 import com.google.gson.Gson;
 
-import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.notification.Notification;
 import de.tum.in.www1.artemis.domain.push_notification.PushNotificationDeviceType;
 import de.tum.in.www1.artemis.repository.PushNotificationDeviceConfigurationRepository;
 
@@ -45,12 +43,6 @@ public class ApplePushNotificationService extends PushNotificationService {
     public ApplePushNotificationService(PushNotificationDeviceConfigurationRepository repository, RestTemplate restTemplate) {
         this.repository = repository;
         this.restTemplate = restTemplate;
-    }
-
-    @Override
-    @Async
-    public void sendNotification(Notification notification, List<User> users, Object notificationSubject) {
-        super.sendNotification(notification, users, notificationSubject);
     }
 
     @Override

@@ -16,6 +16,7 @@ import javax.crypto.spec.SecretKeySpec;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import com.google.gson.Gson;
@@ -69,6 +70,7 @@ public class PushNotificationService extends InstantNotificationService {
     }
 
     @Override
+    @Async
     public void sendNotification(Notification notification, List<User> users, Object notificationSubject) {
         final Optional<String> relayServerBaseUrl = getRelayBaseUrl();
 
