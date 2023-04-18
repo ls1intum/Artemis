@@ -3,6 +3,8 @@ package de.tum.in.www1.artemis.service.connectors.localci;
 import java.util.List;
 import java.util.Optional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -29,6 +31,8 @@ import de.tum.in.www1.artemis.service.hestia.TestwiseCoverageService;
 @Service
 @Profile("localci")
 public class LocalCIService extends AbstractContinuousIntegrationService {
+
+    private final Logger log = LoggerFactory.getLogger(LocalCIService.class);
 
     public LocalCIService(ProgrammingSubmissionRepository programmingSubmissionRepository, FeedbackRepository feedbackRepository, BuildLogEntryService buildLogService,
             BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, TestwiseCoverageService testwiseCoverageService) {
@@ -164,7 +168,8 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
      */
     public ResponseEntity<byte[]> retrieveLatestArtifact(ProgrammingExerciseParticipation participation) {
         // Build artifacts are not supported by local CI yet.
-        return ResponseEntity.noContent().build();
+        log.error("Unsupported action: LocalCIService.retrieveLatestArtifact()");
+        return null;
     }
 
     @Override

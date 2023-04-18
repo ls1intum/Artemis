@@ -170,11 +170,17 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
             return null;
         }).when(execStartCmd).exec(any());
 
+        // Mock dockerClient.copyArchiveFromContainerCmd() such that it returns a dummy commitHash for both the assignment and the tests repository.
+        // Note: The stub needs to receive the same object twice in case there are two requests to the same method. Usually, specifying one doReturn() is enough to make the stub
+        // return the same object on every subsequent call.
+        // However, in this case we have it return an InputStream, which will be consumed after returning it the first time, so we need to create two separate ones.
+        localVCLocalCITestService.mockInputStreamReturnedFromContainer(dockerClient, "/repositories/assignment-repository/.git/refs/heads/[^/]+",
+                Map.of("assignmentComitHash", DUMMY_COMMIT_HASH), Map.of("assignmentComitHash", DUMMY_COMMIT_HASH));
+        localVCLocalCITestService.mockInputStreamReturnedFromContainer(dockerClient, "/repositories/test-repository/.git/refs/heads/[^/]+",
+                Map.of("testsCommitHash", DUMMY_COMMIT_HASH), Map.of("testsCommitHash", DUMMY_COMMIT_HASH));
         String mockData = "mockData";
-
-        localVCLocalCITestService.mockInputStreamReturnedFromContainer(dockerClient, "/repositories/assignment-repository/.git/refs/heads/[^/]+", Map.of(mockData, mockData));
-        localVCLocalCITestService.mockInputStreamReturnedFromContainer(dockerClient, "/repositories/test-repository/.git/refs/heads/[^/]+", Map.of(mockData, mockData));
-        localVCLocalCITestService.mockInputStreamReturnedFromContainer(dockerClient, "/repositories/test-repository/build/test-results/test", Map.of(mockData, mockData));
+        localVCLocalCITestService.mockInputStreamReturnedFromContainer(dockerClient, "/repositories/test-repository/build/test-results/test", Map.of(mockData, mockData),
+                Map.of(mockData, mockData));
     }
 
     /**

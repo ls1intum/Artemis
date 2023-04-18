@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.programmingexercise;
 
+import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.IMPORT;
 import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.PROGRAMMING_EXERCISES;
 import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.ROOT;
 import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.SETUP;
@@ -33,77 +34,35 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractSpringInt
 
     private static final String TEST_PREFIX = "progexlocalvclocalci";
 
+    private Course course;
+
+    private ProgrammingExercise programmingExercise;
+
     @BeforeEach
     void setup() throws Exception {
         database.addUsers(TEST_PREFIX, 1, 1, 0, 1);
 
-        // The mock commit hashes don't allow the getPushDate() method in the LocalVCService to retrieve the push date using the commit hash. Thus, this method must be mocked.
-        doReturn(ZonedDateTime.now().minusSeconds(2)).when(versionControlService).getPushDate(any(), any(), any());
-
-        mockDockerClientMethods();
-
-        // Mock dockerClient.copyArchiveFromContainerCmd() such that it returns a dummy commitHash for both the template and the solution repository.
-        // Note: The stub needs to receive the same object twice. Usually, specifying one doReturn() is enough to make the stub return the same object on every subsequent call.
-        // However, in this case we have it return an InputStream, which will be consumed after returning it the first time, so we need to create two separate ones.
-        localVCLocalCITestService.mockInputStreamReturnedFromContainer(dockerClient, "/repositories/assignment-repository/.git/refs/heads/[^/]+",
-                Map.of("testCommitHash", DUMMY_COMMIT_HASH), Map.of("testCommitHash", DUMMY_COMMIT_HASH));
-        localVCLocalCITestService.mockInputStreamReturnedFromContainer(dockerClient, "/repositories/test-repository/.git/refs/heads/[^/]+",
-                Map.of("testCommitHash", DUMMY_COMMIT_HASH), Map.of("testCommitHash", DUMMY_COMMIT_HASH));
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testCreateProgrammingExercise() throws Exception {
-        Course course = database.addEmptyCourse();
-        ProgrammingExercise exercise = ModelFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
-        exercise.setProjectType(ProjectType.PLAIN_GRADLE);
-
-        // Mock dockerClient.copyArchiveFromContainerCmd() such that it returns the XMLs containing the test results.
-        // Mock the results for the template repository build and for the solution repository build that will both be triggered as a result of creating the exercise.
-        Map<String, String> templateBuildTestResults = localVCLocalCITestService.createMapFromTestResultsFolder(ALL_FAIL_TEST_RESULTS_PATH);
-        Map<String, String> solutionBuildTestResults = localVCLocalCITestService.createMapFromTestResultsFolder(ALL_SUCCEED_TEST_RESULTS_PATH);
-        localVCLocalCITestService.mockInputStreamReturnedFromContainer(dockerClient, "/repositories/test-repository/build/test-results/test", templateBuildTestResults,
-                solutionBuildTestResults);
-
-        ProgrammingExercise createdExercise = request.postWithResponseBody(ROOT + SETUP, exercise, ProgrammingExercise.class, HttpStatus.CREATED);
-
-        // Check that the repository folders were created in the file system for the template, solution, and tests repository.
-        LocalVCRepositoryUrl templateRepositoryUrl = new LocalVCRepositoryUrl(createdExercise.getTemplateRepositoryUrl(), localVCBaseUrl);
-        assertThat(Files.exists(templateRepositoryUrl.getLocalRepositoryPath(localVCBasePath))).isTrue();
-        LocalVCRepositoryUrl solutionRepositoryUrl = new LocalVCRepositoryUrl(createdExercise.getSolutionRepositoryUrl(), localVCBaseUrl);
-        assertThat(Files.exists(solutionRepositoryUrl.getLocalRepositoryPath(localVCBasePath))).isTrue();
-        LocalVCRepositoryUrl testsRepositoryUrl = new LocalVCRepositoryUrl(createdExercise.getTestRepositoryUrl(), localVCBaseUrl);
-        assertThat(Files.exists(testsRepositoryUrl.getLocalRepositoryPath(localVCBasePath))).isTrue();
-
-        // Also check that the template and solution repositories were built successfully.
-        localVCLocalCITestService.testLastestSubmission(createdExercise.getTemplateParticipation().getId(), null, 0, false);
-        localVCLocalCITestService.testLastestSubmission(createdExercise.getSolutionParticipation().getId(), null, 13, false);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testDeleteProgrammingExercise() throws Exception {
-        Course course = database.addCourseWithOneProgrammingExercise();
-        ProgrammingExercise exercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
-        String projectKey = exercise.getProjectKey();
-        exercise.setTestRepositoryUrl(localVCBaseUrl + "/git/" + projectKey + "/" + projectKey.toLowerCase() + "-tests.git");
-        programmingExerciseRepository.save(exercise);
-        exercise = programmingExerciseRepository.findWithAllParticipationsById(exercise.getId()).orElseThrow();
+        course = database.addCourseWithOneProgrammingExercise();
+        programmingExercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        String projectKey = programmingExercise.getProjectKey();
+        programmingExercise.setTestRepositoryUrl(localVCBaseUrl + "/git/" + projectKey + "/" + projectKey.toLowerCase() + "-tests.git");
+        programmingExerciseRepository.save(programmingExercise);
+        programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExercise.getId()).orElseThrow();
 
         // Set the correct repository URLs for the template and the solution participation.
         String templateRepositorySlug = projectKey.toLowerCase() + "-exercise";
-        TemplateProgrammingExerciseParticipation templateParticipation = exercise.getTemplateParticipation();
+        TemplateProgrammingExerciseParticipation templateParticipation = programmingExercise.getTemplateParticipation();
         templateParticipation.setRepositoryUrl(localVCBaseUrl + "/git/" + projectKey + "/" + templateRepositorySlug + ".git");
         templateProgrammingExerciseParticipationRepository.save(templateParticipation);
         String solutionRepositorySlug = projectKey.toLowerCase() + "-solution";
-        SolutionProgrammingExerciseParticipation solutionParticipation = exercise.getSolutionParticipation();
+        SolutionProgrammingExerciseParticipation solutionParticipation = programmingExercise.getSolutionParticipation();
         solutionParticipation.setRepositoryUrl(localVCBaseUrl + "/git/" + projectKey + "/" + solutionRepositorySlug + ".git");
         solutionProgrammingExerciseParticipationRepository.save(solutionParticipation);
 
         String assignmentRepositorySlug = projectKey.toLowerCase() + "-" + TEST_PREFIX + "student1";
 
         // Add a participation for student1.
-        ProgrammingExerciseStudentParticipation studentParticipation = database.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
+        ProgrammingExerciseStudentParticipation studentParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
         studentParticipation.setRepositoryUrl(String.format(localVCBaseUrl + "/git/%s/%s.git", projectKey, assignmentRepositorySlug));
         studentParticipation.setBranch(defaultBranch);
         programmingExerciseStudentParticipationRepository.save(studentParticipation);
@@ -125,23 +84,78 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractSpringInt
         LocalRepository assignmentRepository = new LocalRepository(defaultBranch);
         assignmentRepository.configureRepos("localAssignment", remoteAssignmentRepositoryFolder);
 
-        // Check that the repository folders were created in the file system for all repositories.
-        LocalVCRepositoryUrl templateRepositoryUrl = new LocalVCRepositoryUrl(exercise.getTemplateRepositoryUrl(), localVCBaseUrl);
-        assertThat(Files.exists(templateRepositoryUrl.getLocalRepositoryPath(localVCBasePath))).isTrue();
-        LocalVCRepositoryUrl solutionRepositoryUrl = new LocalVCRepositoryUrl(exercise.getSolutionRepositoryUrl(), localVCBaseUrl);
-        assertThat(Files.exists(solutionRepositoryUrl.getLocalRepositoryPath(localVCBasePath))).isTrue();
-        LocalVCRepositoryUrl testsRepositoryUrl = new LocalVCRepositoryUrl(exercise.getTestRepositoryUrl(), localVCBaseUrl);
-        assertThat(Files.exists(testsRepositoryUrl.getLocalRepositoryPath(localVCBasePath))).isTrue();
+        // Check that the repository folders were created in the file system for all base repositories.
+        localVCLocalCITestService.verifyRepositoryFoldersExist(programmingExercise);
+    }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreateProgrammingExercise() throws Exception {
+        // The mock commit hashes don't allow the getPushDate() method in the LocalVCService to retrieve the push date using the commit hash. Thus, this method must be mocked.
+        doReturn(ZonedDateTime.now().minusSeconds(2)).when(versionControlService).getPushDate(any(), any(), any());
+        mockDockerClientMethods();
+
+        ProgrammingExercise exercise = ModelFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
+        exercise.setProjectType(ProjectType.PLAIN_GRADLE);
+
+        // Mock dockerClient.copyArchiveFromContainerCmd() such that it returns the XMLs containing the test results.
+        // Mock the results for the template repository build and for the solution repository build that will both be triggered as a result of creating the exercise.
+        Map<String, String> templateBuildTestResults = localVCLocalCITestService.createMapFromTestResultsFolder(ALL_FAIL_TEST_RESULTS_PATH);
+        Map<String, String> solutionBuildTestResults = localVCLocalCITestService.createMapFromTestResultsFolder(ALL_SUCCEED_TEST_RESULTS_PATH);
+        localVCLocalCITestService.mockInputStreamReturnedFromContainer(dockerClient, "/repositories/test-repository/build/test-results/test", templateBuildTestResults,
+                solutionBuildTestResults);
+
+        ProgrammingExercise createdExercise = request.postWithResponseBody(ROOT + SETUP, exercise, ProgrammingExercise.class, HttpStatus.CREATED);
+
+        // Check that the repository folders were created in the file system for the template, solution, and tests repository.
+        localVCLocalCITestService.verifyRepositoryFoldersExist(createdExercise);
+
+        // Also check that the template and solution repositories were built successfully.
+        localVCLocalCITestService.testLastestSubmission(createdExercise.getTemplateParticipation().getId(), null, 0, false);
+        localVCLocalCITestService.testLastestSubmission(createdExercise.getSolutionParticipation().getId(), null, 13, false);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateProgrammingExercise() throws Exception {
+        programmingExercise.setReleaseDate(ZonedDateTime.now().plusHours(1));
+
+        ProgrammingExercise updatedExercise = request.putWithResponseBody(ROOT + PROGRAMMING_EXERCISES, programmingExercise, ProgrammingExercise.class, HttpStatus.OK);
+
+        assertThat(updatedExercise.getReleaseDate()).isEqualTo(programmingExercise.getReleaseDate());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testDeleteProgrammingExercise() throws Exception {
         // Delete the exercise
         var params = new LinkedMultiValueMap<String, String>();
         params.add("deleteStudentReposBuildPlans", "true");
         params.add("deleteBaseReposBuildPlans", "true");
-        request.delete(ROOT + PROGRAMMING_EXERCISES + "/" + exercise.getId(), HttpStatus.OK, params);
+        request.delete(ROOT + PROGRAMMING_EXERCISES + "/" + programmingExercise.getId(), HttpStatus.OK, params);
 
         // Assert that the repository folders do not exist anymore.
+        LocalVCRepositoryUrl templateRepositoryUrl = new LocalVCRepositoryUrl(programmingExercise.getTemplateRepositoryUrl(), localVCBaseUrl);
         assertThat(Files.exists(templateRepositoryUrl.getLocalRepositoryPath(localVCBasePath))).isFalse();
+        LocalVCRepositoryUrl solutionRepositoryUrl = new LocalVCRepositoryUrl(programmingExercise.getSolutionRepositoryUrl(), localVCBaseUrl);
         assertThat(Files.exists(solutionRepositoryUrl.getLocalRepositoryPath(localVCBasePath))).isFalse();
+        LocalVCRepositoryUrl testsRepositoryUrl = new LocalVCRepositoryUrl(programmingExercise.getTestRepositoryUrl(), localVCBaseUrl);
         assertThat(Files.exists(testsRepositoryUrl.getLocalRepositoryPath(localVCBasePath))).isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testImportProgrammingExercise() throws Exception {
+        ProgrammingExercise exerciseToBeImported = ModelFactory.generateToBeImportedProgrammingExercise("ImportTitle", "imported", programmingExercise, database.addEmptyCourse());
+
+        // Import the exercise and load all referenced entities
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("recreateBuildPlans", "true");
+        var importedExercise = request.postWithResponseBody(ROOT + IMPORT.replace("{sourceExerciseId}", programmingExercise.getId().toString()), exerciseToBeImported,
+                ProgrammingExercise.class, params, HttpStatus.OK);
+
+        // Assert that the repositories were correctly created for the imported exercise.
+        ProgrammingExercise importedExerciseWithParticipations = programmingExerciseRepository.findWithAllParticipationsById(importedExercise.getId()).orElseThrow();
+        localVCLocalCITestService.verifyRepositoryFoldersExist(importedExerciseWithParticipations);
     }
 }

@@ -30,4 +30,15 @@ class LocalCIServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
         participation.setBuildPlanId("MY-PLAN_BUILDING");
         assertThat(continuousIntegrationService.getBuildStatus(participation)).isEqualTo(BuildStatus.BUILDING);
     }
+
+    @Test
+    void testHealth() {
+        var health = continuousIntegrationService.health();
+        assertThat(health.isUp()).isTrue();
+    }
+
+    @Test
+    void testUnsupportedMethods() {
+        assertThat(continuousIntegrationService.retrieveLatestArtifact(null)).isNull();
+    }
 }

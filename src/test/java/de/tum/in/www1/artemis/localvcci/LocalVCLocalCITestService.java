@@ -13,6 +13,7 @@ import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
@@ -36,6 +37,7 @@ import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.transport.RefSpec;
 import org.mockito.ArgumentMatcher;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import com.github.dockerjava.api.DockerClient;
@@ -48,6 +50,7 @@ import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.enumeration.Visibility;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
+import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUrl;
 import de.tum.in.www1.artemis.util.GitUtilService;
 
 @Service
@@ -61,6 +64,12 @@ public class LocalVCLocalCITestService {
 
     @Autowired
     private GitUtilService gitUtilService;
+
+    @Value("${artemis.version-control.url}")
+    private URL localVCBaseUrl;
+
+    @Value("${artemis.version-control.local-vcs-repo-path}")
+    private String localVCBasePath;
 
     // Cannot inject {local.server.port} here, because it is not available at the time this class is instantiated.
     private int port;
@@ -488,5 +497,14 @@ public class LocalVCLocalCITestService {
         pushCommand.setRemote(repositoryUrl);
         // Execute the push.
         pushCommand.call();
+    }
+
+    public void verifyRepositoryFoldersExist(ProgrammingExercise programmingExercise) {
+        LocalVCRepositoryUrl templateRepositoryUrl = new LocalVCRepositoryUrl(programmingExercise.getTemplateRepositoryUrl(), localVCBaseUrl);
+        assertThat(Files.exists(templateRepositoryUrl.getLocalRepositoryPath(localVCBasePath))).isTrue();
+        LocalVCRepositoryUrl solutionRepositoryUrl = new LocalVCRepositoryUrl(programmingExercise.getSolutionRepositoryUrl(), localVCBaseUrl);
+        assertThat(Files.exists(solutionRepositoryUrl.getLocalRepositoryPath(localVCBasePath))).isTrue();
+        LocalVCRepositoryUrl testsRepositoryUrl = new LocalVCRepositoryUrl(programmingExercise.getTestRepositoryUrl(), localVCBaseUrl);
+        assertThat(Files.exists(testsRepositoryUrl.getLocalRepositoryPath(localVCBasePath))).isTrue();
     }
 }

@@ -79,6 +79,8 @@ import de.tum.in.www1.artemis.web.rest.dto.BuildLogStatisticsDTO;
  * Note: this class should be independent of the actual VCS and CIS and contains common test logic for both scenarios:
  * 1) Bamboo + Bitbucket
  * 2) Jenkins + Gitlab
+ * The local CI + local VC systems require a different setup as there are no requests to external systems and only minimal mocking is necessary. See
+ * {@link ProgrammingExerciseLocalVCLocalCIIntegrationTest}.
  */
 @Service
 public class ProgrammingExerciseTestService {
