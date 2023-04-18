@@ -82,7 +82,16 @@ describe('Plagiarism Cases Instructor View Component', () => {
     } as PlagiarismCase;
 
     beforeEach(() => {
-        route = { snapshot: { paramMap: convertToParamMap({ courseId: 1 }) } } as any as ActivatedRoute;
+        route = {
+            parent: {
+                snapshot: {
+                    paramMap: convertToParamMap({ courseId: 1 }),
+                },
+            },
+            snapshot: {
+                paramMap: convertToParamMap({}),
+            },
+        } as any as ActivatedRoute;
 
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, TranslateTestingModule],
@@ -129,7 +138,7 @@ describe('Plagiarism Cases Instructor View Component', () => {
     it('should get plagiarism cases for exam when exam id is set', fakeAsync(() => {
         jest.spyOn(plagiarismCasesService, 'getExamPlagiarismCasesForInstructor');
 
-        const newSnapshot = { paramMap: convertToParamMap({ courseId: 1, examId: 1 }) } as ActivatedRouteSnapshot;
+        const newSnapshot = { paramMap: convertToParamMap({ examId: 1 }) } as ActivatedRouteSnapshot;
         const activatedRoute: ActivatedRoute = fixture.debugElement.injector.get(ActivatedRoute);
         activatedRoute.snapshot = newSnapshot;
 

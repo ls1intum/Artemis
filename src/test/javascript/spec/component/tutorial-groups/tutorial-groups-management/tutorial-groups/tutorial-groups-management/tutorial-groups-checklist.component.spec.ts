@@ -40,7 +40,7 @@ describe('TutorialGroupsChecklistComponent', () => {
                 MockProvider(TutorialGroupsConfigurationService),
                 MockProvider(AlertService),
                 { provide: Router, useValue: router },
-                mockedActivatedRoute({ courseId: course.id! }, {}, {}, {}),
+                mockedActivatedRoute({}, {}, {}, { courseId: course.id! }),
             ],
         })
             .compileComponents()

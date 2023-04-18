@@ -16,8 +16,14 @@ describe('Grading System Component', () => {
     let comp: GradingSystemComponent;
     let fixture: ComponentFixture<GradingSystemComponent>;
 
-    const routeParamsSubject = new BehaviorSubject<Params>({ courseId: 1 });
-    const route = { params: routeParamsSubject.asObservable() } as ActivatedRoute;
+    const routeParamsExamId = new BehaviorSubject<Params>({ examId: 0 });
+    const routeParamsCourseId = new BehaviorSubject<Params>({ courseId: 1 });
+    const route = {
+        parent: {
+            params: routeParamsCourseId.asObservable(),
+        },
+        params: routeParamsExamId.asObservable(),
+    } as ActivatedRoute;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -44,8 +50,8 @@ describe('Grading System Component', () => {
 
     it('should initialize for course', () => {
         const courseId = 1;
-        routeParamsSubject.next({ courseId });
-        const paramsSpy = jest.spyOn(route.params, 'subscribe');
+        routeParamsCourseId.next({ courseId });
+        const paramsSpy = jest.spyOn(route.parent!.params, 'subscribe');
 
         fixture.detectChanges();
 
@@ -58,8 +64,9 @@ describe('Grading System Component', () => {
     it('should initialize for exam', () => {
         const courseId = 1;
         const examId = 2;
-        routeParamsSubject.next({ courseId, examId });
-        const paramsSpy = jest.spyOn(route.params, 'subscribe');
+        routeParamsExamId.next({ examId });
+        routeParamsCourseId.next({ courseId });
+        const paramsSpy = jest.spyOn(route.parent!.params, 'subscribe');
 
         fixture.detectChanges();
 

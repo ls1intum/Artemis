@@ -132,8 +132,14 @@ describe('AssessmentDashboardInformationComponent', () => {
     } as StatsForDashboard;
 
     const route = {
+        parent: {
+            snapshot: {
+                paramMap: convertToParamMap({ courseId: course.id }),
+                url: { path: '/course-management/10', parameterMap: {}, parameters: {} } as UrlSegment,
+            },
+        },
         snapshot: {
-            paramMap: convertToParamMap({ courseId: course.id, examId: exam.id }),
+            paramMap: convertToParamMap({ examId: exam.id }),
             url: { path: '/course-management/10/assessment-dashboard', parameterMap: {}, parameters: {} } as UrlSegment,
         },
     } as any as ActivatedRoute;

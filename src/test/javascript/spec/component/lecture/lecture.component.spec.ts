@@ -94,10 +94,12 @@ describe('Lecture', () => {
                 {
                     provide: ActivatedRoute,
                     useValue: {
-                        snapshot: {
-                            paramMap: convertToParamMap({
-                                courseId: '1',
-                            }),
+                        parent: {
+                            snapshot: {
+                                paramMap: convertToParamMap({
+                                    courseId: '1',
+                                }),
+                            },
                         },
                     },
                 },

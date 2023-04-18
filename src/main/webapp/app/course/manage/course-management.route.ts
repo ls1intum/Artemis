@@ -23,6 +23,7 @@ import { CourseLtiConfigurationComponent } from 'app/course/manage/course-lti-co
 import { EditCourseLtiConfigurationComponent } from 'app/course/manage/course-lti-configuration/edit-course-lti-configuration.component';
 import { CourseManagementTabBarComponent } from 'app/shared/course-management-tab-bar/course-management-tab-bar.component';
 import { ExamManagementComponent } from 'app/exam/manage/exam-management.component';
+import { PlagiarismCasesInstructorViewComponent } from 'app/course/plagiarism-cases/instructor-view/plagiarism-cases-instructor-view.component';
 
 export const courseManagementState: Routes = [
     {
@@ -83,6 +84,12 @@ export const courseManagementState: Routes = [
             },
             {
                 path: 'plagiarism-cases',
+                component: PlagiarismCasesInstructorViewComponent,
+                data: {
+                    authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+                    pageTitle: 'artemisApp.plagiarism.cases.pageTitle',
+                },
+                canActivate: [UserRouteAccessService],
                 loadChildren: () => import('../plagiarism-cases/instructor-view/plagiarism-cases-instructor-view.module').then((m) => m.ArtemisPlagiarismCasesInstructorViewModule),
             },
             {
