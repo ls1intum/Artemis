@@ -191,7 +191,7 @@ export class NotificationSidebarComponent implements OnInit {
             if (translation?.includes(translationNotFoundMessage)) {
                 return notification.text ?? 'No text found';
             }
-            if (translation.length > this.maxNotificationLength) {
+            if (translation?.length > this.maxNotificationLength) {
                 return translation.substring(0, this.maxNotificationLength - 1) + '...';
             }
             return translation;
