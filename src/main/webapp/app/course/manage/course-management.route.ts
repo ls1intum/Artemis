@@ -21,6 +21,8 @@ import { TutorialGroupsChecklistComponent } from 'app/course/tutorial-groups/tut
 import { CreateTutorialGroupsConfigurationComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups-configuration/crud/create-tutorial-groups-configuration/create-tutorial-groups-configuration.component';
 import { CourseLtiConfigurationComponent } from 'app/course/manage/course-lti-configuration/course-lti-configuration.component';
 import { EditCourseLtiConfigurationComponent } from 'app/course/manage/course-lti-configuration/edit-course-lti-configuration.component';
+import { CourseManagementTabBarComponent } from 'app/shared/course-management-tab-bar/course-management-tab-bar.component';
+import { ExamManagementComponent } from 'app/exam/manage/exam-management.component';
 
 export const courseManagementState: Routes = [
     {
@@ -42,170 +44,186 @@ export const courseManagementState: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: ':courseId',
-        component: CourseDetailComponent,
-        resolve: {
-            course: CourseManagementResolve,
-        },
-        data: {
-            authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
-            pageTitle: 'artemisApp.course.home.title',
-        },
-        canActivate: [UserRouteAccessService],
-    },
-    {
-        path: ':courseId/grading-system',
-        component: GradingSystemComponent,
-        data: {
-            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
-            pageTitle: 'artemisApp.course.gradingSystem',
-        },
-        canActivate: [UserRouteAccessService],
-        loadChildren: () => import('app/grading-system/grading-system.module').then((m) => m.GradingSystemModule),
-    },
-    {
-        path: ':courseId/tutorial-groups',
-        resolve: {
-            course: TutorialGroupManagementResolve,
-        },
-        loadChildren: () => import('app/course/tutorial-groups/tutorial-groups-management/tutorial-groups-management.module').then((m) => m.ArtemisTutorialGroupsManagementModule),
-    },
-    {
-        path: ':courseId/plagiarism-cases',
-        loadChildren: () => import('../plagiarism-cases/instructor-view/plagiarism-cases-instructor-view.module').then((m) => m.ArtemisPlagiarismCasesInstructorViewModule),
-    },
-    {
         path: ':courseId/exams/:examId/plagiarism-cases',
         loadChildren: () => import('../plagiarism-cases/instructor-view/plagiarism-cases-instructor-view.module').then((m) => m.ArtemisPlagiarismCasesInstructorViewModule),
     },
     {
-        path: ':courseId/tutorial-groups-checklist',
-        component: TutorialGroupsChecklistComponent,
-        data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
-            pageTitle: 'artemisApp.pages.checklist.title',
-        },
-        canActivate: [UserRouteAccessService],
-    },
-    {
-        path: ':courseId/create-tutorial-groups-configuration',
-        component: CreateTutorialGroupsConfigurationComponent,
-        data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
-            pageTitle: 'artemisApp.pages.createTutorialGroupsConfiguration.title',
-        },
-        canActivate: [UserRouteAccessService],
-    },
-    {
-        path: ':courseId/lti-configuration',
-        component: CourseLtiConfigurationComponent,
-        resolve: {
-            course: CourseManagementResolve,
-        },
-        data: {
-            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
-            pageTitle: 'artemisApp.lti.home.title',
-        },
-        canActivate: [UserRouteAccessService],
-    },
-    {
-        path: ':courseId/lti-configuration/edit',
-        component: EditCourseLtiConfigurationComponent,
-        resolve: {
-            course: CourseManagementResolve,
-        },
-        data: {
-            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
-            pageTitle: 'artemisApp.lti.home.title',
-        },
-        canActivate: [UserRouteAccessService],
-    },
-    {
-        // Create a new path without a component defined to prevent resolver caching and the CourseDetailComponent from being always rendered
         path: ':courseId',
-        resolve: {
-            course: CourseManagementResolve,
-        },
+        component: CourseManagementTabBarComponent,
         children: [
             {
-                path: 'exercises',
-                component: !isOrion ? CourseManagementExercisesComponent : OrionCourseManagementExercisesComponent,
-                data: {
-                    authorities: [Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA, Authority.ADMIN],
-                    pageTitle: 'artemisApp.course.exercises',
+                path: '',
+                component: CourseDetailComponent,
+                resolve: {
+                    course: CourseManagementResolve,
                 },
-                canActivate: [UserRouteAccessService],
-            },
-            {
-                path: 'course-statistics',
-                component: CourseManagementStatisticsComponent,
                 data: {
                     authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
-                    pageTitle: 'artemisApp.courseStatistics.statistics',
-                    breadcrumbLabelVariable: '',
+                    pageTitle: 'artemisApp.course.home.title',
                 },
                 canActivate: [UserRouteAccessService],
             },
             {
-                path: 'edit',
-                component: CourseUpdateComponent,
+                path: 'grading-system',
+                component: GradingSystemComponent,
                 data: {
                     authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
-                    pageTitle: 'artemisApp.course.home.editLabel',
+                    pageTitle: 'artemisApp.course.gradingSystem',
                 },
                 canActivate: [UserRouteAccessService],
+                loadChildren: () => import('app/grading-system/grading-system.module').then((m) => m.GradingSystemModule),
             },
             {
-                path: 'groups/:courseGroup',
-                component: CourseGroupMembershipComponent,
+                path: 'tutorial-groups',
+                resolve: {
+                    course: TutorialGroupManagementResolve,
+                },
+                loadChildren: () =>
+                    import('app/course/tutorial-groups/tutorial-groups-management/tutorial-groups-management.module').then((m) => m.ArtemisTutorialGroupsManagementModule),
+            },
+            {
+                path: 'plagiarism-cases',
+                loadChildren: () => import('../plagiarism-cases/instructor-view/plagiarism-cases-instructor-view.module').then((m) => m.ArtemisPlagiarismCasesInstructorViewModule),
+            },
+            {
+                path: 'exams',
+                component: ExamManagementComponent,
                 data: {
-                    authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
-                    pageTitle: 'artemisApp.userManagement.groups',
+                    authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+                    pageTitle: 'artemisApp.examManagement.title',
                 },
                 canActivate: [UserRouteAccessService],
             },
             {
-                path: 'ratings',
-                component: RatingListComponent,
-                data: {
-                    authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
-                    pageTitle: 'artemisApp.ratingList.pageTitle',
-                },
-                canActivate: [UserRouteAccessService],
-            },
-            {
-                path: 'goal-management',
-                component: LearningGoalManagementComponent,
+                path: 'tutorial-groups-checklist',
+                component: TutorialGroupsChecklistComponent,
                 data: {
                     authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
-                    pageTitle: 'artemisApp.learningGoal.manageLearningGoals.title',
+                    pageTitle: 'artemisApp.pages.checklist.title',
                 },
                 canActivate: [UserRouteAccessService],
             },
             {
-                // Create a new path without a component defined to prevent the LearningGoalManagementComponent from being always rendered
-                path: 'goal-management',
+                path: 'create-tutorial-groups-configuration',
+                component: CreateTutorialGroupsConfigurationComponent,
                 data: {
-                    pageTitle: 'artemisApp.learningGoal.manageLearningGoals.title',
+                    authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
+                    pageTitle: 'artemisApp.pages.createTutorialGroupsConfiguration.title',
+                },
+                canActivate: [UserRouteAccessService],
+            },
+            {
+                path: 'lti-configuration',
+                component: CourseLtiConfigurationComponent,
+                resolve: {
+                    course: CourseManagementResolve,
+                },
+                data: {
+                    authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+                    pageTitle: 'artemisApp.lti.home.title',
+                },
+                canActivate: [UserRouteAccessService],
+            },
+            {
+                path: 'lti-configuration/edit',
+                component: EditCourseLtiConfigurationComponent,
+                resolve: {
+                    course: CourseManagementResolve,
+                },
+                data: {
+                    authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+                    pageTitle: 'artemisApp.lti.home.title',
+                },
+                canActivate: [UserRouteAccessService],
+            },
+            {
+                // Create a new path without a component defined to prevent resolver caching and the CourseDetailComponent from being always rendered
+                path: '',
+                resolve: {
+                    course: CourseManagementResolve,
                 },
                 children: [
                     {
-                        path: 'create',
-                        component: CreateLearningGoalComponent,
+                        path: 'exercises',
+                        component: !isOrion ? CourseManagementExercisesComponent : OrionCourseManagementExercisesComponent,
                         data: {
-                            authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
-                            pageTitle: 'artemisApp.learningGoal.createLearningGoal.title',
+                            authorities: [Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA, Authority.ADMIN],
+                            pageTitle: 'artemisApp.course.exercises',
                         },
                         canActivate: [UserRouteAccessService],
                     },
                     {
-                        path: ':learningGoalId/edit',
-                        component: EditLearningGoalComponent,
+                        path: 'course-statistics',
+                        component: CourseManagementStatisticsComponent,
                         data: {
-                            authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
-                            pageTitle: 'artemisApp.learningGoal.editLearningGoal.title',
+                            authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+                            pageTitle: 'artemisApp.courseStatistics.statistics',
+                            breadcrumbLabelVariable: '',
                         },
                         canActivate: [UserRouteAccessService],
+                    },
+                    {
+                        path: 'edit',
+                        component: CourseUpdateComponent,
+                        data: {
+                            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+                            pageTitle: 'artemisApp.course.home.editLabel',
+                        },
+                        canActivate: [UserRouteAccessService],
+                    },
+                    {
+                        path: 'groups/:courseGroup',
+                        component: CourseGroupMembershipComponent,
+                        data: {
+                            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+                            pageTitle: 'artemisApp.userManagement.groups',
+                        },
+                        canActivate: [UserRouteAccessService],
+                    },
+                    {
+                        path: 'ratings',
+                        component: RatingListComponent,
+                        data: {
+                            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+                            pageTitle: 'artemisApp.ratingList.pageTitle',
+                        },
+                        canActivate: [UserRouteAccessService],
+                    },
+                    {
+                        path: 'goal-management',
+                        component: LearningGoalManagementComponent,
+                        data: {
+                            authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
+                            pageTitle: 'artemisApp.learningGoal.manageLearningGoals.title',
+                        },
+                        canActivate: [UserRouteAccessService],
+                    },
+                    {
+                        // Create a new path without a component defined to prevent the LearningGoalManagementComponent from being always rendered
+                        path: 'goal-management',
+                        data: {
+                            pageTitle: 'artemisApp.learningGoal.manageLearningGoals.title',
+                        },
+                        children: [
+                            {
+                                path: 'create',
+                                component: CreateLearningGoalComponent,
+                                data: {
+                                    authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
+                                    pageTitle: 'artemisApp.learningGoal.createLearningGoal.title',
+                                },
+                                canActivate: [UserRouteAccessService],
+                            },
+                            {
+                                path: ':learningGoalId/edit',
+                                component: EditLearningGoalComponent,
+                                data: {
+                                    authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
+                                    pageTitle: 'artemisApp.learningGoal.editLearningGoal.title',
+                                },
+                                canActivate: [UserRouteAccessService],
+                            },
+                        ],
                     },
                 ],
             },

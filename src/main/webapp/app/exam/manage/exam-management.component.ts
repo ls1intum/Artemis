@@ -67,7 +67,7 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
      * @see registerChangeInExams
      */
     ngOnInit(): void {
-        this.courseService.find(Number(this.route.snapshot.paramMap.get('courseId'))).subscribe({
+        this.courseService.find(Number(this.route.parent?.snapshot.paramMap.get('courseId'))).subscribe({
             next: (res: HttpResponse<Course>) => {
                 this.course = res.body!;
                 this.loadAllExamsForCourse();

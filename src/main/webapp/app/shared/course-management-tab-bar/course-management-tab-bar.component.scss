@@ -6,9 +6,14 @@
 
     border-bottom: 1px solid #979797;
     margin-bottom: $padding-y;
+    padding-top: $padding-y;
 
     .tab-item {
         margin-bottom: $padding-y;
+
+        &.active {
+            box-shadow: 0 2px 0 var(--overview-tab-active-border-color);
+        }
     }
 
     @media (max-width: 750px) {

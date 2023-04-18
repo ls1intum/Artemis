@@ -22,7 +22,7 @@ export class GradingSystemComponent implements OnInit {
     constructor(private route: ActivatedRoute) {}
 
     ngOnInit(): void {
-        this.route.params.subscribe((params) => {
+        this.route.parent?.params.subscribe((params) => {
             this.courseId = Number(params['courseId']);
             if (params['examId']) {
                 this.examId = Number(params['examId']);

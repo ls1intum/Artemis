@@ -34,7 +34,7 @@ export class CourseManagementTabBarComponent implements OnInit, OnDestroy {
     readonly FeatureToggle = FeatureToggle;
     readonly ButtonSize = ButtonSize;
 
-    course: Course;
+    course?: Course;
 
     @Input() showCourseEditButtons = false;
 
