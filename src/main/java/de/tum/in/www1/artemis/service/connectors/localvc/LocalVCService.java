@@ -95,8 +95,7 @@ public class LocalVCService extends AbstractVersionControlService {
 
     @Override
     protected void addAuthenticatedWebHook(VcsRepositoryUrl repositoryUrl, String notificationUrl, String webHookName, String secretToken) {
-        // Not needed for local VC.
-        throw new UnsupportedOperationException("Authenticated webhooks with local VC are not supported!");
+        // Webhooks must not be added for the local VC system. The LocalVCPostPushHook notifies Artemis on every push.
     }
 
     @Override
@@ -224,7 +223,7 @@ public class LocalVCService extends AbstractVersionControlService {
      * @param repositorySlug The name for the new repository
      * @throws LocalVCException if the repo could not be created
      */
-    private void createRepository(String projectKey, String repositorySlug) throws LocalVCException {
+    private void createRepository(String projectKey, String repositorySlug) {
 
         LocalVCRepositoryUrl localVCRepositoryUrl = new LocalVCRepositoryUrl(projectKey, repositorySlug, localVCBaseUrl);
 

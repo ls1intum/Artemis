@@ -1,15 +1,8 @@
 package de.tum.in.www1.artemis.service.connectors.localci.dto;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-
-import org.apache.commons.text.StringEscapeUtils;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.BuildLogEntry;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
@@ -23,8 +16,6 @@ import de.tum.in.www1.artemis.service.dto.TestCaseDTOInterface;
  * Represents all the information returned by the local CI system about a build.
  * Note: due to limitations with inheritance, we cannot declare this as a record, but we can use it in a similar way with final fields.
  */
-@JsonIgnoreProperties(ignoreUnknown = true)
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class LocalCIBuildResult extends AbstractBuildResultNotificationDTO {
 
     private final String assignmentRepoBranchName;
@@ -98,40 +89,31 @@ public class LocalCIBuildResult extends AbstractBuildResultNotificationDTO {
 
     @Override
     public boolean hasLogs() {
-        return jobs.stream().anyMatch(job -> !job.logs().isEmpty());
+        // Logs are not implemented for local CI yet.
+        return false;
     }
 
     @Override
     public List<BuildLogEntry> extractBuildLogs(ProgrammingLanguage programmingLanguage) {
-        List<BuildLogEntry> buildLogEntries = new ArrayList<>();
-
-        // Store logs into database. Append logs of multiple jobs.
-        for (var job : jobs) {
-            for (var localCILog : job.logs()) {
-                // We have to unescape the HTML as otherwise symbols like '<' are not displayed correctly
-                buildLogEntries.add(new BuildLogEntry(localCILog.date(), StringEscapeUtils.unescapeHtml4(localCILog.log())));
-            }
-        }
-
-        return buildLogEntries;
+        // Not implemented for local CI yet.
+        return null;
     }
 
-    @JsonIgnore
     @Override
     public List<? extends BuildJobDTOInterface> getBuildJobs() {
         return jobs;
     }
 
-    @JsonIgnore
     @Override
     public List<StaticCodeAnalysisReportDTO> getStaticCodeAnalysisReports() {
-        return jobs.stream().flatMap(job -> job.staticCodeAnalysisReports().stream()).toList();
+        // Static code analysis is not implemented for local CI yet.
+        return null;
     }
 
-    @JsonIgnore
     @Override
     public List<TestwiseCoverageReportDTO> getTestwiseCoverageReports() {
-        return jobs.stream().flatMap(job -> job.testwiseCoverageReport().stream()).toList();
+        // Testwise coverage is not implemented for local CI yet.
+        return null;
     }
 
     /**
@@ -144,8 +126,6 @@ public class LocalCIBuildResult extends AbstractBuildResultNotificationDTO {
      * @param testwiseCoverageReport    list of testwise coverage reports.
      * @param logs                      list of logs.
      */
-    @JsonIgnoreProperties(ignoreUnknown = true)
-    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record LocalCIJobDTO(List<LocalCITestJobDTO> failedTests, List<LocalCITestJobDTO> successfulTests, List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports,
             List<TestwiseCoverageReportDTO> testwiseCoverageReport, List<LocalCIBuildLogDTO> logs) implements BuildJobDTOInterface {
 
@@ -166,8 +146,6 @@ public class LocalCIBuildResult extends AbstractBuildResultNotificationDTO {
      * @param name
      * @param errors
      */
-    @JsonIgnoreProperties(ignoreUnknown = true)
-    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record LocalCITestJobDTO(String name, List<String> errors) implements TestCaseDTOInterface {
 
         @Override

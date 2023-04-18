@@ -39,6 +39,12 @@ class LocalCIServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
     @Test
     void testUnsupportedMethods() {
+        continuousIntegrationService.recreateBuildPlansForExercise(null);
+        continuousIntegrationService.givePlanPermissions(null, null);
+        continuousIntegrationService.enablePlan(null, null);
+        continuousIntegrationService.updatePlanRepository(null, null, null, null, null, null, null, null);
+        assertThat(continuousIntegrationService.getPlanKey(null)).isNull();
+        assertThat(continuousIntegrationService.getWebHookUrl(null, null)).isEmpty();
         assertThat(continuousIntegrationService.retrieveLatestArtifact(null)).isNull();
     }
 }

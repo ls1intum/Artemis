@@ -99,7 +99,7 @@ public interface VersionControlService {
      * Creates a repository on the VCS.
      *
      * @param projectKey       The key of the project that contains the repository (must exist)
-     * @param repoName         The name of repository
+     * @param repoName         The name of the repository
      * @param parentProjectKey The key of parent project (for sub-groups in Gitlab), null if not applicable
      * @throws VersionControlException if the repository could not be created
      */

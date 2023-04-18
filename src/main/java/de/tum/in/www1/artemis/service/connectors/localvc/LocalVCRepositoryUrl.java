@@ -23,7 +23,7 @@ public class LocalVCRepositoryUrl extends VcsRepositoryUrl {
     private final boolean isPracticeRepository;
 
     /**
-     * Constructor that build a LocalVCRepositoryUrl from a project key and a repository slug.
+     * Constructor that builds a LocalVCRepositoryUrl from a project key and a repository slug.
      *
      * @param projectKey     the project key.
      * @param repositorySlug the repository slug.
@@ -63,9 +63,7 @@ public class LocalVCRepositoryUrl extends VcsRepositoryUrl {
 
         this.projectKey = urlPath.getName(1).toString();
         this.repositorySlug = urlPath.getName(2).toString().replace(".git", "");
-        if (!repositorySlug.toLowerCase().startsWith(projectKey.toLowerCase())) {
-            throw new LocalVCException("Invalid repository URL: " + urlString);
-        }
+        validateProjectKeyAndRepositorySlug(projectKey, repositorySlug);
 
         try {
             this.uri = new URI(urlString);
@@ -93,9 +91,7 @@ public class LocalVCRepositoryUrl extends VcsRepositoryUrl {
 
         this.projectKey = repositoryPath.getParent().getFileName().toString();
         this.repositorySlug = repositoryPath.getFileName().toString().replace(".git", "");
-        if (!repositorySlug.toLowerCase().startsWith(projectKey.toLowerCase())) {
-            throw new LocalVCException("Invalid repository path: " + repositoryPath);
-        }
+        validateProjectKeyAndRepositorySlug(projectKey, repositorySlug);
 
         final String urlString = localVCServerUrl + buildRepositoryPath(projectKey, repositorySlug);
         try {
@@ -122,12 +118,14 @@ public class LocalVCRepositoryUrl extends VcsRepositoryUrl {
         return repositorySlug.toLowerCase().startsWith(projectKey.toLowerCase() + "-practice-");
     }
 
-    public String getProjectKey() {
-        return projectKey;
+    private void validateProjectKeyAndRepositorySlug(String projectKey, String repositorySlug) {
+        if (!repositorySlug.toLowerCase().startsWith(projectKey.toLowerCase())) {
+            throw new LocalVCException("Invalid project key and repository slug: " + projectKey + ", " + repositorySlug);
+        }
     }
 
-    public String getRepositorySlug() {
-        return repositorySlug;
+    public String getProjectKey() {
+        return projectKey;
     }
 
     public String getRepositoryTypeOrUserName() {

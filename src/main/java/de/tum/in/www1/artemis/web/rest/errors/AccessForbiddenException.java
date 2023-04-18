@@ -20,12 +20,12 @@ public class AccessForbiddenException extends RuntimeException {
         super(NOT_ALLOWED);
     }
 
-    public AccessForbiddenException(Throwable cause) {
-        super(NOT_ALLOWED, cause);
-    }
-
     public AccessForbiddenException(String message) {
         super(message);
+    }
+
+    public AccessForbiddenException(Throwable cause) {
+        super(NOT_ALLOWED, cause);
     }
 
     public AccessForbiddenException(String entityType, long entityId) {

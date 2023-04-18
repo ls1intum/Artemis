@@ -141,7 +141,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
             participationService.resumeProgrammingExercise((ProgrammingExerciseStudentParticipation) participation);
             // Note: in this case we do not need an empty commit: when we trigger the build manually (below), subsequent commits will work correctly
             try {
-                continuousIntegrationTriggerService.ifPresent(service -> service.triggerBuild(participation));
+                continuousIntegrationTriggerService.orElseThrow().triggerBuild(participation);
             }
             catch (ContinuousIntegrationException ex) {
                 // TODO: This case is currently not handled. The correct handling would be creating the submission and informing the user that the build trigger failed.
