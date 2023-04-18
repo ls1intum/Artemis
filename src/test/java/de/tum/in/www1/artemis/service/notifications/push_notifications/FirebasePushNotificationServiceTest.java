@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.service.notifications.push_notifications;
 
 import static java.lang.Thread.sleep;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
@@ -98,7 +98,7 @@ public class FirebasePushNotificationServiceTest {
         PushNotificationDeviceType deviceType = firebasePushNotificationService.getDeviceType();
 
         // Then
-        assertEquals(PushNotificationDeviceType.FIREBASE, deviceType);
+        assertThat(deviceType).isEqualTo(PushNotificationDeviceType.FIREBASE);
     }
 
     @Test
@@ -107,6 +107,6 @@ public class FirebasePushNotificationServiceTest {
         PushNotificationDeviceConfigurationRepository repository = firebasePushNotificationService.getRepository();
 
         // Then
-        assertEquals(repositoryMock, repository);
+        assertThat(repository).isEqualTo(repositoryMock);
     }
 }
