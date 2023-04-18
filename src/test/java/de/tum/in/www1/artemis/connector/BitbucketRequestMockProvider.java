@@ -262,6 +262,16 @@ public class BitbucketRequestMockProvider {
         }
     }
 
+    public void mockUpdateAnyUserDetails(boolean shouldFail, int requestCount) {
+        var status = shouldFail ? HttpStatus.BAD_REQUEST : HttpStatus.OK;
+        mockServer.expect(ExpectedCount.times(requestCount), requestTo(Matchers.endsWith("latest/admin/users"))).andRespond(withStatus(status));
+    }
+
+    public void mockUpdateAnyUserPassword(boolean shouldFail, int requestCount) {
+        var status = shouldFail ? HttpStatus.BAD_REQUEST : HttpStatus.OK;
+        mockServer.expect(ExpectedCount.times(requestCount), requestTo(Matchers.endsWith("latest/admin/users/credentials"))).andRespond(withStatus(status));
+    }
+
     public void mockUpdateUserDetails(String username, String emailAddress, String displayName) throws JsonProcessingException {
         mockUpdateUserDetails(username, emailAddress, displayName, true);
     }
@@ -331,6 +341,11 @@ public class BitbucketRequestMockProvider {
     public void mockAddUserToGroups() throws URISyntaxException {
         final var path = UriComponentsBuilder.fromUri(bitbucketServerUrl.toURI()).path("/rest/api/latest/admin/users/add-groups").build().toUri();
         mockServer.expect(requestTo(path)).andExpect(method(HttpMethod.POST)).andRespond(withStatus(HttpStatus.OK));
+    }
+
+    public void mockAddUserToGroupsManyTimes() throws URISyntaxException {
+        final var path = UriComponentsBuilder.fromUri(bitbucketServerUrl.toURI()).path("/rest/api/latest/admin/users/add-groups").build().toUri();
+        mockServer.expect(ExpectedCount.manyTimes(), requestTo(path)).andExpect(method(HttpMethod.POST)).andRespond(withStatus(HttpStatus.OK));
     }
 
     public void mockRemoveUserFromGroup(String username, String groupName) throws URISyntaxException {

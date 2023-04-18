@@ -64,6 +64,11 @@ public class JiraRequestMockProvider {
                 .andRespond(withStatus(HttpStatus.OK));
     }
 
+    public void mockAreAnyGroupsAvailable() {
+        final var uriPattern = Pattern.compile(JIRA_URL + "/rest/api/2/group/member\\?groupname=.*");
+        mockServer.expect(ExpectedCount.manyTimes(), requestTo(MatchesPattern.matchesPattern(uriPattern))).andExpect(method(HttpMethod.GET)).andRespond(withStatus(HttpStatus.OK));
+    }
+
     public void mockAddUserToGroup(String group, boolean shouldFail) {
         mockIsGroupAvailable(group);
         final var uriPattern = Pattern.compile(JIRA_URL + "/rest/api/2/group/user\\?groupname=" + group);
@@ -77,6 +82,12 @@ public class JiraRequestMockProvider {
         final var uriPattern = Pattern.compile(JIRA_URL + "/rest/api/2/group/user\\?groupname=(" + regexGroups + ")");
         mockServer.expect(ExpectedCount.times(groups.size()), requestTo(MatchesPattern.matchesPattern(uriPattern))).andExpect(method(HttpMethod.POST))
                 .andRespond(withStatus(HttpStatus.OK));
+    }
+
+    public void mockAddAnyUserToAnyGroups() {
+        mockAreAnyGroupsAvailable();
+        final var uriPattern = Pattern.compile(JIRA_URL + "/rest/api/2/group/user\\?groupname=.*");
+        mockServer.expect(ExpectedCount.manyTimes(), requestTo(MatchesPattern.matchesPattern(uriPattern))).andExpect(method(HttpMethod.POST)).andRespond(withStatus(HttpStatus.OK));
     }
 
     public void mockRemoveUserFromGroup(Set<String> groups, String username, boolean shouldFail, boolean found) {

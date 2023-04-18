@@ -80,8 +80,8 @@ public class User extends AbstractAuditingEntity implements Participant {
     private boolean activated = false;
 
     @NotNull
-    @Column(nullable = false)
-    private boolean isDeleted = false; // default value // TODO: Liquibase changelog
+    @Column(name = "is_deleted", nullable = false)
+    private boolean isDeleted = false; // default value
 
     @Size(min = 2, max = 6)
     @Column(name = "lang_key", length = 6)
