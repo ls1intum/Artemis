@@ -24,7 +24,7 @@ describe('CourseConversationsNotificationService', () => {
         jest.restoreAllMocks();
     });
 
-    it('should make http call to conversations/for-notifications only when cache is empty', fakeAsync(() => {
+    it('should make http call to conversations-for-notifications only when cache is empty', fakeAsync(() => {
         const http = TestBed.inject(HttpClient);
         const response: HttpResponse<Conversation[]> = new HttpResponse({
             body: [conversation],
@@ -36,7 +36,7 @@ describe('CourseConversationsNotificationService', () => {
         expect(service.coursesForNotifications$).toBeUndefined();
         service.getConversationsForNotifications().subscribe((conversations) => {
             expect(conversations).toEqual([conversation]);
-            expect(getSpy).toHaveBeenCalledWith('api/courses/conversations/for-notifications', { observe: 'response' });
+            expect(getSpy).toHaveBeenCalledWith('api/courses/conversations-for-notifications', { observe: 'response' });
             expect(getSpy).toHaveBeenCalledOnce();
             getSpy.mockClear();
             // cache not empty anymore
