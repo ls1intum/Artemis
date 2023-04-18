@@ -7,6 +7,7 @@ import java.util.concurrent.Executors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -21,7 +22,6 @@ import org.springframework.web.client.RestTemplate;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 
-import de.tum.in.www1.artemis.config.RestTemplateConfiguration;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.notification.Notification;
 import de.tum.in.www1.artemis.domain.push_notification.PushNotificationDeviceType;
@@ -40,8 +40,12 @@ public class FirebasePushNotificationService extends PushNotificationService {
     @Value("${artemis.push-notification-relay:#{Optional.empty()}}")
     private Optional<String> relayServerBaseUrl;
 
-    public FirebasePushNotificationService(PushNotificationDeviceConfigurationRepository pushNotificationDeviceConfigurationRepository) {
+    @Autowired
+    RestTemplate restTemplate;
+
+    public FirebasePushNotificationService(PushNotificationDeviceConfigurationRepository pushNotificationDeviceConfigurationRepository, RestTemplate restTemplate) {
         repository = pushNotificationDeviceConfigurationRepository;
+        this.restTemplate = restTemplate;
     }
 
     @Override
@@ -70,9 +74,6 @@ public class FirebasePushNotificationService extends PushNotificationService {
 
         try {
             template.execute((RetryCallback<Void, RestClientException>) context -> {
-                RestTemplateConfiguration restTemplateConfiguration = new RestTemplateConfiguration();
-                RestTemplate restTemplate = restTemplateConfiguration.restTemplate();
-
                 HttpHeaders httpHeaders = new HttpHeaders();
                 httpHeaders.setContentType(MediaType.APPLICATION_JSON);
 

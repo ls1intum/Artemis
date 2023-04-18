@@ -7,6 +7,7 @@ import java.util.concurrent.Executors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -20,7 +21,6 @@ import org.springframework.web.client.RestTemplate;
 
 import com.google.gson.Gson;
 
-import de.tum.in.www1.artemis.config.RestTemplateConfiguration;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.notification.Notification;
 import de.tum.in.www1.artemis.domain.push_notification.PushNotificationDeviceType;
@@ -39,8 +39,12 @@ public class ApplePushNotificationService extends PushNotificationService {
     @Value("${artemis.push-notification-relay:#{Optional.empty()}}")
     private Optional<String> relayServerBaseUrl;
 
-    public ApplePushNotificationService(PushNotificationDeviceConfigurationRepository repository) {
+    @Autowired
+    RestTemplate restTemplate;
+
+    public ApplePushNotificationService(PushNotificationDeviceConfigurationRepository repository, RestTemplate restTemplate) {
         this.repository = repository;
+        this.restTemplate = restTemplate;
     }
 
     @Override
@@ -51,11 +55,8 @@ public class ApplePushNotificationService extends PushNotificationService {
 
     @Override
     void sendNotificationRequestsToEndpoint(List<RelayNotificationRequest> requests, String relayServerBaseUrl) {
-        RestTemplateConfiguration restTemplateConfiguration = new RestTemplateConfiguration();
-        RestTemplate restTemplate = restTemplateConfiguration.restTemplate();
-
         var threadPool = Executors.newFixedThreadPool(10);
-        var futures = requests.stream().map(request -> CompletableFuture.runAsync(() -> sendRelayRequest(restTemplate, request, relayServerBaseUrl))).toList()
+        var futures = requests.stream().map(request -> CompletableFuture.runAsync(() -> sendRelayRequest(request, relayServerBaseUrl))).toList()
                 .toArray(new CompletableFuture[requests.size()]);
 
         CompletableFuture.allOf(futures).thenApply((empty) -> {
@@ -65,7 +66,7 @@ public class ApplePushNotificationService extends PushNotificationService {
     }
 
     @Async
-    void sendRelayRequest(RestTemplate restTemplate, RelayNotificationRequest request, String relayServerBaseUrl) {
+    void sendRelayRequest(RelayNotificationRequest request, String relayServerBaseUrl) {
         RetryTemplate template = RetryTemplate.builder().exponentialBackoff(1000, 4, 60 * 1000).retryOn(RestClientException.class).maxAttempts(4).build();
 
         try {
