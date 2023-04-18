@@ -66,8 +66,8 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
     }
 
     @AfterEach
-    void removeRepositories() {
-        localVCLocalCITestService.removeRepository(studentAssignmentRepository);
+    void removeRepositories() throws IOException {
+        studentAssignmentRepository.resetLocalRepo();
     }
 
     @Test
@@ -137,9 +137,9 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
         assertThat(exception.getMessage()).contains(expectedErrorMessage);
 
         // Cleanup
-        localVCLocalCITestService.removeRepository(solutionRepository);
-        localVCLocalCITestService.removeRepository(templateRepository);
-        localVCLocalCITestService.removeRepository(teamLocalRepository);
+        solutionRepository.resetLocalRepo();
+        templateRepository.resetLocalRepo();
+        teamLocalRepository.resetLocalRepo();
     }
 
     @Test
@@ -189,7 +189,7 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
         localCIPushService.processNewPush(testsCommitHash, testsRepository.originGit.getRepository());
         verifyUserNotification(solutionParticipation, "de.tum.in.www1.artemis.exception.LocalCIException: Project type must be Gradle.");
 
-        localVCLocalCITestService.removeRepository(testsRepository);
+        testsRepository.resetLocalRepo();
     }
 
     @Test

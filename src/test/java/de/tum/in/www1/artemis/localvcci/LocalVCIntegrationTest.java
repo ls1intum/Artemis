@@ -58,10 +58,10 @@ class LocalVCIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
     }
 
     @AfterEach
-    void removeRepositories() {
-        localVCLocalCITestService.removeRepository(assignmentRepository);
-        localVCLocalCITestService.removeRepository(templateRepository);
-        localVCLocalCITestService.removeRepository(solutionRepository);
+    void removeRepositories() throws IOException {
+        assignmentRepository.resetLocalRepo();
+        templateRepository.resetLocalRepo();
+        solutionRepository.resetLocalRepo();
     }
 
     @Test
@@ -146,7 +146,7 @@ class LocalVCIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
         localVCLocalCITestService.testPushThrowsException(student2Repository.localGit, student2Login, projectKey1, repositorySlug, INTERNAL_SERVER_ERROR);
 
         // Cleanup
-        localVCLocalCITestService.removeRepository(student2Repository);
+        student2Repository.resetLocalRepo();
     }
 
     @Test

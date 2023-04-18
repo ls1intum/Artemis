@@ -73,11 +73,11 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
     }
 
     @AfterEach
-    void removeRepositories() {
-        localVCLocalCITestService.removeRepository(templateRepository);
-        localVCLocalCITestService.removeRepository(testsRepository);
-        localVCLocalCITestService.removeRepository(solutionRepository);
-        localVCLocalCITestService.removeRepository(assignmentRepository);
+    void removeRepositories() throws IOException {
+        templateRepository.resetLocalRepo();
+        testsRepository.resetLocalRepo();
+        solutionRepository.resetLocalRepo();
+        assignmentRepository.resetLocalRepo();
     }
 
     // ---- Tests for the base repositories ----
@@ -98,6 +98,8 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         String commitHash = localVCLocalCITestService.commitFile(testsRepository.localRepoFile.toPath(), programmingExercise.getPackageFolderName(), testsRepository.localGit);
 
         // Mock dockerClient.copyArchiveFromContainerCmd() such that it returns the commitHash of the tests repository for both the solution and the template repository.
+        // Note: The stub needs to receive the same object twice. Usually, specifying one doReturn() is enough to make the stub return the same object on every subsequent call.
+        // However, in this case we have it return an InputStream, which will be consumed after returning it the first time, so we need to create two separate ones.
         localVCLocalCITestService.mockInputStreamReturnedFromContainer(dockerClient, "/repositories/assignment-repository/.git/refs/heads/[^/]+",
                 Map.of("testCommitHash", commitHash), Map.of("testCommitHash", commitHash));
 
@@ -331,7 +333,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         localVCLocalCITestService.testPushSuccessful(teamLocalRepository.localGit, instructor1Login, projectKey1, teamRepositorySlug);
 
         // Cleanup
-        localVCLocalCITestService.removeRepository(teamLocalRepository);
+        teamLocalRepository.resetLocalRepo();
     }
 
     // ---- Tests for the teaching assistant assignment repository ----
@@ -377,7 +379,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         localVCLocalCITestService.testPushSuccessful(taAssignmentRepository.localGit, tutor1Login, projectKey1, repositorySlug);
 
         // Cleanup
-        localVCLocalCITestService.removeRepository(taAssignmentRepository);
+        taAssignmentRepository.resetLocalRepo();
     }
 
     // ---- Tests for the instructor assignment repository ----
@@ -421,7 +423,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         localVCLocalCITestService.testPushSuccessful(instructorAssignmentRepository.localGit, instructor1Login, projectKey1, repositorySlug);
 
         // Cleanup
-        localVCLocalCITestService.removeRepository(instructorAssignmentRepository);
+        instructorAssignmentRepository.resetLocalRepo();
     }
 
     // ---- Tests for the exam mode ----
@@ -597,7 +599,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         localVCLocalCITestService.testPushThrowsException(practiceRepository.localGit, student2Login, projectKey1, practiceRepositorySlug, NOT_AUTHORIZED);
 
         // Cleanup
-        localVCLocalCITestService.removeRepository(practiceRepository);
+        practiceRepository.resetLocalRepo();
     }
 
     @Test
@@ -636,7 +638,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         localVCLocalCITestService.testPushSuccessful(practiceRepository.localGit, instructor1Login, projectKey1, practiceRepositorySlug);
 
         // Cleanup
-        localVCLocalCITestService.removeRepository(practiceRepository);
+        practiceRepository.resetLocalRepo();
     }
 
     @Test
@@ -675,6 +677,6 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         localVCLocalCITestService.testPushSuccessful(practiceRepository.localGit, instructor1Login, projectKey1, practiceRepositorySlug);
 
         // Cleanup
-        localVCLocalCITestService.removeRepository(practiceRepository);
+        practiceRepository.resetLocalRepo();
     }
 }

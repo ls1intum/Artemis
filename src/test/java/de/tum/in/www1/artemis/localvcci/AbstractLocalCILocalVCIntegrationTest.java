@@ -1,13 +1,11 @@
 package de.tum.in.www1.artemis.localvcci;
 
 import java.io.IOException;
-import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -24,28 +22,12 @@ import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExercisePa
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.ExerciseGroupRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
-import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.repository.TeamRepository;
-import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
 
 public class AbstractLocalCILocalVCIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
     protected static final String TEST_PREFIX = "localvclocalciintegration";
-
-    @Value("${artemis.version-control.url}")
-    protected String localVCSBaseUrl;
-
-    @Value("${artemis.version-control.local-vcs-repo-path}")
-    protected Path localVCSBasePath;
-
-    @Autowired
-    protected ProgrammingExerciseRepository programmingExerciseRepository;
-
-    @Autowired
-    protected ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
 
     @Autowired
     protected TeamRepository teamRepository;
@@ -59,16 +41,8 @@ public class AbstractLocalCILocalVCIntegrationTest extends AbstractSpringIntegra
     @Autowired
     protected StudentExamRepository studentExamRepository;
 
-    @Autowired
-    protected TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
-
-    @Autowired
-    protected SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
-
     @LocalServerPort
     protected int port;
-
-    protected static final String DUMMY_COMMIT_HASH = "1234567890abcdef";
 
     // The error messages returned by JGit contain these Strings that correspond to the HTTP status codes.
     protected static final String NOT_FOUND = "not found";
@@ -140,36 +114,36 @@ public class AbstractLocalCILocalVCIntegrationTest extends AbstractSpringIntegra
         programmingExercise.setReleaseDate(ZonedDateTime.now().minusDays(1));
         programmingExercise.setProjectType(ProjectType.PLAIN_GRADLE);
         programmingExercise.setAllowOfflineIde(true);
-        programmingExercise.setTestRepositoryUrl(localVCSBaseUrl + "/git/" + projectKey1 + "/" + projectKey1.toLowerCase() + "-tests.git");
+        programmingExercise.setTestRepositoryUrl(localVCBaseUrl + "/git/" + projectKey1 + "/" + projectKey1.toLowerCase() + "-tests.git");
         programmingExerciseRepository.save(programmingExercise);
-        programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExercise.getId()).orElseThrow(); // programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).orElseThrow();
+        programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExercise.getId()).orElseThrow();
         // Set the correct repository URLs for the template and the solution participation.
         templateRepositorySlug = projectKey1.toLowerCase() + "-exercise";
         templateParticipation = programmingExercise.getTemplateParticipation();
-        templateParticipation.setRepositoryUrl(localVCSBaseUrl + "/git/" + projectKey1 + "/" + templateRepositorySlug + ".git");
+        templateParticipation.setRepositoryUrl(localVCBaseUrl + "/git/" + projectKey1 + "/" + templateRepositorySlug + ".git");
         templateProgrammingExerciseParticipationRepository.save(templateParticipation);
         solutionRepositorySlug = projectKey1.toLowerCase() + "-solution";
         solutionParticipation = programmingExercise.getSolutionParticipation();
-        solutionParticipation.setRepositoryUrl(localVCSBaseUrl + "/git/" + projectKey1 + "/" + solutionRepositorySlug + ".git");
+        solutionParticipation.setRepositoryUrl(localVCBaseUrl + "/git/" + projectKey1 + "/" + solutionRepositorySlug + ".git");
         solutionProgrammingExerciseParticipationRepository.save(solutionParticipation);
 
-        assignmentRepositorySlug = (projectKey1 + "-" + student1Login).toLowerCase();
+        assignmentRepositorySlug = projectKey1.toLowerCase() + "-" + student1Login;
 
         // Add a participation for student1.
         studentParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, student1Login);
-        studentParticipation.setRepositoryUrl(String.format(localVCSBaseUrl + "/git/%s/%s.git", projectKey1, assignmentRepositorySlug));
+        studentParticipation.setRepositoryUrl(String.format(localVCBaseUrl + "/git/%s/%s.git", projectKey1, assignmentRepositorySlug));
         studentParticipation.setBranch(defaultBranch);
         programmingExerciseStudentParticipationRepository.save(studentParticipation);
 
         // Add a participation for tutor1.
         teachingAssistantParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, tutor1Login);
-        teachingAssistantParticipation.setRepositoryUrl(String.format(localVCSBaseUrl + "/git/%s/%s.git", projectKey1, (projectKey1 + "-" + tutor1Login).toLowerCase()));
+        teachingAssistantParticipation.setRepositoryUrl(String.format(localVCBaseUrl + "/git/%s/%s.git", projectKey1, (projectKey1 + "-" + tutor1Login).toLowerCase()));
         teachingAssistantParticipation.setBranch(defaultBranch);
         programmingExerciseStudentParticipationRepository.save(teachingAssistantParticipation);
 
         // Add a participation for instructor1.
         instructorParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, instructor1Login);
-        instructorParticipation.setRepositoryUrl(String.format(localVCSBaseUrl + "/git/%s/%s.git", projectKey1, (projectKey1 + "-" + instructor1Login).toLowerCase()));
+        instructorParticipation.setRepositoryUrl(String.format(localVCBaseUrl + "/git/%s/%s.git", projectKey1, (projectKey1 + "-" + instructor1Login).toLowerCase()));
         instructorParticipation.setBranch(defaultBranch);
         programmingExerciseStudentParticipationRepository.save(instructorParticipation);
 

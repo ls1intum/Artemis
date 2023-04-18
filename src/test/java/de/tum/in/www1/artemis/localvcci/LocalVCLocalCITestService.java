@@ -8,7 +8,6 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
@@ -28,7 +27,6 @@ import java.util.Map;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
-import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.FetchCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.PushCommand;
@@ -51,7 +49,6 @@ import de.tum.in.www1.artemis.domain.enumeration.Visibility;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.util.GitUtilService;
-import de.tum.in.www1.artemis.util.LocalRepository;
 
 @Service
 public class LocalVCLocalCITestService {
@@ -119,12 +116,13 @@ public class LocalVCLocalCITestService {
 
         if (dataToReturn.length == 1) {
             // If only one dataToReturn entry is provided, return it for every call to "copyArchiveFromContainerCmd().exec()"
-            when(copyArchiveFromContainerCmd.exec()).thenReturn(createInputStreamForTarArchiveFromMap(dataToReturn[0]));
+            doReturn(createInputStreamForTarArchiveFromMap(dataToReturn[0])).when(copyArchiveFromContainerCmd).exec();
         }
         else {
             // If two dataToReturn entries are provided, return the first one for the first call to "copyArchiveFromContainerCmd().exec()" and the second one for the second call to
             // "copyArchiveFromContainerCmd().exec()"
-            when(copyArchiveFromContainerCmd.exec()).thenReturn(createInputStreamForTarArchiveFromMap(dataToReturn[0]), createInputStreamForTarArchiveFromMap(dataToReturn[1]));
+            doReturn(createInputStreamForTarArchiveFromMap(dataToReturn[0])).doReturn(createInputStreamForTarArchiveFromMap(dataToReturn[1])).when(copyArchiveFromContainerCmd)
+                    .exec();
         }
     }
 
@@ -490,22 +488,5 @@ public class LocalVCLocalCITestService {
         pushCommand.setRemote(repositoryUrl);
         // Execute the push.
         pushCommand.call();
-    }
-
-    /**
-     * Close repository handles and delete temporary directories of a LocalRepository instance.
-     *
-     * @param repository to close and delete.
-     */
-    public void removeRepository(LocalRepository repository) {
-        repository.localGit.close();
-        repository.originGit.close();
-        try {
-            FileUtils.deleteDirectory(repository.localRepoFile);
-            FileUtils.deleteDirectory(repository.originRepoFile);
-        }
-        catch (IOException e) {
-            throw new RuntimeException("Unable to delete repository folder.", e);
-        }
     }
 }

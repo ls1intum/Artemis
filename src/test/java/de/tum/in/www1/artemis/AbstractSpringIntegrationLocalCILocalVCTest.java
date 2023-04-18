@@ -3,11 +3,13 @@ package de.tum.in.www1.artemis;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.io.IOException;
+import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
@@ -19,6 +21,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.SpyBean;
@@ -47,6 +50,10 @@ import de.tum.in.www1.artemis.domain.participation.AbstractBaseProgrammingExerci
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.localvcci.LocalVCLocalCITestService;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
+import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.service.ResourceLoaderService;
 import de.tum.in.www1.artemis.service.connectors.localci.LocalCIService;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCService;
@@ -78,6 +85,18 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     @SpyBean
     protected LocalCIService continuousIntegrationService;
 
+    @Autowired
+    protected ProgrammingExerciseRepository programmingExerciseRepository;
+
+    @Autowired
+    protected TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
+
+    @Autowired
+    protected SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
+
+    @Autowired
+    protected ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
+
     @SpyBean
     protected DockerClient dockerClient;
 
@@ -86,6 +105,14 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
 
     @SpyBean
     protected ProgrammingMessagingService programmingMessagingService;
+
+    @Value("${artemis.version-control.url}")
+    protected URL localVCBaseUrl;
+
+    @Value("${artemis.version-control.local-vcs-repo-path}")
+    protected String localVCBasePath;
+
+    protected static final String DUMMY_COMMIT_HASH = "1234567890abcdef";
 
     protected static final Path ALL_FAIL_TEST_RESULTS_PATH = Paths.get("src", "test", "resources", "test-data", "test-results", "java-gradle", "all-fail");
 
@@ -105,43 +132,43 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
         // Mock dockerClient.inspectImageCmd(String dockerImage).exec()
         InspectImageCmd inspectImageCmd = mock(InspectImageCmd.class);
         InspectImageResponse inspectImageResponse = new InspectImageResponse();
-        when(dockerClient.inspectImageCmd(anyString())).thenReturn(inspectImageCmd);
-        when(inspectImageCmd.exec()).thenReturn(inspectImageResponse);
+        doReturn(inspectImageCmd).when(dockerClient).inspectImageCmd(anyString());
+        doReturn(inspectImageResponse).when(inspectImageCmd).exec();
 
         // Mock dockerClient.createContainerCmd(String dockerImage).withHostConfig(HostConfig hostConfig).withEnv(String... env).withCmd(String... cmd).exec()
         CreateContainerCmd createContainerCmd = mock(CreateContainerCmd.class);
         CreateContainerResponse createContainerResponse = new CreateContainerResponse();
         createContainerResponse.setId("1234567890");
-        when(dockerClient.createContainerCmd(anyString())).thenReturn(createContainerCmd);
-        when(createContainerCmd.withHostConfig(any())).thenReturn(createContainerCmd);
-        when(createContainerCmd.withEnv(anyString(), anyString())).thenReturn(createContainerCmd);
-        when(createContainerCmd.withCmd(anyString(), anyString(), anyString())).thenReturn(createContainerCmd);
-        when(createContainerCmd.exec()).thenReturn(createContainerResponse);
+        doReturn(createContainerCmd).when(dockerClient).createContainerCmd(anyString());
+        doReturn(createContainerCmd).when(createContainerCmd).withHostConfig(any());
+        doReturn(createContainerCmd).when(createContainerCmd).withEnv(anyString(), anyString());
+        doReturn(createContainerCmd).when(createContainerCmd).withCmd(anyString(), anyString(), anyString());
+        doReturn(createContainerResponse).when(createContainerCmd).exec();
 
         // Mock dockerClient.startContainerCmd(String containerId)
         StartContainerCmd startContainerCmd = mock(StartContainerCmd.class);
-        when(dockerClient.startContainerCmd(anyString())).thenReturn(startContainerCmd);
+        doReturn(startContainerCmd).when(dockerClient).startContainerCmd(anyString());
 
         // Mock dockerClient.execCreateCmd(String containerId).withAttachStdout(Boolean attachStdout).withAttachStderr(Boolean attachStderr).withCmd(String... cmd).exec()
         ExecCreateCmd execCreateCmd = mock(ExecCreateCmd.class);
         ExecCreateCmdResponse execCreateCmdResponse = mock(ExecCreateCmdResponse.class);
-        when(dockerClient.execCreateCmd(anyString())).thenReturn(execCreateCmd);
-        when(execCreateCmd.withAttachStdout(anyBoolean())).thenReturn(execCreateCmd);
-        when(execCreateCmd.withAttachStderr(anyBoolean())).thenReturn(execCreateCmd);
-        when(execCreateCmd.withCmd(anyString(), anyString())).thenReturn(execCreateCmd);
-        when(execCreateCmd.exec()).thenReturn(execCreateCmdResponse);
-        when(execCreateCmdResponse.getId()).thenReturn("1234");
+        doReturn(execCreateCmd).when(dockerClient).execCreateCmd(anyString());
+        doReturn(execCreateCmd).when(execCreateCmd).withAttachStdout(anyBoolean());
+        doReturn(execCreateCmd).when(execCreateCmd).withAttachStderr(anyBoolean());
+        doReturn(execCreateCmd).when(execCreateCmd).withCmd(anyString(), anyString());
+        doReturn(execCreateCmdResponse).when(execCreateCmd).exec();
+        doReturn("1234").when(execCreateCmdResponse).getId();
 
         // Mock dockerClient.execStartCmd(String execId).exec(T resultCallback)
         ExecStartCmd execStartCmd = mock(ExecStartCmd.class);
-        when(dockerClient.execStartCmd(anyString())).thenReturn(execStartCmd);
-        when(execStartCmd.exec(any())).thenAnswer(invocation -> {
+        doReturn(execStartCmd).when(dockerClient).execStartCmd(anyString());
+        doAnswer(invocation -> {
             // Stub the 'exec' method of the 'ExecStartCmd' to call the 'onComplete' method of the provided 'ResultCallback.Adapter', which simulates the command completing
             // immediately.
             ResultCallback.Adapter<?> callback = invocation.getArgument(0);
             callback.onComplete();
             return null;
-        });
+        }).when(execStartCmd).exec(any());
 
         String mockData = "mockData";
 
