@@ -12,7 +12,13 @@ import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storag
 import { MockNotificationService } from '../../../helpers/mocks/service/mock-notification.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
-import { LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE, Notification, QUIZ_EXERCISE_STARTED_TEXT, QUIZ_EXERCISE_STARTED_TITLE } from 'app/entities/notification.model';
+import {
+    LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE,
+    NEW_MESSAGE_TITLE,
+    Notification,
+    QUIZ_EXERCISE_STARTED_TEXT,
+    QUIZ_EXERCISE_STARTED_TITLE,
+} from 'app/entities/notification.model';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockPipe } from 'ng-mocks';
@@ -44,7 +50,7 @@ describe('Notification Popup Component', () => {
     const quizNotification = generateQuizNotification(1);
 
     const generateNewMessageNotification = (notificationId: number) => {
-        const generatedNotification = { id: notificationId, title: 'New message', text: 'New message from user. In course' } as Notification;
+        const generatedNotification = { id: notificationId, title: NEW_MESSAGE_TITLE, text: 'New message from user. In course' } as Notification;
         generatedNotification.target = JSON.stringify({ mainPage: 'courses', course: 1, entity: 'message', id: 20, conversation: 1 });
         return generatedNotification;
     };
