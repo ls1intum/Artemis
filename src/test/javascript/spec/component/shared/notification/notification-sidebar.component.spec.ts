@@ -37,6 +37,7 @@ describe('Notification Sidebar Component', () => {
     let userService: UserService;
     let userSettingsService: UserSettingsService;
     let sessionStorageService: SessionStorageService;
+    let artemisTranslatePipe: ArtemisTranslatePipe;
 
     const notificationNow = { id: 1, notificationDate: dayjs() } as Notification;
     const notificationPast = { id: 2, notificationDate: dayjs().subtract(2, 'day') } as Notification;
@@ -77,7 +78,7 @@ describe('Notification Sidebar Component', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: UserService, useClass: MockUserService },
-                { provide: UserSettingsService, useClass: MockUserSettingsService },
+                { provide: ArtemisTranslatePipe, useClass: ArtemisTranslatePipe },
             ],
         })
             .compileComponents()
@@ -89,6 +90,7 @@ describe('Notification Sidebar Component', () => {
                 userService = TestBed.inject(UserService);
                 userSettingsService = TestBed.inject(UserSettingsService);
                 sessionStorageService = TestBed.inject(SessionStorageService);
+                artemisTranslatePipe = TestBed.inject(ArtemisTranslatePipe);
 
                 const loadSettingsStub = jest.spyOn(userSettingsService, 'loadSettings');
                 loadSettingsStub.mockReturnValue(of(new HttpResponse({ body: receivedNotificationSettings })));
