@@ -26,14 +26,14 @@ public class PushNotificationDeviceConfigurationId implements Serializable {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) {
+    public boolean equals(Object object) {
+        if (this == object) {
             return true;
         }
-        if (o == null || getClass() != o.getClass()) {
+        if (object == null || getClass() != object.getClass()) {
             return false;
         }
-        PushNotificationDeviceConfigurationId that = (PushNotificationDeviceConfigurationId) o;
+        PushNotificationDeviceConfigurationId that = (PushNotificationDeviceConfigurationId) object;
         return owner.equals(that.owner) && token.equals(that.token) && deviceType == that.deviceType;
     }
 

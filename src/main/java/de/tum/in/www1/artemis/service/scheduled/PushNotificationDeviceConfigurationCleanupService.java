@@ -28,6 +28,10 @@ public class PushNotificationDeviceConfigurationCleanupService {
         this.env = env;
     }
 
+    /**
+     * cleans up old push notification device configurations (expired expiration_date) from the database at 3:00:00 am in the night in form of a repeating "cron"
+     * job.
+     */
     @Scheduled(cron = "0 0 3 * * *") // execute this every night at 3:00:00 am
     public void cleanup() {
         final Collection<String> activeProfiles = Arrays.asList(env.getActiveProfiles());

@@ -21,11 +21,16 @@ import de.tum.in.www1.artemis.domain.push_notification.PushNotificationDeviceTyp
 public interface PushNotificationDeviceConfigurationRepository extends JpaRepository<PushNotificationDeviceConfiguration, PushNotificationDeviceConfigurationId> {
 
     /**
-     * Finds all the deviceTokens for a specific deviceType for a list of users.
+     * @param userList   a list of users you want the deviceTokens for.
+     * @param deviceType the device type you want the deviceTokens to be found for. Either Firebase or APNS.
+     * @return Finds all the deviceTokens for a specific deviceType for a list of users.
      */
     @Query("SELECT p FROM PushNotificationDeviceConfiguration p WHERE p.expirationDate > now() AND p.owner IN :userList AND p.deviceType = :deviceType")
     List<PushNotificationDeviceConfiguration> findByUserIn(@Param("userList") List<User> userList, @Param("deviceType") PushNotificationDeviceType deviceType);
 
+    /**
+     * Cleans up the old/expired push notifications device configurations
+     */
     @Transactional
     @Modifying
     @Query("DELETE FROM PushNotificationDeviceConfiguration p WHERE p.expirationDate <= now()")

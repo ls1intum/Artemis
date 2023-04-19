@@ -182,6 +182,19 @@ public class MailService extends InstantNotificationService {
         return String.format(newAnnouncementString, postTitle, courseTitle);
     }
 
+    /**
+     * Sends a notification based email to one user
+     *
+     * @param notification        which properties are used to create the email
+     * @param users               who should be contacted
+     * @param notificationSubject that is used to provide further information (e.g. exercise, attachment, post, etc.)
+     */
+    @Override
+    @Async
+    public void sendNotification(Notification notification, List<User> users, Object notificationSubject) {
+        users.forEach(user -> sendNotification(notification, user, notificationSubject));
+    }
+
     @Override
     /**
      * Sends a notification based email to one user
@@ -334,11 +347,6 @@ public class MailService extends InstantNotificationService {
         }
     }
 
-    @Override
-    @Async
-    public void sendNotification(Notification notification, List<User> users, Object notificationSubject) {
-        users.forEach(user -> sendNotification(notification, user, notificationSubject));
-    }
     /// Weekly Summary Email
 
     /**

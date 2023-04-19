@@ -69,8 +69,6 @@ class ApplePushNotificationServiceTest {
     @Test
     void sendNotificationRequestsToEndpoint_shouldSendNotifications() throws InterruptedException {
         // Given
-        RelayNotificationRequest request = new RelayNotificationRequest("", "", "");
-
         when(restTemplateMock.postForObject(any(String.class), any(HttpEntity.class), eq(String.class))).thenReturn("ok");
 
         // When
@@ -83,8 +81,6 @@ class ApplePushNotificationServiceTest {
 
     @Test
     void scheduleSendBatch_shouldRetryOnRestClientException() throws InterruptedException {
-        RelayNotificationRequest request = new RelayNotificationRequest("", "", "");
-
         when(restTemplateMock.postForObject(anyString(), any(HttpEntity.class), any())).thenThrow(new RestClientException(""));
 
         // When

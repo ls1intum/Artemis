@@ -23,6 +23,9 @@ import de.tum.in.www1.artemis.repository.PushNotificationDeviceConfigurationRepo
 import de.tum.in.www1.artemis.repository.UserRepository;
 import io.jsonwebtoken.*;
 
+/**
+ * Rest Controller for managing push notification device tokens for native clients.
+ */
 @RestController
 @RequestMapping("/api/push_notification")
 public class PushNotificationResource {
@@ -48,6 +51,12 @@ public class PushNotificationResource {
         this.userRepository = userRepository;
     }
 
+    /**
+     * API Endpoint which native clients use to register with their device token to enable push notification support
+     *
+     * @param pushNotificationRegisterBody contains all information required to store the device token for a specific user
+     * @return an DTO containing information about the encryption
+     */
     @PostMapping("register")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<PushNotificationRegisterDTO> register(@Valid @RequestBody PushNotificationRegisterBody pushNotificationRegisterBody) {
@@ -80,6 +89,12 @@ public class PushNotificationResource {
         return ResponseEntity.ok(new PushNotificationRegisterDTO(encodedKey, Constants.PUSH_NOTIFICATION_ENCRYPTION_ALGORITHM));
     }
 
+    /**
+     * API Endpoint used by native clients to unregister for push notifications.
+     *
+     * @param body contains information on which device token should be removed for what user
+     * @return HttpStatus as ResponseEntity
+     */
     @DeleteMapping("unregister")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Void> unregister(@Valid @RequestBody PushNotificationUnregisterRequest body) {
