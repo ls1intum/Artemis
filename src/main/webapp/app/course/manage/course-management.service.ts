@@ -193,15 +193,6 @@ export class CourseManagementService {
     }
 
     /**
-     * finds all courses that can be registered to
-     */
-    findAllToRegister(): Observable<EntityArrayResponseType> {
-        return this.http
-            .get<Course[]>(`${this.resourceUrl}/for-registration`, { observe: 'response' })
-            .pipe(map((res: EntityArrayResponseType) => this.processCourseEntityArrayResponseType(res)));
-    }
-
-    /**
      * returns the course with the provided unique identifier for the assessment dashboard
      * @param courseId - the id of the course
      */
@@ -216,6 +207,24 @@ export class CourseManagementService {
      */
     getStatsForTutors(courseId: number): Observable<HttpResponse<StatsForDashboard>> {
         return this.http.get<StatsForDashboard>(`${this.resourceUrl}/${courseId}/stats-for-assessment-dashboard`, { observe: 'response' });
+    }
+
+    /**
+     * finds all courses that can be registered to
+     */
+    findAllForRegistration(): Observable<EntityArrayResponseType> {
+        return this.http
+            .get<Course[]>(`${this.resourceUrl}/for-registration`, { observe: 'response' })
+            .pipe(map((res: EntityArrayResponseType) => this.processCourseEntityArrayResponseType(res)));
+    }
+
+    /**
+     * finds a single course that can be registered to (with limited information)
+     */
+    findOneForRegistration(courseId: number): Observable<EntityResponseType> {
+        return this.http
+            .get<Course>(`${this.resourceUrl}/${courseId}/for-registration`, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.processCourseEntityResponseType(res)));
     }
 
     /**

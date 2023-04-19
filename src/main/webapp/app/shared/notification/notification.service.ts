@@ -19,6 +19,8 @@ import {
     NEW_REPLY_FOR_EXERCISE_POST_TITLE,
     NEW_REPLY_FOR_LECTURE_POST_TITLE,
     Notification,
+    QUIZ_EXERCISE_STARTED_TEXT,
+    QUIZ_EXERCISE_STARTED_TITLE,
 } from 'app/entities/notification.model';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -69,21 +71,35 @@ export class NotificationService {
             const target = JSON.parse(notification.target);
             const targetCourseId = target.course || notification.course?.id;
 
-            if (notification.title === 'Quiz started') {
+            if (notification.title === QUIZ_EXERCISE_STARTED_TITLE) {
                 this.router.navigate([target.mainPage, targetCourseId, 'quiz-exercises', target.id, 'live']);
             } else if (
+                // check with plain strings is needed to support legacy notifications that were created before it was possible to translate notifications
                 notification.title === NEW_ANNOUNCEMENT_POST_TITLE ||
+                notification.title === 'New announcement' ||
                 notification.title === NEW_COURSE_POST_TITLE ||
-                notification.title === NEW_REPLY_FOR_COURSE_POST_TITLE
+                notification.title === 'New course-wide post' ||
+                notification.title === NEW_REPLY_FOR_COURSE_POST_TITLE ||
+                notification.title === 'New reply for course-wide post'
             ) {
                 const queryParams: Params = MetisService.getQueryParamsForCoursePost(target.id);
                 const routeComponents: RouteComponents = MetisService.getLinkForCoursePost(targetCourseId);
                 this.navigateToNotificationTarget(targetCourseId, routeComponents, queryParams);
-            } else if (notification.title === NEW_EXERCISE_POST_TITLE || notification.title === NEW_REPLY_FOR_EXERCISE_POST_TITLE) {
+            } else if (
+                notification.title === NEW_EXERCISE_POST_TITLE ||
+                notification.title === 'New exercise post' ||
+                notification.title === NEW_REPLY_FOR_EXERCISE_POST_TITLE ||
+                notification.title === 'New reply for exercise post'
+            ) {
                 const queryParams: Params = MetisService.getQueryParamsForLectureOrExercisePost(target.id);
                 const routeComponents: RouteComponents = MetisService.getLinkForExercisePost(targetCourseId, target.exercise ?? target.exerciseId);
                 this.navigateToNotificationTarget(targetCourseId, routeComponents, queryParams);
-            } else if (notification.title === NEW_LECTURE_POST_TITLE || notification.title === NEW_REPLY_FOR_LECTURE_POST_TITLE) {
+            } else if (
+                notification.title === NEW_LECTURE_POST_TITLE ||
+                notification.title === 'New lecture post' ||
+                notification.title === NEW_REPLY_FOR_LECTURE_POST_TITLE ||
+                notification.title === 'New reply for lecture post'
+            ) {
                 const queryParams: Params = MetisService.getQueryParamsForLectureOrExercisePost(target.id);
                 const routeComponents: RouteComponents = MetisService.getLinkForLecturePost(targetCourseId, target.lecture ?? target.lectureId);
                 this.navigateToNotificationTarget(targetCourseId, routeComponents, queryParams);
@@ -219,8 +235,10 @@ export class NotificationService {
 
     private static createNotificationFromStartedQuizExercise(quizExercise: QuizExercise): GroupNotification {
         return {
-            title: 'Quiz started',
-            text: 'Quiz "' + quizExercise.title + '" just started.',
+            title: QUIZ_EXERCISE_STARTED_TITLE,
+            text: QUIZ_EXERCISE_STARTED_TEXT,
+            textIsPlaceholder: true,
+            placeholderValues: '["' + quizExercise.course!.title + '","' + quizExercise.title + '"]',
             notificationDate: dayjs(),
             target: JSON.stringify({
                 course: quizExercise.course!.id,

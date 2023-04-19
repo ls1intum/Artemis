@@ -1,9 +1,6 @@
 package de.tum.in.www1.artemis.domain;
 
-import static de.tum.in.www1.artemis.config.Constants.ARTEMIS_GROUP_DEFAULT_PREFIX;
-import static de.tum.in.www1.artemis.config.Constants.COMPLAINT_RESPONSE_TEXT_LIMIT;
-import static de.tum.in.www1.artemis.config.Constants.COMPLAINT_TEXT_LIMIT;
-import static de.tum.in.www1.artemis.config.Constants.SHORT_NAME_PATTERN;
+import static de.tum.in.www1.artemis.config.Constants.*;
 
 import java.time.ZonedDateTime;
 import java.util.HashSet;
@@ -16,7 +13,10 @@ import org.hibernate.Hibernate;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
-import com.fasterxml.jackson.annotation.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonView;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.enumeration.CourseInformationSharingConfiguration;
@@ -320,6 +320,17 @@ public class Course extends DomainObject {
 
     public void setEndDate(ZonedDateTime endDate) {
         this.endDate = endDate;
+    }
+
+    /**
+     * Determine whether the current date is within the course period (after start, before end).
+     *
+     * @return true if the current date is within the course period, false otherwise
+     */
+    @JsonIgnore
+    public boolean isActive() {
+        ZonedDateTime now = ZonedDateTime.now();
+        return (getStartDate() == null || getStartDate().isBefore(now)) && (getEndDate() == null || getEndDate().isAfter(now));
     }
 
     public String getSemester() {
@@ -780,6 +791,7 @@ public class Course extends DomainObject {
      *
      * @return true if the dates are valid
      */
+    @JsonIgnore
     public boolean isValidStartAndEndDate() {
         return getStartDate() == null || getEndDate() == null || this.getEndDate().isAfter(this.getStartDate());
     }
