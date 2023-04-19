@@ -24,6 +24,8 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.test.context.support.WithMockUser;
 
 import com.github.dockerjava.api.command.CopyArchiveFromContainerCmd;
 import com.github.dockerjava.api.command.InspectImageCmd;
@@ -50,9 +52,7 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
 
     @BeforeEach
     void initRepositories() throws Exception {
-        Path localRepositoryFolder = localVCLocalCITestService.createRepositoryFolderInTempDirectory(projectKey1, assignmentRepositorySlug);
-        studentAssignmentRepository = new LocalRepository(defaultBranch);
-        studentAssignmentRepository.configureRepos("localRepo", localRepositoryFolder);
+        studentAssignmentRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, assignmentRepositorySlug);
         commitHash = localVCLocalCITestService.commitFile(studentAssignmentRepository.localRepoFile.toPath(), programmingExercise.getPackageFolderName(),
                 studentAssignmentRepository.localGit);
         studentAssignmentRepository.localGit.push().call();
@@ -68,6 +68,13 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
     @AfterEach
     void removeRepositories() throws IOException {
         studentAssignmentRepository.resetLocalRepo();
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void testSubmitViaOnlineEditor() throws Exception {
+        request.postWithoutLocation("/api/repository/" + studentParticipation.getId() + "/commit", null, HttpStatus.OK, null);
+        localVCLocalCITestService.testLastestSubmission(studentParticipation.getId(), null, 1, false);
     }
 
     @Test
@@ -90,9 +97,7 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
         assertThat(exception.getMessage()).contains(expectedErrorMessage);
 
         // solution participation
-        Path solutionRepositoryFolder = localVCLocalCITestService.createRepositoryFolderInTempDirectory(projectKey1, solutionRepositorySlug);
-        LocalRepository solutionRepository = new LocalRepository(defaultBranch);
-        solutionRepository.configureRepos("localSolutionRepo", solutionRepositoryFolder);
+        LocalRepository solutionRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, solutionRepositorySlug);
         String solutionCommitHash = localVCLocalCITestService.commitFile(solutionRepository.localRepoFile.toPath(), programmingExercise.getPackageFolderName(),
                 solutionRepository.localGit);
         solutionRepository.localGit.push().call();
@@ -103,9 +108,7 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
         assertThat(exception.getMessage()).contains(expectedErrorMessage);
 
         // template participation
-        Path templateRepositoryFolder = localVCLocalCITestService.createRepositoryFolderInTempDirectory(projectKey1, templateRepositorySlug);
-        LocalRepository templateRepository = new LocalRepository(defaultBranch);
-        templateRepository.configureRepos("localTemplateRepo", templateRepositoryFolder);
+        LocalRepository templateRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, templateRepositorySlug);
         String templateCommitHash = localVCLocalCITestService.commitFile(templateRepository.localRepoFile.toPath(), programmingExercise.getPackageFolderName(),
                 templateRepository.localGit);
         templateRepository.localGit.push().call();
@@ -120,9 +123,7 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
         programmingExerciseRepository.save(programmingExercise);
         String teamShortName = "team1";
         String teamRepositorySlug = projectKey1.toLowerCase() + "-" + teamShortName;
-        Path teamRepositoryFolder = localVCLocalCITestService.createRepositoryFolderInTempDirectory(projectKey1, teamRepositorySlug);
-        LocalRepository teamLocalRepository = new LocalRepository(defaultBranch);
-        teamLocalRepository.configureRepos("localTeamRepo", teamRepositoryFolder);
+        LocalRepository teamLocalRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, teamRepositorySlug);
         Team team = new Team();
         team.setName("Team 1");
         team.setShortName(teamShortName);
@@ -179,9 +180,7 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
         programmingExerciseRepository.save(programmingExercise);
 
         String testsRepositorySlug = projectKey1.toLowerCase() + "-" + "tests";
-        Path testsRepositoryFolder = localVCLocalCITestService.createRepositoryFolderInTempDirectory(projectKey1, testsRepositorySlug);
-        LocalRepository testsRepository = new LocalRepository(defaultBranch);
-        testsRepository.configureRepos("localTestsRepo", testsRepositoryFolder);
+        LocalRepository testsRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, testsRepositorySlug);
         String testsCommitHash = localVCLocalCITestService.commitFile(testsRepository.localRepoFile.toPath(), programmingExercise.getPackageFolderName(), testsRepository.localGit);
         testsRepository.localGit.push().call();
 

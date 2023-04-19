@@ -10,7 +10,6 @@ import static org.mockito.Mockito.doReturn;
 
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.Map;
 
@@ -78,21 +77,13 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractSpringInt
         programmingExerciseStudentParticipationRepository.save(studentParticipation);
 
         // Prepare the repositories.
-        Path remoteTemplateRepositoryFolder = localVCLocalCITestService.createRepositoryFolderInTempDirectory(projectKey, templateRepositorySlug);
-        templateRepository = new LocalRepository(defaultBranch);
-        templateRepository.configureRepos("localTemplate", remoteTemplateRepositoryFolder);
+        templateRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, templateRepositorySlug);
 
-        Path remoteTestsRepositoryFolder = localVCLocalCITestService.createRepositoryFolderInTempDirectory(projectKey, projectKey.toLowerCase() + "-tests");
-        testsRepository = new LocalRepository(defaultBranch);
-        testsRepository.configureRepos("localTests", remoteTestsRepositoryFolder);
+        testsRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, projectKey.toLowerCase() + "-tests");
 
-        Path remoteSolutionRepositoryFolder = localVCLocalCITestService.createRepositoryFolderInTempDirectory(projectKey, solutionRepositorySlug);
-        solutionRepository = new LocalRepository(defaultBranch);
-        solutionRepository.configureRepos("localSolution", remoteSolutionRepositoryFolder);
+        solutionRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, solutionRepositorySlug);
 
-        Path remoteAssignmentRepositoryFolder = localVCLocalCITestService.createRepositoryFolderInTempDirectory(projectKey, assignmentRepositorySlug);
-        assignmentRepository = new LocalRepository(defaultBranch);
-        assignmentRepository.configureRepos("localAssignment", remoteAssignmentRepositoryFolder);
+        assignmentRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, assignmentRepositorySlug);
 
         // Check that the repository folders were created in the file system for all base repositories.
         localVCLocalCITestService.verifyRepositoryFoldersExist(programmingExercise, localVCBasePath);

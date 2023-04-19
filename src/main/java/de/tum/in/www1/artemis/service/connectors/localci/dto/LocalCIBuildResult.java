@@ -120,14 +120,10 @@ public class LocalCIBuildResult extends AbstractBuildResultNotificationDTO {
      * Represents all the information returned by the local CI system about a job.
      * In the current implementation of local CI, there is always one job per build.
      *
-     * @param failedTests               list of failed tests.
-     * @param successfulTests           list of successful tests.
-     * @param staticCodeAnalysisReports list of static code analysis reports.
-     * @param testwiseCoverageReport    list of testwise coverage reports.
-     * @param logs                      list of logs.
+     * @param failedTests     list of failed tests.
+     * @param successfulTests list of successful tests.
      */
-    public record LocalCIJobDTO(List<LocalCITestJobDTO> failedTests, List<LocalCITestJobDTO> successfulTests, List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports,
-            List<TestwiseCoverageReportDTO> testwiseCoverageReport, List<LocalCIBuildLogDTO> logs) implements BuildJobDTOInterface {
+    public record LocalCIJobDTO(List<LocalCITestJobDTO> failedTests, List<LocalCITestJobDTO> successfulTests) implements BuildJobDTOInterface {
 
         @Override
         public List<? extends TestCaseDTOInterface> getFailedTests() {

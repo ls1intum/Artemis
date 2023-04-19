@@ -264,8 +264,8 @@ public abstract class RepositoryResource {
             Repository repository = getRepository(domainId, RepositoryActionType.WRITE, true);
             repositoryService.commitChanges(repository, user);
             // Trigger a build, and process the result. Only implemented for local CI.
-            // For Bitbucket + Bamboo and GitLab + Jenkins, webhooks were added when creating the repository, that notify the CI system when the commit happens and thus trigger the
-            // build.
+            // For Bitbucket + Bamboo and GitLab + Jenkins, webhooks were added when creating the repository,
+            // that notify the CI system when the commit happens and thus trigger the build.
             if (Arrays.asList(this.environment.getActiveProfiles()).contains(Constants.PROFILE_LOCALCI)) {
                 localCIPushService.orElseThrow().processNewPush(null, repository);
             }

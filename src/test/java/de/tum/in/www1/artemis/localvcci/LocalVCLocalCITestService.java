@@ -13,6 +13,7 @@ import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileVisitResult;
@@ -52,6 +53,7 @@ import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUrl;
 import de.tum.in.www1.artemis.util.GitUtilService;
+import de.tum.in.www1.artemis.util.LocalRepository;
 
 @Service
 public class LocalVCLocalCITestService {
@@ -67,6 +69,9 @@ public class LocalVCLocalCITestService {
 
     @Value("${artemis.version-control.url}")
     private URL localVCBaseUrl;
+
+    @Value("${artemis.version-control.default-branch:main}")
+    protected String defaultBranch;
 
     // Cannot inject {local.server.port} here, because it is not available at the time this class is instantiated.
     private int port;
@@ -207,6 +212,21 @@ public class LocalVCLocalCITestService {
     }
 
     /**
+     * Create and configure a LocalRepository that works for the local VC system, i.e. the remote folder adheres to the folder structure required for local VC and the remote
+     * repository is bare.
+     *
+     * @param projectKey     the project key of the exercise this repository is to be created for.
+     * @param repositorySlug the repository slug of the repository to be created (e.g. "someprojectkey-solution" or "someprojectkey-practice-student1").
+     * @return the configured LocalRepository that contains Git handles to the remote and local repository.
+     */
+    public LocalRepository createAndConfigureLocalRepository(String projectKey, String repositorySlug) throws GitAPIException, IOException, URISyntaxException {
+        Path localRepositoryFolder = createRepositoryFolderInTempDirectory(projectKey, repositorySlug);
+        LocalRepository repository = new LocalRepository(defaultBranch);
+        repository.configureRepos("localRepo", localRepositoryFolder);
+        return repository;
+    }
+
+    /**
      * Create a folder in the temporary directory with the project key as its name and another folder inside there that gets the name of the repository slug + ".git".
      * This is consistent with the repository folder structure used for the local VC system (though the repositories for the local VC system are not saved in the temporary
      * directory).
@@ -215,7 +235,7 @@ public class LocalVCLocalCITestService {
      * @param repositorySlug the repository slug of the repository.
      * @return the path to the repository folder.
      */
-    public Path createRepositoryFolderInTempDirectory(String projectKey, String repositorySlug) {
+    private Path createRepositoryFolderInTempDirectory(String projectKey, String repositorySlug) {
         String tempDir = System.getProperty("java.io.tmpdir");
 
         Path projectFolder = Paths.get(tempDir, projectKey);

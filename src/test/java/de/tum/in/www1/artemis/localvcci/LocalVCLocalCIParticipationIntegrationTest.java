@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.localvcci;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.time.ZonedDateTime;
 
 import org.junit.jupiter.api.Test;
@@ -39,9 +38,7 @@ class LocalVCLocalCIParticipationIntegrationTest extends AbstractSpringIntegrati
         TemplateProgrammingExerciseParticipation templateParticipation = programmingExercise.getTemplateParticipation();
         templateParticipation.setRepositoryUrl(localVCBaseUrl + "/git/" + projectKey + "/" + templateRepositorySlug + ".git");
         templateProgrammingExerciseParticipationRepository.save(templateParticipation);
-        Path remoteTemplateRepositoryFolder = localVCLocalCITestService.createRepositoryFolderInTempDirectory(projectKey, templateRepositorySlug);
-        LocalRepository templateRepository = new LocalRepository(defaultBranch);
-        templateRepository.configureRepos("localTemplate", remoteTemplateRepositoryFolder);
+        LocalRepository templateRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, templateRepositorySlug);
 
         User user = database.getUserByLogin(TEST_PREFIX + "student1");
 

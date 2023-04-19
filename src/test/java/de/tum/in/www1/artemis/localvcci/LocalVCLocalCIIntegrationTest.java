@@ -4,7 +4,6 @@ import static org.mockito.Mockito.doReturn;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
@@ -49,23 +48,15 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
     @BeforeEach
     void initRepositories() throws GitAPIException, IOException, URISyntaxException {
         templateRepositorySlug = projectKey1.toLowerCase() + "-exercise";
-        Path remoteTemplateRepositoryFolder = localVCLocalCITestService.createRepositoryFolderInTempDirectory(projectKey1, templateRepositorySlug);
-        templateRepository = new LocalRepository(defaultBranch);
-        templateRepository.configureRepos("localTemplate", remoteTemplateRepositoryFolder);
+        templateRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, templateRepositorySlug);
 
         testsRepositorySlug = projectKey1.toLowerCase() + "-tests";
-        Path remoteTestsRepositoryFolder = localVCLocalCITestService.createRepositoryFolderInTempDirectory(projectKey1, testsRepositorySlug);
-        testsRepository = new LocalRepository(defaultBranch);
-        testsRepository.configureRepos("localTests", remoteTestsRepositoryFolder);
+        testsRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, testsRepositorySlug);
 
         solutionRepositorySlug = projectKey1.toLowerCase() + "-solution";
-        Path remoteSolutionRepositoryFolder = localVCLocalCITestService.createRepositoryFolderInTempDirectory(projectKey1, solutionRepositorySlug);
-        solutionRepository = new LocalRepository(defaultBranch);
-        solutionRepository.configureRepos("localSolution", remoteSolutionRepositoryFolder);
+        solutionRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, solutionRepositorySlug);
 
-        Path remoteAssignmentRepositoryFolder = localVCLocalCITestService.createRepositoryFolderInTempDirectory(projectKey1, assignmentRepositorySlug);
-        assignmentRepository = new LocalRepository(defaultBranch);
-        assignmentRepository.configureRepos("localAssignment", remoteAssignmentRepositoryFolder);
+        assignmentRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, assignmentRepositorySlug);
 
         // Mock dockerClient.copyArchiveFromContainerCmd() such that it returns a dummy commit hash for the tests repository.
         localVCLocalCITestService.mockInputStreamReturnedFromContainer(dockerClient, "/repositories/test-repository/.git/refs/heads/[^/]+",
@@ -262,9 +253,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         // Create a new team repository.
         String teamShortName = "team1";
         String teamRepositorySlug = projectKey1.toLowerCase() + "-" + teamShortName;
-        Path remoteRepositoryFolder = localVCLocalCITestService.createRepositoryFolderInTempDirectory(projectKey1, teamRepositorySlug);
-        LocalRepository teamLocalRepository = new LocalRepository(defaultBranch);
-        teamLocalRepository.configureRepos("localTeamRepository", remoteRepositoryFolder);
+        LocalRepository teamLocalRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, teamRepositorySlug);
 
         // Test without team.
         localVCLocalCITestService.testFetchThrowsException(teamLocalRepository.localGit, student1Login, projectKey1, teamRepositorySlug, INTERNAL_SERVER_ERROR);
@@ -347,9 +336,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
 
         // Create teaching assistant repository.
         String repositorySlug = projectKey1.toLowerCase() + "-" + tutor1Login;
-        Path remoteRepositoryFolder = localVCLocalCITestService.createRepositoryFolderInTempDirectory(projectKey1, repositorySlug);
-        LocalRepository taAssignmentRepository = new LocalRepository(defaultBranch);
-        taAssignmentRepository.configureRepos("localTeachingAssistantAssignment", remoteRepositoryFolder);
+        LocalRepository taAssignmentRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, repositorySlug);
 
         programmingExercise.setStartDate(ZonedDateTime.now().plusHours(1));
         programmingExerciseRepository.save(programmingExercise);
@@ -388,9 +375,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
     void testFetchPush_instructorAssignmentRepository() throws GitAPIException, IOException, URISyntaxException {
         // Create instructor assignment repository.
         String repositorySlug = projectKey1.toLowerCase() + "-" + instructor1Login;
-        Path remoteRepositoryFolder = localVCLocalCITestService.createRepositoryFolderInTempDirectory(projectKey1, repositorySlug);
-        LocalRepository instructorAssignmentRepository = new LocalRepository(defaultBranch);
-        instructorAssignmentRepository.configureRepos("localInstructorAssignment", remoteRepositoryFolder);
+        LocalRepository instructorAssignmentRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, repositorySlug);
 
         programmingExercise.setStartDate(ZonedDateTime.now().plusHours(1));
         programmingExerciseRepository.save(programmingExercise);
@@ -519,9 +504,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
 
         // Add repository
         String repositorySlug = projectKey1.toLowerCase() + "-" + instructor1Login;
-        Path remoteRepositoryFolder = localVCLocalCITestService.createRepositoryFolderInTempDirectory(projectKey1, repositorySlug);
-        LocalRepository instructorExamTestRunRepository = new LocalRepository(defaultBranch);
-        instructorExamTestRunRepository.configureRepos("localInstructorExamTestRun", remoteRepositoryFolder);
+        LocalRepository instructorExamTestRunRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, repositorySlug);
 
         // Student should not able to fetch or push.
         localVCLocalCITestService.testFetchThrowsException(instructorExamTestRunRepository.localGit, student1Login, projectKey1, repositorySlug, NOT_AUTHORIZED);
@@ -564,9 +547,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
 
         // Create a new practice repository.
         String practiceRepositorySlug = projectKey1.toLowerCase() + "-practice-" + student1Login;
-        Path remoteRepositoryFolder = localVCLocalCITestService.createRepositoryFolderInTempDirectory(projectKey1, practiceRepositorySlug);
-        LocalRepository practiceRepository = new LocalRepository(defaultBranch);
-        practiceRepository.configureRepos("localPracticeRepository", remoteRepositoryFolder);
+        LocalRepository practiceRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, practiceRepositorySlug);
 
         // Test without participation.
         localVCLocalCITestService.testFetchThrowsException(practiceRepository.localGit, student1Login, projectKey1, practiceRepositorySlug, INTERNAL_SERVER_ERROR);
@@ -613,9 +594,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
 
         // Create a new practice repository.
         String practiceRepositorySlug = projectKey1.toLowerCase() + "-practice-" + tutor1Login;
-        Path remoteRepositoryFolder = localVCLocalCITestService.createRepositoryFolderInTempDirectory(projectKey1, practiceRepositorySlug);
-        LocalRepository practiceRepository = new LocalRepository(defaultBranch);
-        practiceRepository.configureRepos("localPracticeRepository", remoteRepositoryFolder);
+        LocalRepository practiceRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, practiceRepositorySlug);
 
         // Test without participation.
         localVCLocalCITestService.testFetchThrowsException(practiceRepository.localGit, tutor1Login, projectKey1, practiceRepositorySlug, INTERNAL_SERVER_ERROR);
@@ -652,9 +631,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
 
         // Create a new practice repository.
         String practiceRepositorySlug = projectKey1.toLowerCase() + "-practice-" + instructor1Login;
-        Path remoteRepositoryFolder = localVCLocalCITestService.createRepositoryFolderInTempDirectory(projectKey1, practiceRepositorySlug);
-        LocalRepository practiceRepository = new LocalRepository(defaultBranch);
-        practiceRepository.configureRepos("localPracticeRepository", remoteRepositoryFolder);
+        LocalRepository practiceRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, practiceRepositorySlug);
 
         // Test without participation.
         localVCLocalCITestService.testFetchThrowsException(practiceRepository.localGit, instructor1Login, projectKey1, practiceRepositorySlug, INTERNAL_SERVER_ERROR);
