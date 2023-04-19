@@ -115,6 +115,17 @@
                     "searchLearningGoal": "Nach Kompetenz suchen:",
                     "loading": "Lade..."
                 }
+            },
+            "relation": {
+                "competencyRelations": "Beziehungen zwischen Kompetenzen",
+                "tailLearningGoal": "Kompetenz Schluss",
+                "relationType": "Beziehungstyp",
+                "headLearningGoal": "Kompetenz Start",
+                "relates": "Bezieht sich auf",
+                "assumes": "Setzt voraus",
+                "extends": "Erweitert",
+                "matches": "Stimmt überein mit",
+                "createRelation": "Beziehung erstellen"
             }
         }
     }
