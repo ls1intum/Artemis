@@ -99,14 +99,14 @@ public class LearningGoalService {
 
             private boolean visited;
 
-            private final List<Vertex> adjacencyList;
+            private final Set<Vertex> adjacencyList;
 
             public Vertex(String label) {
                 this.label = label;
-                this.adjacencyList = new ArrayList<>();
+                this.adjacencyList = new HashSet<>();
             }
 
-            public List<Vertex> getAdjacencyList() {
+            public Set<Vertex> getAdjacencyList() {
                 return adjacencyList;
             }
 
@@ -184,8 +184,37 @@ public class LearningGoalService {
             var headVertex = graph.vertices.stream().filter(vertex -> vertex.label.equals(relation.getHeadLearningGoal().getTitle())).findFirst().orElseThrow();
             var tailVertex = graph.vertices.stream().filter(vertex -> vertex.label.equals(relation.getTailLearningGoal().getTitle())).findFirst().orElseThrow();
             // Only EXTENDS and ASSUMES are included in the generated graph as other relations are no problem if they are circular
+            // MATCHES relations are considered in the next step by merging the edges and combining the adjacencyLists
             switch (relation.getType()) {
                 case EXTENDS, ASSUMES -> graph.addEdge(tailVertex, headVertex);
+            }
+        }
+        // combine vertices that are connected through MATCHES
+        for (LearningGoalRelation relation : relations) {
+            if (relation.getType() == LearningGoalRelation.RelationType.MATCHES) {
+                var headVertex = graph.vertices.stream().filter(vertex -> vertex.label.equals(relation.getHeadLearningGoal().getTitle())).findFirst().orElseThrow();
+                var tailVertex = graph.vertices.stream().filter(vertex -> vertex.label.equals(relation.getTailLearningGoal().getTitle())).findFirst().orElseThrow();
+                if (headVertex.adjacencyList.contains(tailVertex) || tailVertex.adjacencyList.contains(headVertex)) {
+                    return true;
+                }
+                // create a merged vertex
+                var mergedVertex = new Vertex(tailVertex.label + ", " + headVertex.label);
+                // add all neighbours to merged vertex
+                for (Vertex vertex : headVertex.getAdjacencyList()) {
+                    mergedVertex.addNeighbor(vertex);
+                }
+                for (Vertex vertex : tailVertex.getAdjacencyList()) {
+                    mergedVertex.addNeighbor(vertex);
+                }
+                // update every vertex that initially had one of the two merged vertices as neighbours to now reference the merged vertex
+                for (Vertex vertex : graph.vertices) {
+                    for (Vertex adjacentVertex : vertex.getAdjacencyList()) {
+                        if (adjacentVertex.label.equals(headVertex.label) || adjacentVertex.label.equals(tailVertex.label)) {
+                            vertex.getAdjacencyList().remove(adjacentVertex);
+                            vertex.getAdjacencyList().add(mergedVertex);
+                        }
+                    }
+                }
             }
         }
         return graph.hasCycle();
