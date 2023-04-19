@@ -23,7 +23,7 @@ public interface BuildPlanRepository extends JpaRepository<BuildPlan, Long> {
             """)
     Optional<BuildPlan> findByProgrammingExercises_IdWithProgrammingExercises(@Param("exerciseId") long exerciseId);
 
-    default BuildPlan findByProgrammingExercises_IdWithProgrammingExercisesElseThrow(long exerciseId) {
+    default BuildPlan findByProgrammingExercises_IdWithProgrammingExercisesElseThrow(final long exerciseId) {
         return findByProgrammingExercises_IdWithProgrammingExercises(exerciseId)
                 .orElseThrow(() -> new EntityNotFoundException("Could not find a build plan for exercise " + exerciseId));
     }

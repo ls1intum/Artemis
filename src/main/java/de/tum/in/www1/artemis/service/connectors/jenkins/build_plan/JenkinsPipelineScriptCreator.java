@@ -38,8 +38,8 @@ public class JenkinsPipelineScriptCreator extends AbstractBuildPlanCreator {
 
     private final ProgrammingLanguageConfiguration programmingLanguageConfiguration;
 
-    public JenkinsPipelineScriptCreator(BuildPlanRepository buildPlanRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            ResourceLoaderService resourceLoaderService, ProgrammingLanguageConfiguration programmingLanguageConfiguration) {
+    public JenkinsPipelineScriptCreator(final BuildPlanRepository buildPlanRepository, final ProgrammingExerciseRepository programmingExerciseRepository,
+            final ResourceLoaderService resourceLoaderService, final ProgrammingLanguageConfiguration programmingLanguageConfiguration) {
         super(buildPlanRepository, programmingExerciseRepository);
 
         this.resourceLoaderService = resourceLoaderService;
@@ -82,8 +82,8 @@ public class JenkinsPipelineScriptCreator extends AbstractBuildPlanCreator {
         }
     }
 
-    private Map<String, String> getReplacements(ProgrammingLanguage programmingLanguage, Optional<ProjectType> projectType, boolean isStaticCodeAnalysisEnabled,
-            boolean isTestwiseCoverageAnalysisEnabled) {
+    private Map<String, String> getReplacements(final ProgrammingLanguage programmingLanguage, final Optional<ProjectType> projectType, final boolean isStaticCodeAnalysisEnabled,
+            final boolean isTestwiseCoverageAnalysisEnabled) {
         final Map<String, String> replacements = new HashMap<>();
 
         replacements.put(REPLACE_IS_STATIC_CODE_ANALYSIS_ENABLED, String.valueOf(isStaticCodeAnalysisEnabled));
@@ -94,7 +94,7 @@ public class JenkinsPipelineScriptCreator extends AbstractBuildPlanCreator {
         return replacements;
     }
 
-    private Path buildResourcePath(ProgrammingLanguage programmingLanguage, Optional<ProjectType> projectType, boolean isSequentialRuns) {
+    private Path buildResourcePath(final ProgrammingLanguage programmingLanguage, final Optional<ProjectType> projectType, final boolean isSequentialRuns) {
         if (programmingLanguage == null) {
             throw new IllegalArgumentException("ProgrammingLanguage should not be null");
         }

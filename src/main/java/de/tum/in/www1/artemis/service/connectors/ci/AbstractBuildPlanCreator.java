@@ -18,7 +18,7 @@ public abstract class AbstractBuildPlanCreator {
     @Value("${server.url}")
     private URL artemisServerUrl;
 
-    protected AbstractBuildPlanCreator(BuildPlanRepository buildPlanRepository, ProgrammingExerciseRepository programmingExerciseRepository) {
+    protected AbstractBuildPlanCreator(final BuildPlanRepository buildPlanRepository, final ProgrammingExerciseRepository programmingExerciseRepository) {
         this.buildPlanRepository = buildPlanRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
     }
@@ -37,7 +37,7 @@ public abstract class AbstractBuildPlanCreator {
      * @param exercise The exercise for which the URL of its build plan is generated.
      * @return The build plan URL.
      */
-    public String generateBuildPlanURL(ProgrammingExercise exercise) {
+    public String generateBuildPlanURL(final ProgrammingExercise exercise) {
         programmingExerciseRepository.generateBuildPlanAccessSecretIfNotExists(exercise);
         return String.format("%s/api/programming-exercises/%d/build-plan?secret=%s", artemisServerUrl, exercise.getId(), exercise.getBuildPlanAccessSecret());
     }
@@ -49,8 +49,8 @@ public abstract class AbstractBuildPlanCreator {
      *
      * @param exercise The exercise for which a new build plan is created.
      */
-    public void createBuildPlanForExercise(ProgrammingExercise exercise) {
-        var defaultBuildPlan = generateDefaultBuildPlan(exercise);
+    public void createBuildPlanForExercise(final ProgrammingExercise exercise) {
+        final var defaultBuildPlan = generateDefaultBuildPlan(exercise);
         buildPlanRepository.setBuildPlanForExercise(defaultBuildPlan, exercise);
     }
 

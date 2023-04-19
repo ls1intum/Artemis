@@ -103,12 +103,12 @@ public class ProgrammingExerciseImportBasicService {
         programmingExerciseService.initParticipations(newExercise);
 
         // Hints, tasks, test cases and static code analysis categories
-        Map<Long, Long> newHintIdByOldId = exerciseHintService.copyExerciseHints(templateExercise, newExercise);
+        final Map<Long, Long> newHintIdByOldId = exerciseHintService.copyExerciseHints(templateExercise, newExercise);
 
         final ProgrammingExercise importedExercise = programmingExerciseRepository.save(newExercise);
 
-        Map<Long, Long> newTestCaseIdByOldId = importTestCases(templateExercise, importedExercise);
-        Map<Long, Long> newTaskIdByOldId = importTasks(templateExercise, importedExercise, newTestCaseIdByOldId);
+        final Map<Long, Long> newTestCaseIdByOldId = importTestCases(templateExercise, importedExercise);
+        final Map<Long, Long> newTaskIdByOldId = importTasks(templateExercise, importedExercise, newTestCaseIdByOldId);
         updateTaskExerciseHintReferences(templateExercise, importedExercise, newTaskIdByOldId, newHintIdByOldId);
         importSolutionEntries(templateExercise, importedExercise, newTestCaseIdByOldId, newHintIdByOldId);
 
@@ -129,7 +129,7 @@ public class ProgrammingExerciseImportBasicService {
         importSubmissionPolicy(importedExercise);
 
         // Re-adding auxiliary repositories
-        List<AuxiliaryRepository> auxiliaryRepositoriesToBeImported = templateExercise.getAuxiliaryRepositories();
+        final List<AuxiliaryRepository> auxiliaryRepositoriesToBeImported = templateExercise.getAuxiliaryRepositories();
 
         for (AuxiliaryRepository auxiliaryRepository : auxiliaryRepositoriesToBeImported) {
             AuxiliaryRepository newAuxiliaryRepository = auxiliaryRepository.cloneObjectForNewExercise();
@@ -239,15 +239,15 @@ public class ProgrammingExerciseImportBasicService {
         }
 
         templateExercise.getStaticCodeAnalysisCategories().forEach(originalCategory -> {
-            var categoryCopy = new StaticCodeAnalysisCategory();
+            final var categoryCopy = new StaticCodeAnalysisCategory();
             categoryCopy.setName(originalCategory.getName());
             categoryCopy.setPenalty(originalCategory.getPenalty());
             categoryCopy.setMaxPenalty(originalCategory.getMaxPenalty());
             categoryCopy.setState(originalCategory.getState());
             categoryCopy.setProgrammingExercise(targetExercise);
 
-            categoryCopy = staticCodeAnalysisCategoryRepository.save(categoryCopy);
-            targetExercise.addStaticCodeAnalysisCategory(categoryCopy);
+            final var savedCopy = staticCodeAnalysisCategoryRepository.save(categoryCopy);
+            targetExercise.addStaticCodeAnalysisCategory(savedCopy);
         });
     }
 
