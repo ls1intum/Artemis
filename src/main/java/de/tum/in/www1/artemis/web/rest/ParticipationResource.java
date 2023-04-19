@@ -408,11 +408,11 @@ public class ParticipationResource {
         var originalParticipation = studentParticipationRepository.findByIdElseThrow(participation.getId());
         var user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, originalParticipation.getExercise(), null);
-        if (participation.getPresentationScore() == null || participation.getPresentationScore() < 0) {
-            participation.setPresentationScore(0);
+        if (participation.getPresentationScore() == null || participation.getPresentationScore() < 0.) {
+            participation.setPresentationScore(0.);
         }
-        if (participation.getPresentationScore() > 1) {
-            participation.setPresentationScore(1);
+        if (participation.getPresentationScore() > 1.) {
+            participation.setPresentationScore(1.);
         }
         StudentParticipation currentParticipation = studentParticipationRepository.findByIdElseThrow(participation.getId());
         if (currentParticipation.getPresentationScore() != null && currentParticipation.getPresentationScore() > participation.getPresentationScore()) {

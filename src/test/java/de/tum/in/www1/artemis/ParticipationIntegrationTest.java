@@ -658,7 +658,7 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void updateParticipation() throws Exception {
         var participation = ModelFactory.generateStudentParticipation(InitializationState.INITIALIZED, textExercise, database.getUserByLogin(TEST_PREFIX + "student1"));
-        participation.setPresentationScore(1);
+        participation.setPresentationScore(1.);
         participation = participationRepo.save(participation);
         participation.setPresentationScore(null);
         var actualParticipation = request.putWithResponseBody("/api/exercises/" + textExercise.getId() + "/participations", participation, StudentParticipation.class,
@@ -679,7 +679,7 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     void updateParticipation_presentationScoreMoreThan0() throws Exception {
         var participation = ModelFactory.generateStudentParticipation(InitializationState.INITIALIZED, textExercise, database.getUserByLogin(TEST_PREFIX + "student1"));
         participation = participationRepo.save(participation);
-        participation.setPresentationScore(2);
+        participation.setPresentationScore(2.);
         var actualParticipation = request.putWithResponseBody("/api/exercises/" + textExercise.getId() + "/participations", participation, StudentParticipation.class,
                 HttpStatus.OK);
         assertThat(actualParticipation).as("The participation was updated").isNotNull();
