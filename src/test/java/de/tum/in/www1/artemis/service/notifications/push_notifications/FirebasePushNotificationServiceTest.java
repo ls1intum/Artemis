@@ -28,7 +28,7 @@ import de.tum.in.www1.artemis.domain.push_notification.PushNotificationDeviceCon
 import de.tum.in.www1.artemis.domain.push_notification.PushNotificationDeviceType;
 import de.tum.in.www1.artemis.repository.PushNotificationDeviceConfigurationRepository;
 
-public class FirebasePushNotificationServiceTest {
+class FirebasePushNotificationServiceTest {
 
     @Mock
     private PushNotificationDeviceConfigurationRepository repositoryMock;
