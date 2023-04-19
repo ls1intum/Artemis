@@ -6,6 +6,13 @@
     }
 
     .card-heading {
+        opacity: 1;
+        filter: alpha(opacity = 100);
+        &:hover {
+            transition: 0.5s;
+            opacity: 0.8;
+            filter: alpha(opacity = 100);
+        }
         position: relative;
         display: flex;
         cursor: pointer;
@@ -86,7 +93,6 @@
             }
         }
     }
-
     .section-card {
         min-width: 30%;
         height: 300px;
