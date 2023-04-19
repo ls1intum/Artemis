@@ -178,8 +178,8 @@ public class ResourceLoaderService {
 
     /**
      * Get the path to a file in the 'resources' folder.
-     * If the file is in the file system, the path to the file is returned. If the file is in a jar file, the file is extracted to a temporary file and the path to the temporary
-     * file is returned.
+     * If the file is in the file system, the path to the file is returned.
+     * If the file is in a jar file, the file is extracted to a temporary file and the path to the temporary file is returned.
      *
      * @param path the path to the file in the 'resources' folder.
      * @return the path to the file in the file system or in the jar file.
@@ -200,7 +200,7 @@ public class ResourceLoaderService {
         }
         else if ("jar".equals(resourceUrl.getProtocol())) {
             // Resource is in a jar file.
-            InputStream resourceInputStream = getResource(path).getInputStream();
+            InputStream resourceInputStream = resource.getInputStream();
 
             Path resourcePath = Files.createTempFile(UUID.randomUUID().toString(), "");
             Files.copy(resourceInputStream, resourcePath, StandardCopyOption.REPLACE_EXISTING);
