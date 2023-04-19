@@ -7,8 +7,6 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
 import java.util.Map;
 import java.util.Set;
 
@@ -30,9 +28,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.Commit;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
@@ -281,21 +276,7 @@ public class LocalVCService extends AbstractVersionControlService {
      */
     @Override
     public ZonedDateTime getPushDate(ProgrammingExerciseParticipation participation, String commitHash, Object eventObject) {
-        // If the event object is supplied we try to retrieve the push date from there. Otherwise we use the commitHash to determine date of the latest commit.
-        if (eventObject != null) {
-            JsonNode node = new ObjectMapper().convertValue(eventObject, JsonNode.class);
-            String dateString;
-            try {
-                JsonNode dateNode = node.get("date");
-                if (dateNode != null) {
-                    dateString = dateNode.asText(null);
-                    return ZonedDateTime.parse(dateString, DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssZ"));
-                }
-            }
-            catch (DateTimeParseException e) {
-                throw new LocalVCException("Unable to parse push date from eventObject.", e);
-            }
-        }
+        // The eventObject is null for every call of this method. Use the commitHash to determine date of the latest commit.
 
         de.tum.in.www1.artemis.domain.Repository repository;
         try {

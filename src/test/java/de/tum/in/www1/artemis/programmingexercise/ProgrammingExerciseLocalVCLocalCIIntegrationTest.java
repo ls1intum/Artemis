@@ -133,6 +133,17 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractSpringInt
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateProgrammingExercise_templateRepositoryUrlIsInvalid() throws Exception {
+        programmingExercise.setTemplateRepositoryUrl("http://localhost:9999/some/invalid/url.git");
+        request.put(ROOT + PROGRAMMING_EXERCISES, programmingExercise, HttpStatus.BAD_REQUEST);
+
+        programmingExercise.setTemplateRepositoryUrl(
+                "http://localhost:49152/invalidUrlMapping/" + programmingExercise.getProjectKey() + "/" + programmingExercise.getProjectKey().toLowerCase() + "-exercise.git");
+        request.put(ROOT + PROGRAMMING_EXERCISES, programmingExercise, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDeleteProgrammingExercise() throws Exception {
         // Delete the exercise
         var params = new LinkedMultiValueMap<String, String>();
