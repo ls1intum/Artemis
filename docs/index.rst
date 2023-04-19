@@ -60,7 +60,7 @@ All these exercises are supposed to be run either live in the lecture with insta
    :includehidden:
    :maxdepth: 3
 
-   admin/productionSetupTips
+   admin/setup
    admin/registration
    admin/saml2-shibboleth
    admin/accessRights

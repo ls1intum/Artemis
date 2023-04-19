@@ -1,3 +1,5 @@
+.. _dev_setup:
+
 Setup Guide
 ===========
 
@@ -462,31 +464,7 @@ internal user management in Artemis, then you would use the profiles:
 
    dev,jenkins,gitlab,artemis,scheduling
 
-Configure Text Assessment Analytics Service
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Text Assessment Analytics is an internal analytics service used to gather data regarding the features of the text
-assessment process. Certain assessment events are tracked:
-
-1. Adding new feedback on a manually selected block
-2. Adding new feedback on an automatically selected block
-3. Deleting a feedback
-4. Clicking to resolve feedback conflicts
-5. Clicking to view origin submission of automatically generated feedback
-6. Hovering over the text assessment feedback impact warning
-7. Editing/Discarding an automatically generated feedback
-8. Clicking the Submit button when assessing a text submission
-9. Clicking the Assess Next button when assessing a text submission
-
-These events are tracked by attaching a POST call to the respective DOM elements on the client side.
-The POST call accesses the **TextAssessmentEventResource** which then adds the events in its respective table.
-This feature is disabled by default. We can enable it by modifying the configuration in the file:
-``src/main/resources/config/application-artemis.yml`` like so:
-
-.. code:: yaml
-
-   info:
-      text-assessment-analytics-enabled: true
 
 ------------------------------------------------------------------------------------------------------------------------
 
@@ -571,10 +549,6 @@ instead of the TUM defaults:
 
 ------------------------------------------------------------------------------------------------------------------------
 
-.. include:: setup/programming-exercises.rst
-
-------------------------------------------------------------------------------------------------------------------------
-
 .. include:: setup/bamboo-bitbucket-jira.rst
 
 ------------------------------------------------------------------------------------------------------------------------
@@ -587,75 +561,7 @@ instead of the TUM defaults:
 
 ------------------------------------------------------------------------------------------------------------------------
 
-
-Athene Service
---------------
-
-The semi-automatic text assessment relies on the Athene_ service.
-To enable automatic text assessments, special configuration is required:
-
-Enable the ``athene`` Spring profile:
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-::
-
-   --spring.profiles.active=dev,bamboo,bitbucket,jira,artemis,scheduling,athene
-
-Configure API Endpoints:
-^^^^^^^^^^^^^^^^^^^^^^^^
-
-The Athene service is running on a dedicated machine and is addressed via
-HTTP. We need to extend the configuration in the file
-``src/main/resources/config/application-artemis.yml`` like so:
-
-.. code:: yaml
-
-   artemis:
-     # ...
-     athene:
-       url: http://localhost
-       base64-secret: YWVuaXF1YWRpNWNlaXJpNmFlbTZkb283dXphaVF1b29oM3J1MWNoYWlyNHRoZWUzb2huZ2FpM211bGVlM0VpcAo=
-       token-validity-in-seconds: 10800
-
-.. _Athene: https://github.com/ls1intum/Athene
-
-------------------------------------------------------------------------------------------------------------------------
-
-Apollon Service
----------------
-
-The `Apollon Converter`_ is needed to convert models from their JSON representaiton to PDF.
-Special configuration is required:
-
-Enable the ``apollon`` Spring profile:
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-::
-
-   --spring.profiles.active=dev,bamboo,bitbucket,jira,artemis,scheduling,apollon
-
-Configure API Endpoints:
-^^^^^^^^^^^^^^^^^^^^^^^^
-
-The Apollon conversion service is running on a dedicated machine and is addressed via
-HTTP. We need to extend the configuration in the file
-``src/main/resources/config/application-artemis.yml`` like so:
-
-.. code:: yaml
-
-   apollon:
-      conversion-service-url: http://localhost:8080
-
-
-.. _Apollon Converter: https://github.com/ls1intum/Apollon_converter
-
-------------------------------------------------------------------------------------------------------------------------
-
 .. include:: setup/common-problems.rst
-
-------------------------------------------------------------------------------------------------------------------------
-
-.. include:: setup/distributed.rst
 
 ------------------------------------------------------------------------------------------------------------------------
 
@@ -822,7 +728,3 @@ Other useful commands
 - Restart a service: ``docker compose restart <name of the service>``
 - Remove all local Docker containers: ``docker container rm $(docker ps -a -q)``
 - Remove all local Artemis Docker images: ``docker rmi $(docker images -q ghcr.io/ls1intum/artemis)``
-
-------------------------------------------------------------------------------------------------------------------------
-
-.. include:: setup/kubernetes.rst

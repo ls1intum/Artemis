@@ -1,7 +1,7 @@
 .. _admin_generalSetupTips:
 
-General Production Setup Tips
-=============================
+Additional Production Setup Tips
+================================
 
 Automatic Cleanup
 -----------------

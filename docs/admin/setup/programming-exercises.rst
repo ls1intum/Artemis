@@ -1,13 +1,13 @@
 .. _programming-exercises:
 
-Programming Exercise adjustments
+Programming Exercise Adjustments
 --------------------------------
 
 There are several variables that can be configured when using programming exercises.
 They are presented in this separate section to keep the 'normal' setup guide shorter.
 
 
-Path variables
+Path Variables
 ^^^^^^^^^^^^^^
 
 There are variables for several paths:
@@ -55,7 +55,7 @@ it is loaded from the classpath (e.g. the ``.war`` archive).
 
 We plan to make other folders configurable as well, but this is not supported yet.
 
-Jenkins template
+Jenkins Template
 """"""""""""""""
 The build process in Jenkins is stored in a ``config.xml``-file (``src/main/resources/templates/jenkins``)
 that shares common steps for all programming languages (e.g. triggering a build when a push to GitLab occurred).
@@ -79,8 +79,8 @@ You should not need to touch any of these variables, except the ``#dockerImage``
 if you want to use a different agent setup (e.g. a Kubernetes setup).
 
 
-Caching example for Maven
-^^^^^^^^^^^^^^^^^^^^^^^^^
+Jenkins: Caching Example for Maven
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 The Docker image used to run the maven-tests already contains a set of commonly used dependencies
 (see `artemis-maven-docker <https://github.com/ls1intum/artemis-maven-docker>`__).
 This significantly speeds up builds as the dependencies do not have to be downloaded every time a build is started.

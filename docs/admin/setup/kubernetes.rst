@@ -1,11 +1,19 @@
-Alternative: Kubernetes Setup
------------------------------
+Kubernetes Setup
+----------------
 
 This section describes how to set up an environment deployed in Kubernetes.
+
+.. note::
+
+   These steps were part of an experimental setup.
+   This does not result in a production-ready deployment.
+   There is ongoing work on a `Helm chart <https://github.com/ls1intum/artemis-helm>`__ to simplify the deployment of Artemis.
+
 
 **Prerequisites:**
 
 Follow the links to install the tools which will be needed to proceed with the Kubernetes cluster setup.
+The setup has been tested with the described versions; newer ones might work, too.
 
 * `Docker <https://docs.docker.com/get-docker/>`__ - v20.10.7
    Docker is a platform for developing, shipping and running applications.
@@ -172,27 +180,27 @@ If you can't continue using the Chrome browser, you can try with another browser
 You will be prompted to set a password which later will be used to log in to Rancher.
 The password will often be used, so you shouldn't forget it.
 
-.. figure:: setup/kubernetes/rancher_password.png
+.. figure:: kubernetes/rancher_password.png
    :align: center
 
 Then you should save the Rancher Server URL, please use the predefined name.
 
-.. figure:: setup/kubernetes/rancher_url.png
+.. figure:: kubernetes/rancher_url.png
    :align: center
 
 After saving, you will be redirected to the main page of Rancher, where you see your clusters.
 There will be one local cluster.
 
-.. figure:: setup/kubernetes/rancher_cluster.png
+.. figure:: kubernetes/rancher_cluster.png
    :align: center
 
 You can open the workloads using the menu, there will be no workloads deployed at the moment.
 
-.. figure:: setup/kubernetes/rancher_nav_workloads.png
+.. figure:: kubernetes/rancher_nav_workloads.png
    :align: center
 
 
-.. figure:: setup/kubernetes/rancher_empty_workloads.png
+.. figure:: kubernetes/rancher_empty_workloads.png
    :align: center
 
 6. Create a new namespace in Rancher
@@ -208,12 +216,12 @@ a. Navigate to Namespaces using the top menu of Rancher
 
 b. Select ``Add Namespace`` to open the form for namespace creation
 
-   .. figure:: setup/kubernetes/rancher_namespaces.png
+   .. figure:: kubernetes/rancher_namespaces.png
       :align: center
 
 c. Put ``artemis`` as namespace's name and select the ``Create`` button
 
-   .. figure:: setup/kubernetes/rancher_create_namespace.png
+   .. figure:: kubernetes/rancher_create_namespace.png
       :align: center
 
 
@@ -229,12 +237,12 @@ To create a repository you need to select the ``Create repository`` button.
 
 **DockerHub:**
 
-.. figure:: setup/kubernetes/dockerhub.png
+.. figure:: kubernetes/dockerhub.png
    :align: center
 
 Then fill in the repository name with ``artemis``. Then use the ``Create`` button to create your repository.
 
-.. figure:: setup/kubernetes/dockerhub_create_repository.png
+.. figure:: kubernetes/dockerhub_create_repository.png
    :align: center
 
 Configure Docker ID (username)
@@ -369,7 +377,7 @@ You can do it by executing the following command:
 In the console, you will see that the resources are created.
 It will take a little bit of time when you are doing this for the first time. Be patient!
 
-.. figure:: setup/kubernetes/kubectl_kustomization.png
+.. figure:: kubernetes/kubectl_kustomization.png
    :align: center
 
 Add/Edit Secrets
@@ -380,23 +388,23 @@ Open Rancher using `<https://rancher.localhost/>`__ and navigate to your cluster
 
 Then navigate to ``Secrets`` like shown below:
 
-.. figure:: setup/kubernetes/rancher_secrets_menu.png
+.. figure:: kubernetes/rancher_secrets_menu.png
    :align: center
 
 You will see list of all defined secret files
 
-.. figure:: setup/kubernetes/rancher_secrets_list.png
+.. figure:: kubernetes/rancher_secrets_list.png
    :align: center
 
 Continue with ``artemis-secrets`` and you will see the values in the secret file. Then navigate to the edit page.
 
-.. figure:: setup/kubernetes/rancher_secrets_edit.png
+.. figure:: kubernetes/rancher_secrets_edit.png
    :align: center
 
 You can edit each secret you want or add more secrets.
 Once you select any value box the value itself will be shown and you can edit it.
 
-.. figure:: setup/kubernetes/rancher_secrets_edit_page.png
+.. figure:: kubernetes/rancher_secrets_edit_page.png
    :align: center
 
 After you are done you can save your changes and redeploy the Artemis workload.
@@ -408,7 +416,7 @@ Open Rancher using `<https://rancher.localhost/>`__ and navigate to your cluster
 It may take some time but in the end, you should see that all the workloads have Active status.
 In case there is a problem with some workloads you can check the logs to see what the issue is.
 
-.. figure:: setup/kubernetes/rancher_workloads.png
+.. figure:: kubernetes/rancher_workloads.png
    :align: center
 
 You can open the Artemis application using the link `<https://artemis-app.artemis.rancher.localhost/>`__
@@ -427,7 +435,7 @@ Open the workload which logs you need to check.
 There is a list of pods. Open the menu for one of the pods and select ``View Logs``.
 A pop-up with the logs will be opened.
 
-.. figure:: setup/kubernetes/rancher_logs.png
+.. figure:: kubernetes/rancher_logs.png
    :align: center
 
 Troubleshooting
@@ -444,18 +452,18 @@ This chapter explains how you can set environment variables for your deployment 
 
 Open the Workloads view on Rancher
 
-.. figure:: setup/kubernetes/rancher_workloads.png
+.. figure:: kubernetes/rancher_workloads.png
    :align: center
 
 Enter the details page of the Artemis workload and then select Edit in the three-dot menu
 
-.. figure:: setup/kubernetes/workload_edit.png
+.. figure:: kubernetes/workload_edit.png
    :align: center
 
 Expand the ``Environment Variables`` menu.
 After pressing the ``Add Variable`` button two fields will appear where you can add the variable key and the value.
 
-.. figure:: setup/kubernetes/workload_set_environment_variable.png
+.. figure:: kubernetes/workload_set_environment_variable.png
    :align: center
 
 You can add as many variables as you want.

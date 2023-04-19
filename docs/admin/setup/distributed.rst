@@ -1,13 +1,13 @@
 .. _setup_distributed:
 
-Multiple Artemis instances
+Multiple Artemis Instances
 --------------------------
 
 Setup with one instance
 ^^^^^^^^^^^^^^^^^^^^^^^
 Artemis usually runs with one instance of the application server:
 
-   .. figure:: setup/distributed/deployment_before.drawio.png
+   .. figure:: distributed/deployment_before.drawio.png
       :align: center
 
 
@@ -21,7 +21,7 @@ Artemis also supports this setup (which is also used at the Chair for Applied So
 
 Multiple instances of the application server are used to distribute the load:
 
-   .. figure:: setup/distributed/deployment_after_simple.drawio.png
+   .. figure:: distributed/deployment_after_simple.drawio.png
       :align: center
 
 A load balancer (typically a reverse proxy such as nginx) is added, that distributes the requests
@@ -30,7 +30,7 @@ to the different instances.
 **Note:** This documentation focuses on the practical setup of this distributed setup.
 More details regarding the theoretical aspects can be found in the Bachelor's Thesis
 `Securing and Scaling Artemis WebSocket Architecture`, which can be found here:
-:download:`pdf <setup/distributed/thesis_securing_scaling_artemis.pdf>`.
+:download:`pdf <distributed/thesis_securing_scaling_artemis.pdf>`.
 
 Additional synchronization
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -54,7 +54,7 @@ You can use the configuration argument ``spring.hazelcast.interface`` to configu
 will listen.
 
 
-   .. figure:: setup/distributed/deployment_hazelcast.drawio.png
+   .. figure:: distributed/deployment_hazelcast.drawio.png
       :align: center
 
 
@@ -292,7 +292,7 @@ We use a so-called broker for this (named `Apache ActiveMQ Artemis
 
 It relays message between instances:
 
-   .. figure:: setup/distributed/deployment_broker.drawio.png
+   .. figure:: distributed/deployment_broker.drawio.png
       :align: center
 
 **Setup**
@@ -500,5 +500,5 @@ You can see the state of all connected instances within the registry:
 
 It relays message between instances:
 
-   .. figure:: setup/distributed/registry.png
+   .. figure:: distributed/registry.png
       :align: center
