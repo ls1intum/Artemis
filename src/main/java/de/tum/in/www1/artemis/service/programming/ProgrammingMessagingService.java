@@ -144,4 +144,18 @@ public class ProgrammingMessagingService {
             ltiNewResultService.onNewResult(studentParticipation);
         }
     }
+
+    /**
+     * Notify user about build trigger error, either during preparing the build or during running the build itself.
+     *
+     * @param participation the participation for which the build trigger error occurred.
+     * @param exception     the exception that occurred.
+     */
+    public void notifyUserAboutBuildTriggerError(ProgrammingExerciseParticipation participation, Throwable exception) {
+        log.error("Error while building and testing repository " + participation.getRepositoryUrl(), exception);
+        BuildTriggerWebsocketError error = new BuildTriggerWebsocketError(exception.getMessage(), participation.getId());
+        // This cast to Participation is safe as the participation is either a ProgrammingExerciseStudentParticipation, a TemplateProgrammingExerciseParticipation, or a
+        // SolutionProgrammingExerciseParticipation, which all extend Participation.
+        notifyUserAboutSubmissionError((Participation) participation, error);
+    }
 }

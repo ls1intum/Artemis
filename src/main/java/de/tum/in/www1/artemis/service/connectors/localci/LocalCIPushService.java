@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Path;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 import org.eclipse.jgit.api.Git;
@@ -24,7 +23,6 @@ import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
-import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.LocalCIException;
@@ -42,7 +40,6 @@ import de.tum.in.www1.artemis.service.programming.ProgrammingSubmissionService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingTriggerService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
-import de.tum.in.www1.artemis.web.websocket.programmingSubmission.BuildTriggerWebsocketError;
 
 /**
  * Service for further processing authenticated and authorized pushes in the local CI system.
@@ -161,12 +158,9 @@ public class LocalCIPushService {
             // In case anything goes wrong, notify the user.
             // Throwing an exception here would lead to the Git client request getting stuck.
             // Instead, the user can see in the UI that creating the submission failed.
-            log.error("Exception encountered when trying to process a new push to the repository {} with the following commit: {}", repository.getDirectory().getName(), commitHash,
-                    e);
-            BuildTriggerWebsocketError error = new BuildTriggerWebsocketError(e.getMessage(), participation.getId());
-            // This cast to Participation is safe as the participation is either a ProgrammingExerciseStudentParticipation, a TemplateProgrammingExerciseParticipation, or a
-            // SolutionProgrammingExerciseParticipation, which all extend Participation.
-            programmingMessagingService.notifyUserAboutSubmissionError((Participation) participation, error);
+            // This catch clause does not catch exceptions that happen during runBuildJob() as that method is called asynchronously.
+            // For exceptions happening inside runBuildJob(), the user is also notified. See the addBuildJobToQueue() method in the LocalCIExecutorService for that.
+            programmingMessagingService.notifyUserAboutBuildTriggerError(participation, e);
         }
 
         log.info("New push processed to repository {} in {}.", localVCRepositoryUrl.getURI(), TimeLogUtil.formatDurationFrom(timeNanoStart));
@@ -209,31 +203,21 @@ public class LocalCIPushService {
 
         // Trigger a build of the solution repository.
         CompletableFuture<LocalCIBuildResult> futureSolutionBuildResult = localCIExecutorService.addBuildJobToQueue(participation);
-        futureSolutionBuildResult.whenComplete((buildResult, exception) -> {
-            if (exception != null) {
-                log.error("Exception encountered when trying to process a new push to the tests repository of exercise {} with the following commit: {}", exercise.getId(),
-                        commitHash, exception);
-                // Exceptions are rethrown and handled by the caller.
-                return;
+        futureSolutionBuildResult.thenAccept(buildResult -> {
+            try {
+                // The 'user' is not properly logged into Artemis, this leads to an issue when accessing custom repository methods.
+                // Therefore, a mock auth object has to be created.
+                SecurityUtils.setAuthorizationObject();
+                Result result = programmingExerciseGradingService.processNewProgrammingExerciseResult(participation, buildResult).orElseThrow();
+                programmingMessagingService.notifyUserAboutNewResult(result, participation);
             }
-
-            // The 'user' is not properly logged into Artemis, this leads to an issue when accessing custom repository methods.
-            // Therefore, a mock auth object has to be created.
-            SecurityUtils.setAuthorizationObject();
-
-            // Process the result.
-            Optional<Result> optResult = programmingExerciseGradingService.processNewProgrammingExerciseResult(participation, buildResult);
-            if (optResult.isEmpty()) {
-                throw new LocalCIException("No result found for solution repository build of participation " + participation.getId());
+            catch (Exception e) {
+                programmingMessagingService.notifyUserAboutBuildTriggerError(participation, e);
             }
-
-            Result result = optResult.get();
-            // Notify the user about the new solution result.
-            programmingMessagingService.notifyUserAboutNewResult(result, participation);
 
             // The solution participation received a new result, also trigger a build of the template repository.
             programmingTriggerService.triggerTemplateBuildAndNotifyUser(exercise.getId(), submission.getCommitHash(), SubmissionType.TEST);
-        }).join(); // Wait for the completion and rethrow any exceptions.
+        });
     }
 
     /**

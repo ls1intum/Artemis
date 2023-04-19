@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.concurrent.AbstractExecutorService;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +33,7 @@ public class LocalCIConfiguration {
 
     private final Logger log = LoggerFactory.getLogger(LocalCIConfiguration.class);
 
-    @Value("${artemis.continuous-integration.thread-pool-size}")
+    @Value("${artemis.continuous-integration.thread-pool-size:2}")
     int threadPoolSize;
 
     /**
@@ -40,16 +42,34 @@ public class LocalCIConfiguration {
      * @return The executor service bean.
      */
     @Bean
-    public ExecutorService executorService() {
+    public ExecutorService localCIBuildExecutorService() {
         if (threadPoolSize > 0) {
             log.info("Using ExecutorService with thread pool size: " + threadPoolSize);
-            return Executors.newFixedThreadPool(threadPoolSize);
+            ScheduledExecutorService executorService = Executors.newScheduledThreadPool(threadPoolSize);
+            executorService.scheduleAtFixedRate(() -> {
+                ThreadPoolExecutor threadPoolExecutor = (ThreadPoolExecutor) executorService;
+                // Report on the current state of the executor service every 10 seconds.
+                // Subtract 1 from the active count because we only want to report on the additional threads that are spun up for the build jobs.
+                log.info("Current active tasks in the local CI executor service: {}, Queue size: {}", threadPoolExecutor.getActiveCount() - 1,
+                        threadPoolExecutor.getQueue().size());
+            }, 0, 10, TimeUnit.SECONDS);
+            return executorService;
         }
         else {
             log.info("Using SynchronousExecutorService");
             // Return a synchronous ExecutorService.
             return new SynchronousExecutorService();
         }
+    }
+
+    /**
+     * Creates a scheduler that is used to cancel stuck build jobs after a timeout.
+     *
+     * @return The scheduler bean.
+     */
+    @Bean
+    public ScheduledExecutorService localCIBuildTimeoutExecutorService() {
+        return Executors.newSingleThreadScheduledExecutor();
     }
 
     /**

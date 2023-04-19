@@ -4,9 +4,14 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Path;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,12 +20,15 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.LocalCIException;
 import de.tum.in.www1.artemis.service.ResourceLoaderService;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildResult;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUrl;
+import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
+import de.tum.in.www1.artemis.service.programming.ProgrammingMessagingService;
 
 /**
  * Service for submitting build jobs to the executor service.
@@ -31,7 +39,11 @@ public class LocalCIExecutorService {
 
     private final Logger log = LoggerFactory.getLogger(LocalCIExecutorService.class);
 
-    private final ExecutorService executorService;
+    private final Optional<VersionControlService> versionControlService;
+
+    private final ExecutorService localCIBuildExecutorService;
+
+    private final ScheduledExecutorService localCIBuildTimeoutExecutorService;
 
     private final LocalCIBuildJobService localCIBuildJobService;
 
@@ -39,18 +51,27 @@ public class LocalCIExecutorService {
 
     private final LocalCIBuildPlanService localCIBuildPlanService;
 
+    private final ProgrammingMessagingService programmingMessagingService;
+
     @Value("${artemis.version-control.url}")
     private URL localVCBaseUrl;
 
     @Value("${artemis.version-control.local-vcs-repo-path}")
     private String localVCBasePath;
 
-    public LocalCIExecutorService(ExecutorService executorService, LocalCIBuildJobService localCIBuildJobService, ResourceLoaderService resourceLoaderService,
-            LocalCIBuildPlanService localCIBuildPlanService) {
-        this.executorService = executorService;
+    @Value("${artemis.continuous-integration.timeout-seconds:60}")
+    private int timeoutSeconds;
+
+    public LocalCIExecutorService(Optional<VersionControlService> versionControlService, ExecutorService localCIBuildExecutorService,
+            ScheduledExecutorService localCIBuildTimeoutExecutorService, LocalCIBuildJobService localCIBuildJobService, ResourceLoaderService resourceLoaderService,
+            LocalCIBuildPlanService localCIBuildPlanService, ProgrammingMessagingService programmingMessagingService) {
+        this.versionControlService = versionControlService;
+        this.localCIBuildExecutorService = localCIBuildExecutorService;
+        this.localCIBuildTimeoutExecutorService = localCIBuildTimeoutExecutorService;
         this.localCIBuildJobService = localCIBuildJobService;
         this.resourceLoaderService = resourceLoaderService;
         this.localCIBuildPlanService = localCIBuildPlanService;
+        this.programmingMessagingService = programmingMessagingService;
     }
 
     /**
@@ -61,32 +82,84 @@ public class LocalCIExecutorService {
      */
     public CompletableFuture<LocalCIBuildResult> addBuildJobToQueue(ProgrammingExerciseParticipation participation) {
 
+        ProjectType projectType = participation.getProgrammingExercise().getProjectType();
+        if (projectType == null || !projectType.isGradle()) {
+            throw new LocalCIException("Project type must be Gradle.");
+        }
+
         LocalVCRepositoryUrl assignmentRepositoryUrl = new LocalVCRepositoryUrl(participation.getRepositoryUrl(), localVCBaseUrl);
         Path assignmentRepositoryPath = assignmentRepositoryUrl.getLocalRepositoryPath(localVCBasePath).toAbsolutePath();
 
         ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
-        LocalVCRepositoryUrl testRepositoryUrl = new LocalVCRepositoryUrl(programmingExercise.getTestRepositoryUrl(), localVCBaseUrl);
-        Path testRepositoryPath = testRepositoryUrl.getLocalRepositoryPath(localVCBasePath).toAbsolutePath();
+        LocalVCRepositoryUrl testsRepositoryUrl = new LocalVCRepositoryUrl(programmingExercise.getTestRepositoryUrl(), localVCBaseUrl);
+        Path testsRepositoryPath = testsRepositoryUrl.getLocalRepositoryPath(localVCBasePath).toAbsolutePath();
 
         // Get script file out of resources.
         Path scriptPath = getBuildScriptPath();
 
-        CompletableFuture<LocalCIBuildResult> futureResult = CompletableFuture.supplyAsync(() -> {
-            LocalCIBuildResult buildResult;
+        String branch = versionControlService.orElseThrow().getOrRetrieveBranchOfParticipation(participation);
+
+        // Prepare the Docker container before submitting the build job to the executor service so we can remove the container if something goes wrong.
+        String containerId;
+        try {
+            containerId = localCIBuildJobService.prepareDockerContainer(assignmentRepositoryPath, testsRepositoryPath, scriptPath, branch);
+        }
+        catch (LocalCIException e) {
+            // Remove the temporary build script file.
+            localCIBuildJobService.deleteTemporaryBuildScript(scriptPath);
+            throw new LocalCIException("Error while preparing Docker container", e);
+        }
+
+        // Submit the build job to the executor service. This runs in a separate thread, so it does not block the main thread.
+        // Use Future instead of CompletableFuture to be able to interrupt the build job's thread if running the build job takes too long.
+        Future<LocalCIBuildResult> futureResult = localCIBuildExecutorService.submit(() -> {
             try {
-                buildResult = localCIBuildJobService.runBuildJob(participation, assignmentRepositoryPath, testRepositoryPath, scriptPath);
+                // Add "_BUILDING" to the build plan id to indicate that the build plan is currently building.
+                localCIBuildPlanService.updateBuildPlanStatus(participation, ContinuousIntegrationService.BuildStatus.BUILDING);
+                return localCIBuildJobService.runBuildJob(participation, containerId, branch, scriptPath, projectType);
             }
-            catch (LocalCIException e) {
+            catch (Exception e) {
                 log.error("Error while running build job", e);
+                localCIBuildJobService.stopContainer(containerId);
+                localCIBuildJobService.deleteTemporaryBuildScript(scriptPath);
+                // Wrap the exception in a CompletionException so that the future is completed exceptionally.
                 throw new CompletionException(e);
             }
-            return buildResult;
-        }, executorService);
+        });
+
+        // Schedule a task that will cancel the CompletableFuture if it is not completed within the timeout period.
+        // This task to cancel the build after the timeout runs on a separate thread, so it does not block the main thread.
+        localCIBuildTimeoutExecutorService.schedule(() -> {
+            if (!futureResult.isDone()) {
+                log.error("Build job timed out after {} seconds", timeoutSeconds);
+                futureResult.cancel(true);
+            }
+        }, timeoutSeconds, TimeUnit.SECONDS);
 
         // Add "_QUEUED" to the build plan id to indicate that the build job is queued.
         localCIBuildPlanService.updateBuildPlanStatus(participation, ContinuousIntegrationService.BuildStatus.QUEUED);
 
-        return futureResult;
+        // Convert the Future to a CompletableFuture.
+        CompletableFuture<LocalCIBuildResult> completableFutureResult = toCompletableFuture(futureResult);
+
+        // Notify the user, if the build job produced an exception. This is also the case if the build job timed out.
+        completableFutureResult.exceptionally(exception -> {
+            programmingMessagingService.notifyUserAboutBuildTriggerError(participation, exception);
+            return null;
+        });
+
+        return completableFutureResult;
+    }
+
+    private <T> CompletableFuture<T> toCompletableFuture(Future<T> future) {
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                return future.get();
+            }
+            catch (InterruptedException | ExecutionException e) {
+                throw new CompletionException(e);
+            }
+        });
     }
 
     private Path getBuildScriptPath() {
