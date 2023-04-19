@@ -30,6 +30,8 @@ class LocalVCLocalCIParticipationIntegrationTest extends AbstractSpringIntegrati
         ProgrammingExercise programmingExercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
         String projectKey = programmingExercise.getProjectKey();
         programmingExercise.setStartDate(ZonedDateTime.now().minusHours(1));
+        // Set the branch to null to force the usage of LocalVCService#getDefaultBranchOfRepository().
+        programmingExercise.setBranch(null);
         programmingExerciseRepository.save(programmingExercise);
         programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExercise.getId()).orElseThrow();
 

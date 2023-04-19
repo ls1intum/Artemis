@@ -140,7 +140,7 @@ public class LocalVCService extends AbstractVersionControlService {
      * @return the name of the default branch, e.g. 'main'
      */
     @Override
-    public String getDefaultBranchOfRepository(VcsRepositoryUrl repositoryUrl) throws LocalVCException {
+    public String getDefaultBranchOfRepository(VcsRepositoryUrl repositoryUrl) {
         LocalVCRepositoryUrl localVCRepositoryUrl = new LocalVCRepositoryUrl(repositoryUrl.toString(), localVCBaseUrl);
         String localRepositoryPath = localVCRepositoryUrl.getLocalRepositoryPath(localVCBasePath).toString();
         Map<String, Ref> remoteRepositoryRefs;
@@ -151,7 +151,9 @@ public class LocalVCService extends AbstractVersionControlService {
             throw new LocalVCException("Cannot get default branch of repository " + localRepositoryPath + ". ls-remote failed.", e);
         }
         if (remoteRepositoryRefs.containsKey("HEAD")) {
-            return remoteRepositoryRefs.get("HEAD").getTarget().getName();
+            // The HEAD reference is of the form "ref: refs/heads/main"
+            String[] headRefSplit = remoteRepositoryRefs.get("HEAD").getTarget().getName().split("/");
+            return headRefSplit[headRefSplit.length - 1];
         }
 
         throw new LocalVCException("Cannot get default branch of repository " + localRepositoryPath + ". ls-remote does not return a HEAD reference.");
