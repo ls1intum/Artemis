@@ -176,13 +176,7 @@ public class LocalVCService extends AbstractVersionControlService {
     public boolean checkIfProjectExists(String projectKey, String projectName) {
         // Try to find the folder in the file system. If it is not found, return false.
         Path projectPath = Path.of(localVCBasePath, projectKey);
-        if (Files.exists(projectPath)) {
-            log.warn("Local VC project with key {} already exists: {}", projectKey, projectName);
-            return true;
-        }
-
-        log.debug("Local git project {} does not exist", projectKey);
-        return false;
+        return Files.exists(projectPath);
     }
 
     /**
@@ -230,16 +224,6 @@ public class LocalVCService extends AbstractVersionControlService {
         LocalVCRepositoryUrl localVCRepositoryUrl = new LocalVCRepositoryUrl(projectKey, repositorySlug, localVCBaseUrl);
 
         Path remoteDirPath = localVCRepositoryUrl.getLocalRepositoryPath(localVCBasePath);
-
-        // Check if the folder for the repository to be created already exists. In that case delete it first.
-        if (Files.exists(remoteDirPath)) {
-            try {
-                FileUtils.deleteDirectory(remoteDirPath.toFile());
-            }
-            catch (IOException e) {
-                throw new LocalVCException("Repository already exists in local VC system but was not able to delete it.", e);
-            }
-        }
 
         try {
             Files.createDirectories(remoteDirPath);
