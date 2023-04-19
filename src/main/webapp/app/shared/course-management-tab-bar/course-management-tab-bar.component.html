@@ -43,6 +43,7 @@
             [routerLink]="['/course-management', course.id, 'tutorial-groups']"
             class="tab-item btn btn-primary btn-md ms-1"
             routerLinkActive="active"
+            [class.active]="shouldHighlightTutorialGroupsButton()"
         >
             <fa-icon [icon]="faPersonChalkboard"></fa-icon>
             <span jhiTranslate="artemisApp.entities.tutorialGroup.plural"></span>

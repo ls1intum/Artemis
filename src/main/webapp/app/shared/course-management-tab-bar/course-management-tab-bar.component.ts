@@ -111,4 +111,11 @@ export class CourseManagementTabBarComponent implements OnInit, OnDestroy {
         });
         this.router.navigate(['/course-management']);
     }
+
+    shouldHighlightTutorialGroupsButton(): boolean {
+        let shouldHighlightTutorialGroups = false;
+        shouldHighlightTutorialGroups ||= this.router.url.includes('/tutorial-groups-checklist');
+        shouldHighlightTutorialGroups ||= this.router.url.includes('/create-tutorial-groups-configuration');
+        return shouldHighlightTutorialGroups;
+    }
 }
