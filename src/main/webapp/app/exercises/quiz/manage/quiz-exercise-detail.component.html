@@ -142,7 +142,8 @@
                                     id="cbScheduleQuizStart"
                                     class="form-check-input custom-control-input"
                                     [(ngModel)]="scheduleQuizStart"
-                                    (ngModelChange)="validateStartDate($event)"
+                                    (ngModelChange)="this.cacheValidation()"
+                                    (click)="toggle($event)"
                                 />
                                 <label class="form-check-label custom-control-label" for="cbScheduleQuizStart" jhiTranslate="artemisApp.quizExercise.setStartTime"> </label>
                                 <jhi-help-icon text="artemisApp.quizExercise.startTimeExplanation"></jhi-help-icon>

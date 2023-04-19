@@ -111,7 +111,6 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
 
     isInvalidDate = false;
     isInvalidReleaseDate = false;
-    isInvalidStartDate = false;
     isInvalidDueDate = false;
     isInvalidBachModeStartTime = false;
 
@@ -296,7 +295,12 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
      */
     validateDate() {
         this.exerciseService.validateDate(this.quizExercise);
-        this.isInvalidDate = this.isInvalidReleaseDate || this.isInvalidStartDate || this.isInvalidDueDate || this.isInvalidBachModeStartTime;
+        this.isInvalidDate = this.isInvalidReleaseDate;
+        if (this.quizExercise.quizMode === QuizMode.SYNCHRONIZED && this.scheduleQuizStart) {
+            this.isInvalidDate = this.isInvalidDate || this.isInvalidBachModeStartTime;
+        } else if (this.quizExercise.quizMode !== QuizMode.SYNCHRONIZED) {
+            this.isInvalidDate = this.isInvalidDate || this.isInvalidDueDate;
+        }
         const dueDate = this.quizExercise.quizMode === QuizMode.SYNCHRONIZED ? null : this.quizExercise.dueDate;
         this.quizExercise?.quizBatches?.forEach((batch) => {
             const startTime = dayjs(batch.startTime);
@@ -1094,11 +1098,6 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
         this.cacheValidation();
     }
 
-    validateStartDate(isInvalidDate: boolean) {
-        this.isInvalidStartDate = isInvalidDate;
-        this.cacheValidation();
-    }
-
     validateDueDate(isInvalidDate: boolean) {
         this.isInvalidDueDate = isInvalidDate;
         this.cacheValidation();
@@ -1107,5 +1106,12 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
     validateBachModeStartTime(isInvalidDate: boolean) {
         this.isInvalidBachModeStartTime = isInvalidDate;
         this.cacheValidation();
+    }
+
+    toggle(event: Event) {
+        const checked = (event.target as HTMLInputElement).checked;
+        if (!checked) {
+            this.isInvalidBachModeStartTime = false;
+        }
     }
 }
