@@ -81,7 +81,7 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
 
     private final ResourceLoaderService resourceLoaderService;
 
-    public JenkinsBuildPlanCreator(ResourceLoaderService resourceLoaderService) {
+    public JenkinsBuildPlanCreator(final ResourceLoaderService resourceLoaderService) {
         this.resourceLoaderService = resourceLoaderService;
     }
 
@@ -91,8 +91,8 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
     }
 
     @Override
-    public Document buildBasicConfig(ProgrammingLanguage programmingLanguage, Optional<ProjectType> projectType, InternalVcsRepositoryURLs internalVcsRepositoryURLs,
-            boolean checkoutSolution, String buildPlanUrl) {
+    public Document buildBasicConfig(final ProgrammingLanguage programmingLanguage, final Optional<ProjectType> projectType,
+            final InternalVcsRepositoryURLs internalVcsRepositoryURLs, final boolean checkoutSolution, final String buildPlanUrl) {
         final String jenkinsfile = getJenkinsfile(internalVcsRepositoryURLs, checkoutSolution, buildPlanUrl);
 
         final Path configFilePath = Path.of("templates", "jenkins", "config.xml");
@@ -101,7 +101,7 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
         return XmlFileUtils.readXmlFile(xmlResource, configFileReplacements);
     }
 
-    private String getJenkinsfile(InternalVcsRepositoryURLs internalVcsRepositoryURLs, boolean checkoutSolution, String buildPlanUrl) {
+    private String getJenkinsfile(final InternalVcsRepositoryURLs internalVcsRepositoryURLs, final boolean checkoutSolution, final String buildPlanUrl) {
         final String jenkinsfile = makeSafeForXml(loadJenkinsfile());
         final var replacements = getReplacements(internalVcsRepositoryURLs, checkoutSolution, buildPlanUrl);
 
@@ -109,7 +109,7 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
     }
 
     private String loadJenkinsfile() {
-        Resource resource = resourceLoaderService.getResource(Path.of("templates", "jenkins", "Jenkinsfile"));
+        final Resource resource = resourceLoaderService.getResource(Path.of("templates", "jenkins", "Jenkinsfile"));
 
         try (InputStream inputStream = resource.getInputStream()) {
             return IOUtils.toString(inputStream, Charset.defaultCharset());
@@ -134,7 +134,7 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
         return result.replace("\\", "\\\\");
     }
 
-    private Map<String, String> getReplacements(InternalVcsRepositoryURLs internalVcsRepositoryURLs, boolean checkoutSolution, String buildPlanUrl) {
+    private Map<String, String> getReplacements(final InternalVcsRepositoryURLs internalVcsRepositoryURLs, final boolean checkoutSolution, final String buildPlanUrl) {
         final Map<String, String> replacements = new HashMap<>();
 
         replacements.put(REPLACE_TEST_REPO, internalVcsRepositoryURLs.testRepositoryUrl().getURI().toString());
@@ -154,11 +154,13 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
         return replacements;
     }
 
-    private String replacePipelineScriptParameters(String jenkinsfile, Map<String, String> variablesToReplace) {
+    private String replacePipelineScriptParameters(final String jenkinsfile, final Map<String, String> variablesToReplace) {
+        String updatedJenkinsfile = jenkinsfile;
+
         for (final var replacement : variablesToReplace.entrySet()) {
-            jenkinsfile = jenkinsfile.replace(replacement.getKey(), replacement.getValue());
+            updatedJenkinsfile = updatedJenkinsfile.replace(replacement.getKey(), replacement.getValue());
         }
 
-        return jenkinsfile;
+        return updatedJenkinsfile;
     }
 }
