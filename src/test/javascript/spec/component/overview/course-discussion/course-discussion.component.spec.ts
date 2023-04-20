@@ -401,27 +401,6 @@ describe('CourseDiscussionComponent', () => {
         expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledTimes(3);
     }
 
-    describe('sorting of posts', () => {
-        it('should distinguish context filter options for properly show them in form', () => {
-            let result = component.compareContextFilterOptionFn({ courseId: metisCourse.id }, { courseId: metisCourse.id });
-            expect(result).toBeTrue();
-            result = component.compareContextFilterOptionFn({ courseId: metisCourse.id }, { courseId: 99 });
-            expect(result).toBeFalse();
-            result = component.compareContextFilterOptionFn({ lectureId: metisLecture.id }, { lectureId: metisLecture.id });
-            expect(result).toBeTrue();
-            result = component.compareContextFilterOptionFn({ lectureId: metisLecture.id }, { lectureId: 99 });
-            expect(result).toBeFalse();
-            result = component.compareContextFilterOptionFn({ exerciseId: metisExercise.id }, { exerciseId: metisExercise.id });
-            expect(result).toBeTrue();
-            result = component.compareContextFilterOptionFn({ exerciseId: metisExercise.id }, { exerciseId: 99 });
-            expect(result).toBeFalse();
-            result = component.compareContextFilterOptionFn({ courseWideContext: CourseWideContext.ORGANIZATION }, { courseWideContext: CourseWideContext.ORGANIZATION });
-            expect(result).toBeTrue();
-            result = component.compareContextFilterOptionFn({ courseWideContext: CourseWideContext.ORGANIZATION }, { courseWideContext: CourseWideContext.TECH_SUPPORT });
-            expect(result).toBeFalse();
-        });
-    });
-
     function prepareComponent() {
         component.itemsPerPage = 5;
         component.ngOnInit();

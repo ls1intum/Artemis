@@ -435,41 +435,39 @@ export class MetisService implements OnDestroy {
             postDTO.post.answers?.forEach((answer: AnswerPost) => {
                 answer.creationDate = dayjs(answer.creationDate);
             });
-            switch (postDTO.action) {
-                case MetisPostAction.CREATE:
-                    // determine if either the current post context filter is not set to a specific course-wide topic
-                    // or the sent post has a different context,
-                    // or the sent post has a course-wide context which matches the current filter
-                    if (
-                        !this.currentPostContextFilter.courseWideContext ||
-                        !postDTO.post.courseWideContext ||
-                        this.currentPostContextFilter.courseWideContext === postDTO.post.courseWideContext
-                    ) {
+
+            if (
+                (postDTO.post.courseWideContext && this.currentPostContextFilter.courseWideContexts?.includes(postDTO.post.courseWideContext)) ||
+                (postDTO.post.lecture?.id !== undefined && this.currentPostContextFilter.lectureIds?.includes(postDTO.post.lecture.id)) ||
+                (postDTO.post.exercise?.id !== undefined && this.currentPostContextFilter.lectureIds?.includes(postDTO.post.exercise.id)) ||
+                postDTO.post.conversation?.id === this.currentPostContextFilter.conversationId
+            )
+                switch (postDTO.action) {
+                    case MetisPostAction.CREATE:
                         // we can add the sent post to the cached posts without violating the current context filter setting
                         this.cachedPosts.push(postDTO.post);
-                    }
-                    this.addTags(postDTO.post.tags);
-                    break;
-                case MetisPostAction.UPDATE:
-                    const indexToUpdate = this.cachedPosts.findIndex((post) => post.id === postDTO.post.id);
-                    if (indexToUpdate > -1) {
-                        this.cachedPosts[indexToUpdate] = postDTO.post;
-                    } else {
-                        console.error(`Post with id ${postDTO.post.id} could not be updated`);
-                    }
-                    this.addTags(postDTO.post.tags);
-                    break;
-                case MetisPostAction.DELETE:
-                    const indexToDelete = this.cachedPosts.findIndex((post) => post.id === postDTO.post.id);
-                    if (indexToDelete > -1) {
-                        this.cachedPosts.splice(indexToDelete, 1);
-                    } else {
-                        console.error(`Post with id ${postDTO.post.id} could not be deleted`);
-                    }
-                    break;
-                default:
-                    break;
-            }
+                        this.addTags(postDTO.post.tags);
+                        break;
+                    case MetisPostAction.UPDATE:
+                        const indexToUpdate = this.cachedPosts.findIndex((post) => post.id === postDTO.post.id);
+                        if (indexToUpdate > -1) {
+                            this.cachedPosts[indexToUpdate] = postDTO.post;
+                        } else {
+                            console.error(`Post with id ${postDTO.post.id} could not be updated`);
+                        }
+                        this.addTags(postDTO.post.tags);
+                        break;
+                    case MetisPostAction.DELETE:
+                        const indexToDelete = this.cachedPosts.findIndex((post) => post.id === postDTO.post.id);
+                        if (indexToDelete > -1) {
+                            this.cachedPosts.splice(indexToDelete, 1);
+                        } else {
+                            console.error(`Post with id ${postDTO.post.id} could not be deleted`);
+                        }
+                        break;
+                    default:
+                        break;
+                }
             // emit updated version of cachedPosts to subscribing components
             if (PageType.OVERVIEW === this.pageType) {
                 // by invoking the getFilteredPosts method with forceUpdate set to true, i.e. refetch currently displayed posts from server
@@ -494,11 +492,7 @@ export class MetisService implements OnDestroy {
      */
     private createSubscriptionFromPostContextFilter(): void {
         let channel = MetisWebsocketChannelPrefix;
-        if (this.currentPostContextFilter.exerciseId) {
-            channel += `exercises/${this.currentPostContextFilter.exerciseId}`;
-        } else if (this.currentPostContextFilter.lectureId) {
-            channel += `lectures/${this.currentPostContextFilter.lectureId}`;
-        } else if (this.currentPostContextFilter.conversationId) {
+        if (this.currentPostContextFilter.conversationId) {
             channel = `/user${MetisWebsocketChannelPrefix}courses/${this.courseId}/conversations/` + this.currentPostContextFilter.conversationId;
         } else {
             // subscribe to course as this is topic that is emitted on in every case

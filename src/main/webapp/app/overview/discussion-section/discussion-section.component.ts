@@ -66,8 +66,8 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
                     this.metisService.setCourse(this.course!);
                     this.metisService.setPageType(this.pageType);
                     this.metisService.getFilteredPosts({
-                        exerciseId: this.exercise?.id,
-                        lectureId: this.lecture?.id,
+                        exerciseIds: this.exercise?.id !== undefined ? [this.exercise.id] : undefined,
+                        lectureIds: this.lecture?.id !== undefined ? [this.lecture.id] : undefined,
                     });
                     this.createEmptyPost();
                     this.resetFormGroup();
@@ -210,8 +210,8 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
     setFilterAndSort(): void {
         this.currentPostContextFilter = {
             courseId: undefined,
-            exerciseId: this.exercise?.id,
-            lectureId: this.lecture?.id,
+            exerciseIds: this.exercise?.id ? [this.exercise.id] : undefined,
+            lectureIds: this.lecture?.id ? [this.lecture.id] : undefined,
             searchText: this.searchText,
             filterToUnresolved: this.formGroup.get('filterToUnresolved')?.value,
             filterToOwn: this.formGroup.get('filterToOwn')?.value,
