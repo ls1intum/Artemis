@@ -440,7 +440,7 @@ export class MetisService implements OnDestroy {
                 (postDTO.post.courseWideContext && this.currentPostContextFilter.courseWideContexts?.includes(postDTO.post.courseWideContext)) ||
                 (postDTO.post.lecture?.id !== undefined && this.currentPostContextFilter.lectureIds?.includes(postDTO.post.lecture.id)) ||
                 (postDTO.post.exercise?.id !== undefined && this.currentPostContextFilter.lectureIds?.includes(postDTO.post.exercise.id)) ||
-                postDTO.post.conversation?.id === this.currentPostContextFilter.conversationId
+                (postDTO.post.conversation?.id !== undefined && postDTO.post.conversation.id === this.currentPostContextFilter.conversationId)
             )
                 switch (postDTO.action) {
                     case MetisPostAction.CREATE:
