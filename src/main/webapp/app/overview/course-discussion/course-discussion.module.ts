@@ -7,7 +7,6 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
 import { VirtualScrollModule } from 'app/shared/virtual-scroll/virtual-scroll.module';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { MatSelectModule } from '@angular/material/select';
-import { MatFormFieldModule } from '@angular/material/form-field';
 
 const routes: Routes = [
     {
@@ -22,7 +21,7 @@ const routes: Routes = [
 ];
 
 @NgModule({
-    imports: [RouterModule.forChild(routes), MetisModule, ArtemisSharedModule, ArtemisSharedComponentModule, VirtualScrollModule, MatFormFieldModule, MatSelectModule],
+    imports: [RouterModule.forChild(routes), MetisModule, ArtemisSharedModule, ArtemisSharedComponentModule, VirtualScrollModule, MatSelectModule],
     declarations: [CourseDiscussionComponent],
     exports: [CourseDiscussionComponent],
 })
