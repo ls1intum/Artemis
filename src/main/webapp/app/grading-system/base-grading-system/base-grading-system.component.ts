@@ -13,7 +13,7 @@ import { Exam } from 'app/entities/exam.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { ExportToCsv } from 'export-to-csv';
-import { faExclamationTriangle, faPlus, faSave, faTimes, faWarning } from '@fortawesome/free-solid-svg-icons';
+import { faExclamationTriangle, faInfo, faPlus, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
 
 const csvColumnsGrade = Object.freeze({
     gradeName: 'gradeName',
@@ -63,7 +63,7 @@ export abstract class BaseGradingSystemComponent implements OnInit {
     faPlus = faPlus;
     faTimes = faTimes;
     faExclamationTriangle = faExclamationTriangle;
-    faWarning = faWarning;
+    faInfo = faInfo;
 
     constructor(
         protected gradingSystemService: GradingSystemService,
