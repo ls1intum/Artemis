@@ -161,22 +161,22 @@ describe('Metis Service', () => {
 
         it('should get posts for lecture filter', () => {
             const postServiceSpy = jest.spyOn(postService, 'getPosts');
-            metisService.getFilteredPosts({ lectureId: metisLecture.id }, false);
+            metisService.getFilteredPosts({ lectureIds: [metisLecture.id!] }, false);
             expect(postServiceSpy).toHaveBeenCalledOnce();
 
             // don't change filter
-            metisService.getFilteredPosts({ lectureId: metisLecture.id }, false);
+            metisService.getFilteredPosts({ lectureIds: [metisLecture.id!] }, false);
             expect(postServiceSpy).toHaveBeenCalledOnce();
 
             // change filter
-            metisService.getFilteredPosts({ lectureId: undefined, exerciseId: metisExercise.id }, false);
+            metisService.getFilteredPosts({ lectureIds: undefined, exerciseIds: [metisExercise.id!] }, false);
             expect(postServiceSpy).toHaveBeenCalledTimes(2);
 
             // change filter
             metisService.getFilteredPosts(
                 {
-                    lectureId: undefined,
-                    exerciseId: undefined,
+                    lectureIds: undefined,
+                    exerciseIds: undefined,
                     courseId: metisCourse.id,
                 },
                 false,
@@ -186,23 +186,23 @@ describe('Metis Service', () => {
 
         it('should get posts for exercise filter', () => {
             const postServiceSpy = jest.spyOn(postService, 'getPosts');
-            metisService.getFilteredPosts({ exerciseId: metisExercise.id }, false);
+            metisService.getFilteredPosts({ exerciseIds: [metisExercise.id!] }, false);
             expect(postServiceSpy).toHaveBeenCalledOnce();
 
             // don't change filter
-            metisService.getFilteredPosts({ exerciseId: metisExercise.id }, false);
+            metisService.getFilteredPosts({ exerciseIds: [metisExercise.id!] }, false);
             expect(postServiceSpy).toHaveBeenCalledOnce();
 
             // change filter
-            metisService.getFilteredPosts({ lectureId: metisLecture.id, exerciseId: undefined }, false);
+            metisService.getFilteredPosts({ lectureIds: [metisLecture.id!], exerciseIds: undefined }, false);
             expect(postServiceSpy).toHaveBeenCalledTimes(2);
 
             // change filter
             metisService.getFilteredPosts(
                 {
-                    lectureId: undefined,
-                    exerciseId: undefined,
-                    courseWideContext: CourseWideContext.RANDOM,
+                    lectureIds: undefined,
+                    exerciseIds: undefined,
+                    courseWideContexts: [CourseWideContext.RANDOM],
                 },
                 false,
             );
@@ -211,7 +211,7 @@ describe('Metis Service', () => {
 
         it('should get posts for course-context filter', () => {
             const postServiceSpy = jest.spyOn(postService, 'getPosts');
-            metisService.getFilteredPosts({ courseWideContext: CourseWideContext.RANDOM });
+            metisService.getFilteredPosts({ courseWideContexts: [CourseWideContext.RANDOM] });
             expect(postServiceSpy).toHaveBeenCalledOnce();
         });
 
@@ -424,24 +424,24 @@ describe('Metis Service', () => {
             lecturePostWithTags.tags = ['tag1', 'tag2'];
             websocketServiceReceiveStub.mockReturnValue(of({ post: lecturePostWithTags, action: MetisPostAction.CREATE } as MetisPostDTO));
             // setup subscription
-            metisService.getFilteredPosts({ lectureId: metisLecture.id! });
-            expect(metisServiceCreateWebsocketSubscriptionSpy).toHaveBeenCalledWith(MetisWebsocketChannelPrefix + `lectures/${metisLecture.id}`);
+            metisService.getFilteredPosts({ lectureIds: [metisLecture.id!] });
+            expect(metisServiceCreateWebsocketSubscriptionSpy).toHaveBeenCalledWith(MetisWebsocketChannelPrefix + `courses/${metisCourse.id}`);
             expect(websocketServiceSubscribeSpy).toHaveBeenCalledOnce();
             // receive message on channel
             tick();
-            expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledWith({ lectureId: metisLecture.id! }, false);
+            expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledWith({ lectureIds: [metisLecture.id!] }, false);
         }));
 
         it('should create websocket subscription when posts with exercise context are initially retrieved from DB', fakeAsync(() => {
             websocketServiceReceiveStub.mockReturnValue(of({ post: metisExercisePosts[0], action: MetisPostAction.DELETE } as MetisPostDTO));
             metisService.setPageType(PageType.OVERVIEW);
             // setup subscription
-            metisService.getFilteredPosts({ exerciseId: metisExercise.id!, page: 0, pageSize: ITEMS_PER_PAGE });
-            expect(metisServiceCreateWebsocketSubscriptionSpy).toHaveBeenCalledWith(MetisWebsocketChannelPrefix + `exercises/${metisExercise.id}`);
+            metisService.getFilteredPosts({ exerciseIds: [metisExercise.id!], page: 0, pageSize: ITEMS_PER_PAGE });
+            expect(metisServiceCreateWebsocketSubscriptionSpy).toHaveBeenCalledWith(MetisWebsocketChannelPrefix + `courses/${metisCourse.id}`);
             expect(websocketServiceSubscribeSpy).toHaveBeenCalledOnce();
             // receive message on channel
             tick();
-            expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledWith({ exerciseId: metisExercise.id!, page: 0, pageSize: ITEMS_PER_PAGE });
+            expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledWith({ exerciseIds: [metisExercise.id!], page: 0, pageSize: ITEMS_PER_PAGE });
         }));
 
         it('should create websocket subscription when posts with course-wide context are initially retrieved from DB', fakeAsync(() => {
@@ -449,22 +449,22 @@ describe('Metis Service', () => {
             courseWidePostWithTags.tags = ['tag1', 'tag2'];
             websocketServiceReceiveStub.mockReturnValue(of({ post: courseWidePostWithTags, action: MetisPostAction.UPDATE } as MetisPostDTO));
             // setup subscription
-            metisService.getFilteredPosts({ courseWideContext: courseWidePostWithTags.courseWideContext });
+            metisService.getFilteredPosts({ courseWideContexts: [courseWidePostWithTags.courseWideContext!] });
             expect(metisServiceCreateWebsocketSubscriptionSpy).toHaveBeenCalledWith(MetisWebsocketChannelPrefix + `courses/${metisCourse.id}`);
             expect(websocketServiceSubscribeSpy).toHaveBeenCalledOnce();
             // receive message on channel
             tick();
-            expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledWith({ courseWideContext: courseWidePostWithTags.courseWideContext }, false);
+            expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledWith({ courseWideContexts: [courseWidePostWithTags.courseWideContext!] }, false);
         }));
 
         it('should not create new subscription if already exists', fakeAsync(() => {
             websocketServiceReceiveStub.mockReturnValue(of({ post: metisExercisePosts[0], action: MetisPostAction.DELETE } as MetisPostDTO));
             // setup subscription for the first time
-            metisService.getFilteredPosts({ exerciseId: metisExercise.id! });
-            expect(metisServiceCreateWebsocketSubscriptionSpy).toHaveBeenCalledWith(MetisWebsocketChannelPrefix + `exercises/${metisExercise.id}`);
+            metisService.getFilteredPosts({ exerciseIds: [metisExercise.id!] });
+            expect(metisServiceCreateWebsocketSubscriptionSpy).toHaveBeenCalledWith(MetisWebsocketChannelPrefix + `courses/${metisCourse.id}`);
             // trigger createWebsocketSubscription for the second time with the same context filter. i.e. same channel
-            metisService.getFilteredPosts({ exerciseId: metisExercise.id! });
-            expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledWith({ exerciseId: metisExercise.id! }, false);
+            metisService.getFilteredPosts({ exerciseIds: [metisExercise.id!] });
+            expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledWith({ exerciseIds: [metisExercise.id!] }, false);
             expect(websocketServiceSubscribeSpy).toHaveBeenCalledOnce();
         }));
     });

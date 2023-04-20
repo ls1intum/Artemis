@@ -135,7 +135,6 @@ export class CourseDiscussionComponent extends CourseDiscussionDirective impleme
         const lectureIds: number[] = [];
         const exerciseIds: number[] = [];
         const courseWideContexts: CourseWideContext[] = [];
-        let courseId: number | undefined = undefined;
 
         for (const context of this.formGroup.get('context')?.value || []) {
             if (context.lectureId) {
@@ -144,15 +143,12 @@ export class CourseDiscussionComponent extends CourseDiscussionDirective impleme
                 exerciseIds.push(context.exerciseId);
             } else if (context.courseWideContext) {
                 courseWideContexts.push(context.courseWideContext);
-            } else if (context.courseId) {
-                courseId = context.courseId;
             }
         }
 
-        this.currentPostContextFilter.courseId = courseId;
-        this.currentPostContextFilter.lectureIds = lectureIds;
-        this.currentPostContextFilter.exerciseIds = exerciseIds;
-        this.currentPostContextFilter.courseWideContexts = courseWideContexts;
+        this.currentPostContextFilter.lectureIds = lectureIds.length ? lectureIds : undefined;
+        this.currentPostContextFilter.exerciseIds = exerciseIds.length ? exerciseIds : undefined;
+        this.currentPostContextFilter.courseWideContexts = courseWideContexts.length ? courseWideContexts : undefined;
 
         super.onSelectContext();
     }
@@ -212,8 +208,8 @@ export class CourseDiscussionComponent extends CourseDiscussionDirective impleme
      */
     setFilterAndSort(): void {
         this.currentPostContextFilter = {
-            courseId: undefined,
             ...this.currentPostContextFilter,
+            courseId: this.course?.id,
             searchText: this.searchText,
             pagingEnabled: this.pagingEnabled,
             page: this.page - 1,

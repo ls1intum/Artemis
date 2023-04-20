@@ -116,7 +116,7 @@ describe('Post Service', () => {
             const expected = returnedFromService;
             service
                 .getPosts(metisCourse.id!, {
-                    courseWideContext: CourseWideContext.RANDOM,
+                    courseWideContexts: [CourseWideContext.RANDOM],
                     searchText: 'Text to search for',
                     filterToOwn: true,
                     filterToAnsweredOrReacted: true,
@@ -138,7 +138,7 @@ describe('Post Service', () => {
             const returnedFromService = metisLecturePosts;
             const expected = returnedFromService;
             service
-                .getPosts(metisCourse.id!, { lectureId: metisLecture.id })
+                .getPosts(metisCourse.id!, { lectureIds: [metisLecture.id!] })
                 .pipe(take(2))
                 .subscribe((resp) => expect(resp.body).toEqual(expected));
             const req = httpMock.expectOne({ method: 'GET' });
@@ -150,7 +150,7 @@ describe('Post Service', () => {
             const returnedFromService = metisExercisePosts;
             const expected = returnedFromService;
             service
-                .getPosts(metisCourse.id!, { exerciseId: metisExercise.id })
+                .getPosts(metisCourse.id!, { exerciseIds: [metisExercise.id!] })
                 .pipe(take(2))
                 .subscribe((resp) => expect(resp.body).toEqual(expected));
             const req = httpMock.expectOne({ method: 'GET' });
