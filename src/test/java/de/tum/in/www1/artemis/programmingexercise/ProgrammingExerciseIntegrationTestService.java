@@ -63,6 +63,7 @@ import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.in.www1.artemis.util.*;
 import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints;
 import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseTestCaseResource;
+import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseResetOptionsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseTestCaseDTO;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryExportOptionsDTO;
 import de.tum.in.www1.artemis.web.websocket.dto.ProgrammingExerciseTestCaseStateDTO;
@@ -1885,6 +1886,50 @@ class ProgrammingExerciseIntegrationTestService {
         request.put(defaultRecreateBuildPlanEndpoint(), programmingExercise, HttpStatus.OK);
     }
 
+    void testResetForbidden() throws Exception {
+        var resetOptions = new ProgrammingExerciseResetOptionsDTO();
+        request.put(defaultResetEndpoint(), resetOptions, HttpStatus.FORBIDDEN);
+    }
+
+    void testResetOnlyRecreateBuildPlansForbidden() throws Exception {
+        var resetOptions = new ProgrammingExerciseResetOptionsDTO();
+        resetOptions.setRecreateBuildPlans(true);
+        request.put(defaultResetEndpoint(), resetOptions, HttpStatus.FORBIDDEN);
+    }
+
+    void testResetExerciseNotFound() throws Exception {
+        var resetOptions = new ProgrammingExerciseResetOptionsDTO();
+        request.put(defaultResetEndpoint(-1L), resetOptions, HttpStatus.NOT_FOUND);
+    }
+
+    void testResetOnlyRecreateBuildPlansSuccess() throws Exception {
+        addAuxiliaryRepositoryToExercise();
+        mockDelegate.mockGetProjectKeyFromAnyUrl(programmingExercise.getProjectKey());
+        String templateBuildPlanName = programmingExercise.getProjectKey() + "-" + TEMPLATE.getName();
+        String solutionBuildPlanName = programmingExercise.getProjectKey() + "-" + SOLUTION.getName();
+        mockDelegate.mockGetBuildPlan(programmingExercise.getProjectKey(), templateBuildPlanName, true, true, false, false);
+        mockDelegate.mockGetBuildPlan(programmingExercise.getProjectKey(), solutionBuildPlanName, true, true, false, false);
+        mockDelegate.mockDeleteBuildPlan(programmingExercise.getProjectKey(), templateBuildPlanName, false);
+        mockDelegate.mockDeleteBuildPlan(programmingExercise.getProjectKey(), solutionBuildPlanName, false);
+        mockDelegate.mockConnectorRequestsForSetup(programmingExercise, false);
+
+        var resetOptions = new ProgrammingExerciseResetOptionsDTO();
+        resetOptions.setRecreateBuildPlans(true);
+        request.put(defaultResetEndpoint(), resetOptions, HttpStatus.OK);
+    }
+
+    void testResetOnlyDeleteStudentParticipationsSubmissionsAndResultsSuccess() throws Exception {
+
+    }
+
+    void testResetOnlyDeleteBuildPlansAndDeleteBuildPlansSuccess() throws Exception {
+
+    }
+
+    void testResetOnlyDeleteBuildPlansAndNotDeleteBuildPlansSuccess() throws Exception {
+
+    }
+
     void testExportAuxiliaryRepositoryForbidden() throws Exception {
         AuxiliaryRepository repository = addAuxiliaryRepositoryToExercise();
         request.get(defaultExportInstructorAuxiliaryRepository(repository), HttpStatus.FORBIDDEN, File.class);
@@ -1924,6 +1969,10 @@ class ProgrammingExerciseIntegrationTestService {
         return defaultRecreateBuildPlanEndpoint(programmingExercise.getId());
     }
 
+    private String defaultResetEndpoint() {
+        return defaultResetEndpoint(programmingExercise.getId());
+    }
+
     private String defaultGetAuxReposEndpoint() {
         return defaultGetAuxReposEndpoint(programmingExercise.getId());
     }
@@ -1934,6 +1983,10 @@ class ProgrammingExerciseIntegrationTestService {
 
     private String defaultRecreateBuildPlanEndpoint(Long exerciseId) {
         return ROOT + RECREATE_BUILD_PLANS.replace("{exerciseId}", exerciseId.toString());
+    }
+
+    private String defaultResetEndpoint(Long exerciseId) {
+        return ROOT + RESET.replace("{exerciseId}", exerciseId.toString());
     }
 
     private String defaultGetAuxReposEndpoint(Long exerciseId) {

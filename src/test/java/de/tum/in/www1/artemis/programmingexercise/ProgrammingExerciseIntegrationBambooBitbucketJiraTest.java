@@ -964,6 +964,56 @@ class ProgrammingExerciseIntegrationBambooBitbucketJiraTest extends AbstractSpri
         programmingExerciseIntegrationTestService.testRecreateBuildPlansExerciseSuccess();
     }
 
+    // Tests for reset endpoint
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
+    void testResetForbiddenStudent() throws Exception {
+        programmingExerciseIntegrationTestService.testResetForbidden();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testResetForbiddenTutor() throws Exception {
+        programmingExerciseIntegrationTestService.testResetForbidden();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testResetExerciseNotFound() throws Exception {
+        programmingExerciseIntegrationTestService.testResetExerciseNotFound();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testResetOnlyRecreateBuildPlansForbiddenInstructor() throws Exception {
+        programmingExerciseIntegrationTestService.testResetOnlyRecreateBuildPlansForbidden();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testResetOnlyRecreateBuildPlansSuccess() throws Exception {
+        programmingExerciseIntegrationTestService.testResetOnlyRecreateBuildPlansSuccess();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testResetOnlyDeleteStudentParticipationsSubmissionsAndResultsSuccess() throws Exception {
+        programmingExerciseIntegrationTestService.testResetOnlyDeleteStudentParticipationsSubmissionsAndResultsSuccess();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testResetOnlyDeleteBuildPlansAndDeleteBuildPlansSuccess() throws Exception {
+        programmingExerciseIntegrationTestService.testResetOnlyDeleteBuildPlansAndDeleteBuildPlansSuccess();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testResetOnlyDeleteBuildPlansAndNotDeleteBuildPlansSuccess() throws Exception {
+        programmingExerciseIntegrationTestService.testResetOnlyDeleteBuildPlansAndNotDeleteBuildPlansSuccess();
+    }
+
     // Tests for export auxiliary repository for exercise endpoint
 
     @Test
