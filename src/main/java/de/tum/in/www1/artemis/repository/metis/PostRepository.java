@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.repository.metis;
 import static de.tum.in.www1.artemis.repository.specs.PostSpecs.*;
 
 import java.util.List;
+import java.util.Set;
 
 import javax.transaction.Transactional;
 
@@ -17,7 +18,9 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.metis.Post;
+import de.tum.in.www1.artemis.domain.metis.conversation.OneToOneChat;
 import de.tum.in.www1.artemis.web.rest.dto.PostContextFilter;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -57,10 +60,21 @@ public interface PostRepository extends JpaRepository<Post, Long>, JpaSpecificat
         }
     }
 
-    @Transactional
+    @Transactional // ok because of delete
     @Modifying
-    // ok because of delete
+    void deleteAllByConversationIn(Set<OneToOneChat> oneToOneChats);
+
+    @Transactional // ok because of delete
+    @Modifying
     void deleteAllByConversationId(Long conversationId);
+
+    @Transactional // ok because of delete
+    @Modifying
+    void deleteAllByConversationCreator(User user);
+
+    @Transactional // ok because of delete
+    @Modifying
+    void deleteAllByAuthor(User author);
 
     @Query("""
             SELECT DISTINCT tag FROM Post post
@@ -85,5 +99,4 @@ public interface PostRepository extends JpaRepository<Post, Long>, JpaSpecificat
     default Post findPostOrMessagePostByIdElseThrow(Long postId) throws EntityNotFoundException {
         return findById(postId).orElseThrow(() -> new EntityNotFoundException("Post", postId));
     }
-
 }

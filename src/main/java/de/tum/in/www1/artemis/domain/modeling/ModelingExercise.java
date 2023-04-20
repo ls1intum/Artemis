@@ -65,6 +65,7 @@ public class ModelingExercise extends Exercise {
         this.exampleSolutionExplanation = exampleSolutionExplanation;
     }
 
+    @JsonIgnore
     public ZonedDateTime getClusterBuildDate() {
         return clusterBuildDate;
     }
