@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet author="m-loehde" id="20230419222222">
+        <!-- Create the new local CI build tables -->
+        <createTable tableName="local_ci_build_plan">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false" />
+            </column>
+            <column name="name" type="varchar(255)">
+                <constraints nullable="false" />
+            </column>
+            <column name="docker_image" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createTable tableName="local_ci_build_stage">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false" />
+            </column>
+            <column name="name" type="varchar(255)">
+                <constraints nullable="false" />
+            </column>
+        </createTable>
+
+        <createTable tableName="local_ci_build_task">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false" />
+            </column>
+            <column name="name" type="varchar(255)">
+                <constraints nullable="false" />
+            </column>
+            <column name="script" type="longtext">
+                <constraints nullable="false" />
+            </column>
+        </createTable>
+
+        <!-- Adapt the programming_exercise_details table to establish the one-to-many relationship
+         between it and localCIBuildPlan-->
+        <addColumn tableName="programming_exercise_details">
+            <column name="local_ci_build_plan_id" type="bigint">
+                <constraints foreignKeyName="fk_local_ci_build_plan_id" referencedTableName="local_ci_build_plan" referencedColumnNames="id" nullable="true"/>
+            </column>
+        </addColumn>
+
+        <!-- Create the intermediate tables for the many-to-many relationships-->
+        <createTable tableName="local_ci_build_plan_stages">
+            <column name="local_ci_build_plan_id" type="bigint">
+                <constraints nullable="false" />
+            </column>
+            <column name="local_ci_build_stage_id" type="bigint">
+                <constraints nullable="false" />
+            </column>
+            <column name="stage_order" type="int">
+                <constraints nullable="false" />
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint baseTableName="local_ci_build_plan_stages"
+                                 baseColumnNames="local_ci_build_plan_id"
+                                 constraintName="fk_local_ci_build_plan_stages_local_ci_build_plan_id"
+                                 referencedTableName="local_ci_build_plan"
+                                 referencedColumnNames="id"
+                                 onUpdate="RESTRICT"
+                                 onDelete="RESTRICT"
+                                 deferrable="false"
+                                 initiallyDeferred="false"
+                                 validate="true"/>
+        <addForeignKeyConstraint baseTableName="local_ci_build_plan_stages"
+                                 baseColumnNames="local_ci_build_stage_id"
+                                 constraintName="fk_local_ci_build_plan_stages_local_ci_build_stage_id"
+                                 referencedTableName="local_ci_build_stage"
+                                 referencedColumnNames="id"
+                                 onUpdate="RESTRICT"
+                                 onDelete="RESTRICT"
+                                 deferrable="false"
+                                 initiallyDeferred="false"
+                                 validate="true"/>
+        <addPrimaryKey tableName="local_ci_build_plan_stages"
+                       columnNames="local_ci_build_plan_id, local_ci_build_stage_id"
+                       constraintName="pk_local_ci_build_plan_stages" />
+
+        <createTable tableName="local_ci_build_stage_tasks">
+            <column name="local_ci_build_stage_id" type="bigint">
+                <constraints nullable="false" />
+            </column>
+            <column name="local_ci_build_task_id" type="bigint">
+                <constraints nullable="false" />
+            </column>
+            <column name="task_order" type="int">
+                <constraints nullable="false" />
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint baseTableName="local_ci_build_stage_tasks"
+                                 baseColumnNames="local_ci_build_stage_id"
+                                 constraintName="fk_local_ci_build_stage_tasks_local_ci_build_stage_id"
+                                 referencedTableName="local_ci_build_stage"
+                                 referencedColumnNames="id"
+                                 deferrable="false"
+                                 initiallyDeferred="false"
+                                 onUpdate="RESTRICT"
+                                 onDelete="RESTRICT"
+                                 validate="true"/>
+        <addForeignKeyConstraint baseTableName="local_ci_build_stage_tasks"
+                                    baseColumnNames="local_ci_build_task_id"
+                                    constraintName="fk_local_ci_build_stage_tasks_local_ci_build_task_id"
+                                    referencedTableName="local_ci_build_task"
+                                    referencedColumnNames="id"
+                                    onUpdate="RESTRICT"
+                                    onDelete="RESTRICT"
+                                    deferrable="false"
+                                    initiallyDeferred="false"
+                                    validate="true"/>
+        <addPrimaryKey tableName="local_ci_build_stage_tasks"
+                          columnNames="local_ci_build_stage_id, local_ci_build_task_id"
+                          constraintName="pk_local_ci_build_stage_tasks" />
+    </changeSet>
+</databaseChangeLog>

@@ -23,6 +23,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.hestia.ExerciseHint;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
+import de.tum.in.www1.artemis.domain.localci.LocalCIBuildPlan;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
@@ -135,6 +136,11 @@ public class ProgrammingExercise extends Exercise {
 
     @Column(name = "release_tests_with_example_solution", table = "programming_exercise_details")
     private boolean releaseTestsWithExampleSolution;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "local_ci_build_plan_id", table = "programming_exercise_details")
+    @JsonIgnoreProperties("programmingExercises")
+    private LocalCIBuildPlan localCIBuildPlan;
 
     /**
      * This boolean flag determines whether the solution repository should be checked out during the build (additional to the student's submission).
