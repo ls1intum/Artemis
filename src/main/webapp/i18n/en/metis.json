@@ -55,6 +55,8 @@
                 "title": "Posts",
                 "searchBarDefault": "Search for a post, use # to find a specific post (e.g. #1)",
                 "postContextFilter": "Show posts for:",
+                "one_extra_context": "other",
+                "multiple_extra_contexts": "others",
                 "courseFilterExplanation": "(All posts)",
                 "filterToUnresolved": "Unresolved",
                 "filterToOwn": "Own",

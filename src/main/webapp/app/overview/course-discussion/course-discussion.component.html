@@ -45,7 +45,12 @@
                             <mat-select-trigger *ngIf="formGroup.get('context')?.value?.length">
                                 {{formGroup.get('context')?.value?.[0].title}}
                                 <span *ngIf="(formGroup.get('context')?.value?.length || 0) > 1">
-                                    (+{{ (formGroup.get('context')?.value?.length || 0) - 1 }} {{ formGroup.get('context')?.value?.length === 2 ? 'other' : 'others' }})
+                                    (+{{ (formGroup.get('context')?.value?.length || 0) - 1 }}
+                                    {{
+                                        formGroup.get('context')?.value?.length === 2
+                                            ? ('artemisApp.metis.overview.one_extra_context' | artemisTranslate)
+                                            : ('artemisApp.metis.overview.multiple_extra_contexts' | artemisTranslate)
+                                    }})
                                 </span>
                             </mat-select-trigger>
                             <mat-optgroup [label]="'artemisApp.metis.post.courseWideContext' | artemisTranslate">

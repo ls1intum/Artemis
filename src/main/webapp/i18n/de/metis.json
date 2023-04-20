@@ -55,6 +55,8 @@
                 "title": "Beiträge",
                 "searchBarDefault": "Suche nach Beiträgen, verwende #, um einem bestimmten Beitrag zu suchen (z.B. #1)",
                 "postContextFilter": "Zeige Beiträge in:",
+                "one_extra_context": "weiterer",
+                "multiple_extra_contexts": "weitere",
                 "filterToUnresolved": "Ungeklärt",
                 "filterToOwn": "Eigene",
                 "filterToAnsweredOrReacted": "Reagiert",
