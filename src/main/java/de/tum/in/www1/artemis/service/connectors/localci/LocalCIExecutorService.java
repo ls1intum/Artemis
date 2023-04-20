@@ -1,22 +1,28 @@
 package de.tum.in.www1.artemis.service.connectors.localci;
 
+import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
+
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.Optional;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.function.Supplier;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
@@ -39,11 +45,11 @@ public class LocalCIExecutorService {
 
     private final Logger log = LoggerFactory.getLogger(LocalCIExecutorService.class);
 
+    private final Environment environment;
+
     private final Optional<VersionControlService> versionControlService;
 
     private final ExecutorService localCIBuildExecutorService;
-
-    private final ScheduledExecutorService localCIBuildTimeoutExecutorService;
 
     private final LocalCIBuildJobService localCIBuildJobService;
 
@@ -62,12 +68,12 @@ public class LocalCIExecutorService {
     @Value("${artemis.continuous-integration.timeout-seconds:60}")
     private int timeoutSeconds;
 
-    public LocalCIExecutorService(Optional<VersionControlService> versionControlService, ExecutorService localCIBuildExecutorService,
-            ScheduledExecutorService localCIBuildTimeoutExecutorService, LocalCIBuildJobService localCIBuildJobService, ResourceLoaderService resourceLoaderService,
-            LocalCIBuildPlanService localCIBuildPlanService, ProgrammingMessagingService programmingMessagingService) {
+    public LocalCIExecutorService(Environment environment, Optional<VersionControlService> versionControlService, ExecutorService localCIBuildExecutorService,
+            LocalCIBuildJobService localCIBuildJobService, ResourceLoaderService resourceLoaderService, LocalCIBuildPlanService localCIBuildPlanService,
+            ProgrammingMessagingService programmingMessagingService) {
+        this.environment = environment;
         this.versionControlService = versionControlService;
         this.localCIBuildExecutorService = localCIBuildExecutorService;
-        this.localCIBuildTimeoutExecutorService = localCIBuildTimeoutExecutorService;
         this.localCIBuildJobService = localCIBuildJobService;
         this.resourceLoaderService = resourceLoaderService;
         this.localCIBuildPlanService = localCIBuildPlanService;
@@ -123,17 +129,18 @@ public class LocalCIExecutorService {
             throw new LocalCIException("Error while preparing Docker container", e);
         }
 
+        Callable<LocalCIBuildResult> buildJob = () -> {
+            // Add "_BUILDING" to the build plan id to indicate that the build plan is currently building.
+            localCIBuildPlanService.updateBuildPlanStatus(participation, ContinuousIntegrationService.BuildStatus.BUILDING);
+            return localCIBuildJobService.runBuildJob(participation, containerId, branch, scriptPath);
+        };
+
         // Submit the build job to the executor service. This runs in a separate thread, so it does not block the main thread.
-        // Use Future instead of CompletableFuture to be able to interrupt the build job's thread if running the build job takes too long.
-        // Canceling a CompletableFuture would merely mark the CompletableFuture as completed exceptionally but steps running inside the CompletableFuture will never throw an
-        // InterruptedException and thus never stop execution.
-        Future<LocalCIBuildResult> futureResult = localCIBuildExecutorService.submit(() -> {
+        CompletableFuture<LocalCIBuildResult> futureResult = createCompletableFuture(() -> {
             try {
-                // Add "_BUILDING" to the build plan id to indicate that the build plan is currently building.
-                localCIBuildPlanService.updateBuildPlanStatus(participation, ContinuousIntegrationService.BuildStatus.BUILDING);
-                return localCIBuildJobService.runBuildJob(participation, containerId, branch, scriptPath);
+                return runBuildJobWithTimeout(buildJob, timeoutSeconds);
             }
-            catch (LocalCIException e) {
+            catch (InterruptedException | ExecutionException | TimeoutException e) {
                 log.error("Error while running build job", e);
                 // Set the build status to "INACTIVE" to indicate that the build is not running anymore.
                 localCIBuildPlanService.updateBuildPlanStatus(participation, ContinuousIntegrationService.BuildStatus.INACTIVE);
@@ -146,32 +153,52 @@ public class LocalCIExecutorService {
             }
         });
 
-        // Schedule a task that will cancel the CompletableFuture if it is not completed within the timeout period.
-        // This will raise an InterruptedException for interruptible steps (i.e. the running of the script in the container).
-        // This task to cancel the build after the timeout runs on a separate thread, so it does not block the main thread.
-        localCIBuildTimeoutExecutorService.schedule(() -> {
-            if (!futureResult.isDone()) {
-                log.error("Build job timed out after {} seconds", timeoutSeconds);
-                futureResult.cancel(true);
-            }
-        }, 5, TimeUnit.SECONDS);
-
         // Add "_QUEUED" to the build plan id to indicate that the build job is queued.
         localCIBuildPlanService.updateBuildPlanStatus(participation, ContinuousIntegrationService.BuildStatus.QUEUED);
 
-        // Convert the Future to a CompletableFuture to simplify the logic needed to process the result after the build finished successfully.
-        return toCompletableFuture(futureResult);
+        return futureResult;
     }
 
-    private <T> CompletableFuture<T> toCompletableFuture(Future<T> future) {
-        return CompletableFuture.supplyAsync(() -> {
+    private CompletableFuture<LocalCIBuildResult> createCompletableFuture(Supplier<LocalCIBuildResult> supplier) {
+        // Use a synchronous CompletableFuture in the test environment. Otherwise, the test will not wait for the CompletableFuture to complete before asserting on the database.
+        if (Arrays.asList(environment.getActiveProfiles()).contains(SPRING_PROFILE_TEST)) {
+            CompletableFuture<LocalCIBuildResult> future = new CompletableFuture<>();
             try {
-                return future.get();
+                LocalCIBuildResult result = supplier.get();
+                future.complete(result);
             }
-            catch (InterruptedException | ExecutionException e) {
-                throw new CompletionException(e);
+            catch (Throwable ex) {
+                future.completeExceptionally(ex);
             }
-        });
+            return future;
+        }
+        else {
+            return CompletableFuture.supplyAsync(supplier);
+        }
+    }
+
+    private LocalCIBuildResult runBuildJobWithTimeout(Callable<LocalCIBuildResult> buildJob, long timeoutSeconds)
+            throws InterruptedException, ExecutionException, TimeoutException {
+        // Submit the task and get a Future.
+        // Use Future to be able to interrupt the build job's thread if running the build job takes too long.
+        // Canceling a CompletableFuture would merely mark the CompletableFuture as completed exceptionally but steps running inside the CompletableFuture will never throw an
+        // InterruptedException and thus never stop execution.
+        Future<LocalCIBuildResult> future = localCIBuildExecutorService.submit(buildJob);
+
+        try {
+            // Get the result of the build job at the latest after the timeout.
+            return future.get(timeoutSeconds, TimeUnit.SECONDS);
+        }
+        catch (InterruptedException | ExecutionException | TimeoutException e) {
+            // The InterruptedException is thrown if the thread is interrupted from somewhere else (e.g. the executor service is shut down).
+            // The ExecutionException is thrown if the build job throws an exception (i.e. a LocalCIException in this case).
+            // The TimeoutException is thrown if the build job takes too long.
+            if (!future.isDone()) {
+                // Cancel the task if it is still running.
+                future.cancel(true);
+            }
+            throw e;
+        }
     }
 
     private Path getBuildScriptPath() {

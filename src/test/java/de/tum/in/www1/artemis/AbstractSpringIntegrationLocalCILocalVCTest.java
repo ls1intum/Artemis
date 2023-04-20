@@ -39,7 +39,9 @@ import com.github.dockerjava.api.command.ExecCreateCmdResponse;
 import com.github.dockerjava.api.command.ExecStartCmd;
 import com.github.dockerjava.api.command.InspectImageCmd;
 import com.github.dockerjava.api.command.InspectImageResponse;
+import com.github.dockerjava.api.command.ListContainersCmd;
 import com.github.dockerjava.api.command.StartContainerCmd;
+import com.github.dockerjava.api.model.Container;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
@@ -72,7 +74,7 @@ import io.zonky.test.db.AutoConfigureEmbeddedDatabase;
 @ActiveProfiles({ SPRING_PROFILE_TEST, "artemis", "localci", "localvc", "scheduling" })
 // Note: the server.port property must correspond to the port used in the artemis.version-control.url property.
 @TestPropertySource(properties = { "server.port=49152", "artemis.version-control.url=http://localhost:49152", "artemis.version-control.local-vcs-repo-path=${java.io.tmpdir}",
-        "artemis.continuous-integration.thread-pool-size=0", "artemis.continuous-integration.build.images.java.default=dummy-docker-image",
+        "artemis.continuous-integration.thread-pool-size=1", "artemis.continuous-integration.build.images.java.default=dummy-docker-image",
         "artemis.user-management.use-external=false" })
 public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends AbstractArtemisIntegrationTest {
 
@@ -135,10 +137,12 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
         doReturn(inspectImageCmd).when(dockerClient).inspectImageCmd(anyString());
         doReturn(inspectImageResponse).when(inspectImageCmd).exec();
 
+        String dummyContainerId = "1234567890";
+
         // Mock dockerClient.createContainerCmd(String dockerImage).withHostConfig(HostConfig hostConfig).withEnv(String... env).withCmd(String... cmd).exec()
         CreateContainerCmd createContainerCmd = mock(CreateContainerCmd.class);
         CreateContainerResponse createContainerResponse = new CreateContainerResponse();
-        createContainerResponse.setId("1234567890");
+        createContainerResponse.setId(dummyContainerId);
         doReturn(createContainerCmd).when(dockerClient).createContainerCmd(anyString());
         doReturn(createContainerCmd).when(createContainerCmd).withHostConfig(any());
         doReturn(createContainerCmd).when(createContainerCmd).withEnv(anyString(), anyString());
@@ -169,6 +173,15 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
             callback.onComplete();
             return null;
         }).when(execStartCmd).exec(any());
+
+        // Mock dockerClient.listContainersCmd().withShowAll(true).exec().
+        ListContainersCmd listContainersCmd = mock(ListContainersCmd.class);
+        doReturn(listContainersCmd).when(dockerClient).listContainersCmd();
+        doReturn(listContainersCmd).when(listContainersCmd).withShowAll(anyBoolean());
+        Container container = mock(Container.class);
+        doReturn(List.of(container)).when(listContainersCmd).exec();
+        doReturn(dummyContainerId).when(container).getId();
+        doReturn("running").when(container).getState();
 
         // Mock dockerClient.copyArchiveFromContainerCmd() such that it returns a dummy commitHash for both the assignment and the tests repository.
         // Note: The stub needs to receive the same object twice in case there are two requests to the same method. Usually, specifying one doReturn() is enough to make the stub

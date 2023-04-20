@@ -74,7 +74,7 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
     @WithMockUser(username = "student1", roles = "USER")
     void testSubmitViaOnlineEditor() throws Exception {
         request.postWithoutLocation("/api/repository/" + studentParticipation.getId() + "/commit", null, HttpStatus.OK, null);
-        localVCLocalCITestService.testLastestSubmission(studentParticipation.getId(), null, 1, false);
+        localVCLocalCITestService.testLatestSubmission(studentParticipation.getId(), null, 1, false);
     }
 
     @Test
@@ -147,14 +147,14 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
     void testCommitHashNull() {
         // Should still work because in that case the latest commit should be retrieved from the repository.
         localCIPushService.processNewPush(null, studentAssignmentRepository.originGit.getRepository());
-        localVCLocalCITestService.testLastestSubmission(studentParticipation.getId(), commitHash, 1, false);
+        localVCLocalCITestService.testLatestSubmission(studentParticipation.getId(), commitHash, 1, false);
     }
 
     @Test
     void testNoExceptionWhenResolvingWrongCommitHash() {
         // Call processNewPush with a wrong commit hash. This should not throw an exception, but the notifyUserAboutSubmissionError() method should have been called.
         localCIPushService.processNewPush(DUMMY_COMMIT_HASH, studentAssignmentRepository.originGit.getRepository());
-        verifyUserNotification(studentParticipation, "Unable to resolve commit hash to an ObjectId");
+        verifyUserNotification(studentParticipation, "Could not resolve commit hash " + DUMMY_COMMIT_HASH + " in repository");
     }
 
     @Test
@@ -171,7 +171,7 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
         programmingExerciseRepository.save(programmingExercise);
         // Should not throw an exception but notify the user about the error.
         localCIPushService.processNewPush(commitHash, studentAssignmentRepository.originGit.getRepository());
-        verifyUserNotification(studentParticipation, "de.tum.in.www1.artemis.exception.LocalCIException: Project type must be Gradle.");
+        verifyUserNotification(studentParticipation, "Project type must be Gradle.");
     }
 
     @Test
@@ -186,7 +186,7 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
 
         // Should not throw an exception but notify the user about the error.
         localCIPushService.processNewPush(testsCommitHash, testsRepository.originGit.getRepository());
-        verifyUserNotification(solutionParticipation, "de.tum.in.www1.artemis.exception.LocalCIException: Project type must be Gradle.");
+        verifyUserNotification(solutionParticipation, "Project type must be Gradle.");
 
         testsRepository.resetLocalRepo();
     }
@@ -206,7 +206,7 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
 
         // Should not throw an exception but notify the user about the error.
         localCIPushService.processNewPush(commitHash, studentAssignmentRepository.originGit.getRepository());
-        verifyUserNotification(studentParticipation, "de.tum.in.www1.artemis.exception.LocalCIException: Interrupted while pulling docker image dummy-docker-image");
+        verifyUserNotification(studentParticipation, "Error while preparing Docker container");
     }
 
     @Test
@@ -225,7 +225,7 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
 
         localCIPushService.processNewPush(commitHash, studentAssignmentRepository.originGit.getRepository());
         // Should return a build result that indicates that the build failed.
-        localVCLocalCITestService.testLastestSubmission(studentParticipation.getId(), null, 0, true);
+        localVCLocalCITestService.testLatestSubmission(studentParticipation.getId(), null, 0, true);
     }
 
     @Test
@@ -238,7 +238,7 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
 
         localCIPushService.processNewPush(commitHash, studentAssignmentRepository.originGit.getRepository());
         // Should return a build result that indicates that the build failed.
-        localVCLocalCITestService.testLastestSubmission(studentParticipation.getId(), commitHash, 0, true);
+        localVCLocalCITestService.testLatestSubmission(studentParticipation.getId(), commitHash, 0, true);
     }
 
     @Test

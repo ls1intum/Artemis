@@ -265,6 +265,11 @@ public class LocalCIPushService {
         String branch = null;
 
         ObjectId objectId = repository.resolve(commitHash);
+
+        if (objectId == null) {
+            throw new LocalCIException("Could not resolve commit hash " + commitHash + " in repository");
+        }
+
         revCommit = repository.parseCommit(objectId);
 
         // Get the branch name.

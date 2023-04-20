@@ -466,7 +466,7 @@ public class LocalVCLocalCITestService {
      * @param expectedSuccessfulTestCaseCount the expected number or passed test cases.
      * @param buildFailed                     whether the build should have failed or not.
      */
-    public void testLastestSubmission(Long participationId, String expectedCommitHash, int expectedSuccessfulTestCaseCount, boolean buildFailed) {
+    public void testLatestSubmission(Long participationId, String expectedCommitHash, int expectedSuccessfulTestCaseCount, boolean buildFailed) {
         ProgrammingSubmission programmingSubmission = programmingSubmissionRepository.findFirstByParticipationIdOrderByLegalSubmissionDateDesc(participationId).orElseThrow();
         if (expectedCommitHash != null) {
             assertThat(programmingSubmission.getCommitHash()).isEqualTo(expectedCommitHash);

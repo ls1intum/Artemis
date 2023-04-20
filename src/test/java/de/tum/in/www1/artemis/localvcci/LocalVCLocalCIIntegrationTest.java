@@ -110,8 +110,8 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         localVCLocalCITestService.testPushSuccessful(testsRepository.localGit, instructor1Login, projectKey1, testsRepositorySlug);
 
         // Solution submissions created as a result from a push to the tests repository should contain the last commit of the tests repository.
-        localVCLocalCITestService.testLastestSubmission(solutionParticipation.getId(), commitHash, 13, false);
-        localVCLocalCITestService.testLastestSubmission(templateParticipation.getId(), commitHash, 0, false);
+        localVCLocalCITestService.testLatestSubmission(solutionParticipation.getId(), commitHash, 13, false);
+        localVCLocalCITestService.testLatestSubmission(templateParticipation.getId(), commitHash, 0, false);
     }
 
     @Test
@@ -136,7 +136,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
 
         localVCLocalCITestService.testPushSuccessful(solutionRepository.localGit, instructor1Login, projectKey1, solutionRepositorySlug);
 
-        localVCLocalCITestService.testLastestSubmission(solutionParticipation.getId(), commitHash, 13, false);
+        localVCLocalCITestService.testLatestSubmission(solutionParticipation.getId(), commitHash, 13, false);
     }
 
     @Test
@@ -161,7 +161,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
 
         localVCLocalCITestService.testPushSuccessful(templateRepository.localGit, instructor1Login, projectKey1, templateRepositorySlug);
 
-        localVCLocalCITestService.testLastestSubmission(templateParticipation.getId(), commitHash, 0, false);
+        localVCLocalCITestService.testLatestSubmission(templateParticipation.getId(), commitHash, 0, false);
     }
 
     // ---- Tests for the student assignment repository ----
@@ -180,7 +180,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         // Mock dockerClient.copyArchiveFromContainerCmd() such that it returns the XMLs containing the test results.
         localVCLocalCITestService.mockTestResults(dockerClient, PARTLY_SUCCESSFUL_TEST_RESULTS_PATH);
         localVCLocalCITestService.testPushSuccessful(assignmentRepository.localGit, student1Login, projectKey1, assignmentRepositorySlug);
-        localVCLocalCITestService.testLastestSubmission(studentParticipation.getId(), commitHash, 1, false);
+        localVCLocalCITestService.testLatestSubmission(studentParticipation.getId(), commitHash, 1, false);
 
         // Teaching assistant
         localVCLocalCITestService.testFetchSuccessful(assignmentRepository.localGit, tutor1Login, projectKey1, assignmentRepositorySlug);
@@ -454,7 +454,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         localVCLocalCITestService.mockCommitHash(dockerClient, commitHash);
         localVCLocalCITestService.mockTestResults(dockerClient, PARTLY_SUCCESSFUL_TEST_RESULTS_PATH);
         localVCLocalCITestService.testPushSuccessful(assignmentRepository.localGit, student1Login, projectKey1, assignmentRepositorySlug);
-        localVCLocalCITestService.testLastestSubmission(studentParticipation.getId(), commitHash, 1, false);
+        localVCLocalCITestService.testLatestSubmission(studentParticipation.getId(), commitHash, 1, false);
         // tutor1 should be able to fetch but not push.
         localVCLocalCITestService.testFetchSuccessful(assignmentRepository.localGit, tutor1Login, projectKey1, assignmentRepositorySlug);
         localVCLocalCITestService.testPushThrowsException(assignmentRepository.localGit, tutor1Login, projectKey1, assignmentRepositorySlug, NOT_AUTHORIZED);
@@ -568,7 +568,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         localVCLocalCITestService.mockCommitHash(dockerClient, commitHash);
         localVCLocalCITestService.mockTestResults(dockerClient, PARTLY_SUCCESSFUL_TEST_RESULTS_PATH);
         localVCLocalCITestService.testPushSuccessful(practiceRepository.localGit, student1Login, projectKey1, practiceRepositorySlug);
-        localVCLocalCITestService.testLastestSubmission(practiceParticipation.getId(), commitHash, 1, false);
+        localVCLocalCITestService.testLatestSubmission(practiceParticipation.getId(), commitHash, 1, false);
 
         // Teaching assistant
         localVCLocalCITestService.testFetchSuccessful(practiceRepository.localGit, tutor1Login, projectKey1, practiceRepositorySlug);
