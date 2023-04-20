@@ -1,5 +1,5 @@
 <span *ngIf="!hasReachedZero()" class="count-down">
-    {{ remainingTimeSeconds | artemisDurationFromSeconds }}
+    {{ remainingTimeSeconds || 0 | artemisDurationFromSeconds }}
 </span>
 <span *ngIf="hasReachedZero()" class="count-down">
     {{ 'artemisApp.showStatistic.now' | artemisTranslate }}
