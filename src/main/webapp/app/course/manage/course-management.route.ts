@@ -105,7 +105,7 @@ export const courseManagementState: Routes = [
                 path: 'tutorial-groups-checklist',
                 component: TutorialGroupsChecklistComponent,
                 data: {
-                    authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
+                    authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
                     pageTitle: 'artemisApp.pages.checklist.title',
                 },
                 canActivate: [UserRouteAccessService],
@@ -114,7 +114,7 @@ export const courseManagementState: Routes = [
                 path: 'create-tutorial-groups-configuration',
                 component: CreateTutorialGroupsConfigurationComponent,
                 data: {
-                    authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
+                    authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
                     pageTitle: 'artemisApp.pages.createTutorialGroupsConfiguration.title',
                 },
                 canActivate: [UserRouteAccessService],
@@ -200,7 +200,7 @@ export const courseManagementState: Routes = [
                         path: 'goal-management',
                         component: LearningGoalManagementComponent,
                         data: {
-                            authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
+                            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
                             pageTitle: 'artemisApp.learningGoal.manageLearningGoals.title',
                         },
                         canActivate: [UserRouteAccessService],
@@ -216,7 +216,7 @@ export const courseManagementState: Routes = [
                                 path: 'create',
                                 component: CreateLearningGoalComponent,
                                 data: {
-                                    authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
+                                    authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
                                     pageTitle: 'artemisApp.learningGoal.createLearningGoal.title',
                                 },
                                 canActivate: [UserRouteAccessService],
@@ -225,7 +225,7 @@ export const courseManagementState: Routes = [
                                 path: ':learningGoalId/edit',
                                 component: EditLearningGoalComponent,
                                 data: {
-                                    authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
+                                    authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
                                     pageTitle: 'artemisApp.learningGoal.editLearningGoal.title',
                                 },
                                 canActivate: [UserRouteAccessService],
