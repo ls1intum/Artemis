@@ -2,7 +2,18 @@ import { Component, Input, OnInit } from '@angular/core';
 import { ProgrammingExerciseTaskService } from 'app/exercises/programming/manage/grading/tasks/programming-exercise-task.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { Course } from 'app/entities/course.model';
-import { faAngleDown, faAngleRight, faAsterisk, faFilterCircleXmark, faMedal, faQuestionCircle, faScaleUnbalanced } from '@fortawesome/free-solid-svg-icons';
+import {
+    faAngleDown,
+    faAngleRight,
+    faAsterisk,
+    faFilterCircleXmark,
+    faMedal,
+    faQuestionCircle,
+    faScaleUnbalanced,
+    faSort,
+    faSortDown,
+    faSortUp,
+} from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseGradingStatistics } from 'app/entities/programming-exercise-test-case-statistics.model';
 import { ProgrammingExerciseTask } from './programming-exercise-task';
 import { Observable, Subject } from 'rxjs';
@@ -11,6 +22,8 @@ type Sort = {
     by: 'name' | 'weight' | 'multiplier' | 'bonusPoints' | 'visibility' | 'resulting' | 'type';
     descending: boolean;
 };
+
+type TaskComparator = (a: ProgrammingExerciseTask, b: ProgrammingExerciseTask) => number;
 
 @Component({
     selector: 'jhi-programming-exercise-grading-task',
@@ -93,6 +106,14 @@ export class ProgrammingExerciseGradingTaskComponent implements OnInit {
         this.updateTasks();
     };
 
+    getSortIcon = (by: Sort['by']) => {
+        if (this.currentSort?.by !== by) {
+            return faSort;
+        }
+
+        return this.currentSort.descending ? faSortDown : faSortUp;
+    };
+
     private sort = () => {
         const comparators = {
             name: this.compareStringForAttribute('taskName'),
@@ -103,22 +124,22 @@ export class ProgrammingExerciseGradingTaskComponent implements OnInit {
             resulting: this.compareNumForAttribute('resultingPoints'),
             type: this.compareStringForAttribute('type'),
         };
-        const comparator = comparators[this.currentSort!['by']];
-        this.tasks = this.tasks.slice().sort(comparator);
+        const comparator = (a: ProgrammingExerciseTask, b: ProgrammingExerciseTask) => {
+            const order = comparators[this.currentSort!['by']](a, b);
+            return this.currentSort?.descending ? order : -order;
+        };
 
-        if (!this.currentSort?.descending) {
-            this.tasks = this.tasks.reverse();
-        }
+        this.tasks = this.tasks.slice().sort(comparator);
     };
 
-    private compareNumForAttribute = (attributeKey: keyof ProgrammingExerciseTask) => {
-        return (a: ProgrammingExerciseTask, b: ProgrammingExerciseTask) => {
+    private compareNumForAttribute = (attributeKey: keyof ProgrammingExerciseTask): TaskComparator => {
+        return (a, b) => {
             return ((a[attributeKey] as number) ?? 0) - ((b[attributeKey] as number) ?? 0);
         };
     };
 
-    private compareStringForAttribute = (attributeKey: keyof ProgrammingExerciseTask) => {
-        return (a: ProgrammingExerciseTask, b: ProgrammingExerciseTask) => {
+    private compareStringForAttribute = (attributeKey: keyof ProgrammingExerciseTask): TaskComparator => {
+        return (a, b) => {
             const aType = a[attributeKey] ?? '';
             const bType = b[attributeKey] ?? '';
 
