@@ -658,7 +658,6 @@ public class ProgrammingExerciseResource {
         if (programmingExerciseResetOptionsDTO.isDeleteBuildPlans()) {
             boolean deleteRepositories = programmingExerciseResetOptionsDTO.isDeleteRepositories();
             exerciseDeletionService.cleanup(exerciseId, deleteRepositories);
-            log.info("Cleanup build plans was successful for Exercise : {}", exerciseId);
         }
 
         return ResponseEntity.ok().build();

@@ -1,5 +1,3 @@
-@import 'src/main/webapp/content/scss/artemis-variables';
-
 .programming-exercise-detail-wrapper-class {
     .button-header {
         button {
@@ -29,14 +27,5 @@
 
     .auxiliaryRepositoryDescription {
         display: block;
-    }
-
-    .danger-dropdown-item:hover {
-        background-color: var(--programming-exercise-danger-hover-bg-color);
-    }
-
-    .danger-dropdown-item:active {
-        background-color: var(--danger);
-        color: var(--bs-body-color) !important;
     }
 }
