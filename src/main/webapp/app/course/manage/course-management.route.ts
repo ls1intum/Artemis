@@ -154,7 +154,7 @@ export const courseManagementState: Routes = [
                         path: 'exercises',
                         component: !isOrion ? CourseManagementExercisesComponent : OrionCourseManagementExercisesComponent,
                         data: {
-                            authorities: [Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA, Authority.ADMIN],
+                            authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
                             pageTitle: 'artemisApp.course.exercises',
                         },
                         canActivate: [UserRouteAccessService],
