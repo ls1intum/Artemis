@@ -7,7 +7,6 @@ import java.util.concurrent.Executors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -15,6 +14,7 @@ import org.springframework.http.MediaType;
 import org.springframework.retry.RetryCallback;
 import org.springframework.retry.support.RetryTemplate;
 import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
@@ -28,17 +28,17 @@ import de.tum.in.www1.artemis.repository.PushNotificationDeviceConfigurationRepo
  * Handles the sending of iOS Notifications to the Relay Service
  */
 @Service
+@EnableAsync(proxyTargetClass = true)
 public class ApplePushNotificationService extends PushNotificationService {
 
     private final PushNotificationDeviceConfigurationRepository repository;
 
-    private final Logger log = LoggerFactory.getLogger(FirebasePushNotificationService.class);
+    private final Logger log = LoggerFactory.getLogger(ApplePushNotificationService.class);
 
     @Value("${artemis.push-notification-relay:#{Optional.empty()}}")
     private Optional<String> relayServerBaseUrl;
 
-    @Autowired
-    RestTemplate restTemplate;
+    private final RestTemplate restTemplate;
 
     public ApplePushNotificationService(PushNotificationDeviceConfigurationRepository repository, RestTemplate restTemplate) {
         this.repository = repository;
@@ -78,7 +78,7 @@ public class ApplePushNotificationService extends PushNotificationService {
     }
 
     @Override
-    public PushNotificationDeviceConfigurationRepository getRepository() {
+    protected PushNotificationDeviceConfigurationRepository getRepository() {
         return repository;
     }
 

@@ -17,7 +17,6 @@ import javax.crypto.spec.SecretKeySpec;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Async;
-import org.springframework.stereotype.Service;
 
 import com.google.gson.Gson;
 
@@ -35,8 +34,7 @@ import de.tum.in.www1.artemis.service.notifications.InstantNotificationService;
  * Wraps the sending of iOS and Android Notifications to the Relay Service
  * Implements the encryption of the payload
  */
-@Service
-public class PushNotificationService extends InstantNotificationService {
+public abstract class PushNotificationService implements InstantNotificationService {
 
     private static SecureRandom random = new SecureRandom();
 
@@ -61,8 +59,7 @@ public class PushNotificationService extends InstantNotificationService {
      * @param requests     the requests previously built using buildSendRequest
      * @param relayBaseUrl the url of the relay
      */
-    void sendNotificationRequestsToEndpoint(List<RelayNotificationRequest> requests, String relayBaseUrl) {
-    }
+    abstract void sendNotificationRequestsToEndpoint(List<RelayNotificationRequest> requests, String relayBaseUrl);
 
     @Override
     public final void sendNotification(Notification notification, User user, Object notificationSubject) {
@@ -102,17 +99,11 @@ public class PushNotificationService extends InstantNotificationService {
         sendNotificationRequestsToEndpoint(notificationRequests, relayServerBaseUrl.get());
     }
 
-    PushNotificationDeviceConfigurationRepository getRepository() {
-        return null;
-    }
+    protected abstract PushNotificationDeviceConfigurationRepository getRepository();
 
-    PushNotificationDeviceType getDeviceType() {
-        return null;
-    }
+    abstract PushNotificationDeviceType getDeviceType();
 
-    Optional<String> getRelayBaseUrl() {
-        return null;
-    }
+    abstract Optional<String> getRelayBaseUrl();
 
     record PushNotificationData(String[] notificationPlaceholders, String target, String type, String date) {
     }
