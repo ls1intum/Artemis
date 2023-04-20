@@ -7,7 +7,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
-import de.tum.in.www1.artemis.exception.localvc.LocalVCException;
+import de.tum.in.www1.artemis.exception.localvc.LocalVCInternalException;
 
 /**
  * Represents a URL to a local VC repository.
@@ -28,6 +28,7 @@ public class LocalVCRepositoryUrl extends VcsRepositoryUrl {
      * @param projectKey     the project key.
      * @param repositorySlug the repository slug.
      * @param localVCBaseUrl the base URL of the local VC server defined in an environment variable.
+     * @throws LocalVCInternalException if the project key or repository slug are invalid.
      */
     public LocalVCRepositoryUrl(String projectKey, String repositorySlug, URL localVCBaseUrl) {
         final String urlString = localVCBaseUrl + buildRepositoryPath(projectKey, repositorySlug);
@@ -35,7 +36,7 @@ public class LocalVCRepositoryUrl extends VcsRepositoryUrl {
             this.uri = new URI(urlString);
         }
         catch (URISyntaxException e) {
-            throw new LocalVCException("Could not create local VC Repository URL", e);
+            throw new LocalVCInternalException("Could not create local VC Repository URL", e);
         }
 
         this.projectKey = projectKey;
@@ -49,16 +50,17 @@ public class LocalVCRepositoryUrl extends VcsRepositoryUrl {
      *
      * @param urlString      the enire URL string (should already contain the base URL, otherwise an exception is thrown).
      * @param localVCBaseUrl the base URL of the local VC server defined in an environment variable.
+     * @throws LocalVCInternalException if the URL string is invalid.
      */
     public LocalVCRepositoryUrl(String urlString, URL localVCBaseUrl) {
         if (!urlString.startsWith(localVCBaseUrl.toString())) {
-            throw new LocalVCException("Invalid local VC Repository URL: " + urlString);
+            throw new LocalVCInternalException("Invalid local VC Repository URL: " + urlString);
         }
 
         Path urlPath = Paths.get(urlString.replaceFirst(localVCBaseUrl.toString(), ""));
 
         if (!("git".equals(urlPath.getName(0).toString())) || !urlPath.getName(2).toString().endsWith(".git")) {
-            throw new LocalVCException("Invalid local VC Repository URL: " + urlString);
+            throw new LocalVCInternalException("Invalid local VC Repository URL: " + urlString);
         }
 
         this.projectKey = urlPath.getName(1).toString();
@@ -69,7 +71,7 @@ public class LocalVCRepositoryUrl extends VcsRepositoryUrl {
             this.uri = new URI(urlString);
         }
         catch (URISyntaxException e) {
-            throw new LocalVCException("Could not create local VC Repository URL", e);
+            throw new LocalVCInternalException("Could not create local VC Repository URL", e);
         }
 
         this.repositoryTypeOrUserName = getRepositoryTypeOrUserName(repositorySlug, projectKey);
@@ -81,6 +83,7 @@ public class LocalVCRepositoryUrl extends VcsRepositoryUrl {
      *
      * @param repositoryPath   the path to the repository, also works with a path to a local checked out repository.
      * @param localVCServerUrl the base URL of the local VC server defined in an environment variable.
+     * @throws LocalVCInternalException if the repository path is invalid.
      */
     public LocalVCRepositoryUrl(Path repositoryPath, URL localVCServerUrl) {
         if (".git".equals(repositoryPath.getFileName().toString())) {
@@ -98,7 +101,7 @@ public class LocalVCRepositoryUrl extends VcsRepositoryUrl {
             this.uri = new URI(urlString);
         }
         catch (URISyntaxException e) {
-            throw new LocalVCException("Could not create local VC Repository URL", e);
+            throw new LocalVCInternalException("Could not create local VC Repository URL", e);
         }
 
         this.repositoryTypeOrUserName = getRepositoryTypeOrUserName(repositorySlug, projectKey);
@@ -120,7 +123,7 @@ public class LocalVCRepositoryUrl extends VcsRepositoryUrl {
 
     private void validateProjectKeyAndRepositorySlug(String projectKey, String repositorySlug) {
         if (!repositorySlug.toLowerCase().startsWith(projectKey.toLowerCase())) {
-            throw new LocalVCException("Invalid project key and repository slug: " + projectKey + ", " + repositorySlug);
+            throw new LocalVCInternalException("Invalid project key and repository slug: " + projectKey + ", " + repositorySlug);
         }
     }
 

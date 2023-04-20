@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Path;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.concurrent.CompletableFuture;
 
 import org.eclipse.jgit.api.Git;
@@ -26,7 +27,7 @@ import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.LocalCIException;
-import de.tum.in.www1.artemis.exception.localvc.LocalVCException;
+import de.tum.in.www1.artemis.exception.localvc.LocalVCInternalException;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
@@ -94,6 +95,7 @@ public class LocalCIPushService {
      *
      * @param commitHash the hash of the last commit.
      * @param repository the remote repository which was pushed to.
+     * @throws LocalCIException if something goes wrong retrieving the exercise or participation.
      */
     public void processNewPush(String commitHash, Repository repository) {
         long timeNanoStart = System.nanoTime();
@@ -154,7 +156,7 @@ public class LocalCIPushService {
             processNewPushToRepository(participation, commit);
 
         }
-        catch (Exception e) {
+        catch (LocalCIException | GitAPIException | IOException e) {
             // In case anything goes wrong, notify the user.
             // Throwing an exception here would lead to the Git client request getting stuck.
             // Instead, the user can see in the UI that creating the submission failed.
@@ -170,19 +172,16 @@ public class LocalCIPushService {
         try {
             return new LocalVCRepositoryUrl(repositoryFolderPath, localVCBaseUrl);
         }
-        catch (LocalVCException e) {
+        catch (LocalVCInternalException e) {
             // This means something is misconfigured.
             throw new LocalCIException("Could not create valid repository URL from path " + repositoryFolderPath, e);
         }
     }
 
-    private String getLatestCommitHash(Repository repository) {
+    private String getLatestCommitHash(Repository repository) throws GitAPIException {
         try (Git git = new Git(repository)) {
             RevCommit latestCommit = git.log().setMaxCount(1).call().iterator().next();
             return latestCommit.getName();
-        }
-        catch (GitAPIException e) {
-            throw new LocalCIException("Could not retrieve latest commit from repository " + repository.getDirectory().toPath(), e);
         }
     }
 
@@ -192,14 +191,27 @@ public class LocalCIPushService {
      *
      * @param exercise   the exercise for which the push was made.
      * @param commitHash the hash of the last commit to the tests repository.
+     * @throws LocalCIException if something unexpected goes wrong creating the submission or triggering the build.
      */
     private void processNewPushToTestsRepository(ProgrammingExercise exercise, String commitHash, SolutionProgrammingExerciseParticipation participation) {
         // Create a new submission for the solution repository.
-        ProgrammingSubmission submission = programmingSubmissionService.createSolutionParticipationSubmissionWithTypeTest(exercise.getId(), commitHash);
+        ProgrammingSubmission submission;
+        try {
+            submission = programmingSubmissionService.createSolutionParticipationSubmissionWithTypeTest(exercise.getId(), commitHash);
+        }
+        catch (EntityNotFoundException | IllegalStateException e) {
+            throw new LocalCIException("Could not create submission for solution participation", e);
+        }
+
         programmingMessagingService.notifyUserAboutSubmission(submission);
 
-        // Set a flag to inform the instructor that the student results are now outdated.
-        programmingTriggerService.setTestCasesChanged(exercise.getId(), true);
+        try {
+            // Set a flag to inform the instructor that the student results are now outdated.
+            programmingTriggerService.setTestCasesChanged(exercise.getId(), true);
+        }
+        catch (EntityNotFoundException e) {
+            throw new LocalCIException("Could not set test cases changed flag", e);
+        }
 
         // Trigger a build of the solution repository.
         CompletableFuture<LocalCIBuildResult> futureSolutionBuildResult = localCIExecutorService.addBuildJobToQueue(participation);
@@ -211,12 +223,17 @@ public class LocalCIPushService {
                 Result result = programmingExerciseGradingService.processNewProgrammingExerciseResult(participation, buildResult).orElseThrow();
                 programmingMessagingService.notifyUserAboutNewResult(result, participation);
             }
-            catch (Exception e) {
+            catch (NoSuchElementException e) {
                 programmingMessagingService.notifyUserAboutBuildTriggerError(participation, e);
             }
 
             // The solution participation received a new result, also trigger a build of the template repository.
-            programmingTriggerService.triggerTemplateBuildAndNotifyUser(exercise.getId(), submission.getCommitHash(), SubmissionType.TEST);
+            try {
+                programmingTriggerService.triggerTemplateBuildAndNotifyUser(exercise.getId(), submission.getCommitHash(), SubmissionType.TEST);
+            }
+            catch (EntityNotFoundException e) {
+                programmingMessagingService.notifyUserAboutBuildTriggerError(participation, e);
+            }
         });
     }
 
@@ -227,7 +244,14 @@ public class LocalCIPushService {
         // The 'user' is not properly logged into Artemis, this leads to an issue when accessing custom repository methods.
         // Therefore, a mock auth object has to be created.
         SecurityUtils.setAuthorizationObject();
-        ProgrammingSubmission submission = programmingSubmissionService.processNewProgrammingSubmission(participation, commit);
+        ProgrammingSubmission submission;
+        try {
+            submission = programmingSubmissionService.processNewProgrammingSubmission(participation, commit);
+        }
+        catch (EntityNotFoundException | IllegalStateException | IllegalArgumentException e) {
+            throw new LocalCIException("Could not process submission for participation", e);
+        }
+
         // Remove unnecessary information from the new submission.
         submission.getParticipation().setSubmissions(null);
         programmingMessagingService.notifyUserAboutSubmission(submission);
@@ -236,33 +260,25 @@ public class LocalCIPushService {
         localCITriggerService.triggerBuild(participation);
     }
 
-    private Commit extractCommitInfo(String commitHash, Repository repository) {
+    private Commit extractCommitInfo(String commitHash, Repository repository) throws IOException, GitAPIException {
         RevCommit revCommit;
         String branch = null;
 
-        try {
-            ObjectId objectId = repository.resolve(commitHash);
-            if (objectId == null) {
-                throw new LocalCIException("Unable to resolve commit hash to an ObjectId");
-            }
-            revCommit = repository.parseCommit(objectId);
+        ObjectId objectId = repository.resolve(commitHash);
+        revCommit = repository.parseCommit(objectId);
 
-            // Get the branch name.
-            Git git = new Git(repository);
-            // Look in the 'refs/heads' namespace for a ref that points to the commit.
-            // The returned map contains at most one entry where the key is the commit id and the value denotes the branch which points to it.
-            Map<ObjectId, String> objectIdBranchNameMap = git.nameRev().addPrefix("refs/heads").add(objectId).call();
-            if (!objectIdBranchNameMap.isEmpty()) {
-                branch = objectIdBranchNameMap.get(objectId);
-            }
-            git.close();
-
-            if (revCommit == null || branch == null) {
-                throw new LocalCIException("Something went wrong retrieving the revCommit or the branch.");
-            }
+        // Get the branch name.
+        Git git = new Git(repository);
+        // Look in the 'refs/heads' namespace for a ref that points to the commit.
+        // The returned map contains at most one entry where the key is the commit id and the value denotes the branch which points to it.
+        Map<ObjectId, String> objectIdBranchNameMap = git.nameRev().addPrefix("refs/heads").add(objectId).call();
+        if (!objectIdBranchNameMap.isEmpty()) {
+            branch = objectIdBranchNameMap.get(objectId);
         }
-        catch (IOException | GitAPIException e) {
-            throw new LocalCIException("Could not resolve commit hash " + commitHash + " to a commit.", e);
+        git.close();
+
+        if (revCommit == null || branch == null) {
+            throw new LocalCIException("Something went wrong retrieving the revCommit or the branch.");
         }
 
         Commit commit = new Commit();

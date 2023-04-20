@@ -12,6 +12,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import de.tum.in.www1.artemis.exception.localvc.LocalVCAuthException;
+import de.tum.in.www1.artemis.exception.localvc.LocalVCForbiddenException;
+import de.tum.in.www1.artemis.exception.localvc.LocalVCInternalException;
 import de.tum.in.www1.artemis.web.rest.repository.RepositoryActionType;
 
 /**
@@ -37,7 +40,7 @@ public class LocalVCFetchFilter extends OncePerRequestFilter {
         try {
             localVCFilterService.authenticateAndAuthorizeGitRequest(servletRequest, RepositoryActionType.READ);
         }
-        catch (Exception e) {
+        catch (LocalVCAuthException | LocalVCForbiddenException | LocalVCInternalException e) {
             servletResponse.setStatus(localVCFilterService.getHttpStatusForException(e, servletRequest.getRequestURI()));
             return;
         }

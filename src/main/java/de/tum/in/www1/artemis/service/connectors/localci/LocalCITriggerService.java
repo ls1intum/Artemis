@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors.localci;
 
+import java.util.NoSuchElementException;
 import java.util.concurrent.CompletableFuture;
 
 import org.springframework.context.annotation.Profile;
@@ -7,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.exception.LocalCIException;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationTriggerService;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildResult;
@@ -39,6 +41,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
      * Add a new build job to the queue managed by the ExecutorService.
      *
      * @param participation the participation of the repository which should be built and tested.
+     * @throws LocalCIException if the build job could not be added to the queue.
      */
     @Override
     public void triggerBuild(ProgrammingExerciseParticipation participation) {
@@ -51,7 +54,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
                 Result result = programmingExerciseGradingService.processNewProgrammingExerciseResult(participation, buildResult).orElseThrow();
                 programmingMessagingService.notifyUserAboutNewResult(result, participation);
             }
-            catch (Exception e) {
+            catch (NoSuchElementException e) {
                 programmingMessagingService.notifyUserAboutBuildTriggerError(participation, e);
             }
         });

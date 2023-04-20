@@ -36,6 +36,7 @@ public class LocalVCServletService {
      *
      * @param repositoryPath the path of the repository, as parsed out of the URL (everything after /git).
      * @return the opened repository instance.
+     * @throws RepositoryNotFoundException if the repository could not be found.
      */
     public Repository resolveRepository(String repositoryPath) throws RepositoryNotFoundException {
         // Find the local repository depending on the name.

@@ -35,8 +35,7 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
-import de.tum.in.www1.artemis.exception.VersionControlException;
-import de.tum.in.www1.artemis.exception.localvc.LocalVCException;
+import de.tum.in.www1.artemis.exception.localvc.LocalVCInternalException;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.service.UrlService;
@@ -93,6 +92,12 @@ public class LocalVCService extends AbstractVersionControlService {
         // Webhooks must not be added for the local VC system. The LocalVCPostPushHook notifies Artemis on every push.
     }
 
+    /**
+     * Delete the entire project including all repositories for a given project key.
+     *
+     * @param projectKey of the project that should be deleted.
+     * @throws LocalVCInternalException if the project cannot be deleted.
+     */
     @Override
     public void deleteProject(String projectKey) {
         try {
@@ -100,10 +105,16 @@ public class LocalVCService extends AbstractVersionControlService {
             FileUtils.deleteDirectory(projectPath.toFile());
         }
         catch (IOException e) {
-            throw new LocalVCException("Could not delete project " + projectKey, e);
+            throw new LocalVCInternalException("Could not delete project " + projectKey, e);
         }
     }
 
+    /**
+     * Delete the repository at the given repository URL
+     *
+     * @param repositoryUrl of the repository that should be deleted
+     * @throws LocalVCInternalException if the repository cannot be deleted
+     */
     @Override
     public void deleteRepository(VcsRepositoryUrl repositoryUrl) {
 
@@ -114,17 +125,25 @@ public class LocalVCService extends AbstractVersionControlService {
             FileUtils.deleteDirectory(localRepositoryPath.toFile());
         }
         catch (IOException e) {
-            throw new LocalVCException("Could not delete repository at " + localRepositoryPath, e);
+            throw new LocalVCInternalException("Could not delete repository at " + localRepositoryPath, e);
         }
     }
 
+    /**
+     * Get the VcsRepositoryUrl for the given project key and repository slug
+     *
+     * @param projectKey     The project key
+     * @param repositorySlug The repository slug
+     * @return The VcsRepositoryUrl
+     * @throws LocalVCInternalException if the repository URL cannot be constructed
+     */
     @Override
     public VcsRepositoryUrl getCloneRepositoryUrl(String projectKey, String repositorySlug) {
         return new LocalVCRepositoryUrl(projectKey, repositorySlug, localVCBaseUrl);
     }
 
     @Override
-    public void setRepositoryPermissionsToReadOnly(VcsRepositoryUrl repositoryUrl, String projectKey, Set<User> users) throws LocalVCException {
+    public void setRepositoryPermissionsToReadOnly(VcsRepositoryUrl repositoryUrl, String projectKey, Set<User> users) {
         // Not implemented for local VC. All checks for whether a student can access a repository are conducted in the LocalVCFetchFilter and LocalVCPushFilter.
     }
 
@@ -133,6 +152,7 @@ public class LocalVCService extends AbstractVersionControlService {
      *
      * @param repositoryUrl The repository url to get the default branch for.
      * @return the name of the default branch, e.g. 'main'
+     * @throws LocalVCInternalException if the default branch cannot be determined
      */
     @Override
     public String getDefaultBranchOfRepository(VcsRepositoryUrl repositoryUrl) {
@@ -143,7 +163,7 @@ public class LocalVCService extends AbstractVersionControlService {
             remoteRepositoryRefs = Git.lsRemoteRepository().setRemote(localRepositoryPath).callAsMap();
         }
         catch (GitAPIException e) {
-            throw new LocalVCException("Cannot get default branch of repository " + localRepositoryPath + ". ls-remote failed.", e);
+            throw new LocalVCInternalException("Cannot get default branch of repository " + localRepositoryPath + ". ls-remote failed.", e);
         }
         if (remoteRepositoryRefs.containsKey("HEAD")) {
             // The HEAD reference is of the form "ref: refs/heads/main"
@@ -151,11 +171,11 @@ public class LocalVCService extends AbstractVersionControlService {
             return headRefSplit[headRefSplit.length - 1];
         }
 
-        throw new LocalVCException("Cannot get default branch of repository " + localRepositoryPath + ". ls-remote does not return a HEAD reference.");
+        throw new LocalVCInternalException("Cannot get default branch of repository " + localRepositoryPath + ". ls-remote does not return a HEAD reference.");
     }
 
     @Override
-    public void unprotectBranch(VcsRepositoryUrl repositoryUrl, String branch) throws VersionControlException {
+    public void unprotectBranch(VcsRepositoryUrl repositoryUrl, String branch) {
         // Not implemented. It is not needed for local VC for the current use
         // case, because the main branch is unprotected by default.
     }
@@ -179,10 +199,10 @@ public class LocalVCService extends AbstractVersionControlService {
      *
      * @param programmingExercise the programming exercise for which the local git
      *                                Project should be created
-     * @throws LocalVCException if the project could not be created
+     * @throws LocalVCInternalException if the project could not be created
      */
     @Override
-    public void createProjectForExercise(ProgrammingExercise programmingExercise) throws LocalVCException {
+    public void createProjectForExercise(ProgrammingExercise programmingExercise) {
         String projectKey = programmingExercise.getProjectKey();
         try {
             // Instead of defining a project like would be done for GitLab or Bitbucket, just create a directory that will contain all repositories.
@@ -191,7 +211,7 @@ public class LocalVCService extends AbstractVersionControlService {
             log.debug("Created folder for local git project at {}", projectPath);
         }
         catch (IOException e) {
-            throw new LocalVCException("Error while creating local VC project.", e);
+            throw new LocalVCInternalException("Error while creating local VC project.", e);
         }
     }
 
@@ -202,18 +222,18 @@ public class LocalVCService extends AbstractVersionControlService {
         return health;
     }
 
+    /**
+     * Create a new repository for the given project key and repository slug
+     *
+     * @param projectKey     The project key of the parent project
+     * @param repositorySlug The name for the new repository
+     * @throws LocalVCInternalException if the repository could not be created
+     */
     @Override
     public void createRepository(String projectKey, String repositorySlug, String parentProjectKey) {
         createRepository(projectKey, repositorySlug);
     }
 
-    /**
-     * Create a new repo
-     *
-     * @param projectKey     The project key of the parent project
-     * @param repositorySlug The name for the new repository
-     * @throws LocalVCException if the repo could not be created
-     */
     private void createRepository(String projectKey, String repositorySlug) {
 
         LocalVCRepositoryUrl localVCRepositoryUrl = new LocalVCRepositoryUrl(projectKey, repositorySlug, localVCBaseUrl);
@@ -237,7 +257,7 @@ public class LocalVCService extends AbstractVersionControlService {
         }
         catch (GitAPIException | IOException e) {
             log.error("Could not create local git repo {} at location {}", repositorySlug, remoteDirPath, e);
-            throw new LocalVCException("Error while creating local git project.", e);
+            throw new LocalVCInternalException("Error while creating local git project.", e);
         }
     }
 
@@ -250,7 +270,7 @@ public class LocalVCService extends AbstractVersionControlService {
         try {
             new LocalVCRepositoryUrl(repositoryUrl.toString(), localVCBaseUrl);
         }
-        catch (LocalVCException e) {
+        catch (LocalVCInternalException e) {
             return false;
         }
 
@@ -259,7 +279,7 @@ public class LocalVCService extends AbstractVersionControlService {
 
     @Override
     @NotNull
-    public Commit getLastCommitDetails(Object requestBody) throws LocalVCException {
+    public Commit getLastCommitDetails(Object requestBody) {
         // The local VCS will create a Commit object straight away and hand that to the processNewProgrammingSubmission method in
         // ProgrammingSubmissionService.
         return (Commit) requestBody;
@@ -267,12 +287,13 @@ public class LocalVCService extends AbstractVersionControlService {
 
     /**
      * Get the date of a push event. If the event object is supplied we try to retrieve the push date from there.
-     * Otherwise we use the participation to retrieve the repository and use the commitHash to determine the date of the latest commit.
+     * Otherwise, we use the participation to retrieve the repository and use the commitHash to determine the date of the latest commit.
      *
      * @param participation The participation we retrieve the repository for.
      * @param commitHash    The commit hash that identifies the latest commit.
      * @param eventObject   An object describing the push event, that contains the node "date". null if not available
      * @return The date of the push event or the date of the latest commit.
+     * @throws LocalVCInternalException if the repository could not be retrieved or the push date could not be retrieved from the repository..
      */
     @Override
     public ZonedDateTime getPushDate(ProgrammingExerciseParticipation participation, String commitHash, Object eventObject) {
@@ -283,7 +304,7 @@ public class LocalVCService extends AbstractVersionControlService {
             repository = gitService.getOrCheckoutRepository(participation);
         }
         catch (GitAPIException e) {
-            throw new LocalVCException("Unable to get the repository from participation " + participation.getId() + ": " + participation.getRepositoryUrl(), e);
+            throw new LocalVCInternalException("Unable to get the repository from participation " + participation.getId() + ": " + participation.getRepositoryUrl(), e);
         }
 
         try (RevWalk revWalk = new RevWalk(repository)) {
@@ -295,7 +316,7 @@ public class LocalVCService extends AbstractVersionControlService {
             return ZonedDateTime.ofInstant(instant, zoneId);
         }
         catch (IOException e) {
-            throw new LocalVCException("Unable to get the push date from participation " + participation.getId() + ": " + participation.getRepositoryUrl(), e);
+            throw new LocalVCInternalException("Unable to get the push date from participation " + participation.getId() + ": " + participation.getRepositoryUrl(), e);
         }
 
     }

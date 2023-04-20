@@ -40,15 +40,8 @@ public class JGitServletConfiguration {
      */
     @Bean
     public ServletRegistrationBean<GitServlet> jgitServlet() {
-
-        try {
-            ArtemisGitServlet gitServlet = new ArtemisGitServlet(localVCServletService, localVCFilterService, localCIPushService);
-            log.info("Registering GitServlet");
-            return new ServletRegistrationBean<>(gitServlet, "/git/*");
-        }
-        catch (Exception e) {
-            log.error("Something went wrong creating the JGit Servlet.");
-        }
-        return null;
+        ArtemisGitServlet gitServlet = new ArtemisGitServlet(localVCServletService, localVCFilterService, localCIPushService);
+        log.info("Registering ArtemisGitServlet for handling fetch and push requests to [Artemis URL]/git/[Project Key]/[Repository Slug].git");
+        return new ServletRegistrationBean<>(gitServlet, "/git/*");
     }
 }

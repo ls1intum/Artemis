@@ -9,7 +9,6 @@ import java.nio.file.Paths;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.concurrent.CountDownLatch;
 
 import javax.xml.stream.XMLInputFactory;
@@ -37,7 +36,6 @@ import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.HostConfig;
 import com.github.dockerjava.api.model.Volume;
 
-import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.LocalCIException;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
@@ -68,7 +66,10 @@ public class LocalCIBuildJobService {
     /**
      * @param assignmentRepositoryPath The path to the assignment repository.
      * @param testsRepositoryPath      The path to the test repository.
+     * @param scriptPath               The path to the shell script that should be executed in the container.
+     * @param branch                   The branch that should be built.
      * @return the container id of the created container.
+     * @throws LocalCIException if the container could not be created.
      */
     public String prepareDockerContainer(Path assignmentRepositoryPath, Path testsRepositoryPath, Path scriptPath, String branch) {
         HostConfig volumeConfig = createVolumeConfig(assignmentRepositoryPath, testsRepositoryPath, scriptPath);
@@ -88,11 +89,11 @@ public class LocalCIBuildJobService {
      * @param participation The participation for which the build job should be run.
      * @param containerId   The id of the container that should be used for the build job.
      * @param branch        The branch that should be built.
-     *
      * @param scriptPath    The path to the build script.
      * @return The build result.
+     * @throws LocalCIException if something went wrong while running the build job.
      */
-    public LocalCIBuildResult runBuildJob(ProgrammingExerciseParticipation participation, String containerId, String branch, Path scriptPath, ProjectType projectType) {
+    public LocalCIBuildResult runBuildJob(ProgrammingExerciseParticipation participation, String containerId, String branch, Path scriptPath) {
 
         long timeNanoStart = System.nanoTime();
 
@@ -114,7 +115,7 @@ public class LocalCIBuildJobService {
             // empty list for successful tests).
             stopContainer(containerId);
             deleteTemporaryBuildScript(scriptPath);
-            return constructBuildResult(List.of(), List.of(), branch, assignmentRepoCommitHash, testsRepoCommitHash, false, buildCompletedDate);
+            return constructFailedBuildResult(branch, assignmentRepoCommitHash, testsRepoCommitHash, buildCompletedDate);
         }
 
         // When Gradle is used as the build tool, the test results are located in /repositories/test-repository/build/test-results/test/TEST-*.xml.
@@ -131,7 +132,7 @@ public class LocalCIBuildJobService {
             // Stop the container and return a build results that indicates that the build failed.
             stopContainer(containerId);
             deleteTemporaryBuildScript(scriptPath);
-            return constructBuildResult(List.of(), List.of(), branch, assignmentRepoCommitHash, testsRepoCommitHash, false, buildCompletedDate);
+            return constructFailedBuildResult(branch, assignmentRepoCommitHash, testsRepoCommitHash, buildCompletedDate);
         }
 
         stopContainer(containerId);
@@ -139,7 +140,7 @@ public class LocalCIBuildJobService {
 
         LocalCIBuildResult buildResult;
         try {
-            buildResult = parseTestResults(testResultsTarInputStream, projectType, branch, assignmentRepoCommitHash, testsRepoCommitHash, buildCompletedDate);
+            buildResult = parseTestResults(testResultsTarInputStream, branch, assignmentRepoCommitHash, testsRepoCommitHash, buildCompletedDate);
         }
         catch (IOException | XMLStreamException | IllegalStateException e) {
             throw new LocalCIException("Error while parsing test results", e);
@@ -226,6 +227,12 @@ public class LocalCIBuildJobService {
         }
     }
 
+    /**
+     * Stops the container with the given id by creating a file "stop_container.txt" in its root directory.
+     * The container was created in such a way that it waits for this file to appear and then stops running, causing it to be removed at the same time.
+     *
+     * @param containerId The id of the container to stop.
+     */
     public void stopContainer(String containerId) {
         if (!isContainerRunning(containerId)) {
             return;
@@ -242,16 +249,14 @@ public class LocalCIBuildJobService {
         List<Container> containers = dockerClient.listContainersCmd().withShowAll(true).exec();
 
         // Check if there's a container with the given ID and if it's running.
-        boolean isContainerRunning = false;
-        try {
-            isContainerRunning = containers.stream().filter(container -> container.getId().equals(containerId)).findFirst().orElseThrow().getState().equals("running");
-        }
-        catch (NoSuchElementException e) {
-            // No container with the given ID exists.
-        }
-        return isContainerRunning;
+        return containers.stream().filter(container -> container.getId().equals(containerId)).findFirst().map(container -> container.getState().equals("running")).orElse(false);
     }
 
+    /**
+     * Deletes the build script if it was created as a temporary file.
+     *
+     * @param scriptPath The path of the build script.
+     */
     public void deleteTemporaryBuildScript(Path scriptPath) {
         // If the script was created as a temporary file, delete it.
         Path tempDir = Paths.get(System.getProperty("java.io.tmpdir"));
@@ -265,8 +270,8 @@ public class LocalCIBuildJobService {
         }
     }
 
-    private LocalCIBuildResult parseTestResults(TarArchiveInputStream testResultsTarInputStream, ProjectType projectType, String assignmentRepoBranchName,
-            String assignmentRepoCommitHash, String testsRepoCommitHash, ZonedDateTime buildCompletedDate) throws IOException, XMLStreamException {
+    private LocalCIBuildResult parseTestResults(TarArchiveInputStream testResultsTarInputStream, String assignmentRepoBranchName, String assignmentRepoCommitHash,
+            String testsRepoCommitHash, ZonedDateTime buildCompletedDate) throws IOException, XMLStreamException {
 
         boolean isBuildSuccessful = true;
 
@@ -275,11 +280,10 @@ public class LocalCIBuildJobService {
 
         XMLInputFactory xmlInputFactory = XMLInputFactory.newInstance();
 
-        String testResultsFolderName = projectType.isGradle() ? "test" : "surefire-reports";
         TarArchiveEntry tarEntry;
         while ((tarEntry = testResultsTarInputStream.getNextTarEntry()) != null) {
 
-            if (tarEntry.isDirectory() || !tarEntry.getName().endsWith(".xml") || !tarEntry.getName().startsWith(testResultsFolderName + "/TEST-")) {
+            if (tarEntry.isDirectory() || !tarEntry.getName().endsWith(".xml") || !tarEntry.getName().startsWith("test/TEST-")) {
                 continue;
             }
 
@@ -340,6 +344,11 @@ public class LocalCIBuildJobService {
         }
 
         return constructBuildResult(failedTests, successfulTests, assignmentRepoBranchName, assignmentRepoCommitHash, testsRepoCommitHash, isBuildSuccessful, buildCompletedDate);
+    }
+
+    private LocalCIBuildResult constructFailedBuildResult(String assignmentRepoBranchName, String assignmentRepoCommitHash, String testsRepoCommitHash,
+            ZonedDateTime buildRunDate) {
+        return constructBuildResult(List.of(), List.of(), assignmentRepoBranchName, assignmentRepoCommitHash, testsRepoCommitHash, false, buildRunDate);
     }
 
     private LocalCIBuildResult constructBuildResult(List<LocalCIBuildResult.LocalCITestJobDTO> failedTests, List<LocalCIBuildResult.LocalCITestJobDTO> successfulTests,

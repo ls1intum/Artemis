@@ -20,7 +20,6 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.localvc.LocalVCAuthException;
-import de.tum.in.www1.artemis.exception.localvc.LocalVCException;
 import de.tum.in.www1.artemis.exception.localvc.LocalVCForbiddenException;
 import de.tum.in.www1.artemis.exception.localvc.LocalVCInternalException;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
@@ -78,12 +77,16 @@ public class LocalVCFilterService {
     }
 
     /**
-     * Determines whether a given request to access a local VC repository (either via fetch of push) is authenticated and authorized. Throws an exception if not.
+     * Determines whether a given request to access a local VC repository (either via fetch of push) is authenticated and authorized.
      *
      * @param servletRequest       The object containing all information about the incoming request.
      * @param repositoryActionType Indicates whether the method should authenticate a fetch or a push request. For a push request, additional checks are conducted.
+     * @throws LocalVCAuthException      If the user authentication fails or the user is not authorized to access a certain repository.
+     * @throws LocalVCForbiddenException If the user is not allowed to access the repository, e.g. because offline IDE usage is not allowed or the due date has passed.
+     * @throws LocalVCInternalException  If an internal error occurs, e.g. because the LocalVCRepositoryUrl could not be created.
      */
-    public void authenticateAndAuthorizeGitRequest(HttpServletRequest servletRequest, RepositoryActionType repositoryActionType) {
+    public void authenticateAndAuthorizeGitRequest(HttpServletRequest servletRequest, RepositoryActionType repositoryActionType)
+            throws LocalVCAuthException, LocalVCForbiddenException {
 
         long timeNanoStart = System.nanoTime();
 
@@ -99,15 +102,7 @@ public class LocalVCFilterService {
             return;
         }
 
-        LocalVCRepositoryUrl localVCRepositoryUrl;
-        try {
-            localVCRepositoryUrl = new LocalVCRepositoryUrl(servletRequest.getRequestURL().toString().replace("/info/refs", ""), localVCBaseUrl);
-        }
-        catch (LocalVCException e) {
-            // This should never happen. At this point the request already went through the RepositoryResolver, and if the repository was not found, an error was already returned
-            // to the user.
-            throw new LocalVCInternalException("Cannot create LocalVCRepositoryUrl from request: " + servletRequest.getRequestURL().toString().replace("/info/refs", ""), e);
-        }
+        LocalVCRepositoryUrl localVCRepositoryUrl = new LocalVCRepositoryUrl(servletRequest.getRequestURL().toString().replace("/info/refs", ""), localVCBaseUrl);
 
         String projectKey = localVCRepositoryUrl.getProjectKey();
         String repositoryTypeOrUserName = localVCRepositoryUrl.getRepositoryTypeOrUserName();
@@ -208,23 +203,19 @@ public class LocalVCFilterService {
     /**
      * Returns the HTTP status code for the given exception thrown by the above method "authenticateAndAuthorizeGitRequest".
      *
-     * @param e             The exception thrown.
+     * @param exception     The exception thrown.
      * @param repositoryUrl The URL of the repository that was accessed.
      * @return The HTTP status code.
      */
-    public int getHttpStatusForException(Exception e, String repositoryUrl) {
-        if (e instanceof LocalVCAuthException) {
+    public int getHttpStatusForException(Exception exception, String repositoryUrl) {
+        if (exception instanceof LocalVCAuthException) {
             return HttpStatus.UNAUTHORIZED.value();
         }
-        else if (e instanceof LocalVCForbiddenException) {
+        else if (exception instanceof LocalVCForbiddenException) {
             return HttpStatus.FORBIDDEN.value();
         }
-        else if (e instanceof LocalVCInternalException) {
-            log.error("Internal server error while trying to access repository {}: {}", repositoryUrl, e.getMessage());
-            return HttpStatus.INTERNAL_SERVER_ERROR.value();
-        }
         else {
-            log.error("Unexpected error while trying to access repository {}: {}", repositoryUrl, e.getMessage());
+            log.error("Internal server error while trying to access repository {}: {}", repositoryUrl, exception.getMessage());
             return HttpStatus.INTERNAL_SERVER_ERROR.value();
         }
     }

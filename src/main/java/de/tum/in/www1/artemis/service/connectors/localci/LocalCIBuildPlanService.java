@@ -43,6 +43,7 @@ public class LocalCIBuildPlanService {
      *
      * @param participation  the participation for which the build plan status should be updated.
      * @param newBuildStatus the new build plan status.
+     * @throws LocalCIException if the build plan id is null.
      */
     public void updateBuildPlanStatus(ProgrammingExerciseParticipation participation, ContinuousIntegrationService.BuildStatus newBuildStatus) {
         String buildPlanId = participation.getBuildPlanId();
