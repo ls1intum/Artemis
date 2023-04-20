@@ -156,30 +156,15 @@ describe('AttachmentUnitFormComponent', () => {
     });
 
     it('should disable submit button for too big file', () => {
-        attachmentUnitFormComponentFixture.detectChanges();
-        const exampleName = 'test';
-        attachmentUnitFormComponent.nameControl!.setValue(exampleName);
-        const exampleReleaseDate = dayjs().year(2010).month(3).date(5);
-        attachmentUnitFormComponent.releaseDateControl!.setValue(exampleReleaseDate);
-        const exampleDescription = 'lorem ipsum';
-        attachmentUnitFormComponent.descriptionControl!.setValue(exampleDescription);
-        const exampleVersion = 42;
-        attachmentUnitFormComponent.versionControl!.setValue(exampleVersion);
-        const exampleUpdateNotificationText = 'updated';
-        attachmentUnitFormComponent.updateNotificationTextControl!.setValue(exampleUpdateNotificationText);
         const fakeFile = new File([''], 'Test-File.pdf', { type: 'application/pdf', lastModified: Date.now() });
 
         // Set file size to exceed the maximum file size
         Object.defineProperty(fakeFile, 'size', { value: MAX_FILE_SIZE + 1 });
 
-        attachmentUnitFormComponent.file = fakeFile;
-        attachmentUnitFormComponent.fileName = 'lorem Ipsum';
-        attachmentUnitFormComponent.fileTooBig = fakeFile.size > MAX_FILE_SIZE;
-
+        attachmentUnitFormComponent.onFileChange({ target: { files: [fakeFile] } });
         attachmentUnitFormComponentFixture.detectChanges();
 
         const submitButton = attachmentUnitFormComponentFixture.debugElement.nativeElement.querySelector('#submitButton');
-
         expect(attachmentUnitFormComponent.fileTooBig).toBeTrue();
         expect(submitButton.disabled).toBeTrue();
     });
