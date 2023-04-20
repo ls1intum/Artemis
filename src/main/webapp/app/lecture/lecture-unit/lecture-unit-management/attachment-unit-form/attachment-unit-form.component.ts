@@ -5,6 +5,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { faQuestionCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { FILE_EXTENSIONS } from 'app/shared/constants/file-extensions.constants';
 import { LearningGoal } from 'app/entities/learningGoal.model';
+import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
 
 export interface AttachmentUnitFormData {
     formProperties: FormProperties;
@@ -61,6 +62,7 @@ export class AttachmentUnitFormComponent implements OnInit, OnChanges {
     file: File;
     fileName?: string;
     fileInputTouched = false;
+    fileTooBig: boolean;
 
     constructor(private translateService: TranslateService, private fb: FormBuilder) {}
 
@@ -94,6 +96,7 @@ export class AttachmentUnitFormComponent implements OnInit, OnChanges {
             const fileList = event.target.files;
             this.file = fileList[0];
             this.fileName = this.file.name;
+            this.fileTooBig = this.file.size > MAX_FILE_SIZE;
         }
     }
 
@@ -118,7 +121,7 @@ export class AttachmentUnitFormComponent implements OnInit, OnChanges {
     }
 
     get isSubmitPossible() {
-        return !(this.form.invalid || !this.fileName);
+        return !(this.form.invalid || !this.fileName) && !this.fileTooBig;
     }
 
     submitForm() {
