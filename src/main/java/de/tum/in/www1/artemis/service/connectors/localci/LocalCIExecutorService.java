@@ -120,6 +120,10 @@ public class LocalCIExecutorService {
             }
             catch (Exception e) {
                 log.error("Error while running build job", e);
+                // Set the build status to "INACTIVE" to indicate that the build is not running anymore.
+                localCIBuildPlanService.updateBuildPlanStatus(participation, ContinuousIntegrationService.BuildStatus.INACTIVE);
+                // Notify the user, if the build job produced an exception. This is also the case if the build job timed out.
+                programmingMessagingService.notifyUserAboutBuildTriggerError(participation, e);
                 localCIBuildJobService.stopContainer(containerId);
                 localCIBuildJobService.deleteTemporaryBuildScript(scriptPath);
                 // Wrap the exception in a CompletionException so that the future is completed exceptionally.
@@ -139,16 +143,8 @@ public class LocalCIExecutorService {
         // Add "_QUEUED" to the build plan id to indicate that the build job is queued.
         localCIBuildPlanService.updateBuildPlanStatus(participation, ContinuousIntegrationService.BuildStatus.QUEUED);
 
-        // Convert the Future to a CompletableFuture.
-        CompletableFuture<LocalCIBuildResult> completableFutureResult = toCompletableFuture(futureResult);
-
-        // Notify the user, if the build job produced an exception. This is also the case if the build job timed out.
-        completableFutureResult.exceptionally(exception -> {
-            programmingMessagingService.notifyUserAboutBuildTriggerError(participation, exception);
-            return null;
-        });
-
-        return completableFutureResult;
+        // Convert the Future to a CompletableFuture to simplify the logic needed to process the result after the build finished successfully.
+        return toCompletableFuture(futureResult);
     }
 
     private <T> CompletableFuture<T> toCompletableFuture(Future<T> future) {
