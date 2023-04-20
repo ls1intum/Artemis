@@ -8,6 +8,7 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
@@ -537,24 +538,22 @@ public class StudentExamService {
         var startedAt = ZonedDateTime.now();
         var lock = new ReentrantLock();
         sendAndCacheExercisePreparationStatus(examId, 0, 0, studentExams.size(), 0, startedAt, lock);
-        var futures = parallelExecutorService.runForAll(studentExams, studentExam -> {
-            setUpExerciseParticipationsAndSubmissions(studentExam, generatedParticipations);
-            return studentExam;
-        });
-        for (var future : futures) {
-            future.whenComplete((studentExam, exception) -> {
-                if (exception != null) {
-                    log.error("Exception while preparing exercises for student exam {}", studentExam.getId(), exception);
-                    sendAndCacheExercisePreparationStatus(examId, finishedExamsCounter.get(), failedExamsCounter.incrementAndGet(), studentExams.size(),
-                            generatedParticipations.size(), startedAt, lock);
-                    return;
-                }
-                sendAndCacheExercisePreparationStatus(examId, finishedExamsCounter.incrementAndGet(), failedExamsCounter.get(), studentExams.size(), generatedParticipations.size(),
-                        startedAt, lock);
-            });
-        }
 
-        return CompletableFuture.allOf(futures).thenApply(emtpy -> {
+        // TODO improve that
+        var threadPool = Executors.newFixedThreadPool(10);
+        var futures = studentExams.stream()
+                .map(studentExam -> CompletableFuture.runAsync(() -> setUpExerciseParticipationsAndSubmissions(studentExam, generatedParticipations), threadPool)
+                        .thenRun(() -> sendAndCacheExercisePreparationStatus(examId, finishedExamsCounter.incrementAndGet(), failedExamsCounter.get(), studentExams.size(),
+                                generatedParticipations.size(), startedAt, lock))
+                        .exceptionally(throwable -> {
+                            log.error("Exception while preparing exercises for student exam {}", studentExam.getId(), throwable);
+                            sendAndCacheExercisePreparationStatus(examId, finishedExamsCounter.get(), failedExamsCounter.incrementAndGet(), studentExams.size(),
+                                    generatedParticipations.size(), startedAt, lock);
+                            return null;
+                        }))
+                .toList().toArray(new CompletableFuture<?>[studentExams.size()]);
+        return CompletableFuture.allOf(futures).thenApply((emtpy) -> {
+            threadPool.shutdown();
             sendAndCacheExercisePreparationStatus(examId, finishedExamsCounter.get(), failedExamsCounter.get(), studentExams.size(), generatedParticipations.size(), startedAt,
                     lock);
             return generatedParticipations.size();

@@ -201,7 +201,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
     }
 
     /**
-     * We check if a submission for an exam programming exercise is after the individual end date and a student is not allowed to submit anymore.
+     * We check if a submission for a programming exercise is after the individual end date and a student is not allowed to submit anymore.
      * If this is the case, the submission is set to {@link SubmissionType#ILLEGAL}.
      *
      * @param programmingExerciseParticipation current participation of the exam exercise
@@ -218,9 +218,8 @@ public class ProgrammingSubmissionService extends SubmissionService {
             }
             User student = optionalStudentWithGroups.get();
             if (!isAllowedToSubmit(studentParticipation, student)) {
-                final String message = "The student " + student.getLogin()
-                        + " just illegally submitted code after the allowed individual due date (including the grace period) in the participation "
-                        + programmingExerciseParticipation.getId() + " for the programming exercise " + programmingExercise.getId();
+                final String message = "The student %s just illegally submitted code after the allowed individual due date (including the grace period) in the participation %d for the programming exercise %d"
+                        .formatted(student.getLogin(), programmingExerciseParticipation.getId(), programmingExercise.getId());
                 programmingSubmission.setType(SubmissionType.ILLEGAL);
                 programmingMessagingService.notifyInstructorGroupAboutIllegalSubmissionsForExercise(programmingExercise, message);
                 log.warn(message);
