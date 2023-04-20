@@ -292,7 +292,6 @@ export abstract class BaseGradingSystemComponent implements OnInit {
      * -- the presentationScore must be 0 or undefined
      */
     validPresentationSettings(): boolean {
-        console.log(this.presentationsConfig, this.gradingScale);
         if (this.presentationsConfig.presentationType === PresentationType.NONE) {
             // The presentationsNumber and presentationsWeight must be undefined
             if (this.presentationsConfig.presentationsNumber !== undefined || this.presentationsConfig.presentationsWeight !== undefined) {

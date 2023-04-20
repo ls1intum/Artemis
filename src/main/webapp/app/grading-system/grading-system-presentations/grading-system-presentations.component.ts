@@ -101,7 +101,6 @@ export class GradingSystemPresentationsComponent implements OnInit, OnChanges {
      * @param presentationsWeight
      */
     updatePresentationsWeight(presentationsWeight?: number) {
-        console.log('updatePresentationsWeight', presentationsWeight);
         this.presentationsConfig.presentationsWeight = (presentationsWeight ?? -1) >= 0 ? presentationsWeight : undefined;
         this.gradingScale.presentationsWeight = this.presentationsConfig.presentationsWeight;
     }
