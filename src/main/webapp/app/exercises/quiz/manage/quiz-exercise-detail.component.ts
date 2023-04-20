@@ -311,6 +311,7 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
     cacheValidation() {
         if (this.quizExercise.quizMode === QuizMode.SYNCHRONIZED) {
             this.quizExercise.dueDate = undefined; // Due date is calculated on server side
+
             if (this.scheduleQuizStart) {
                 if ((this.quizExercise.quizBatches?.length ?? 0) !== 1) {
                     this.quizExercise.quizBatches = [this.quizExercise.quizBatches?.[0] ?? new QuizBatch()];

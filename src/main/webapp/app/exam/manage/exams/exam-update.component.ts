@@ -39,7 +39,7 @@ export class ExamUpdateComponent implements OnInit {
     isInvalidPublishResultsDate = false;
     isInvalidStudentReviewStartDate = false;
     isInvalidStudentReviewEndDate = false;
-    invalidExampleSolutionPublicationDate = false;
+    isInvalidExampleSolutionPublicationDate = false;
 
     // Link to the component enabling the selection of exercise groups and exercises for import
     @ViewChild(ExamExerciseImportComponent) examExerciseImportComponent: ExamExerciseImportComponent;
@@ -348,6 +348,10 @@ export class ExamUpdateComponent implements OnInit {
 
     validateStudentReviewEndDate(isInvalidDate: boolean) {
         this.isInvalidStudentReviewEndDate = isInvalidDate;
+    }
+
+    validateExampleSolutionPublicationDate(isInvalidDate: boolean) {
+        this.isInvalidExampleSolutionPublicationDate = isInvalidDate;
     }
 
     /**

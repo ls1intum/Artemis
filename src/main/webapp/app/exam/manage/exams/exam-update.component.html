@@ -218,7 +218,7 @@
                         labelName="{{ 'artemisApp.exam.exampleSolutionPublicationDate' | artemisTranslate }}"
                         labelTooltip="{{ 'artemisApp.examManagement.exampleSolutionPublicationDateTooltip' | artemisTranslate }}"
                         [(ngModel)]="exam.exampleSolutionPublicationDate"
-                        (valueChange)="invalidExampleSolutionPublicationDate = $event"
+                        (valueChange)="validateExampleSolutionPublicationDate($event)"
                         [error]="!isValidExampleSolutionPublicationDate"
                     ></jhi-date-time-picker>
                 </div>

@@ -519,7 +519,7 @@ export class CourseUpdateComponent implements OnInit {
         if (this.atLeastOneDateNotExisting()) {
             this.areInvalidDates = false;
         } else {
-            this.areInvalidDates = !dayjs(this.course.startDate).isBefore(this.course.endDate);
+            this.areInvalidDates = dayjs(this.course.endDate).isBefore(this.course.startDate);
         }
     }
 
