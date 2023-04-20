@@ -2,12 +2,15 @@ package de.tum.in.www1.artemis.service;
 
 import java.time.ZonedDateTime;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Consumer;
+import java.util.regex.Pattern;
 
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 
 import org.hibernate.Hibernate;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -16,6 +19,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.SecurityUtils;
@@ -29,8 +33,14 @@ public class AuthorizationCheckService {
 
     private final UserRepository userRepository;
 
-    public AuthorizationCheckService(UserRepository userRepository) {
+    private final CourseRepository courseRepository;
+
+    @Value("${artemis.user-management.course-registration.allowed-username-pattern:#{null}}")
+    private Optional<Pattern> allowedCourseRegistrationUsernamePattern;
+
+    public AuthorizationCheckService(UserRepository userRepository, CourseRepository courseRepository) {
         this.userRepository = userRepository;
+        this.courseRepository = courseRepository;
     }
 
     /**
@@ -176,6 +186,76 @@ public class AuthorizationCheckService {
     private void checkIsAtLeastStudentInCourseElseThrow(@NotNull Course course, @Nullable User user) {
         if (!isAtLeastStudentInCourse(course, user)) {
             throw new AccessForbiddenException("Course", course.getId());
+        }
+    }
+
+    /**
+     * An enum that represents the different reasons why a user is not allowed to self register for a course,
+     * or ALLOWED if the user is allowed to self register for the course.
+     */
+    private enum RegistrationAuthorization {
+        ALLOWED, USERNAME_PATTERN, COURSE_STATUS, REGISTRATION_STATUS, ONLINE, ORGANIZATIONS
+    }
+
+    /**
+     * Checks if the user is allowed to self register for the given course.
+     * Returns `RegistrationAuthorization.ALLOWED` if the user is allowed to self register for the course,
+     * or the reason why the user is not allowed to self register for the course otherwise.
+     * See also: {@link #checkUserAllowedToSelfRegisterForCourseElseThrow(User, Course)}
+     *
+     * @param user   The user that wants to self register
+     * @param course The course to which the user wants to self register
+     * @return `RegistrationAuthorization.ALLOWED` if the user is allowed to self register for the course,
+     *         or the reason why the user is not allowed to self register for the course otherwise
+     */
+    public RegistrationAuthorization getUserRegistrationAuthorizationForCourse(User user, Course course) {
+        if (allowedCourseRegistrationUsernamePattern.isPresent() && !allowedCourseRegistrationUsernamePattern.get().matcher(user.getLogin()).matches()) {
+            return RegistrationAuthorization.USERNAME_PATTERN;
+        }
+        if (!course.isActive()) {
+            return RegistrationAuthorization.COURSE_STATUS;
+        }
+        if (!Boolean.TRUE.equals(course.isRegistrationEnabled())) {
+            return RegistrationAuthorization.REGISTRATION_STATUS;
+        }
+        Set<Organization> courseOrganizations = course.getOrganizations();
+        if (courseOrganizations != null && !courseOrganizations.isEmpty() && !courseRepository.checkIfUserIsMemberOfCourseOrganizations(user, course)) {
+            return RegistrationAuthorization.ORGANIZATIONS;
+        }
+        if (course.isOnlineCourse()) {
+            return RegistrationAuthorization.ONLINE;
+        }
+        return RegistrationAuthorization.ALLOWED;
+    }
+
+    /**
+     * Checks if the user is allowed to self register for the given course.
+     * See also: {@link #checkUserAllowedToSelfRegisterForCourseElseThrow(User, Course)}
+     *
+     * @param user   The user that wants to self register
+     * @param course The course to which the user wants to self register
+     * @return boolean, true if the user is allowed to self register for the course, false otherwise
+     */
+    public boolean isUserAllowedToSelfRegisterForCourse(User user, Course course) {
+        return RegistrationAuthorization.ALLOWED.equals(getUserRegistrationAuthorizationForCourse(user, course));
+    }
+
+    /**
+     * Checks if the user is allowed to self register for the given course.
+     * Throws an AccessForbiddenException if the user is not allowed to self register for the course.
+     * See also: {@link #getUserRegistrationAuthorizationForCourse(User, Course)}
+     *
+     * @param user   The user that wants to self register
+     * @param course The course to which the user wants to self register
+     */
+    public void checkUserAllowedToSelfRegisterForCourseElseThrow(User user, Course course) throws AccessForbiddenException {
+        RegistrationAuthorization auth = getUserRegistrationAuthorizationForCourse(user, course);
+        switch (auth) {
+            case USERNAME_PATTERN -> throw new AccessForbiddenException("Registration with this username is not allowed.");
+            case COURSE_STATUS -> throw new AccessForbiddenException("The course is not currently active.");
+            case REGISTRATION_STATUS -> throw new AccessForbiddenException("The course does not allow registration.");
+            case ORGANIZATIONS -> throw new AccessForbiddenException("User is not member of any organization of this course.");
+            case ONLINE -> throw new AccessForbiddenException("Online courses cannot be registered for.");
         }
     }
 
@@ -498,7 +578,6 @@ public class AuthorizationCheckService {
 
     /**
      * Checks if the user is allowed to see the exam result. Returns true if
-     *
      * - the current user is at least teaching assistant in the course
      * - OR if the exercise is not part of an exam
      * - OR if the exam has not ended
@@ -512,33 +591,6 @@ public class AuthorizationCheckService {
         return this.isAtLeastTeachingAssistantInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user)
                 || (exercise.isCourseExercise() || (exercise.isExamExercise() && exercise.getExerciseGroup().getExam().getEndDate().isAfter(ZonedDateTime.now()))
                         || exercise.getExerciseGroup().getExam().resultsPublished());
-    }
-
-    /**
-     * Check if a participation can be accessed with the current user.
-     *
-     * @param participation to access
-     * @return can user access participation
-     */
-    public boolean canAccessParticipation(StudentParticipation participation) {
-        return Optional.ofNullable(participation).isPresent() && userHasPermissionsToAccessParticipation(participation);
-    }
-
-    /**
-     * Check if a user has permissions to access a certain participation. This includes not only the owner of the participation but also the TAs and instructors of the course.
-     *
-     * @param participation to access
-     * @return does user has permissions to access participation
-     */
-    private boolean userHasPermissionsToAccessParticipation(StudentParticipation participation) {
-        if (isOwnerOfParticipation(participation)) {
-            return true;
-        }
-        // if the user is not the owner of the participation, the user can only see it in case they are
-        // a teaching assistant, an editor or an instructor of the course, or in case they are an admin
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        Course course = participation.getExercise().getCourseViaExerciseGroupOrCourseMember();
-        return isAtLeastTeachingAssistantInCourse(course, user);
     }
 
     /**

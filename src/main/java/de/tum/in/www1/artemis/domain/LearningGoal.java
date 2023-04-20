@@ -139,7 +139,7 @@ public class LearningGoal extends DomainObject {
     public void addLectureUnit(LectureUnit lectureUnit) {
         if (lectureUnit instanceof ExerciseUnit) {
             // The learning goals of ExerciseUnits are taken from the corresponding exercise
-            throw new IllegalArgumentException("ExerciseUnits can not be connected to learning goals");
+            throw new IllegalArgumentException("ExerciseUnits can not be connected to competencies");
         }
         this.lectureUnits.add(lectureUnit);
         lectureUnit.getLearningGoals().add(this);
@@ -154,7 +154,7 @@ public class LearningGoal extends DomainObject {
     public void removeLectureUnit(LectureUnit lectureUnit) {
         if (lectureUnit instanceof ExerciseUnit) {
             // The learning goals of ExerciseUnits are taken from the corresponding exercise
-            throw new IllegalArgumentException("ExerciseUnits can not be disconnected from learning goals");
+            throw new IllegalArgumentException("ExerciseUnits can not be disconnected from competencies");
         }
         this.lectureUnits.remove(lectureUnit);
         lectureUnit.getLearningGoals().remove(this);

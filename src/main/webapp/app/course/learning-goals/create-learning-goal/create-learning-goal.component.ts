@@ -17,7 +17,7 @@ import { DocumentationType } from 'app/shared/components/documentation-button/do
     styles: [],
 })
 export class CreateLearningGoalComponent implements OnInit {
-    documentationType = DocumentationType.LearningGoals;
+    documentationType = DocumentationType.Competencies;
     learningGoalToCreate: LearningGoal = new LearningGoal();
     isLoading: boolean;
     courseId: number;
