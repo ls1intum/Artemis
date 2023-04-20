@@ -123,7 +123,7 @@
         </button>
     </div>
     <div>
-        <button (click)="save()" [disabled]="isLoading || !validGradeSteps()" class="btn btn-primary mr-1 mb-1" type="button">
+        <button (click)="save()" [disabled]="isLoading || !validGradeSteps() || !validPresentationSettings()" class="btn btn-primary mr-1 mb-1" type="button">
             <fa-icon [icon]="faSave"></fa-icon>&nbsp;<span jhiTranslate="artemisApp.gradingSystem.save">Save</span>
         </button>
         <button

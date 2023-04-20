@@ -6,6 +6,8 @@
     <jhi-documentation-button [type]="documentationType"></jhi-documentation-button>
 </div>
 <div *ngIf="childComponent" class="course-body-container">
+    <div>Number: {{ childComponent.gradingScale.presentationsNumber }}</div>
+    <div>Weight: {{ childComponent.gradingScale.presentationsWeight }}</div>
     <div class="d-flex">
         <button (click)="childComponent.generateDefaultGradingScale()" class="btn btn-primary me-1 mb-1" type="button">
             <span jhiTranslate="artemisApp.gradingSystem.defaultButton">Generate Default Grading Scale</span>
@@ -54,6 +56,7 @@
             </ng-container>
         </div>
     </div>
+    <jhi-grading-system-presentations [gradingScale]="childComponent.gradingScale" [presentationsConfig]="childComponent.presentationsConfig"></jhi-grading-system-presentations>
 </div>
 <div class="tab-bar" id="tab-bar">
     <div class="col-12 no-indent">
