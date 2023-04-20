@@ -116,6 +116,9 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbuc
      */
     @BeforeEach
     void setUp() {
+        // this is done to prevent flakiness in case other tests created notifications as side effects and did not clean them up
+        notificationRepository.deleteAllInBatch();
+
         course = database.createCourse();
         course.setInstructorGroupName(TEST_PREFIX + "instructors");
         course.setTeachingAssistantGroupName(TEST_PREFIX + "tutors");
