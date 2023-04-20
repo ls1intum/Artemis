@@ -64,7 +64,7 @@ export class ProgrammingExerciseGradingTaskComponent implements OnInit {
         });
     }
 
-    private initTasks = () => {
+    initTasks = () => {
         this.updateTasks();
         this.unsortedTasks = this.tasks.slice();
     };

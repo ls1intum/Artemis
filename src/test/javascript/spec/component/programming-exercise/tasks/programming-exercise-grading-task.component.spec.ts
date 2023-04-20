@@ -47,7 +47,7 @@ describe('ProgrammingExerciseGradingTaskComponent', () => {
 
         comp.ngOnInit();
 
-        expect(taskServiceConfigureStub).toHaveBeenCalledWith(exercise, course, gradingStatistics);
+        expect(taskServiceConfigureStub).toHaveBeenCalledOnceWith(exercise, course, gradingStatistics);
     });
 
     it('should update tasks through the service and set them in the component', () => {
@@ -55,9 +55,9 @@ describe('ProgrammingExerciseGradingTaskComponent', () => {
         const updatedTasks = [{ taskName: 'updatedTask' }] as ProgrammingExerciseTask[];
         taskServiceUpdateTasksStub.mockReturnValue(updatedTasks);
 
-        comp.updateTasks();
+        comp.initTasks();
 
-        expect(taskServiceUpdateTasksStub).toHaveBeenCalled();
+        expect(taskServiceUpdateTasksStub).toHaveBeenCalledOnce();
         expect(comp.tasks).toBe(updatedTasks);
     });
 
@@ -69,8 +69,8 @@ describe('ProgrammingExerciseGradingTaskComponent', () => {
 
         comp.toggleShowInactiveTestsShown();
 
-        expect(taskServiceToggleIgnoreInactiveStub).toHaveBeenCalled();
-        expect(taskServiceUpdateTasksStub).toHaveBeenCalled();
+        expect(taskServiceToggleIgnoreInactiveStub).toHaveBeenCalledOnce();
+        expect(taskServiceUpdateTasksStub).toHaveBeenCalledOnce();
     });
 
     it('should pass saving to the service', () => {
@@ -80,7 +80,7 @@ describe('ProgrammingExerciseGradingTaskComponent', () => {
         comp.saveTestCases();
 
         expect(comp.isSaving).toBeTruthy();
-        expect(taskServiceSaveTestCasesStub).toHaveBeenCalled();
+        expect(taskServiceSaveTestCasesStub).toHaveBeenCalledOnce();
 
         subject.next({});
 
@@ -94,11 +94,52 @@ describe('ProgrammingExerciseGradingTaskComponent', () => {
         comp.resetTestCases();
 
         expect(comp.isSaving).toBeTruthy();
-        expect(taskServiceResetTestCasesStub).toHaveBeenCalled();
+        expect(taskServiceResetTestCasesStub).toHaveBeenCalledOnce();
 
         subject.next({});
 
         expect(comp.isSaving).toBeFalsy();
-        expect(taskServiceUpdateTasksStub).toHaveBeenCalled();
+        expect(taskServiceUpdateTasksStub).toHaveBeenCalledOnce();
+    });
+
+    it('should change sort correctly', () => {
+        const tasks = [
+            { taskName: 'task1', weight: 2 },
+            { taskName: 'task2', weight: 1 },
+            { taskName: 'task3', weight: 0 },
+            { taskName: 'task4', weight: 1 },
+            { taskName: 'task5', weight: 2 },
+        ] as ProgrammingExerciseTask[];
+        const expected = [
+            { taskName: 'task3', weight: 0 },
+            { taskName: 'task2', weight: 1 },
+            { taskName: 'task4', weight: 1 },
+            { taskName: 'task1', weight: 2 },
+            { taskName: 'task5', weight: 2 },
+        ];
+
+        taskServiceUpdateTasksStub.mockReturnValue(tasks);
+        comp.initTasks();
+
+        comp.changeSort('weight');
+
+        expect(comp.tasks).toEqual(expected);
+    });
+
+    it('should reset sort correctly', () => {
+        const tasks = [
+            { taskName: 'task1', weight: 2 },
+            { taskName: 'task2', weight: 1 },
+            { taskName: 'task3', weight: 0 },
+            { taskName: 'task4', weight: 1 },
+            { taskName: 'task5', weight: 2 },
+        ] as ProgrammingExerciseTask[];
+        taskServiceUpdateTasksStub.mockReturnValue(tasks.slice());
+        comp.initTasks();
+        comp.changeSort('weight');
+
+        comp.resetSort();
+
+        expect(comp.tasks).toEqual(tasks);
     });
 });
