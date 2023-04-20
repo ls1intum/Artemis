@@ -18,7 +18,7 @@
     </div>
     <div class="row"></div>
     <br />
-    <div class="table-responsive" id="exams-table">
+    <div *ngIf="allExamUsersAttendanceCheck.length > 0" class="table-responsive" id="exams-table">
         <table class="table table-striped">
             <thead>
                 <tr jhiSort [(predicate)]="predicate" [(ascending)]="ascending" (sortChange)="sortRows()">
