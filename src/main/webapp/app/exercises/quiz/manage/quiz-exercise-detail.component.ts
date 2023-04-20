@@ -1109,10 +1109,17 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
         this.cacheValidation();
     }
 
-    toggle(event: Event) {
-        const checked = (event.target as HTMLInputElement).checked;
-        if (!checked) {
+    /**
+     * used for changing the quiz mode. If the quiz mode is changes to SYNCHRONIZED, then the due date cannot be invalid
+     * since SYNCHRONIZED quizzes do not have an end date. In case the quiz is not SYNCHRONIZED , the bachModeStartTime
+     * is not set and so cannot be invalid
+     */
+    switchQuizMode() {
+        if (this.quizExercise.quizMode === QuizMode.SYNCHRONIZED) {
+            this.isInvalidDueDate = false;
+        } else {
             this.isInvalidBachModeStartTime = false;
         }
+        this.cacheValidation();
     }
 }
