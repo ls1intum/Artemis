@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { faAngleDown, faAngleRight } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseTask } from 'app/exercises/programming/manage/grading/tasks/programming-exercise-task';
 import { ProgrammingExerciseTestCase, Visibility } from 'app/entities/programming-exercise-test-case.model';
@@ -9,7 +9,7 @@ import { ProgrammingExerciseTaskService } from '../programming-exercise-task.ser
     templateUrl: './programming-exercise-task.component.html',
     styleUrls: ['./programming-exercise-task.component.scss'],
 })
-export class ProgrammingExerciseTaskComponent {
+export class ProgrammingExerciseTaskComponent implements OnInit {
     @Input() task: ProgrammingExerciseTask;
     @Input() open: boolean;
 
@@ -28,6 +28,13 @@ export class ProgrammingExerciseTaskComponent {
     }
 
     constructor(private programmingExerciseTaskService: ProgrammingExerciseTaskService) {}
+
+    ngOnInit(): void {
+        // If this is the only task have it open by default
+        if (this.programmingExerciseTaskService.currentTasks.length == 1) {
+            this.open = true;
+        }
+    }
 
     testUpdateHandler(test: ProgrammingExerciseTestCase) {
         this.programmingExerciseTaskService.initializeTask(this.task);
