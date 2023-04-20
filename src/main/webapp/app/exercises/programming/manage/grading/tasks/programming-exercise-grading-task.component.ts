@@ -48,6 +48,7 @@ export class ProgrammingExerciseGradingTaskComponent implements OnInit {
     tasks: ProgrammingExerciseTask[];
     allTasksExpandedSubject: Subject<boolean>;
     currentSort: Sort | undefined;
+    unsortedTasks: ProgrammingExerciseTask[];
 
     get ignoreInactive() {
         return this.taskService.ignoreInactive;
@@ -58,7 +59,10 @@ export class ProgrammingExerciseGradingTaskComponent implements OnInit {
     ngOnInit(): void {
         this.allTasksExpandedSubject = new Subject();
         this.gradingStatisticsObservable.subscribe((gradingStatistics) => {
-            this.taskService.configure(this.exercise, this.course, gradingStatistics).subscribe(this.updateTasks);
+            this.taskService.configure(this.exercise, this.course, gradingStatistics).subscribe(() => {
+                this.updateTasks();
+                this.unsortedTasks = this.tasks.slice();
+            });
         });
     }
 
@@ -69,6 +73,7 @@ export class ProgrammingExerciseGradingTaskComponent implements OnInit {
     toggleShowInactiveTestsShown = () => {
         this.taskService.toggleIgnoreInactive();
         this.updateTasks();
+        this.unsortedTasks = this.tasks.slice();
     };
 
     saveTestCases = () => {
@@ -81,6 +86,7 @@ export class ProgrammingExerciseGradingTaskComponent implements OnInit {
         this.taskService.resetTestCases().subscribe(() => {
             this.isSaving = false;
             this.updateTasks();
+            this.unsortedTasks = this.tasks.slice();
         });
     };
 
@@ -103,7 +109,7 @@ export class ProgrammingExerciseGradingTaskComponent implements OnInit {
 
     resetSort = () => {
         this.currentSort = undefined;
-        this.updateTasks();
+        this.tasks = this.unsortedTasks.slice();
     };
 
     getSortIcon = (by: Sort['by']) => {
@@ -129,7 +135,7 @@ export class ProgrammingExerciseGradingTaskComponent implements OnInit {
             return this.currentSort?.descending ? order : -order;
         };
 
-        this.tasks = this.tasks.slice().sort(comparator);
+        this.tasks = this.tasks.sort(comparator);
     };
 
     private compareNumForAttribute = (attributeKey: keyof ProgrammingExerciseTask): TaskComparator => {
