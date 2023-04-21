@@ -5,6 +5,8 @@ import static de.tum.in.www1.artemis.domain.notification.SingleUserNotificationF
 import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsCommunicationChannel.*;
 
 import java.time.ZonedDateTime;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -13,8 +15,10 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
+import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.Post;
-import de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants;
+import de.tum.in.www1.artemis.domain.metis.Posting;
+import de.tum.in.www1.artemis.domain.notification.NotificationConstants;
 import de.tum.in.www1.artemis.domain.notification.SingleUserNotification;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
@@ -60,8 +64,8 @@ public class SingleUserNotificationService {
     private void notifyRecipientWithNotificationType(Object notificationSubject, NotificationType notificationType, Object typeSpecificInformation, User author) {
         var singleUserNotification = switch (notificationType) {
             // Post Types
-            case NEW_REPLY_FOR_EXERCISE_POST, NEW_REPLY_FOR_LECTURE_POST, NEW_REPLY_FOR_COURSE_POST -> createNotification((Post) notificationSubject, notificationType,
-                    (Course) typeSpecificInformation);
+            case NEW_REPLY_FOR_EXERCISE_POST, NEW_REPLY_FOR_LECTURE_POST, NEW_REPLY_FOR_COURSE_POST -> createNotification((Post) ((List<Posting>) notificationSubject).get(0),
+                    (AnswerPost) ((List<Posting>) notificationSubject).get(1), notificationType, (Course) typeSpecificInformation);
             // Exercise related
             case EXERCISE_SUBMISSION_ASSESSED, FILE_SUBMISSION_SUCCESSFUL -> createNotification((Exercise) notificationSubject, notificationType, (User) typeSpecificInformation);
             // Plagiarism related
@@ -103,32 +107,35 @@ public class SingleUserNotificationService {
     /**
      * Notify author of a post for an exercise that there is a new reply.
      *
-     * @param post   that is replied
-     * @param course that the post belongs to
+     * @param post       that is replied
+     * @param answerPost that is replied with
+     * @param course     that the post belongs to
      */
-    public void notifyUserAboutNewReplyForExercise(Post post, Course course) {
-        notifyRecipientWithNotificationType(post, NEW_REPLY_FOR_EXERCISE_POST, course, post.getAuthor());
+    public void notifyUserAboutNewReplyForExercise(Post post, AnswerPost answerPost, Course course) {
+        notifyRecipientWithNotificationType(Arrays.asList(post, answerPost), NEW_REPLY_FOR_EXERCISE_POST, course, post.getAuthor());
     }
 
     /**
      * Notify author of a post for a lecture that there is a new reply.
      *
-     * @param post   that is replied
-     * @param course that the post belongs to
+     * @param post       that is replied
+     * @param answerPost that is replied with
+     * @param course     that the post belongs to
      */
-    public void notifyUserAboutNewReplyForLecture(Post post, Course course) {
-        notifyRecipientWithNotificationType(post, NEW_REPLY_FOR_LECTURE_POST, course, post.getAuthor());
+    public void notifyUserAboutNewReplyForLecture(Post post, AnswerPost answerPost, Course course) {
+        notifyRecipientWithNotificationType(Arrays.asList(post, answerPost), NEW_REPLY_FOR_LECTURE_POST, course, post.getAuthor());
     }
 
     /**
      * Notify author of a course-wide that there is a new reply.
      * Also creates and sends an email.
      *
-     * @param post   that is replied
-     * @param course that the post belongs to
+     * @param post       that is replied
+     * @param answerPost that is replied with
+     * @param course     that the post belongs to
      */
-    public void notifyUserAboutNewReplyForCoursePost(Post post, Course course) {
-        notifyRecipientWithNotificationType(post, NEW_REPLY_FOR_COURSE_POST, course, post.getAuthor());
+    public void notifyUserAboutNewReplyForCoursePost(Post post, AnswerPost answerPost, Course course) {
+        notifyRecipientWithNotificationType(Arrays.asList(post, answerPost), NEW_REPLY_FOR_COURSE_POST, course, post.getAuthor());
     }
 
     /**
@@ -318,7 +325,7 @@ public class SingleUserNotificationService {
      * @param notificationSubject which information will be extracted to create the email
      */
     private void prepareSingleUserNotificationEmail(SingleUserNotification notification, Object notificationSubject) {
-        NotificationType type = NotificationTitleTypeConstants.findCorrespondingNotificationType(notification.getTitle());
+        NotificationType type = NotificationConstants.findCorrespondingNotificationType(notification.getTitle());
         // checks if this notification type has email support
         if (notificationSettingsService.checkNotificationTypeForEmailSupport(type)) {
             boolean isAllowedBySettingsForEmail = notificationSettingsService.checkIfNotificationOrEmailIsAllowedBySettingsForGivenUser(notification, notification.getRecipient(),

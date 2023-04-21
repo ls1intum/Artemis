@@ -74,7 +74,11 @@ describe('Course communication', () => {
             cy.login(studentTwo, `/courses/${course.id}/discussion`);
             navigationBar.openNotificationPanel();
             navigationBar.getNotifications().first().find('.notification-title').contains('New announcement');
-            navigationBar.getNotifications().first().find('.notification-text').contains(`Course "${course.title}" got a new announcement.`);
+            navigationBar
+                .getNotifications()
+                .first()
+                .find('.notification-text')
+                .contains((`The course "` + courseName + `" got a new announcement: "` + content + `"`).substring(0, 300 - 1));
         });
 
         it('instructor should be able to archive a post', () => {
