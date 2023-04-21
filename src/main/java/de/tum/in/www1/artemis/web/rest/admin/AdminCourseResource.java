@@ -35,7 +35,6 @@ public class AdminCourseResource {
 
     private final Logger log = LoggerFactory.getLogger(AdminCourseResource.class);
 
-    private final ChannelService channelService;
 
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
@@ -43,6 +42,8 @@ public class AdminCourseResource {
     private final UserRepository userRepository;
 
     private final CourseService courseService;
+
+    private final ChannelService channelService;
 
     private final CourseRepository courseRepository;
 
