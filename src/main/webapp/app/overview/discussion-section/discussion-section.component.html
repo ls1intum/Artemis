@@ -127,6 +127,7 @@
                         <jhi-posting-thread
                             *ngFor="let post of posts; trackBy: postsTrackByFn"
                             [id]="'item-' + post.id"
+                            class="item"
                             [post]="post"
                             [showAnswers]="posts.length === 1"
                         ></jhi-posting-thread>

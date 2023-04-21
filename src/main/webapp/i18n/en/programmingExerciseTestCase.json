@@ -22,6 +22,12 @@
                 "Always": "Always",
                 "AfterDueDate": "After Due Date",
                 "Never": "Never"
+            },
+            "type": {
+                "null": "",
+                "STRUCTURAL": "Structural",
+                "BEHAVIORAL": "Behavior",
+                "MIXED": "Mixed"
             }
         }
     }
