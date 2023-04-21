@@ -189,6 +189,8 @@
                 "shortTitle": "Bewertung",
                 "save": "Speichern",
                 "reset": "Zurücksetzen",
+                "expandAll": "Alle Testfälle einblenden",
+                "collapseAll": "Alle Testfälle ausblenden",
                 "status": {
                     "unsavedChanges": "Ungespeicherte Änderungen",
                     "unsavedTestCaseChanges": "Ungespeicherte Tests",
@@ -245,7 +247,7 @@
                     }
                 },
                 "gradingTableHeader": {
-                    "testName": "Testname",
+                    "testName": "<b>Task</b> / Test",
                     "weight": "Gewichtung",
                     "bonusMultiplier": "Bonusmultiplikator",
                     "bonusPoints": "Bonuspunkte",
@@ -255,13 +257,14 @@
                     "passedPercent": "Bestanden %"
                 },
                 "help": {
+                    "name": "Aufgabennamen werden fett geschrieben, während Testnamen normal sind. Ob es ein Aufgabenname oder Testname ist hängt davon ab, ob die Reihe eine Aufgabe oder einen Test darstellt.",
                     "state": "Gibt an, ob Issues in dieser Kategorie den Studierenden angezeigt und bewertet werden sollen.",
                     "penalty": "Punktabzüge werden auf jedes erkannte Issue in dieser Kategorie angewendet.",
                     "maxPenalty": "Der maximale Punktabzug über alle Issues einer/s Studierenden in dieser Kategorie.",
                     "detectedIssues": "Zeigt die Anzahl an Studierenden je Höhe der erkannten Issues in einer Kategorie, beginnend bei einem Issue. Die Balken werden rot, sobald der durch maxPenalty definierte Grenzwert der Kategorie überschritten wird.",
-                    "weight": "Die Gewichtung eines Testfalls bestimmt die Punkte, die Studierende für das Bestehen des Testfalls erhält. Die verteilten Punkte eines Testfalls sind proportional zu dessen Gewichtung und werden als ein Anteil der vollen Punktzahl der Aufgabe berechnet.",
-                    "bonusMultiplier": "Dies multipliziert die Punkte für das Bestehen eines Testfalls, ohne dabei die Anteile der anderen Testfälle zu beeinflussen. Multiplikatoren größer als 1 können zu Ergebnissen von mehr als 100% führen.",
-                    "bonusPoints": "Bonuspunkte, die zu den regulären Punkten für das Bestehen eines Testfalls hinzuaddiert werden. Das Setzen von Bonuspunkten kann zu Ergebnissen von mehr als 100% führen.",
+                    "weight": "Gewichtung: Die Gewichtung eines Testfalls bestimmt die Punkte, die Studierende für das Bestehen des Testfalls erhält. Die verteilten Punkte eines Testfalls sind proportional zu dessen Gewichtung und werden als ein Anteil der vollen Punktzahl der Aufgabe berechnet.",
+                    "bonusMultiplier": "Bonusmultiplikator: Dies multipliziert die Punkte für das Bestehen eines Testfalls, ohne dabei die Anteile der anderen Testfälle zu beeinflussen. Multiplikatoren größer als 1 können zu Ergebnissen von mehr als 100% führen.",
+                    "bonusPoints": "Bonuspunkte: Zusätzliche Punkte, die zu den regulären Punkten für das Bestehen eines Testfalls hinzuaddiert werden. Das Setzen von Bonuspunkten kann zu Ergebnissen von mehr als 100% führen.",
                     "visibility": "Feedback und Punkte für Testfälle, die mit „Nach Einreichungsfrist“ markiert sind, werden erst danach für Studierende angezeigt. Nie sichtbare Tests werden nicht in die Punktebewertung einbezogen.",
                     "points": "Die Menge an Punkten, die die Studierenden für das Bestehen dieses Tests bekommen. Dieser Wert wird wie in den Kurseinstellungen festgelegt gerundet.",
                     "type": "Der Typ des Tests gibt an, ob dieser aus der test.json-Datei generiert wurde (STRUCTURAL), oder manuell geschrieben wurde (BEHAVIORAL)."
