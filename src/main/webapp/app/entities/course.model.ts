@@ -118,7 +118,7 @@ export class Course implements BaseEntity {
         this.requestMoreFeedbackEnabled = true; // default value
         this.maxRequestMoreFeedbackTimeDays = 7; // default value
         this.accuracyOfScores = 1; // default value
-        this.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.DISABLED; // default value
+        this.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING; // default value
     }
 
     /**

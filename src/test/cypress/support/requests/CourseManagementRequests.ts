@@ -23,6 +23,7 @@ import lectureTemplate from '../../fixtures/lecture/template.json';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { Channel } from 'app/entities/metis/conversation/channel.model';
 import { Post } from 'app/entities/metis/post.model';
+import { GroupChat } from 'app/entities/metis/conversation/group-chat.model';
 
 export const COURSE_BASE = BASE_API + 'courses/';
 export const COURSE_ADMIN_BASE = BASE_API + 'admin/courses';
@@ -256,6 +257,32 @@ export class CourseManagementRequests {
             type: 'channel',
         };
         return cy.request({ method: POST, url: `${COURSE_BASE}${course.id}/channels`, body });
+    }
+
+    createCourseMessageGroupChat(course: Course, users: Array<string>) {
+        const body = users;
+        return cy.request({ method: POST, url: `${COURSE_BASE}${course.id}/group-chats`, body });
+    }
+
+    createCourseMessage(course: Course, targetId: number, type: string, message: string) {
+        const body = {
+            content: message,
+            conversation: {
+                id: targetId,
+                type,
+            },
+            displayPriority: 'NONE',
+            visibleForStudents: true,
+        };
+        return cy.request({ method: POST, url: `${COURSE_BASE}${course.id}/messages`, body });
+    }
+
+    updateCourseMessageGroupChatName(course: Course, groupChat: GroupChat, name: string) {
+        const body = {
+            name,
+            type: 'groupChat',
+        };
+        return cy.request({ method: PUT, url: `${COURSE_BASE}${course.id}/group-chats/${groupChat.id}`, body });
     }
 
     joinUserIntoChannel(course: Course, channel: Channel, user: CypressCredentials) {
