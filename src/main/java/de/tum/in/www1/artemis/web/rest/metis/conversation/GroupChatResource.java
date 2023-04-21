@@ -15,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.metis.conversation.GroupChat;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
@@ -23,6 +24,7 @@ import de.tum.in.www1.artemis.service.metis.conversation.ConversationDTOService;
 import de.tum.in.www1.artemis.service.metis.conversation.ConversationService;
 import de.tum.in.www1.artemis.service.metis.conversation.GroupChatService;
 import de.tum.in.www1.artemis.service.metis.conversation.auth.GroupChatAuthorizationService;
+import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.GroupChatDTO;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.MetisCrudAction;
@@ -45,8 +47,11 @@ public class GroupChatResource extends ConversationManagementResource {
 
     private final ConversationDTOService conversationDTOService;
 
-    public GroupChatResource(UserRepository userRepository, CourseRepository courseRepository, GroupChatAuthorizationService groupChatAuthorizationService,
-            ConversationService conversationService, GroupChatService groupChatService, GroupChatRepository groupChatRepository, ConversationDTOService conversationDTOService) {
+    private final SingleUserNotificationService singleUserNotificationService;
+
+    public GroupChatResource(SingleUserNotificationService singleUserNotificationService, UserRepository userRepository, CourseRepository courseRepository,
+            GroupChatAuthorizationService groupChatAuthorizationService, ConversationService conversationService, GroupChatService groupChatService,
+            GroupChatRepository groupChatRepository, ConversationDTOService conversationDTOService) {
         super(courseRepository);
         this.userRepository = userRepository;
         this.groupChatAuthorizationService = groupChatAuthorizationService;
@@ -54,6 +59,7 @@ public class GroupChatResource extends ConversationManagementResource {
         this.groupChatService = groupChatService;
         this.groupChatRepository = groupChatRepository;
         this.conversationDTOService = conversationDTOService;
+        this.singleUserNotificationService = singleUserNotificationService;
     }
 
     /**
@@ -82,6 +88,8 @@ public class GroupChatResource extends ConversationManagementResource {
         }
 
         var groupChat = groupChatService.startGroupChat(course, chatMembers);
+        chatMembers.forEach(user -> singleUserNotificationService.notifyClientAboutConversationCreationOrDeletion(groupChat, user, requestingUser,
+                NotificationType.CONVERSATION_CREATE_GROUP_CHAT));
 
         conversationService.broadcastOnConversationMembershipChannel(course, MetisCrudAction.CREATE, groupChat, chatMembers);
 
@@ -135,6 +143,8 @@ public class GroupChatResource extends ConversationManagementResource {
         groupChatAuthorizationService.isAllowedToAddUsersToGroupChat(groupChatFromDatabase, requestingUser);
         var usersToRegister = conversationService.findUsersInDatabase(userLogins);
         conversationService.registerUsersToConversation(course, usersToRegister, groupChatFromDatabase, Optional.of(MAX_GROUP_CHAT_PARTICIPANTS));
+        usersToRegister.forEach(user -> singleUserNotificationService.notifyClientAboutConversationCreationOrDeletion(groupChatFromDatabase, user, requestingUser,
+                NotificationType.CONVERSATION_ADD_USER_GROUP_CHAT));
         return ResponseEntity.ok().build();
     }
 
@@ -164,6 +174,9 @@ public class GroupChatResource extends ConversationManagementResource {
         var usersToDeRegister = conversationService.findUsersInDatabase(userLogins);
         conversationService.deregisterUsersFromAConversation(course, usersToDeRegister, groupChatFromDatabase);
         // ToDo: Discuss if we should delete the group chat if it has no participants left, but maybe we want to keep it for data analysis purposes
+
+        usersToDeRegister.forEach(user -> singleUserNotificationService.notifyClientAboutConversationCreationOrDeletion(groupChatFromDatabase, user, requestingUser,
+                NotificationType.CONVERSATION_REMOVE_USER_GROUP_CHAT));
         return ResponseEntity.ok().build();
     }
 
