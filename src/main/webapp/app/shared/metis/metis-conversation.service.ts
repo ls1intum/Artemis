@@ -184,20 +184,10 @@ export class MetisConversationService implements OnDestroy {
         );
     };
 
-    public setUpConversationService = (courseId: number): Observable<never> => {
-        if (!courseId) {
-            throw new Error('CourseId is not set. The service cannot be initialized.');
-        }
-        this._courseId = courseId;
-        this.setIsLoading(true);
-        return this.courseManagementService.findOneForDashboard(courseId).pipe(
-            map((res: HttpResponse<Course>) => {
-                return res.body;
-            }),
-            switchMap((course: Course) => {
-                this._course = course;
-                return this.conversationService.getConversationsOfUser(this._course.id ?? 0);
-            }),
+    public setUpConversationService = (course: Course): Observable<never> => {
+        this._courseId = course.id!;
+        this._course = course;
+        return this.conversationService.getConversationsOfUser(this._course.id ?? 0).pipe(
             map((conversations: HttpResponse<ConversationDto[]>) => {
                 return conversations.body ?? [];
             }),
@@ -213,7 +203,7 @@ export class MetisConversationService implements OnDestroy {
                 this._conversationsOfUser$.next(this.conversationsOfUser);
                 this.activeConversation = undefined;
                 this._activeConversation$.next(this.activeConversation);
-                this.subscribeToConversationMembershipTopic(courseId, this.userId);
+                this.subscribeToConversationMembershipTopic(course.id!, this.userId);
                 this.subscribeToRouteChange();
                 this.setIsLoading(false);
                 this._isServiceSetup$.next(true);
