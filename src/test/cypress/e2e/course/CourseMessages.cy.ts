@@ -1,8 +1,9 @@
 import { Channel } from 'app/entities/metis/conversation/channel.model';
-import { Course } from '../../../../main/webapp/app/entities/course.model';
+import { Course } from 'app/entities/course.model';
+import { GroupChat } from 'app/entities/metis/conversation/group-chat.model';
 import { courseManagementRequest, courseMessages } from '../../support/artemis';
 import { convertCourseAfterMultiPart } from '../../support/requests/CourseManagementRequests';
-import { admin, instructor, studentOne, studentTwo } from '../../support/users';
+import { admin, instructor, studentOne, studentTwo, tutor, users } from '../../support/users';
 import { generateUUID } from '../../support/utils';
 
 // Common primitives
@@ -22,6 +23,7 @@ describe('Course messages', () => {
             course = convertCourseAfterMultiPart(response);
             courseId = course.id!;
             courseManagementRequest.addInstructorToCourse(course, instructor);
+            courseManagementRequest.addTutorToCourse(course, tutor);
             courseManagementRequest.addStudentToCourse(course, studentOne);
             courseManagementRequest.addStudentToCourse(course, studentTwo);
         });
@@ -139,6 +141,225 @@ describe('Course messages', () => {
                 courseMessages.browseChannelsButton();
                 courseMessages.leaveChannel(channel.id!);
                 courseMessages.checkBadgeJoined(channel.id!).should('not.exist');
+            });
+        });
+
+        describe('Write/edit/delete message in channel', () => {
+            let channel: Channel;
+            before('create channel', () => {
+                cy.login(admin);
+                courseManagementRequest.createCourseMessageChannel(course, 'write-test-channel', 'Write Test Channel', false, true).then((response) => {
+                    channel = response.body;
+                    courseManagementRequest.joinUserIntoChannel(course, channel, studentOne);
+                });
+            });
+
+            it('student should be able to write message in channel', () => {
+                cy.login(studentOne, `/courses/${course.id}/messages?conversationId=${channel.id}`);
+                const messageText = 'Student Test Message';
+                courseMessages.writeMessage(messageText);
+                courseMessages.save().then((interception) => {
+                    const message = interception.response!.body;
+                    courseMessages.checkMessage(message.id, messageText);
+                });
+            });
+
+            it('student should be able to edit message in channel', () => {
+                cy.login(studentOne, `/courses/${course.id}/messages?conversationId=${channel.id}`);
+                const messageText = 'Student Edit Test Message';
+                courseManagementRequest.createCourseMessage(course, channel.id!, 'channel', messageText).then((response) => {
+                    const message = response.body;
+                    const newMessage = 'Edited Text';
+                    courseMessages.editMessage(message.id, newMessage);
+                    courseMessages.checkMessage(message.id, newMessage);
+                    courseMessages.checkMessage(message.id, 'edited by');
+                });
+            });
+
+            it('student should be able to delete his message in channel', () => {
+                cy.login(studentOne, `/courses/${course.id}/messages?conversationId=${channel.id}`);
+                const messageText = 'Student Edit Test Message';
+                courseManagementRequest.createCourseMessage(course, channel.id!, 'channel', messageText).then((response) => {
+                    const message = response.body;
+                    courseMessages.checkMessage(message.id, messageText);
+                    courseMessages.deleteMessage(message.id);
+                    courseMessages.getSinglePost(message.id).should('not.exist');
+                });
+            });
+        });
+    });
+
+    describe('Group chats', () => {
+        let instructorName: string;
+        let tutorName: string;
+        let studentOneName: string;
+        let studentTwoName: string;
+
+        before('Get usernames', () => {
+            cy.login(admin);
+            users.getUserInfo(instructor.username, (userInfo) => {
+                instructorName = userInfo.name;
+            });
+            users.getUserInfo(tutor.username, (userInfo) => {
+                tutorName = userInfo.name;
+            });
+            users.getUserInfo(studentOne.username, (userInfo) => {
+                studentOneName = userInfo.name;
+            });
+            users.getUserInfo(studentTwo.username, (userInfo) => {
+                studentTwoName = userInfo.name;
+            });
+        });
+
+        describe('Create group chat', () => {
+            it('instructors should be able to create group chat', () => {
+                cy.login(instructor, `/courses/${course.id}/messages`);
+                courseMessages.createGroupChatButton();
+                courseMessages.addUserToGroupChat(studentOne.username);
+                courseMessages.addUserToGroupChat(studentTwo.username);
+                courseMessages.createGroupChat().then((interception) => {
+                    const group = interception.response!.body;
+                    courseMessages.listMembersButton(course.id!, group.id);
+                    courseMessages.checkMemberList(studentOneName);
+                    courseMessages.checkMemberList(studentTwoName);
+                    courseMessages.closeEditPanel();
+                });
+            });
+
+            it('tutor should be able to create group chat', () => {
+                cy.login(tutor, `/courses/${course.id}/messages`);
+                courseMessages.createGroupChatButton();
+                courseMessages.addUserToGroupChat(studentOne.username);
+                courseMessages.addUserToGroupChat(instructor.username);
+                courseMessages.createGroupChat().then((interception) => {
+                    const group = interception.response!.body;
+                    courseMessages.listMembersButton(course.id!, group.id);
+                    courseMessages.checkMemberList(studentOneName);
+                    courseMessages.checkMemberList(instructorName);
+                    courseMessages.closeEditPanel();
+                });
+            });
+
+            it('student should be able to create group chat', () => {
+                cy.login(studentOne, `/courses/${course.id}/messages`);
+                courseMessages.createGroupChatButton();
+                courseMessages.addUserToGroupChat(studentTwo.username);
+                courseMessages.addUserToGroupChat(tutor.username);
+                courseMessages.createGroupChat().then((interception) => {
+                    const group = interception.response!.body;
+                    courseMessages.listMembersButton(course.id!, group.id);
+                    courseMessages.checkMemberList(studentTwoName);
+                    courseMessages.checkMemberList(tutorName);
+                    courseMessages.closeEditPanel();
+                });
+            });
+        });
+
+        describe('Add to group chat', () => {
+            let groupChat: GroupChat;
+            before('create group chat', () => {
+                cy.login(admin);
+                courseManagementRequest.createCourseMessageGroupChat(course, [studentOne.username, tutor.username]).then((response) => {
+                    groupChat = response.body;
+                });
+            });
+
+            it('tutor should be able to add user to group chat', () => {
+                cy.login(tutor, `/courses/${course.id}/messages?conversationId=${groupChat.id}`);
+                courseMessages.addUserToGroupChatButton();
+                courseMessages.addUserToGroupChat(instructor.username);
+                courseMessages.updateGroupChat();
+
+                courseMessages.listMembersButton(course.id!, groupChat.id!);
+                courseMessages.checkMemberList(instructorName);
+                courseMessages.closeEditPanel();
+            });
+
+            it('student should be able to add user to group chat', () => {
+                cy.login(studentOne, `/courses/${course.id}/messages?conversationId=${groupChat.id}`);
+                courseMessages.addUserToGroupChatButton();
+                courseMessages.addUserToGroupChat(studentTwo.username);
+                courseMessages.updateGroupChat();
+
+                courseMessages.listMembersButton(course.id!, groupChat.id!);
+                courseMessages.checkMemberList(studentTwoName);
+                courseMessages.closeEditPanel();
+            });
+        });
+
+        describe('Leave group chat', () => {
+            let groupChat: GroupChat;
+            const groupChatName = 'leave-test';
+
+            before('create group chat', () => {
+                cy.login(admin);
+                courseManagementRequest.createCourseMessageGroupChat(course, [studentOne.username, tutor.username]).then((response) => {
+                    groupChat = response.body;
+                    courseManagementRequest.updateCourseMessageGroupChatName(course, groupChat, groupChatName);
+                });
+            });
+
+            it('tutor should be able to leave group chat', () => {
+                cy.login(tutor, `/courses/${course.id}/messages?conversationId=${groupChat.id}`);
+                courseMessages.checkGroupChatExists(groupChatName, true);
+                courseMessages.listMembersButton(course.id!, groupChat.id!);
+                courseMessages.openSettingsTab();
+                courseMessages.leaveGroupChat();
+                cy.visit(`/courses/${course.id}/messages`);
+                courseMessages.checkGroupChatExists(groupChatName, false);
+            });
+
+            it('student should be able to leave group chat', () => {
+                cy.login(studentOne, `/courses/${course.id}/messages?conversationId=${groupChat.id}`);
+                courseMessages.checkGroupChatExists(groupChatName, true);
+                courseMessages.listMembersButton(course.id!, groupChat.id!);
+                courseMessages.openSettingsTab();
+                courseMessages.leaveGroupChat();
+                cy.visit(`/courses/${course.id}/messages`);
+                courseMessages.checkGroupChatExists(groupChatName, false);
+            });
+        });
+
+        describe('Write/edit/delete message in group chat', () => {
+            let groupChat: GroupChat;
+            before('create group chat', () => {
+                cy.login(admin);
+                courseManagementRequest.createCourseMessageGroupChat(course, [studentOne.username, tutor.username]).then((response) => {
+                    groupChat = response.body;
+                });
+            });
+
+            it('student should be able to write message in group chat', () => {
+                cy.login(studentOne, `/courses/${course.id}/messages?conversationId=${groupChat.id}`);
+                const messageText = 'Student Test Message';
+                courseMessages.writeMessage(messageText);
+                courseMessages.save().then((interception) => {
+                    const message = interception.response!.body;
+                    courseMessages.checkMessage(message.id, messageText);
+                });
+            });
+
+            it('student should be able to edit message in group chat', () => {
+                cy.login(studentOne, `/courses/${course.id}/messages?conversationId=${groupChat.id}`);
+                const messageText = 'Student Edit Test Message';
+                courseManagementRequest.createCourseMessage(course, groupChat.id!, 'groupChat', messageText).then((response) => {
+                    const message = response.body;
+                    const newMessage = 'Edited Text';
+                    courseMessages.editMessage(message.id, newMessage);
+                    courseMessages.checkMessage(message.id, newMessage);
+                    courseMessages.checkMessage(message.id, 'edited by');
+                });
+            });
+
+            it('student should be able to delete his message in group chat', () => {
+                cy.login(studentOne, `/courses/${course.id}/messages?conversationId=${groupChat.id}`);
+                const messageText = 'Student Edit Test Message';
+                courseManagementRequest.createCourseMessage(course, groupChat.id!, 'groupChat', messageText).then((response) => {
+                    const message = response.body;
+                    courseMessages.checkMessage(message.id, messageText);
+                    courseMessages.deleteMessage(message.id);
+                    courseMessages.getSinglePost(message.id).should('not.exist');
+                });
             });
         });
     });
