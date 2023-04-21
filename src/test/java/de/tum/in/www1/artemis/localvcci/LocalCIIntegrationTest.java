@@ -16,6 +16,7 @@ import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
@@ -33,10 +34,12 @@ import com.github.dockerjava.api.command.PullImageCmd;
 import com.github.dockerjava.api.command.PullImageResultCallback;
 import com.github.dockerjava.api.exception.NotFoundException;
 
+import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.Team;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.exception.LocalCIException;
+import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.service.connectors.localci.LocalCIPushService;
 import de.tum.in.www1.artemis.util.LocalRepository;
 import de.tum.in.www1.artemis.web.websocket.programmingSubmission.BuildTriggerWebsocketError;
@@ -45,6 +48,9 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
 
     @Autowired
     private LocalCIPushService localCIPushService;
+
+    @Autowired
+    private ProgrammingSubmissionRepository programmingSubmissionRepository;
 
     private LocalRepository studentAssignmentRepository;
 
@@ -87,14 +93,13 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
 
     @Test
     void testNoParticipation() throws Exception {
-        // Should throw a LocalCIException if there is no participation for the exercise and the repositoryTypeOrUserName.
-        String expectedErrorMessage = "No participation found for the given repository";
-        LocalCIException exception;
+        // If there is no participation, processNewPush() should not throw an exception as that would cause the push to get stuck. However, no submission should be created.
 
         // student participation
         programmingExerciseStudentParticipationRepository.delete(studentParticipation);
-        exception = assertThrows(LocalCIException.class, () -> localCIPushService.processNewPush(commitHash, studentAssignmentRepository.originGit.getRepository()));
-        assertThat(exception.getMessage()).contains(expectedErrorMessage);
+        localCIPushService.processNewPush(commitHash, studentAssignmentRepository.originGit.getRepository());
+        Optional<ProgrammingSubmission> studentSubmission = programmingSubmissionRepository.findFirstByParticipationIdOrderByLegalSubmissionDateDesc(studentParticipation.getId());
+        assertThat(studentSubmission).isEmpty();
 
         // solution participation
         LocalRepository solutionRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, solutionRepositorySlug);
@@ -104,8 +109,10 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
         programmingExercise.setSolutionParticipation(null);
         programmingExerciseRepository.save(programmingExercise);
         solutionProgrammingExerciseParticipationRepository.delete(solutionParticipation);
-        exception = assertThrows(LocalCIException.class, () -> localCIPushService.processNewPush(solutionCommitHash, solutionRepository.originGit.getRepository()));
-        assertThat(exception.getMessage()).contains(expectedErrorMessage);
+        localCIPushService.processNewPush(solutionCommitHash, solutionRepository.originGit.getRepository());
+        Optional<ProgrammingSubmission> solutionSubmission = programmingSubmissionRepository
+                .findFirstByParticipationIdOrderByLegalSubmissionDateDesc(solutionParticipation.getId());
+        assertThat(solutionSubmission).isEmpty();
 
         // template participation
         LocalRepository templateRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, templateRepositorySlug);
@@ -115,8 +122,10 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
         programmingExercise.setTemplateParticipation(null);
         programmingExerciseRepository.save(programmingExercise);
         templateProgrammingExerciseParticipationRepository.delete(templateParticipation);
-        exception = assertThrows(LocalCIException.class, () -> localCIPushService.processNewPush(templateCommitHash, templateRepository.originGit.getRepository()));
-        assertThat(exception.getMessage()).contains(expectedErrorMessage);
+        localCIPushService.processNewPush(templateCommitHash, templateRepository.originGit.getRepository());
+        Optional<ProgrammingSubmission> templateSubmission = programmingSubmissionRepository
+                .findFirstByParticipationIdOrderByLegalSubmissionDateDesc(templateParticipation.getId());
+        assertThat(templateSubmission).isEmpty();
 
         // team participation
         programmingExercise.setMode(ExerciseMode.TEAM);
@@ -134,8 +143,8 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
         String teamCommitHash = localVCLocalCITestService.commitFile(teamLocalRepository.localRepoFile.toPath(), programmingExercise.getPackageFolderName(),
                 teamLocalRepository.localGit);
         teamLocalRepository.localGit.push().call();
-        exception = assertThrows(LocalCIException.class, () -> localCIPushService.processNewPush(teamCommitHash, teamLocalRepository.originGit.getRepository()));
-        assertThat(exception.getMessage()).contains(expectedErrorMessage);
+        localCIPushService.processNewPush(teamCommitHash, teamLocalRepository.originGit.getRepository());
+        // No participation to fetch the submission for anyway. Just checking that no exception is thrown.
 
         // Cleanup
         solutionRepository.resetLocalRepo();
