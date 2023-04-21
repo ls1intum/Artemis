@@ -199,7 +199,7 @@ export const courseManagementState: Routes = [
                         canActivate: [UserRouteAccessService],
                     },
                     {
-                        path: ':learningGoalId/edit',
+                        path: ':competencyId/edit',
                         component: EditLearningGoalComponent,
                         data: {
                             authorities: [Authority.ADMIN, Authority.INSTRUCTOR],

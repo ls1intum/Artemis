@@ -125,10 +125,10 @@
             <tbody>
                 <tr *ngFor="let learningGoal of learningGoals; trackBy: identify; let i = index" id="learning-goal-row-{{ i }}">
                     <td>
-                        <a [routerLink]="['/courses', courseId, 'learning-goals', learningGoal.id]">{{ learningGoal.id }}</a>
+                        <a [routerLink]="['/courses', courseId, 'competencies', learningGoal.id]">{{ learningGoal.id }}</a>
                     </td>
                     <td>
-                        <a [routerLink]="['/courses', courseId, 'learning-goals', learningGoal.id]">{{ learningGoal.title }}</a>
+                        <a [routerLink]="['/courses', courseId, 'competencies', learningGoal.id]">{{ learningGoal.title }}</a>
                     </td>
                     <td [innerHTML]="learningGoal.description"></td>
                     <td>
@@ -149,7 +149,7 @@
                         <a
                             *jhiHasAnyAuthority="['ROLE_INSTRUCTOR', 'ROLE_ADMIN']"
                             class="btn btn-sm btn-primary"
-                            [routerLink]="['/course-management', courseId, 'goal-management', learningGoal.id, 'edit']"
+                            [routerLink]="['/course-management', courseId, 'competency-management', learningGoal.id, 'edit']"
                         >
                             <fa-icon [icon]="faPencilAlt"></fa-icon>
                             <span class="d-none d-md-inline">{{ 'entity.action.edit' | artemisTranslate }}</span>
