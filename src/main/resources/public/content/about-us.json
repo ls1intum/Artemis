@@ -368,6 +368,10 @@
         {
             "fullName": "Benjamin Sebastian Schmitz",
             "photoDirectory": "public/images/about/Benjamin_Sebastian_Schmitz.jpg"
+        },
+        {
+            "fullName": "Lucas Welscher",
+            "photoDirectory": "public/images/about/Welscher_Lucas.png"
         }
     ]
 }
