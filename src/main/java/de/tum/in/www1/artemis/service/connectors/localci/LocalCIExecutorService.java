@@ -1,12 +1,9 @@
 package de.tum.in.www1.artemis.service.connectors.localci;
 
-import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
-
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
@@ -22,7 +19,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
-import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
@@ -45,8 +41,6 @@ public class LocalCIExecutorService {
 
     private final Logger log = LoggerFactory.getLogger(LocalCIExecutorService.class);
 
-    private final Environment environment;
-
     private final Optional<VersionControlService> versionControlService;
 
     private final ExecutorService localCIBuildExecutorService;
@@ -68,10 +62,11 @@ public class LocalCIExecutorService {
     @Value("${artemis.continuous-integration.timeout-seconds:60}")
     private int timeoutSeconds;
 
-    public LocalCIExecutorService(Environment environment, Optional<VersionControlService> versionControlService, ExecutorService localCIBuildExecutorService,
-            LocalCIBuildJobService localCIBuildJobService, ResourceLoaderService resourceLoaderService, LocalCIBuildPlanService localCIBuildPlanService,
-            ProgrammingMessagingService programmingMessagingService) {
-        this.environment = environment;
+    @Value("${artemis.continuous-integration.asynchronous:true}")
+    private boolean runBuildJobsAsynchronously;
+
+    public LocalCIExecutorService(Optional<VersionControlService> versionControlService, ExecutorService localCIBuildExecutorService, LocalCIBuildJobService localCIBuildJobService,
+            ResourceLoaderService resourceLoaderService, LocalCIBuildPlanService localCIBuildPlanService, ProgrammingMessagingService programmingMessagingService) {
         this.versionControlService = versionControlService;
         this.localCIBuildExecutorService = localCIBuildExecutorService;
         this.localCIBuildJobService = localCIBuildJobService;
@@ -179,13 +174,13 @@ public class LocalCIExecutorService {
     }
 
     private CompletableFuture<LocalCIBuildResult> createCompletableFuture(Supplier<LocalCIBuildResult> supplier) {
-        if (!Arrays.asList(environment.getActiveProfiles()).contains(SPRING_PROFILE_TEST)) {
+        if (runBuildJobsAsynchronously) {
             // Just use the normal supplyAsync.
             return CompletableFuture.supplyAsync(supplier);
         }
         else {
-            // Use a synchronous CompletableFuture in the test environment. Otherwise, the test will not wait for the CompletableFuture to complete before asserting on the
-            // database.
+            // Use a synchronous CompletableFuture, e.g. in the test environment.
+            // Otherwise, tests will not wait for the CompletableFuture to complete before asserting on the database.
             CompletableFuture<LocalCIBuildResult> future = new CompletableFuture<>();
             try {
                 LocalCIBuildResult result = supplier.get();
