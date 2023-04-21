@@ -33,11 +33,6 @@ export class ProgrammingExerciseTaskComponent implements OnInit {
 
     ngOnInit(): void {
         this.openSubject.subscribe((open) => (this.open = open));
-
-        // If this is the only task have it open by default
-        if (this.programmingExerciseTaskService.currentTasks.length == 1) {
-            this.open = true;
-        }
     }
 
     testUpdateHandler(test: ProgrammingExerciseTestCase) {
