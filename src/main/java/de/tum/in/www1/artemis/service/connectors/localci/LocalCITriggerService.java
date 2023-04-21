@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.service.connectors.localci;
 
-import java.util.NoSuchElementException;
 import java.util.concurrent.CompletableFuture;
 
 import org.springframework.context.annotation.Profile;
@@ -47,16 +46,11 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
     public void triggerBuild(ProgrammingExerciseParticipation participation) {
         CompletableFuture<LocalCIBuildResult> futureResult = localCIExecutorService.addBuildJobToQueue(participation);
         futureResult.thenAccept(buildResult -> {
-            try {
-                // The 'user' is not properly logged into Artemis, this leads to an issue when accessing custom repository methods.
-                // Therefore, a mock auth object has to be created.
-                SecurityUtils.setAuthorizationObject();
-                Result result = programmingExerciseGradingService.processNewProgrammingExerciseResult(participation, buildResult).orElseThrow();
-                programmingMessagingService.notifyUserAboutNewResult(result, participation);
-            }
-            catch (NoSuchElementException e) {
-                programmingMessagingService.notifyUserAboutBuildTriggerError(participation, e.getMessage());
-            }
+            // The 'user' is not properly logged into Artemis, this leads to an issue when accessing custom repository methods.
+            // Therefore, a mock auth object has to be created.
+            SecurityUtils.setAuthorizationObject();
+            Result result = programmingExerciseGradingService.processNewProgrammingExerciseResult(participation, buildResult).orElseThrow();
+            programmingMessagingService.notifyUserAboutNewResult(result, participation);
         });
     }
 }
