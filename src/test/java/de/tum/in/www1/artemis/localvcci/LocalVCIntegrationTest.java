@@ -73,7 +73,7 @@ class LocalVCIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
         localVCLocalCITestService.testFetchThrowsException(someRepository.localGit, student1Login, USER_PASSWORD, projectKey, repositorySlug, InvalidRemoteException.class, "");
 
         // Try to push to the remote repository.
-        localVCLocalCITestService.testPushThrowsException(someRepository.localGit, student1Login, projectKey, repositorySlug, NOT_FOUND);
+        localVCLocalCITestService.testPushReturnsError(someRepository.localGit, student1Login, projectKey, repositorySlug, NOT_FOUND);
 
         // Cleanup
         someRepository.localGit.close();
@@ -83,12 +83,12 @@ class LocalVCIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
     @Test
     void testFetchPush_wrongCredentials() {
         // Try to access with the wrong password.
-        localVCLocalCITestService.testFetchThrowsException(assignmentRepository.localGit, student1Login, "wrong-password", projectKey1, assignmentRepositorySlug, NOT_AUTHORIZED);
-        localVCLocalCITestService.testPushThrowsException(assignmentRepository.localGit, student1Login, "wrong-password", projectKey1, assignmentRepositorySlug, NOT_AUTHORIZED);
+        localVCLocalCITestService.testFetchReturnsError(assignmentRepository.localGit, student1Login, "wrong-password", projectKey1, assignmentRepositorySlug, NOT_AUTHORIZED);
+        localVCLocalCITestService.testPushReturnsError(assignmentRepository.localGit, student1Login, "wrong-password", projectKey1, assignmentRepositorySlug, NOT_AUTHORIZED);
 
         // Try to access without a password.
-        localVCLocalCITestService.testFetchThrowsException(assignmentRepository.localGit, student1Login, "", projectKey1, assignmentRepositorySlug, NOT_AUTHORIZED);
-        localVCLocalCITestService.testPushThrowsException(assignmentRepository.localGit, student1Login, "", projectKey1, assignmentRepositorySlug, NOT_AUTHORIZED);
+        localVCLocalCITestService.testFetchReturnsError(assignmentRepository.localGit, student1Login, "", projectKey1, assignmentRepositorySlug, NOT_AUTHORIZED);
+        localVCLocalCITestService.testPushReturnsError(assignmentRepository.localGit, student1Login, "", projectKey1, assignmentRepositorySlug, NOT_AUTHORIZED);
     }
 
     @Test
@@ -98,8 +98,8 @@ class LocalVCIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
         String repositorySlug = "someprojectkey-some-repository-slug";
         LocalRepository someRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey, repositorySlug);
 
-        localVCLocalCITestService.testFetchThrowsException(someRepository.localGit, student1Login, projectKey, repositorySlug, INTERNAL_SERVER_ERROR);
-        localVCLocalCITestService.testPushThrowsException(someRepository.localGit, student1Login, projectKey, repositorySlug, INTERNAL_SERVER_ERROR);
+        localVCLocalCITestService.testFetchReturnsError(someRepository.localGit, student1Login, projectKey, repositorySlug, INTERNAL_SERVER_ERROR);
+        localVCLocalCITestService.testPushReturnsError(someRepository.localGit, student1Login, projectKey, repositorySlug, INTERNAL_SERVER_ERROR);
 
         // Cleanup
         someRepository.resetLocalRepo();
@@ -110,8 +110,8 @@ class LocalVCIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
         programmingExercise.setAllowOfflineIde(false);
         programmingExerciseRepository.save(programmingExercise);
 
-        localVCLocalCITestService.testFetchThrowsException(assignmentRepository.localGit, student1Login, projectKey1, assignmentRepositorySlug, FORBIDDEN);
-        localVCLocalCITestService.testPushThrowsException(assignmentRepository.localGit, student1Login, projectKey1, assignmentRepositorySlug, FORBIDDEN);
+        localVCLocalCITestService.testFetchReturnsError(assignmentRepository.localGit, student1Login, projectKey1, assignmentRepositorySlug, FORBIDDEN);
+        localVCLocalCITestService.testPushReturnsError(assignmentRepository.localGit, student1Login, projectKey1, assignmentRepositorySlug, FORBIDDEN);
 
         // Teaching assistants and higher should still be able to fetch and push.
         localVCLocalCITestService.testFetchSuccessful(assignmentRepository.localGit, tutor1Login, projectKey1, assignmentRepositorySlug);
@@ -124,8 +124,8 @@ class LocalVCIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
         String repositorySlug = projectKey1.toLowerCase() + "-" + student2Login;
         LocalRepository student2Repository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, repositorySlug);
 
-        localVCLocalCITestService.testFetchThrowsException(student2Repository.localGit, student2Login, projectKey1, repositorySlug, INTERNAL_SERVER_ERROR);
-        localVCLocalCITestService.testPushThrowsException(student2Repository.localGit, student2Login, projectKey1, repositorySlug, INTERNAL_SERVER_ERROR);
+        localVCLocalCITestService.testFetchReturnsError(student2Repository.localGit, student2Login, projectKey1, repositorySlug, INTERNAL_SERVER_ERROR);
+        localVCLocalCITestService.testPushReturnsError(student2Repository.localGit, student2Login, projectKey1, repositorySlug, INTERNAL_SERVER_ERROR);
 
         // Cleanup
         student2Repository.resetLocalRepo();
@@ -138,8 +138,8 @@ class LocalVCIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
         programmingExerciseRepository.save(programmingExercise);
         templateProgrammingExerciseParticipationRepository.delete(templateParticipation);
 
-        localVCLocalCITestService.testFetchThrowsException(templateRepository.localGit, instructor1Login, projectKey1, templateRepositorySlug, INTERNAL_SERVER_ERROR);
-        localVCLocalCITestService.testPushThrowsException(templateRepository.localGit, instructor1Login, projectKey1, templateRepositorySlug, INTERNAL_SERVER_ERROR);
+        localVCLocalCITestService.testFetchReturnsError(templateRepository.localGit, instructor1Login, projectKey1, templateRepositorySlug, INTERNAL_SERVER_ERROR);
+        localVCLocalCITestService.testPushReturnsError(templateRepository.localGit, instructor1Login, projectKey1, templateRepositorySlug, INTERNAL_SERVER_ERROR);
     }
 
     @Test
@@ -149,8 +149,8 @@ class LocalVCIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
         programmingExerciseRepository.save(programmingExercise);
         solutionProgrammingExerciseParticipationRepository.delete(solutionParticipation);
 
-        localVCLocalCITestService.testFetchThrowsException(solutionRepository.localGit, instructor1Login, projectKey1, solutionRepositorySlug, INTERNAL_SERVER_ERROR);
-        localVCLocalCITestService.testPushThrowsException(solutionRepository.localGit, instructor1Login, projectKey1, solutionRepositorySlug, INTERNAL_SERVER_ERROR);
+        localVCLocalCITestService.testFetchReturnsError(solutionRepository.localGit, instructor1Login, projectKey1, solutionRepositorySlug, INTERNAL_SERVER_ERROR);
+        localVCLocalCITestService.testPushReturnsError(solutionRepository.localGit, instructor1Login, projectKey1, solutionRepositorySlug, INTERNAL_SERVER_ERROR);
     }
 
     @Test

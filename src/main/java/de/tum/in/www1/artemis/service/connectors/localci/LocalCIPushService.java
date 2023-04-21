@@ -94,7 +94,7 @@ public class LocalCIPushService {
      *
      * @param commitHash the hash of the last commit.
      * @param repository the remote repository which was pushed to.
-     * @throws LocalCIException if something goes wrong retrieving the exercise or participation.
+     * @throws LocalCIException if something goes wrong preparing the queueing of the build job.
      */
     public void processNewPush(String commitHash, Repository repository) {
         long timeNanoStart = System.nanoTime();
@@ -112,17 +112,14 @@ public class LocalCIPushService {
             exercise = programmingExerciseRepository.findOneByProjectKeyOrThrow(projectKey, false);
         }
         catch (EntityNotFoundException e) {
-            // This should never happen, as the exercise is already retrieved in the LocalVCPushFilter.
-            // Throwing an exception here would lead to the push getting stuck.
-            log.error("Programming exercise with project key " + projectKey + " not found", e);
-            return;
+            throw new LocalCIException("Could not find programming exercise for project key " + projectKey, e);
         }
 
         ProgrammingExerciseParticipation participation;
 
         try {
             if (repositoryTypeOrUserName.equals(RepositoryType.TESTS.getName())) {
-                // For pushes to the tests repository, the solution repository is built first.
+                // For pushes to the tests repository, the solution repository is built first, and thus we need the solution participation.
                 participation = programmingExerciseParticipationService.findParticipationByRepositoryTypeOrUserNameAndExerciseAndTestRunOrThrow(RepositoryType.SOLUTION.toString(),
                         exercise, false, true);
             }
@@ -137,10 +134,7 @@ public class LocalCIPushService {
             }
         }
         catch (EntityNotFoundException e) {
-            // This should never happen, as the participation is already retrieved in the LocalVCPushFilter.
-            // Throwing an exception here would lead to the push getting stuck.
-            log.error("No participation found for the given repository", e);
-            return;
+            throw new LocalCIException("Could not find participation for repository " + repositoryTypeOrUserName + " of exercise " + exercise, e);
         }
 
         try {
@@ -160,12 +154,9 @@ public class LocalCIPushService {
 
         }
         catch (LocalCIException | GitAPIException | IOException e) {
-            // In case anything goes wrong, notify the user.
-            // Throwing an exception here would lead to the Git client request getting stuck.
-            // Instead, the user can see in the UI that creating the submission failed.
             // This catch clause does not catch exceptions that happen during runBuildJob() as that method is called asynchronously.
-            // For exceptions happening inside runBuildJob(), the user is also notified. See the addBuildJobToQueue() method in the LocalCIExecutorService for that.
-            programmingMessagingService.notifyUserAboutBuildTriggerError(participation, e.getMessage());
+            // For exceptions happening inside runBuildJob(), the user is notified. See the addBuildJobToQueue() method in the LocalCIExecutorService for that.
+            throw new LocalCIException("Could not process new push to repository " + localVCRepositoryUrl.getURI() + ". No build job was queued.", e);
         }
 
         log.info("New push processed to repository {} in {}. A build job was queued.", localVCRepositoryUrl.getURI(), TimeLogUtil.formatDurationFrom(timeNanoStart));
@@ -196,7 +187,7 @@ public class LocalCIPushService {
      * @param commitHash the hash of the last commit to the tests repository.
      * @throws LocalCIException if something unexpected goes wrong creating the submission or triggering the build.
      */
-    private void processNewPushToTestsRepository(ProgrammingExercise exercise, String commitHash, SolutionProgrammingExerciseParticipation participation) {
+    private void processNewPushToTestsRepository(ProgrammingExercise exercise, String commitHash, SolutionProgrammingExerciseParticipation solutionParticipation) {
         // Create a new submission for the solution repository.
         ProgrammingSubmission submission;
         try {
@@ -217,21 +208,22 @@ public class LocalCIPushService {
         }
 
         // Trigger a build of the solution repository.
-        CompletableFuture<LocalCIBuildResult> futureSolutionBuildResult = localCIExecutorService.addBuildJobToQueue(participation);
+        CompletableFuture<LocalCIBuildResult> futureSolutionBuildResult = localCIExecutorService.addBuildJobToQueue(solutionParticipation);
         futureSolutionBuildResult.thenAccept(buildResult -> {
 
             // The 'user' is not properly logged into Artemis, this leads to an issue when accessing custom repository methods.
             // Therefore, a mock auth object has to be created.
             SecurityUtils.setAuthorizationObject();
-            Result result = programmingExerciseGradingService.processNewProgrammingExerciseResult(participation, buildResult).orElseThrow();
-            programmingMessagingService.notifyUserAboutNewResult(result, participation);
+            Result result = programmingExerciseGradingService.processNewProgrammingExerciseResult(solutionParticipation, buildResult).orElseThrow();
+            programmingMessagingService.notifyUserAboutNewResult(result, solutionParticipation);
 
             // The solution participation received a new result, also trigger a build of the template repository.
             try {
                 programmingTriggerService.triggerTemplateBuildAndNotifyUser(exercise.getId(), submission.getCommitHash(), SubmissionType.TEST);
             }
             catch (EntityNotFoundException e) {
-                programmingMessagingService.notifyUserAboutBuildTriggerError(participation, e.getMessage());
+                // programmingMessagingService.notifyUserAboutBuildTriggerError() does not work here, as this exception means that the template participation is not available.
+                throw new LocalCIException("Could not trigger template build as no template participation was available", e);
             }
         });
     }

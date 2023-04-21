@@ -388,8 +388,8 @@ public class LocalVCLocalCITestService {
      * @param repositorySlug   the repository slug of the repository.
      * @param expectedMessage  the expected message of the exception.
      */
-    public void testFetchThrowsException(Git repositoryHandle, String username, String projectKey, String repositorySlug, String expectedMessage) {
-        testFetchThrowsException(repositoryHandle, username, USER_PASSWORD, projectKey, repositorySlug, expectedMessage);
+    public void testFetchReturnsError(Git repositoryHandle, String username, String projectKey, String repositorySlug, String expectedMessage) {
+        testFetchReturnsError(repositoryHandle, username, USER_PASSWORD, projectKey, repositorySlug, expectedMessage);
     }
 
     /**
@@ -402,7 +402,7 @@ public class LocalVCLocalCITestService {
      * @param repositorySlug   the repository slug of the repository.
      * @param expectedMessage  the expected message of the exception.
      */
-    public void testFetchThrowsException(Git repositoryHandle, String username, String password, String projectKey, String repositorySlug, String expectedMessage) {
+    public void testFetchReturnsError(Git repositoryHandle, String username, String password, String projectKey, String repositorySlug, String expectedMessage) {
         testFetchThrowsException(repositoryHandle, username, password, projectKey, repositorySlug, TransportException.class, expectedMessage);
     }
 
@@ -483,8 +483,8 @@ public class LocalVCLocalCITestService {
      * @param repositorySlug   the repository slug of the repository.
      * @param expectedMessage  the expected message of the exception.
      */
-    public void testPushThrowsException(Git repositoryHandle, String username, String projectKey, String repositorySlug, String expectedMessage) {
-        testPushThrowsException(repositoryHandle, username, USER_PASSWORD, projectKey, repositorySlug, expectedMessage);
+    public void testPushReturnsError(Git repositoryHandle, String username, String projectKey, String repositorySlug, String expectedMessage) {
+        testPushReturnsError(repositoryHandle, username, USER_PASSWORD, projectKey, repositorySlug, expectedMessage);
     }
 
     /**
@@ -497,7 +497,7 @@ public class LocalVCLocalCITestService {
      * @param repositorySlug   the repository slug of the repository.
      * @param expectedMessage  the expected message of the exception.
      */
-    public void testPushThrowsException(Git repositoryHandle, String username, String password, String projectKey, String repositorySlug, String expectedMessage) {
+    public void testPushReturnsError(Git repositoryHandle, String username, String password, String projectKey, String repositorySlug, String expectedMessage) {
         TransportException exception = assertThrows(TransportException.class, () -> performPush(repositoryHandle, username, password, projectKey, repositorySlug));
         assertThat(exception.getMessage()).contains(expectedMessage);
     }

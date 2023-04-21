@@ -9,6 +9,7 @@ import org.eclipse.jgit.transport.PostReceiveHook;
 import org.eclipse.jgit.transport.ReceiveCommand;
 import org.eclipse.jgit.transport.ReceivePack;
 
+import de.tum.in.www1.artemis.exception.LocalCIException;
 import de.tum.in.www1.artemis.service.connectors.localci.LocalCIPushService;
 
 /**
@@ -54,6 +55,13 @@ public class LocalVCPostPushHook implements PostReceiveHook {
 
         Repository repository = receivePack.getRepository();
 
-        localCIPushService.orElseThrow().processNewPush(commitHash, repository);
+        try {
+            localCIPushService.orElseThrow().processNewPush(commitHash, repository);
+        }
+        catch (LocalCIException e) {
+            // Cannot set an error message to be displayed to the user in the PostReceiveHook.
+            // Throwing an exception here would cause the push to get stuck.
+            // The user will see in the UI that no build was executed.
+        }
     }
 }

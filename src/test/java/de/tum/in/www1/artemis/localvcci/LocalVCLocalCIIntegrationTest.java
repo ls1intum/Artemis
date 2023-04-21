@@ -76,12 +76,12 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
     @Test
     void testFetchPush_testsRepository() throws Exception {
         // Students should not be able to fetch and push.
-        localVCLocalCITestService.testFetchThrowsException(testsRepository.localGit, student1Login, projectKey1, testsRepositorySlug, NOT_AUTHORIZED);
-        localVCLocalCITestService.testPushThrowsException(testsRepository.localGit, student1Login, projectKey1, testsRepositorySlug, NOT_AUTHORIZED);
+        localVCLocalCITestService.testFetchReturnsError(testsRepository.localGit, student1Login, projectKey1, testsRepositorySlug, NOT_AUTHORIZED);
+        localVCLocalCITestService.testPushReturnsError(testsRepository.localGit, student1Login, projectKey1, testsRepositorySlug, NOT_AUTHORIZED);
 
         // Teaching assistants should be able to fetch but not push.
         localVCLocalCITestService.testFetchSuccessful(testsRepository.localGit, tutor1Login, projectKey1, testsRepositorySlug);
-        localVCLocalCITestService.testPushThrowsException(testsRepository.localGit, tutor1Login, projectKey1, testsRepositorySlug, NOT_AUTHORIZED);
+        localVCLocalCITestService.testPushReturnsError(testsRepository.localGit, tutor1Login, projectKey1, testsRepositorySlug, NOT_AUTHORIZED);
 
         // Instructors should be able to fetch and push.
         localVCLocalCITestService.testFetchSuccessful(testsRepository.localGit, instructor1Login, projectKey1, testsRepositorySlug);
@@ -117,12 +117,12 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
     @Test
     void testFetchPush_solutionRepository() throws Exception {
         // Students should not be able to fetch and push.
-        localVCLocalCITestService.testFetchThrowsException(solutionRepository.localGit, student1Login, projectKey1, solutionRepositorySlug, NOT_AUTHORIZED);
-        localVCLocalCITestService.testPushThrowsException(solutionRepository.localGit, student1Login, projectKey1, solutionRepositorySlug, NOT_AUTHORIZED);
+        localVCLocalCITestService.testFetchReturnsError(solutionRepository.localGit, student1Login, projectKey1, solutionRepositorySlug, NOT_AUTHORIZED);
+        localVCLocalCITestService.testPushReturnsError(solutionRepository.localGit, student1Login, projectKey1, solutionRepositorySlug, NOT_AUTHORIZED);
 
         // Teaching assistants should be able to fetch but not push.
         localVCLocalCITestService.testFetchSuccessful(solutionRepository.localGit, tutor1Login, projectKey1, solutionRepositorySlug);
-        localVCLocalCITestService.testPushThrowsException(solutionRepository.localGit, tutor1Login, projectKey1, solutionRepositorySlug, NOT_AUTHORIZED);
+        localVCLocalCITestService.testPushReturnsError(solutionRepository.localGit, tutor1Login, projectKey1, solutionRepositorySlug, NOT_AUTHORIZED);
 
         // Instructors should be able to fetch and push.
         localVCLocalCITestService.testFetchSuccessful(solutionRepository.localGit, instructor1Login, projectKey1, solutionRepositorySlug);
@@ -142,12 +142,12 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
     @Test
     void testFetchPush_templateRepository() throws Exception {
         // Students should not be able to fetch and push.
-        localVCLocalCITestService.testFetchThrowsException(templateRepository.localGit, student1Login, projectKey1, templateRepositorySlug, NOT_AUTHORIZED);
-        localVCLocalCITestService.testPushThrowsException(templateRepository.localGit, student1Login, projectKey1, templateRepositorySlug, NOT_AUTHORIZED);
+        localVCLocalCITestService.testFetchReturnsError(templateRepository.localGit, student1Login, projectKey1, templateRepositorySlug, NOT_AUTHORIZED);
+        localVCLocalCITestService.testPushReturnsError(templateRepository.localGit, student1Login, projectKey1, templateRepositorySlug, NOT_AUTHORIZED);
 
         // Teaching assistants should be able to fetch but not push.
         localVCLocalCITestService.testFetchSuccessful(templateRepository.localGit, tutor1Login, projectKey1, templateRepositorySlug);
-        localVCLocalCITestService.testPushThrowsException(templateRepository.localGit, tutor1Login, projectKey1, templateRepositorySlug, NOT_AUTHORIZED);
+        localVCLocalCITestService.testPushReturnsError(templateRepository.localGit, tutor1Login, projectKey1, templateRepositorySlug, NOT_AUTHORIZED);
 
         // Instructors should be able to fetch and push.
         localVCLocalCITestService.testFetchSuccessful(templateRepository.localGit, instructor1Login, projectKey1, templateRepositorySlug);
@@ -184,15 +184,15 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
 
         // Teaching assistant
         localVCLocalCITestService.testFetchSuccessful(assignmentRepository.localGit, tutor1Login, projectKey1, assignmentRepositorySlug);
-        localVCLocalCITestService.testPushThrowsException(assignmentRepository.localGit, tutor1Login, projectKey1, assignmentRepositorySlug, NOT_AUTHORIZED);
+        localVCLocalCITestService.testPushReturnsError(assignmentRepository.localGit, tutor1Login, projectKey1, assignmentRepositorySlug, NOT_AUTHORIZED);
 
         // Instructor
         localVCLocalCITestService.testFetchSuccessful(assignmentRepository.localGit, instructor1Login, projectKey1, assignmentRepositorySlug);
         localVCLocalCITestService.testPushSuccessful(assignmentRepository.localGit, instructor1Login, projectKey1, assignmentRepositorySlug);
 
         // Student2 should not be able to access the repository of student1.
-        localVCLocalCITestService.testFetchThrowsException(assignmentRepository.localGit, student2Login, projectKey1, assignmentRepositorySlug, NOT_AUTHORIZED);
-        localVCLocalCITestService.testPushThrowsException(assignmentRepository.localGit, student2Login, projectKey1, assignmentRepositorySlug, NOT_AUTHORIZED);
+        localVCLocalCITestService.testFetchReturnsError(assignmentRepository.localGit, student2Login, projectKey1, assignmentRepositorySlug, NOT_AUTHORIZED);
+        localVCLocalCITestService.testPushReturnsError(assignmentRepository.localGit, student2Login, projectKey1, assignmentRepositorySlug, NOT_AUTHORIZED);
 
         // Before the start date of the exercise, students are able to fetch if (as in this case) their repository already exists. This is consistent with the behaviour of
         // Bitbucket and GitLab. Usually, the exercise will be configured with a start date in the future and students will not be able to create a repository before that.
@@ -202,11 +202,11 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
 
         // Student
         localVCLocalCITestService.testFetchSuccessful(assignmentRepository.localGit, student1Login, projectKey1, assignmentRepositorySlug);
-        localVCLocalCITestService.testPushThrowsException(assignmentRepository.localGit, student1Login, projectKey1, assignmentRepositorySlug, FORBIDDEN);
+        localVCLocalCITestService.testPushReturnsError(assignmentRepository.localGit, student1Login, projectKey1, assignmentRepositorySlug, FORBIDDEN);
 
         // Teaching assistant
         localVCLocalCITestService.testFetchSuccessful(assignmentRepository.localGit, tutor1Login, projectKey1, assignmentRepositorySlug);
-        localVCLocalCITestService.testPushThrowsException(assignmentRepository.localGit, tutor1Login, projectKey1, assignmentRepositorySlug, NOT_AUTHORIZED);
+        localVCLocalCITestService.testPushReturnsError(assignmentRepository.localGit, tutor1Login, projectKey1, assignmentRepositorySlug, NOT_AUTHORIZED);
 
         // Instructor
         localVCLocalCITestService.testFetchSuccessful(assignmentRepository.localGit, instructor1Login, projectKey1, assignmentRepositorySlug);
@@ -220,11 +220,11 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
 
         // Student
         localVCLocalCITestService.testFetchSuccessful(assignmentRepository.localGit, student1Login, projectKey1, assignmentRepositorySlug);
-        localVCLocalCITestService.testPushThrowsException(assignmentRepository.localGit, student1Login, projectKey1, assignmentRepositorySlug, FORBIDDEN);
+        localVCLocalCITestService.testPushReturnsError(assignmentRepository.localGit, student1Login, projectKey1, assignmentRepositorySlug, FORBIDDEN);
 
         // Teaching assistant
         localVCLocalCITestService.testFetchSuccessful(assignmentRepository.localGit, tutor1Login, projectKey1, assignmentRepositorySlug);
-        localVCLocalCITestService.testPushThrowsException(assignmentRepository.localGit, tutor1Login, projectKey1, assignmentRepositorySlug, NOT_AUTHORIZED);
+        localVCLocalCITestService.testPushReturnsError(assignmentRepository.localGit, tutor1Login, projectKey1, assignmentRepositorySlug, NOT_AUTHORIZED);
 
         // Instructor
         localVCLocalCITestService.testFetchSuccessful(assignmentRepository.localGit, instructor1Login, projectKey1, assignmentRepositorySlug);
@@ -238,7 +238,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         lockRepositoryPolicy.setSubmissionLimit(0);
         lockRepositoryPolicy.setActive(true);
         database.addSubmissionPolicyToExercise(lockRepositoryPolicy, programmingExercise);
-        localVCLocalCITestService.testPushThrowsException(assignmentRepository.localGit, student1Login, projectKey1, assignmentRepositorySlug, FORBIDDEN);
+        localVCLocalCITestService.testPushReturnsError(assignmentRepository.localGit, student1Login, projectKey1, assignmentRepositorySlug, FORBIDDEN);
 
         // Instructors should still be able to push
         localVCLocalCITestService.testPushSuccessful(assignmentRepository.localGit, instructor1Login, projectKey1, assignmentRepositorySlug);
@@ -256,8 +256,8 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         LocalRepository teamLocalRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, teamRepositorySlug);
 
         // Test without team.
-        localVCLocalCITestService.testFetchThrowsException(teamLocalRepository.localGit, student1Login, projectKey1, teamRepositorySlug, INTERNAL_SERVER_ERROR);
-        localVCLocalCITestService.testPushThrowsException(teamLocalRepository.localGit, student1Login, projectKey1, teamRepositorySlug, INTERNAL_SERVER_ERROR);
+        localVCLocalCITestService.testFetchReturnsError(teamLocalRepository.localGit, student1Login, projectKey1, teamRepositorySlug, INTERNAL_SERVER_ERROR);
+        localVCLocalCITestService.testPushReturnsError(teamLocalRepository.localGit, student1Login, projectKey1, teamRepositorySlug, INTERNAL_SERVER_ERROR);
 
         // Create team.
         Team team = new Team();
@@ -269,8 +269,8 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         team = teamRepository.save(team);
 
         // Test without participation.
-        localVCLocalCITestService.testFetchThrowsException(teamLocalRepository.localGit, student1Login, projectKey1, teamRepositorySlug, INTERNAL_SERVER_ERROR);
-        localVCLocalCITestService.testPushThrowsException(teamLocalRepository.localGit, student1Login, projectKey1, teamRepositorySlug, INTERNAL_SERVER_ERROR);
+        localVCLocalCITestService.testFetchReturnsError(teamLocalRepository.localGit, student1Login, projectKey1, teamRepositorySlug, INTERNAL_SERVER_ERROR);
+        localVCLocalCITestService.testPushReturnsError(teamLocalRepository.localGit, student1Login, projectKey1, teamRepositorySlug, INTERNAL_SERVER_ERROR);
 
         // Create participation.
         database.addTeamParticipationForProgrammingExercise(programmingExercise, team);
@@ -279,12 +279,12 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         localVCLocalCITestService.testPushSuccessful(teamLocalRepository.localGit, student1Login, projectKey1, teamRepositorySlug);
 
         // Try to access the repository as student2, which is not part of the team
-        localVCLocalCITestService.testFetchThrowsException(teamLocalRepository.localGit, student2Login, projectKey1, teamRepositorySlug, NOT_AUTHORIZED);
-        localVCLocalCITestService.testPushThrowsException(teamLocalRepository.localGit, student2Login, projectKey1, teamRepositorySlug, NOT_AUTHORIZED);
+        localVCLocalCITestService.testFetchReturnsError(teamLocalRepository.localGit, student2Login, projectKey1, teamRepositorySlug, NOT_AUTHORIZED);
+        localVCLocalCITestService.testPushReturnsError(teamLocalRepository.localGit, student2Login, projectKey1, teamRepositorySlug, NOT_AUTHORIZED);
 
         // Teaching assistant should be able to read but not write.
         localVCLocalCITestService.testFetchSuccessful(teamLocalRepository.localGit, tutor1Login, projectKey1, teamRepositorySlug);
-        localVCLocalCITestService.testPushThrowsException(teamLocalRepository.localGit, tutor1Login, projectKey1, teamRepositorySlug, NOT_AUTHORIZED);
+        localVCLocalCITestService.testPushReturnsError(teamLocalRepository.localGit, tutor1Login, projectKey1, teamRepositorySlug, NOT_AUTHORIZED);
 
         // Instructor should be able to read and write.
         localVCLocalCITestService.testFetchSuccessful(teamLocalRepository.localGit, instructor1Login, projectKey1, teamRepositorySlug);
@@ -295,11 +295,11 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
 
         // Student is able to read before the start date if the repository already exists.
         localVCLocalCITestService.testFetchSuccessful(teamLocalRepository.localGit, student1Login, projectKey1, teamRepositorySlug);
-        localVCLocalCITestService.testPushThrowsException(teamLocalRepository.localGit, student1Login, projectKey1, teamRepositorySlug, FORBIDDEN);
+        localVCLocalCITestService.testPushReturnsError(teamLocalRepository.localGit, student1Login, projectKey1, teamRepositorySlug, FORBIDDEN);
 
         // Teaching assistant should be able to read but not write.
         localVCLocalCITestService.testFetchSuccessful(teamLocalRepository.localGit, tutor1Login, projectKey1, teamRepositorySlug);
-        localVCLocalCITestService.testPushThrowsException(teamLocalRepository.localGit, tutor1Login, projectKey1, teamRepositorySlug, NOT_AUTHORIZED);
+        localVCLocalCITestService.testPushReturnsError(teamLocalRepository.localGit, tutor1Login, projectKey1, teamRepositorySlug, NOT_AUTHORIZED);
 
         // Instructor should be able to read and write.
         localVCLocalCITestService.testFetchSuccessful(teamLocalRepository.localGit, instructor1Login, projectKey1, teamRepositorySlug);
@@ -311,11 +311,11 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
 
         // Student should be able to read but not write.
         localVCLocalCITestService.testFetchSuccessful(teamLocalRepository.localGit, student1Login, projectKey1, teamRepositorySlug);
-        localVCLocalCITestService.testPushThrowsException(teamLocalRepository.localGit, student1Login, projectKey1, teamRepositorySlug, FORBIDDEN);
+        localVCLocalCITestService.testPushReturnsError(teamLocalRepository.localGit, student1Login, projectKey1, teamRepositorySlug, FORBIDDEN);
 
         // Teaching assistant should be able to read but not write.
         localVCLocalCITestService.testFetchSuccessful(teamLocalRepository.localGit, tutor1Login, projectKey1, teamRepositorySlug);
-        localVCLocalCITestService.testPushThrowsException(teamLocalRepository.localGit, tutor1Login, projectKey1, teamRepositorySlug, NOT_AUTHORIZED);
+        localVCLocalCITestService.testPushReturnsError(teamLocalRepository.localGit, tutor1Login, projectKey1, teamRepositorySlug, NOT_AUTHORIZED);
 
         // Instructor should be able to read and write.
         localVCLocalCITestService.testFetchSuccessful(teamLocalRepository.localGit, instructor1Login, projectKey1, teamRepositorySlug);
@@ -342,8 +342,8 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         programmingExerciseRepository.save(programmingExercise);
 
         // Student
-        localVCLocalCITestService.testFetchThrowsException(taAssignmentRepository.localGit, student1Login, projectKey1, repositorySlug, NOT_AUTHORIZED);
-        localVCLocalCITestService.testPushThrowsException(taAssignmentRepository.localGit, student1Login, projectKey1, repositorySlug, NOT_AUTHORIZED);
+        localVCLocalCITestService.testFetchReturnsError(taAssignmentRepository.localGit, student1Login, projectKey1, repositorySlug, NOT_AUTHORIZED);
+        localVCLocalCITestService.testPushReturnsError(taAssignmentRepository.localGit, student1Login, projectKey1, repositorySlug, NOT_AUTHORIZED);
 
         // Teaching assistant
         localVCLocalCITestService.testFetchSuccessful(taAssignmentRepository.localGit, tutor1Login, projectKey1, repositorySlug);
@@ -380,11 +380,11 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         programmingExercise.setStartDate(ZonedDateTime.now().plusHours(1));
         programmingExerciseRepository.save(programmingExercise);
 
-        localVCLocalCITestService.testFetchThrowsException(instructorAssignmentRepository.localGit, student1Login, projectKey1, repositorySlug, NOT_AUTHORIZED);
-        localVCLocalCITestService.testPushThrowsException(instructorAssignmentRepository.localGit, student1Login, projectKey1, repositorySlug, NOT_AUTHORIZED);
+        localVCLocalCITestService.testFetchReturnsError(instructorAssignmentRepository.localGit, student1Login, projectKey1, repositorySlug, NOT_AUTHORIZED);
+        localVCLocalCITestService.testPushReturnsError(instructorAssignmentRepository.localGit, student1Login, projectKey1, repositorySlug, NOT_AUTHORIZED);
 
         localVCLocalCITestService.testFetchSuccessful(instructorAssignmentRepository.localGit, tutor1Login, projectKey1, repositorySlug);
-        localVCLocalCITestService.testPushThrowsException(instructorAssignmentRepository.localGit, tutor1Login, projectKey1, repositorySlug, NOT_AUTHORIZED);
+        localVCLocalCITestService.testPushReturnsError(instructorAssignmentRepository.localGit, tutor1Login, projectKey1, repositorySlug, NOT_AUTHORIZED);
 
         localVCLocalCITestService.testFetchSuccessful(instructorAssignmentRepository.localGit, instructor1Login, projectKey1, repositorySlug);
         localVCLocalCITestService.testPushSuccessful(instructorAssignmentRepository.localGit, instructor1Login, projectKey1, repositorySlug);
@@ -393,7 +393,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         programmingExerciseRepository.save(programmingExercise);
 
         localVCLocalCITestService.testFetchSuccessful(instructorAssignmentRepository.localGit, tutor1Login, projectKey1, repositorySlug);
-        localVCLocalCITestService.testPushThrowsException(instructorAssignmentRepository.localGit, tutor1Login, projectKey1, repositorySlug, NOT_AUTHORIZED);
+        localVCLocalCITestService.testPushReturnsError(instructorAssignmentRepository.localGit, tutor1Login, projectKey1, repositorySlug, NOT_AUTHORIZED);
 
         localVCLocalCITestService.testFetchSuccessful(instructorAssignmentRepository.localGit, instructor1Login, projectKey1, repositorySlug);
         localVCLocalCITestService.testPushSuccessful(instructorAssignmentRepository.localGit, instructor1Login, projectKey1, repositorySlug);
@@ -402,7 +402,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         programmingExerciseRepository.save(programmingExercise);
 
         localVCLocalCITestService.testFetchSuccessful(instructorAssignmentRepository.localGit, tutor1Login, projectKey1, repositorySlug);
-        localVCLocalCITestService.testPushThrowsException(instructorAssignmentRepository.localGit, tutor1Login, projectKey1, repositorySlug, NOT_AUTHORIZED);
+        localVCLocalCITestService.testPushReturnsError(instructorAssignmentRepository.localGit, tutor1Login, projectKey1, repositorySlug, NOT_AUTHORIZED);
 
         localVCLocalCITestService.testFetchSuccessful(instructorAssignmentRepository.localGit, instructor1Login, projectKey1, repositorySlug);
         localVCLocalCITestService.testPushSuccessful(instructorAssignmentRepository.localGit, instructor1Login, projectKey1, repositorySlug);
@@ -432,11 +432,11 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         studentExamRepository.save(studentExam);
 
         // student1 should not be able to fetch or push yet, even if the repository was already prepared.
-        localVCLocalCITestService.testFetchThrowsException(assignmentRepository.localGit, student1Login, projectKey1, assignmentRepositorySlug, FORBIDDEN);
-        localVCLocalCITestService.testPushThrowsException(assignmentRepository.localGit, student1Login, projectKey1, assignmentRepositorySlug, FORBIDDEN);
+        localVCLocalCITestService.testFetchReturnsError(assignmentRepository.localGit, student1Login, projectKey1, assignmentRepositorySlug, FORBIDDEN);
+        localVCLocalCITestService.testPushReturnsError(assignmentRepository.localGit, student1Login, projectKey1, assignmentRepositorySlug, FORBIDDEN);
         // tutor1 should be able to fetch but not push.
         localVCLocalCITestService.testFetchSuccessful(assignmentRepository.localGit, tutor1Login, projectKey1, assignmentRepositorySlug);
-        localVCLocalCITestService.testPushThrowsException(assignmentRepository.localGit, tutor1Login, projectKey1, assignmentRepositorySlug, NOT_AUTHORIZED);
+        localVCLocalCITestService.testPushReturnsError(assignmentRepository.localGit, tutor1Login, projectKey1, assignmentRepositorySlug, NOT_AUTHORIZED);
         // instructor1 should be able to fetch and push.
         localVCLocalCITestService.testFetchSuccessful(assignmentRepository.localGit, instructor1Login, projectKey1, assignmentRepositorySlug);
         localVCLocalCITestService.testPushSuccessful(assignmentRepository.localGit, instructor1Login, projectKey1, assignmentRepositorySlug);
@@ -457,7 +457,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         localVCLocalCITestService.testLatestSubmission(studentParticipation.getId(), commitHash, 1, false);
         // tutor1 should be able to fetch but not push.
         localVCLocalCITestService.testFetchSuccessful(assignmentRepository.localGit, tutor1Login, projectKey1, assignmentRepositorySlug);
-        localVCLocalCITestService.testPushThrowsException(assignmentRepository.localGit, tutor1Login, projectKey1, assignmentRepositorySlug, NOT_AUTHORIZED);
+        localVCLocalCITestService.testPushReturnsError(assignmentRepository.localGit, tutor1Login, projectKey1, assignmentRepositorySlug, NOT_AUTHORIZED);
         // instructor1 should be able to fetch and push.
         localVCLocalCITestService.testFetchSuccessful(assignmentRepository.localGit, instructor1Login, projectKey1, assignmentRepositorySlug);
         localVCLocalCITestService.testPushSuccessful(assignmentRepository.localGit, instructor1Login, projectKey1, assignmentRepositorySlug);
@@ -469,11 +469,11 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         studentExamRepository.save(studentExam);
 
         // student1 should not be able to fetch or push.
-        localVCLocalCITestService.testFetchThrowsException(assignmentRepository.localGit, student1Login, projectKey1, assignmentRepositorySlug, FORBIDDEN);
-        localVCLocalCITestService.testPushThrowsException(assignmentRepository.localGit, student1Login, projectKey1, assignmentRepositorySlug, FORBIDDEN);
+        localVCLocalCITestService.testFetchReturnsError(assignmentRepository.localGit, student1Login, projectKey1, assignmentRepositorySlug, FORBIDDEN);
+        localVCLocalCITestService.testPushReturnsError(assignmentRepository.localGit, student1Login, projectKey1, assignmentRepositorySlug, FORBIDDEN);
         // tutor1 should be able to fetch but not push.
         localVCLocalCITestService.testFetchSuccessful(assignmentRepository.localGit, tutor1Login, projectKey1, assignmentRepositorySlug);
-        localVCLocalCITestService.testPushThrowsException(assignmentRepository.localGit, tutor1Login, projectKey1, assignmentRepositorySlug, NOT_AUTHORIZED);
+        localVCLocalCITestService.testPushReturnsError(assignmentRepository.localGit, tutor1Login, projectKey1, assignmentRepositorySlug, NOT_AUTHORIZED);
         // instructor1 should be able to fetch and push.
         localVCLocalCITestService.testFetchSuccessful(assignmentRepository.localGit, instructor1Login, projectKey1, assignmentRepositorySlug);
         localVCLocalCITestService.testPushSuccessful(assignmentRepository.localGit, instructor1Login, projectKey1, assignmentRepositorySlug);
@@ -507,12 +507,12 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         LocalRepository instructorExamTestRunRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, repositorySlug);
 
         // Student should not able to fetch or push.
-        localVCLocalCITestService.testFetchThrowsException(instructorExamTestRunRepository.localGit, student1Login, projectKey1, repositorySlug, NOT_AUTHORIZED);
-        localVCLocalCITestService.testPushThrowsException(instructorExamTestRunRepository.localGit, student1Login, projectKey1, repositorySlug, NOT_AUTHORIZED);
+        localVCLocalCITestService.testFetchReturnsError(instructorExamTestRunRepository.localGit, student1Login, projectKey1, repositorySlug, NOT_AUTHORIZED);
+        localVCLocalCITestService.testPushReturnsError(instructorExamTestRunRepository.localGit, student1Login, projectKey1, repositorySlug, NOT_AUTHORIZED);
 
         // Tutor should be able to fetch but not push.
         localVCLocalCITestService.testFetchSuccessful(instructorExamTestRunRepository.localGit, tutor1Login, projectKey1, repositorySlug);
-        localVCLocalCITestService.testPushThrowsException(instructorExamTestRunRepository.localGit, tutor1Login, projectKey1, repositorySlug, NOT_AUTHORIZED);
+        localVCLocalCITestService.testPushReturnsError(instructorExamTestRunRepository.localGit, tutor1Login, projectKey1, repositorySlug, NOT_AUTHORIZED);
 
         // Instructor should be able to fetch and push.
         localVCLocalCITestService.testFetchSuccessful(instructorExamTestRunRepository.localGit, instructor1Login, projectKey1, repositorySlug);
@@ -523,12 +523,12 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         studentExamRepository.save(instructorExam);
 
         // Student should not able to fetch or push.
-        localVCLocalCITestService.testFetchThrowsException(instructorExamTestRunRepository.localGit, student1Login, projectKey1, repositorySlug, NOT_AUTHORIZED);
-        localVCLocalCITestService.testPushThrowsException(instructorExamTestRunRepository.localGit, student1Login, projectKey1, repositorySlug, NOT_AUTHORIZED);
+        localVCLocalCITestService.testFetchReturnsError(instructorExamTestRunRepository.localGit, student1Login, projectKey1, repositorySlug, NOT_AUTHORIZED);
+        localVCLocalCITestService.testPushReturnsError(instructorExamTestRunRepository.localGit, student1Login, projectKey1, repositorySlug, NOT_AUTHORIZED);
 
         // Tutor should be able to fetch but not push.
         localVCLocalCITestService.testFetchSuccessful(instructorExamTestRunRepository.localGit, tutor1Login, projectKey1, repositorySlug);
-        localVCLocalCITestService.testPushThrowsException(instructorExamTestRunRepository.localGit, tutor1Login, projectKey1, repositorySlug, NOT_AUTHORIZED);
+        localVCLocalCITestService.testPushReturnsError(instructorExamTestRunRepository.localGit, tutor1Login, projectKey1, repositorySlug, NOT_AUTHORIZED);
 
         // Instructor should be able to fetch and push.
         localVCLocalCITestService.testFetchSuccessful(instructorExamTestRunRepository.localGit, instructor1Login, projectKey1, repositorySlug);
@@ -550,8 +550,8 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         LocalRepository practiceRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, practiceRepositorySlug);
 
         // Test without participation.
-        localVCLocalCITestService.testFetchThrowsException(practiceRepository.localGit, student1Login, projectKey1, practiceRepositorySlug, INTERNAL_SERVER_ERROR);
-        localVCLocalCITestService.testPushThrowsException(practiceRepository.localGit, student1Login, projectKey1, practiceRepositorySlug, INTERNAL_SERVER_ERROR);
+        localVCLocalCITestService.testFetchReturnsError(practiceRepository.localGit, student1Login, projectKey1, practiceRepositorySlug, INTERNAL_SERVER_ERROR);
+        localVCLocalCITestService.testPushReturnsError(practiceRepository.localGit, student1Login, projectKey1, practiceRepositorySlug, INTERNAL_SERVER_ERROR);
 
         // Create practice participation.
         ProgrammingExerciseStudentParticipation practiceParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, student1Login);
@@ -572,15 +572,15 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
 
         // Teaching assistant
         localVCLocalCITestService.testFetchSuccessful(practiceRepository.localGit, tutor1Login, projectKey1, practiceRepositorySlug);
-        localVCLocalCITestService.testPushThrowsException(practiceRepository.localGit, tutor1Login, projectKey1, practiceRepositorySlug, NOT_AUTHORIZED);
+        localVCLocalCITestService.testPushReturnsError(practiceRepository.localGit, tutor1Login, projectKey1, practiceRepositorySlug, NOT_AUTHORIZED);
 
         // Instructor
         localVCLocalCITestService.testFetchSuccessful(practiceRepository.localGit, instructor1Login, projectKey1, practiceRepositorySlug);
         localVCLocalCITestService.testPushSuccessful(practiceRepository.localGit, instructor1Login, projectKey1, practiceRepositorySlug);
 
         // Student2 should not be able to access the repository of student1.
-        localVCLocalCITestService.testFetchThrowsException(practiceRepository.localGit, student2Login, projectKey1, practiceRepositorySlug, NOT_AUTHORIZED);
-        localVCLocalCITestService.testPushThrowsException(practiceRepository.localGit, student2Login, projectKey1, practiceRepositorySlug, NOT_AUTHORIZED);
+        localVCLocalCITestService.testFetchReturnsError(practiceRepository.localGit, student2Login, projectKey1, practiceRepositorySlug, NOT_AUTHORIZED);
+        localVCLocalCITestService.testPushReturnsError(practiceRepository.localGit, student2Login, projectKey1, practiceRepositorySlug, NOT_AUTHORIZED);
 
         // Cleanup
         practiceRepository.resetLocalRepo();
@@ -597,8 +597,8 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         LocalRepository practiceRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, practiceRepositorySlug);
 
         // Test without participation.
-        localVCLocalCITestService.testFetchThrowsException(practiceRepository.localGit, tutor1Login, projectKey1, practiceRepositorySlug, INTERNAL_SERVER_ERROR);
-        localVCLocalCITestService.testPushThrowsException(practiceRepository.localGit, tutor1Login, projectKey1, practiceRepositorySlug, INTERNAL_SERVER_ERROR);
+        localVCLocalCITestService.testFetchReturnsError(practiceRepository.localGit, tutor1Login, projectKey1, practiceRepositorySlug, INTERNAL_SERVER_ERROR);
+        localVCLocalCITestService.testPushReturnsError(practiceRepository.localGit, tutor1Login, projectKey1, practiceRepositorySlug, INTERNAL_SERVER_ERROR);
 
         // Create practice participation.
         ProgrammingExerciseStudentParticipation practiceParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, tutor1Login);
@@ -608,8 +608,8 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         // Students should not be able to access, teaching assistants should be able to fetch and push and editors and higher should be able to fetch and push.
 
         // Student
-        localVCLocalCITestService.testFetchThrowsException(practiceRepository.localGit, student1Login, projectKey1, practiceRepositorySlug, NOT_AUTHORIZED);
-        localVCLocalCITestService.testPushThrowsException(practiceRepository.localGit, student1Login, projectKey1, practiceRepositorySlug, NOT_AUTHORIZED);
+        localVCLocalCITestService.testFetchReturnsError(practiceRepository.localGit, student1Login, projectKey1, practiceRepositorySlug, NOT_AUTHORIZED);
+        localVCLocalCITestService.testPushReturnsError(practiceRepository.localGit, student1Login, projectKey1, practiceRepositorySlug, NOT_AUTHORIZED);
 
         // Teaching assistant
         localVCLocalCITestService.testFetchSuccessful(practiceRepository.localGit, tutor1Login, projectKey1, practiceRepositorySlug);
@@ -634,8 +634,8 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         LocalRepository practiceRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, practiceRepositorySlug);
 
         // Test without participation.
-        localVCLocalCITestService.testFetchThrowsException(practiceRepository.localGit, instructor1Login, projectKey1, practiceRepositorySlug, INTERNAL_SERVER_ERROR);
-        localVCLocalCITestService.testPushThrowsException(practiceRepository.localGit, instructor1Login, projectKey1, practiceRepositorySlug, INTERNAL_SERVER_ERROR);
+        localVCLocalCITestService.testFetchReturnsError(practiceRepository.localGit, instructor1Login, projectKey1, practiceRepositorySlug, INTERNAL_SERVER_ERROR);
+        localVCLocalCITestService.testPushReturnsError(practiceRepository.localGit, instructor1Login, projectKey1, practiceRepositorySlug, INTERNAL_SERVER_ERROR);
 
         // Create practice participation.
         ProgrammingExerciseStudentParticipation practiceParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, instructor1Login);
@@ -645,12 +645,12 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         // Students should not be able to access, teaching assistants should be able to fetch, and editors and higher should be able to fetch and push.
 
         // Student
-        localVCLocalCITestService.testFetchThrowsException(practiceRepository.localGit, student1Login, projectKey1, practiceRepositorySlug, NOT_AUTHORIZED);
-        localVCLocalCITestService.testPushThrowsException(practiceRepository.localGit, student1Login, projectKey1, practiceRepositorySlug, NOT_AUTHORIZED);
+        localVCLocalCITestService.testFetchReturnsError(practiceRepository.localGit, student1Login, projectKey1, practiceRepositorySlug, NOT_AUTHORIZED);
+        localVCLocalCITestService.testPushReturnsError(practiceRepository.localGit, student1Login, projectKey1, practiceRepositorySlug, NOT_AUTHORIZED);
 
         // Teaching assistant
         localVCLocalCITestService.testFetchSuccessful(practiceRepository.localGit, tutor1Login, projectKey1, practiceRepositorySlug);
-        localVCLocalCITestService.testPushThrowsException(practiceRepository.localGit, tutor1Login, projectKey1, practiceRepositorySlug, NOT_AUTHORIZED);
+        localVCLocalCITestService.testPushReturnsError(practiceRepository.localGit, tutor1Login, projectKey1, practiceRepositorySlug, NOT_AUTHORIZED);
 
         // Instructor
         localVCLocalCITestService.testFetchSuccessful(practiceRepository.localGit, instructor1Login, projectKey1, practiceRepositorySlug);

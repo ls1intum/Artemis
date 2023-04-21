@@ -30,6 +30,7 @@ import org.springframework.http.ResponseEntity;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
@@ -344,7 +345,7 @@ public abstract class RepositoryResource {
         catch (FileNotFoundException ex) {
             throw new EntityNotFoundException("File not found");
         }
-        catch (GitAPIException | IOException ex) {
+        catch (GitAPIException | IOException | ContinuousIntegrationException ex) {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
         return responseEntitySuccess;
