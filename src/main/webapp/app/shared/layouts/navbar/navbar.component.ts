@@ -268,7 +268,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         teams: 'artemisApp.team.home.title',
         exercise_hints: 'artemisApp.exerciseHint.home.title',
         ratings: 'artemisApp.ratingList.pageTitle',
-        goal_management: 'artemisApp.learningGoal.manageLearningGoals.title',
+        competency_management: 'artemisApp.learningGoal.manageLearningGoals.title',
         assessment_locks: 'artemisApp.assessment.locks.home.title',
         apollon_diagrams: 'artemisApp.apollonDiagram.home.title',
         communication: 'artemisApp.metis.communication.label',
@@ -483,7 +483,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
                 this.addTranslationAsCrumb(currentPath, 'text-feedback-conflict');
                 break;
             // No breadcrumbs for those segments
-            case 'goal-management':
+            case 'competency-management':
             case 'unit-management':
             case 'exercise-groups':
             case 'student-exams':

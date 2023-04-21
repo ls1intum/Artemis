@@ -11,7 +11,7 @@
             <jhi-documentation-button [type]="documentationType"></jhi-documentation-button>
         </div>
         <div class="ms-auto text-truncate justify-content-end" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
-            <a class="btn btn-primary" [routerLink]="['/course-management', courseId, 'goal-management', 'create']">
+            <a class="btn btn-primary" [routerLink]="['/course-management', courseId, 'competency-management', 'create']">
                 <fa-icon [icon]="faPlus"></fa-icon>
                 <span>{{ 'artemisApp.learningGoal.manageLearningGoals.create' | artemisTranslate }}</span>
             </a>
@@ -210,7 +210,7 @@
                     </td>
                     <td>
                         <div *ngIf="prerequisite.course">
-                            <a [routerLink]="['/course-management', prerequisite.course!.id, 'goal-management']">{{ prerequisite.course!.title }}</a>
+                            <a [routerLink]="['/course-management', prerequisite.course!.id, 'competency-management']">{{ prerequisite.course!.title }}</a>
                         </div>
                     </td>
                     <td class="text-end">

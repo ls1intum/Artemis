@@ -28,7 +28,7 @@
                 <a
                     *jhiHasAnyAuthority="['ROLE_INSTRUCTOR', 'ROLE_ADMIN']"
                     class="btn btn-sm btn-warning float-end"
-                    [routerLink]="['/course-management', courseId, 'goal-management', learningGoal.id, 'edit']"
+                    [routerLink]="['/course-management', courseId, 'competency-management', learningGoal.id, 'edit']"
                 >
                     <fa-icon [icon]="faPencilAlt"></fa-icon>
                     <span class="d-none d-md-inline">{{ 'entity.action.edit' | artemisTranslate }}</span>
