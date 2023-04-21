@@ -181,4 +181,9 @@ export class IntervalGradingSystemComponent extends BaseGradingSystemComponent {
             });
         });
     }
+
+    shouldShowGradingStepsAboveMaxPointsWarning(): boolean {
+        const steps = [...this.gradingScale.gradeSteps].slice(0, this.gradingScale.gradeSteps.length - 1);
+        return this.isAnyGradingStepAboveMaxPoints(steps);
+    }
 }

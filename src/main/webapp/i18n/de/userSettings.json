@@ -25,6 +25,7 @@
                 "tutorialGroupNotifications": "Übungsgruppenbenachrichtigungen",
                 "courseWideDiscussionNotifications": "Kursdiskussionsbenachrichtigungen",
                 "tutorNotifications": "Benachrichtigungen für Tutor:innen",
+                "conversationNotifications": "Benachrichtigungen über Unterhaltungen",
                 "editorNotifications": "Benachrichtigungen für Editor:innen",
                 "instructorNotifications": "Benachrichtigungen für Lehrende"
             },
@@ -46,6 +47,8 @@
                 "programmingTestCasesChanged": "Veränderte Testfälle bei Programmieraufgaben",
                 "registrationTutorialGroup": "An- und Abmeldungen von Übungsgruppen",
                 "tutorialGroupUpdateDelete": "Änderungen und Löschungen von Übungsgruppen",
+                "newConversationMessages": "Neue Nachrichten in Unterhaltung",
+                "newReplyMessage": "Neue Antworten in Unterhaltung",
                 "assignUnassignTutorialGroup": "Anmeldungen und Abmeldungen von Übungsgruppenleitung"
             },
             "settingDescriptions": {
@@ -67,6 +70,8 @@
                 "registrationTutorialGroupTutorDescription": "Erhalte eine Mitteilung, wenn ein:e Student:in für deine Übungsgruppe registriert oder abgemeldet wurde",
                 "registrationTutorialGroupStudentDescription": "Erhalte eine Mitteilung, wenn du für eine Übungsgruppe registriert oder abgemeldet wurdest",
                 "tutorialGroupUpdateDeleteDescription": "Erhalte eine Mitteilung, wenn eine Übungsgruppe aktualisiert oder gelöscht wurde in der du registriert oder Tutor:in bist",
+                "newConversationMessageDescription": "Erhalte eine Mitteilung, wenn du eine neue Nachricht in einer Unterhaltung erhältst",
+                "conversationNewReplyMessageDescription": "Erhalte eine Mitteilung, wenn du eine neue Antwort in einer Unterhaltung erhältst",
                 "assignUnassignTutorialGroupDescription": "Erhalte eine Mitteilung, wenn du als Tutor:in der Leitung einer Übungsgruppe zugewiesen oder entzogen wurdest"
             }
         }
