@@ -376,6 +376,10 @@
         {
             "fullName": "Ludwig Pusl",
             "photoDirectory": "public/images/about/Ludwig_Pusl.png"
+        },
+        {
+            "fullName": "Paul Schwind",
+            "photoDirectory": "public/images/about/Paul_Schwind.jpg"
         }
     ]
 }
