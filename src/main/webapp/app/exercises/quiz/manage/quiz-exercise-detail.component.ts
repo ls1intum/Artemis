@@ -1078,7 +1078,6 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
     }
 
     isSaveDisabled(): boolean {
-        // eslint-disable-next-line max-len
         return (
             this.isSaving ||
             !this.pendingChangesCache ||

@@ -181,7 +181,7 @@ export class ExamUpdateComponent implements OnInit {
     }
 
     get isValidVisibleDate(): boolean {
-        return this.exam.visibleDate !== undefined && this.exam.visibleDate !== null;
+        return !!this.exam.visibleDate;
     }
 
     get isValidNumberOfCorrectionRounds(): boolean {
@@ -217,7 +217,7 @@ export class ExamUpdateComponent implements OnInit {
      * Validates the EndDate inputted by the user.
      */
     get isValidEndDate(): boolean {
-        return this.exam.endDate !== undefined && this.exam.endDate !== null && dayjs(this.exam.endDate).isAfter(this.exam.startDate);
+        return !!this.exam.endDate && dayjs(this.exam.endDate).isAfter(this.exam.startDate);
     }
 
     /**
@@ -287,7 +287,7 @@ export class ExamUpdateComponent implements OnInit {
             return true;
         }
         // check for undefined because undefined is otherwise treated as the now dayjs
-        return this.exam.endDate !== undefined && this.exam.endDate !== null && dayjs(this.exam.publishResultsDate).isAfter(this.exam.endDate);
+        return !!this.exam.endDate && dayjs(this.exam.publishResultsDate).isAfter(this.exam.endDate);
     }
 
     get isValidExamStudentReviewStart(): boolean {
@@ -296,20 +296,16 @@ export class ExamUpdateComponent implements OnInit {
             return true;
         }
         // check for undefined because undefined is otherwise treated as the now dayjs
-        return this.exam.publishResultsDate !== undefined && this.exam.publishResultsDate !== null && dayjs(this.exam.examStudentReviewStart).isAfter(this.exam.publishResultsDate);
+        return !!this.exam.publishResultsDate && dayjs(this.exam.examStudentReviewStart).isAfter(this.exam.publishResultsDate);
     }
 
     get isValidExamStudentReviewEnd(): boolean {
         // checks whether the end date can be undefined depending on if there is an undefined or manually deleted start date
         if (!this.exam.examStudentReviewEnd) {
-            return !this.exam.examStudentReviewStart || !this.exam.examStudentReviewStart.isValid();
+            return !this.exam.examStudentReviewStart || !dayjs(this.exam.examStudentReviewStart).isValid();
         }
         // check for undefined because undefined is otherwise treated as the now dayjs
-        return (
-            this.exam.examStudentReviewStart !== undefined &&
-            this.exam.publishResultsDate !== null &&
-            dayjs(this.exam.examStudentReviewEnd).isAfter(this.exam.examStudentReviewStart)
-        );
+        return !!this.exam.examStudentReviewStart && dayjs(this.exam.examStudentReviewEnd).isAfter(this.exam.examStudentReviewStart);
     }
 
     get isValidExampleSolutionPublicationDate(): boolean {

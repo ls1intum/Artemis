@@ -121,18 +121,19 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
     validateAndUpdateField(event: Event) {
         const val = (event.target as HTMLInputElement).value;
         //value is empty string in case the input field has been cleared (this is handled in updateEmptyField)
-        if (val != '') {
-            //date is InvalidDate or an actual date
-            const date = new Date(val);
-            if (this.isValidDate(date)) {
-                this.isInvalidDate = false;
-                this.value = date;
-            } else {
-                this.isInvalidDate = true;
-            }
-            this._onChange(this.value);
-            this.valueChanged();
+        if (val === '') {
+            return;
         }
+        //date is InvalidDate or an actual date
+        const date = new Date(val);
+        if (this.isValidDate(date)) {
+            this.isInvalidDate = false;
+            this.value = date;
+        } else {
+            this.isInvalidDate = true;
+        }
+        this._onChange(this.value);
+        this.valueChanged();
     }
 
     /**
@@ -140,7 +141,7 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
      * @param inputValue the string value from the input field
      */
     updateEmptyField(inputValue: string) {
-        if (inputValue == '') {
+        if (inputValue === '') {
             this.isInvalidDate = false;
             this.value = null;
             this._onChange(this.value);
