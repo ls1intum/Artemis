@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Path;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.concurrent.CompletableFuture;
 
 import org.eclipse.jgit.api.Git;
@@ -114,7 +113,9 @@ public class LocalCIPushService {
         }
         catch (EntityNotFoundException e) {
             // This should never happen, as the exercise is already retrieved in the LocalVCPushFilter.
-            throw new LocalCIException("Programming exercise with project key " + projectKey + " not found");
+            // Throwing an exception here would lead to the push getting stuck.
+            log.error("Programming exercise with project key " + projectKey + " not found", e);
+            return;
         }
 
         ProgrammingExerciseParticipation participation;
@@ -137,7 +138,9 @@ public class LocalCIPushService {
         }
         catch (EntityNotFoundException e) {
             // This should never happen, as the participation is already retrieved in the LocalVCPushFilter.
-            throw new LocalCIException("No participation found for the given repository");
+            // Throwing an exception here would lead to the push getting stuck.
+            log.error("No participation found for the given repository", e);
+            return;
         }
 
         try {
@@ -165,7 +168,7 @@ public class LocalCIPushService {
             programmingMessagingService.notifyUserAboutBuildTriggerError(participation, e.getMessage());
         }
 
-        log.info("New push processed to repository {} in {}.", localVCRepositoryUrl.getURI(), TimeLogUtil.formatDurationFrom(timeNanoStart));
+        log.info("New push processed to repository {} in {}. A build job was queued.", localVCRepositoryUrl.getURI(), TimeLogUtil.formatDurationFrom(timeNanoStart));
     }
 
     private LocalVCRepositoryUrl getLocalVCRepositoryUrl(Path repositoryFolderPath) {
@@ -216,16 +219,12 @@ public class LocalCIPushService {
         // Trigger a build of the solution repository.
         CompletableFuture<LocalCIBuildResult> futureSolutionBuildResult = localCIExecutorService.addBuildJobToQueue(participation);
         futureSolutionBuildResult.thenAccept(buildResult -> {
-            try {
-                // The 'user' is not properly logged into Artemis, this leads to an issue when accessing custom repository methods.
-                // Therefore, a mock auth object has to be created.
-                SecurityUtils.setAuthorizationObject();
-                Result result = programmingExerciseGradingService.processNewProgrammingExerciseResult(participation, buildResult).orElseThrow();
-                programmingMessagingService.notifyUserAboutNewResult(result, participation);
-            }
-            catch (NoSuchElementException e) {
-                programmingMessagingService.notifyUserAboutBuildTriggerError(participation, e.getMessage());
-            }
+
+            // The 'user' is not properly logged into Artemis, this leads to an issue when accessing custom repository methods.
+            // Therefore, a mock auth object has to be created.
+            SecurityUtils.setAuthorizationObject();
+            Result result = programmingExerciseGradingService.processNewProgrammingExerciseResult(participation, buildResult).orElseThrow();
+            programmingMessagingService.notifyUserAboutNewResult(result, participation);
 
             // The solution participation received a new result, also trigger a build of the template repository.
             try {
