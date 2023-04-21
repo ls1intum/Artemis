@@ -6,7 +6,7 @@ import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
 import { ConversationWebsocketDTO } from 'app/entities/metis/conversation/conversation-websocket-dto.model';
-import { MetisPostAction, MetisWebsocketChannelPrefix } from 'app/shared/metis/metis.util';
+import { MetisPostAction, MetisWebsocketChannelPrefix, RouteComponents } from 'app/shared/metis/metis.util';
 import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { OneToOneChatService } from 'app/shared/metis/conversations/one-to-one-chat.service';
@@ -18,7 +18,7 @@ import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { OneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
 import { GroupChatService } from 'app/shared/metis/conversations/group-chat.service';
 import dayjs from 'dayjs/esm';
-import { NavigationEnd, Router } from '@angular/router';
+import { NavigationEnd, Params, Router } from '@angular/router';
 
 /**
  * NOTE: NOT INJECTED IN THE ROOT MODULE
@@ -346,5 +346,15 @@ export class MetisConversationService implements OnDestroy {
             }
         }
         this.conversationsOfUser = conversationsCopy;
+    }
+
+    static getQueryParamsForConversation(conversationId: number): Params {
+        const params: Params = {};
+        params.conversationId = conversationId;
+        return params;
+    }
+
+    static getLinkForConversation(courseId: number): RouteComponents {
+        return ['/courses', courseId, 'messages'];
     }
 }

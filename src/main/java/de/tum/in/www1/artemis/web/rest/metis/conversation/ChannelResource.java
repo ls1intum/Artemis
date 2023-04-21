@@ -14,9 +14,12 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
+import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
@@ -24,6 +27,7 @@ import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
 import de.tum.in.www1.artemis.service.metis.conversation.ConversationDTOService;
 import de.tum.in.www1.artemis.service.metis.conversation.ConversationService;
 import de.tum.in.www1.artemis.service.metis.conversation.auth.ChannelAuthorizationService;
+import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
 import de.tum.in.www1.artemis.service.tutorialgroups.TutorialGroupChannelManagementService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.ChannelDTO;
@@ -50,7 +54,12 @@ public class ChannelResource extends ConversationManagementResource {
 
     private final TutorialGroupChannelManagementService tutorialGroupChannelManagementService;
 
-    public ChannelResource(ChannelService channelService, ChannelRepository channelRepository, ChannelAuthorizationService channelAuthorizationService,
+    private final SingleUserNotificationService singleUserNotificationService;
+
+    private final ConversationParticipantRepository conversationParticipantRepository;
+
+    public ChannelResource(ConversationParticipantRepository conversationParticipantRepository, SingleUserNotificationService singleUserNotificationService,
+            ChannelService channelService, ChannelRepository channelRepository, ChannelAuthorizationService channelAuthorizationService,
             AuthorizationCheckService authorizationCheckService, ConversationDTOService conversationDTOService, CourseRepository courseRepository, UserRepository userRepository,
             ConversationService conversationService, TutorialGroupChannelManagementService tutorialGroupChannelManagementService) {
         super(courseRepository);
@@ -62,6 +71,8 @@ public class ChannelResource extends ConversationManagementResource {
         this.userRepository = userRepository;
         this.conversationService = conversationService;
         this.tutorialGroupChannelManagementService = tutorialGroupChannelManagementService;
+        this.singleUserNotificationService = singleUserNotificationService;
+        this.conversationParticipantRepository = conversationParticipantRepository;
     }
 
     /**
@@ -172,7 +183,11 @@ public class ChannelResource extends ConversationManagementResource {
             throw new BadRequestAlertException("The channel belongs to tutorial group " + tutorialGroup.getTitle(), CHANNEL_ENTITY_NAME, "channel.tutorialGroup.mismatch");
         }, Optional::empty);
 
+        var usersToNotify = conversationParticipantRepository.findConversationParticipantByConversationId(channel.getId()).stream().map(ConversationParticipant::getUser)
+                .collect(Collectors.toSet());
         conversationService.deleteConversation(channel);
+        usersToNotify.forEach(
+                user -> singleUserNotificationService.notifyClientAboutConversationCreationOrDeletion(channel, user, requestingUser, NotificationType.CONVERSATION_DELETE_CHANNEL));
         return ResponseEntity.ok().build();
     }
 
@@ -303,6 +318,8 @@ public class ChannelResource extends ConversationManagementResource {
         usersToRegister.addAll(conversationService.findUsersInDatabase(course, addAllStudents, addAllTutors, addAllInstructors));
         usersToRegister.addAll(conversationService.findUsersInDatabase(usersLoginsToRegister.stream().toList()));
         conversationService.registerUsersToConversation(course, usersToRegister, channelFromDatabase, Optional.empty());
+        usersToRegister.forEach(user -> singleUserNotificationService.notifyClientAboutConversationCreationOrDeletion(channelFromDatabase, user, requestingUser,
+                NotificationType.CONVERSATION_ADD_USER_CHANNEL));
         return ResponseEntity.ok().build();
     }
 
@@ -339,6 +356,8 @@ public class ChannelResource extends ConversationManagementResource {
         }
 
         conversationService.deregisterUsersFromAConversation(course, usersToDeRegister, channelFromDatabase);
+        usersToDeRegister.forEach(user -> singleUserNotificationService.notifyClientAboutConversationCreationOrDeletion(channelFromDatabase, user, requestingUser,
+                NotificationType.CONVERSATION_REMOVE_USER_CHANNEL));
         return ResponseEntity.ok().build();
     }
 
