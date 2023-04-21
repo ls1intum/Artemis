@@ -162,7 +162,7 @@ public class LocalCIPushService {
             // Instead, the user can see in the UI that creating the submission failed.
             // This catch clause does not catch exceptions that happen during runBuildJob() as that method is called asynchronously.
             // For exceptions happening inside runBuildJob(), the user is also notified. See the addBuildJobToQueue() method in the LocalCIExecutorService for that.
-            programmingMessagingService.notifyUserAboutBuildTriggerError(participation, e);
+            programmingMessagingService.notifyUserAboutBuildTriggerError(participation, e.getMessage());
         }
 
         log.info("New push processed to repository {} in {}.", localVCRepositoryUrl.getURI(), TimeLogUtil.formatDurationFrom(timeNanoStart));
@@ -224,7 +224,7 @@ public class LocalCIPushService {
                 programmingMessagingService.notifyUserAboutNewResult(result, participation);
             }
             catch (NoSuchElementException e) {
-                programmingMessagingService.notifyUserAboutBuildTriggerError(participation, e);
+                programmingMessagingService.notifyUserAboutBuildTriggerError(participation, e.getMessage());
             }
 
             // The solution participation received a new result, also trigger a build of the template repository.
@@ -232,7 +232,7 @@ public class LocalCIPushService {
                 programmingTriggerService.triggerTemplateBuildAndNotifyUser(exercise.getId(), submission.getCommitHash(), SubmissionType.TEST);
             }
             catch (EntityNotFoundException e) {
-                programmingMessagingService.notifyUserAboutBuildTriggerError(participation, e);
+                programmingMessagingService.notifyUserAboutBuildTriggerError(participation, e.getMessage());
             }
         });
     }

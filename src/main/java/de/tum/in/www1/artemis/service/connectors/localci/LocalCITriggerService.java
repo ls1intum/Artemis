@@ -55,7 +55,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
                 programmingMessagingService.notifyUserAboutNewResult(result, participation);
             }
             catch (NoSuchElementException e) {
-                programmingMessagingService.notifyUserAboutBuildTriggerError(participation, e);
+                programmingMessagingService.notifyUserAboutBuildTriggerError(participation, e.getMessage());
             }
         });
     }

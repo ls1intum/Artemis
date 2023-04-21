@@ -224,7 +224,7 @@ public class ProgrammingTriggerService {
                 programmingMessagingService.notifyUserAboutSubmission(submission.get());
             }
             catch (Exception e) {
-                programmingMessagingService.notifyUserAboutBuildTriggerError(participation, e);
+                programmingMessagingService.notifyUserAboutBuildTriggerError(participation, e.getMessage());
             }
         }
     }

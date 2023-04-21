@@ -2,8 +2,6 @@ package de.tum.in.www1.artemis.service.programming;
 
 import static de.tum.in.www1.artemis.config.Constants.*;
 
-import java.util.concurrent.TimeoutException;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
@@ -151,11 +149,10 @@ public class ProgrammingMessagingService {
      * Notify user about build trigger error, either during preparing the build or during running the build itself.
      *
      * @param participation the participation for which the build trigger error occurred.
-     * @param exception     the exception that occurred.
+     * @param errorMessage  the error message of the exception that occurred.
      */
-    public void notifyUserAboutBuildTriggerError(ProgrammingExerciseParticipation participation, Throwable exception) {
-        log.error("Error while building and testing repository " + participation.getRepositoryUrl(), exception);
-        String errorMessage = exception instanceof TimeoutException ? "The build process timed out." : exception.getMessage();
+    public void notifyUserAboutBuildTriggerError(ProgrammingExerciseParticipation participation, String errorMessage) {
+        log.error("Error while building and testing repository " + participation.getRepositoryUrl());
         BuildTriggerWebsocketError error = new BuildTriggerWebsocketError(errorMessage, participation.getId());
         // This cast to Participation is safe as the participation is either a ProgrammingExerciseStudentParticipation, a TemplateProgrammingExerciseParticipation, or a
         // SolutionProgrammingExerciseParticipation, which all extend Participation.

@@ -157,7 +157,8 @@ public class LocalCIExecutorService {
                 localCIBuildPlanService.updateBuildPlanStatus(participation, ContinuousIntegrationService.BuildStatus.INACTIVE);
 
                 // Notify the user, that the build job produced an exception. This is also the case if the build job timed out.
-                programmingMessagingService.notifyUserAboutBuildTriggerError(participation, e);
+                programmingMessagingService.notifyUserAboutBuildTriggerError(participation,
+                        e instanceof TimeoutException ? "Build timed out after " + timeoutSeconds + " seconds" : e.getMessage());
 
                 localCIBuildJobService.stopContainer(containerId);
                 localCIBuildJobService.deleteTemporaryBuildScript(scriptPath);
@@ -186,8 +187,8 @@ public class LocalCIExecutorService {
                 LocalCIBuildResult result = supplier.get();
                 future.complete(result);
             }
-            catch (Exception ex) {
-                future.completeExceptionally(ex);
+            catch (Exception e) {
+                future.completeExceptionally(e);
             }
             return future;
         }
