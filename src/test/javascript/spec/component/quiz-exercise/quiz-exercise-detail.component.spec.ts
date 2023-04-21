@@ -701,6 +701,42 @@ describe('QuizExercise Management Detail Component', () => {
             });
         });
 
+        describe('handle invalid dates when switching quiz mode', () => {
+            // setup
+            beforeEach(() => {
+                resetQuizExercise();
+                comp.quizExercise = quizExercise;
+            });
+
+            it('should remove isInvalidDueDate for SYNCHRONIZED quiz', () => {
+                comp.quizExercise.quizMode = QuizMode.SYNCHRONIZED;
+                comp.isInvalidDueDate = true;
+                comp.switchQuizMode();
+                expect(comp.isInvalidDueDate).toBeFalse();
+            });
+
+            it('should remove isInvalidBachModeStartTime for BATCHED quiz', () => {
+                comp.quizExercise.quizMode = QuizMode.BATCHED;
+                comp.isInvalidBachModeStartTime = true;
+                comp.switchQuizMode();
+                expect(comp.isInvalidBachModeStartTime).toBeFalse();
+            });
+
+            it('should remove isInvalidBachModeStartTime for INDIVIDUAL quiz', () => {
+                comp.quizExercise.quizMode = QuizMode.INDIVIDUAL;
+                comp.isInvalidBachModeStartTime = true;
+                comp.switchQuizMode();
+                expect(comp.isInvalidBachModeStartTime).toBeFalse();
+            });
+
+            it('should keep isInvalidDueDate when switching from BATCHED to INDIVIDUAL mode', () => {
+                comp.quizExercise.quizMode = QuizMode.INDIVIDUAL;
+                comp.isInvalidDueDate = true;
+                comp.switchQuizMode();
+                expect(comp.isInvalidDueDate).toBeTrue();
+            });
+        });
+
         describe('add questions without quizExercise', () => {
             let initializeNewQuizExerciseStub: jest.SpyInstance;
 
