@@ -50,7 +50,7 @@
               "dagre",
               "webcola",
               "rfdc",
-                "js-zip"
+              "js-zip"
             ],
             "outputPath": "build/resources/main/static/",
             "index": "src/main/webapp/index.html",
