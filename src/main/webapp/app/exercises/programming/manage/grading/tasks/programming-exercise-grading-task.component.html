@@ -1,95 +1,88 @@
-<div class="d-flex flex-row justify-content-between">
-    <div>
-        <h2 class="mb-1 fw-medium">Tasks</h2>
+<div class="d-flex flex-column gap-3 mb-3">
+    <h2 class="fw-medium">Tasks</h2>
 
-        <div class="form-check form-switch">
-            <input class="form-check-input" type="checkbox" id="grading-task-inactive-toggle" [value]="ignoreInactive" (click)="toggleShowInactiveTestsShown()" />
-            <label class="form-check-label" for="grading-task-inactive-toggle" jhiTranslate="artemisApp.programmingExercise.configureGrading.testCases.showInactive"
-                >Show inactive
-            </label>
+    <div class="d-flex justify-content-between">
+        <div>
+            <jhi-button [shouldSubmit]="false" (click)="toggleAllTasksExpanded(true)" title="artemisApp.programmingExercise.configureGrading.expandAll" [icon]="faAngleDown">
+                Expand all
+            </jhi-button>
+
+            <jhi-button [shouldSubmit]="false" (click)="toggleAllTasksExpanded(false)" title="artemisApp.programmingExercise.configureGrading.collapseAll" [icon]="faAngleRight">
+                Collapse all
+            </jhi-button>
         </div>
 
         <div>
-            <label class="form-check-label" jhiTranslate="artemisApp.programmingExercise.configureGrading.testCases.exercisePoints">Exercise Points:</label>
-            {{ exercise.maxPoints }} P
+            <button type="button" (click)="saveTestCases()" class="btn btn-primary" [disabled]="isSaving" jhiTranslate="artemisApp.programmingExercise.configureGrading.save">
+                save
+            </button>
+
+            <button type="button" (click)="resetTestCases()" class="btn btn-secondary" [disabled]="isSaving" jhiTranslate="artemisApp.programmingExercise.configureGrading.reset">
+                reset
+            </button>
         </div>
     </div>
 
-    <div>
-        <button type="button" (click)="saveTestCases()" class="btn btn-primary" [disabled]="isSaving" jhiTranslate="artemisApp.programmingExercise.configureGrading.save">
-            save
-        </button>
+    <div class="form-check form-switch">
+        <input class="form-check-input" type="checkbox" id="grading-task-inactive-toggle" [value]="ignoreInactive" (click)="toggleShowInactiveTestsShown()" />
+        <label class="form-check-label" for="grading-task-inactive-toggle" jhiTranslate="artemisApp.programmingExercise.configureGrading.testCases.showInactive"
+            >Show inactive
+        </label>
+    </div>
 
-        <button type="button" (click)="resetTestCases()" class="btn btn-secondary" [disabled]="isSaving" jhiTranslate="artemisApp.programmingExercise.configureGrading.reset">
-            reset
-        </button>
+    <div>
+        <label class="form-check-label" jhiTranslate="artemisApp.programmingExercise.configureGrading.testCases.exercisePoints">Exercise Points:</label>
+        {{ exercise.maxPoints }} P
     </div>
 </div>
 
 <form>
-    <div class="task__head task__row">
-        <div class="task__row__cell">
-            <p>{{ 'artemisApp.programmingExercise.configureGrading.gradingTableHeader.testName' | artemisTranslate }}</p>
+    <div class="ps-5 task__row">
+        <div class="task__row__cell" [ngbTooltip]="'artemisApp.programmingExercise.configureGrading.help.name' | artemisTranslate" placement="bottom auto">
+            <p class="mb-0" [innerHtml]="'artemisApp.programmingExercise.configureGrading.gradingTableHeader.testName' | artemisTranslate"></p>
+            <fa-icon [icon]="faQuestionCircle" class="text-secondary ms-2"></fa-icon>
         </div>
 
-        <div class="task__row__cell">
-            {{ 'artemisApp.programmingExercise.configureGrading.gradingTableHeader.weight' | artemisTranslate }}
-            <fa-icon
-                [icon]="faQuestionCircle"
-                class="text-secondary ms-2"
-                placement="bottom auto"
-                [ngbTooltip]="'artemisApp.programmingExercise.configureGrading.help.weight' | artemisTranslate"
-            ></fa-icon>
+        <div
+            class="task__row__cell task__row__cell--small ps-2"
+            [ngbTooltip]="'artemisApp.programmingExercise.configureGrading.help.weight' | artemisTranslate"
+            placement="bottom auto"
+        >
+            <fa-icon [icon]="faScaleUnbalanced" size="xl"></fa-icon>
+            <fa-icon [icon]="faQuestionCircle" class="text-secondary ms-2"></fa-icon>
         </div>
 
-        <div class="task__row__cell">
-            {{ 'artemisApp.programmingExercise.configureGrading.gradingTableHeader.bonusMultiplier' | artemisTranslate }}
-            <fa-icon
-                [icon]="faQuestionCircle"
-                class="text-secondary ms-2"
-                placement="bottom auto"
-                [ngbTooltip]="'artemisApp.programmingExercise.configureGrading.help.bonusMultiplier' | artemisTranslate"
-            ></fa-icon>
+        <div
+            class="task__row__cell task__row__cell--small ps-2"
+            [ngbTooltip]="'artemisApp.programmingExercise.configureGrading.help.bonusMultiplier' | artemisTranslate"
+            placement="bottom auto"
+        >
+            <fa-icon [icon]="faAsterisk" size="xl"></fa-icon>
+            <fa-icon [icon]="faQuestionCircle" class="text-secondary ms-2"></fa-icon>
         </div>
 
-        <div class="task__row__cell">
-            {{ 'artemisApp.programmingExercise.configureGrading.gradingTableHeader.bonusPoints' | artemisTranslate }}
-            <fa-icon
-                [icon]="faQuestionCircle"
-                class="text-secondary ms-2"
-                placement="bottom auto"
-                [ngbTooltip]="'artemisApp.programmingExercise.configureGrading.help.bonusPoints' | artemisTranslate"
-            ></fa-icon>
+        <div
+            class="task__row__cell task__row__cell--small ps-2"
+            [ngbTooltip]="'artemisApp.programmingExercise.configureGrading.help.bonusPoints' | artemisTranslate"
+            placement="bottom auto"
+        >
+            <fa-icon [icon]="faMedal" size="xl"></fa-icon>
+            <fa-icon [icon]="faQuestionCircle" class="text-secondary ms-2"></fa-icon>
         </div>
 
-        <div class="task__row__cell">
-            {{ 'artemisApp.programmingExercise.configureGrading.gradingTableHeader.visibility' | artemisTranslate }}
-            <fa-icon
-                [icon]="faQuestionCircle"
-                class="text-secondary ms-2"
-                [ngbTooltip]="'artemisApp.programmingExercise.configureGrading.help.visibility' | artemisTranslate"
-                placement="bottom auto"
-            ></fa-icon>
+        <div class="task__row__cell" [ngbTooltip]="'artemisApp.programmingExercise.configureGrading.help.visibility' | artemisTranslate" placement="bottom auto">
+            <p class="mb-0" [innerHtml]="'artemisApp.programmingExercise.configureGrading.gradingTableHeader.visibility' | artemisTranslate"></p>
+            <fa-icon [icon]="faQuestionCircle" class="text-secondary ms-2"></fa-icon>
         </div>
 
-        <div class="task__row__cell">
-            {{ 'artemisApp.programmingExercise.configureGrading.gradingTableHeader.resultingPoints' | artemisTranslate }}
-            <fa-icon
-                [icon]="faQuestionCircle"
-                class="text-secondary ms-2"
-                [ngbTooltip]="'artemisApp.programmingExercise.configureGrading.help.points' | artemisTranslate"
-                placement="bottom auto"
-            ></fa-icon>
+        <div class="task__row__cell" [ngbTooltip]="'artemisApp.programmingExercise.configureGrading.help.points' | artemisTranslate" placement="bottom auto">
+            <p class="mb-0" [innerHtml]="'artemisApp.programmingExercise.configureGrading.gradingTableHeader.resultingPoints' | artemisTranslate"></p>
+            <fa-icon [icon]="faQuestionCircle" class="text-secondary ms-2"></fa-icon>
         </div>
 
-        <div class="task__row__cell">
-            {{ 'artemisApp.programmingExercise.configureGrading.gradingTableHeader.testType' | artemisTranslate }}
-            <fa-icon
-                [icon]="faQuestionCircle"
-                class="text-secondary ms-2"
-                placement="bottom auto"
-                [ngbTooltip]="'artemisApp.programmingExercise.configureGrading.help.type' | artemisTranslate"
-            ></fa-icon>
+        <div class="task__row__cell" [ngbTooltip]="'artemisApp.programmingExercise.configureGrading.help.type' | artemisTranslate" placement="bottom auto">
+            <p class="mb-0" [innerHtml]="'artemisApp.programmingExercise.configureGrading.gradingTableHeader.testType' | artemisTranslate"></p>
+            <fa-icon [icon]="faQuestionCircle" class="text-secondary ms-2"></fa-icon>
         </div>
 
         <div class="task__row__cell">
@@ -97,5 +90,11 @@
         </div>
     </div>
 
-    <jhi-programming-exercise-task *ngFor="let task of tasks" [task]="task" (updateTasksEvent)="updateTasks()"></jhi-programming-exercise-task>
+    <jhi-programming-exercise-task
+        *ngFor="let task of tasks; index as i"
+        [index]="i"
+        [task]="task"
+        [openSubject]="allTasksExpandedSubject"
+        (updateTasksEvent)="updateTasks()"
+    ></jhi-programming-exercise-task>
 </form>

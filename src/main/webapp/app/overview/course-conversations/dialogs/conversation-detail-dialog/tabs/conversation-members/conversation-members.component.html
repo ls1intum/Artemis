@@ -48,6 +48,7 @@
                 <li
                     *ngFor="let user of members; let i = index; trackBy: trackIdentity"
                     class="list-group-item"
+                    [id]="'user-' + user.id"
                     jhi-conversation-member-row
                     [conversationMember]="user"
                     [activeConversation]="activeConversation"
