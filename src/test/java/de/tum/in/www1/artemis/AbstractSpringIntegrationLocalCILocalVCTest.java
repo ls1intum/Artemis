@@ -74,8 +74,8 @@ import io.zonky.test.db.AutoConfigureEmbeddedDatabase;
 @ActiveProfiles({ SPRING_PROFILE_TEST, "artemis", "localci", "localvc", "scheduling" })
 // Note: the server.port property must correspond to the port used in the artemis.version-control.url property.
 @TestPropertySource(properties = { "server.port=49152", "artemis.version-control.url=http://localhost:49152", "artemis.version-control.local-vcs-repo-path=${java.io.tmpdir}",
-        "artemis.continuous-integration.thread-pool-size=1", "artemis.continuous-integration.build.images.java.default=dummy-docker-image",
-        "artemis.user-management.use-external=false" })
+        "artemis.continuous-integration.thread-pool-size=1", "artemis.continuous-integration.asynchronous=false",
+        "artemis.continuous-integration.build.images.java.default=dummy-docker-image", "artemis.user-management.use-external=false" })
 public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends AbstractArtemisIntegrationTest {
 
     @Autowired
