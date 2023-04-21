@@ -37,7 +37,8 @@ export class CourseCommunicationPage {
     }
 
     filterByContext(context: CourseWideContext) {
-        cy.get('#filter-context').select(titleCaseWord(context));
+        cy.get('#filter-context').click().get('mat-option').contains(titleCaseWord(context)).click();
+        cy.get('#filter-context').click();
     }
 
     getSinglePost(postID: number) {
