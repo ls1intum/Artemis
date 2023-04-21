@@ -322,6 +322,7 @@ dependencies {
     implementation "com.github.seancfoley:ipaddress:5.4.0"
     implementation "org.apache.maven:maven-model:3.9.1"
     implementation "org.apache.pdfbox:pdfbox:2.0.27"
+    implementation 'org.apache.commons:commons-csv:1.10.0'
     implementation "com.google.protobuf:protobuf-java:3.22.2"
     implementation "org.commonmark:commonmark:0.21.0"
     implementation "de.tum.in.ase.athene:client:0.0.2"

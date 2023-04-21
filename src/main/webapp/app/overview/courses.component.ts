@@ -18,6 +18,7 @@ import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { Router } from '@angular/router';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { faPenAlt } from '@fortawesome/free-solid-svg-icons';
+import { DataExportService } from 'app/shared/user-settings/data-export/data-export.service';
 
 @Component({
     selector: 'jhi-overview',
@@ -51,7 +52,11 @@ export class CoursesComponent implements OnInit, OnChanges, OnDestroy {
         private examService: ExamManagementService,
         private router: Router,
         private serverDateService: ArtemisServerDateService,
+        private dataExportService: DataExportService,
     ) {}
+    requestExport() {
+        this.dataExportService.requestExport();
+    }
 
     async ngOnInit() {
         this.loadAndFilterCourses();

@@ -412,6 +412,21 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
             """)
     List<ProgrammingExercise> findAllProgrammingExercisesInCourseOrInExamsOfCourse(@Param("course") Course course);
 
+    @Query("""
+            SELECT e
+            FROM Course c
+            LEFT JOIN  c.exercises e
+            LEFT JOIN FETCH e.studentParticipations p
+            LEFT JOIN FETCH p.submissions s
+            LEFT JOIN FETCH s.results r
+            Where c.id = :courseId
+            AND p.student.id = :userId
+            AND TYPE(e) = ProgrammingExercise
+            """)
+
+    Set<ProgrammingExercise> getAllProgrammingExercisesWithEagerParticipationsSubmissionsAndResultsOfUserFromCourseByCourseAndUserId(@Param("courseId") long courseId,
+            @Param("userId") long userId);
+
     long countByShortNameAndCourse(String shortName, Course course);
 
     long countByTitleAndCourse(String shortName, Course course);

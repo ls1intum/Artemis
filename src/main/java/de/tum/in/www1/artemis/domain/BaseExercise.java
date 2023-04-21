@@ -245,4 +245,8 @@ public abstract class BaseExercise extends DomainObject {
         }
         return !previousDate.isAfter(laterDate);
     }
+
+    public String getSanitizedExerciseTitle() {
+        return title.replaceAll("\\s+", "_").replaceAll("[\\\\/:*?\"<>|]", "_");
+    }
 }

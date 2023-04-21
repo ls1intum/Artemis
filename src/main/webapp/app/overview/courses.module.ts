@@ -22,6 +22,7 @@ import { NgxChartsModule, PieChartModule } from '@swimlane/ngx-charts';
 import { HeaderCourseComponent } from 'app/overview/header-course.component';
 import { ArtemisExamSharedModule } from 'app/exam/shared/exam-shared.module';
 import { CourseExamAttemptReviewDetailComponent } from 'app/overview/course-exams/course-exam-attempt-review-detail/course-exam-attempt-review-detail.component';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 
 @NgModule({
     imports: [
@@ -39,6 +40,7 @@ import { CourseExamAttemptReviewDetailComponent } from 'app/overview/course-exam
         NgxChartsModule,
         ArtemisExamSharedModule,
         PieChartModule,
+        ArtemisSharedComponentModule,
     ],
     declarations: [
         CoursesComponent,
