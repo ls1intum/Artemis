@@ -235,19 +235,14 @@ public class LocalVCLocalCITestService {
      * @param repositorySlug the repository slug of the repository.
      * @return the path to the repository folder.
      */
-    private Path createRepositoryFolderInTempDirectory(String projectKey, String repositorySlug) {
+    private Path createRepositoryFolderInTempDirectory(String projectKey, String repositorySlug) throws IOException {
         String tempDir = System.getProperty("java.io.tmpdir");
 
         Path projectFolder = Paths.get(tempDir, projectKey);
 
         // Create the project folder if it does not exist.
-        try {
-            if (!Files.exists(projectFolder)) {
-                Files.createDirectories(projectFolder);
-            }
-        }
-        catch (IOException e) {
-            throw new RuntimeException(e);
+        if (!Files.exists(projectFolder)) {
+            Files.createDirectories(projectFolder);
         }
 
         // Create the repository folder.
@@ -516,6 +511,12 @@ public class LocalVCLocalCITestService {
         pushCommand.call();
     }
 
+    /**
+     * Assert that the base repository folders were created correctly for a programming exercise.
+     *
+     * @param programmingExercise the programming exercise.
+     * @param localVCBasePath     the base path for the local repositories taken from the artemis.version-control.local-vcs-repo-path environment variable.
+     */
     public void verifyRepositoryFoldersExist(ProgrammingExercise programmingExercise, String localVCBasePath) {
         LocalVCRepositoryUrl templateRepositoryUrl = new LocalVCRepositoryUrl(programmingExercise.getTemplateRepositoryUrl(), localVCBaseUrl);
         assertThat(Files.exists(templateRepositoryUrl.getLocalRepositoryPath(localVCBasePath))).isTrue();
