@@ -321,7 +321,6 @@ public class ExerciseResource {
             // TODO: instead fetch the policy without programming exercise, should be faster
             SubmissionPolicy policy = programmingExerciseRepository.findWithSubmissionPolicyById(programmingExercise.getId()).get().getSubmissionPolicy();
             programmingExercise.setSubmissionPolicy(policy);
-            programmingExercise.checksAndSetsIfProgrammingExerciseIsLocalSimulation();
         }
         // TODO: we should also check that the submissions do not contain sensitive data
 

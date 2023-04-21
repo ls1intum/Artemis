@@ -12,8 +12,7 @@
                 "SOLUTION_REPO_MISSING": "Missing solution repository",
                 "TEST_REPO_MISSING": "Missing test repository",
                 "TEMPLATE_BUILD_PLAN_MISSING": "Missing template build plan",
-                "SOLUTION_BUILD_PLAN_MISSING": "Missing solution build plan",
-                "IS_LOCAL_SIMULATION": "Is a local simulation"
+                "SOLUTION_BUILD_PLAN_MISSING": "Missing solution build plan"
             },
             "noInconsistencies": "No inconsistencies found",
             "inconsistenciesFound": "Following inconsistencies have been found"
