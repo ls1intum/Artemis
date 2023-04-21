@@ -274,6 +274,23 @@ describe('Exam Update Component', () => {
             expect(component.isValidConfiguration).toBeFalse();
         });
 
+        it('validates dates related to results correctly', () => {
+            component.isInvalidPublishResultsDate = false;
+            component.isInvalidStudentReviewStartDate = false;
+            component.isInvalidStudentReviewEndDate = false;
+            component.isInvalidExampleSolutionPublicationDate = false;
+
+            component.setIsInvalidPublishResultsDate(true);
+            component.setIsInvalidStudentReviewStartDate(true);
+            component.setIsInvalidStudentReviewEndDate(true);
+            component.setIsInvalidExampleSolutionPublicationDate(true);
+
+            expect(component.isInvalidPublishResultsDate).toBeTrue();
+            expect(component.isInvalidStudentReviewStartDate).toBeTrue();
+            expect(component.isInvalidStudentReviewEndDate).toBeTrue();
+            expect(component.isInvalidExampleSolutionPublicationDate).toBeTrue();
+        });
+
         it('should update', fakeAsync(() => {
             const navigateSpy = jest.spyOn(router, 'navigate');
             fixture.detectChanges();

@@ -335,4 +335,19 @@ describe('LectureUpdateComponent', () => {
         expect(setDatesSpy).toHaveBeenCalledTimes(3);
         expect(lectureUpdateComponent.lecture.startDate.toDate()).toBeBefore(lectureUpdateComponent.lecture.endDate.toDate());
     }));
+
+    it('should set isInvalidStartDate and invalidEndDate correctly', () => {
+        lectureUpdateComponent.lecture = { id: 7, title: 'test' } as Lecture;
+        const validateDatesSpy = jest.spyOn(lectureUpdateComponent, 'validateDates');
+
+        lectureUpdateComponent.isInvalidStartDate = false;
+        lectureUpdateComponent.isInvalidEndDate = false;
+
+        lectureUpdateComponent.setIsInvalidStartDateAndValidateDates(true);
+        lectureUpdateComponent.setIsInvalidEndDateAndValidateDates(true);
+
+        expect(lectureUpdateComponent.isInvalidStartDate).toBeTrue();
+        expect(lectureUpdateComponent.isInvalidEndDate).toBeTrue();
+        expect(validateDatesSpy).toHaveBeenCalledTimes(2);
+    });
 });
