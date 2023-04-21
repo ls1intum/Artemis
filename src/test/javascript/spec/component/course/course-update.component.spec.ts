@@ -187,7 +187,7 @@ describe('Course Management Update Component', () => {
         it('should call update service on save for existing entity', fakeAsync(() => {
             // GIVEN
             const entity = new Course();
-            entity.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.DISABLED;
+            entity.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING;
             entity.id = 123;
             const updateStub = jest.spyOn(courseManagementService, 'update').mockReturnValue(of(new HttpResponse({ body: entity })));
             comp.course = entity;
@@ -222,7 +222,7 @@ describe('Course Management Update Component', () => {
         it('should call create service on save for new entity', fakeAsync(() => {
             // GIVEN
             const entity = new Course();
-            entity.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.DISABLED;
+            entity.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING;
             const createStub = jest.spyOn(courseAdminService, 'create').mockReturnValue(of(new HttpResponse({ body: entity })));
             comp.course = entity;
             comp.courseForm = new FormGroup({
