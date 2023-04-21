@@ -117,16 +117,6 @@ public class AdminCourseResource {
         return ResponseEntity.created(new URI("/api/courses/" + result.getId())).body(result);
     }
 
-    private void createChannel(Course course, String name, Boolean isAnnouncement) {
-        var channelToCreate = new Channel();
-        channelToCreate.setName(name);
-        channelToCreate.setIsPublic(true);
-        channelToCreate.setIsAnnouncementChannel(isAnnouncement);
-        channelToCreate.setIsArchived(false);
-        channelToCreate.setDescription(null);
-        channelService.createChannel(course, channelToCreate, Optional.of(userRepository.getUserWithGroupsAndAuthorities()));
-    }
-
     /**
      * DELETE /courses/:courseId : delete the "id" course.
      *
@@ -145,5 +135,15 @@ public class AdminCourseResource {
 
         courseService.delete(course);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, Course.ENTITY_NAME, course.getTitle())).build();
+    }
+
+    private void createChannel(Course course, String name, Boolean isAnnouncement) {
+        var channelToCreate = new Channel();
+        channelToCreate.setName(name);
+        channelToCreate.setIsPublic(true);
+        channelToCreate.setIsAnnouncementChannel(isAnnouncement);
+        channelToCreate.setIsArchived(false);
+        channelToCreate.setDescription(null);
+        channelService.createChannel(course, channelToCreate, Optional.of(userRepository.getUserWithGroupsAndAuthorities()));
     }
 }
