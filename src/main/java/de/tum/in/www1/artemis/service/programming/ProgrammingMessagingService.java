@@ -54,8 +54,8 @@ public class ProgrammingMessagingService {
      */
     public void notifyUserAboutSubmission(ProgrammingSubmission submission) {
         if (submission.getParticipation() instanceof StudentParticipation studentParticipation) {
-            // No need to send all exercise details here. Remove the exercise from the participation and add it again after sending the message as it is needed by some methods for
-            // further processing.
+            // No need to send all exercise details here.
+            // Remove the exercise from the participation and add it again after sending the message as it is needed by some methods for further processing.
             Exercise exercise = submission.getParticipation().getExercise();
             submission.getParticipation().setExercise(null);
             studentParticipation.getStudents().forEach(user -> messagingTemplate.convertAndSendToUser(user.getLogin(), NEW_SUBMISSION_TOPIC, submission));
@@ -143,19 +143,5 @@ public class ProgrammingMessagingService {
             // do not try to report results for template or solution participations
             ltiNewResultService.onNewResult(studentParticipation);
         }
-    }
-
-    /**
-     * Notify user about build trigger error, either during preparing the build or during running the build itself.
-     *
-     * @param participation the participation for which the build trigger error occurred.
-     * @param errorMessage  the error message of the exception that occurred.
-     */
-    public void notifyUserAboutBuildTriggerError(ProgrammingExerciseParticipation participation, String errorMessage) {
-        log.error("Error while building and testing repository " + participation.getRepositoryUrl());
-        BuildTriggerWebsocketError error = new BuildTriggerWebsocketError(errorMessage, participation.getId());
-        // This cast to Participation is safe as the participation is either a ProgrammingExerciseStudentParticipation, a TemplateProgrammingExerciseParticipation, or a
-        // SolutionProgrammingExerciseParticipation, which all extend Participation.
-        notifyUserAboutSubmissionError((Participation) participation, error);
     }
 }

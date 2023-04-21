@@ -35,6 +35,7 @@ import com.github.dockerjava.api.exception.NotFoundException;
 
 import de.tum.in.www1.artemis.domain.Team;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
+import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.exception.LocalCIException;
 import de.tum.in.www1.artemis.service.connectors.localci.LocalCIPushService;
@@ -77,6 +78,16 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
     void testSubmitViaOnlineEditor() throws Exception {
         request.postWithoutLocation("/api/repository/" + studentParticipation.getId() + "/commit", null, HttpStatus.OK, null);
         localVCLocalCITestService.testLatestSubmission(studentParticipation.getId(), null, 1, false);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void testSubmitViaOnlineEditor_wrongProjectType() throws Exception {
+        // Submit from the online editor with the wrong project type set on the programming exercise.
+        // This tests that an internal error is caught properly in the processNewPush() method and the "/commit" endpoint returns 500 in that case.
+        programmingExercise.setProjectType(ProjectType.PLAIN_MAVEN);
+        programmingExerciseRepository.save(programmingExercise);
+        request.postWithoutLocation("/api/repository/" + studentParticipation.getId() + "/commit", null, HttpStatus.INTERNAL_SERVER_ERROR, null);
     }
 
     @Test

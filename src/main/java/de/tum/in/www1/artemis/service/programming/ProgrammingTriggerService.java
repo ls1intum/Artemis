@@ -224,7 +224,9 @@ public class ProgrammingTriggerService {
                 programmingMessagingService.notifyUserAboutSubmission(submission.get());
             }
             catch (Exception e) {
-                programmingMessagingService.notifyUserAboutBuildTriggerError(participation, e.getMessage());
+                log.error("Trigger build failed for {} with the exception {}", participation.getBuildPlanId(), e.getMessage());
+                BuildTriggerWebsocketError error = new BuildTriggerWebsocketError(e.getMessage(), participation.getId());
+                programmingMessagingService.notifyUserAboutSubmissionError(participation, error);
             }
         }
     }

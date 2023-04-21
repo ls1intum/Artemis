@@ -22,6 +22,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
+import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.LocalCIException;
 import de.tum.in.www1.artemis.exception.localvc.LocalVCInternalException;
@@ -31,6 +32,7 @@ import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildResult;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUrl;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingMessagingService;
+import de.tum.in.www1.artemis.web.websocket.programmingSubmission.BuildTriggerWebsocketError;
 
 /**
  * Service for submitting build jobs to the executor service.
@@ -157,8 +159,12 @@ public class LocalCIExecutorService {
                 localCIBuildPlanService.updateBuildPlanStatus(participation, ContinuousIntegrationService.BuildStatus.INACTIVE);
 
                 // Notify the user, that the build job produced an exception. This is also the case if the build job timed out.
-                programmingMessagingService.notifyUserAboutBuildTriggerError(participation,
-                        e instanceof TimeoutException ? "Build timed out after " + timeoutSeconds + " seconds" : e.getMessage());
+                log.error("Error while building and testing repository " + participation.getRepositoryUrl());
+                BuildTriggerWebsocketError error = new BuildTriggerWebsocketError(
+                        e instanceof TimeoutException ? "Build timed out after " + timeoutSeconds + " seconds" : e.getMessage(), participation.getId());
+                // This cast to Participation is safe as the participation is either a ProgrammingExerciseStudentParticipation, a TemplateProgrammingExerciseParticipation, or a
+                // SolutionProgrammingExerciseParticipation, which all extend Participation.
+                programmingMessagingService.notifyUserAboutSubmissionError((Participation) participation, error);
 
                 localCIBuildJobService.stopContainer(containerId);
                 localCIBuildJobService.deleteTemporaryBuildScript(scriptPath);
