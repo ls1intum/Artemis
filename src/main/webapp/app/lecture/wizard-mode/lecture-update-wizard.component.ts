@@ -22,7 +22,7 @@ export class LectureUpdateWizardComponent implements OnInit {
     @Input() startDate: string;
     @Input() endDate: string;
     @Input() isEndDateBeforeStartDate: boolean;
-    public invalidDate: boolean;
+    public isInvalidDate: boolean;
 
     @ViewChild(LectureUpdateWizardUnitsComponent, { static: false }) unitsComponent: LectureUpdateWizardUnitsComponent;
     @ViewChild(LectureUpdateWizardLearningGoalsComponent, { static: false }) learningGoalsComponent: LectureUpdateWizardLearningGoalsComponent;
@@ -46,7 +46,7 @@ export class LectureUpdateWizardComponent implements OnInit {
      */
     ngOnInit() {
         this.isSaving = false;
-        this.invalidDate = false;
+        this.isInvalidDate = false;
 
         this.activatedRoute.queryParams.pipe(take(1)).subscribe((params) => {
             if (params.step && !isNaN(+params.step)) {
@@ -112,8 +112,8 @@ export class LectureUpdateWizardComponent implements OnInit {
         }
     }
 
-    validateDates(areInvalidDates: boolean) {
-        this.invalidDate = areInvalidDates;
+    setIsInvalidDateAndValidateDates(areInvalidDates: boolean) {
+        this.isInvalidDate = areInvalidDates;
         this.validateDatesFunction();
     }
 }

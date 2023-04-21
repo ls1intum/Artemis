@@ -150,7 +150,7 @@ describe('SystemNotificationManagementUpdateComponent', () => {
         const saveSpy = jest.spyOn(updateComponent, 'save');
         updateComponentFixture.detectChanges();
 
-        updateComponent.validateNotificationDate(true);
+        updateComponent.setIsInvalidNotificationDateAndValidate(true);
 
         updateComponentFixture.detectChanges();
         const button = updateComponentFixture.debugElement.nativeElement.querySelector('#saveButton');
@@ -164,7 +164,7 @@ describe('SystemNotificationManagementUpdateComponent', () => {
         const saveSpy = jest.spyOn(updateComponent, 'save');
         updateComponentFixture.detectChanges();
 
-        updateComponent.validateExpireDate(true);
+        updateComponent.setIsInvalidExpireDateAndValidate(true);
 
         updateComponentFixture.detectChanges();
         const button = updateComponentFixture.debugElement.nativeElement.querySelector('#saveButton');

@@ -27,7 +27,7 @@
                         [labelName]="'artemisApp.systemNotification.notificationDate' | artemisTranslate"
                         formControlName="notificationDate"
                         [shouldDisplayTimeZoneWarning]="false"
-                        (valueChange)="validateNotificationDate($event)"
+                        (valueChange)="setIsInvalidNotificationDateAndValidate($event)"
                         [error]="isDatesError"
                         name="notificationDate"
                     ></jhi-date-time-picker>
@@ -37,7 +37,7 @@
                         [labelName]="'artemisApp.systemNotification.expireDate' | artemisTranslate"
                         formControlName="expireDate"
                         [shouldDisplayTimeZoneWarning]="false"
-                        (valueChange)="validateExpireDate($event)"
+                        (valueChange)="setIsInvalidExpireDateAndValidate($event)"
                         [error]="isDatesError"
                         name="expireDate"
                     ></jhi-date-time-picker>

@@ -545,12 +545,12 @@ export class CourseUpdateComponent implements OnInit {
         this.courseForm.controls['courseIcon'].setValue(undefined);
     }
 
-    validateStartDate(isInvalidDate: boolean) {
+    setIsInvalidStartDateAndValidate(isInvalidDate: boolean) {
         this.isInvalidStartDate = isInvalidDate;
         this.validateDates();
     }
 
-    validateEndDate(isInvalidDate: boolean) {
+    setIsInvalidEndDateAndValidate(isInvalidDate: boolean) {
         this.isInvalidEndDate = isInvalidDate;
         this.validateDates();
     }

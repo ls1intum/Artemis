@@ -462,7 +462,7 @@ describe('Course Management Update Component', () => {
             comp.isInvalidEndDate = false;
 
             //the boolean passed in this method tells us if the user input could be converted into a date or not
-            comp.validateStartDate(true);
+            comp.setIsInvalidStartDateAndValidate(true);
 
             expect(comp.isInvalidStartDate).toBeTrue();
             expect(comp.isInvalidEndDate).toBeFalse();
@@ -477,7 +477,7 @@ describe('Course Management Update Component', () => {
             comp.isInvalidStartDate = true;
 
             //the boolean passed in this method tells us if the user input could be converted into a date or not
-            comp.validateEndDate(true);
+            comp.setIsInvalidEndDateAndValidate(true);
 
             expect(comp.isInvalidStartDate).toBeTrue();
             expect(comp.isInvalidEndDate).toBeTrue();

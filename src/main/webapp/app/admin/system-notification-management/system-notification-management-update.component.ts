@@ -121,12 +121,12 @@ export class SystemNotificationManagementUpdateComponent implements OnInit {
         this.isSaving = false;
     }
 
-    validateNotificationDate(isInvalidDate: boolean) {
+    setIsInvalidNotificationDateAndValidate(isInvalidDate: boolean) {
         this.isInvalidNotificationDate = isInvalidDate;
         this.validateDates();
     }
 
-    validateExpireDate(isInvalidDate: boolean) {
+    setIsInvalidExpireDateAndValidate(isInvalidDate: boolean) {
         this.isInvalidExpireDate = isInvalidDate;
         this.validateDates();
     }

@@ -217,7 +217,7 @@ describe('Exam Update Component', () => {
             component.ngOnInit();
             fixture.detectChanges();
 
-            component.validateVisibleDate(true);
+            component.setIsInvalidVisibleDate(true);
             expect(component.isValidConfiguration).toBeFalse();
             expect(component.isInvalidVisibleDate).toBeTrue();
             expect(component.isInvalidStartDate).toBeFalse();
@@ -233,7 +233,7 @@ describe('Exam Update Component', () => {
             component.ngOnInit();
             fixture.detectChanges();
 
-            component.validateStartDate(true);
+            component.setIsInvalidStartDateAndCalculateMaxWorkingTime(true);
             expect(component.isValidConfiguration).toBeFalse();
             expect(component.isInvalidVisibleDate).toBeFalse();
             expect(component.isInvalidStartDate).toBeTrue();
@@ -246,7 +246,7 @@ describe('Exam Update Component', () => {
             examWithoutExercises.endDate = dayjs().add(3, 'hours');
 
             fixture.detectChanges();
-            component.validateEndDate(true);
+            component.setIsInvalidEndDateAndCalculateMaxWorkingTime(true);
 
             expect(component.isValidConfiguration).toBeFalse();
             expect(component.isInvalidVisibleDate).toBeFalse();

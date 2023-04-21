@@ -282,7 +282,7 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
         }
         this.scheduleQuizStart = (this.quizExercise.quizBatches?.length ?? 0) > 0;
         this.updateDuration();
-        this.exerciseService.validateDate(this.quizExercise);
+        this.exerciseService.validateDates(this.quizExercise);
 
         // Assign savedEntity to identify local changes
         this.savedEntity = this.quizExercise.id && !this.isImport ? cloneDeep(this.quizExercise) : new QuizExercise(undefined, undefined);
@@ -293,8 +293,8 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
     /**
      * Validates if the date is correct
      */
-    validateDate() {
-        this.exerciseService.validateDate(this.quizExercise);
+    validateDates() {
+        this.exerciseService.validateDates(this.quizExercise);
         this.isInvalidDate = this.isInvalidReleaseDate;
         if (this.quizExercise.quizMode === QuizMode.SYNCHRONIZED && this.scheduleQuizStart) {
             this.isInvalidDate = this.isInvalidDate || this.isInvalidBachModeStartTime;
@@ -323,7 +323,7 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
             }
         }
 
-        this.validateDate();
+        this.validateDates();
         return super.cacheValidation(this.changeDetector);
     }
 
@@ -915,7 +915,7 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
         this.prepareEntity(quizExercise);
         this.quizExercise = quizExercise;
         this.quizExercise.isEditable = isQuizEditable(this.quizExercise);
-        this.exerciseService.validateDate(this.quizExercise);
+        this.exerciseService.validateDates(this.quizExercise);
         this.savedEntity = cloneDeep(quizExercise);
         this.changeDetector.detectChanges();
 
@@ -1094,17 +1094,17 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
         return !!this.quizExercise?.quizBatches?.some((batch) => batch.startTimeError);
     }
 
-    validateReleaseDate(isInvalidDate: boolean) {
+    setIsInvalidReleaseDateAndValidateCache(isInvalidDate: boolean) {
         this.isInvalidReleaseDate = isInvalidDate;
         this.cacheValidation();
     }
 
-    validateDueDate(isInvalidDate: boolean) {
+    setIsInvalidDueDateAndValidateCache(isInvalidDate: boolean) {
         this.isInvalidDueDate = isInvalidDate;
         this.cacheValidation();
     }
 
-    validateBachModeStartTime(isInvalidDate: boolean) {
+    setIsInvalidBachModeStartTimeAndValidateCache(isInvalidDate: boolean) {
         this.isInvalidBachModeStartTime = isInvalidDate;
         this.cacheValidation();
     }

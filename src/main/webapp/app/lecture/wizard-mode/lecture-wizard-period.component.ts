@@ -27,12 +27,12 @@ export class LectureUpdateWizardPeriodComponent {
         }
     }
 
-    validateStartDate(isInvalidDate: boolean) {
+    setIsInvalidStartDateAndEmitDateConfigValidity(isInvalidDate: boolean) {
         this.isInvalidStartDate = isInvalidDate;
         this.emitDateConfigurationValidity();
     }
 
-    validateEndDate(isInvalidDate: boolean) {
+    setIsInvalidEndDateAndEmitDateConfigValidity(isInvalidDate: boolean) {
         this.isInvalidEndDate = isInvalidDate;
         this.emitDateConfigurationValidity();
     }

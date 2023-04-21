@@ -338,19 +338,19 @@ describe('QuizExercise Management Detail Component', () => {
                 const now = dayjs();
                 comp.quizExercise.releaseDate = now;
 
-                comp.validateDate();
+                comp.validateDates();
                 expect(comp.quizExercise.dueDateError).toBeFalsy();
                 expect(comp.hasErrorInQuizBatches()).toBeFalse();
 
                 comp.quizExercise!.quizBatches![0].startTime = now.add(1, 'days');
 
-                comp.validateDate();
+                comp.validateDates();
                 expect(comp.quizExercise.dueDateError).toBeFalsy();
                 expect(comp.hasErrorInQuizBatches()).toBeFalse();
 
                 comp.quizExercise.dueDate = now.add(2, 'days');
 
-                comp.validateDate();
+                comp.validateDates();
                 expect(comp.quizExercise.dueDateError).toBeFalsy();
                 expect(comp.hasErrorInQuizBatches()).toBeFalse();
             });
@@ -368,20 +368,20 @@ describe('QuizExercise Management Detail Component', () => {
 
                 comp.quizExercise!.quizBatches![0].startTime = now.add(-1, 'days');
 
-                comp.validateDate();
+                comp.validateDates();
                 expect(comp.quizExercise.dueDateError).toBeFalsy();
                 expect(comp.hasErrorInQuizBatches()).toBeTrue();
 
                 comp.quizExercise.dueDate = now.add(-2, 'days');
 
-                comp.validateDate();
+                comp.validateDates();
                 expect(comp.quizExercise.dueDateError).toBeTrue();
                 expect(comp.hasErrorInQuizBatches()).toBeTrue();
 
                 comp.quizExercise!.quizBatches![0].startTime = now.add(1, 'days');
                 comp.quizExercise.dueDate = now.add(1, 'days');
 
-                comp.validateDate();
+                comp.validateDates();
                 expect(comp.quizExercise.dueDateError).toBeFalsy();
                 if (quizMode !== QuizMode.SYNCHRONIZED) {
                     // dueDate for SYNCHRONIZED quizzes are calculated so no need to validate.

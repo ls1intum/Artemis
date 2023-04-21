@@ -100,7 +100,7 @@ describe('Exercise Service', () => {
         exercise.assessmentDueDate = currentDate.add(1, 'day');
         exercise.exampleSolutionPublicationDate = currentDate.add(1, 'day');
 
-        service.validateDate(exercise);
+        service.validateDates(exercise);
 
         expect(exercise.dueDateError).toBeFalse();
         expect(exercise.assessmentDueDateError).toBeFalse();
@@ -120,7 +120,7 @@ describe('Exercise Service', () => {
         exercise.assessmentDueDate = currentDate.add(4, 'day');
         exercise.exampleSolutionPublicationDate = currentDate.add(2, 'day');
 
-        service.validateDate(exercise);
+        service.validateDates(exercise);
 
         expect(exercise.dueDateError).toBeFalse();
         expect(exercise.assessmentDueDateError).toBeFalse();
@@ -137,7 +137,7 @@ describe('Exercise Service', () => {
         exercise.dueDate = currentDate.add(2, 'day');
         exercise.assessmentDueDate = currentDate.add(1, 'day');
 
-        service.validateDate(exercise);
+        service.validateDates(exercise);
 
         expect(exercise.dueDateError).toBeTrue();
         expect(exercise.assessmentDueDateError).toBeTrue();
@@ -155,7 +155,7 @@ describe('Exercise Service', () => {
         exercise.assessmentDueDate = currentDate.add(4, 'day');
         exercise.exampleSolutionPublicationDate = undefined;
 
-        service.validateDate(exercise);
+        service.validateDates(exercise);
 
         expect(exercise.dueDateError).toBeFalse();
         expect(exercise.assessmentDueDateError).toBeFalse();
@@ -173,7 +173,7 @@ describe('Exercise Service', () => {
         exercise.dueDate = currentDate.add(2, 'day');
         exercise.exampleSolutionPublicationDate = undefined;
 
-        service.validateDate(exercise);
+        service.validateDates(exercise);
 
         expect(exercise.dueDateError).toBeFalse();
         expect(exercise.exampleSolutionPublicationDateError).toBeFalse();
@@ -187,7 +187,7 @@ describe('Exercise Service', () => {
         exercise.releaseDate = currentDate.add(5, 'day');
         exercise.dueDate = currentDate.add(2, 'day');
 
-        service.validateDate(exercise);
+        service.validateDates(exercise);
 
         expect(exercise.dueDateError).toBeTrue();
     });
@@ -201,7 +201,7 @@ describe('Exercise Service', () => {
         exercise.dueDate = undefined;
         exercise.exampleSolutionPublicationDate = currentDate.add(3, 'day');
 
-        service.validateDate(exercise);
+        service.validateDates(exercise);
 
         expect(exercise.dueDateError).toBeFalsy();
         expect(exercise.exampleSolutionPublicationDateError).toBeTrue();
@@ -217,7 +217,7 @@ describe('Exercise Service', () => {
         exercise.dueDate = currentDate.add(5, 'day');
         exercise.exampleSolutionPublicationDate = currentDate.add(3, 'day');
 
-        service.validateDate(exercise);
+        service.validateDates(exercise);
 
         expect(exercise.dueDateError).toBeFalse();
         expect(exercise.exampleSolutionPublicationDateError).toBeTrue();
@@ -235,7 +235,7 @@ describe('Exercise Service', () => {
         exercise.dueDate = currentDate.add(5, 'day');
         exercise.exampleSolutionPublicationDate = currentDate.add(3, 'day');
 
-        service.validateDate(exercise);
+        service.validateDates(exercise);
 
         expect(exercise.dueDateError).toBeFalse();
         expect(exercise.exampleSolutionPublicationDateError).toBeFalse();

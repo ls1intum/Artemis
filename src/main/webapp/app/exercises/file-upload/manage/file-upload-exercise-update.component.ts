@@ -175,33 +175,33 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
     /**
      * Validates if the date is correct
      */
-    validateDate() {
-        this.exerciseService.validateDate(this.fileUploadExercise);
+    validateDates() {
+        this.exerciseService.validateDates(this.fileUploadExercise);
     }
 
-    validateReleaseDate(isInvalidDate: boolean) {
+    setIsInvalidReleaseDateAndValidateDates(isInvalidDate: boolean) {
         this.fileUploadExercise.isInvalidReleaseDate = isInvalidDate;
-        this.exerciseService.validateDate(this.fileUploadExercise);
+        this.exerciseService.validateDates(this.fileUploadExercise);
     }
 
-    validateStartDate(isInvalidDate: boolean) {
+    setIsInvalidStartDateAndValidateDates(isInvalidDate: boolean) {
         this.fileUploadExercise.isInvalidStartDate = isInvalidDate;
-        this.exerciseService.validateDate(this.fileUploadExercise);
+        this.exerciseService.validateDates(this.fileUploadExercise);
     }
 
-    validateDueDate(isInvalidDate: boolean) {
+    setIsInvalidDueDateAndValidateDates(isInvalidDate: boolean) {
         this.fileUploadExercise.isInvalidDueDate = isInvalidDate;
-        this.exerciseService.validateDate(this.fileUploadExercise);
+        this.exerciseService.validateDates(this.fileUploadExercise);
     }
 
-    validateAssessmentDueDate(isInvalidDate: boolean) {
+    setIsInvalidAssessmentDueDateAndValidateDates(isInvalidDate: boolean) {
         this.fileUploadExercise.isInvalidAssessmentDueDate = isInvalidDate;
-        this.exerciseService.validateDate(this.fileUploadExercise);
+        this.exerciseService.validateDates(this.fileUploadExercise);
     }
 
-    validateExamplePublicationDate(isInvalidDate: boolean) {
+    setIsInvalidExamplePublicationDateAndValidateDates(isInvalidDate: boolean) {
         this.fileUploadExercise.isInvalidExampleSolutionDate = isInvalidDate;
-        this.exerciseService.validateDate(this.fileUploadExercise);
+        this.exerciseService.validateDates(this.fileUploadExercise);
     }
 
     /**

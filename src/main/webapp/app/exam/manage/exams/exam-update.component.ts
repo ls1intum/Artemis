@@ -324,33 +324,33 @@ export class ExamUpdateComponent implements OnInit {
         );
     }
 
-    validateVisibleDate(isInvalidDate: boolean) {
+    setIsInvalidVisibleDate(isInvalidDate: boolean) {
         this.isInvalidVisibleDate = isInvalidDate;
     }
 
-    validateStartDate(isInvalidDate: boolean) {
+    setIsInvalidStartDateAndCalculateMaxWorkingTime(isInvalidDate: boolean) {
         this.isInvalidStartDate = isInvalidDate;
         this.calculateMaxWorkingTime();
     }
 
-    validateEndDate(isInvalidDate: boolean) {
+    setIsInvalidEndDateAndCalculateMaxWorkingTime(isInvalidDate: boolean) {
         this.isInvalidEndDate = isInvalidDate;
         this.calculateMaxWorkingTime();
     }
 
-    validatePublishResultsDate(isInvalidDate: boolean) {
+    setIsInvalidPublishResultsDate(isInvalidDate: boolean) {
         this.isInvalidPublishResultsDate = isInvalidDate;
     }
 
-    validateStudentReviewStartDate(isInvalidDate: boolean) {
+    setIsInvalidStudentReviewStartDate(isInvalidDate: boolean) {
         this.isInvalidStudentReviewStartDate = isInvalidDate;
     }
 
-    validateStudentReviewEndDate(isInvalidDate: boolean) {
+    setIsInvalidStudentReviewEndDate(isInvalidDate: boolean) {
         this.isInvalidStudentReviewEndDate = isInvalidDate;
     }
 
-    validateExampleSolutionPublicationDate(isInvalidDate: boolean) {
+    setIsInvalidExampleSolutionPublicationDate(isInvalidDate: boolean) {
         this.isInvalidExampleSolutionPublicationDate = isInvalidDate;
     }
 

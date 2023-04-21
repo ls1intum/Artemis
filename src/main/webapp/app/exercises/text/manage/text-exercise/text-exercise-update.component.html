@@ -37,7 +37,7 @@
                     id="pick-releaseDate"
                     labelName="{{ 'artemisApp.exercise.releaseDate' | artemisTranslate }}"
                     [(ngModel)]="textExercise.releaseDate"
-                    (valueChange)="validateReleaseDate($event)"
+                    (valueChange)="setIsInvalidReleaseDateAndValidateDates($event)"
                     [error]="false"
                     name="releaseDate"
                 ></jhi-date-time-picker>
@@ -49,7 +49,7 @@
                     name="startDate"
                     [error]="!!textExercise.startDateError"
                     labelName="{{ 'artemisApp.exercise.startDate' | artemisTranslate }}"
-                    (valueChange)="validateStartDate($event)"
+                    (valueChange)="setIsInvalidStartDateAndValidateDates($event)"
                     [(ngModel)]="textExercise.startDate"
                 ></jhi-date-time-picker>
                 <span *ngIf="textExercise.startDateError" class="invalid-feedback">{{ 'artemisApp.exercise.startDateError' | artemisTranslate }}</span>
@@ -63,7 +63,7 @@
                     name="dueDate"
                     [error]="!!textExercise.dueDateError"
                     labelName="{{ 'artemisApp.exercise.dueDate' | artemisTranslate }}"
-                    (valueChange)="validateDueDate($event)"
+                    (valueChange)="setIsInvalidDueDateAndValidateDates($event)"
                     [(ngModel)]="textExercise.dueDate"
                 ></jhi-date-time-picker>
                 <span *ngIf="textExercise.dueDateError" class="invalid-feedback">{{ 'artemisApp.exercise.dueDateError' | artemisTranslate }}</span>
@@ -75,7 +75,7 @@
                     name="assessmentDueDate"
                     [error]="!!textExercise.assessmentDueDateError"
                     labelName="{{ 'artemisApp.exercise.assessmentDueDate' | artemisTranslate }}"
-                    (valueChange)="validateAssessmentDueDate($event)"
+                    (valueChange)="setIsInvalidAssessmentDueDateAndValidateDates($event)"
                     [(ngModel)]="textExercise.assessmentDueDate"
                 ></jhi-date-time-picker>
                 <span *ngIf="textExercise.assessmentDueDateError" class="invalid-feedback">{{ 'artemisApp.exercise.assessmentDueDateError' | artemisTranslate }}</span>
@@ -86,7 +86,7 @@
             <div>
                 <jhi-included-in-overall-score-picker
                     [(includedInOverallScore)]="textExercise.includedInOverallScore"
-                    (includedInOverallScoreChange)="validateDate()"
+                    (includedInOverallScoreChange)="validateDates()"
                     [allowNotIncluded]="!isExamMode"
                 ></jhi-included-in-overall-score-picker>
             </div>
@@ -178,7 +178,7 @@
                 labelName="{{ 'artemisApp.exercise.exampleSolutionPublicationDate' | artemisTranslate }}"
                 [(ngModel)]="textExercise.exampleSolutionPublicationDate"
                 [error]="textExercise.exampleSolutionPublicationDateError!"
-                (valueChange)="validateExamplePublicationDate($event)"
+                (valueChange)="setIsInvalidExampleSolutionDateAndValidateDates($event)"
             ></jhi-date-time-picker>
             <span *ngIf="textExercise.exampleSolutionPublicationDateError" class="invalid-feedback">{{
                 'artemisApp.exercise.exampleSolutionPublicationDateError' | artemisTranslate

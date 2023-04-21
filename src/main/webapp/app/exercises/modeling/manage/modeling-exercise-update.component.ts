@@ -184,33 +184,33 @@ export class ModelingExerciseUpdateComponent implements OnInit {
     /**
      * Validates if the date is correct
      */
-    validateDate(): void {
-        this.exerciseService.validateDate(this.modelingExercise);
+    validateDates(): void {
+        this.exerciseService.validateDates(this.modelingExercise);
     }
 
-    validateReleaseDate(isInvalidDate: boolean) {
+    setIsInvalidReleaseDateAndValidateDates(isInvalidDate: boolean) {
         this.modelingExercise.isInvalidReleaseDate = isInvalidDate;
-        this.exerciseService.validateDate(this.modelingExercise);
+        this.exerciseService.validateDates(this.modelingExercise);
     }
 
-    validateStartDate(isInvalidDate: boolean) {
+    setIsInvalidStartDateAndValidateDates(isInvalidDate: boolean) {
         this.modelingExercise.isInvalidStartDate = isInvalidDate;
-        this.exerciseService.validateDate(this.modelingExercise);
+        this.exerciseService.validateDates(this.modelingExercise);
     }
 
-    validateDueDate(isInvalidDate: boolean) {
+    setIsInvalidDueDateAndValidateDates(isInvalidDate: boolean) {
         this.modelingExercise.isInvalidDueDate = isInvalidDate;
-        this.exerciseService.validateDate(this.modelingExercise);
+        this.exerciseService.validateDates(this.modelingExercise);
     }
 
-    validateAssessmentDueDate(isInvalidDate: boolean) {
+    setIsInvalidAssessmentDueDateAndValidateDates(isInvalidDate: boolean) {
         this.modelingExercise.isInvalidAssessmentDueDate = isInvalidDate;
-        this.exerciseService.validateDate(this.modelingExercise);
+        this.exerciseService.validateDates(this.modelingExercise);
     }
 
-    validateExamplePublicationDate(isInvalidDate: boolean) {
+    setIsInvalidExampleSolutionDateAndValidateDates(isInvalidDate: boolean) {
         this.modelingExercise.isInvalidExampleSolutionDate = isInvalidDate;
-        this.exerciseService.validateDate(this.modelingExercise);
+        this.exerciseService.validateDates(this.modelingExercise);
     }
 
     save() {

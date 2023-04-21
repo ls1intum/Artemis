@@ -124,7 +124,7 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
         if (val != '') {
             //date is InvalidDate or an actual date
             const date = new Date(val);
-            if (dayjs(val).isValid() && this.isValidDate(date)) {
+            if (this.isValidDate(date)) {
                 this.isInvalidDate = false;
                 this.value = date;
             } else {

@@ -251,8 +251,8 @@ describe('ModelingExercise Management Update Component', () => {
         const modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
         comp.modelingExercise = modelingExercise;
         jest.spyOn(exerciseService, 'validateDate');
-        comp.validateDate();
-        expect(exerciseService.validateDate).toHaveBeenCalledWith(modelingExercise);
+        comp.validateDates();
+        expect(exerciseService.validateDates).toHaveBeenCalledWith(modelingExercise);
     });
 
     it('should set assessmentType to manual in exam mode', () => {
