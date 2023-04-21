@@ -17,7 +17,12 @@
             <fa-icon [icon]="faPlus"></fa-icon>
             <span jhiTranslate="artemisApp.quizExercise.home.createLabel"> Create new Quiz </span>
         </button>
-        <button *ngIf="course && course.isAtLeastEditor" class="btn btn-primary text-truncate mb-1 me-1" [routerLink]="['/course-management', courseId, 'apollon-diagrams']">
+        <button
+            id="create-dd-quiz"
+            *ngIf="course && course.isAtLeastEditor"
+            class="btn btn-primary text-truncate mb-1 me-1"
+            [routerLink]="['/course-management', courseId, 'apollon-diagrams']"
+        >
             <fa-icon [icon]="faPlus"></fa-icon>
             <span jhiTranslate="artemisApp.quizExercise.home.createModelDragAndDrop"> Create new Drag and Drop Model Quiz </span>
         </button>
@@ -186,6 +191,7 @@
                         <div class="btn-group flex-btn-group-container">
                             <div class="btn-group-vertical me-1 mb-1">
                                 <a
+                                    id="preview-quiz"
                                     *ngIf="quizExercise.isAtLeastTutor"
                                     [routerLink]="['/course-management', quizExercise.course?.id, 'quiz-exercises', quizExercise.id, 'preview']"
                                     class="btn btn-success btn-sm me-1 mb-1"
