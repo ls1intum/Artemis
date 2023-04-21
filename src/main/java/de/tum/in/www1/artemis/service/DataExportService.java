@@ -1,24 +1,28 @@
 package de.tum.in.www1.artemis.service;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
+import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseExportService;
@@ -81,11 +85,18 @@ public class DataExportService {
     }
 
     public void requestDataExport(User user) throws IOException {
+        DataExport dataExport = new DataExport();
+        dataExport.setDataExportState(DataExportState.REQUESTED);
+        dataExport.setUser(user);
+        dataExport.setRequestDate(ZonedDateTime.now());
         if (!Files.exists(dataExportPath)) {
             Files.createDirectories(dataExportPath);
         }
         workingDirectory = Files.createTempDirectory(dataExportPath, "data-export-working-dir");
-        createDataExport(user);
+        dataExport.setDataExportState(DataExportState.IN_CREATION);
+        var dataExportPath = createDataExport(user);
+        dataExport.setFilePath(dataExportPath.toString());
+        dataExport.setDataExportState(DataExportState.EMAIL_SENT);
 
     }
 
@@ -93,14 +104,11 @@ public class DataExportService {
 
     }
 
-    private void createDataExport(User user) throws IOException {
+    private Path createDataExport(User user) throws IOException {
         var courses = courseRepository.getAllCoursesUserIsMemberOf(authorizationCheckService.isAdmin(user), user.getGroups());
         for (var course : courses) {
             var courseWorkingDir = Files.createTempDirectory(workingDirectory, "course-" + course.getId());
-            var outputDir = courseWorkingDir.resolve("output");
-            if (!Files.exists(outputDir)) {
-                Files.createDirectory(outputDir);
-            }
+            var outputDir = retrieveOutputDirectoryCreateIfNotExistent(courseWorkingDir);
 
             var programmingExercises = programmingExerciseRepository
                     .getAllProgrammingExercisesWithEagerParticipationsSubmissionsAndResultsOfUserFromCourseByCourseAndUserId(course.getId(), user.getId());
@@ -110,23 +118,64 @@ public class DataExportService {
             var modelingExercises = modelingExerciseRepository.getAllModelingExercisesWithEagerParticipationsSubmissionsAndResultsOfUserFromCourseByCourseAndUserId(course.getId(),
                     user.getId());
             for (var modelingExercise : modelingExercises) {
-                createModelingExerciseExport(modelingExercise, courseWorkingDir, outputDir);
+                createModelingTextOrFileUploadExerciseExport(modelingExercise, courseWorkingDir, outputDir);
             }
             var textExercises = textExerciseRepository.getAllTextExercisesWithEagerParticipationsSubmissionsAndResultsOfUserFromCourseByCourseAndUserId(course.getId(),
                     user.getId());
             for (var textExercise : textExercises) {
-                createTextExerciseExport(textExercise, courseWorkingDir, outputDir);
+                createModelingTextOrFileUploadExerciseExport(textExercise, courseWorkingDir, outputDir);
             }
             var fileUploadExercises = fileUploadExerciseRepository
                     .getAllFileUploadExercisesWithEagerParticipationsSubmissionsAndResultsOfUserFromCourseByCourseAndUserId(course.getId(), user.getId());
             for (var fileUploadExercise : fileUploadExercises) {
-                createFileUploadExerciseExport(fileUploadExercise, courseWorkingDir, outputDir);
+                createModelingTextOrFileUploadExerciseExport(fileUploadExercise, courseWorkingDir, outputDir);
             }
             var quizExercises = quizExerciseRepository.getAllQuizExercisesWithEagerParticipationsSubmissionsAndResultsOfUserFromCourseByCourseAndUserId(course.getId(),
                     user.getId());
-            createCourseZipFile();
+            for (var quizExercise : quizExercises) {
+                createModelingTextOrFileUploadExerciseExport(quizExercise, courseWorkingDir, outputDir);
+            }
+            createCourseZipFile(course, outputDir);
         }
+        addGeneralUserInformation(user);
+        addGDPRInformationFile();
+        return createDataExportZipFile(user.getLogin());
 
+    }
+
+    private void addGDPRInformationFile() throws IOException {
+        var outputDir = retrieveOutputDirectoryCreateIfNotExistent(workingDirectory);
+        String art15GdprInformation = """
+                # General information in accordance with Art. 15 GDPR
+                ## Purposes of processing
+                The purposes of processing of personal data are teaching and examinations in an university context.
+
+                ## Categories of personal data
+                Artemis only processes general personal data
+
+                ## Recipients of personal data
+                As operator of the Artemis instance at TUM the Rechnerbetriebsgruppe processes personal data.
+
+                ## Right to lodge a complaint
+                According to Art. 15 1(f) GDPR you have the right to lodge a complaint with the supervisory authority
+
+                ## Right of rectification or erasure of personal data
+                According to Art. 15 1(e) GDPR you have the right to
+                            """;
+        Files.writeString(outputDir.resolve("README.md"), art15GdprInformation, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+
+    }
+
+    private void addGeneralUserInformation(User user) throws IOException {
+        var outputDir = retrieveOutputDirectoryCreateIfNotExistent(workingDirectory);
+        String[] headers = new String[] { "login", "name", "email" };
+        CSVFormat csvFormat = CSVFormat.DEFAULT.builder().setHeader(headers).build();
+
+        try (final CSVPrinter printer = new CSVPrinter(Files.newBufferedWriter(outputDir.resolve("general-user-information.csv")), csvFormat)) {
+            printer.printRecord(user.getLogin(), user.getName(), user.getEmail());
+            printer.flush();
+
+        }
     }
 
     private void createProgrammingExerciseExport(ProgrammingExercise programmingExercise, Path workingDirectory, Path outputPath) throws IOException {
@@ -144,21 +193,41 @@ public class DataExportService {
                 .filter(studentParticipation -> studentParticipation instanceof ProgrammingExerciseStudentParticipation)
                 .map(studentParticipation -> (ProgrammingExerciseStudentParticipation) studentParticipation).toList();
         List<String> exportRepoErrors = new ArrayList<>();
+        var outputDir = retrieveOutputDirectoryCreateIfNotExistent(exerciseWorkingDir);
         programmingExerciseExportService.exportStudentRepositories(programmingExercise, listOfProgrammingExerciseParticipations, repositoryExportOptions, exerciseWorkingDir,
-                exportRepoErrors);
-        zipFileService.createZipFileWithFolderContent(
-                outputPath.resolve(programmingExercise.getCourseViaExerciseGroupOrCourseMember().getShortName() + "-" + programmingExercise.getShortName() + ".zip"),
-                exerciseWorkingDir, null);
+                outputDir, exportRepoErrors);
 
+        zipFileService.createZipFileWithFolderContent(
+                outputPath.resolve(programmingExercise.getCourseViaExerciseGroupOrCourseMember().getShortName() + "-" + programmingExercise.getShortName() + ".zip"), outputDir,
+                null);
+
+    }
+
+    private Path retrieveOutputDirectoryCreateIfNotExistent(Path workingDirectory) throws IOException {
+        var outputPath = workingDirectory.resolve("output");
+        if (!Files.exists(outputPath)) {
+            Files.createDirectory(outputPath);
+
+        }
+        return outputPath;
     }
 
     private Path createParticipationsSubmissionsResultsExport(Exercise exercise, Path workingDirectory) throws IOException {
         var exerciseWorkingDir = Files.createTempDirectory(workingDirectory, "exercise-" + exercise.getId());
-        for (var particpation : exercise.getStudentParticipations()) {
+        var outputDir = retrieveOutputDirectoryCreateIfNotExistent(exerciseWorkingDir);
+        for (var participation : exercise.getStudentParticipations()) {
+            createParticipationCsvFile(participation, outputDir);
             // TODO create participation csv file
-            for (var submission : particpation.getSubmissions()) {
-                createSubmissionCsvFile(submission, exerciseWorkingDir);
+            for (var submission : participation.getSubmissions()) {
+                createSubmissionCsvFile(submission, retrieveOutputDirectoryCreateIfNotExistent(exerciseWorkingDir));
+                if (submission instanceof FileUploadSubmission) {
+                    copyFileUploadSubmissionFile(FileUploadSubmission.buildFilePath(exercise.getId(), submission.getId()), outputDir);
+                }
+                else if (submission instanceof TextSubmission textSubmission) {
+                    storeTextSubmissionContent(textSubmission, outputDir);
+                }
                 for (var result : submission.getResults()) {
+                    createResultsCsvFile(submission.getResults(), outputDir);
                     // TODO create result csv file
                 }
             }
@@ -166,46 +235,46 @@ public class DataExportService {
         return exerciseWorkingDir;
     }
 
-    private void createFileUploadExerciseExport(FileUploadExercise fileUploadExercise, Path workingDirectory, Path outputPath) throws IOException {
-        Path exerciseWorkingDir = createParticipationsSubmissionsResultsExport(fileUploadExercise, workingDirectory);
-        zipFileService.createZipFileWithFolderContent(
-                outputPath.resolve(fileUploadExercise.getCourseViaExerciseGroupOrCourseMember().getShortName() + "-" + fileUploadExercise.getSanitizedExerciseTitle() + ".zip"),
-                exerciseWorkingDir, null);
+    private void createParticipationCsvFile(StudentParticipation participation, Path outputDir) {
 
     }
 
-    private void createTextExerciseExport(TextExercise textExercise, Path workingDirectory, Path outputPath) throws IOException {
-        Path exerciseWorkingDir = createParticipationsSubmissionsResultsExport(textExercise, workingDirectory);
+    private void storeTextSubmissionContent(TextSubmission textSubmission, Path outputDir) throws IOException {
+        Files.writeString(outputDir.resolve("submission-text.txt"), textSubmission.getText());
+    }
+
+    private void createResultsCsvFile(List<Result> results, Path exerciseWorkingDir) {
+    }
+
+    private void createModelingTextOrFileUploadExerciseExport(Exercise exercise, Path workingDirectory, Path outputPath) throws IOException {
+        Path exerciseWorkingDir = createParticipationsSubmissionsResultsExport(exercise, workingDirectory);
         zipFileService.createZipFileWithFolderContent(
-                outputPath.resolve(textExercise.getCourseViaExerciseGroupOrCourseMember().getShortName() + "-" + textExercise.getSanitizedExerciseTitle() + ".zip"),
-                exerciseWorkingDir, null);
+                outputPath.resolve(exercise.getCourseViaExerciseGroupOrCourseMember().getShortName() + "-" + exercise.getSanitizedExerciseTitle() + ".zip"),
+                retrieveOutputDirectoryCreateIfNotExistent(exerciseWorkingDir), null);
 
     }
 
-    private void createModelingExerciseExport(ModelingExercise modelingExercise, Path workingDirectory, Path outputPath) throws IOException {
-        Path exerciseWorkingDir = Files.createTempDirectory(workingDirectory, "modeling-exercise" + modelingExercise.getId());
-        log.info("Creating export for modeling exercise with id{}", modelingExercise.getId());
-        for (var particpation : modelingExercise.getStudentParticipations()) {
-            // TODO create participation csv file
-            for (var submission : particpation.getSubmissions()) {
-                createSubmissionCsvFile(submission, exerciseWorkingDir);
-                for (var result : submission.getResults()) {
-                    // TODO create result csv file
-                }
-            }
+    private void copyFileUploadSubmissionFile(String submissionFilePath, Path outputDir) {
+        try {
+            FileUtils.copyDirectory(new File(submissionFilePath), outputDir.toFile());
         }
-        zipFileService.createZipFileWithFolderContent(
-                outputPath.resolve(modelingExercise.getCourseViaExerciseGroupOrCourseMember().getShortName() + "-" + modelingExercise.getSanitizedExerciseTitle() + ".zip"),
-                exerciseWorkingDir, null);
+        catch (IOException ignored) {
+            ignored.printStackTrace();
+            // ignore if we cannot retrieve the submitted file.
+        }
+    }
+
+    private void createCourseZipFile(Course course, Path exercisesOutputDir) throws IOException {
+        zipFileService.createZipFileWithFolderContent(retrieveOutputDirectoryCreateIfNotExistent(workingDirectory).resolve("course-" + course.getShortName() + ".zip"),
+                exercisesOutputDir, null);
 
     }
 
-    private void createCourseZipFile() {
-
-    }
-
-    private void createExerciseZipFile(Path exercisePath, Path outputPath) {
-
+    private Path createDataExportZipFile(String userLogin) throws IOException {
+        // There should actually never exist more than one data export for a user at a time (once the feature is fully implemented), but to be sure the name is unique, we add the
+        // current timestamp
+        return zipFileService.createZipFileWithFolderContent(dataExportPath.resolve("data-export-" + userLogin + ZonedDateTime.now().toEpochSecond() + ".zip"),
+                retrieveOutputDirectoryCreateIfNotExistent(workingDirectory), null);
     }
 
     private void createSubmissionCsvFile(Submission submission, Path outputPath) throws IOException {
@@ -231,34 +300,34 @@ public class DataExportService {
 
         }
         Files.writeString(outputPath.resolve(submission.getParticipation().getExercise().getCourseViaExerciseGroupOrCourseMember().getShortName() + "exercise-"
-                + submission.getParticipation().getExercise().getTitle() + "-participation" + submission.getParticipation().getId() + "-submission" + submission.getId() + ".csv"),
-                sw.toString());
+                + submission.getParticipation().getExercise().getSanitizedExerciseTitle() + "-participation" + submission.getParticipation().getId() + "-submission"
+                + submission.getId() + ".csv"), sw.toString());
     }
 
     private Stream<?> getSubmissionStreamToPrint(Submission submission) {
+        var builder = Stream.builder();
+        builder.add(submission.getId()).add(submission.getSubmissionDate()).add(submission.getType()).add(submission.getDurationInMinutes());
         if (submission instanceof ProgrammingSubmission programmingSubmission) {
-            return Stream.of(programmingSubmission.getId(), programmingSubmission.getSubmissionDate(), programmingSubmission.getType(),
-                    programmingSubmission.getDurationInMinutes(), programmingSubmission.getCommitHash());
+            builder.add(programmingSubmission.getCommitHash());
 
         }
         else if (submission instanceof TextSubmission textSubmission) {
-            return Stream.of(textSubmission.getId(), textSubmission.getSubmissionDate(), textSubmission.getType(), textSubmission.getDurationInMinutes(), textSubmission.getText());
+            builder.add(textSubmission.getText());
         }
         else if (submission instanceof ModelingSubmission modelingSubmission) {
-            return Stream.of(modelingSubmission.getId(), modelingSubmission.getSubmissionDate(), modelingSubmission.getType(), modelingSubmission.getDurationInMinutes(),
-                    modelingSubmission.getModel());
-        }
-        else if (submission instanceof FileUploadSubmission fileUploadSubmission) {
-            return Stream.of(fileUploadSubmission.getId(), fileUploadSubmission.getSubmissionDate(), fileUploadSubmission.getType(), fileUploadSubmission.getDurationInMinutes());
+            builder.add(modelingSubmission.getModel());
         }
         else if (submission instanceof QuizSubmission quizSubmission) {
+            builder.add(quizSubmission.getScoreInPoints());
             // TODO add submitted answers once we have a query to fetch them
-            return Stream.of(quizSubmission.getId(), quizSubmission.getSubmissionDate(), quizSubmission.getType(), quizSubmission.getDurationInMinutes(),
-                    quizSubmission.getScoreInPoints());
+        }
+        else if (submission instanceof FileUploadSubmission fileUploadSubmission) {
+            // do nothing, just prevent throwing the IllegalArgumentException
         }
         else {
             throw new IllegalArgumentException("Submission type not supported");
         }
+        return builder.build();
     }
 
 }

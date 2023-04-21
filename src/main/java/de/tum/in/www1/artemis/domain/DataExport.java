@@ -26,6 +26,9 @@ public class DataExport extends DomainObject {
     // @JoinColumn(name = "student_id")
     private User user;
 
+    // @Column(name = "file_path")
+    private String filePath;
+
     public ZonedDateTime getRequestDate() {
         return requestDate;
     }
@@ -64,5 +67,13 @@ public class DataExport extends DomainObject {
 
     public void setUser(User user) {
         this.user = user;
+    }
+
+    public String getFilePath() {
+        return filePath;
+    }
+
+    public void setFilePath(String filePath) {
+        this.filePath = filePath;
     }
 }

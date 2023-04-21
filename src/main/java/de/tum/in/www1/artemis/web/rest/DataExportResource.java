@@ -41,9 +41,9 @@ public class DataExportResource {
 
     }
 
-    @GetMapping("/{userId}/data-export")
+    @GetMapping("/{userId}/data-export/{dataExportId}")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<Resource> downloadDataExport(@PathVariable long userId) {
+    public ResponseEntity<Resource> downloadDataExport(@PathVariable long userId, @PathVariable long dataExportId) {
         checkLoggedInUserIsAllowedToAccessDataExport(userId);
         dataExportService.downloadDataExport();
         return ResponseEntity.ok().build();

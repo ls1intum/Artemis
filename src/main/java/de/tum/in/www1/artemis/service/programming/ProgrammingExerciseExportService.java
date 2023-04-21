@@ -157,7 +157,7 @@ public class ProgrammingExerciseExportService {
 
     /**
      * Export instructor repositories and optionally students' repositories in a zip file.
-     *
+     * <p>
      * The outputDir is used to store the zip file and temporary files used for zipping so make
      * sure to delete it if it's no longer used.
      *
@@ -183,7 +183,7 @@ public class ProgrammingExerciseExportService {
             exportOptions.setHideStudentNameInZippedFolder(false);
 
             // Export student repositories and add them to list
-            var exportedStudentRepositoryFiles = exportStudentRepositories(exercise, studentParticipations, exportOptions, outputDir, exportErrors).stream()
+            var exportedStudentRepositoryFiles = exportStudentRepositories(exercise, studentParticipations, exportOptions, outputDir, outputDir, exportErrors).stream()
                     .filter(Objects::nonNull).toList();
             pathsToBeZipped.addAll(exportedStudentRepositoryFiles);
         }
@@ -237,7 +237,7 @@ public class ProgrammingExerciseExportService {
     /**
      * Exports a repository available for an instructor/tutor for a given programming exercise. This can be a template,
      * solution, or tests repository.
-     *
+     * <p>
      * The repository download directory is used as the output directory and is destroyed after 5 minutes.
      *
      * @param exerciseId     The id of the programming exercise that has the repository
@@ -252,7 +252,7 @@ public class ProgrammingExerciseExportService {
 
     /**
      * Exports a solution repository available for an instructor/tutor/student for a given programming exercise.
-     *
+     * <p>
      * The repository download directory is used as the output directory and is destroyed after 5 minutes.
      *
      * @param exerciseId   The id of the programming exercise that has the repository
@@ -267,7 +267,7 @@ public class ProgrammingExerciseExportService {
 
     /**
      * Exports an auxiliary repository available for an instructor/editor/tutor for a given programming exercise.
-     *
+     * <p>
      * The repository download directory is used as the output directory and is destroyed after 5 minutes.
      *
      * @param exerciseId          The id of the programming exercise that has the repository
@@ -432,7 +432,7 @@ public class ProgrammingExerciseExportService {
 
     /**
      * Get participations of programming exercises of a requested list of students packed together in one zip file.
-     *
+     * <p>
      * The repository download directory is used as the output directory and is destroyed after 5 minutes.
      *
      * @param programmingExerciseId   the id of the exercise entity
@@ -446,7 +446,7 @@ public class ProgrammingExerciseExportService {
                 .get();
 
         Path outputDir = fileService.getUniquePath(repoDownloadClonePath);
-        var zippedRepos = exportStudentRepositories(programmingExercise, participations, repositoryExportOptions, outputDir, new ArrayList<>());
+        var zippedRepos = exportStudentRepositories(programmingExercise, participations, repositoryExportOptions, outputDir, outputDir, new ArrayList<>());
 
         try {
             // Create a zip folder containing the zipped repositories.
@@ -472,7 +472,7 @@ public class ProgrammingExerciseExportService {
      * @return List of zip file paths
      */
     public List<Path> exportStudentRepositories(ProgrammingExercise programmingExercise, @NotNull List<ProgrammingExerciseStudentParticipation> participations,
-            RepositoryExportOptionsDTO repositoryExportOptions, Path outputDir, List<String> exportErrors) {
+            RepositoryExportOptionsDTO repositoryExportOptions, Path workingDir, Path outputDir, List<String> exportErrors) {
         var programmingExerciseId = programmingExercise.getId();
         if (repositoryExportOptions.isExportAllParticipants()) {
             log.info("Request to export all student or team repositories of programming exercise {} with title '{}'", programmingExerciseId, programmingExercise.getTitle());
@@ -485,7 +485,7 @@ public class ProgrammingExerciseExportService {
         List<Path> exportedStudentRepositories = new ArrayList<>();
         participations.forEach(participation -> {
             try {
-                Path zipFile = createZipForRepositoryWithParticipation(programmingExercise, participation, repositoryExportOptions, outputDir);
+                Path zipFile = createZipForRepositoryWithParticipation(programmingExercise, participation, repositoryExportOptions, workingDir, outputDir);
                 if (zipFile != null) {
                     exportedStudentRepositories.add(zipFile);
                 }
@@ -555,12 +555,13 @@ public class ProgrammingExerciseExportService {
      * @param programmingExercise     The programming exercise for the participation
      * @param participation           The participation, for which the repository should get zipped
      * @param repositoryExportOptions The options, that should get applied to the zipped repo
-     * @param outputDir               The directory used for downloading and zipping the repository
+     * @param workingDir              The directory used to clone the repository
+     * @param outputDir               The directory where the zip file is stored
      * @return The checked out and zipped repository
      * @throws IOException if zip file creation failed
      */
     private Path createZipForRepositoryWithParticipation(final ProgrammingExercise programmingExercise, final ProgrammingExerciseStudentParticipation participation,
-            final RepositoryExportOptionsDTO repositoryExportOptions, Path outputDir) throws IOException, UncheckedIOException {
+            final RepositoryExportOptionsDTO repositoryExportOptions, Path workingDir, Path outputDir) throws IOException, UncheckedIOException {
         if (participation.getVcsRepositoryUrl() == null) {
             log.warn("Ignore participation {} for export, because its repository URL is null", participation.getId());
             return null;
@@ -573,7 +574,7 @@ public class ProgrammingExerciseExportService {
 
         try {
             // Checkout the repository
-            Repository repository = gitService.getOrCheckoutRepository(participation, outputDir.toString());
+            Repository repository = gitService.getOrCheckoutRepository(participation, workingDir.toString());
             if (repository == null) {
                 log.warn("Cannot checkout repository for participation id: {}", participation.getId());
                 return null;

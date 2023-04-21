@@ -157,6 +157,7 @@ repos-download/
 /src/main/generated
 /coverage
 /exports
+data-exports/
 
 ######################
 # Gradle Wrapper
