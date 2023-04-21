@@ -11,13 +11,14 @@ export class ModelingEditor {
     /**
      * Adds a Modeling Component to the Example Solution
      * */
-    addComponentToModel(exerciseID: number, componentNumber: number, scrollBehavior: scrollBehaviorOptions = 'center') {
+    addComponentToModel(exerciseID: number, componentNumber: number, scrollBehavior: scrollBehaviorOptions = 'center', x?: number, y?: number) {
         getExercise(exerciseID)
             .find('#modeling-editor-sidebar')
             .children()
             .eq(componentNumber)
-            .drag(`#exercise-${exerciseID} ${MODELING_EDITOR_CANVAS}`, { scrollBehavior, timeout: 1000 });
-        getExercise(exerciseID).find(MODELING_EDITOR_CANVAS).trigger('mouseup').trigger('pointerup');
+            // @ts-ignore https://github.com/4teamwork/cypress-drag-drop/issues/103
+            .drag(`#exercise-${exerciseID} ${MODELING_EDITOR_CANVAS}`, { target: { x, y }, scrollBehavior, timeout: 1000 });
+        getExercise(exerciseID).find(MODELING_EDITOR_CANVAS).trigger('pointerup');
     }
 
     addComponentToExampleSolutionModel(componentNumber: number, scrollBehavior: scrollBehaviorOptions = 'center') {

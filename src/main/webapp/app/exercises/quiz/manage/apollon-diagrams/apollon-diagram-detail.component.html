@@ -11,7 +11,7 @@
                 <fa-icon [icon]="faDownload"></fa-icon>&nbsp;<span jhiTranslate="entity.action.download">Download</span>
             </button>
             <span class="border-right border-secondary me-2"></span>
-            <button class="btn btn-info me-1" (click)="generateExercise()" [hidden]="!apollonDiagram">
+            <button id="generate-quiz-exercise" class="btn btn-info me-1" (click)="generateExercise()" [hidden]="!apollonDiagram">
                 {{ 'artemisApp.apollonDiagram.detail.createLabel' | artemisTranslate }} &hellip;
             </button>
             <button class="btn btn-success" (click)="saveDiagram()" [hidden]="!apollonDiagram" jhiTranslate="entity.action.save">Save</button>
