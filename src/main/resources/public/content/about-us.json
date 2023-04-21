@@ -372,6 +372,10 @@
         {
             "fullName": "Lucas Welscher",
             "photoDirectory": "public/images/about/Welscher_Lucas.png"
+        },
+        {
+            "fullName": "Ludwig Pusl",
+            "photoDirectory": "public/images/about/Ludwig_Pusl.png"
         }
     ]
 }
