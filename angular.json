@@ -1,203 +1,203 @@
 {
-    "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
-    "version": 1,
-    "newProjectRoot": "projects",
-    "projects": {
-        "artemis": {
-            "projectType": "application",
-            "schematics": {
-                "@schematics/angular:component": {
-                    "style": "scss"
-                },
-                "@schematics/angular:application": {
-                    "strict": true
-                }
-            },
-            "root": "",
-            "sourceRoot": "src/main/webapp",
-            "prefix": "jhi",
-            "architect": {
-                "build": {
-                    "builder": "@angular-builders/custom-webpack:browser",
-                    "options": {
-                        "customWebpackConfig": {
-                            "path": "./webpack/webpack.custom.js"
-                        },
-                        "allowedCommonJsDependencies": [
-                            "sockjs-client",
-                            "hoist-non-react-statics",
-                            "showdown-highlight",
-                            "showdown-katex",
-                            "showdown",
-                            "brace",
-                            "export-to-csv",
-                            "prop-types",
-                            "dayjs/locale/de",
-                            "brace/mode/java",
-                            "crypto",
-                            "crypto-js",
-                            "clone-deep",
-                            "pepjs",
-                            "is-mobile",
-                            "shallowequal",
-                            "webstomp-client",
-                            "smoothscroll-polyfill",
-                            "papaparse",
-                            "js-video-url-parser",
-                            "dompurify",
-                            "interactjs",
-                            "mobile-drag-drop",
-                            "dagre",
-                            "webcola",
-                            "rfdc",
-                            "js-zip"
-                        ],
-                        "outputPath": "build/resources/main/static/",
-                        "index": "src/main/webapp/index.html",
-                        "main": "src/main/webapp/app/app.main.ts",
-                        "polyfills": "src/main/webapp/app/polyfills.ts",
-                        "tsConfig": "tsconfig.json",
-                        "inlineStyleLanguage": "scss",
-                        "assets": [
-                            "src/main/webapp/content",
-                            "src/main/webapp/logo/favicon.svg",
-                            "src/main/webapp/manifest.webapp",
-                            "src/main/webapp/robots.txt",
-                            "src/main/webapp/logo/android-chrome-192x192.png",
-                            "src/main/webapp/logo/android-chrome-512x512.png",
-                            "src/main/webapp/logo/apple-touch-icon.png",
-                            "src/main/webapp/browserconfig.xml",
-                            "src/main/webapp/logo/favicon.ico",
-                            "src/main/webapp/logo/favicon-16x16.png",
-                            "src/main/webapp/logo/favicon-32x32.png",
-                            "src/main/webapp/logo/mstile-70x70.png",
-                            "src/main/webapp/logo/mstile-144x144.png",
-                            "src/main/webapp/logo/mstile-150x150.png",
-                            "src/main/webapp/logo/mstile-310x150.png",
-                            "src/main/webapp/logo/mstile-310x310.png",
-                            "src/main/webapp/logo/safari-pinned-tab.svg",
-                            {
-                                "glob": "*.{js,css,html,png}",
-                                "input": "./node_modules/swagger-ui-dist",
-                                "output": "swagger-ui",
-                                "ignore": [
-                                    "**/index.html"
-                                ]
-                            },
-                            {
-                                "glob": "axios.min.js",
-                                "input": "./node_modules/axios/dist",
-                                "output": "swagger-ui"
-                            },
-                            {
-                                "glob": "**/*",
-                                "input": "src/main/webapp/swagger-ui/",
-                                "output": "swagger-ui"
-                            }
-                        ],
-                        "styles": [
-                            "src/main/webapp/content/scss/themes/theme-default.scss",
-                            {
-                                "bundleName": "theme-dark",
-                                "input": "src/main/webapp/content/scss/themes/theme-dark.scss",
-                                "inject": false
-                            }
-                        ],
-                        "scripts": []
-                    },
-                    "configurations": {
-                        "production": {
-                            "optimization": {
-                                "scripts": true,
-                                "styles": {
-                                    "minify": true,
-                                    "inlineCritical": false
-                                },
-                                "fonts": true
-                            },
-                            "outputHashing": "all",
-                            "sourceMap": {
-                                "scripts": true,
-                                "styles": false,
-                                "hidden": false,
-                                "vendor": false
-                            },
-                            "namedChunks": false,
-                            "aot": true,
-                            "extractLicenses": true,
-                            "vendorChunk": false,
-                            "buildOptimizer": true,
-                            "serviceWorker": true,
-                            "ngswConfigPath": "ngsw-config.json",
-                            "budgets": [
-                                {
-                                    "type": "initial",
-                                    "maximumWarning": "2.4mb",
-                                    "maximumError": "2.5mb"
-                                },
-                                {
-                                    "type": "anyComponentStyle",
-                                    "maximumWarning": "1mb",
-                                    "maximumError": "1.6mb"
-                                }
-                            ]
-                        },
-                        "development": {
-                            "buildOptimizer": false,
-                            "optimization": false,
-                            "vendorChunk": true,
-                            "extractLicenses": false,
-                            "sourceMap": true,
-                            "namedChunks": true
-                        }
-                    },
-                    "defaultConfiguration": "production"
-                },
-                "serve": {
-                    "builder": "@angular-builders/custom-webpack:dev-server",
-                    "options": {
-                        "browserTarget": "artemis:build:development",
-                        "port": 4200
-                    },
-                    "configurations": {
-                        "production": {
-                            "browserTarget": "artemis:build:production"
-                        },
-                        "development": {
-                            "browserTarget": "artemis:build:development"
-                        }
-                    },
-                    "defaultConfiguration": "development"
-                },
-                "test": {
-                    "builder": "@angular-builders/jest:run",
-                    "options": {
-                        "configPath": "jest.config.js"
-                    }
-                },
-                "lint": {
-                    "builder": "@angular-eslint/builder:lint",
-                    "options": {
-                        "lintFilePatterns": [
-                            "src/main/webapp/**/*.ts",
-                            "src/main/webapp/**/*.html"
-                        ]
-                    }
-                }
-            }
-        }
-    },
-    "cli": {
-        "analytics": false,
-        "packageManager": "npm",
-        "cache": {
-            "enabled": true,
-            "path": ".cache",
-            "environment": "all"
+  "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
+  "version": 1,
+  "newProjectRoot": "projects",
+  "projects": {
+    "artemis": {
+      "projectType": "application",
+      "schematics": {
+        "@schematics/angular:component": {
+          "style": "scss"
         },
-        "schematicCollections": [
-            "@angular-eslint/schematics",
-            "@angular-eslint/schematics"
-        ]
+        "@schematics/angular:application": {
+          "strict": true
+        }
+      },
+      "root": "",
+      "sourceRoot": "src/main/webapp",
+      "prefix": "jhi",
+      "architect": {
+        "build": {
+          "builder": "@angular-builders/custom-webpack:browser",
+          "options": {
+            "customWebpackConfig": {
+              "path": "./webpack/webpack.custom.js"
+            },
+            "allowedCommonJsDependencies": [
+              "sockjs-client",
+              "hoist-non-react-statics",
+              "showdown-highlight",
+              "showdown-katex",
+              "showdown",
+              "brace",
+              "export-to-csv",
+              "prop-types",
+              "dayjs/locale/de",
+              "brace/mode/java",
+              "crypto",
+              "crypto-js",
+              "clone-deep",
+              "pepjs",
+              "is-mobile",
+              "shallowequal",
+              "webstomp-client",
+              "smoothscroll-polyfill",
+              "papaparse",
+              "js-video-url-parser",
+              "dompurify",
+              "interactjs",
+              "mobile-drag-drop",
+              "dagre",
+              "webcola",
+              "rfdc",
+                "js-zip"
+            ],
+            "outputPath": "build/resources/main/static/",
+            "index": "src/main/webapp/index.html",
+            "main": "src/main/webapp/app/app.main.ts",
+            "polyfills": "src/main/webapp/app/polyfills.ts",
+            "tsConfig": "tsconfig.json",
+            "inlineStyleLanguage": "scss",
+            "assets": [
+              "src/main/webapp/content",
+              "src/main/webapp/logo/favicon.svg",
+              "src/main/webapp/manifest.webapp",
+              "src/main/webapp/robots.txt",
+              "src/main/webapp/logo/android-chrome-192x192.png",
+              "src/main/webapp/logo/android-chrome-512x512.png",
+              "src/main/webapp/logo/apple-touch-icon.png",
+              "src/main/webapp/browserconfig.xml",
+              "src/main/webapp/logo/favicon.ico",
+              "src/main/webapp/logo/favicon-16x16.png",
+              "src/main/webapp/logo/favicon-32x32.png",
+              "src/main/webapp/logo/mstile-70x70.png",
+              "src/main/webapp/logo/mstile-144x144.png",
+              "src/main/webapp/logo/mstile-150x150.png",
+              "src/main/webapp/logo/mstile-310x150.png",
+              "src/main/webapp/logo/mstile-310x310.png",
+              "src/main/webapp/logo/safari-pinned-tab.svg",
+              {
+                "glob": "*.{js,css,html,png}",
+                "input": "./node_modules/swagger-ui-dist",
+                "output": "swagger-ui",
+                "ignore": [
+                  "**/index.html"
+                ]
+              },
+              {
+                "glob": "axios.min.js",
+                "input": "./node_modules/axios/dist",
+                "output": "swagger-ui"
+              },
+              {
+                "glob": "**/*",
+                "input": "src/main/webapp/swagger-ui/",
+                "output": "swagger-ui"
+              }
+            ],
+            "styles": [
+              "src/main/webapp/content/scss/themes/theme-default.scss",
+              {
+                "bundleName": "theme-dark",
+                "input": "src/main/webapp/content/scss/themes/theme-dark.scss",
+                "inject": false
+              }
+            ],
+            "scripts": []
+          },
+          "configurations": {
+            "production": {
+              "optimization": {
+                "scripts": true,
+                "styles": {
+                  "minify": true,
+                  "inlineCritical": false
+                },
+                "fonts": true
+              },
+              "outputHashing": "all",
+              "sourceMap": {
+                "scripts": true,
+                "styles": false,
+                "hidden": false,
+                "vendor": false
+              },
+              "namedChunks": false,
+              "aot": true,
+              "extractLicenses": true,
+              "vendorChunk": false,
+              "buildOptimizer": true,
+              "serviceWorker": true,
+              "ngswConfigPath": "ngsw-config.json",
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "2.4mb",
+                  "maximumError": "2.5mb"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "1mb",
+                  "maximumError": "1.6mb"
+                }
+              ]
+            },
+            "development": {
+              "buildOptimizer": false,
+              "optimization": false,
+              "vendorChunk": true,
+              "extractLicenses": false,
+              "sourceMap": true,
+              "namedChunks": true
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "serve": {
+          "builder": "@angular-builders/custom-webpack:dev-server",
+          "options": {
+            "browserTarget": "artemis:build:development",
+            "port": 4200
+          },
+          "configurations": {
+            "production": {
+              "browserTarget": "artemis:build:production"
+            },
+            "development": {
+              "browserTarget": "artemis:build:development"
+            }
+          },
+          "defaultConfiguration": "development"
+        },
+        "test": {
+          "builder": "@angular-builders/jest:run",
+          "options": {
+            "configPath": "jest.config.js"
+          }
+        },
+        "lint": {
+          "builder": "@angular-eslint/builder:lint",
+          "options": {
+            "lintFilePatterns": [
+              "src/main/webapp/**/*.ts",
+              "src/main/webapp/**/*.html"
+            ]
+          }
+        }
+      }
     }
+  },
+  "cli": {
+    "analytics": false,
+    "packageManager": "npm",
+    "cache": {
+      "enabled": true,
+      "path": ".cache",
+      "environment": "all"
+    },
+    "schematicCollections": [
+      "@angular-eslint/schematics",
+      "@angular-eslint/schematics"
+    ]
+  }
 }
