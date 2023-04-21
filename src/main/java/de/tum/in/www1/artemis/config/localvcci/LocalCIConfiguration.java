@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.config;
+package de.tum.in.www1.artemis.config.localvcci;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
