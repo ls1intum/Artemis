@@ -22,6 +22,12 @@
                 "Always": "Immer",
                 "AfterDueDate": "Nach Einreichungsfrist",
                 "Never": "Nie"
+            },
+            "type": {
+                "null": "",
+                "STRUCTURAL": "Struktur",
+                "BEHAVIORAL": "Verhalten",
+                "MIXED": "Verschieden"
             }
         }
     }

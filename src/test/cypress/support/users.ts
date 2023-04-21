@@ -77,6 +77,12 @@ export class CypressUserManagement {
             func(response.body);
         });
     }
+
+    public getUserInfo(username: string, func: (response: any) => void) {
+        cy.request({ method: GET, url: BASE_API + 'users/' + username, log: false }).then((response) => {
+            func(response.body);
+        });
+    }
 }
 
 // Users
