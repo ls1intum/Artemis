@@ -250,7 +250,7 @@ describe('ModelingExercise Management Update Component', () => {
     it('should call exercise service to validate date', () => {
         const modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
         comp.modelingExercise = modelingExercise;
-        jest.spyOn(exerciseService, 'validateDate');
+        jest.spyOn(exerciseService, 'validateDates');
         comp.validateDates();
         expect(exerciseService.validateDates).toHaveBeenCalledWith(modelingExercise);
     });
