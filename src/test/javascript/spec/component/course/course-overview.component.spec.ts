@@ -86,6 +86,8 @@ const course2: Course = {
     description: 'Short description of course 2',
     shortName: 'shortName2',
     learningGoals: [new LearningGoal()],
+    tutorialGroups: [new TutorialGroup()],
+    prerequisites: [new LearningGoal()],
 };
 
 @Component({

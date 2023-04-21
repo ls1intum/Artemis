@@ -385,4 +385,39 @@ describe('Interval Grading System Component', () => {
         expect(comp.gradingScale.gradeSteps[3].lowerBoundInclusive).toBeFalse();
         expect(comp.gradingScale.gradeSteps[3].upperBoundInclusive).toBeTrue();
     });
+
+    it('should not show grading steps above max points warning', () => {
+        const result = comp.shouldShowGradingStepsAboveMaxPointsWarning();
+        expect(result).toBeFalse();
+    });
+
+    it('should show grading steps above max points warning for inclusive bound', () => {
+        const gradeStep: GradeStep = {
+            gradeName: 'Step',
+            lowerBoundPercentage: 100,
+            upperBoundPercentage: 101,
+            lowerBoundInclusive: true,
+            upperBoundInclusive: true,
+            isPassingGrade: true,
+        };
+        comp.gradingScale.gradeSteps = [gradeStep1, gradeStep2, gradeStep3, gradeStep, gradeStep4];
+
+        const result = comp.shouldShowGradingStepsAboveMaxPointsWarning();
+        expect(result).toBeTrue();
+    });
+
+    it('should show grading steps above max points warning for exclusive bound', () => {
+        const gradeStep: GradeStep = {
+            gradeName: 'Step',
+            lowerBoundPercentage: 100,
+            upperBoundPercentage: 100,
+            lowerBoundInclusive: true,
+            upperBoundInclusive: false,
+            isPassingGrade: true,
+        };
+        comp.gradingScale.gradeSteps = [gradeStep1, gradeStep2, gradeStep3, gradeStep, gradeStep4];
+
+        const result = comp.shouldShowGradingStepsAboveMaxPointsWarning();
+        expect(result).toBeTrue();
+    });
 });

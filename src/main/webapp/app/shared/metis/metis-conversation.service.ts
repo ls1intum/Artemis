@@ -6,7 +6,7 @@ import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
 import { ConversationWebsocketDTO } from 'app/entities/metis/conversation/conversation-websocket-dto.model';
-import { MetisPostAction, MetisWebsocketChannelPrefix } from 'app/shared/metis/metis.util';
+import { MetisPostAction, MetisWebsocketChannelPrefix, RouteComponents } from 'app/shared/metis/metis.util';
 import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { OneToOneChatService } from 'app/shared/metis/conversations/one-to-one-chat.service';
@@ -18,7 +18,7 @@ import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { OneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
 import { GroupChatService } from 'app/shared/metis/conversations/group-chat.service';
 import dayjs from 'dayjs/esm';
-import { NavigationEnd, Router } from '@angular/router';
+import { NavigationEnd, Params, Router } from '@angular/router';
 
 /**
  * NOTE: NOT INJECTED IN THE ROOT MODULE
@@ -184,20 +184,10 @@ export class MetisConversationService implements OnDestroy {
         );
     };
 
-    public setUpConversationService = (courseId: number): Observable<never> => {
-        if (!courseId) {
-            throw new Error('CourseId is not set. The service cannot be initialized.');
-        }
-        this._courseId = courseId;
-        this.setIsLoading(true);
-        return this.courseManagementService.findOneForDashboard(courseId).pipe(
-            map((res: HttpResponse<Course>) => {
-                return res.body;
-            }),
-            switchMap((course: Course) => {
-                this._course = course;
-                return this.conversationService.getConversationsOfUser(this._course.id ?? 0);
-            }),
+    public setUpConversationService = (course: Course): Observable<never> => {
+        this._courseId = course.id!;
+        this._course = course;
+        return this.conversationService.getConversationsOfUser(this._course.id ?? 0).pipe(
             map((conversations: HttpResponse<ConversationDto[]>) => {
                 return conversations.body ?? [];
             }),
@@ -213,7 +203,7 @@ export class MetisConversationService implements OnDestroy {
                 this._conversationsOfUser$.next(this.conversationsOfUser);
                 this.activeConversation = undefined;
                 this._activeConversation$.next(this.activeConversation);
-                this.subscribeToConversationMembershipTopic(courseId, this.userId);
+                this.subscribeToConversationMembershipTopic(course.id!, this.userId);
                 this.subscribeToRouteChange();
                 this.setIsLoading(false);
                 this._isServiceSetup$.next(true);
@@ -356,5 +346,15 @@ export class MetisConversationService implements OnDestroy {
             }
         }
         this.conversationsOfUser = conversationsCopy;
+    }
+
+    static getQueryParamsForConversation(conversationId: number): Params {
+        const params: Params = {};
+        params.conversationId = conversationId;
+        return params;
+    }
+
+    static getLinkForConversation(courseId: number): RouteComponents {
+        return ['/courses', courseId, 'messages'];
     }
 }
