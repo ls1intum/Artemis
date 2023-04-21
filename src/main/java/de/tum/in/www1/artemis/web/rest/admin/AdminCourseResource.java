@@ -17,10 +17,12 @@ import org.springframework.web.multipart.MultipartFile;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.annotations.EnforceAdmin;
 import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
@@ -32,6 +34,8 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 public class AdminCourseResource {
 
     private final Logger log = LoggerFactory.getLogger(AdminCourseResource.class);
+
+    private final ChannelService channelService;
 
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
@@ -49,13 +53,14 @@ public class AdminCourseResource {
     private final OnlineCourseConfigurationService onlineCourseConfigurationService;
 
     public AdminCourseResource(UserRepository userRepository, CourseService courseService, CourseRepository courseRepository, AuditEventRepository auditEventRepository,
-            FileService fileService, OnlineCourseConfigurationService onlineCourseConfigurationService) {
+            FileService fileService, OnlineCourseConfigurationService onlineCourseConfigurationService, ChannelService channelService) {
         this.courseService = courseService;
         this.courseRepository = courseRepository;
         this.auditEventRepository = auditEventRepository;
         this.userRepository = userRepository;
         this.fileService = fileService;
         this.onlineCourseConfigurationService = onlineCourseConfigurationService;
+        this.channelService = channelService;
     }
 
     /**
@@ -104,7 +109,22 @@ public class AdminCourseResource {
 
         Course result = courseRepository.save(course);
 
+        this.createChannel(result, "tech-support", false);
+        this.createChannel(result, "organization", false);
+        this.createChannel(result, "random", false);
+        this.createChannel(result, "announcement", true);
+
         return ResponseEntity.created(new URI("/api/courses/" + result.getId())).body(result);
+    }
+
+    private void createChannel(Course course, String name, Boolean isAnnouncement) {
+        var channelToCreate = new Channel();
+        channelToCreate.setName(name);
+        channelToCreate.setIsPublic(true);
+        channelToCreate.setIsAnnouncementChannel(isAnnouncement);
+        channelToCreate.setIsArchived(false);
+        channelToCreate.setDescription(null);
+        channelService.createChannel(course, channelToCreate, Optional.of(userRepository.getUserWithGroupsAndAuthorities()));
     }
 
     /**
