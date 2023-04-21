@@ -62,7 +62,7 @@ export class AttachmentUnitFormComponent implements OnInit, OnChanges {
     file: File;
     fileName?: string;
     fileInputTouched = false;
-    fileTooBig: boolean;
+    isFileTooBig: boolean;
 
     constructor(private translateService: TranslateService, private fb: FormBuilder) {}
 
@@ -96,7 +96,7 @@ export class AttachmentUnitFormComponent implements OnInit, OnChanges {
             const fileList = event.target.files;
             this.file = fileList[0];
             this.fileName = this.file.name;
-            this.fileTooBig = this.file.size > MAX_FILE_SIZE;
+            this.isFileTooBig = this.file.size > MAX_FILE_SIZE;
         }
     }
 
@@ -121,7 +121,7 @@ export class AttachmentUnitFormComponent implements OnInit, OnChanges {
     }
 
     get isSubmitPossible() {
-        return !(this.form.invalid || !this.fileName) && !this.fileTooBig;
+        return !(this.form.invalid || !this.fileName) && !this.isFileTooBig;
     }
 
     submitForm() {

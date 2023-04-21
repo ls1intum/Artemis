@@ -165,7 +165,7 @@ describe('AttachmentUnitFormComponent', () => {
         attachmentUnitFormComponentFixture.detectChanges();
 
         const submitButton = attachmentUnitFormComponentFixture.debugElement.nativeElement.querySelector('#submitButton');
-        expect(attachmentUnitFormComponent.fileTooBig).toBeTrue();
+        expect(attachmentUnitFormComponent.isFileTooBig).toBeTrue();
         expect(submitButton.disabled).toBeTrue();
     });
 });
