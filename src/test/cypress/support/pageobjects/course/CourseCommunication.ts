@@ -36,9 +36,21 @@ export class CourseCommunicationPage {
         cy.get('#search-submit').click();
     }
 
-    filterByContext(context: CourseWideContext) {
-        cy.get('#filter-context').click().get('mat-option').contains(titleCaseWord(context)).click();
+    filterByContext(context: string) {
+        cy.get('#filter-context').click().get('mat-option').contains(context);
         cy.get('#filter-context').click();
+    }
+
+    filterByOwn() {
+        cy.get('#filterToOwn').check();
+    }
+
+    filterByUnresolved() {
+        cy.get('#filterToUnresolved').check();
+    }
+
+    filterByReacted() {
+        cy.get('#filterToAnsweredOrReacted').check().click();
     }
 
     getSinglePost(postID: number) {
@@ -94,8 +106,10 @@ export class CourseCommunicationPage {
         this.getSinglePost(answerID).find('.resolve').click();
     }
 
-    checkSinglePost(postID: number, title: string, content: string, context: CourseWideContext) {
-        this.getSinglePost(postID).find('.context-information').contains(titleCaseWord(context));
+    checkSinglePost(postID: number, title: string, content: string, context?: CourseWideContext) {
+        if (context) {
+            this.getSinglePost(postID).find('.context-information').contains(titleCaseWord(context));
+        }
         this.getSinglePost(postID).find('.post-title').contains(title);
         this.getSinglePost(postID).find('.markdown-preview').contains(content);
         this.getSinglePost(postID).find('.reference-hash').contains(`#${postID}`);
@@ -113,8 +127,10 @@ export class CourseCommunicationPage {
         this.getSinglePost(postID).find('fa-icon.resolved').should('exist');
     }
 
-    checkSinglePostByPosition(position: number, title: string, content: string, context: CourseWideContext) {
-        cy.get('.items-container .item').eq(position).find('.context-information').contains(titleCaseWord(context));
+    checkSinglePostByPosition(position: number, title: string, content: string, context?: CourseWideContext) {
+        if (context) {
+            cy.get('.items-container .item').eq(position).find('.context-information').contains(titleCaseWord(context));
+        }
         cy.get('.items-container .item').eq(position).find('.post-title').contains(title);
         cy.get('.items-container .item').eq(position).find('.markdown-preview').contains(content);
     }
