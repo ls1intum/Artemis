@@ -388,6 +388,10 @@
         {
             "fullName": "Sven Andabaka",
             "photoDirectory": "public/images/about/Sven_Andabaka.jpg"
+        },
+        {
+            "fullName": "Tarlan Ismayilsoy",
+            "photoDirectory": "public/images/about/Tarlan_Ismayilsoy.jpg"
         }
     ]
 }
