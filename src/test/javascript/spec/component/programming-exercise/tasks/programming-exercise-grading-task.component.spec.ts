@@ -9,8 +9,9 @@ import { Course } from 'app/entities/course.model';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockPipe } from 'ng-mocks';
+import { MockComponent, MockPipe } from 'ng-mocks';
 import { ProgrammingExerciseTask } from 'app/exercises/programming/manage/grading/tasks/programming-exercise-task';
+import { ButtonComponent } from 'app/shared/components/button.component';
 
 describe('ProgrammingExerciseGradingTaskComponent', () => {
     let fixture;
@@ -25,7 +26,7 @@ describe('ProgrammingExerciseGradingTaskComponent', () => {
     beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [ProgrammingExerciseGradingTaskComponent, MockPipe(ArtemisTranslatePipe)],
+            declarations: [ProgrammingExerciseGradingTaskComponent, MockPipe(ArtemisTranslatePipe), MockComponent(ButtonComponent)],
             providers: [ProgrammingExerciseTaskService, { provide: TranslateService, useClass: MockTranslateService }],
         })
             .compileComponents()

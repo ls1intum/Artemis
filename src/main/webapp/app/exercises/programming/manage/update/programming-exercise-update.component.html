@@ -7,6 +7,7 @@
         [isSaving]="isSaving"
         [getInvalidReasons]="getInvalidReasonsForWizard"
         [isImport]="isImport"
+        [isExamMode]="isExamMode"
         [(exercise)]="programmingExercise"
         [infoStepInputs]="getInfoStepInputs()"
         [languageStepInputs]="getLanguageStepInputs()"
@@ -56,6 +57,7 @@
             <jhi-programming-exercise-grading
                 class="form-step"
                 [isImport]="isImport"
+                [isExamMode]="isExamMode"
                 [programmingExercise]="programmingExercise"
                 [gradingInputs]="getGradingStepInputs()"
             ></jhi-programming-exercise-grading>
