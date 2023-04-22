@@ -288,7 +288,7 @@ export abstract class BaseGradingSystemComponent implements OnInit {
      * -- the presentationsNumber and presentationsWeight must be undefined
      * -- the presentationScore must be above 0
      * - if the presentationType is GRADED:
-     * -- the presentationsNumber must be a whole number between 1 and 100
+     * -- the presentationsNumber must be a whole number above 0
      * -- the presentationsWeight must be between 0 and 100
      * -- the presentationScore must be 0 or undefined
      */
@@ -316,7 +316,7 @@ export abstract class BaseGradingSystemComponent implements OnInit {
             }
         }
         if (this.presentationsConfig.presentationType === PresentationType.GRADED) {
-            // The presentationsNumber must be a whole number between 1 and 100
+            // The presentationsNumber must be a whole number above 0
             if (
                 this.presentationsConfig.presentationsNumber === undefined ||
                 !Number.isInteger(this.presentationsConfig.presentationsNumber) ||
