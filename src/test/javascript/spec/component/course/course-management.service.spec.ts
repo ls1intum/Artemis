@@ -44,7 +44,9 @@ describe('Course Management Service', () => {
     let course: Course;
     let courseForDashboard: CourseForDashboardDTO;
     let courseScores: CourseScores;
-    let scoresPerExerciseType: { [key in ExerciseType]: CourseScores };
+    // Cannot be the proper Map type because the server only returns JSON objects.
+    // The scoresPerExerciseTypeMap represents the scoresPerExercise after they were returned from the server and converted to a ScoresPerExerciseType Map.
+    let scoresPerExerciseTypeFromServer: { [key in ExerciseType]: CourseScores };
     let scoresPerExerciseTypeMap: ScoresPerExerciseType;
     let participationResult: Result;
     let onlineCourseConfiguration: OnlineCourseConfiguration;
@@ -88,8 +90,8 @@ describe('Course Management Service', () => {
         courseForDashboard.course = course;
         courseScores = new CourseScores(0, 0, { absoluteScore: 0, relativeScore: 0, currentRelativeScore: 0, presentationScore: 0 });
         courseForDashboard.totalScores = courseScores;
-        scoresPerExerciseType = { programming: courseScores, modeling: courseScores, quiz: courseScores, text: courseScores, 'file-upload': courseScores };
-        courseForDashboard.scoresPerExerciseType = scoresPerExerciseType;
+        scoresPerExerciseTypeFromServer = { programming: courseScores, modeling: courseScores, quiz: courseScores, text: courseScores, 'file-upload': courseScores };
+        courseForDashboard.scoresPerExerciseType = scoresPerExerciseTypeFromServer;
         scoresPerExerciseTypeMap = new Map<ExerciseType, CourseScores>();
         scoresPerExerciseTypeMap.set(ExerciseType.PROGRAMMING, courseScores);
         scoresPerExerciseTypeMap.set(ExerciseType.MODELING, courseScores);
