@@ -10,8 +10,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 
-import de.tum.in.www1.artemis.security.localvc.LocalVCFilterService;
-import de.tum.in.www1.artemis.service.connectors.localci.LocalCIPushService;
+import de.tum.in.www1.artemis.service.connectors.localci.LocalCIConnectorService;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCServletService;
 
 /**
@@ -25,14 +24,11 @@ public class JGitServletConfiguration {
 
     private final LocalVCServletService localVCServletService;
 
-    private final LocalVCFilterService localVCFilterService;
+    private final Optional<LocalCIConnectorService> localCIConnectorService;
 
-    private final Optional<LocalCIPushService> localCIPushService;
-
-    public JGitServletConfiguration(LocalVCServletService localVCServletService, LocalVCFilterService localVCFilterService, Optional<LocalCIPushService> localCIPushService) {
+    public JGitServletConfiguration(LocalVCServletService localVCServletService, Optional<LocalCIConnectorService> localCIConnectorService) {
         this.localVCServletService = localVCServletService;
-        this.localVCFilterService = localVCFilterService;
-        this.localCIPushService = localCIPushService;
+        this.localCIConnectorService = localCIConnectorService;
     }
 
     /**
@@ -40,7 +36,7 @@ public class JGitServletConfiguration {
      */
     @Bean
     public ServletRegistrationBean<GitServlet> jgitServlet() {
-        ArtemisGitServlet gitServlet = new ArtemisGitServlet(localVCServletService, localVCFilterService, localCIPushService);
+        ArtemisGitServlet gitServlet = new ArtemisGitServlet(localVCServletService, localCIConnectorService);
         log.info("Registering ArtemisGitServlet for handling fetch and push requests to [Artemis URL]/git/[Project Key]/[Repository Slug].git");
         return new ServletRegistrationBean<>(gitServlet, "/git/*");
     }

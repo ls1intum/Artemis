@@ -42,13 +42,15 @@ import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
- * Service for further processing authenticated and authorized pushes in the local CI system.
+ * This service connects the local VC system and the online editor to the local CI system.
+ * It contains the {@link #processNewPush(String, Repository)} method that is called by the local VC system and the RepositoryResource and makes sure the correct build is
+ * triggered.
  */
 @Service
 @Profile("localci")
-public class LocalCIPushService {
+public class LocalCIConnectorService {
 
-    private final Logger log = LoggerFactory.getLogger(LocalCIPushService.class);
+    private final Logger log = LoggerFactory.getLogger(LocalCIConnectorService.class);
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
@@ -58,7 +60,7 @@ public class LocalCIPushService {
 
     private final ProgrammingTriggerService programmingTriggerService;
 
-    private final LocalCIExecutorService localCIExecutorService;
+    private final LocalCIBuildJobExecutionService localCIBuildJobExecutionService;
 
     private final ProgrammingExerciseGradingService programmingExerciseGradingService;
 
@@ -73,15 +75,16 @@ public class LocalCIPushService {
     @Value("${artemis.version-control.url}")
     private URL localVCBaseUrl;
 
-    public LocalCIPushService(ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingSubmissionService programmingSubmissionService,
-            ProgrammingMessagingService programmingMessagingService, ProgrammingTriggerService programmingTriggerService, LocalCIExecutorService localCIExecutorService,
-            ProgrammingExerciseGradingService programmingExerciseGradingService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
-            LocalCITriggerService localCITriggerService, AuthorizationCheckService authorizationCheckService, UserRepository userRepository) {
+    public LocalCIConnectorService(ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingSubmissionService programmingSubmissionService,
+            ProgrammingMessagingService programmingMessagingService, ProgrammingTriggerService programmingTriggerService,
+            LocalCIBuildJobExecutionService localCIBuildJobExecutionService, ProgrammingExerciseGradingService programmingExerciseGradingService,
+            ProgrammingExerciseParticipationService programmingExerciseParticipationService, LocalCITriggerService localCITriggerService,
+            AuthorizationCheckService authorizationCheckService, UserRepository userRepository) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingSubmissionService = programmingSubmissionService;
         this.programmingMessagingService = programmingMessagingService;
         this.programmingTriggerService = programmingTriggerService;
-        this.localCIExecutorService = localCIExecutorService;
+        this.localCIBuildJobExecutionService = localCIBuildJobExecutionService;
         this.programmingExerciseGradingService = programmingExerciseGradingService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.localCITriggerService = localCITriggerService;
@@ -155,7 +158,7 @@ public class LocalCIPushService {
         }
         catch (LocalCIException | GitAPIException | IOException e) {
             // This catch clause does not catch exceptions that happen during runBuildJob() as that method is called asynchronously.
-            // For exceptions happening inside runBuildJob(), the user is notified. See the addBuildJobToQueue() method in the LocalCIExecutorService for that.
+            // For exceptions happening inside runBuildJob(), the user is notified. See the addBuildJobToQueue() method in the LocalCIBuildJobExecutionService for that.
             throw new LocalCIException("Could not process new push to repository " + localVCRepositoryUrl.getURI() + ". No build job was queued.", e);
         }
 
@@ -208,7 +211,7 @@ public class LocalCIPushService {
         }
 
         // Trigger a build of the solution repository.
-        CompletableFuture<LocalCIBuildResult> futureSolutionBuildResult = localCIExecutorService.addBuildJobToQueue(solutionParticipation);
+        CompletableFuture<LocalCIBuildResult> futureSolutionBuildResult = localCIBuildJobExecutionService.addBuildJobToQueue(solutionParticipation);
         futureSolutionBuildResult.thenAccept(buildResult -> {
 
             // The 'user' is not properly logged into Artemis, this leads to an issue when accessing custom repository methods.

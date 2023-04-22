@@ -2,6 +2,8 @@ package de.tum.in.www1.artemis.service.connectors.localci;
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -9,7 +11,17 @@ import java.nio.file.Paths;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.function.Supplier;
 
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamException;
@@ -36,31 +48,79 @@ import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.HostConfig;
 import com.github.dockerjava.api.model.Volume;
 
+import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
+import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.LocalCIException;
+import de.tum.in.www1.artemis.exception.localvc.LocalVCInternalException;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
+import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
+import de.tum.in.www1.artemis.service.ResourceLoaderService;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildResult;
+import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUrl;
+import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
+import de.tum.in.www1.artemis.service.programming.ProgrammingMessagingService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
+import de.tum.in.www1.artemis.web.websocket.programmingSubmission.BuildTriggerWebsocketError;
 
 /**
- * Service for running build jobs on the local CI server.
+ * This service is responsible for executing build jobs on the local CI server.
  */
 @Service
 @Profile("localci")
-public class LocalCIBuildJobService {
+public class LocalCIBuildJobExecutionService {
 
-    private final Logger log = LoggerFactory.getLogger(LocalCIBuildJobService.class);
+    private final Logger log = LoggerFactory.getLogger(LocalCIBuildJobExecutionService.class);
 
-    private final LocalCIBuildPlanService localCIBuildPlanService;
+    private final Optional<VersionControlService> versionControlService;
+
+    private final ExecutorService localCIBuildExecutorService;
 
     private final DockerClient dockerClient;
+
+    private final ResourceLoaderService resourceLoaderService;
+
+    private final ProgrammingMessagingService programmingMessagingService;
+
+    private final TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
+
+    private final SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
+
+    private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
+
+    @Value("${artemis.version-control.url}")
+    private URL localVCBaseUrl;
+
+    @Value("${artemis.version-control.local-vcs-repo-path}")
+    private String localVCBasePath;
 
     @Value("${artemis.continuous-integration.build.images.java.default}")
     String dockerImage;
 
-    public LocalCIBuildJobService(LocalCIBuildPlanService localCIBuildPlanService, DockerClient dockerClient) {
-        this.localCIBuildPlanService = localCIBuildPlanService;
+    @Value("${artemis.continuous-integration.timeout-seconds:60}")
+    private int timeoutSeconds;
+
+    @Value("${artemis.continuous-integration.asynchronous:true}")
+    private boolean runBuildJobsAsynchronously;
+
+    public LocalCIBuildJobExecutionService(Optional<VersionControlService> versionControlService, ExecutorService localCIBuildExecutorService, DockerClient dockerClient,
+            ResourceLoaderService resourceLoaderService, ProgrammingMessagingService programmingMessagingService,
+            TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
+            SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
+            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository) {
+        this.versionControlService = versionControlService;
+        this.localCIBuildExecutorService = localCIBuildExecutorService;
         this.dockerClient = dockerClient;
+        this.resourceLoaderService = resourceLoaderService;
+        this.programmingMessagingService = programmingMessagingService;
+        this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
+        this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
+        this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
     }
 
     /**
@@ -71,7 +131,7 @@ public class LocalCIBuildJobService {
      * @return the container id of the created container.
      * @throws LocalCIException if the container could not be created.
      */
-    public String prepareDockerContainer(Path assignmentRepositoryPath, Path testsRepositoryPath, Path scriptPath, String branch) {
+    private String prepareDockerContainer(Path assignmentRepositoryPath, Path testsRepositoryPath, Path scriptPath, String branch) {
         HostConfig volumeConfig = createVolumeConfig(assignmentRepositoryPath, testsRepositoryPath, scriptPath);
 
         // If the docker image is not available on the local machine, pull it from Docker Hub.
@@ -84,6 +144,142 @@ public class LocalCIBuildJobService {
     }
 
     /**
+     * Prepare paths to the assignment and test repositories and the build script and then submit the build job to the executor service.
+     *
+     * @param participation The participation of the repository for which the build job should be executed.
+     * @return A future that will be completed with the build result.
+     * @throws LocalCIException If the build job could not be submitted to the executor service.
+     */
+    public CompletableFuture<LocalCIBuildResult> addBuildJobToQueue(ProgrammingExerciseParticipation participation) {
+
+        ProjectType projectType = participation.getProgrammingExercise().getProjectType();
+        if (projectType == null || !projectType.isGradle()) {
+            throw new LocalCIException("Project type must be Gradle.");
+        }
+
+        LocalVCRepositoryUrl assignmentRepositoryUrl;
+        LocalVCRepositoryUrl testsRepositoryUrl;
+        try {
+            assignmentRepositoryUrl = new LocalVCRepositoryUrl(participation.getRepositoryUrl(), localVCBaseUrl);
+            testsRepositoryUrl = new LocalVCRepositoryUrl(participation.getProgrammingExercise().getTestRepositoryUrl(), localVCBaseUrl);
+        }
+        catch (LocalVCInternalException e) {
+            throw new LocalCIException("Error while creating LocalVCRepositoryUrl", e);
+        }
+
+        Path assignmentRepositoryPath = assignmentRepositoryUrl.getLocalRepositoryPath(localVCBasePath).toAbsolutePath();
+        Path testsRepositoryPath = testsRepositoryUrl.getLocalRepositoryPath(localVCBasePath).toAbsolutePath();
+
+        // Get script file out of resources.
+        Path scriptPath = getBuildScriptPath();
+
+        String branch;
+        try {
+            branch = versionControlService.orElseThrow().getOrRetrieveBranchOfParticipation(participation);
+        }
+        catch (LocalVCInternalException e) {
+            throw new LocalCIException("Error while getting branch of participation", e);
+        }
+
+        // Prepare the Docker container before submitting the build job to the executor service, so we can remove the container if something goes wrong.
+        String containerId;
+        try {
+            containerId = prepareDockerContainer(assignmentRepositoryPath, testsRepositoryPath, scriptPath, branch);
+        }
+        catch (LocalCIException e) {
+            // Remove the temporary build script file.
+            deleteTemporaryBuildScript(scriptPath);
+            throw new LocalCIException("Error while preparing Docker container", e);
+        }
+
+        Callable<LocalCIBuildResult> buildJob = () -> {
+            // Add "_BUILDING" to the build plan id to indicate that the build plan is currently building.
+            updateBuildPlanStatus(participation, ContinuousIntegrationService.BuildStatus.BUILDING);
+            return runBuildJob(participation, containerId, branch, scriptPath);
+        };
+
+        // Submit the build job to the executor service. This runs in a separate thread, so it does not block the main thread.
+        CompletableFuture<LocalCIBuildResult> futureResult = createCompletableFuture(() -> {
+            // Submit the task and get a Future.
+            // Use Future to be able to interrupt the build job's thread if running the build job takes too long.
+            // Canceling a CompletableFuture would merely mark the CompletableFuture as completed exceptionally but steps running inside the CompletableFuture will never throw an
+            // InterruptedException and thus never stop execution.
+            Future<LocalCIBuildResult> future = localCIBuildExecutorService.submit(buildJob);
+            try {
+                // Get the result of the build job at the latest after the timeout.
+                return future.get(timeoutSeconds, TimeUnit.SECONDS);
+            }
+            catch (InterruptedException | ExecutionException | TimeoutException e) {
+                // The InterruptedException is thrown if the thread is interrupted from somewhere else (e.g. the executor service is shut down).
+                // The ExecutionException is thrown if the build job throws an exception (i.e. a LocalCIException in this case).
+                // The TimeoutException is thrown if the build job takes too long.
+
+                log.error("Error while running build job", e);
+
+                if (!future.isDone()) {
+                    // Cancel the task if it is still running.
+                    future.cancel(true);
+                }
+
+                // Set the build status to "INACTIVE" to indicate that the build is not running anymore.
+                updateBuildPlanStatus(participation, ContinuousIntegrationService.BuildStatus.INACTIVE);
+
+                // Notify the user, that the build job produced an exception. This is also the case if the build job timed out.
+                log.error("Error while building and testing repository " + participation.getRepositoryUrl());
+                BuildTriggerWebsocketError error = new BuildTriggerWebsocketError(
+                        e instanceof TimeoutException ? "Build timed out after " + timeoutSeconds + " seconds" : e.getMessage(), participation.getId());
+                // This cast to Participation is safe as the participation is either a ProgrammingExerciseStudentParticipation, a TemplateProgrammingExerciseParticipation, or a
+                // SolutionProgrammingExerciseParticipation, which all extend Participation.
+                programmingMessagingService.notifyUserAboutSubmissionError((Participation) participation, error);
+
+                stopContainer(containerId);
+                deleteTemporaryBuildScript(scriptPath);
+
+                // Wrap the exception in a CompletionException so that the future is completed exceptionally and the thenAccept block is not run.
+                throw new CompletionException(e);
+            }
+        });
+
+        // Add "_QUEUED" to the build plan id to indicate that the build job is queued.
+        updateBuildPlanStatus(participation, ContinuousIntegrationService.BuildStatus.QUEUED);
+
+        return futureResult;
+    }
+
+    private CompletableFuture<LocalCIBuildResult> createCompletableFuture(Supplier<LocalCIBuildResult> supplier) {
+        if (runBuildJobsAsynchronously) {
+            // Just use the normal supplyAsync.
+            return CompletableFuture.supplyAsync(supplier);
+        }
+        else {
+            // Use a synchronous CompletableFuture, e.g. in the test environment.
+            // Otherwise, tests will not wait for the CompletableFuture to complete before asserting on the database.
+            CompletableFuture<LocalCIBuildResult> future = new CompletableFuture<>();
+            try {
+                LocalCIBuildResult result = supplier.get();
+                future.complete(result);
+            }
+            catch (Exception e) {
+                future.completeExceptionally(e);
+            }
+            return future;
+        }
+    }
+
+    private Path getBuildScriptPath() {
+        Path resourcePath = Path.of("templates", "localci", "java", "build_and_run_tests.sh");
+        Path scriptPath;
+        try {
+            scriptPath = resourceLoaderService.getResourceFilePath(resourcePath);
+        }
+        catch (IOException | URISyntaxException | IllegalArgumentException e) {
+            throw new LocalCIException("Could not retrieve build script.", e);
+        }
+
+        return scriptPath;
+    }
+
+    /**
      * Runs the build job. This includes creating and starting a Docker container, executing the build script, and processing the build result.
      *
      * @param participation The participation for which the build job should be run.
@@ -93,7 +289,7 @@ public class LocalCIBuildJobService {
      * @return The build result.
      * @throws LocalCIException if something went wrong while running the build job.
      */
-    public LocalCIBuildResult runBuildJob(ProgrammingExerciseParticipation participation, String containerId, String branch, Path scriptPath) {
+    private LocalCIBuildResult runBuildJob(ProgrammingExerciseParticipation participation, String containerId, String branch, Path scriptPath) {
 
         long timeNanoStart = System.nanoTime();
 
@@ -147,7 +343,7 @@ public class LocalCIBuildJobService {
         }
 
         // Set the build status to "INACTIVE" to indicate that the build is not running anymore.
-        localCIBuildPlanService.updateBuildPlanStatus(participation, ContinuousIntegrationService.BuildStatus.INACTIVE);
+        updateBuildPlanStatus(participation, ContinuousIntegrationService.BuildStatus.INACTIVE);
 
         log.info("Building and testing submission for repository {} took {}", participation.getRepositoryUrl(), TimeLogUtil.formatDurationFrom(timeNanoStart));
 
@@ -233,7 +429,7 @@ public class LocalCIBuildJobService {
      *
      * @param containerId The id of the container to stop.
      */
-    public void stopContainer(String containerId) {
+    private void stopContainer(String containerId) {
         if (!isContainerRunning(containerId)) {
             return;
         }
@@ -257,7 +453,7 @@ public class LocalCIBuildJobService {
      *
      * @param scriptPath The path of the build script.
      */
-    public void deleteTemporaryBuildScript(Path scriptPath) {
+    private void deleteTemporaryBuildScript(Path scriptPath) {
         // If the script was created as a temporary file, delete it.
         Path tempDir = Paths.get(System.getProperty("java.io.tmpdir"));
         if (scriptPath.startsWith(tempDir)) {
@@ -356,5 +552,41 @@ public class LocalCIBuildJobService {
         LocalCIBuildResult.LocalCIJobDTO job = new LocalCIBuildResult.LocalCIJobDTO(failedTests, successfulTests);
 
         return new LocalCIBuildResult(assignmentRepoBranchName, assignmentRepoCommitHash, testsRepoCommitHash, isBuildSuccessful, buildRunDate, List.of(job));
+    }
+
+    /**
+     * Updates the build plan status of the given participation to the given status.
+     * This method attaches the new status to the build plan id and saves it in the database. This way no new database table must be added just for this purpose.
+     * Inactive build plan id: "TESTCOURSE1TESTEX2-USER1"
+     * Queued build plan id: "TESTCOURSE1TESTEX2-USER1_QUEUED"
+     * Building build plan id: "TESTCOURSE1TESTEX2-USER1_BUILDING"
+     *
+     * @param participation  the participation for which the build plan status should be updated.
+     * @param newBuildStatus the new build plan status.
+     * @throws LocalCIException if the build plan id is null.
+     */
+    private void updateBuildPlanStatus(ProgrammingExerciseParticipation participation, ContinuousIntegrationService.BuildStatus newBuildStatus) {
+        String buildPlanId = participation.getBuildPlanId();
+        if (buildPlanId == null) {
+            throw new LocalCIException("Build plan id is null.");
+        }
+        buildPlanId = buildPlanId.replace("_" + ContinuousIntegrationService.BuildStatus.QUEUED.name(), "").replace("_" + ContinuousIntegrationService.BuildStatus.BUILDING.name(),
+                "");
+
+        if (!newBuildStatus.equals(ContinuousIntegrationService.BuildStatus.INACTIVE)) {
+            buildPlanId += "_" + newBuildStatus.name();
+        }
+
+        participation.setBuildPlanId(buildPlanId);
+
+        if (participation instanceof TemplateProgrammingExerciseParticipation templateParticipation) {
+            templateProgrammingExerciseParticipationRepository.save(templateParticipation);
+        }
+        else if (participation instanceof SolutionProgrammingExerciseParticipation solutionParticipation) {
+            solutionProgrammingExerciseParticipationRepository.save(solutionParticipation);
+        }
+        else {
+            programmingExerciseStudentParticipationRepository.save((ProgrammingExerciseStudentParticipation) participation);
+        }
     }
 }

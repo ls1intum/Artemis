@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.security.localvc;
+package de.tum.in.www1.artemis.service.connectors.localvc;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -10,17 +10,17 @@ import org.eclipse.jgit.transport.ReceiveCommand;
 import org.eclipse.jgit.transport.ReceivePack;
 
 import de.tum.in.www1.artemis.exception.LocalCIException;
-import de.tum.in.www1.artemis.service.connectors.localci.LocalCIPushService;
+import de.tum.in.www1.artemis.service.connectors.localci.LocalCIConnectorService;
 
 /**
  * Contains an onPostReceive method that is called by JGit after a push has been received (i.e. after the pushed files were successfully written to disk).
  */
 public class LocalVCPostPushHook implements PostReceiveHook {
 
-    private final Optional<LocalCIPushService> localCIPushService;
+    private final Optional<LocalCIConnectorService> localCIConnectorService;
 
-    public LocalVCPostPushHook(Optional<LocalCIPushService> localCIPushService) {
-        this.localCIPushService = localCIPushService;
+    public LocalVCPostPushHook(Optional<LocalCIConnectorService> localCIConnectorService) {
+        this.localCIConnectorService = localCIConnectorService;
     }
 
     /**
@@ -56,7 +56,7 @@ public class LocalVCPostPushHook implements PostReceiveHook {
         Repository repository = receivePack.getRepository();
 
         try {
-            localCIPushService.orElseThrow().processNewPush(commitHash, repository);
+            localCIConnectorService.orElseThrow().processNewPush(commitHash, repository);
         }
         catch (LocalCIException e) {
             // Cannot set an error message to be displayed to the user in the PostReceiveHook.

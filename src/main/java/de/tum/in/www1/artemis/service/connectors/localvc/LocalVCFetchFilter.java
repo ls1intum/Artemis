@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.security.localvc;
+package de.tum.in.www1.artemis.service.connectors.localvc;
 
 import java.io.IOException;
 
@@ -18,37 +18,33 @@ import de.tum.in.www1.artemis.exception.localvc.LocalVCInternalException;
 import de.tum.in.www1.artemis.web.rest.repository.RepositoryActionType;
 
 /**
- * Filters incoming push requests reaching the local Version Control implementation.
+ * Filters incoming fetch requests reaching the local git server implementation.
  */
-public class LocalVCPushFilter extends OncePerRequestFilter {
+public class LocalVCFetchFilter extends OncePerRequestFilter {
 
-    private final Logger log = LoggerFactory.getLogger(LocalVCPushFilter.class);
+    private final Logger log = LoggerFactory.getLogger(LocalVCFetchFilter.class);
 
-    private final LocalVCFilterService localVCFilterService;
+    private final LocalVCServletService localVCServletService;
 
-    public LocalVCPushFilter(LocalVCFilterService localVCFilterService) {
-        this.localVCFilterService = localVCFilterService;
+    public LocalVCFetchFilter(LocalVCServletService localVCServletService) {
+        this.localVCServletService = localVCServletService;
     }
 
-    /**
-     * Filters incoming push requests performing authentication and authorization.
-     */
     @Override
     public void doFilterInternal(HttpServletRequest servletRequest, HttpServletResponse servletResponse, @NotNull FilterChain filterChain) throws IOException, ServletException {
 
-        log.debug("Trying to push to repository {}", servletRequest.getRequestURI());
+        log.debug("Trying to fetch repository {}", servletRequest.getRequestURI());
 
         servletResponse.setHeader("WWW-Authenticate", "Basic");
 
         try {
-            localVCFilterService.authenticateAndAuthorizeGitRequest(servletRequest, RepositoryActionType.WRITE);
+            localVCServletService.authenticateAndAuthorizeGitRequest(servletRequest, RepositoryActionType.READ);
         }
         catch (LocalVCAuthException | LocalVCForbiddenException | LocalVCInternalException e) {
-            servletResponse.setStatus(localVCFilterService.getHttpStatusForException(e, servletRequest.getRequestURI()));
+            servletResponse.setStatus(localVCServletService.getHttpStatusForException(e, servletRequest.getRequestURI()));
             return;
         }
 
         filterChain.doFilter(servletRequest, servletResponse);
-
     }
 }

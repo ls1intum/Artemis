@@ -5,17 +5,16 @@ import java.util.Optional;
 import org.eclipse.jgit.http.server.GitServlet;
 import org.eclipse.jgit.transport.ReceivePack;
 
-import de.tum.in.www1.artemis.security.localvc.LocalVCFetchFilter;
-import de.tum.in.www1.artemis.security.localvc.LocalVCFilterService;
-import de.tum.in.www1.artemis.security.localvc.LocalVCPostPushHook;
-import de.tum.in.www1.artemis.security.localvc.LocalVCPrePushHook;
-import de.tum.in.www1.artemis.security.localvc.LocalVCPushFilter;
-import de.tum.in.www1.artemis.service.connectors.localci.LocalCIPushService;
+import de.tum.in.www1.artemis.service.connectors.localci.LocalCIConnectorService;
+import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCFetchFilter;
+import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCPostPushHook;
+import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCPrePushHook;
+import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCPushFilter;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCServletService;
 
 public class ArtemisGitServlet extends GitServlet {
 
-    public ArtemisGitServlet(LocalVCServletService localVCServletService, LocalVCFilterService localVCFilterService, Optional<LocalCIPushService> localCIPushService) {
+    public ArtemisGitServlet(LocalVCServletService localVCServletService, Optional<LocalCIConnectorService> localCIConnectorService) {
         super();
 
         this.setRepositoryResolver((req, name) -> {
@@ -27,15 +26,15 @@ public class ArtemisGitServlet extends GitServlet {
         });
 
         // Add filters that every request to the JGit Servlet goes through, one for each fetch request, and one for each push request.
-        this.addUploadPackFilter(new LocalVCFetchFilter(localVCFilterService));
-        this.addReceivePackFilter(new LocalVCPushFilter(localVCFilterService));
+        this.addUploadPackFilter(new LocalVCFetchFilter(localVCServletService));
+        this.addReceivePackFilter(new LocalVCPushFilter(localVCServletService));
 
         this.setReceivePackFactory((req, db) -> {
             ReceivePack receivePack = new ReceivePack(db);
             // Add a hook that prevents illegal actions on push (delete branch, rename branch, force push).
             receivePack.setPreReceiveHook(new LocalVCPrePushHook());
             // Add a hook that triggers the creation of a new submission after the push went through successfully.
-            receivePack.setPostReceiveHook(new LocalVCPostPushHook(localCIPushService));
+            receivePack.setPostReceiveHook(new LocalVCPostPushHook(localCIConnectorService));
             return receivePack;
         });
     }

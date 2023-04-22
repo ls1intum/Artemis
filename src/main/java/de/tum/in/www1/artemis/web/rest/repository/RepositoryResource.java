@@ -38,7 +38,7 @@ import de.tum.in.www1.artemis.service.RepositoryAccessService;
 import de.tum.in.www1.artemis.service.RepositoryService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
-import de.tum.in.www1.artemis.service.connectors.localci.LocalCIPushService;
+import de.tum.in.www1.artemis.service.connectors.localci.LocalCIConnectorService;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.in.www1.artemis.web.rest.dto.FileMove;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryStatusDTO;
@@ -74,11 +74,12 @@ public abstract class RepositoryResource {
 
     protected final RepositoryAccessService repositoryAccessService;
 
-    private final Optional<LocalCIPushService> localCIPushService;
+    private final Optional<LocalCIConnectorService> localCIConnectorService;
 
     public RepositoryResource(Environment environment, UserRepository userRepository, AuthorizationCheckService authCheckService, GitService gitService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, RepositoryService repositoryService, Optional<VersionControlService> versionControlService,
-            ProgrammingExerciseRepository programmingExerciseRepository, RepositoryAccessService repositoryAccessService, Optional<LocalCIPushService> localCIPushService) {
+            ProgrammingExerciseRepository programmingExerciseRepository, RepositoryAccessService repositoryAccessService,
+            Optional<LocalCIConnectorService> localCIConnectorService) {
         this.environment = environment;
         this.userRepository = userRepository;
         this.authCheckService = authCheckService;
@@ -88,7 +89,7 @@ public abstract class RepositoryResource {
         this.versionControlService = versionControlService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.repositoryAccessService = repositoryAccessService;
-        this.localCIPushService = localCIPushService;
+        this.localCIConnectorService = localCIConnectorService;
     }
 
     /**
@@ -268,7 +269,7 @@ public abstract class RepositoryResource {
             // For Bitbucket + Bamboo and GitLab + Jenkins, webhooks were added when creating the repository,
             // that notify the CI system when the commit happens and thus trigger the build.
             if (Arrays.asList(this.environment.getActiveProfiles()).contains(Constants.PROFILE_LOCALCI)) {
-                localCIPushService.orElseThrow().processNewPush(null, repository);
+                localCIConnectorService.orElseThrow().processNewPush(null, repository);
             }
             return new ResponseEntity<>(HttpStatus.OK);
         });

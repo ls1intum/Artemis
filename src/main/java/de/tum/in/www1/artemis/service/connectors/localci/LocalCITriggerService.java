@@ -15,23 +15,21 @@ import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseGradingServ
 import de.tum.in.www1.artemis.service.programming.ProgrammingMessagingService;
 
 /**
- * Service for triggering builds on the local CI server.
- * Note: This service exists only to prevent a circular dependency LocalCIService -> ProgrammingExercisesGradingService -> LocalCIService, which would be present if the
- * triggerBuild method from the ContinuousIntegrationService interface would be used.
+ * Service for triggering builds on the local CI system.
  */
 @Service
 @Profile("localci")
 public class LocalCITriggerService implements ContinuousIntegrationTriggerService {
 
-    private final LocalCIExecutorService localCIExecutorService;
+    private final LocalCIBuildJobExecutionService localCIBuildJobExecutionService;
 
     private final ProgrammingExerciseGradingService programmingExerciseGradingService;
 
     private final ProgrammingMessagingService programmingMessagingService;
 
-    public LocalCITriggerService(LocalCIExecutorService localCIExecutorService, ProgrammingExerciseGradingService programmingExerciseGradingService,
+    public LocalCITriggerService(LocalCIBuildJobExecutionService localCIBuildJobExecutionService, ProgrammingExerciseGradingService programmingExerciseGradingService,
             ProgrammingMessagingService programmingMessagingService) {
-        this.localCIExecutorService = localCIExecutorService;
+        this.localCIBuildJobExecutionService = localCIBuildJobExecutionService;
         this.programmingExerciseGradingService = programmingExerciseGradingService;
         this.programmingMessagingService = programmingMessagingService;
     }
@@ -44,7 +42,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
      */
     @Override
     public void triggerBuild(ProgrammingExerciseParticipation participation) {
-        CompletableFuture<LocalCIBuildResult> futureResult = localCIExecutorService.addBuildJobToQueue(participation);
+        CompletableFuture<LocalCIBuildResult> futureResult = localCIBuildJobExecutionService.addBuildJobToQueue(participation);
         futureResult.thenAccept(buildResult -> {
             // The 'user' is not properly logged into Artemis, this leads to an issue when accessing custom repository methods.
             // Therefore, a mock auth object has to be created.
