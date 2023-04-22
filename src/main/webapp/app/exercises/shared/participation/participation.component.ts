@@ -43,6 +43,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
 
     participations: StudentParticipation[] = [];
     participationsChangedDueDate: Map<number, StudentParticipation> = new Map<number, StudentParticipation>();
+    participationsChangedPresentation: Map<number, StudentParticipation> = new Map<number, StudentParticipation>();
     filteredParticipationsSize = 0;
     eventSubscriber: Subscription;
     paramSub: Subscription;
@@ -220,7 +221,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         return !!(this.exercise.course && this.exercise.isAtLeastTutor && (this.gradingScale?.presentationsNumber ?? 0) > 0);
     }
 
-    addPresentation(participation: StudentParticipation) {
+    addBasicPresentation(participation: StudentParticipation) {
         if (!this.basicPresentationEnabled) {
             return;
         }
@@ -229,17 +230,29 @@ export class ParticipationComponent implements OnInit, OnDestroy {
             error: () => this.alertService.error('artemisApp.participation.addPresentation.error'),
         });
     }
-    saveParticipation(participation: StudentParticipation) {
+
+    addGradedPresentation(participation: StudentParticipation) {
         this.participationService.update(this.exercise, participation).subscribe({
-            error: () => this.alertService.error('artemisApp.participation.addPresentation.error'),
+            error: () => this.alertService.error('Add Presentation Grade Error'),
+            complete: () => {
+                this.participationsChangedPresentation.delete(participation.id!);
+            },
         });
     }
 
+    hasGradedPresentationChanged(participation: StudentParticipation) {
+        return this.participationsChangedPresentation.has(participation.id!);
+    }
+
+    changeGradedPresentation(participation: StudentParticipation) {
+        this.participationsChangedPresentation.set(participation.id!, participation);
+    }
+
     removePresentation(participation: StudentParticipation) {
-        if (!this.basicPresentationEnabled) {
+        if (!this.basicPresentationEnabled && !this.gradedPresentationEnabled) {
             return;
         }
-        participation.presentationScore = 0;
+        participation.presentationScore = undefined;
         this.participationService.update(this.exercise, participation).subscribe({
             error: () => this.alertService.error('artemisApp.participation.removePresentation.error'),
         });

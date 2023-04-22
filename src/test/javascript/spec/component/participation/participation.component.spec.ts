@@ -333,7 +333,7 @@ describe('ParticipationComponent', () => {
             component.exercise = exercise1;
             component.basicPresentationEnabled = component.checkBasicPresentationConfig();
 
-            component.addPresentation(participation);
+            component.addBasicPresentation(participation);
             tick();
 
             expect(updateStub).toHaveBeenCalledOnce();
@@ -344,7 +344,7 @@ describe('ParticipationComponent', () => {
             component.exercise = exercise2;
             component.basicPresentationEnabled = component.checkBasicPresentationConfig();
 
-            component.addPresentation(participation);
+            component.addBasicPresentation(participation);
             tick();
 
             expect(updateStub).not.toHaveBeenCalled();
