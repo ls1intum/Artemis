@@ -84,6 +84,7 @@ export class ProgrammingExerciseUpdateWizardComponent implements OnInit {
     @Output() onNextStep: EventEmitter<any> = new EventEmitter();
     @Input() getInvalidReasons: () => ValidationReason[];
     @Input() isImport: boolean;
+    @Input() isExamMode: boolean;
 
     @Input() infoStepInputs: InfoStepInputs;
     @Input() languageStepInputs: LanguageStepInputs;
