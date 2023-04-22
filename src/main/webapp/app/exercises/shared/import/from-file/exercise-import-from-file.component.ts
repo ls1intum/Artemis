@@ -12,10 +12,9 @@ import JSZip from 'jszip';
     templateUrl: './exercise-import-from-file.component.html',
 })
 export class ExerciseImportFromFileComponent implements OnInit {
-    @Input()
-    exerciseType: ExerciseType;
-    @Input()
-    exercise: Exercise;
+    @Input() exerciseType: ExerciseType;
+    @Input() exercise: Exercise;
+
     titleKey: string;
     fileForImport?: File;
     //Icons

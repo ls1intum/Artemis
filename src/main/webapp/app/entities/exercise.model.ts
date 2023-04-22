@@ -73,7 +73,6 @@ export abstract class Exercise implements BaseEntity {
     public teamAssignmentConfig?: TeamAssignmentConfig;
     public categories?: ExerciseCategory[];
     public type?: ExerciseType;
-    public zipFileForImport?: File;
     public exampleSolutionPublicationDate?: dayjs.Dayjs;
 
     public teams?: Team[];
@@ -120,6 +119,7 @@ export abstract class Exercise implements BaseEntity {
     public presentationScoreEnabled?: boolean;
     public gradingInstructionFeedbackUsed?: boolean;
     public exampleSolutionPublished?: boolean;
+    public zipFileForImport?: File;
 
     protected constructor(type: ExerciseType) {
         this.type = type;
