@@ -99,7 +99,7 @@ describe('ParticipationComponent', () => {
         expect(component.isLoading).toBeFalse();
         expect(component.participations).toHaveLength(1);
         expect(component.participations[0].id).toBe(participation.id);
-        expect(component.presentationScoreEnabled).toBeFalse();
+        expect(component.basicPresentationEnabled).toBeFalse();
 
         expect(exerciseFindStub).toHaveBeenCalledOnce();
         expect(exerciseFindStub).toHaveBeenCalledWith(theExercise.id);
@@ -124,7 +124,7 @@ describe('ParticipationComponent', () => {
         expect(component.isLoading).toBeFalse();
         expect(component.participations).toHaveLength(1);
         expect(component.participations[0].id).toBe(participation.id);
-        expect(component.presentationScoreEnabled).toBeFalse();
+        expect(component.basicPresentationEnabled).toBeFalse();
         expect(component.exerciseSubmissionState).toEqual(submissionState);
 
         expect(exerciseFindStub).toHaveBeenCalledOnce();
@@ -331,7 +331,7 @@ describe('ParticipationComponent', () => {
 
         it('should add a presentation score if the feature is enabled', fakeAsync(() => {
             component.exercise = exercise1;
-            component.presentationScoreEnabled = component.checkPresentationScoreConfig();
+            component.basicPresentationEnabled = component.checkBasicPresentationConfig();
 
             component.addPresentation(participation);
             tick();
@@ -342,7 +342,7 @@ describe('ParticipationComponent', () => {
 
         it('should not add a presentation score if the feature is disabled', fakeAsync(() => {
             component.exercise = exercise2;
-            component.presentationScoreEnabled = component.checkPresentationScoreConfig();
+            component.basicPresentationEnabled = component.checkBasicPresentationConfig();
 
             component.addPresentation(participation);
             tick();
@@ -352,7 +352,7 @@ describe('ParticipationComponent', () => {
 
         it('should remove a presentation score if the feature is enabled', fakeAsync(() => {
             component.exercise = exercise1;
-            component.presentationScoreEnabled = component.checkPresentationScoreConfig();
+            component.basicPresentationEnabled = component.checkBasicPresentationConfig();
 
             component.removePresentation(participation);
             tick();
@@ -363,7 +363,7 @@ describe('ParticipationComponent', () => {
 
         it('should do nothing on removal of a presentation score if the feature is disabled', fakeAsync(() => {
             component.exercise = exercise2;
-            component.presentationScoreEnabled = component.checkPresentationScoreConfig();
+            component.basicPresentationEnabled = component.checkBasicPresentationConfig();
 
             component.removePresentation(participation);
             tick();
@@ -373,10 +373,10 @@ describe('ParticipationComponent', () => {
 
         it('should check if the presentation score actions should be displayed', () => {
             component.exercise = exercise1;
-            expect(component.checkPresentationScoreConfig()).toBeTrue();
+            expect(component.checkBasicPresentationConfig()).toBeTrue();
 
             component.exercise = exercise2;
-            expect(component.checkPresentationScoreConfig()).toBeFalse();
+            expect(component.checkBasicPresentationConfig()).toBeFalse();
         });
     });
 

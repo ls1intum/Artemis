@@ -20,6 +20,8 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { setBuildPlanUrlForProgrammingParticipations } from 'app/exercises/shared/participation/participation.utils';
 import { faCircleNotch, faEraser, faFilePowerpoint, faTable, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { GradingScale } from 'app/entities/grading-scale.model';
+import { GradingSystemService } from 'app/grading-system/grading-system.service';
 
 enum FilterProp {
     ALL = 'all',
@@ -46,7 +48,11 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     paramSub: Subscription;
     exercise: Exercise;
     hasLoadedPendingSubmissions = false;
-    presentationScoreEnabled = false;
+    basicPresentationEnabled = false;
+    gradedPresentationEnabled = false;
+
+    gradingScale?: GradingScale;
+    gradingScaleSub: Subscription;
 
     private dialogErrorSource = new Subject<string>();
     dialogError = this.dialogErrorSource.asObservable();
@@ -81,6 +87,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         private programmingSubmissionService: ProgrammingSubmissionService,
         private accountService: AccountService,
         private profileService: ProfileService,
+        private gradingSystemService: GradingSystemService,
     ) {
         this.participationCriteria = {
             filterProp: FilterProp.ALL,
@@ -106,6 +113,9 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         if (this.paramSub) {
             this.paramSub.unsubscribe();
         }
+        if (this.gradingScaleSub) {
+            this.gradingScaleSub.unsubscribe();
+        }
     }
 
     private loadExercise(exerciseId: number) {
@@ -114,12 +124,24 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         this.exerciseService.find(exerciseId).subscribe((exerciseResponse) => {
             this.exercise = exerciseResponse.body!;
             this.afterDueDate = !!this.exercise.dueDate && dayjs().isAfter(this.exercise.dueDate);
+            this.loadGradingScale(this.exercise.course?.id);
             this.loadParticipations(exerciseId);
             if (this.exercise.type === ExerciseType.PROGRAMMING) {
                 this.loadSubmissions(exerciseId);
             }
-            this.presentationScoreEnabled = this.checkPresentationScoreConfig();
+            this.basicPresentationEnabled = this.checkBasicPresentationConfig();
         });
+    }
+
+    private loadGradingScale(courseId?: number) {
+        if (courseId) {
+            this.gradingScaleSub = this.gradingSystemService.findGradingScaleForCourse(courseId).subscribe((gradingScale) => {
+                if (gradingScale.body) {
+                    this.gradingScale = gradingScale.body;
+                }
+                this.gradedPresentationEnabled = this.checkGradedPresentationConfig();
+            });
+        }
     }
 
     private loadParticipations(exerciseId: number) {
@@ -187,15 +209,19 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         this.eventSubscriber = this.eventManager.subscribe('participationListModification', () => this.loadExercise(this.exercise.id!));
     }
 
-    checkPresentationScoreConfig(): boolean {
+    checkBasicPresentationConfig(): boolean {
         if (!this.exercise.course) {
             return false;
         }
         return this.exercise.isAtLeastTutor === true && this.exercise.course.presentationScore !== 0 && this.exercise.presentationScoreEnabled === true;
     }
 
+    checkGradedPresentationConfig(): boolean {
+        return !!(this.exercise.course && this.exercise.isAtLeastTutor && (this.gradingScale?.presentationsNumber ?? 0) > 0);
+    }
+
     addPresentation(participation: StudentParticipation) {
-        if (!this.presentationScoreEnabled) {
+        if (!this.basicPresentationEnabled) {
             return;
         }
         participation.presentationScore = 1;
@@ -203,9 +229,14 @@ export class ParticipationComponent implements OnInit, OnDestroy {
             error: () => this.alertService.error('artemisApp.participation.addPresentation.error'),
         });
     }
+    saveParticipation(participation: StudentParticipation) {
+        this.participationService.update(this.exercise, participation).subscribe({
+            error: () => this.alertService.error('artemisApp.participation.addPresentation.error'),
+        });
+    }
 
     removePresentation(participation: StudentParticipation) {
-        if (!this.presentationScoreEnabled) {
+        if (!this.basicPresentationEnabled) {
             return;
         }
         participation.presentationScore = 0;

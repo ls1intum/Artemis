@@ -1,7 +1,10 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { Exercise } from 'app/entities/exercise.model';
 import { Authority } from 'app/shared/constants/authority.constants';
+import { GradingSystemService } from 'app/grading-system/grading-system.service';
+import { Subscription } from 'rxjs';
+import { GradingScale } from 'app/entities/grading-scale.model';
 
 @Component({
     selector: 'jhi-presentation-score-checkbox',
@@ -31,14 +34,43 @@ import { Authority } from 'app/shared/constants/authority.constants';
     `,
     styleUrls: ['../../shared/exercise/_exercise-update.scss'],
 })
-export class PresentationScoreComponent {
+export class PresentationScoreComponent implements OnInit, OnDestroy {
     @Input() exercise: Exercise;
 
     Authority = Authority;
     // Icons
     faQuestionCircle = faQuestionCircle;
 
+    private gradingScale?: GradingScale;
+    private gradingScaleSub: Subscription;
+
+    constructor(private gradingSystemService: GradingSystemService) {}
+
+    ngOnInit(): void {
+        if (this.exercise.course?.id) {
+            this.gradingScaleSub = this.gradingSystemService.findGradingScaleForCourse(this.exercise.course.id).subscribe((gradingScale) => {
+                if (gradingScale.body) {
+                    this.gradingScale = gradingScale.body;
+                }
+            });
+        }
+    }
+
+    ngOnDestroy(): void {
+        if (this.gradingScaleSub) {
+            this.gradingScaleSub.unsubscribe();
+        }
+    }
+
     showPresentationScoreCheckbox(): boolean {
+        return this.isBasicPresentation() || this.isGradedPresentation();
+    }
+
+    private isBasicPresentation(): boolean {
         return !!(this.exercise.course && this.exercise.course.presentationScore !== 0);
+    }
+
+    private isGradedPresentation(): boolean {
+        return !!(this.exercise.course && (this.gradingScale?.presentationsNumber ?? 0) > 0);
     }
 }
