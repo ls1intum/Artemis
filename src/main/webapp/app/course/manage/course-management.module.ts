@@ -46,7 +46,7 @@ import { CourseManagementStatisticsComponent } from 'app/course/manage/course-ma
 import { CourseDetailDoughnutChartComponent } from 'app/course/manage/detail/course-detail-doughnut-chart.component';
 import { OrionCourseManagementExercisesComponent } from 'app/orion/management/orion-course-management-exercises.component';
 import { CourseDetailLineChartComponent } from 'app/course/manage/detail/course-detail-line-chart.component';
-import { UserImportModule } from 'app/shared/import/user-import.module';
+import { UserImportModule } from 'app/shared/user-import/user-import.module';
 import { CourseManagementExercisesSearchComponent } from 'app/course/manage/course-management-exercises-search.component';
 import { LineChartModule, PieChartModule } from '@swimlane/ngx-charts';
 import { ArtemisPlagiarismModule } from 'app/exercises/shared/plagiarism/plagiarism.module';

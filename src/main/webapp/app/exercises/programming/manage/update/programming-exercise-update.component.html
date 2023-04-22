@@ -7,6 +7,8 @@
         [isSaving]="isSaving"
         [getInvalidReasons]="getInvalidReasonsForWizard"
         [isImportFromExistingExercise]="isImportFromExistingExercise"
+        [isImport]="isImport"
+        [isExamMode]="isExamMode"
         [(exercise)]="programmingExercise"
         [infoStepInputs]="getInfoStepInputs()"
         [languageStepInputs]="getLanguageStepInputs()"
@@ -70,6 +72,7 @@
             <jhi-programming-exercise-grading
                 class="form-step"
                 [isImportFromExistingExercise]="isImportFromExistingExercise"
+                [isExamMode]="isExamMode"
                 [programmingExercise]="programmingExercise"
                 [gradingInputs]="getGradingStepInputs()"
             ></jhi-programming-exercise-grading>

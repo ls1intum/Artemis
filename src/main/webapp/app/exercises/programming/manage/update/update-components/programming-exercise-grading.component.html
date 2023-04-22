@@ -4,7 +4,7 @@
             <label jhiTranslate="artemisApp.programmingExercise.timeline.timelineLabel" for="timeline"> Timeline for the whole programming exercise </label>
             <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.timeline.timelineTooltip"></jhi-help-icon>
         </div>
-        <jhi-programming-exercise-lifecycle id="timeline" [exercise]="programmingExercise" [isExamMode]="false" [readOnly]="false"></jhi-programming-exercise-lifecycle>
+        <jhi-programming-exercise-lifecycle id="timeline" [exercise]="programmingExercise" [isExamMode]="isExamMode" [readOnly]="false"></jhi-programming-exercise-lifecycle>
     </div>
     <div class="form-group mt-2" *ngIf="programmingExercise.programmingLanguage && gradingInputs.staticCodeAnalysisAllowed">
         <div class="form-check custom-control custom-checkbox">
