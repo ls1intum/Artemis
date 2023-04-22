@@ -118,16 +118,16 @@ public class GradingScale extends DomainObject {
         return presentationsNumber;
     }
 
-    public Integer setPresentationsNumber(Integer presentationsNumber) {
-        return this.presentationsNumber = presentationsNumber;
+    public void setPresentationsNumber(Integer presentationsNumber) {
+        this.presentationsNumber = presentationsNumber;
     }
 
     public Double getPresentationsWeight() {
         return presentationsWeight;
     }
 
-    public Double setPresentationsWeight(Double presentationsWeight) {
-        return this.presentationsWeight = presentationsWeight;
+    public void setPresentationsWeight(Double presentationsWeight) {
+        this.presentationsWeight = presentationsWeight;
     }
 
     public Set<GradeStep> getGradeSteps() {
