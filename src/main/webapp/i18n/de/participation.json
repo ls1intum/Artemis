@@ -18,6 +18,10 @@
                 "label": "Füge Präsentation hinzu",
                 "error": "Die Präsentation konnte nicht hinzugefügt werden. Bitte versuche es nochmal."
             },
+            "savePresentation": {
+                "label": "Sichere Präsentation",
+                "error": "Die Präsentationsnote konnte nicht hinzugefügt werden. Bitte versuche es nochmal."
+            },
             "removePresentation": {
                 "label": "Entferne Präsentation",
                 "error": "Die Präsentation konnte nicht entfernt werden. Bitte versuche es nochmal."
@@ -35,7 +39,8 @@
             "initializationDate": "Teilnahme Start",
             "individualDueDate": "Abgabefrist",
             "initializationNotYetStarted": "Noch nicht gestartet",
-            "presentationScore": "Präsentationsergebnis",
+            "presentationScore": "Präsentation",
+            "presentationGrade": "Präsentationsnote",
             "results": "Ergebnisse",
             "student": "Student",
             "team": "Team",

@@ -296,24 +296,22 @@ export abstract class BaseGradingSystemComponent implements OnInit {
         if (this.presentationsConfig.presentationType === PresentationType.NONE) {
             // The presentationsNumber and presentationsWeight must be undefined
             if (this.presentationsConfig.presentationsNumber !== undefined || this.presentationsConfig.presentationsWeight !== undefined) {
-                this.invalidGradeStepsMessage = this.translateService.instant('The presentationsNumber and presentationsWeight must be undefined if presentationType is NONE.');
                 return false;
             }
             // The presentationScore must be 0 or undefined
             if ((this.course?.presentationScore ?? 0) > 0) {
-                this.invalidGradeStepsMessage = this.translateService.instant('The presentationScore must be 0 or undefined if presentationType is NONE.');
+                this.invalidGradeStepsMessage = this.translateService.instant('artemisApp.gradingSystem.error.invalidBasicPresentationIsEnabled');
                 return false;
             }
         }
         if (this.presentationsConfig.presentationType === PresentationType.BASIC) {
             // The presentationsNumber and presentationsWeight must be undefined
             if (this.presentationsConfig.presentationsNumber !== undefined || this.presentationsConfig.presentationsWeight !== undefined) {
-                this.invalidGradeStepsMessage = this.translateService.instant('The presentationsNumber and presentationsWeight must be undefined if presentationType is BASIC.');
                 return false;
             }
             // The presentationScore must be above 0
             if ((this.course?.presentationScore ?? 0) <= 0) {
-                this.invalidGradeStepsMessage = this.translateService.instant('The presentationScore must be above 0 if presentationType is BASIC.');
+                this.invalidGradeStepsMessage = this.translateService.instant('artemisApp.gradingSystem.error.invalidPresentationsNumber');
                 return false;
             }
         }
@@ -322,10 +320,9 @@ export abstract class BaseGradingSystemComponent implements OnInit {
             if (
                 this.presentationsConfig.presentationsNumber === undefined ||
                 !Number.isInteger(this.presentationsConfig.presentationsNumber) ||
-                this.presentationsConfig.presentationsNumber < 1 ||
-                this.presentationsConfig.presentationsNumber > 100
+                this.presentationsConfig.presentationsNumber < 1
             ) {
-                this.invalidGradeStepsMessage = this.translateService.instant('the presentationsNumber must be a whole number between 1 and 100 if presentationType is GRADED.');
+                this.invalidGradeStepsMessage = this.translateService.instant('artemisApp.gradingSystem.error.invalidPresentationsNumber');
                 return false;
             }
             // The presentationsWeight must be between 0 and 100
@@ -334,12 +331,12 @@ export abstract class BaseGradingSystemComponent implements OnInit {
                 this.presentationsConfig.presentationsWeight < 0 ||
                 this.presentationsConfig.presentationsWeight > 100
             ) {
-                this.invalidGradeStepsMessage = this.translateService.instant('the presentationsWeight must be between 0 and 100 if presentationType is GRADED.');
+                this.invalidGradeStepsMessage = this.translateService.instant('artemisApp.gradingSystem.error.invalidPresentationsWeight');
                 return false;
             }
             // The presentationScore must be 0 or undefined
             if ((this.course?.presentationScore ?? 0) > 0) {
-                this.invalidGradeStepsMessage = this.translateService.instant('the presentationScore must be 0 or undefined');
+                this.invalidGradeStepsMessage = this.translateService.instant('artemisApp.gradingSystem.error.invalidBasicPresentationIsEnabled');
                 return false;
             }
         }

@@ -26,12 +26,12 @@ export class GradingSystemPresentationsComponent implements OnInit, OnChanges {
     readonly modePickerOptions: ModePickerOption<PresentationType>[] = [
         {
             value: PresentationType.NONE,
-            labelKey: 'None',
+            labelKey: 'artemisApp.gradingSystem.presentationType.none',
             btnClass: 'btn-secondary',
         },
         {
             value: PresentationType.GRADED,
-            labelKey: 'Graded',
+            labelKey: 'artemisApp.gradingSystem.presentationType.graded',
             btnClass: 'btn-secondary',
         },
     ];

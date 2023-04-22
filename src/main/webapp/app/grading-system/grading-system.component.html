@@ -6,8 +6,6 @@
     <jhi-documentation-button [type]="documentationType"></jhi-documentation-button>
 </div>
 <div *ngIf="childComponent" class="course-body-container">
-    <div>Number: {{ childComponent.gradingScale.presentationsNumber }}</div>
-    <div>Weight: {{ childComponent.gradingScale.presentationsWeight }}</div>
     <div class="d-flex">
         <button (click)="childComponent.generateDefaultGradingScale()" class="btn btn-primary me-1 mb-1" type="button">
             <span jhiTranslate="artemisApp.gradingSystem.defaultButton">Generate Default Grading Scale</span>
@@ -46,7 +44,7 @@
             </select>
         </div>
         <div class="form-group">
-            <ng-container *ngIf="childComponent.gradingScale.gradeType == GradeType.GRADE">
+            <ng-container *ngIf="childComponent.gradingScale.gradeType === GradeType.GRADE">
                 <span class="colon-suffix no-flex-shrink" jhiTranslate="artemisApp.gradingSystem.firstPassingGrade">First Passing Grade</span>
                 <select class="form-select" title="first passing grade" [(ngModel)]="childComponent.firstPassingGrade">
                     <option *ngFor="let gradeStep of childComponent.gradeStepsWithNonemptyNames()" [ngValue]="gradeStep.gradeName">

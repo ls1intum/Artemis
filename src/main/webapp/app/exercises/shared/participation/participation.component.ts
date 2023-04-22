@@ -233,7 +233,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
 
     addGradedPresentation(participation: StudentParticipation) {
         this.participationService.update(this.exercise, participation).subscribe({
-            error: () => this.alertService.error('Add Presentation Grade Error'),
+            error: () => this.alertService.error('artemisApp.participation.savePresentation.error'),
             complete: () => {
                 this.participationsChangedPresentation.delete(participation.id!);
             },
