@@ -23,6 +23,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseExportService;
@@ -118,28 +119,32 @@ public class DataExportService {
             var modelingExercises = modelingExerciseRepository.getAllModelingExercisesWithEagerParticipationsSubmissionsAndResultsOfUserFromCourseByCourseAndUserId(course.getId(),
                     user.getId());
             for (var modelingExercise : modelingExercises) {
-                createModelingTextOrFileUploadExerciseExport(modelingExercise, courseWorkingDir, outputDir);
+                createNonProgrammingExerciseExport(modelingExercise, courseWorkingDir, outputDir);
             }
             var textExercises = textExerciseRepository.getAllTextExercisesWithEagerParticipationsSubmissionsAndResultsOfUserFromCourseByCourseAndUserId(course.getId(),
                     user.getId());
             for (var textExercise : textExercises) {
-                createModelingTextOrFileUploadExerciseExport(textExercise, courseWorkingDir, outputDir);
+                createNonProgrammingExerciseExport(textExercise, courseWorkingDir, outputDir);
             }
             var fileUploadExercises = fileUploadExerciseRepository
                     .getAllFileUploadExercisesWithEagerParticipationsSubmissionsAndResultsOfUserFromCourseByCourseAndUserId(course.getId(), user.getId());
             for (var fileUploadExercise : fileUploadExercises) {
-                createModelingTextOrFileUploadExerciseExport(fileUploadExercise, courseWorkingDir, outputDir);
+                createNonProgrammingExerciseExport(fileUploadExercise, courseWorkingDir, outputDir);
             }
             var quizExercises = quizExerciseRepository.getAllQuizExercisesWithEagerParticipationsSubmissionsAndResultsOfUserFromCourseByCourseAndUserId(course.getId(),
                     user.getId());
             for (var quizExercise : quizExercises) {
-                createModelingTextOrFileUploadExerciseExport(quizExercise, courseWorkingDir, outputDir);
+                createQuizExerciseExport(quizExercise, courseWorkingDir, outputDir);
             }
             createCourseZipFile(course, outputDir);
         }
         addGeneralUserInformation(user);
         addGDPRInformationFile();
         return createDataExportZipFile(user.getLogin());
+
+    }
+
+    private void createQuizExerciseExport(QuizExercise quizExercise, Path courseWorkingDir, Path outputDir) {
 
     }
 
@@ -168,11 +173,11 @@ public class DataExportService {
 
     private void addGeneralUserInformation(User user) throws IOException {
         var outputDir = retrieveOutputDirectoryCreateIfNotExistent(workingDirectory);
-        String[] headers = new String[] { "login", "name", "email" };
+        String[] headers = new String[] { "login", "name", "email", "registration number" };
         CSVFormat csvFormat = CSVFormat.DEFAULT.builder().setHeader(headers).build();
 
         try (final CSVPrinter printer = new CSVPrinter(Files.newBufferedWriter(outputDir.resolve("general-user-information.csv")), csvFormat)) {
-            printer.printRecord(user.getLogin(), user.getName(), user.getEmail());
+            printer.printRecord(user.getLogin(), user.getName(), user.getEmail(), user.getRegistrationNumber());
             printer.flush();
 
         }
@@ -217,36 +222,81 @@ public class DataExportService {
         var outputDir = retrieveOutputDirectoryCreateIfNotExistent(exerciseWorkingDir);
         for (var participation : exercise.getStudentParticipations()) {
             createParticipationCsvFile(participation, outputDir);
-            // TODO create participation csv file
             for (var submission : participation.getSubmissions()) {
-                createSubmissionCsvFile(submission, retrieveOutputDirectoryCreateIfNotExistent(exerciseWorkingDir));
+                createSubmissionCsvFile(submission, outputDir);
                 if (submission instanceof FileUploadSubmission) {
                     copyFileUploadSubmissionFile(FileUploadSubmission.buildFilePath(exercise.getId(), submission.getId()), outputDir);
                 }
                 else if (submission instanceof TextSubmission textSubmission) {
                     storeTextSubmissionContent(textSubmission, outputDir);
                 }
-                for (var result : submission.getResults()) {
-                    createResultsCsvFile(submission.getResults(), outputDir);
-                    // TODO create result csv file
+                else if (submission instanceof ModelingSubmission modelingSubmission) {
+                    storeModelingSubmissionContent(modelingSubmission, outputDir);
                 }
+                else if (submission instanceof QuizSubmission quizSubmission) {
+                    createCsvForQuizAnswers(quizSubmission, outputDir);
+                }
+                createResultsCsvFile(submission.getResults(), outputDir);
             }
         }
         return exerciseWorkingDir;
     }
 
-    private void createParticipationCsvFile(StudentParticipation participation, Path outputDir) {
+    private void createCsvForQuizAnswers(QuizSubmission quizSubmission, Path outputDir) throws IOException {
+        String[] headers = new String[] { "id", "exercise ", "question title", "points" };
+        CSVFormat csvFormat = CSVFormat.DEFAULT.builder().setHeader(headers).build();
+        try (final CSVPrinter printer = new CSVPrinter(Files.newBufferedWriter(outputDir.resolve("quiz-submission-" + quizSubmission.getId() + "-answers.csv")), csvFormat)) {
+            for (var submittedAnswer : quizSubmission.getSubmittedAnswers()) {
+
+                printer.printRecord(submittedAnswer.getId(), submittedAnswer.getQuizQuestion().getExercise().getTitle(), submittedAnswer.getQuizQuestion().getTitle(),
+                        submittedAnswer.getScoreInPoints());
+            }
+            printer.flush();
+
+        }
+    }
+
+    private void storeModelingSubmissionContent(ModelingSubmission modelingSubmission, Path outputDir) throws IOException {
+        Files.writeString(outputDir.resolve("modeling-exercise-" + modelingSubmission.getParticipation().getExercise().getSanitizedExerciseTitle() + "-submission.json"),
+                modelingSubmission.getModel());
+    }
+
+    private void createParticipationCsvFile(StudentParticipation participation, Path outputDir) throws IOException {
+        String[] headers = new String[] { "id", "exercise ", "participating student/team", "number of submissions", "presentation score", "due date", "practice mode/test run" };
+        CSVFormat csvFormat = CSVFormat.DEFAULT.builder().setHeader(headers).build();
+        try (final CSVPrinter printer = new CSVPrinter(Files.newBufferedWriter(outputDir.resolve("participation-" + participation.getId() + ".csv")), csvFormat)) {
+            printer.printRecord(participation.getId(), participation.getExercise().getTitle(), participation.getParticipant().getName(), participation.getSubmissions().size(),
+                    participation.getPresentationScore(), participation.getIndividualDueDate(), participation.isTestRun());
+            printer.flush();
+
+        }
 
     }
 
     private void storeTextSubmissionContent(TextSubmission textSubmission, Path outputDir) throws IOException {
-        Files.writeString(outputDir.resolve("submission-text.txt"), textSubmission.getText());
+        Files.writeString(
+                outputDir.resolve(
+                        "text-exercise-" + textSubmission.getParticipation().getExercise().getSanitizedExerciseTitle() + "-submission-" + textSubmission.getId() + "-text.txt"),
+                textSubmission.getText());
     }
 
-    private void createResultsCsvFile(List<Result> results, Path exerciseWorkingDir) {
+    private void createResultsCsvFile(List<Result> results, Path outputDir) throws IOException {
+        String[] headers = new String[] { "id", "exercise ", "submission id", "assessment type", "score", "complaint for result" };
+        CSVFormat csvFormat = CSVFormat.DEFAULT.builder().setHeader(headers).build();
+        try (final CSVPrinter printer = new CSVPrinter(Files.newBufferedWriter(outputDir.resolve("results.csv")), csvFormat)) {
+            for (var result : results) {
+                printer.printRecord(result.getId(), result.getSubmission().getParticipation().getExercise().getTitle(), result.getSubmission().getId(), result.getAssessmentType(),
+                        result.getScore(), result.hasComplaint());
+                // for now, leave out feedback
+
+            }
+            printer.flush();
+
+        }
+
     }
 
-    private void createModelingTextOrFileUploadExerciseExport(Exercise exercise, Path workingDirectory, Path outputPath) throws IOException {
+    private void createNonProgrammingExerciseExport(Exercise exercise, Path workingDirectory, Path outputPath) throws IOException {
         Path exerciseWorkingDir = createParticipationsSubmissionsResultsExport(exercise, workingDirectory);
         zipFileService.createZipFileWithFolderContent(
                 outputPath.resolve(exercise.getCourseViaExerciseGroupOrCourseMember().getShortName() + "-" + exercise.getSanitizedExerciseTitle() + ".zip"),
@@ -291,7 +341,6 @@ public class DataExportService {
         }
         else if (submission instanceof QuizSubmission) {
             headers.add("scoreInPoints");
-            headers.add("submittedAnswers");
         }
         CSVFormat csvFormat = CSVFormat.DEFAULT.builder().setHeader(headers.toArray(String[]::new)).build();
 
@@ -319,7 +368,6 @@ public class DataExportService {
         }
         else if (submission instanceof QuizSubmission quizSubmission) {
             builder.add(quizSubmission.getScoreInPoints());
-            // TODO add submitted answers once we have a query to fetch them
         }
         else if (submission instanceof FileUploadSubmission fileUploadSubmission) {
             // do nothing, just prevent throwing the IllegalArgumentException
