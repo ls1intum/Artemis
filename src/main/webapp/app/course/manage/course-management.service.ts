@@ -155,7 +155,7 @@ export class CourseManagementService {
             }),
             map((res: EntityArrayResponseType) => this.processCourseEntityArrayResponseType(res)),
             map((res: EntityArrayResponseType) => this.setCoursesForNotifications(res)),
-            tap((res: EntityArrayResponseType) => this.courseStorageService.setCourses(res.body)),
+            tap((res: EntityArrayResponseType) => this.courseStorageService.setCourses(res.body !== null ? res.body : undefined)),
         );
     }
 
@@ -181,7 +181,7 @@ export class CourseManagementService {
                 return res;
             }),
             map((res: EntityResponseType) => this.processCourseEntityResponseType(res)),
-            tap((res: EntityResponseType) => this.courseStorageService.updateCourse(res.body)),
+            tap((res: EntityResponseType) => this.courseStorageService.updateCourse(res.body !== null ? res.body : undefined)),
         );
     }
 
