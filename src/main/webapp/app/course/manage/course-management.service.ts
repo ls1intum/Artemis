@@ -21,7 +21,6 @@ import { objectToJsonBlob } from 'app/utils/blob-util';
 import { TutorialGroupsConfigurationService } from 'app/course/tutorial-groups/services/tutorial-groups-configuration.service';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { OnlineCourseConfiguration } from 'app/entities/online-course-configuration.model';
-import { ExerciseType, ScoresPerExerciseType } from 'app/entities/exercise.model';
 import { CourseForDashboardDTO } from 'app/course/manage/course-for-dashboard-dto';
 import { ScoresStorageService } from 'app/course/course-scores/scores-storage.service';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
@@ -188,24 +187,9 @@ export class CourseManagementService {
     saveScoresInStorage(courseForDashboardDTO: CourseForDashboardDTO) {
         // Save the total scores in the scores-storage.service.
         this.scoresStorageService.setStoredTotalScores(courseForDashboardDTO.course.id!, courseForDashboardDTO.totalScores);
-
-        // Retrieve the scores per exercise type.
-        // Convert the received object to a Map.
-        const scoresPerExerciseType: ScoresPerExerciseType = new Map();
-        Object.entries(courseForDashboardDTO.scoresPerExerciseType).forEach(([exerciseType, courseScores]) => {
-            // Convert exerciseType as returned from the server ExerciseType enum (e.g. "FILE_UPLOAD") to the format defined in the client enum (e.g. "file-upload").
-            const clientExerciseType = exerciseType.toLowerCase().replace('_', '-');
-            let exerciseTypeTyped: ExerciseType | undefined = undefined;
-            if (Object.values(ExerciseType).some((value) => value === clientExerciseType)) {
-                exerciseTypeTyped = clientExerciseType as ExerciseType;
-            }
-
-            if (exerciseTypeTyped) {
-                scoresPerExerciseType.set(exerciseTypeTyped, courseScores);
-            }
-        });
-        // Save the scoresPerExerciseType and the participationResults in the scores-storage.service.
-        this.scoresStorageService.setStoredScoresPerExerciseType(courseForDashboardDTO.course.id!, scoresPerExerciseType);
+        // Save the scoresPerExerciseType in the scores-storage.service.
+        this.scoresStorageService.setStoredScoresPerExerciseType(courseForDashboardDTO.course.id!, courseForDashboardDTO.scoresPerExerciseType);
+        // Save the participation results in the scores-storage.service.
         this.scoresStorageService.setStoredParticipationResults(courseForDashboardDTO.participationResults);
     }
 
