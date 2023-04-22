@@ -664,7 +664,7 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         var actualParticipation = request.putWithResponseBody("/api/exercises/" + textExercise.getId() + "/participations", participation, StudentParticipation.class,
                 HttpStatus.OK);
         assertThat(actualParticipation).as("The participation was updated").isNotNull();
-        assertThat(actualParticipation.getPresentationScore()).as("Presentation score was set to 0").isZero();
+        assertThat(actualParticipation.getPresentationScore()).as("Presentation score was set to null").isNull();
     }
 
     @Test
