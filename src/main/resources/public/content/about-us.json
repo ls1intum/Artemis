@@ -380,6 +380,10 @@
         {
             "fullName": "Paul Schwind",
             "photoDirectory": "public/images/about/Paul_Schwind.jpg"
+        },
+        {
+            "fullName": "Tobias Lippert",
+            "photoDirectory": "public/images/about/Tobias_Lippert.jpg"
         }
     ]
 }
