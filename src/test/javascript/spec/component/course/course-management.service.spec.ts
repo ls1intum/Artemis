@@ -44,7 +44,10 @@ describe('Course Management Service', () => {
     let course: Course;
     let courseForDashboard: CourseForDashboardDTO;
     let courseScores: CourseScores;
-    let scoresPerExerciseType: ScoresPerExerciseType;
+    // Cannot be the proper Map type because the server only returns JSON objects.
+    // The scoresPerExerciseTypeMap represents the scoresPerExercise after they were returned from the server and converted to a ScoresPerExerciseType Map.
+    let scoresPerExerciseTypeFromServer: { [key in ExerciseType]: CourseScores };
+    let scoresPerExerciseTypeMap: ScoresPerExerciseType;
     let participationResult: Result;
     let onlineCourseConfiguration: OnlineCourseConfiguration;
     let exercises: Exercise[];
@@ -87,14 +90,14 @@ describe('Course Management Service', () => {
         courseForDashboard.course = course;
         courseScores = new CourseScores(0, 0, { absoluteScore: 0, relativeScore: 0, currentRelativeScore: 0, presentationScore: 0 });
         courseForDashboard.totalScores = courseScores;
-        scoresPerExerciseType = new Map<ExerciseType, CourseScores>([
-            [ExerciseType.PROGRAMMING, courseScores],
-            [ExerciseType.MODELING, courseScores],
-            [ExerciseType.QUIZ, courseScores],
-            [ExerciseType.TEXT, courseScores],
-            [ExerciseType.FILE_UPLOAD, courseScores],
-        ]);
-        courseForDashboard.scoresPerExerciseType = scoresPerExerciseType;
+        scoresPerExerciseTypeFromServer = { programming: courseScores, modeling: courseScores, quiz: courseScores, text: courseScores, 'file-upload': courseScores };
+        courseForDashboard.scoresPerExerciseType = scoresPerExerciseTypeFromServer;
+        scoresPerExerciseTypeMap = new Map<ExerciseType, CourseScores>();
+        scoresPerExerciseTypeMap.set(ExerciseType.PROGRAMMING, courseScores);
+        scoresPerExerciseTypeMap.set(ExerciseType.MODELING, courseScores);
+        scoresPerExerciseTypeMap.set(ExerciseType.QUIZ, courseScores);
+        scoresPerExerciseTypeMap.set(ExerciseType.TEXT, courseScores);
+        scoresPerExerciseTypeMap.set(ExerciseType.FILE_UPLOAD, courseScores);
         participationResult = new Result();
         const participation = new StudentParticipation();
         participation.id = 432;
@@ -242,7 +245,7 @@ describe('Course Management Service', () => {
             .pipe(take(1))
             .subscribe(() => {
                 expect(setStoredTotalScoresSpy).toHaveBeenCalledWith(course.id!, courseScores);
-                expect(setStoredScoresPerExerciseTypeSpy).toHaveBeenCalledWith(course.id!, scoresPerExerciseType);
+                expect(setStoredScoresPerExerciseTypeSpy).toHaveBeenCalledWith(course.id!, scoresPerExerciseTypeMap);
                 expect(setParticipationResultsSpy).toHaveBeenCalledWith(courseForDashboard.participationResults);
             });
         const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/${course.id}/for-dashboard` });
