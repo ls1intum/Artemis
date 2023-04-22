@@ -384,6 +384,10 @@
         {
             "fullName": "Tobias Lippert",
             "photoDirectory": "public/images/about/Tobias_Lippert.jpg"
+        },
+        {
+            "fullName": "Sven Andabaka",
+            "photoDirectory": "public/images/about/Sven_Andabaka.jpg"
         }
     ]
 }
