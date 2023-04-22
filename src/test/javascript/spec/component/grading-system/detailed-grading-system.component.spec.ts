@@ -774,6 +774,41 @@ describe('Detailed Grading System Component', () => {
         expect(ExportToCsv).toHaveBeenCalledTimes(2);
         expect(generateCsv).toHaveBeenCalledTimes(2);
     });
+
+    it('should not show grading steps above max points warning', () => {
+        const result = comp.shouldShowGradingStepsAboveMaxPointsWarning();
+        expect(result).toBeFalse();
+    });
+
+    it('should show grading steps above max points warning for inclusive bound', () => {
+        const gradeStep: GradeStep = {
+            gradeName: 'Step',
+            lowerBoundPercentage: 100,
+            upperBoundPercentage: 101,
+            lowerBoundInclusive: true,
+            upperBoundInclusive: true,
+            isPassingGrade: true,
+        };
+        comp.gradingScale.gradeSteps.push(gradeStep);
+
+        const result = comp.shouldShowGradingStepsAboveMaxPointsWarning();
+        expect(result).toBeTrue();
+    });
+
+    it('should show grading steps above max points warning for exclusive bound', () => {
+        const gradeStep: GradeStep = {
+            gradeName: 'Step',
+            lowerBoundPercentage: 100,
+            upperBoundPercentage: 100,
+            lowerBoundInclusive: true,
+            upperBoundInclusive: false,
+            isPassingGrade: true,
+        };
+        comp.gradingScale.gradeSteps.push(gradeStep);
+
+        const result = comp.shouldShowGradingStepsAboveMaxPointsWarning();
+        expect(result).toBeTrue();
+    });
 });
 
 // validating grade step rows
