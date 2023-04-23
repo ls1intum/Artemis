@@ -14,7 +14,6 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.ExerciseType;
 import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismVerdict;
@@ -193,14 +192,14 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationBambooB
         assertThat(totalCourseScores.studentScores().relativeScore()).isEqualTo(0.0);
         assertThat(totalCourseScores.studentScores().currentRelativeScore()).isEqualTo(0.0);
 
-        CourseScoresDTO programmingExerciseScores = courseForDashboard.scoresPerExerciseType().get(ExerciseType.PROGRAMMING);
+        CourseScoresDTO programmingExerciseScores = courseForDashboard.programmingScores();
         assertThat(programmingExerciseScores.maxPoints()).isEqualTo(0.0);
         assertThat(programmingExerciseScores.reachablePoints()).isEqualTo(0.0);
         assertThat(programmingExerciseScores.studentScores().absoluteScore()).isEqualTo(0.0);
         assertThat(programmingExerciseScores.studentScores().relativeScore()).isEqualTo(0.0);
         assertThat(programmingExerciseScores.studentScores().currentRelativeScore()).isEqualTo(0.0);
 
-        CourseScoresDTO quizExerciseScores = courseForDashboard.scoresPerExerciseType().get(ExerciseType.QUIZ);
+        CourseScoresDTO quizExerciseScores = courseForDashboard.quizScores();
         assertThat(quizExerciseScores.maxPoints()).isEqualTo(5.0);
         assertThat(quizExerciseScores.reachablePoints()).isEqualTo(5.0);
         assertThat(quizExerciseScores.studentScores().absoluteScore()).isEqualTo(0.0);

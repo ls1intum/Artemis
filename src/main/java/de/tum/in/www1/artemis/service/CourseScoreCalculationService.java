@@ -222,7 +222,9 @@ public class CourseScoreCalculationService {
             }
         }
 
-        return new CourseForDashboardDTO(course, totalScores, scoresPerExerciseType, participationResults);
+        return new CourseForDashboardDTO(course, totalScores, scoresPerExerciseType.get(ExerciseType.TEXT), scoresPerExerciseType.get(ExerciseType.PROGRAMMING),
+                scoresPerExerciseType.get(ExerciseType.MODELING), scoresPerExerciseType.get(ExerciseType.FILE_UPLOAD), scoresPerExerciseType.get(ExerciseType.QUIZ),
+                participationResults);
     }
 
     /**

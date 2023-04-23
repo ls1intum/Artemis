@@ -409,7 +409,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         const modelingExerciseTotalScore = this.retrieveScoreByExerciseTypeAndScoreType(ExerciseType.MODELING, ScoreType.ABSOLUTE_SCORE);
         const textExerciseTotalScore = this.retrieveScoreByExerciseTypeAndScoreType(ExerciseType.TEXT, ScoreType.ABSOLUTE_SCORE);
         const fileUploadExerciseTotalScore = this.retrieveScoreByExerciseTypeAndScoreType(ExerciseType.FILE_UPLOAD, ScoreType.ABSOLUTE_SCORE);
-        this.overallPoints = this.retrieveScoreForTotalScoresOfType(ScoreType.ABSOLUTE_SCORE);
+        this.overallPoints = this.retrieveTotalScoreByScoreType(ScoreType.ABSOLUTE_SCORE);
         let totalMissedPoints = this.reachablePoints - this.overallPoints;
         if (totalMissedPoints < 0) {
             totalMissedPoints = 0;
@@ -454,7 +454,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         overallMaxPoints[ExerciseType.TEXT] = textExerciseTotalMaxPoints;
         overallMaxPoints[ExerciseType.FILE_UPLOAD] = fileUploadExerciseTotalMaxPoints;
         this.overallMaxPointsPerExercise = overallMaxPoints;
-        this.overallMaxPoints = this.retrieveScoreForTotalScoresOfType(ScoreType.MAX_POINTS);
+        this.overallMaxPoints = this.retrieveTotalScoreByScoreType(ScoreType.MAX_POINTS);
     }
 
     /**
@@ -474,7 +474,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         relativeScores[ExerciseType.TEXT] = textExerciseRelativeScore;
         relativeScores[ExerciseType.FILE_UPLOAD] = fileUploadExerciseRelativeScore;
         this.relativeScoresPerExercise = relativeScores;
-        this.totalRelativeScore = this.retrieveScoreForTotalScoresOfType(ScoreType.RELATIVE_SCORE);
+        this.totalRelativeScore = this.retrieveTotalScoreByScoreType(ScoreType.RELATIVE_SCORE);
     }
 
     /**
@@ -494,7 +494,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         reachablePoints[ExerciseType.TEXT] = textExercisesReachablePoints;
         reachablePoints[ExerciseType.FILE_UPLOAD] = fileUploadExercisesReachablePoints;
         this.reachablePointsPerExercise = reachablePoints;
-        this.reachablePoints = this.retrieveScoreForTotalScoresOfType(ScoreType.REACHABLE_POINTS);
+        this.reachablePoints = this.retrieveTotalScoreByScoreType(ScoreType.REACHABLE_POINTS);
     }
 
     /**
@@ -514,7 +514,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         currentRelativeScores[ExerciseType.TEXT] = textExerciseCurrentRelativeScore;
         currentRelativeScores[ExerciseType.FILE_UPLOAD] = fileUploadExerciseCurrentRelativeScore;
         this.currentRelativeScoresPerExercise = currentRelativeScores;
-        this.currentRelativeScore = this.retrieveScoreForTotalScoresOfType(ScoreType.CURRENT_RELATIVE_SCORE);
+        this.currentRelativeScore = this.retrieveTotalScoreByScoreType(ScoreType.CURRENT_RELATIVE_SCORE);
     }
 
     /**
@@ -534,7 +534,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         presentationScores[ExerciseType.TEXT] = textExercisePresentationScore;
         presentationScores[ExerciseType.FILE_UPLOAD] = fileUploadExercisePresentationScore;
         this.presentationScoresPerExercise = presentationScores;
-        this.overallPresentationScore = this.retrieveScoreForTotalScoresOfType(ScoreType.PRESENTATION_SCORE);
+        this.overallPresentationScore = this.retrieveTotalScoreByScoreType(ScoreType.PRESENTATION_SCORE);
     }
 
     /**
@@ -556,7 +556,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
      * @returns requested score value
      * @private
      */
-    private retrieveScoreForTotalScoresOfType(scoreType: ScoreType): number {
+    private retrieveTotalScoreByScoreType(scoreType: ScoreType): number {
         const totalScores: CourseScores | undefined = this.scoresStorageService.getStoredTotalScores(this.courseId);
         return this.getScoreByScoreType(totalScores, scoreType);
     }
