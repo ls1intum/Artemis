@@ -2,18 +2,7 @@ import { Component, Input, OnInit } from '@angular/core';
 import { ProgrammingExerciseTaskService } from 'app/exercises/programming/manage/grading/tasks/programming-exercise-task.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { Course } from 'app/entities/course.model';
-import {
-    faAngleDown,
-    faAngleRight,
-    faAsterisk,
-    faFilterCircleXmark,
-    faMedal,
-    faQuestionCircle,
-    faScaleUnbalanced,
-    faSort,
-    faSortDown,
-    faSortUp,
-} from '@fortawesome/free-solid-svg-icons';
+import { faAngleDown, faAngleRight, faAsterisk, faMedal, faQuestionCircle, faScaleUnbalanced, faSort, faSortDown, faSortUp } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseGradingStatistics } from 'app/entities/programming-exercise-test-case-statistics.model';
 import { ProgrammingExerciseTask } from './programming-exercise-task';
 import { Observable, Subject } from 'rxjs';
@@ -39,7 +28,6 @@ export class ProgrammingExerciseGradingTaskComponent implements OnInit {
     faAngleDown = faAngleDown;
     faAngleRight = faAngleRight;
     faQuestionCircle = faQuestionCircle;
-    faFilterCircleXmark = faFilterCircleXmark;
     faScaleUnbalanced = faScaleUnbalanced;
     faMedal = faMedal;
     faAsterisk = faAsterisk;
@@ -67,10 +55,6 @@ export class ProgrammingExerciseGradingTaskComponent implements OnInit {
             descending: true,
         };
     }
-
-    initTasks = () => {
-        this.updateTasks();
-    };
 
     updateTasks = () => {
         this.tasks = this.taskService.updateTasks();
