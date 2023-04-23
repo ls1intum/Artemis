@@ -49,7 +49,6 @@ export class ProgrammingExerciseGradingTaskComponent implements OnInit {
     allTasksExpandedSubject: Subject<boolean>;
 
     currentSort: Sort | undefined;
-    private unsortedTasks: ProgrammingExerciseTask[];
 
     get ignoreInactive() {
         return this.taskService.ignoreInactive;
@@ -60,13 +59,17 @@ export class ProgrammingExerciseGradingTaskComponent implements OnInit {
     ngOnInit(): void {
         this.allTasksExpandedSubject = new Subject();
         this.gradingStatisticsObservable.subscribe((gradingStatistics) => {
-            this.taskService.configure(this.exercise, this.course, gradingStatistics).subscribe(this.initTasks);
+            this.taskService.configure(this.exercise, this.course, gradingStatistics).subscribe(this.updateTasks);
         });
+
+        this.currentSort = {
+            by: 'name',
+            descending: true,
+        };
     }
 
     initTasks = () => {
         this.updateTasks();
-        this.unsortedTasks = this.tasks.slice();
     };
 
     updateTasks = () => {
@@ -75,7 +78,7 @@ export class ProgrammingExerciseGradingTaskComponent implements OnInit {
 
     toggleShowInactiveTestsShown = () => {
         this.taskService.toggleIgnoreInactive();
-        this.initTasks();
+        this.updateTasks();
     };
 
     saveTestCases = () => {
@@ -87,7 +90,7 @@ export class ProgrammingExerciseGradingTaskComponent implements OnInit {
         this.isSaving = true;
         this.taskService.resetTestCases().subscribe(() => {
             this.isSaving = false;
-            this.initTasks();
+            this.updateTasks();
         });
     };
 
@@ -106,11 +109,6 @@ export class ProgrammingExerciseGradingTaskComponent implements OnInit {
         }
 
         this.sort();
-    };
-
-    resetSort = () => {
-        this.currentSort = undefined;
-        this.tasks = this.unsortedTasks.slice();
     };
 
     getSortIcon = (by: Sort['by']) => {

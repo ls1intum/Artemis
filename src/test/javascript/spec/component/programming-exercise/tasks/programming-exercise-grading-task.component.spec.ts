@@ -55,7 +55,7 @@ describe('ProgrammingExerciseGradingTaskComponent', () => {
         const updatedTasks = [{ taskName: 'updatedTask' }] as ProgrammingExerciseTask[];
         taskServiceUpdateTasksStub.mockReturnValue(updatedTasks);
 
-        comp.initTasks();
+        comp.updateTasks();
 
         expect(taskServiceUpdateTasksStub).toHaveBeenCalledOnce();
         expect(comp.tasks).toBe(updatedTasks);
@@ -119,27 +119,10 @@ describe('ProgrammingExerciseGradingTaskComponent', () => {
         ];
 
         taskServiceUpdateTasksStub.mockReturnValue(tasks);
-        comp.initTasks();
+        comp.updateTasks();
 
         comp.changeSort('weight');
 
         expect(comp.tasks).toEqual(expected);
-    });
-
-    it('should reset sort correctly', () => {
-        const tasks = [
-            { taskName: 'task1', weight: 2 },
-            { taskName: 'task2', weight: 1 },
-            { taskName: 'task3', weight: 0 },
-            { taskName: 'task4', weight: 1 },
-            { taskName: 'task5', weight: 2 },
-        ] as ProgrammingExerciseTask[];
-        taskServiceUpdateTasksStub.mockReturnValue(tasks.slice());
-        comp.initTasks();
-        comp.changeSort('weight');
-
-        comp.resetSort();
-
-        expect(comp.tasks).toEqual(tasks);
     });
 });
