@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
 import de.tum.in.www1.artemis.repository.CourseRepository;
@@ -166,5 +167,18 @@ public class ConversationResource extends ConversationManagementResource {
                         "conversationIdMismatch");
             }
         });
+    }
+
+    /**
+     * GET api/courses/conversations-for-notifications : Get all conversations for which the current user should receive notifications
+     *
+     * @return the list of Conversations for which the current user should receive notifications about
+     */
+    @GetMapping("/conversations-for-notifications")
+    @PreAuthorize("hasRole('USER')")
+    public List<Conversation> getAllConversationsForNotifications() {
+        log.debug("REST request to get all tutorial groups for which the current user should receive notifications");
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        return conversationService.findAllConversationsForNotifications(user, false);
     }
 }
