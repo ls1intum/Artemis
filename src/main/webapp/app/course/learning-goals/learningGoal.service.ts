@@ -60,6 +60,11 @@ export class LearningGoalService {
         return this.httpClient.post<LearningGoal>(`${this.resourceURL}/courses/${courseId}/competencies`, copy, { observe: 'response' });
     }
 
+    import(learningGoal: LearningGoal, courseId: number): Observable<EntityResponseType> {
+        const learningGoalCopy = this.convertLearningGoalFromClient(learningGoal);
+        return this.httpClient.post<LearningGoal>(`${this.resourceURL}/courses/${courseId}/learning-goals/import`, learningGoalCopy, { observe: 'response' });
+    }
+
     addPrerequisite(competencyId: number, courseId: number): Observable<EntityResponseType> {
         return this.httpClient.post(`${this.resourceURL}/courses/${courseId}/prerequisites/${competencyId}`, null, { observe: 'response' });
     }
