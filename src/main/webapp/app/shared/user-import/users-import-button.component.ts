@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
-import { UsersImportDialogComponent } from 'app/shared/import/users-import-dialog.component';
+import { UsersImportDialogComponent } from 'app/shared/user-import/users-import-dialog.component';
 import { CourseGroup } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam.model';
 import { faPlus } from '@fortawesome/free-solid-svg-icons';
