@@ -185,7 +185,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         this.resultWithComplaint = getFirstResultWithComplaintFromResults(this.gradedStudentParticipation?.results);
         this.exerciseService.getExerciseDetails(this.exerciseId).subscribe((exerciseResponse: HttpResponse<Exercise>) => {
             this.handleNewExercise(exerciseResponse.body!);
-            this.getLatestRatedResult();
+            this.loadComplaintAndLatestRatedResult();
         });
         this.plagiarismCaseService.getPlagiarismCaseInfoForStudent(this.courseId, this.exerciseId).subscribe((res: HttpResponse<PlagiarismCaseInfo>) => {
             this.plagiarismCaseInfo = res.body ?? undefined;
@@ -398,10 +398,9 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Returns the latest finished result for modeling and text exercises. It does not have to be rated.
-     * For other exercise types it returns a rated result.
+     * Loads and stores the complaint if any exists. Furthermore, loads the latest rated result and stores it.
      */
-    getLatestRatedResult(): void {
+    loadComplaintAndLatestRatedResult(): void {
         if (!this.gradedStudentParticipation?.submissions?.[0] || !this.sortedHistoryResults?.length) {
             return;
         }

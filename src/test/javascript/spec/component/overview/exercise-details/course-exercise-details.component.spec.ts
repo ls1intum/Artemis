@@ -343,7 +343,7 @@ describe('CourseExerciseDetailsComponent', () => {
         comp.sortedHistoryResults = [{ id: 2 }];
         comp.exercise = { ...exercise };
 
-        comp.getLatestRatedResult();
+        comp.loadComplaintAndLatestRatedResult();
         tick();
 
         expect(complaintServiceSpy).toHaveBeenCalledOnce();
