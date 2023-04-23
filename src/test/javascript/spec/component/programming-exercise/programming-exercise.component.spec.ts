@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { ExerciseType } from 'app/entities/exercise.model';
-import { ExerciseImportComponent } from 'app/exercises/shared/import/exercise-import.component';
 import { of, throwError } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
 import { ProgrammingExerciseComponent } from 'app/exercises/programming/manage/programming-exercise.component';
@@ -20,6 +19,10 @@ import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.
 import { ProgrammingExerciseEditSelectedComponent } from 'app/exercises/programming/manage/programming-exercise-edit-selected.component';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
+import { ExerciseImportTabsComponent } from 'app/exercises/shared/import/exercise-import-tabs.component';
+import { MockDirective } from 'ng-mocks';
+import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
+import { ExerciseImportWrapperComponent } from 'app/exercises/shared/import/exercise-import-wrapper/exercise-import-wrapper.component';
 
 describe('ProgrammingExercise Management Component', () => {
     const course = { id: 123 } as Course;
@@ -39,7 +42,6 @@ describe('ProgrammingExercise Management Component', () => {
     let programmingExerciseService: ProgrammingExerciseService;
     let exerciseService: ExerciseService;
     let modalService: NgbModal;
-
     const route = { snapshot: { paramMap: convertToParamMap({ courseId: course.id }) } } as any as ActivatedRoute;
 
     beforeEach(() => {
@@ -169,15 +171,15 @@ describe('ProgrammingExercise Management Component', () => {
         expect(mockSubscriber).toHaveBeenCalledOnce();
     });
 
-    it('should open import modal', () => {
+    it.each([undefined, 456])('should open import modal', (id) => {
         const mockReturnValue = {
-            result: Promise.resolve({ id: 456 } as ProgrammingExercise),
+            result: Promise.resolve({ id } as ProgrammingExercise),
             componentInstance: {},
         } as NgbModalRef;
         jest.spyOn(modalService, 'open').mockReturnValue(mockReturnValue);
 
         comp.openImportModal();
-        expect(modalService.open).toHaveBeenCalledWith(ExerciseImportComponent, { size: 'lg', backdrop: 'static' });
+        expect(modalService.open).toHaveBeenCalledWith(ExerciseImportWrapperComponent, { size: 'lg', backdrop: 'static' });
         expect(modalService.open).toHaveBeenCalledOnce();
         expect(mockReturnValue.componentInstance.exerciseType).toEqual(ExerciseType.PROGRAMMING);
     });
@@ -187,7 +189,10 @@ describe('ProgrammingExercise Management Component', () => {
         jest.spyOn(modalService, 'open').mockReturnValue(mockReturnValue);
 
         comp.openEditSelectedModal();
-        expect(modalService.open).toHaveBeenCalledWith(ProgrammingExerciseEditSelectedComponent, { size: 'xl', backdrop: 'static' });
+        expect(modalService.open).toHaveBeenCalledWith(ProgrammingExerciseEditSelectedComponent, {
+            size: 'xl',
+            backdrop: 'static',
+        });
         expect(modalService.open).toHaveBeenCalledOnce();
     });
 
