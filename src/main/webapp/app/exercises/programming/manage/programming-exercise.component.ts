@@ -38,6 +38,7 @@ import {
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
+import { ExerciseImportWrapperComponent } from 'app/exercises/shared/import/exercise-import-wrapper/exercise-import-wrapper.component';
 import { downloadZipFileFromResponse } from 'app/shared/util/download.util';
 import { PROFILE_LOCALVC } from 'app/app.constants';
 
@@ -187,10 +188,19 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
     }
 
     openImportModal() {
-        const modalRef = this.modalService.open(ExerciseImportComponent, { size: 'lg', backdrop: 'static' });
+        const modalRef = this.modalService.open(ExerciseImportWrapperComponent, { size: 'lg', backdrop: 'static' });
         modalRef.componentInstance.exerciseType = ExerciseType.PROGRAMMING;
         modalRef.result.then((result: ProgrammingExercise) => {
-            this.router.navigate(['course-management', this.courseId, 'programming-exercises', 'import', result.id]);
+            //when the file is uploaded we set the id to undefined.
+            if (result.id === undefined) {
+                this.router.navigate(['course-management', this.courseId, 'programming-exercises', 'import-from-file'], {
+                    state: {
+                        programmingExerciseForImportFromFile: result,
+                    },
+                });
+            } else {
+                this.router.navigate(['course-management', this.courseId, 'programming-exercises', 'import', result.id]);
+            }
         });
     }
 

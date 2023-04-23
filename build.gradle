@@ -330,6 +330,8 @@ dependencies {
     implementation "org.commonmark:commonmark:0.21.0"
     implementation "de.tum.in.ase.athene:client:0.0.2"
     implementation "commons-fileupload:commons-fileupload:1.5"
+    implementation "net.lingala.zip4j:zip4j:2.11.5"
+
 
     annotationProcessor "org.hibernate:hibernate-jpamodelgen:${hibernate_version}"
     annotationProcessor ("org.glassfish.jaxb:jaxb-runtime:${jaxb_runtime_version}") {

@@ -513,4 +513,19 @@ export class ProgrammingExerciseService {
     getBuildLogStatistics(exerciseId: number): Observable<BuildLogStatisticsDTO> {
         return this.http.get<BuildLogStatisticsDTO>(`${this.resourceUrl}/${exerciseId}/build-log-statistics`);
     }
+
+    /** Imports a programming exercise from a given zip file **/
+    importFromFile(exercise: ProgrammingExercise, courseId: number): Observable<EntityResponseType> {
+        let copy = this.convertDataFromClient(exercise);
+        copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
+        copy.categories = ExerciseService.stringifyExerciseCategories(copy);
+        const formData = new FormData();
+        formData.append('file', exercise.zipFileForImport!);
+        const exerciseBlob = new Blob([JSON.stringify(copy)], { type: 'application/json' });
+        formData.append('programmingExercise', exerciseBlob);
+        const url = `api/courses/${courseId}/programming-exercises/import-from-file`;
+        return this.http
+            .post<ProgrammingExercise>(url, formData, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.processProgrammingExerciseEntityResponse(res)));
+    }
 }
