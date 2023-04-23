@@ -69,7 +69,8 @@
         "uuid": "9.0.0",
         "webstomp-client": "1.2.6",
         "xlsx": "0.18.5",
-        "zone.js": "0.13.0"
+        "zone.js": "0.13.0",
+        "jszip": "3.10.1"
     },
     "overrides": {
         "browser-sync": {
