@@ -760,7 +760,7 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importLearningGoal_asInstructor_shouldImportLearningGoal() throws Exception {
         var existingLearningGoal = learningGoalRepository.findByIdElseThrow(idOfLearningGoal);
-        var importedLearningGoal = request.postWithResponseBody("/api/courses/" + idOfCourseTwo + "/learning-goals/import", existingLearningGoal, LearningGoal.class,
+        var importedLearningGoal = request.postWithResponseBody("/api/courses/" + idOfCourseTwo + "/competencies/import", existingLearningGoal, LearningGoal.class,
                 HttpStatus.CREATED);
 
         assertThat(learningGoalRepository.findById(importedLearningGoal.getId())).isNotEmpty();
@@ -779,7 +779,7 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     void importLearningGoal_instructorNotInCourse_shouldReturnForbidden() throws Exception {
         LearningGoal learningGoal = new LearningGoal();
         learningGoal.setTitle("Example Title");
-        request.postWithResponseBody("/api/courses/" + idOfCourseTwo + "/learning-goals/import", learningGoal, LearningGoal.class, HttpStatus.FORBIDDEN);
+        request.postWithResponseBody("/api/courses/" + idOfCourseTwo + "/competencies/import", learningGoal, LearningGoal.class, HttpStatus.FORBIDDEN);
     }
 
     @Test

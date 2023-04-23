@@ -217,14 +217,14 @@ public class LearningGoalResource {
     }
 
     /**
-     * POST /courses/:courseId/learning-goals/import : imports a new competency.
+     * POST /courses/:courseId/competencies/import : imports a new competency.
      *
      * @param courseId           the id of the course to which the learning goal should be imported to
      * @param competencyToImport the competency that should be imported
      * @return the ResponseEntity with status 201 (Created) and with body containing the imported competency
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PostMapping("/courses/{courseId}/learning-goals/import")
+    @PostMapping("/courses/{courseId}/competencies/import")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<LearningGoal> importCompetency(@PathVariable long courseId, @RequestBody LearningGoal competencyToImport) throws URISyntaxException {
         log.info("REST request to import a competency: {}", competencyToImport.getId());
@@ -241,7 +241,7 @@ public class LearningGoalResource {
         competencyToImport.setId(null);
         competencyToImport = learningGoalRepository.save(competencyToImport);
 
-        return ResponseEntity.created(new URI("/api/courses/" + courseId + "/learning-goals/" + competencyToImport.getId())).body(competencyToImport);
+        return ResponseEntity.created(new URI("/api/courses/" + courseId + "/competencies/" + competencyToImport.getId())).body(competencyToImport);
     }
 
     /**
