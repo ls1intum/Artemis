@@ -6,6 +6,7 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { ActivatedRoute } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
 import { ExerciseCacheService } from 'app/exercises/shared/exercise/exercise-cache.service';
+import { ResultTemplateStatus, evaluateTemplateStatus } from 'app/exercises/shared/result/result.utils';
 
 @Component({
     selector: 'jhi-standalone-feedback',
@@ -16,7 +17,6 @@ export class StandaloneFeedbackComponent implements OnInit {
     exercise?: Exercise;
     result?: Result;
 
-    isTemplateStatusMissing = false;
     showMissingAutomaticFeedbackInformation = false;
     messageKey?: string;
     exerciseType?: ExerciseType;
@@ -31,8 +31,6 @@ export class StandaloneFeedbackComponent implements OnInit {
             const participationId = parseInt(params['participationId'], 10);
             const resultId = parseInt(params['resultId'], 10);
 
-            this.isTemplateStatusMissing = params['isTemplateStatusMissing'] === 'true';
-
             this.exerciseService.getExerciseDetails(exerciseId).subscribe((exerciseResponse: HttpResponse<Exercise>) => {
                 this.exercise = exerciseResponse.body!;
                 const participation = this.exercise?.studentParticipations?.find((participation) => participation.id === participationId);
@@ -46,6 +44,14 @@ export class StandaloneFeedbackComponent implements OnInit {
                 }
 
                 this.result = relevantResult;
+
+                // We set isBuilding here to false. It is the native applications responsibility to make the user aware if a participation is being built
+                const templateStatus = evaluateTemplateStatus(exerciseResponse.body!, participation, relevantResult, false);
+                if (templateStatus == ResultTemplateStatus.MISSING) {
+                    this.messageKey = 'artemisApp.result.notLatestSubmission';
+                } else {
+                    this.messageKey = undefined;
+                }
 
                 this.setup();
             });
@@ -63,10 +69,6 @@ export class StandaloneFeedbackComponent implements OnInit {
 
             if (this.latestDueDate) {
                 this.showMissingAutomaticFeedbackInformation = dayjs().isBefore(this.latestDueDate);
-            }
-
-            if (this.isTemplateStatusMissing) {
-                this.messageKey = 'artemisApp.result.notLatestSubmission';
             }
         }
     }

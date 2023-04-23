@@ -63,7 +63,7 @@ const routes: Routes = [
                 component: ProblemStatementComponent,
             },
             {
-                path: 'feedback/:participationId/:resultId/:isTemplateStatusMissing',
+                path: 'participations/:participationId/results/:resultId/feedback',
                 pathMatch: 'full',
                 component: StandaloneFeedbackComponent,
             },
