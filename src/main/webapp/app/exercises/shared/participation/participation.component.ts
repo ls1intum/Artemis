@@ -232,6 +232,9 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     }
 
     addGradedPresentation(participation: StudentParticipation) {
+        if (!this.gradedPresentationEnabled || (participation.presentationScore ?? 0) > 100 || (participation.presentationScore ?? 0) < 0) {
+            return;
+        }
         this.participationService.update(this.exercise, participation).subscribe({
             error: () => this.alertService.error('artemisApp.participation.savePresentation.error'),
             complete: () => {
@@ -327,6 +330,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
                 });
                 this.dialogErrorSource.next('');
                 this.participationsChangedDueDate.delete(participationId);
+                this.participationsChangedPresentation.delete(participationId);
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         });

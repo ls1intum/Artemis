@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnInit } from '@angular/core';
+import { Component, Input, OnChanges } from '@angular/core';
 import { ModePickerOption } from 'app/exercises/shared/mode-picker/mode-picker.component';
 import { GradingScale } from 'app/entities/grading-scale.model';
 
@@ -18,7 +18,7 @@ export interface PresentationsConfig {
     templateUrl: './grading-system-presentations.component.html',
     styleUrls: ['./grading-system-presentations.component.scss'],
 })
-export class GradingSystemPresentationsComponent implements OnInit, OnChanges {
+export class GradingSystemPresentationsComponent implements OnChanges {
     readonly NONE = PresentationType.NONE;
     readonly BASIC = PresentationType.BASIC;
     readonly GRADED = PresentationType.GRADED;
@@ -37,14 +37,10 @@ export class GradingSystemPresentationsComponent implements OnInit, OnChanges {
     ];
 
     @Input()
-    protected gradingScale: GradingScale;
+    gradingScale: GradingScale;
 
     @Input()
     presentationsConfig: PresentationsConfig;
-
-    ngOnInit(): void {
-        this.initializePresentationConfig();
-    }
 
     ngOnChanges(): void {
         this.initializePresentationConfig();
@@ -64,7 +60,7 @@ export class GradingSystemPresentationsComponent implements OnInit, OnChanges {
         return (this.gradingScale.course?.presentationScore ?? 0) > 0;
     }
 
-    private isGradedPresentation(): boolean {
+    isGradedPresentation(): boolean {
         let isGradedPresentation = true;
         isGradedPresentation &&= (this.gradingScale.presentationsWeight ?? -1) >= 0;
         isGradedPresentation &&= (this.gradingScale.presentationsNumber ?? -1) > 0;
@@ -82,8 +78,8 @@ export class GradingSystemPresentationsComponent implements OnInit, OnChanges {
             this.updatePresentationsWeight(undefined);
         }
         if (presentationType === PresentationType.GRADED) {
-            this.updatePresentationsNumber(2);
-            this.updatePresentationsWeight(20);
+            this.updatePresentationsNumber(2); // default value
+            this.updatePresentationsWeight(20); // default value
         }
     }
 
