@@ -35,6 +35,7 @@ import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.programmingexercise.ProgrammingExerciseTestService;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
+import de.tum.in.www1.artemis.service.GradingScaleService;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggleService;
@@ -79,6 +80,9 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
     @Autowired
     private ProgrammingExerciseTestService programmingExerciseTestService;
+
+    @Autowired
+    private GradingScaleService gradingScaleService;
 
     @Value("${artemis.version-control.default-branch:main}")
     private String defaultBranch;
@@ -684,6 +688,46 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
                 HttpStatus.OK);
         assertThat(actualParticipation).as("The participation was updated").isNotNull();
         assertThat(actualParticipation.getPresentationScore()).as("Presentation score was set to 1").isEqualTo(1);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void updateParticipation_gradedPresentation() throws Exception {
+        var course = textExercise.getCourseViaExerciseGroupOrCourseMember();
+        course.setPresentationScore(0);
+
+        var gradingScale = database.generateGradingScale(2, new double[] { 0, 50, 100 }, true, 1, Optional.empty(), course, 2, 20.);
+        gradingScaleService.saveGradingScale(gradingScale);
+
+        var participation = ModelFactory.generateStudentParticipation(InitializationState.INITIALIZED, textExercise, database.getUserByLogin(TEST_PREFIX + "student1"));
+        participation = participationRepo.save(participation);
+
+        participation.setPresentationScore(64.);
+        var actualParticipation = request.putWithResponseBody("/api/exercises/" + textExercise.getId() + "/participations", participation, StudentParticipation.class,
+                HttpStatus.OK);
+
+        assertThat(actualParticipation).as("The participation was updated").isNotNull();
+        assertThat(actualParticipation.getPresentationScore()).as("Presentation score was set to 64").isEqualTo(64);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void updateParticipation_gradedPresentationAbove100() throws Exception {
+        var course = textExercise.getCourseViaExerciseGroupOrCourseMember();
+        course.setPresentationScore(0);
+
+        var gradingScale = database.generateGradingScale(2, new double[] { 0, 50, 100 }, true, 1, Optional.empty(), course, 2, 20.);
+        gradingScaleService.saveGradingScale(gradingScale);
+
+        var participation = ModelFactory.generateStudentParticipation(InitializationState.INITIALIZED, textExercise, database.getUserByLogin(TEST_PREFIX + "student1"));
+        participation = participationRepo.save(participation);
+
+        participation.setPresentationScore(101.);
+        var actualParticipation = request.putWithResponseBody("/api/exercises/" + textExercise.getId() + "/participations", participation, StudentParticipation.class,
+                HttpStatus.OK);
+
+        assertThat(actualParticipation).as("The participation was updated").isNotNull();
+        assertThat(actualParticipation.getPresentationScore()).as("Presentation score was set to 100").isEqualTo(100);
     }
 
     @Test
