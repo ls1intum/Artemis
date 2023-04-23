@@ -15,11 +15,11 @@ type Sort = {
 type TaskComparator = (a: ProgrammingExerciseTask, b: ProgrammingExerciseTask) => number;
 
 @Component({
-    selector: 'jhi-programming-exercise-grading-task',
-    templateUrl: './programming-exercise-grading-task.component.html',
-    styleUrls: ['./programming-exercise-grading-task.scss'],
+    selector: 'jhi-programming-exercise-grading-tasks-table',
+    templateUrl: './programming-exercise-grading-tasks-table.component.html',
+    styleUrls: ['./programming-exercise-grading-tasks-table.scss'],
 })
-export class ProgrammingExerciseGradingTaskComponent implements OnInit {
+export class ProgrammingExerciseGradingTasksTableComponent implements OnInit {
     @Input() exercise: ProgrammingExercise;
     @Input() course: Course;
     @Input() gradingStatisticsObservable: Observable<ProgrammingExerciseGradingStatistics>;

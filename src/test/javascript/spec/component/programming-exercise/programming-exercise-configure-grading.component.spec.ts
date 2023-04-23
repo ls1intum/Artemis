@@ -53,7 +53,7 @@ import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.s
 import { TranslateTestingModule } from '../../helpers/mocks/service/mock-translate.service';
 import { expectElementToBeEnabled, getElement } from '../../helpers/utils/general.utils';
 import { ArtemisTestModule } from '../../test.module';
-import { ProgrammingExerciseGradingTaskComponent } from 'app/exercises/programming/manage/grading/tasks/programming-exercise-grading-task.component';
+import { ProgrammingExerciseGradingTasksTableComponent } from 'app/exercises/programming/manage/grading/tasks/programming-exercise-grading-tasks-table.component';
 
 describe('ProgrammingExerciseConfigureGradingComponent', () => {
     let comp: ProgrammingExerciseConfigureGradingComponent;
@@ -200,7 +200,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
                 ProgrammingExerciseGradingTableActionsComponent,
                 TableEditableFieldComponent,
                 MockComponent(ProgrammingExerciseConfigureGradingActionsComponent),
-                MockComponent(ProgrammingExerciseGradingTaskComponent),
+                MockComponent(ProgrammingExerciseGradingTasksTableComponent),
                 MockComponent(ProgrammingExerciseGradingSubmissionPolicyConfigurationActionsComponent),
                 MockComponent(SubmissionPolicyUpdateComponent),
                 MockComponent(ProgrammingExerciseReEvaluateButtonComponent),

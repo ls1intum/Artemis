@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../../test.module';
-import { ProgrammingExerciseGradingTaskComponent } from 'app/exercises/programming/manage/grading/tasks/programming-exercise-grading-task.component';
+import { ProgrammingExerciseGradingTasksTableComponent } from 'app/exercises/programming/manage/grading/tasks/programming-exercise-grading-tasks-table.component';
 import { ProgrammingExerciseTaskService } from 'app/exercises/programming/manage/grading/tasks/programming-exercise-task.service';
 import { Observable, Subject, of } from 'rxjs';
 import { ProgrammingExerciseGradingStatistics } from 'app/entities/programming-exercise-test-case-statistics.model';
@@ -15,7 +15,7 @@ import { ButtonComponent } from 'app/shared/components/button.component';
 
 describe('ProgrammingExerciseGradingTaskComponent', () => {
     let fixture;
-    let comp: ProgrammingExerciseGradingTaskComponent;
+    let comp: ProgrammingExerciseGradingTasksTableComponent;
     let taskService: ProgrammingExerciseTaskService;
     let taskServiceUpdateTasksStub: jest.SpyInstance;
 
@@ -26,12 +26,12 @@ describe('ProgrammingExerciseGradingTaskComponent', () => {
     beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [ProgrammingExerciseGradingTaskComponent, MockPipe(ArtemisTranslatePipe), MockComponent(ButtonComponent)],
+            declarations: [ProgrammingExerciseGradingTasksTableComponent, MockPipe(ArtemisTranslatePipe), MockComponent(ButtonComponent)],
             providers: [ProgrammingExerciseTaskService, { provide: TranslateService, useClass: MockTranslateService }],
         })
             .compileComponents()
             .then(() => {
-                fixture = TestBed.createComponent(ProgrammingExerciseGradingTaskComponent);
+                fixture = TestBed.createComponent(ProgrammingExerciseGradingTasksTableComponent);
                 comp = fixture.componentInstance;
 
                 comp.gradingStatisticsObservable = of(gradingStatistics);
