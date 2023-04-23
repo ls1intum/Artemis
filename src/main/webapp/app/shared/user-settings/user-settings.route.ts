@@ -4,7 +4,7 @@ import { AccountInformationComponent } from 'app/shared/user-settings/account-in
 import { NotificationSettingsComponent } from 'app/shared/user-settings/notification-settings/notification-settings.component';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { Authority } from 'app/shared/constants/authority.constants';
-import { DataExportComponent } from 'app/shared/user-settings/data-export/data-export.component';
+import { DataExportComponent } from 'app/core/legal/data-export/data-export.component';
 
 export const userSettingsState: Routes = [
     {

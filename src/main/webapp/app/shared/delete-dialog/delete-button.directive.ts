@@ -65,6 +65,7 @@ export class DeleteButtonDirective implements OnInit {
             deleteConfirmationText: this.deleteConfirmationText,
             additionalChecks: this.additionalChecks,
             actionType: this.actionType,
+            buttonType: this.buttonType,
             delete: this.delete,
             dialogError: this.dialogError,
             requireConfirmationOnlyForAdditionalChecks: this.requireConfirmationOnlyForAdditionalChecks,

@@ -55,13 +55,12 @@ public interface QuizExerciseRepository extends JpaRepository<QuizExercise, Long
             LEFT JOIN  c.exercises e
             LEFT JOIN FETCH e.studentParticipations p
             LEFT JOIN FETCH p.submissions s
-            LEFT JOIN FETCH s.results r
+            LEFT JOIN FETCH s.results
             Where c.id = :courseId
             AND p.student.id = :userId
             AND TYPE(e) = QuizExercise
             """)
-    Set<QuizExercise> getAllQuizExercisesWithEagerParticipationsSubmissionsAndResultsOfUserFromCourseByCourseAndUserId(@Param("courseId") long courseId,
-            @Param("userId") long userId);
+    Set<QuizExercise> getAllQuizExercisesWithEagerParticipationsSubmissionsOfUserFromCourseByCourseAndUserId(@Param("courseId") long courseId, @Param("userId") long userId);
 
     @EntityGraph(type = LOAD, attributePaths = { "quizQuestions", "quizPointStatistic", "quizQuestions.quizQuestionStatistic", "categories", "quizBatches" })
     Optional<QuizExercise> findWithEagerQuestionsAndStatisticsById(Long quizExerciseId);

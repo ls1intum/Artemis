@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:pro="http://www.liquibase.org/xml/ns/pro"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/pro http://www.liquibase.org/xml/ns/pro/liquibase-pro-4.6.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <changeSet author="tobias-lippert" id="1682154279916-188">
+        <createTable tableName="data_export">
+            <column autoIncrement="true" name="id" type="BIGINT">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="data_exportPK"/>
+            </column>
+            <!-- Enum Ordinal mapping, 0 = requested -->
+            <column name="data_export_state" type="tinyint unsigned" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="creation_date" type="datetime(3)"/>
+            <column name="download_date" type="datetime(3)"/>
+            <column name="file_path" type="VARCHAR(255)"/>
+            <column name="request_date" type="datetime(3)"/>
+            <column name="student_id" type="BIGINT"/>
+        </createTable>
+        <addForeignKeyConstraint baseColumnNames="student_id" baseTableName="data_export" constraintName="FK_student_id_data_export" deferrable="false" initiallyDeferred="false"
+                                 referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
+    </changeSet>
+</databaseChangeLog>

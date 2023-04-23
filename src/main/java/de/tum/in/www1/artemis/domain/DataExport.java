@@ -4,29 +4,38 @@ import java.time.ZonedDateTime;
 
 import javax.persistence.*;
 
-// @Entity
-// @Table(name = "data_export")
-// @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-// @JsonInclude(JsonInclude.Include.NON_EMPTY)
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+/**
+ * A data export for user data
+ **/
+@Entity
+@Table(name = "data_export")
+@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class DataExport extends DomainObject {
 
-    // @Enumerated(EnumType.ORDINAL)
+    @Enumerated(EnumType.ORDINAL)
     private DataExportState dataExportState;
 
-    // @Column(name = "request_date")
+    @Column(name = "request_date")
     private ZonedDateTime requestDate;
 
-    // @Column(name = "creation_date")
+    @Column(name = "creation_date")
     private ZonedDateTime creationDate;
 
-    // @Column(name = "download_date")
+    @Column(name = "download_date")
     private ZonedDateTime downloadDate;
 
-    // @ManyToOne
-    // @JoinColumn(name = "student_id")
+    @ManyToOne
+    @JoinColumn(name = "student_id")
     private User user;
 
-    // @Column(name = "file_path")
+    @Column(name = "file_path")
     private String filePath;
 
     public ZonedDateTime getRequestDate() {

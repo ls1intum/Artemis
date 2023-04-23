@@ -256,7 +256,8 @@
             "toggleToSubmitted": "Change Student Exam to Submitted",
             "endNow": "End Now",
             "ldap": "Sync from LDAP",
-            "notUndoable": "This action cannot be undone!"
+            "notUndoable": "This action cannot be undone!",
+            "requestDataExport": "Request data export"
         },
         "detail": {
             "field": "Field",

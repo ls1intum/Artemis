@@ -18,7 +18,8 @@ import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { Router } from '@angular/router';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { faPenAlt } from '@fortawesome/free-solid-svg-icons';
-import { DataExportService } from 'app/shared/user-settings/data-export/data-export.service';
+import { DataExportService } from 'app/core/legal/data-export/data-export.service';
+import { downloadZipFileFromResponse } from 'app/shared/util/download.util';
 
 @Component({
     selector: 'jhi-overview',
@@ -36,6 +37,7 @@ export class CoursesComponent implements OnInit, OnChanges, OnDestroy {
     quizExercisesChannels: string[] = [];
 
     nextRelevantExercise?: Exercise;
+    private dataExportId: number;
 
     // Icons
     faPenAlt = faPenAlt;
@@ -54,8 +56,24 @@ export class CoursesComponent implements OnInit, OnChanges, OnDestroy {
         private serverDateService: ArtemisServerDateService,
         private dataExportService: DataExportService,
     ) {}
+
     requestExport() {
-        this.dataExportService.requestExport();
+        this.dataExportService.requestExport().subscribe(
+            (response) => {
+                this.alertService.success('You successfully requested a data export');
+                this.dataExportId = response.id!;
+            },
+            () => {
+                this.alertService.error('Data export failed');
+            },
+        );
+    }
+
+    downloadExport() {
+        this.dataExportService.downloadDataExport(this.dataExportId).subscribe((response) => {
+            downloadZipFileFromResponse(response);
+            this.alertService.success('artemisApp.dataExport.downloadSuccess');
+        });
     }
 
     async ngOnInit() {

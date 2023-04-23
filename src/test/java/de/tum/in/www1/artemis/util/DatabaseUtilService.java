@@ -2512,6 +2512,30 @@ public class DatabaseUtilService {
         return course;
     }
 
+    public QuizExercise addQuizExerciseToCourseWithParticipationAndSubmissionForUser(Course course, String login) {
+        QuizExercise quizExercise = createQuiz(course, futureTimestamp, futureFutureTimestamp, QuizMode.SYNCHRONIZED);
+        quizExercise.setTitle("quiz");
+        quizExercise.setDuration(120);
+        assertThat(quizExercise.getQuizQuestions()).isNotEmpty();
+        assertThat(quizExercise.isValid()).isTrue();
+        course.addExercises(quizExercise);
+        StudentParticipation studentParticipation = new StudentParticipation();
+        studentParticipation.setExercise(quizExercise);
+        studentParticipation.setParticipant(userRepo.findOneByLogin(login).get());
+        QuizSubmission quizSubmission = new QuizSubmission();
+        quizSubmission.setParticipation(studentParticipation);
+        quizSubmission.setType(SubmissionType.MANUAL);
+        quizSubmission.setScoreInPoints(2.0);
+        studentParticipation.addSubmission(quizSubmission);
+        quizExercise = quizExerciseRepository.save(quizExercise);
+        studentParticipationRepo.save(studentParticipation);
+        quizSubmissionRepository.save(quizSubmission);
+        quizExercise.addParticipation(studentParticipation);
+        courseRepo.save(course);
+        quizExerciseRepository.save(quizExercise);
+        return quizExercise;
+    }
+
     public Course addCourseWithOneProgrammingExercise() {
         return addCourseWithOneProgrammingExercise(false);
     }

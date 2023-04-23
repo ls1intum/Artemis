@@ -165,9 +165,10 @@ public class User extends AbstractAuditingEntity implements Participant {
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnore
     private Set<ExamUser> examUsers = new HashSet<>();
-    // @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
-    // @JsonIgnore
-    // private Set<DataExport> dataExports = new HashSet<>();
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonIgnore
+    private Set<DataExport> dataExports = new HashSet<>();
 
     public String getLogin() {
         return login;
@@ -426,11 +427,11 @@ public class User extends AbstractAuditingEntity implements Participant {
         this.tutorialGroupRegistrations = tutorialGroupRegistrations;
     }
 
-    // public Set<DataExport> getDataExports() {
-    // return dataExports;
-    // }
-    //
-    // public void setDataExports(Set<DataExport> dataExports) {
-    // this.dataExports = dataExports;
-    // }
+    public Set<DataExport> getDataExports() {
+        return dataExports;
+    }
+
+    public void setDataExports(Set<DataExport> dataExports) {
+        this.dataExports = dataExports;
+    }
 }
