@@ -48,7 +48,7 @@ public class PushNotificationDeviceConfiguration {
     }
 
     public PushNotificationDeviceConfiguration() {
-
+        // needed for JPA
     }
 
     public String getToken() {
