@@ -1,6 +1,5 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { ExerciseImportComponent } from 'app/exercises/shared/import/exercise-import.component';
 import { Subject, forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
@@ -20,6 +19,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { faAngleDown, faAngleUp, faCheckDouble, faFileUpload, faFont, faKeyboard, faPlus, faProjectDiagram, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { ExamImportComponent } from 'app/exam/manage/exams/exam-import/exam-import.component';
+import { ExerciseImportWrapperComponent } from 'app/exercises/shared/import/exercise-import-wrapper/exercise-import-wrapper.component';
 
 @Component({
     selector: 'jhi-exercise-groups',
@@ -165,16 +165,26 @@ export class ExerciseGroupsComponent implements OnInit {
      * @param exerciseType The exercise type you want to import
      */
     openImportModal(exerciseGroup: ExerciseGroup, exerciseType: ExerciseType) {
-        const importBaseRoute = ['/course-management', this.courseId, 'exams', this.examId, 'exercise-groups', exerciseGroup.id, `${exerciseType}-exercises`, 'import'];
+        const importBaseRoute = ['/course-management', this.courseId, 'exams', this.examId, 'exercise-groups', exerciseGroup.id, `${exerciseType}-exercises`];
 
-        const importModalRef = this.modalService.open(ExerciseImportComponent, {
+        const importModalRef = this.modalService.open(ExerciseImportWrapperComponent, {
             size: 'lg',
             backdrop: 'static',
         });
         importModalRef.componentInstance.exerciseType = exerciseType;
         importModalRef.result.then((result: Exercise) => {
-            importBaseRoute.push(result.id);
-            this.router.navigate(importBaseRoute);
+            if (result.id) {
+                importBaseRoute.push('import', result.id);
+                this.router.navigate(importBaseRoute);
+            } else {
+                // we know it must be a programming exercise, because only programming exercises can be imported from a file
+                importBaseRoute.push('import-from-file');
+                this.router.navigate(importBaseRoute, {
+                    state: {
+                        programmingExerciseForImportFromFile: result,
+                    },
+                });
+            }
         });
     }
 

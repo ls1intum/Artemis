@@ -281,6 +281,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         quiz_statistic: 'artemisApp.quizExercise.statistics',
         quiz_point_statistic: 'artemisApp.quizExercise.statistics',
         import: 'artemisApp.exercise.import.table.doImport',
+        import_from_file: 'artemisApp.programmingExercise.importFromFile.title',
         plagiarism: 'artemisApp.plagiarism.plagiarismDetection',
         example_solution: 'artemisApp.modelingExercise.exampleSolution',
         example_submissions: 'artemisApp.exampleSubmission.home.title',
@@ -474,6 +475,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
                 // Special case: Don't display the ID here but the name directly (clicking the ID wouldn't work)
                 // This has to go in the future
                 this.addTranslationAsCrumb(currentPath, 'import');
+                break;
+            case 'import-from-file':
+                this.addTranslationAsCrumb(currentPath, 'import-from-file');
                 break;
             case 'example-submissions':
                 // Special case: Don't display the ID here but the name directly (clicking the ID wouldn't work)
