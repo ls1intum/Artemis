@@ -7,17 +7,17 @@ import dayjs from 'dayjs/esm';
 import { CourseExamDetailComponent } from 'app/overview/course-exams/course-exam-detail/course-exam-detail.component';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { Observable, of } from 'rxjs';
-import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CourseExamAttemptReviewDetailComponent } from 'app/overview/course-exams/course-exam-attempt-review-detail/course-exam-attempt-review-detail.component';
+import { CourseStorageService } from 'app/course/manage/course-storage.service';
 
 describe('CourseExamsComponent', () => {
     let component: CourseExamsComponent;
     let componentFixture: ComponentFixture<CourseExamsComponent>;
+    let courseStorageService: CourseStorageService;
 
     const visibleRealExam1 = {
         id: 1,
@@ -92,8 +92,7 @@ describe('CourseExamsComponent', () => {
             declarations: [CourseExamsComponent, MockComponent(CourseExamDetailComponent), MockComponent(CourseExamAttemptReviewDetailComponent), MockPipe(ArtemisTranslatePipe)],
             providers: [
                 { provide: ActivatedRoute, useValue: { parent: { params: of(1) } } },
-                MockProvider(CourseScoreCalculationService),
-                MockProvider(CourseManagementService),
+                MockProvider(CourseStorageService),
                 MockProvider(ArtemisServerDateService),
                 MockProvider(ExamParticipationService),
             ],
@@ -103,8 +102,9 @@ describe('CourseExamsComponent', () => {
                 componentFixture = TestBed.createComponent(CourseExamsComponent);
                 component = componentFixture.componentInstance;
 
-                jest.spyOn(TestBed.inject(CourseManagementService), 'getCourseUpdates').mockReturnValue(of());
-                jest.spyOn(TestBed.inject(CourseScoreCalculationService), 'getCourse').mockReturnValue({
+                courseStorageService = TestBed.inject(CourseStorageService);
+                jest.spyOn(courseStorageService, 'subscribeToCourseUpdates').mockReturnValue(of());
+                jest.spyOn(courseStorageService, 'getCourse').mockReturnValue({
                     exams: [visibleRealExam1, visibleRealExam2, notVisibleRealExam, visibleTestExam1, visibleTestExam2, notVisibleTestExam],
                 });
                 jest.spyOn(TestBed.inject(ExamParticipationService), 'loadStudentExamsForTestExamsPerCourseAndPerUserForOverviewPage').mockReturnValue(
