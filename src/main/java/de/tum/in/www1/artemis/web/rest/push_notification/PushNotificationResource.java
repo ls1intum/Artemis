@@ -80,9 +80,9 @@ public class PushNotificationResource {
 
         User user = userRepository.getUser();
 
-        // DB CALL INSERT OR UPDATE
-        pushNotificationDeviceConfigurationRepository.save(new PushNotificationDeviceConfiguration(pushNotificationRegisterBody.token(), pushNotificationRegisterBody.deviceType(),
-                expirationDate, newKey.getEncoded(), user));
+        PushNotificationDeviceConfiguration deviceConfiguration = new PushNotificationDeviceConfiguration(pushNotificationRegisterBody.token(),
+                pushNotificationRegisterBody.deviceType(), expirationDate, newKey.getEncoded(), user);
+        pushNotificationDeviceConfigurationRepository.save(deviceConfiguration);
 
         var encodedKey = Base64.getEncoder().encodeToString(newKey.getEncoded());
 
@@ -98,7 +98,7 @@ public class PushNotificationResource {
     @DeleteMapping("unregister")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Void> unregister(@Valid @RequestBody PushNotificationUnregisterRequest body) {
-        final var id = new PushNotificationDeviceConfigurationId(userRepository.getUser(), body.getToken(), body.getDeviceType());
+        final var id = new PushNotificationDeviceConfigurationId(userRepository.getUser(), body.token(), body.deviceType());
 
         if (!pushNotificationDeviceConfigurationRepository.existsById(id)) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
@@ -111,7 +111,6 @@ public class PushNotificationResource {
 
     private String getToken() {
         UsernamePasswordAuthenticationToken auth = (UsernamePasswordAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
-        String token = (String) auth.getCredentials();
-        return token;
+        return (String) auth.getCredentials();
     }
 }

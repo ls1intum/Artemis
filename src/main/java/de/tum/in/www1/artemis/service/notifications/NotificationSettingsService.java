@@ -153,20 +153,40 @@ public class NotificationSettingsService {
      */
     public boolean checkIfNotificationIsAllowedInCommunicationChannelBySettingsForGivenUser(Notification notification, User user,
             NotificationSettingsCommunicationChannel communicationChannel) {
+        List<User> users = filterUsersByNotificationIsAllowedInCommunicationChannelBySettings(notification, Collections.singletonList(user), communicationChannel);
+        return !users.isEmpty();
+    }
+
+    /**
+     * Filters the given user array based on if the notification (i.e. its type based on title) is allowed by the respective notification settings
+     *
+     * @param notification         which type (based on title) should be checked
+     * @param users                whose notification settings will be used for checking
+     * @param communicationChannel which channel to use (e.g. email or webapp or push)
+     * @return filtered user list
+     */
+    public List<User> filterUsersByNotificationIsAllowedInCommunicationChannelBySettings(Notification notification, List<User> users,
+            NotificationSettingsCommunicationChannel communicationChannel) {
         NotificationType type = findCorrespondingNotificationType(notification.getTitle());
 
-        Set<NotificationSetting> decidedNotificationSettings = notificationSettingRepository.findAllNotificationSettingsForRecipientWithId(user.getId());
+        Set<NotificationSetting> decidedNotificationSettings = notificationSettingRepository
+                .findAllNotificationSettingsForRecipientsWithId(users.stream().map(user -> user.getId()).toList());
         Set<NotificationSetting> notificationSettings = new HashSet<>(decidedNotificationSettings);
 
-        // for those notification types that are not explicitly set by the user, we use the default settings
-        Set<String> decidedIds = decidedNotificationSettings.stream().map(NotificationSetting::getSettingId).collect(Collectors.toSet());
-        for (NotificationSetting defaultSetting : DEFAULT_NOTIFICATION_SETTINGS) {
-            if (!decidedIds.contains(defaultSetting.getSettingId())) {
-                notificationSettings.add(defaultSetting);
+        return users.stream().filter(user -> {
+            // for those notification types that are not explicitly set by the user, we use the default settings
+            Set<String> decidedIds = decidedNotificationSettings.stream().filter(notificationSetting -> notificationSetting.getUser().equals(user))
+                    .map(NotificationSetting::getSettingId).collect(Collectors.toSet());
+            for (NotificationSetting defaultSetting : DEFAULT_NOTIFICATION_SETTINGS) {
+                if (!decidedIds.contains(defaultSetting.getSettingId())) {
+                    notificationSettings
+                            .add(new NotificationSetting(user, defaultSetting.isWebapp(), defaultSetting.isEmail(), defaultSetting.isPush(), defaultSetting.getSettingId()));
+                }
             }
-        }
-        Set<NotificationType> deactivatedTypes = findDeactivatedNotificationTypes(communicationChannel, notificationSettings);
-        return !deactivatedTypes.contains(type);
+
+            Set<NotificationType> deactivatedTypes = findDeactivatedNotificationTypes(communicationChannel, notificationSettings);
+            return !deactivatedTypes.contains(type);
+        }).toList();
     }
 
     /**

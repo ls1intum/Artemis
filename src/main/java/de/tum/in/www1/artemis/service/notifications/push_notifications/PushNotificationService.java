@@ -7,6 +7,7 @@ import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 import javax.crypto.Cipher;
 import javax.crypto.NoSuchPaddingException;
@@ -16,7 +17,14 @@ import javax.crypto.spec.SecretKeySpec;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.retry.RetryCallback;
+import org.springframework.retry.support.RetryTemplate;
 import org.springframework.scheduling.annotation.Async;
+import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestTemplate;
 
 import com.google.gson.Gson;
 
@@ -53,13 +61,44 @@ public abstract class PushNotificationService implements InstantNotificationServ
 
     private static final Gson gson = new Gson();
 
+    private final RestTemplate restTemplate;
+
+    protected PushNotificationService(RestTemplate restTemplate) {
+        this.restTemplate = restTemplate;
+    }
+
     /**
      * Send all the notifications requests to the endpoint. Potentially, optimize the sending using a batched request.
      *
-     * @param requests     the requests previously built using buildSendRequest
-     * @param relayBaseUrl the url of the relay
+     * @param requests           the requests previously built using buildSendRequest
+     * @param relayServerBaseUrl the url of the relay
      */
-    abstract void sendNotificationRequestsToEndpoint(List<RelayNotificationRequest> requests, String relayBaseUrl);
+    void sendNotificationRequestsToEndpoint(List<RelayNotificationRequest> requests, String relayServerBaseUrl) {
+        var futures = requests.stream()
+                .map(request -> CompletableFuture.runAsync(() -> sendSpecificNotificationRequestsToEndpoint(Collections.singletonList(request), relayServerBaseUrl))).toList()
+                .toArray(new CompletableFuture[0]);
+
+        CompletableFuture.allOf(futures);
+    }
+
+    @Async
+    void sendRelayRequest(String body, String relayServerBaseUrl) {
+        RetryTemplate template = RetryTemplate.builder().exponentialBackoff(1000, 4, 60 * 1000).retryOn(RestClientException.class).maxAttempts(4).build();
+
+        try {
+            template.execute((RetryCallback<Void, RestClientException>) context -> {
+                HttpHeaders httpHeaders = new HttpHeaders();
+                httpHeaders.setContentType(MediaType.APPLICATION_JSON);
+                HttpEntity<String> httpEntity = new HttpEntity<>(body, httpHeaders);
+                restTemplate.postForObject(relayServerBaseUrl + getRelayPath(), httpEntity, String.class);
+
+                return null;
+            });
+        }
+        catch (RestClientException e) {
+            log.error("Could not send " + getDeviceType().toString() + " notifications");
+        }
+    }
 
     @Override
     public final void sendNotification(Notification notification, User user, Object notificationSubject) {
@@ -71,27 +110,29 @@ public abstract class PushNotificationService implements InstantNotificationServ
     public void sendNotification(Notification notification, List<User> users, Object notificationSubject) {
         final Optional<String> relayServerBaseUrl = getRelayBaseUrl();
 
-        if (relayServerBaseUrl.isEmpty())
+        if (relayServerBaseUrl.isEmpty()) {
             return;
+        }
 
         final NotificationType type = NotificationConstants.findCorrespondingNotificationType(notification.getTitle());
 
         final List<PushNotificationDeviceConfiguration> userDeviceConfigurations = getRepository().findByUserIn(users, getDeviceType());
-        if (userDeviceConfigurations.isEmpty())
+        if (userDeviceConfigurations.isEmpty()) {
             return;
+        }
 
         final String date = Instant.now().toString();
         final String payload = gson.toJson(new PushNotificationData(notification.getTransientPlaceholderValuesAsArray(), notification.getTarget(), type.name(), date));
 
-        final byte[] iv = new byte[16];
+        final byte[] initializationVector = new byte[16];
 
         List<RelayNotificationRequest> notificationRequests = userDeviceConfigurations.stream().flatMap(deviceConfiguration -> {
-            random.nextBytes(iv);
+            random.nextBytes(initializationVector);
 
             SecretKey key = new SecretKeySpec(deviceConfiguration.getSecretKey(), "AES");
 
-            String ivAsString = Base64.getEncoder().encodeToString(iv);
-            Optional<String> payloadCiphertext = encrypt(payload, key, iv);
+            String ivAsString = Base64.getEncoder().encodeToString(initializationVector);
+            Optional<String> payloadCiphertext = encrypt(payload, key, initializationVector);
 
             return payloadCiphertext.stream().map(s -> new RelayNotificationRequest(ivAsString, s, deviceConfiguration.getToken()));
         }).toList();
@@ -105,20 +146,24 @@ public abstract class PushNotificationService implements InstantNotificationServ
 
     abstract Optional<String> getRelayBaseUrl();
 
+    abstract String getRelayPath();
+
+    abstract void sendSpecificNotificationRequestsToEndpoint(List<RelayNotificationRequest> requests, String relayServerBaseUrl);
+
     record PushNotificationData(String[] notificationPlaceholders, String target, String type, String date) {
     }
 
     /**
      * Perform symmetric AES encryption.
      *
-     * @param payload the text to encrypt
-     * @param key     the secret key to encrypt with
-     * @param iv      the initialization vector needed for CBC
+     * @param payload              the text to encrypt
+     * @param key                  the secret key to encrypt with
+     * @param initializationVector the initialization vector needed for CBC
      * @return the ciphertext
      */
-    private static Optional<String> encrypt(String payload, SecretKey key, byte[] iv) {
+    private static Optional<String> encrypt(String payload, SecretKey key, byte[] initializationVector) {
         try {
-            cipher.init(Cipher.ENCRYPT_MODE, key, new IvParameterSpec(iv));
+            cipher.init(Cipher.ENCRYPT_MODE, key, new IvParameterSpec(initializationVector));
 
             return Optional.of(Base64.getEncoder().encodeToString(cipher.doFinal(payload.getBytes(StandardCharsets.UTF_8))));
         }

@@ -23,6 +23,7 @@ public class PushNotificationDeviceConfigurationId implements Serializable {
     }
 
     public PushNotificationDeviceConfigurationId() {
+        // needed for JPA
     }
 
     @Override

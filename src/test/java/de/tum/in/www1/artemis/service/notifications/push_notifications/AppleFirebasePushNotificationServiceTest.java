@@ -31,15 +31,20 @@ import de.tum.in.www1.artemis.domain.push_notification.PushNotificationDeviceCon
 import de.tum.in.www1.artemis.domain.push_notification.PushNotificationDeviceType;
 import de.tum.in.www1.artemis.repository.PushNotificationDeviceConfigurationRepository;
 
-class ApplePushNotificationServiceTest {
+class AppleFirebasePushNotificationServiceTest {
 
     @Mock
     private PushNotificationDeviceConfigurationRepository repositoryMock;
 
     @Mock
-    private RestTemplate restTemplateMock;
+    private RestTemplate appleRestTemplateMock;
+
+    @Mock
+    private RestTemplate firebaseRestTemplateMock;
 
     private ApplePushNotificationService applePushNotificationService;
+
+    private FirebasePushNotificationService firebasePushNotificationService;
 
     private Notification notification;
 
@@ -56,39 +61,52 @@ class ApplePushNotificationServiceTest {
         notification = new GroupNotification(null, NotificationConstants.NEW_ANNOUNCEMENT_POST_TITLE, NotificationConstants.NEW_ANNOUNCEMENT_POST_TEXT, false, new String[0],
                 student, GroupNotificationType.STUDENT);
 
-        PushNotificationDeviceConfiguration pushNotificationDeviceConfiguration = new PushNotificationDeviceConfiguration("test", PushNotificationDeviceType.APNS, new Date(),
-                HexFormat.of().parseHex("e04fd020ea3a6910a2d808002b30309d"), student);
+        String token = "test";
+        byte[] payload = HexFormat.of().parseHex("e04fd020ea3a6910a2d808002b30309d");
+        PushNotificationDeviceConfiguration applePushNotificationDeviceConfiguration = new PushNotificationDeviceConfiguration(token, PushNotificationDeviceType.APNS, new Date(),
+                payload, student);
+        PushNotificationDeviceConfiguration firebasePushNotificationDeviceConfiguration = new PushNotificationDeviceConfiguration(token, PushNotificationDeviceType.FIREBASE,
+                new Date(), payload, student);
 
-        when(repositoryMock.findByUserIn(anyList(), eq(PushNotificationDeviceType.APNS))).thenReturn(Collections.singletonList(pushNotificationDeviceConfiguration));
+        when(repositoryMock.findByUserIn(anyList(), eq(PushNotificationDeviceType.APNS))).thenReturn(Collections.singletonList(applePushNotificationDeviceConfiguration));
+        when(repositoryMock.findByUserIn(anyList(), eq(PushNotificationDeviceType.FIREBASE))).thenReturn(Collections.singletonList(firebasePushNotificationDeviceConfiguration));
 
-        applePushNotificationService = new ApplePushNotificationService(repositoryMock, restTemplateMock);
+        applePushNotificationService = new ApplePushNotificationService(repositoryMock, appleRestTemplateMock);
+        firebasePushNotificationService = new FirebasePushNotificationService(repositoryMock, firebaseRestTemplateMock);
 
         ReflectionTestUtils.setField(applePushNotificationService, "relayServerBaseUrl", Optional.of("test"));
+        ReflectionTestUtils.setField(firebasePushNotificationService, "relayServerBaseUrl", Optional.of("test"));
     }
 
     @Test
     void sendNotificationRequestsToEndpoint_shouldSendNotifications() throws InterruptedException {
         // Given
-        when(restTemplateMock.postForObject(any(String.class), any(HttpEntity.class), eq(String.class))).thenReturn("ok");
+        when(appleRestTemplateMock.postForObject(any(String.class), any(HttpEntity.class), eq(String.class))).thenReturn("ok");
+        when(firebaseRestTemplateMock.postForObject(any(String.class), any(HttpEntity.class), eq(String.class))).thenReturn("ok");
 
         // When
         applePushNotificationService.sendNotification(notification, student, null);
+        firebasePushNotificationService.sendNotification(notification, student, null);
         sleep(1000);
 
         // Then
-        verify(restTemplateMock, times(1)).postForObject(anyString(), any(HttpEntity.class), eq(String.class));
+        verify(appleRestTemplateMock, times(1)).postForObject(anyString(), any(HttpEntity.class), eq(String.class));
+        verify(firebaseRestTemplateMock, times(1)).postForObject(anyString(), any(HttpEntity.class), eq(String.class));
     }
 
     @Test
     void scheduleSendBatch_shouldRetryOnRestClientException() throws InterruptedException {
-        when(restTemplateMock.postForObject(anyString(), any(HttpEntity.class), any())).thenThrow(new RestClientException(""));
+        when(appleRestTemplateMock.postForObject(anyString(), any(HttpEntity.class), any())).thenThrow(new RestClientException(""));
+        when(firebaseRestTemplateMock.postForObject(anyString(), any(HttpEntity.class), any())).thenThrow(new RestClientException(""));
 
         // When
         applePushNotificationService.sendNotification(notification, student, null);
+        firebasePushNotificationService.sendNotification(notification, student, null);
         sleep(5000);
 
         // Then
-        verify(restTemplateMock, atLeast(2)).postForObject(anyString(), any(HttpEntity.class), any());
+        verify(appleRestTemplateMock, atLeast(2)).postForObject(anyString(), any(HttpEntity.class), any());
+        verify(firebaseRestTemplateMock, atLeast(2)).postForObject(anyString(), any(HttpEntity.class), any());
     }
 
     @Test
@@ -109,4 +127,12 @@ class ApplePushNotificationServiceTest {
         assertThat(repository).isEqualTo(repositoryMock);
     }
 
+    @Test
+    void getDeviceType_shouldReturnFirebase() {
+        // When
+        PushNotificationDeviceType deviceType = firebasePushNotificationService.getDeviceType();
+
+        // Then
+        assertThat(deviceType).isEqualTo(PushNotificationDeviceType.FIREBASE);
+    }
 }

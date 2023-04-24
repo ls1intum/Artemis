@@ -36,29 +36,28 @@ class PushNotificationResourceTest extends AbstractSpringIntegrationBambooBitbuc
     @Autowired
     PushNotificationDeviceConfigurationRepository pushNotificationDeviceConfigurationRepository;
 
-    private static final String fakeToken = "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJ4eDQ0eHh4IiwiYXV0aCI6IlJPTEVfVEEsUk9MRV9JTlNUUlVDVE9SLFJPTEVfVVNFUiIsImV4cCI6NDgzMjgzODk2M30.jTzuQGl1nwvkKfwRUa8DpoAotw0zXf9DuLo2-OPYFub7GyBheKHBRgsqtFKSdv5ISYuEFuPIWJCuQOA8cH5UWA";
+    private static final String FAKE_TOKEN = "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJ4eDQ0eHh4IiwiYXV0aCI6IlJPTEVfVEEsUk9MRV9JTlNUUlVDVE9SLFJPTEVfVVNFUiIsImV4cCI6NDgzMjgzODk2M30.jTzuQGl1nwvkKfwRUa8DpoAotw0zXf9DuLo2-OPYFub7GyBheKHBRgsqtFKSdv5ISYuEFuPIWJCuQOA8cH5UWA";
 
-    private static final String userLogin = "test-user";
+    private static final String USER_LOGIN = "test-user";
 
-    private static final String fakeFirebaseToken = "FakeFirebaseToken";
+    private static final String FAKE_FIREBASE_TOKEN = "FakeFirebaseToken";
 
     private User user;
 
     @BeforeEach
     void setup() {
-        user = databaseUtilService.createAndSaveUser(userLogin);
+        user = databaseUtilService.createAndSaveUser(USER_LOGIN);
     }
 
     @AfterEach
     void teardown() {
         userRepository.delete(user);
-        user = null;
     }
 
     @Test
-    @WithMockUser(username = userLogin, roles = "USER", password = fakeToken)
+    @WithMockUser(username = USER_LOGIN, roles = "USER", password = FAKE_TOKEN)
     void testRegister() throws Exception {
-        PushNotificationRegisterBody body = new PushNotificationRegisterBody(fakeFirebaseToken, PushNotificationDeviceType.FIREBASE);
+        PushNotificationRegisterBody body = new PushNotificationRegisterBody(FAKE_FIREBASE_TOKEN, PushNotificationDeviceType.FIREBASE);
         PushNotificationRegisterDTO response = request.postWithResponseBody("/api/push_notification/register", body, PushNotificationRegisterDTO.class);
 
         assertThat(response.secretKey()).isNotEmpty();
@@ -72,11 +71,11 @@ class PushNotificationResourceTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = userLogin, roles = "USER", password = fakeToken)
+    @WithMockUser(username = USER_LOGIN, roles = "USER", password = FAKE_TOKEN)
     void testUnregister() throws Exception {
         testRegister();
 
-        PushNotificationUnregisterRequest body = new PushNotificationUnregisterRequest(fakeFirebaseToken, PushNotificationDeviceType.FIREBASE);
+        PushNotificationUnregisterRequest body = new PushNotificationUnregisterRequest(FAKE_FIREBASE_TOKEN, PushNotificationDeviceType.FIREBASE);
         request.delete("/api/push_notification/unregister", HttpStatus.OK, body);
 
         List<PushNotificationDeviceConfiguration> deviceConfigurations = pushNotificationDeviceConfigurationRepository.findByUserIn(Collections.singletonList(user),
@@ -86,7 +85,7 @@ class PushNotificationResourceTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = userLogin, roles = "USER")
+    @WithMockUser(username = USER_LOGIN, roles = "USER")
     void testUnregisterNonExistentRegistration() throws Exception {
         PushNotificationUnregisterRequest body = new PushNotificationUnregisterRequest("Does not exist", PushNotificationDeviceType.FIREBASE);
         request.delete("/api/push_notification/unregister", HttpStatus.NOT_FOUND, body);

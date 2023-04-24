@@ -3,8 +3,6 @@ package de.tum.in.www1.artemis.service.scheduled;
 import java.util.Arrays;
 import java.util.Collection;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -16,8 +14,6 @@ import tech.jhipster.config.JHipsterConstants;
 @Service
 @Profile("scheduling")
 public class PushNotificationDeviceConfigurationCleanupService {
-
-    private final Logger log = LoggerFactory.getLogger(NotificationScheduleService.class);
 
     private final PushNotificationDeviceConfigurationRepository deviceConfigurationRepository;
 

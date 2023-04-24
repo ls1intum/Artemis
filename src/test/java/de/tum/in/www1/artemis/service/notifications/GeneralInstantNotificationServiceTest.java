@@ -45,7 +45,7 @@ class GeneralInstantNotificationServiceTest {
 
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.initMocks(this);
+        MockitoAnnotations.openMocks(this);
         student1 = new User();
         student1.setId(1L);
         student1.setLogin("1");

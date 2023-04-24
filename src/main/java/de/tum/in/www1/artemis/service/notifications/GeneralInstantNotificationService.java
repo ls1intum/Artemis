@@ -84,7 +84,6 @@ public class GeneralInstantNotificationService implements InstantNotificationSer
 
     @NotNull
     private List<User> filterRecipients(Notification notification, List<User> users, NotificationSettingsCommunicationChannel channel) {
-        return users.stream().filter(user -> notificationSettingsService.checkIfNotificationIsAllowedInCommunicationChannelBySettingsForGivenUser(notification, user, channel))
-                .toList();
+        return notificationSettingsService.filterUsersByNotificationIsAllowedInCommunicationChannelBySettings(notification, users, channel);
     }
 }
