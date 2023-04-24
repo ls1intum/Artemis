@@ -24,13 +24,12 @@ import { EventManager } from 'app/core/util/event-manager.service';
 import { FullscreenComponent } from 'app/shared/fullscreen/fullscreen.component';
 import { Course } from 'app/entities/course.model';
 import { CourseAdminService } from 'app/course/manage/course-admin.service';
-import { CourseManagementTabBarComponent } from 'app/shared/course-management-tab-bar/course-management-tab-bar.component';
+import { CourseManagementTabBarComponent } from 'app/course/manage/course-management-tab-bar/course-management-tab-bar.component';
 
 describe('Course Management Detail Component', () => {
     let component: CourseDetailComponent;
     let fixture: ComponentFixture<CourseDetailComponent>;
     let courseManagementService: CourseManagementService;
-    let courseAdminService: CourseAdminService;
     let eventManager: EventManager;
 
     const course: Course = {
@@ -74,14 +73,11 @@ describe('Course Management Detail Component', () => {
                 MockComponent(UsersImportButtonComponent),
                 MockRouterLinkDirective,
                 MockPipe(ArtemisTranslatePipe),
-                MockDirective(DeleteButtonDirective),
                 MockPipe(ArtemisDatePipe),
                 MockComponent(CourseExamArchiveButtonComponent),
-                MockDirective(HasAnyAuthorityDirective),
                 MockComponent(CourseDetailDoughnutChartComponent),
                 MockComponent(CourseDetailLineChartComponent),
                 MockComponent(FullscreenComponent),
-                MockComponent(HeaderCourseComponent),
                 MockDirective(FeatureToggleLinkDirective),
             ],
             providers: [
@@ -103,7 +99,6 @@ describe('Course Management Detail Component', () => {
         fixture = TestBed.createComponent(CourseDetailComponent);
         component = fixture.componentInstance;
         courseManagementService = fixture.debugElement.injector.get(CourseManagementService);
-        courseAdminService = fixture.debugElement.injector.get(CourseAdminService);
         eventManager = fixture.debugElement.injector.get(EventManager);
     });
 
@@ -130,21 +125,5 @@ describe('Course Management Detail Component', () => {
         const destroySpy = jest.spyOn(eventManager, 'destroy');
         component.ngOnDestroy();
         expect(destroySpy).toHaveBeenCalledOnce();
-    });
-
-    it('should broadcast course modification on delete', () => {
-        const componentTabBar = TestBed.createComponent(CourseManagementTabBarComponent).componentInstance;
-        const broadcastSpy = jest.spyOn(eventManager, 'broadcast');
-        const deleteStub = jest.spyOn(courseAdminService, 'delete');
-        deleteStub.mockReturnValue(of(new HttpResponse<void>()));
-
-        const courseId = 444;
-        componentTabBar.deleteCourse(courseId);
-
-        expect(deleteStub).toHaveBeenCalledWith(courseId);
-        expect(broadcastSpy).toHaveBeenCalledWith({
-            name: 'courseListModification',
-            content: 'Deleted an course',
-        });
     });
 });

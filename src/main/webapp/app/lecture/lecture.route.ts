@@ -13,7 +13,7 @@ import { LectureAttachmentsComponent } from 'app/lecture/lecture-attachments.com
 import { Authority } from 'app/shared/constants/authority.constants';
 import { lectureUnitRoute } from 'app/lecture/lecture-unit/lecture-unit-management/lecture-unit-management.route';
 import { CourseManagementResolve } from 'app/course/manage/course-management-resolve.service';
-import { CourseManagementTabBarComponent } from 'app/shared/course-management-tab-bar/course-management-tab-bar.component';
+import { CourseManagementTabBarComponent } from 'app/course/manage/course-management-tab-bar/course-management-tab-bar.component';
 
 @Injectable({ providedIn: 'root' })
 export class LectureResolve implements Resolve<Lecture> {

@@ -4,7 +4,7 @@ import { UserRouteAccessService } from 'app/core/auth/user-route-access-service'
 import { NgModule } from '@angular/core';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { CourseManagementResolve } from 'app/course/manage/course-management-resolve.service';
-import { CourseManagementTabBarComponent } from 'app/shared/course-management-tab-bar/course-management-tab-bar.component';
+import { CourseManagementTabBarComponent } from 'app/course/manage/course-management-tab-bar/course-management-tab-bar.component';
 
 const routes: Routes = [
     {
