@@ -198,7 +198,7 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
      * @param login     the student of interest to check if submission exists
      * @return boolean the submission status of student for the given quiz batch
      */
-    public boolean isSubmitted(QuizBatch quizBatch, String login) {
+    public boolean hasUserSubmitted(QuizBatch quizBatch, String login) {
         Set<QuizSubmission> submissions = quizSubmissionRepository.findAllByQuizBatchAndStudentLogin(quizBatch, login);
         Optional<QuizSubmission> submission = submissions.stream().findFirst();
         return submission.map(QuizSubmission::isSubmitted).orElse(false);
