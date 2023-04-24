@@ -218,7 +218,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     }
 
     checkGradedPresentationConfig(): boolean {
-        return !!(this.exercise.course && this.exercise.isAtLeastTutor && (this.gradingScale?.presentationsNumber ?? 0) > 0);
+        return !!(this.exercise.course && this.exercise.isAtLeastTutor && (this.gradingScale?.presentationsNumber ?? 0) > 0 && this.exercise.presentationScoreEnabled === true);
     }
 
     addBasicPresentation(participation: StudentParticipation) {
