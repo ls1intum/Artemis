@@ -19,7 +19,6 @@ import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Authority;
 import de.tum.in.www1.artemis.domain.GuidedTourSetting;
 import de.tum.in.www1.artemis.domain.User;
@@ -457,11 +456,11 @@ public class UserService {
         final String originalLogin = user.getLogin();
         final String randomPassword = RandomUtil.generatePassword();
 
-        user.setFirstName(Constants.USER_FIRST_NAME_AFTER_SOFT_DELETE);
-        user.setLastName(Constants.USER_LAST_NAME_AFTER_SOFT_DELETE);
+        user.setFirstName(USER_FIRST_NAME_AFTER_SOFT_DELETE);
+        user.setLastName(USER_LAST_NAME_AFTER_SOFT_DELETE);
         user.setLogin(RandomUtil.generateRandomAlphanumericString());
         user.setPassword(randomPassword);
-        user.setEmail(RandomUtil.generateRandomAlphanumericString() + Constants.USER_EMAIL_DOMAIN_AFTER_SOFT_DELETE);
+        user.setEmail(RandomUtil.generateRandomAlphanumericString() + USER_EMAIL_DOMAIN_AFTER_SOFT_DELETE);
         user.setRegistrationNumber(null);
         user.setImageUrl(null);
         user.setActivated(false);

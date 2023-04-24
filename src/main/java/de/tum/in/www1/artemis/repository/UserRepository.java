@@ -31,7 +31,12 @@ import de.tum.in.www1.artemis.web.rest.dto.UserPageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
- * Spring Data JPA repository for the User entity.
+ * Spring Data JPA repository for the User entity.<br>
+ * <br>
+ * <p>
+ * <b>Note</b>: Please keep in mind that the User entities are soft-deleted when adding new queries to this repository.
+ * If you don't need deleted user entities, add `WHERE user.isDeleted = false` to your query.
+ * </p>
  */
 @Repository
 public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificationExecutor<User> {

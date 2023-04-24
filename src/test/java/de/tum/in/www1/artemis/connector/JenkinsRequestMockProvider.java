@@ -55,7 +55,7 @@ public class JenkinsRequestMockProvider {
 
     private final RestTemplate restTemplate;
 
-    public MockRestServiceServer mockServer;
+    private MockRestServiceServer mockServer;
 
     private final RestTemplate shortTimeoutRestTemplate;
 
