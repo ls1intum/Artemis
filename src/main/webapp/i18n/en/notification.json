@@ -106,7 +106,14 @@
                 "tutorialGroupDeregistrationTutor": "A student has been deregistered from your tutorial group",
                 "tutorialGroupMultipleRegistrationTutor": "Multiple students have been registered to your tutorial group",
                 "tutorialGroupAssigned": "You have been assigned to lead a tutorial group",
-                "tutorialGroupUnassigned": "You have been unassigned from leading a tutorial group"
+                "tutorialGroupUnassigned": "You have been unassigned from leading a tutorial group",
+                "messageReply": "New message reply in conversation",
+                "deleteChannel": "Channel deleted",
+                "removeUserChannel": "You have been removed from a channel",
+                "addUserChannel": "You have been added to a channel",
+                "removeUserGroupChat": "You have been removed from a group chat",
+                "addUserGroupChat": "You have been added to a group chat",
+                "createGroupChat": "New group chat"
             },
             "text": {
                 "newReplyForExercisePost": "Your post regarding exercise \"{{ placeholderValues.8 }}\" in the course \"{{ placeholderValues.0 }}\" got a new reply: \"{{ placeholderValues.5 }}\"",
@@ -122,7 +129,14 @@
                 "tutorialGroupDeregistrationTutor": "The student {{ placeholderValues.1 }} has been deregistered from your tutorial group {{ placeholderValues.2 }} by {{ placeholderValues.3 }}.",
                 "tutorialGroupMultipleRegistrationTutor": "{{ placeholderValues.1 }} students have been registered to your tutorial group {{ placeholderValues.2 }} by {{ placeholderValues.3 }}.",
                 "tutorialGroupAssigned": "You have been assigned to lead the tutorial group {{ placeholderValues.1 }} by {{ placeholderValues.2 }}.",
-                "tutorialGroupUnassigned": "You have been unassigned from leading the tutorial group {{ placeholderValues.1 }} by {{ placeholderValues.2 }}."
+                "tutorialGroupUnassigned": "You have been unassigned from leading the tutorial group {{ placeholderValues.1 }} by {{ placeholderValues.2 }}.",
+                "messageReply": "You have new reply in a message by {{ placeholderValues.6 }} in course {{ placeholderValues.0 }}.",
+                "deleteChannel": "{{ placeholderValues.1 }} channel has been deleted by {{ placeholderValues.2 }} in course {{ placeholderValues.0 }}.",
+                "removeUserChannel": "You have been removed from channel {{ placeholderValues.1 }} by {{ placeholderValues.2 }} in course {{ placeholderValues.0 }}.",
+                "addUserChannel": "You have been added to channel {{ placeholderValues.1 }} by {{ placeholderValues.2 }} in course {{ placeholderValues.0 }}.",
+                "removeUserGroupChat": "You have been removed from group chat by {{ placeholderValues.1 }} in course {{ placeholderValues.0 }}.",
+                "addUserGroupChat": "You have been added to a new group chat by {{ placeholderValues.1 }} in course {{ placeholderValues.0 }}.",
+                "createGroupChat": "You have been added to a new group chat by {{ placeholderValues.1 }} in course {{ placeholderValues.0 }}."
             }
         },
         "tutorialGroupNotification": {
@@ -133,6 +147,16 @@
             "text": {
                 "tutorialGroupDeleted": "The tutorial group {{ placeholderValues.1 }} has been deleted.",
                 "tutorialGroupUpdated": "The tutorial group {{ placeholderValues.1 }} has been updated."
+            }
+        },
+        "conversationNotification": {
+            "title": {
+                "newMessage": "New message"
+            },
+            "text": {
+                "newMessageChannel": "New message in {{ placeholderValues.3 }} channel from {{ placeholderValues.4 }} in course {{ placeholderValues.0 }}.",
+                "newMessageGroupChat": "New message in group chat from {{ placeholderValues.3 }} in course {{ placeholderValues.0 }}.",
+                "newMessageDirect": "New direct message from {{ placeholderValues.3 }} in course {{ placeholderValues.0 }}."
             }
         }
     }

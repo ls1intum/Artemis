@@ -13,7 +13,7 @@ import { Exam } from 'app/entities/exam.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { ExportToCsv } from 'export-to-csv';
-import { faExclamationTriangle, faPlus, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faExclamationTriangle, faInfo, faPlus, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
 
 const csvColumnsGrade = Object.freeze({
     gradeName: 'gradeName',
@@ -63,6 +63,7 @@ export abstract class BaseGradingSystemComponent implements OnInit {
     faPlus = faPlus;
     faTimes = faTimes;
     faExclamationTriangle = faExclamationTriangle;
+    faInfo = faInfo;
 
     constructor(
         protected gradingSystemService: GradingSystemService,
@@ -747,5 +748,22 @@ export abstract class BaseGradingSystemComponent implements OnInit {
 
         const csvExporter = new ExportToCsv(options);
         csvExporter.generateCsv(rows);
+    }
+
+    /**
+     * Returns true if grading scale goes above the maxPoints.
+     */
+    abstract shouldShowGradingStepsAboveMaxPointsWarning(): boolean;
+
+    protected isAnyGradingStepAboveMaxPoints(steps: GradeStep[]): boolean {
+        for (const step of steps) {
+            if (step.upperBoundInclusive && step.upperBoundPercentage > 100) {
+                return true;
+            }
+            if (!step.upperBoundInclusive && step.upperBoundPercentage >= 100) {
+                return true;
+            }
+        }
+        return false;
     }
 }
