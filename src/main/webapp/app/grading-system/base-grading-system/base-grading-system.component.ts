@@ -443,6 +443,7 @@ export abstract class BaseGradingSystemComponent implements OnInit {
             this.handleDeleteObservable(this.gradingSystemService.deleteGradingScaleForCourse(this.courseId!));
         }
         this.gradingScale = new GradingScale();
+        this.gradingScale.course = this.course;
     }
 
     handleDeleteObservable(deleteObservable: Observable<EntityResponseType>) {
