@@ -49,6 +49,7 @@ import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.service.tutorialgroups.TutorialGroupsConfigurationService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
+import de.tum.in.www1.artemis.web.rest.dto.CourseForDashboardDTO;
 import de.tum.in.www1.artemis.web.rest.dto.CourseManagementDetailViewDTO;
 import de.tum.in.www1.artemis.web.rest.dto.CourseManagementOverviewStatisticsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.StatsForDashboardDTO;
@@ -105,11 +106,14 @@ public class CourseResource {
 
     private final GradingScaleService gradingScaleService;
 
+    private final CourseScoreCalculationService courseScoreCalculationService;
+
     public CourseResource(UserRepository userRepository, CourseService courseService, CourseRepository courseRepository, ExerciseService exerciseService,
             OAuth2JWKSService oAuth2JWKSService, OnlineCourseConfigurationService onlineCourseConfigurationService, AuthorizationCheckService authCheckService,
             TutorParticipationRepository tutorParticipationRepository, SubmissionService submissionService, Optional<VcsUserManagementService> optionalVcsUserManagementService,
             AssessmentDashboardService assessmentDashboardService, ExerciseRepository exerciseRepository, Optional<CIUserManagementService> optionalCiUserManagementService,
-            FileService fileService, TutorialGroupsConfigurationService tutorialGroupsConfigurationService, GradingScaleService gradingScaleService) {
+            FileService fileService, TutorialGroupsConfigurationService tutorialGroupsConfigurationService, GradingScaleService gradingScaleService,
+            CourseScoreCalculationService courseScoreCalculationService) {
         this.courseService = courseService;
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
@@ -126,6 +130,7 @@ public class CourseResource {
         this.fileService = fileService;
         this.tutorialGroupsConfigurationService = tutorialGroupsConfigurationService;
         this.gradingScaleService = gradingScaleService;
+        this.courseScoreCalculationService = courseScoreCalculationService;
     }
 
     /**
@@ -409,12 +414,13 @@ public class CourseResource {
      *
      * @param courseId the courseId for which exercises, lectures, exams and learning goals should be fetched
      * @param refresh  if true, this request was initiated by the user clicking on a refresh button
-     * @return a course with all exercises, lectures, exams, learning goals, etc. visible to the user
+     * @return a DTO containing a course with all exercises, lectures, exams, learning goals, etc. visible to the user as well as the total scores for the course, the scores per
+     *         exercise type for each exercise, and the participation result for each participation.
      */
     // TODO: we should rename this into courses/{courseId}/details
     @GetMapping("courses/{courseId}/for-dashboard")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<Course> getCourseForDashboard(@PathVariable long courseId, @RequestParam(defaultValue = "false") boolean refresh) {
+    public ResponseEntity<CourseForDashboardDTO> getCourseForDashboard(@PathVariable long courseId, @RequestParam(defaultValue = "false") boolean refresh) {
         long timeNanoStart = System.nanoTime();
         log.debug("REST request to get one course {} with exams, lectures, exercises, participations, submissions and results, etc.", courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
@@ -437,25 +443,37 @@ public class CourseResource {
         }
 
         courseService.fetchParticipationsWithSubmissionsAndResultsForCourses(List.of(course), user);
+        courseService.fetchPlagiarismCasesForCourseExercises(course.getExercises(), user.getId());
+        CourseForDashboardDTO courseForDashboardDTO = courseScoreCalculationService.getScoresAndParticipationResults(course, user.getId());
         logDuration(List.of(course), user, timeNanoStart);
-        return ResponseEntity.ok(course);
+        return ResponseEntity.ok(courseForDashboardDTO);
     }
 
     /**
      * GET /courses/for-dashboard
      *
-     * @return the list of courses (the user has access to) including all exercises with participation, submission and result, etc. for the user
+     * @return a DTO containing a list of courses (the user has access to) including all exercises with participation, submission and result, etc. for the user. In addition, the
+     *         DTO contains the total scores for the course, the scores per exercise
+     *         type for each exercise, and the participation result for each participation.
      */
     @GetMapping("courses/for-dashboard")
     @PreAuthorize("hasRole('USER')")
-    public List<Course> getAllCoursesForDashboard() {
+    public List<CourseForDashboardDTO> getAllCoursesForDashboard() {
         long timeNanoStart = System.nanoTime();
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        log.debug("REST request to get all courses the user {} has access to with exams, lectures, exercises, participations, submissions and results", user.getLogin());
+        log.debug(
+                "REST request to get all courses the user {} has access to with exams, lectures, exercises, participations, submissions and results + the calculated scores the user achieved in each of those courses",
+                user.getLogin());
         List<Course> courses = courseService.findAllActiveWithExercisesAndLecturesAndExamsForUser(user);
         courseService.fetchParticipationsWithSubmissionsAndResultsForCourses(courses, user);
+        courseService.fetchPlagiarismCasesForCourseExercises(courses.stream().flatMap(course -> course.getExercises().stream()).collect(Collectors.toSet()), user.getId());
+        List<CourseForDashboardDTO> coursesForDashboard = new ArrayList<>();
+        for (Course course : courses) {
+            CourseForDashboardDTO courseForDashboardDTO = courseScoreCalculationService.getScoresAndParticipationResults(course, user.getId());
+            coursesForDashboard.add(courseForDashboardDTO);
+        }
         logDuration(courses, user, timeNanoStart);
-        return courses;
+        return coursesForDashboard;
     }
 
     private void logDuration(List<Course> courses, User user, long timeNanoStart) {

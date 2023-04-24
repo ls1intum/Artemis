@@ -1,15 +1,14 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Course } from 'app/entities/course.model';
-import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { Exam } from 'app/entities/exam.model';
 import dayjs from 'dayjs/esm';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 import { faAngleDown, faAngleUp } from '@fortawesome/free-solid-svg-icons';
+import { CourseStorageService } from 'app/course/manage/course-storage.service';
 
 @Component({
     selector: 'jhi-course-exams',
@@ -33,8 +32,7 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
 
     constructor(
         private route: ActivatedRoute,
-        private courseCalculationService: CourseScoreCalculationService,
-        private courseManagementService: CourseManagementService,
+        private courseStorageService: CourseStorageService,
         private serverDateService: ArtemisServerDateService,
         private examParticipationService: ExamParticipationService,
     ) {}
@@ -47,11 +45,10 @@ export class CourseExamsComponent implements OnInit, OnDestroy {
             this.courseId = parseInt(params['courseId'], 10);
         });
 
-        this.course = this.courseCalculationService.getCourse(this.courseId);
+        this.course = this.courseStorageService.getCourse(this.courseId);
 
-        this.courseUpdatesSubscription = this.courseManagementService.getCourseUpdates(this.courseId).subscribe((course: Course) => {
-            this.courseCalculationService.updateCourse(course);
-            this.course = this.courseCalculationService.getCourse(this.courseId);
+        this.courseUpdatesSubscription = this.courseStorageService.subscribeToCourseUpdates(this.courseId).subscribe((course: Course) => {
+            this.course = course;
         });
 
         this.studentExamTestExamUpdateSubscription = this.examParticipationService
