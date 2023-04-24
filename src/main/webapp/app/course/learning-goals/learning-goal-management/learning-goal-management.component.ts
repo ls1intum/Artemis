@@ -287,11 +287,43 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
                 throw new TypeError('Every edge needs a source or a target.');
             }
             // only extends and assumes relations are considered when checking for circles because only they don't make sense
+            // MATCHES relations are considered in the next step by merging the edges and combining the adjacencyLists
             switch (edge.label) {
                 case 'EXTENDS':
                 case 'ASSUMES': {
                     graph.addEdge(tailVertex, headVertex);
                     break;
+                }
+            }
+        }
+        // combine vertices that are connected through MATCHES
+        for (const edge of edgesWithNewEdge) {
+            if (edge.label === 'MATCHES') {
+                const headVertex = graph.vertices.find((vertex: Vertex) => vertex.getLabel() === edge.target);
+                const tailVertex = graph.vertices.find((vertex: Vertex) => vertex.getLabel() === edge.source);
+                if (headVertex === undefined || tailVertex === undefined) {
+                    throw new TypeError('Every edge needs a source or a target.');
+                }
+                if (headVertex.getAdjacencyList().includes(tailVertex) || tailVertex.getAdjacencyList().includes(headVertex)) {
+                    return true;
+                }
+                // create a merged vertex
+                const mergedVertex = new Vertex(tailVertex.getLabel() + ', ' + headVertex.getLabel());
+                //change to set
+                // add all neighbours to merged vertex
+                mergedVertex.getAdjacencyList().push(...headVertex.getAdjacencyList());
+                mergedVertex.getAdjacencyList().push(...tailVertex.getAdjacencyList());
+                // update every vertex that initially had one of the two merged vertices as neighbours to now reference the merged vertex
+                for (const vertex of graph.vertices) {
+                    for (const adjacentVertex of vertex.getAdjacencyList()) {
+                        if (adjacentVertex.getLabel() === headVertex.getLabel() || adjacentVertex.getLabel() === tailVertex.getLabel()) {
+                            const index = vertex.getAdjacencyList().indexOf(adjacentVertex, 0);
+                            if (index > -1) {
+                                vertex.getAdjacencyList().splice(index, 1);
+                            }
+                            vertex.getAdjacencyList().push(mergedVertex);
+                        }
+                    }
                 }
             }
         }
