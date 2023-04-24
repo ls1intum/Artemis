@@ -33,7 +33,7 @@ import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.se
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { Exam } from 'app/entities/exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
-import { GradingScale } from 'app/entities/grading-scale.model';
+import { GradeStepsDTO } from 'app/entities/grade-step.model';
 
 describe('ParticipationComponent', () => {
     let component: ParticipationComponent;
@@ -339,11 +339,9 @@ describe('ParticipationComponent', () => {
         } as Exercise;
 
         const gradingScaleWithGradedPresentation = {
-            id: 1,
-            course: courseWithGradedPresentation,
             presentationsNumber: 2,
             presentationsWeight: 20,
-        } as GradingScale;
+        } as GradeStepsDTO;
 
         const participation = {
             id: 123,
@@ -364,7 +362,7 @@ describe('ParticipationComponent', () => {
 
         it('should add a presentation score if graded presentations is enabled', fakeAsync(() => {
             component.exercise = exercise3;
-            component.gradingScale = gradingScaleWithGradedPresentation;
+            component.gradeStepsDTO = gradingScaleWithGradedPresentation;
             component.gradedPresentationEnabled = component.checkGradedPresentationConfig();
 
             participation.presentationScore = 20;
@@ -377,7 +375,7 @@ describe('ParticipationComponent', () => {
 
         it('should not add an invalid presentation score if graded presentations is enabled', fakeAsync(() => {
             component.exercise = exercise3;
-            component.gradingScale = gradingScaleWithGradedPresentation;
+            component.gradeStepsDTO = gradingScaleWithGradedPresentation;
             component.gradedPresentationEnabled = component.checkGradedPresentationConfig();
 
             participation.presentationScore = 200;
@@ -411,7 +409,7 @@ describe('ParticipationComponent', () => {
 
         it('should remove a presentation score if graded presentations is enabled', fakeAsync(() => {
             component.exercise = exercise3;
-            component.gradingScale = gradingScaleWithGradedPresentation;
+            component.gradeStepsDTO = gradingScaleWithGradedPresentation;
             component.gradedPresentationEnabled = component.checkGradedPresentationConfig();
 
             component.removePresentation(participation);
@@ -442,7 +440,7 @@ describe('ParticipationComponent', () => {
             expect(component.checkGradedPresentationConfig()).toBeFalse();
 
             component.exercise = exercise3;
-            component.gradingScale = gradingScaleWithGradedPresentation;
+            component.gradeStepsDTO = gradingScaleWithGradedPresentation;
             expect(component.checkBasicPresentationConfig()).toBeFalse();
             expect(component.checkGradedPresentationConfig()).toBeTrue();
         });
