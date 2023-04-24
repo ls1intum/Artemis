@@ -52,6 +52,7 @@ import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.programmingexercise.MockDelegate;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
@@ -140,6 +141,9 @@ public class CourseTestService {
 
     @Autowired
     private ExamUserRepository examUserRepository;
+
+    @Autowired
+    private ChannelRepository channelRepository;
 
     private static final int numberOfStudents = 8;
 
@@ -429,6 +433,26 @@ public class CourseTestService {
         Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>());
         course.setShortName("`badName~");
         request.getMvc().perform(buildCreateCourse(course)).andExpect(status().isBadRequest());
+    }
+
+    // Test
+    public void testCreateCourseWithDefaultChannels() throws Exception {
+
+        final List<String> defaultChannelNames = List.of("tech-support", "organization", "random", "announcement");
+
+        Course course1 = ModelFactory.generateCourse(1L, null, null, new HashSet<>());
+        course1.setShortName("testdefaultchannels");
+        mockDelegate.mockCreateGroupInUserManagement(course1.getDefaultStudentGroupName());
+        mockDelegate.mockCreateGroupInUserManagement(course1.getDefaultTeachingAssistantGroupName());
+        mockDelegate.mockCreateGroupInUserManagement(course1.getDefaultEditorGroupName());
+        mockDelegate.mockCreateGroupInUserManagement(course1.getDefaultInstructorGroupName());
+
+        var result = request.getMvc().perform(buildCreateCourse(course1)).andExpect(status().isCreated()).andReturn();
+        course1 = objectMapper.readValue(result.getResponse().getContentAsString(), Course.class);
+        assertThat(courseRepo.findByIdElseThrow(course1.getId())).isNotNull();
+        var channels = channelRepository.findChannelsByCourseId(course1.getId());
+        assertThat(channels).hasSize(defaultChannelNames.size());
+        channels.forEach(channel -> assertThat(defaultChannelNames).contains(channel.getName()));
     }
 
     // Test

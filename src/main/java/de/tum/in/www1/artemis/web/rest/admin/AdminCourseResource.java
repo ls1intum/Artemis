@@ -35,6 +35,7 @@ public class AdminCourseResource {
 
     private final Logger log = LoggerFactory.getLogger(AdminCourseResource.class);
 
+    private static final List<String> defaultChannelNames = List.of("tech-support", "organization", "random", "announcement");
 
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
@@ -110,10 +111,7 @@ public class AdminCourseResource {
 
         Course result = courseRepository.save(course);
 
-        this.createChannel(result, "tech-support", false);
-        this.createChannel(result, "organization", false);
-        this.createChannel(result, "random", false);
-        this.createChannel(result, "announcement", true);
+        defaultChannelNames.forEach(channelName -> this.createChannel(result, channelName, channelName.equals("announcement")));
 
         return ResponseEntity.created(new URI("/api/courses/" + result.getId())).body(result);
     }
