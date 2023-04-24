@@ -12,4 +12,4 @@ artemis:
         # The maximum number of seconds that a CI job is allowed to run. If the job exceeds this time, it will be terminated.
         timeout-seconds: 60
         # The number of builds that can be added to the local CI queue per second. This can prevent the CI system from being overloaded on slow machines.
-        rate-limit: 0.1
+        rate-limit: 1

@@ -50,7 +50,7 @@ public class LocalCIConfiguration {
     @Value("${artemis.continuous-integration.thread-pool-size:1}")
     int threadPoolSize;
 
-    @Value("${artemis.continuous-integration.rate-limit:1}")
+    @Value("${artemis.continuous-integration.rate-limit:0.1}")
     double rateLimit;
 
     @Value("${artemis.continuous-integration.build.images.java.default}")
