@@ -8,6 +8,7 @@ import java.nio.file.Paths;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -36,7 +37,7 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.RepositoryAccessService;
-import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
+import de.tum.in.www1.artemis.service.connectors.localci.LocalCIConnectorService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.AccessUnauthorizedException;
@@ -59,11 +60,11 @@ public class LocalVCServletService {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
-    private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
-
     private final RepositoryAccessService repositoryAccessService;
 
     private final AuthorizationCheckService authorizationCheckService;
+
+    private final Optional<LocalCIConnectorService> localCIConnectorService;
 
     @Value("${artemis.version-control.url}")
     private URL localVCBaseUrl;
@@ -81,14 +82,14 @@ public class LocalVCServletService {
     private final Map<String, Repository> repositories = new HashMap<>();
 
     public LocalVCServletService(AuthenticationManagerBuilder authenticationManagerBuilder, UserRepository userRepository,
-            ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
-            RepositoryAccessService repositoryAccessService, AuthorizationCheckService authorizationCheckService) {
+            ProgrammingExerciseRepository programmingExerciseRepository, RepositoryAccessService repositoryAccessService, AuthorizationCheckService authorizationCheckService,
+            Optional<LocalCIConnectorService> localCIConnectorService) {
         this.authenticationManagerBuilder = authenticationManagerBuilder;
         this.userRepository = userRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
-        this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.repositoryAccessService = repositoryAccessService;
         this.authorizationCheckService = authorizationCheckService;
+        this.localCIConnectorService = localCIConnectorService;
     }
 
     /**
@@ -235,13 +236,14 @@ public class LocalVCServletService {
             return;
         }
 
-        // The repository is a test run repository either if the repository URL contains "-practice-" or if the exercise is an exam exercise and the repository's owner is at least
-        // an editor (exam test run repository).
-        boolean isTestRunRepository = isPracticeRepository || (exercise.isExamExercise() && !repositoryTypeOrUserName.equals(RepositoryType.TEMPLATE.toString())
-                && !repositoryTypeOrUserName.equals(RepositoryType.SOLUTION.toString())
-                && authorizationCheckService.isAtLeastEditorForExercise(exercise, userRepository.getUserByLoginElseThrow(repositoryTypeOrUserName)));
-        ProgrammingExerciseParticipation participation = programmingExerciseParticipationService
-                .findParticipationByRepositoryTypeOrUserNameAndExerciseAndTestRunOrThrow(repositoryTypeOrUserName, exercise, isTestRunRepository, false);
+        ProgrammingExerciseParticipation participation;
+
+        try {
+            participation = localCIConnectorService.orElseThrow().getParticipationForRepository(exercise, repositoryTypeOrUserName, isPracticeRepository, false);
+        }
+        catch (EntityNotFoundException e) {
+            throw new LocalVCInternalException("No participation found for repository " + repositoryTypeOrUserName + " in exercise " + exercise.getId(), e);
+        }
 
         try {
             repositoryAccessService.checkAccessRepositoryElseThrow(participation, user, exercise, repositoryActionType);

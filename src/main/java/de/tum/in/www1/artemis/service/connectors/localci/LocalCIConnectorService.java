@@ -28,6 +28,9 @@ import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExercisePa
 import de.tum.in.www1.artemis.exception.LocalCIException;
 import de.tum.in.www1.artemis.exception.localvc.LocalVCInternalException;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
+import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
@@ -66,6 +69,12 @@ public class LocalCIConnectorService {
 
     private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
+    private final ProgrammingExerciseStudentParticipationRepository studentParticipationRepository;
+
+    private final TemplateProgrammingExerciseParticipationRepository templateParticipationRepository;
+
+    private final SolutionProgrammingExerciseParticipationRepository solutionParticipationRepository;
+
     private final LocalCITriggerService localCITriggerService;
 
     private final AuthorizationCheckService authorizationCheckService;
@@ -78,8 +87,9 @@ public class LocalCIConnectorService {
     public LocalCIConnectorService(ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingSubmissionService programmingSubmissionService,
             ProgrammingMessagingService programmingMessagingService, ProgrammingTriggerService programmingTriggerService,
             LocalCIBuildJobExecutionService localCIBuildJobExecutionService, ProgrammingExerciseGradingService programmingExerciseGradingService,
-            ProgrammingExerciseParticipationService programmingExerciseParticipationService, LocalCITriggerService localCITriggerService,
-            AuthorizationCheckService authorizationCheckService, UserRepository userRepository) {
+            ProgrammingExerciseParticipationService programmingExerciseParticipationService, ProgrammingExerciseStudentParticipationRepository studentParticipationRepository,
+            TemplateProgrammingExerciseParticipationRepository templateParticipationRepository, SolutionProgrammingExerciseParticipationRepository solutionParticipationRepository,
+            LocalCITriggerService localCITriggerService, AuthorizationCheckService authorizationCheckService, UserRepository userRepository) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingSubmissionService = programmingSubmissionService;
         this.programmingMessagingService = programmingMessagingService;
@@ -87,6 +97,9 @@ public class LocalCIConnectorService {
         this.localCIBuildJobExecutionService = localCIBuildJobExecutionService;
         this.programmingExerciseGradingService = programmingExerciseGradingService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
+        this.studentParticipationRepository = studentParticipationRepository;
+        this.templateParticipationRepository = templateParticipationRepository;
+        this.solutionParticipationRepository = solutionParticipationRepository;
         this.localCITriggerService = localCITriggerService;
         this.authorizationCheckService = authorizationCheckService;
         this.userRepository = userRepository;
@@ -121,20 +134,7 @@ public class LocalCIConnectorService {
         ProgrammingExerciseParticipation participation;
 
         try {
-            if (repositoryTypeOrUserName.equals(RepositoryType.TESTS.getName())) {
-                // For pushes to the tests repository, the solution repository is built first, and thus we need the solution participation.
-                participation = programmingExerciseParticipationService.findParticipationByRepositoryTypeOrUserNameAndExerciseAndTestRunOrThrow(RepositoryType.SOLUTION.toString(),
-                        exercise, false, true);
-            }
-            else {
-                // The repository is a test run repository either if the repository URL contains "-practice-" or if the exercise is an exam exercise and the repository's owner is
-                // at least an editor (exam test run repository).
-                boolean isTestRunRepository = localVCRepositoryUrl.isPracticeRepository() || (exercise.isExamExercise()
-                        && !repositoryTypeOrUserName.equals(RepositoryType.TEMPLATE.toString()) && !repositoryTypeOrUserName.equals(RepositoryType.SOLUTION.toString())
-                        && authorizationCheckService.isAtLeastEditorForExercise(exercise, userRepository.getUserByLoginElseThrow(repositoryTypeOrUserName)));
-                participation = programmingExerciseParticipationService.findParticipationByRepositoryTypeOrUserNameAndExerciseAndTestRunOrThrow(repositoryTypeOrUserName, exercise,
-                        isTestRunRepository, true);
-            }
+            participation = getParticipationForRepository(exercise, repositoryTypeOrUserName, localVCRepositoryUrl.isPracticeRepository(), true);
         }
         catch (EntityNotFoundException e) {
             throw new LocalCIException("Could not find participation for repository " + repositoryTypeOrUserName + " of exercise " + exercise, e);
@@ -288,5 +288,63 @@ public class LocalCIConnectorService {
         commit.setMessage(revCommit.getFullMessage());
 
         return commit;
+    }
+
+    /**
+     * Get the participation for a given exercise and a repository type or user name. This method is used by the local VC system and by the local CI system to get the
+     * participation.
+     *
+     * @param exercise                 the exercise for which to get the participation.
+     * @param repositoryTypeOrUserName the repository type ("exercise", "solution", or "tests") or username (e.g. "artemis_test_user_1") as extracted from the repository URL.
+     * @param isPracticeRepository     whether the repository is a practice repository, i.e. the repository URL contains "-practice-".
+     * @param withSubmissions          whether submissions should be loaded with the participation. This is needed for the local CI system.
+     * @return the participation.
+     * @throws EntityNotFoundException if the participation could not be found.
+     */
+    public ProgrammingExerciseParticipation getParticipationForRepository(ProgrammingExercise exercise, String repositoryTypeOrUserName, boolean isPracticeRepository,
+            boolean withSubmissions) {
+
+        // For pushes to the tests repository, the solution repository is built first, and thus we need the solution participation.
+        if (repositoryTypeOrUserName.equals(RepositoryType.SOLUTION.toString()) || repositoryTypeOrUserName.equals(RepositoryType.TESTS.toString())) {
+            if (withSubmissions) {
+                return solutionParticipationRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseIdElseThrow(exercise.getId());
+            }
+            else {
+                return solutionParticipationRepository.findByProgrammingExerciseIdElseThrow(exercise.getId());
+            }
+        }
+
+        if (repositoryTypeOrUserName.equals(RepositoryType.TEMPLATE.toString())) {
+            if (withSubmissions) {
+                return templateParticipationRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseIdElseThrow(exercise.getId());
+            }
+            else {
+                return templateParticipationRepository.findByProgrammingExerciseIdElseThrow(exercise.getId());
+            }
+        }
+
+        if (exercise.isTeamMode()) {
+            // The repositoryTypeOrUserName is the team short name.
+            // For teams, there is no practice participation.
+            return programmingExerciseParticipationService.findTeamParticipationByExerciseAndTeamShortNameOrThrow(exercise, repositoryTypeOrUserName, withSubmissions);
+        }
+
+        // If the exercise is an exam exercise and the repository's owner is at least an editor, the repository could be a test run repository, or it could be the instructor's
+        // assignment repository.
+        // There is no way to tell from the repository URL, and only one participation will be created, even if both are used.
+        // This participation has "testRun = true" set if the test run was created first, and "testRun = false" set if the instructor's assignment repository was created first.
+        // If the exercise is an exam exercise, and the repository's owner is at least an editor, get the participation without regard for the testRun flag.
+        boolean isExamEditorRepository = exercise.isExamExercise()
+                && authorizationCheckService.isAtLeastEditorForExercise(exercise, userRepository.getUserByLoginElseThrow(repositoryTypeOrUserName));
+        if (isExamEditorRepository) {
+            if (withSubmissions) {
+                return studentParticipationRepository.findWithSubmissionsByExerciseIdAndStudentLoginOrThrow(exercise.getId(), repositoryTypeOrUserName);
+            }
+
+            return studentParticipationRepository.findByExerciseIdAndStudentLoginOrThrow(exercise.getId(), repositoryTypeOrUserName);
+        }
+
+        return programmingExerciseParticipationService.findStudentParticipationByExerciseAndStudentLoginAndTestRunOrThrow(exercise, repositoryTypeOrUserName, isPracticeRepository,
+                withSubmissions);
     }
 }

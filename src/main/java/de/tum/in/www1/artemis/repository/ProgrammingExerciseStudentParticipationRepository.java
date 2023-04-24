@@ -68,6 +68,18 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
 
     Optional<ProgrammingExerciseStudentParticipation> findByExerciseIdAndStudentLogin(Long exerciseId, String username);
 
+    default ProgrammingExerciseStudentParticipation findByExerciseIdAndStudentLoginOrThrow(Long exerciseId, String username) {
+        return findByExerciseIdAndStudentLogin(exerciseId, username).orElseThrow(() -> new EntityNotFoundException("Programming Exercise Student Participation", exerciseId));
+    }
+
+    @EntityGraph(type = LOAD, attributePaths = { "submissions" })
+    Optional<ProgrammingExerciseStudentParticipation> findWithSubmissionsByExerciseIdAndStudentLogin(Long exerciseId, String username);
+
+    default ProgrammingExerciseStudentParticipation findWithSubmissionsByExerciseIdAndStudentLoginOrThrow(Long exerciseId, String username) {
+        return findWithSubmissionsByExerciseIdAndStudentLogin(exerciseId, username)
+                .orElseThrow(() -> new EntityNotFoundException("Programming Exercise Student Participation", exerciseId));
+    }
+
     Optional<ProgrammingExerciseStudentParticipation> findByExerciseIdAndStudentLoginAndTestRun(Long exerciseId, String username, boolean testRun);
 
     Optional<ProgrammingExerciseStudentParticipation> findByExerciseIdAndTeamId(Long exerciseId, Long teamId);

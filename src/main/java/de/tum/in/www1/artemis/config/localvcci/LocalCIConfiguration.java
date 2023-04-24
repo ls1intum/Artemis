@@ -2,9 +2,6 @@ package de.tum.in.www1.artemis.config.localvcci;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,7 +27,7 @@ public class LocalCIConfiguration {
 
     private final Logger log = LoggerFactory.getLogger(LocalCIConfiguration.class);
 
-    @Value("${artemis.continuous-integration.thread-pool-size:2}")
+    @Value("${artemis.continuous-integration.thread-pool-size:1}")
     int threadPoolSize;
 
     /**
@@ -41,14 +38,7 @@ public class LocalCIConfiguration {
     @Bean
     public ExecutorService localCIBuildExecutorService() {
         log.info("Using ExecutorService with thread pool size: " + threadPoolSize);
-        ScheduledExecutorService executorService = Executors.newScheduledThreadPool(threadPoolSize);
-        executorService.scheduleAtFixedRate(() -> {
-            ThreadPoolExecutor threadPoolExecutor = (ThreadPoolExecutor) executorService;
-            // Report on the current state of the executor service every 10 seconds.
-            // Subtract 1 from the active count because we only want to report on the additional threads that are spun up for the build jobs.
-            log.info("Active tasks in the local CI executor service: {}, Queue size: {}", threadPoolExecutor.getActiveCount() - 1, threadPoolExecutor.getQueue().size());
-        }, 0, 10, TimeUnit.SECONDS);
-        return executorService;
+        return Executors.newFixedThreadPool(threadPoolSize);
     }
 
     /**
