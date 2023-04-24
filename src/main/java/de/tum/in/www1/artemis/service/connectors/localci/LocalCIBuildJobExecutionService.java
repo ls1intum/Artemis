@@ -142,6 +142,8 @@ public class LocalCIBuildJobExecutionService {
             // Add "_BUILDING" to the build plan id to indicate that the build plan is currently building.
             updateBuildPlanStatus(participation, ContinuousIntegrationService.BuildStatus.BUILDING);
 
+            log.info("Updated build plan status for build job " + containerName);
+
             // Retrieve the paths to the repositories that the build jobs needs.
             // This includes the assignment repository (the one to be tested, e.g. the student's repository, or the template repository), and the tests repository which includes
             // the tests to be executed.
@@ -155,6 +157,8 @@ public class LocalCIBuildJobExecutionService {
                 throw new LocalCIException("Error while creating LocalVCRepositoryUrl", e);
             }
 
+            log.info("URetrieved repository URLs for build job " + containerName);
+
             Path assignmentRepositoryPath = assignmentRepositoryUrl.getLocalRepositoryPath(localVCBasePath).toAbsolutePath();
             Path testsRepositoryPath = testsRepositoryUrl.getLocalRepositoryPath(localVCBasePath).toAbsolutePath();
 
@@ -166,6 +170,8 @@ public class LocalCIBuildJobExecutionService {
                 throw new LocalCIException("Error while getting branch of participation", e);
             }
 
+            log.info("Retrieved repository paths and branch for build job " + containerName);
+
             // Create the volume configuration for the container. The assignment repository, the tests repository, and the build script are bound into the container to be used by
             // the build job.
             HostConfig volumeConfig = createVolumeConfig(assignmentRepositoryPath, testsRepositoryPath);
@@ -173,6 +179,8 @@ public class LocalCIBuildJobExecutionService {
             // Create the container from the "ls1tum/artemis-maven-template" image with the local paths to the Git repositories and the shell script bound to it. This does not
             // start the container yet.
             CreateContainerResponse container = createContainer(containerName, volumeConfig, branch);
+
+            log.info("Created container for build job " + containerName);
 
             return runBuildJob(participation, containerName, container.getId(), branch);
         };
@@ -194,7 +202,7 @@ public class LocalCIBuildJobExecutionService {
                 // The ExecutionException is thrown if the build job throws an exception (i.e. a LocalCIException in this case).
                 // The TimeoutException is thrown if the build job takes too long.
 
-                log.error("Error while running build job", e);
+                log.error("Error while building and testing repository " + participation.getRepositoryUrl() + " with container name " + containerName, e);
 
                 if (!future.isDone()) {
                     // Cancel the task if it is still running.
@@ -205,7 +213,6 @@ public class LocalCIBuildJobExecutionService {
                 updateBuildPlanStatus(participation, ContinuousIntegrationService.BuildStatus.INACTIVE);
 
                 // Notify the user, that the build job produced an exception. This is also the case if the build job timed out.
-                log.error("Error while building and testing repository " + participation.getRepositoryUrl());
                 BuildTriggerWebsocketError error = new BuildTriggerWebsocketError(
                         e instanceof TimeoutException ? "Build timed out after " + timeoutSeconds + " seconds" : e.getMessage(), participation.getId());
                 // This cast to Participation is safe as the participation is either a ProgrammingExerciseStudentParticipation, a TemplateProgrammingExerciseParticipation, or a
@@ -262,7 +269,11 @@ public class LocalCIBuildJobExecutionService {
 
         dockerClient.startContainerCmd(containerId).exec();
 
+        log.info("Started container for build job " + containerName);
+
         runScriptInContainer(containerId);
+
+        log.info("Ran script in container for build job " + containerName);
 
         ZonedDateTime buildCompletedDate = ZonedDateTime.now();
 
@@ -280,6 +291,8 @@ public class LocalCIBuildJobExecutionService {
             return constructFailedBuildResult(branch, assignmentRepoCommitHash, testsRepoCommitHash, buildCompletedDate);
         }
 
+        log.info("Retrieved commit hashes for build job " + containerName);
+
         // When Gradle is used as the build tool, the test results are located in /repositories/test-repository/build/test-results/test/TEST-*.xml.
         // When Maven is used as the build tool, the test results are located in /repositories/test-repository/target/surefire-reports/TEST-*.xml.
         String testResultsPath = "/repositories/test-repository/build/test-results/test";
@@ -296,7 +309,11 @@ public class LocalCIBuildJobExecutionService {
             return constructFailedBuildResult(branch, assignmentRepoCommitHash, testsRepoCommitHash, buildCompletedDate);
         }
 
+        log.info("Retrieved test results for build job " + containerName);
+
         stopContainer(containerName);
+
+        log.info("Stopped container for build job " + containerName);
 
         LocalCIBuildResult buildResult;
         try {
@@ -306,8 +323,12 @@ public class LocalCIBuildJobExecutionService {
             throw new LocalCIException("Error while parsing test results", e);
         }
 
+        log.info("Parsed test results for build job " + containerName);
+
         // Set the build status to "INACTIVE" to indicate that the build is not running anymore.
         updateBuildPlanStatus(participation, ContinuousIntegrationService.BuildStatus.INACTIVE);
+
+        log.info("Updated build plan status to INACTIVE for build job " + containerName);
 
         log.info("Building and testing submission for repository {} took {}", participation.getRepositoryUrl(), TimeLogUtil.formatDurationFrom(timeNanoStart));
 
