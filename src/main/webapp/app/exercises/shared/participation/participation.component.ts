@@ -20,8 +20,8 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { setBuildPlanUrlForProgrammingParticipations } from 'app/exercises/shared/participation/participation.utils';
 import { faCircleNotch, faEraser, faFilePowerpoint, faTable, faTimes } from '@fortawesome/free-solid-svg-icons';
-import { GradingScale } from 'app/entities/grading-scale.model';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
+import { GradeStepsDTO } from 'app/entities/grade-step.model';
 
 enum FilterProp {
     ALL = 'all',
@@ -52,8 +52,8 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     basicPresentationEnabled = false;
     gradedPresentationEnabled = false;
 
-    gradingScale?: GradingScale;
-    gradingScaleSub: Subscription;
+    gradeStepsDTO?: GradeStepsDTO;
+    gradeStepsDTOSub: Subscription;
 
     private dialogErrorSource = new Subject<string>();
     dialogError = this.dialogErrorSource.asObservable();
@@ -114,8 +114,8 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         if (this.paramSub) {
             this.paramSub.unsubscribe();
         }
-        if (this.gradingScaleSub) {
-            this.gradingScaleSub.unsubscribe();
+        if (this.gradeStepsDTOSub) {
+            this.gradeStepsDTOSub.unsubscribe();
         }
     }
 
@@ -136,9 +136,9 @@ export class ParticipationComponent implements OnInit, OnDestroy {
 
     private loadGradingScale(courseId?: number) {
         if (courseId) {
-            this.gradingScaleSub = this.gradingSystemService.findGradingScaleForCourse(courseId).subscribe((gradingScale) => {
-                if (gradingScale.body) {
-                    this.gradingScale = gradingScale.body;
+            this.gradeStepsDTOSub = this.gradingSystemService.findGradeStepsForCourse(courseId).subscribe((gradeStepsDTO) => {
+                if (gradeStepsDTO.body) {
+                    this.gradeStepsDTO = gradeStepsDTO.body;
                 }
                 this.gradedPresentationEnabled = this.checkGradedPresentationConfig();
             });
@@ -218,7 +218,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     }
 
     checkGradedPresentationConfig(): boolean {
-        return !!(this.exercise.course && this.exercise.isAtLeastTutor && (this.gradingScale?.presentationsNumber ?? 0) > 0 && this.exercise.presentationScoreEnabled === true);
+        return !!(this.exercise.course && this.exercise.isAtLeastTutor && (this.gradeStepsDTO?.presentationsNumber ?? 0) > 0 && this.exercise.presentationScoreEnabled === true);
     }
 
     addBasicPresentation(participation: StudentParticipation) {
