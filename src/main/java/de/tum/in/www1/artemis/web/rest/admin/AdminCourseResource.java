@@ -111,7 +111,7 @@ public class AdminCourseResource {
 
         Course course = courseRepository.save(course);
 
-        DEFAULT_CHANNEL_NAMES.forEach(channelName -> this.createChannel(course, channelName, "announcement".equals(channelName)));
+        DEFAULT_CHANNEL_NAMES.forEach(channelName -> this.createDefaultChannel(course, channelName, "announcement".equals(channelName)));
 
         return ResponseEntity.created(new URI("/api/courses/" + course.getId())).body(course);
     }
@@ -137,19 +137,20 @@ public class AdminCourseResource {
     }
 
     /**
-     * Helper function, that's creates a channel within a course
+     * Creates a default channel with the given name and adds all students, tutors and instructors as participants.
      *
-     * @param course the course, where the channel should be created
-     * @param name the name of the channel
-     * @param isAnnouncement whether the channel is a announcement channel
+     * @param course         the course in which the channel shall be created
+     * @param name           the name of the channel to create
+     * @param isAnnouncement whether the channel is an announcement channel
      */
-    private void createChannel(Course course, String name, Boolean isAnnouncement) {
-        var channelToCreate = new Channel();
+    private void createDefaultChannel(Course course, String name, Boolean isAnnouncement) {
+        Channel channelToCreate = new Channel();
         channelToCreate.setName(name);
         channelToCreate.setIsPublic(true);
         channelToCreate.setIsAnnouncementChannel(isAnnouncement);
         channelToCreate.setIsArchived(false);
         channelToCreate.setDescription(null);
-        channelService.createChannel(course, channelToCreate, Optional.of(userRepository.getUserWithGroupsAndAuthorities()));
+        Channel createdChannel = channelService.createChannel(course, channelToCreate, Optional.of(userRepository.getUserWithGroupsAndAuthorities()));
+        channelService.registerUsersToChannel(true, true, true, List.of(), course, createdChannel);
     }
 }
