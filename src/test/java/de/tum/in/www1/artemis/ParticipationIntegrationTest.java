@@ -687,47 +687,29 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         var actualParticipation = request.putWithResponseBody("/api/exercises/" + textExercise.getId() + "/participations", participation, StudentParticipation.class,
                 HttpStatus.OK);
         assertThat(actualParticipation).as("The participation was updated").isNotNull();
-        assertThat(actualParticipation.getPresentationScore()).as("Presentation score was set to 1").isEqualTo(1);
+        assertThat(actualParticipation.getPresentationScore()).as("Presentation score was set to 1").isEqualTo(1.);
     }
 
-    @Test
+    @ParameterizedTest
+    @CsvSource({ "-42,0", "42,42", "420,100" })
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void updateParticipation_gradedPresentation() throws Exception {
-        var course = textExercise.getCourseViaExerciseGroupOrCourseMember();
+    void updateParticipation_gradedPresentation(double input, double expectedOutput) throws Exception {
+        Course course = textExercise.getCourseViaExerciseGroupOrCourseMember();
         course.setPresentationScore(0);
 
-        var gradingScale = database.generateGradingScale(2, new double[] { 0, 50, 100 }, true, 1, Optional.empty(), course, 2, 20.);
+        GradingScale gradingScale = database.generateGradingScale(2, new double[] { 0, 50, 100 }, true, 1, Optional.empty(), course, 2, 20.);
         gradingScaleService.saveGradingScale(gradingScale);
 
-        var participation = ModelFactory.generateStudentParticipation(InitializationState.INITIALIZED, textExercise, database.getUserByLogin(TEST_PREFIX + "student1"));
+        StudentParticipation participation = ModelFactory.generateStudentParticipation(InitializationState.INITIALIZED, textExercise,
+                database.getUserByLogin(TEST_PREFIX + "student1"));
         participation = participationRepo.save(participation);
 
-        participation.setPresentationScore(64.);
-        var actualParticipation = request.putWithResponseBody("/api/exercises/" + textExercise.getId() + "/participations", participation, StudentParticipation.class,
-                HttpStatus.OK);
+        participation.setPresentationScore(input);
+        StudentParticipation actualParticipation = request.putWithResponseBody("/api/exercises/" + textExercise.getId() + "/participations", participation,
+                StudentParticipation.class, HttpStatus.OK);
 
         assertThat(actualParticipation).as("The participation was updated").isNotNull();
-        assertThat(actualParticipation.getPresentationScore()).as("Presentation score was set to 64").isEqualTo(64);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void updateParticipation_gradedPresentationAbove100() throws Exception {
-        var course = textExercise.getCourseViaExerciseGroupOrCourseMember();
-        course.setPresentationScore(0);
-
-        var gradingScale = database.generateGradingScale(2, new double[] { 0, 50, 100 }, true, 1, Optional.empty(), course, 2, 20.);
-        gradingScaleService.saveGradingScale(gradingScale);
-
-        var participation = ModelFactory.generateStudentParticipation(InitializationState.INITIALIZED, textExercise, database.getUserByLogin(TEST_PREFIX + "student1"));
-        participation = participationRepo.save(participation);
-
-        participation.setPresentationScore(101.);
-        var actualParticipation = request.putWithResponseBody("/api/exercises/" + textExercise.getId() + "/participations", participation, StudentParticipation.class,
-                HttpStatus.OK);
-
-        assertThat(actualParticipation).as("The participation was updated").isNotNull();
-        assertThat(actualParticipation.getPresentationScore()).as("Presentation score was set to 100").isEqualTo(100);
+        assertThat(actualParticipation.getPresentationScore()).as("Presentation score was set to " + expectedOutput).isEqualTo(expectedOutput);
     }
 
     @Test
