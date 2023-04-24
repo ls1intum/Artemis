@@ -6,6 +6,7 @@ import java.nio.file.Path;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -29,7 +30,6 @@ import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.DockerClientImpl;
 import com.github.dockerjava.httpclient5.ApacheDockerHttpClient;
 import com.github.dockerjava.transport.DockerHttpClient;
-import com.google.common.util.concurrent.RateLimiter;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import de.tum.in.www1.artemis.exception.LocalCIException;
@@ -50,8 +50,11 @@ public class LocalCIConfiguration {
     @Value("${artemis.continuous-integration.thread-pool-size:1}")
     int threadPoolSize;
 
-    @Value("${artemis.continuous-integration.rate-limit:0.1}")
-    double rateLimit;
+    @Value("${artemis.continuous-integration.queue-size-limit:3}")
+    int queueSizeLimit;
+
+    @Value("${artemis.continuous-integration.queue-timeout-seconds:300}")
+    int queueTimeoutSeconds;
 
     @Value("${artemis.continuous-integration.build.images.java.default}")
     String dockerImage;
@@ -70,7 +73,38 @@ public class LocalCIConfiguration {
         log.info("Using ExecutorService with thread pool size: " + threadPoolSize);
         ThreadFactory customThreadFactory = new ThreadFactoryBuilder().setNameFormat("local-ci-build-%d")
                 .setUncaughtExceptionHandler((thread, exception) -> log.error("Uncaught exception in thread " + thread.getName(), exception)).build();
-        return new ThreadPoolExecutor(threadPoolSize, threadPoolSize, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(), customThreadFactory);
+        RejectedExecutionHandler customRejectedExecutionHandler = new TimedBlockingPolicy(queueTimeoutSeconds, TimeUnit.SECONDS);
+        return new ThreadPoolExecutor(threadPoolSize, threadPoolSize, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(queueSizeLimit), customThreadFactory,
+                customRejectedExecutionHandler);
+    }
+
+    class TimedBlockingPolicy implements RejectedExecutionHandler {
+
+        private final long timeout;
+
+        private final TimeUnit timeUnit;
+
+        public TimedBlockingPolicy(long timeout, TimeUnit timeUnit) {
+            this.timeout = timeout;
+            this.timeUnit = timeUnit;
+        }
+
+        @Override
+        public void rejectedExecution(Runnable r, ThreadPoolExecutor executor) {
+            if (executor.isShutdown()) {
+                return;
+            }
+
+            try {
+                if (!executor.getQueue().offer(r, timeout, timeUnit)) {
+                    // Task was not accepted after waiting for the specified timeout.
+                    log.error("Task was not accepted after waiting for the specified timeout: {}", r.toString());
+                }
+            }
+            catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 
     /**
@@ -88,17 +122,6 @@ public class LocalCIConfiguration {
             log.info("Current queue size of local CI ExecutorService: {}", threadPoolExecutor.getQueue().size());
         }, 0, 3, TimeUnit.SECONDS);
         return buildQueueLogger;
-    }
-
-    /**
-     * Creates a rate limiter to control the rate at which build jobs are added to the queue.
-     *
-     * @return the rate limiter bean.
-     */
-    @Bean
-    public RateLimiter localCIBuildJobRateLimiter() {
-        log.info("Using RateLimiter with rate limit: " + rateLimit + " per second.");
-        return RateLimiter.create(rateLimit);
     }
 
     /**

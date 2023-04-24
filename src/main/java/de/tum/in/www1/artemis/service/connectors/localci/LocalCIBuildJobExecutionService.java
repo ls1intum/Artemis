@@ -43,7 +43,6 @@ import com.github.dockerjava.api.model.Bind;
 import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.HostConfig;
 import com.github.dockerjava.api.model.Volume;
-import com.google.common.util.concurrent.RateLimiter;
 
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
@@ -87,8 +86,6 @@ public class LocalCIBuildJobExecutionService {
 
     private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
 
-    private final RateLimiter localCIBuildJobRateLimiter;
-
     // The Path to the script file located in the resources folder. The script file contains the steps that run the tests on the Docker container.
     private final Path buildScriptFilePath;
 
@@ -103,7 +100,7 @@ public class LocalCIBuildJobExecutionService {
     @Value("${artemis.continuous-integration.build.images.java.default}")
     String dockerImage;
 
-    @Value("${artemis.continuous-integration.timeout-seconds:60}")
+    @Value("${artemis.continuous-integration.timeout-seconds:120}")
     private int timeoutSeconds;
 
     @Value("${artemis.continuous-integration.asynchronous:true}")
@@ -112,8 +109,7 @@ public class LocalCIBuildJobExecutionService {
     public LocalCIBuildJobExecutionService(Optional<VersionControlService> versionControlService, ExecutorService localCIBuildExecutorService, DockerClient dockerClient,
             ProgrammingMessagingService programmingMessagingService, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
-            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, RateLimiter localCIBuildJobRateLimiter, Path buildScriptFilePath,
-            XMLInputFactory localCIXMLInputFactory) {
+            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, Path buildScriptFilePath, XMLInputFactory localCIXMLInputFactory) {
         this.versionControlService = versionControlService;
         this.localCIBuildExecutorService = localCIBuildExecutorService;
         this.dockerClient = dockerClient;
@@ -121,7 +117,6 @@ public class LocalCIBuildJobExecutionService {
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
-        this.localCIBuildJobRateLimiter = localCIBuildJobRateLimiter;
         this.buildScriptFilePath = buildScriptFilePath;
         this.localCIXMLInputFactory = localCIXMLInputFactory;
     }
@@ -184,9 +179,6 @@ public class LocalCIBuildJobExecutionService {
 
         // Submit the build job to the executor service. This runs in a separate thread, so it does not block the main thread.
         CompletableFuture<LocalCIBuildResult> futureResult = createCompletableFuture(() -> {
-
-            // Acquire a permit from the RateLimiter before submitting the job.
-            localCIBuildJobRateLimiter.acquire();
 
             // Submit the task and get a Future.
             // Use Future to be able to interrupt the build job's thread if running the build job takes too long.
