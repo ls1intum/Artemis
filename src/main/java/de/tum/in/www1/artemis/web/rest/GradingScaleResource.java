@@ -72,12 +72,12 @@ public class GradingScaleResource {
      * @return ResponseEntity with status 200 (Ok) with body the grading scale if it exists and 404 (Not found) otherwise
      */
     @GetMapping("/courses/{courseId}/grading-scale")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @PreAuthorize("hasRole('TA')")
     public ResponseEntity<GradingScale> getGradingScaleForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get grading scale for course: {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         Optional<GradingScale> gradingScale = gradingScaleRepository.findByCourseId(courseId);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
         return gradingScale.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.ok(null));
     }
 
