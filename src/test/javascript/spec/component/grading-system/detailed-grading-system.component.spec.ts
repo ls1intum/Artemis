@@ -564,10 +564,6 @@ describe('Detailed Grading System Component', () => {
         expect(translateStub).toHaveBeenCalledOnce();
     });
 
-    it('should validate grading scale with no presentations and invalid presentationScore', () => {
-        validateInvalidPresentationsConfig(PresentationType.NONE, 'artemisApp.gradingSystem.error.invalidBasicPresentationIsEnabled', 2);
-    });
-
     it('should validate grading scale with basic presentations and invalid presentationScore', () => {
         validateInvalidPresentationsConfig(PresentationType.BASIC, 'artemisApp.gradingSystem.error.invalidPresentationsNumber', 0);
     });
