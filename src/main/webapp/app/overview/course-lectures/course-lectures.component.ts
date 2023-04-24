@@ -1,16 +1,15 @@
 import { AfterViewInit, Component, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
 import { Course } from 'app/entities/course.model';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ActivatedRoute } from '@angular/router';
 import { Subject, Subscription } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import dayjs from 'dayjs/esm';
 import { Lecture } from 'app/entities/lecture.model';
 import { LocalStorageService } from 'ngx-webstorage';
-import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { faAngleDown, faAngleUp, faSortNumericDown, faSortNumericUp } from '@fortawesome/free-solid-svg-icons';
 import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/overview/tab-bar/tab-bar';
+import { CourseStorageService } from 'app/course/manage/course-storage.service';
 
 export enum LectureSortingOrder {
     ASC = 1,
@@ -56,9 +55,7 @@ export class CourseLecturesComponent implements OnInit, OnDestroy, AfterViewInit
     };
 
     constructor(
-        private courseService: CourseManagementService,
-        private courseCalculationService: CourseScoreCalculationService,
-        private courseServer: CourseManagementService,
+        private courseStorageService: CourseStorageService,
         private translateService: TranslateService,
         private exerciseService: ExerciseService,
         private route: ActivatedRoute,
@@ -72,12 +69,11 @@ export class CourseLecturesComponent implements OnInit, OnDestroy, AfterViewInit
             this.courseId = parseInt(params['courseId'], 10);
         });
 
-        this.course = this.courseCalculationService.getCourse(this.courseId);
+        this.course = this.courseStorageService.getCourse(this.courseId);
         this.onCourseLoad();
 
-        this.courseUpdatesSubscription = this.courseService.getCourseUpdates(this.courseId).subscribe((course: Course) => {
-            this.courseCalculationService.updateCourse(course);
-            this.course = this.courseCalculationService.getCourse(this.courseId);
+        this.courseUpdatesSubscription = this.courseStorageService.subscribeToCourseUpdates(this.courseId).subscribe((course: Course) => {
+            this.course = course;
             this.onCourseLoad();
         });
 

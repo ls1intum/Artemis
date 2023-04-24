@@ -1,0 +1,11 @@
+<div class="modal-body">
+    <input type="file" accept="application/zip" (change)="setFileForExerciseImport($event)" style="margin-right: -10px; padding-right: -10px" />
+    <jhi-button
+        id="upload-exercise-btn"
+        [disabled]="fileForImport === undefined"
+        [icon]="faUpload"
+        [title]="'artemisApp.programmingExercise.importFromFile.uploadForImport'"
+        (onClick)="uploadExercise()"
+    ></jhi-button>
+    <jhi-help-icon text="artemisApp.programmingExercise.importFromFile.description" style="margin-left: 15px"></jhi-help-icon>
+</div>
