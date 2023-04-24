@@ -200,12 +200,8 @@ public class LearningGoalService {
                 // create a merged vertex
                 var mergedVertex = new Vertex(tailVertex.label + ", " + headVertex.label);
                 // add all neighbours to merged vertex
-                for (Vertex vertex : headVertex.getAdjacencyList()) {
-                    mergedVertex.addNeighbor(vertex);
-                }
-                for (Vertex vertex : tailVertex.getAdjacencyList()) {
-                    mergedVertex.addNeighbor(vertex);
-                }
+                mergedVertex.getAdjacencyList().addAll(headVertex.getAdjacencyList());
+                mergedVertex.getAdjacencyList().addAll(tailVertex.getAdjacencyList());
                 // update every vertex that initially had one of the two merged vertices as neighbours to now reference the merged vertex
                 for (Vertex vertex : graph.vertices) {
                     for (Vertex adjacentVertex : vertex.getAdjacencyList()) {
