@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Subject, Subscription } from 'rxjs';
@@ -35,8 +35,6 @@ export class CourseManagementTabBarComponent implements OnInit, OnDestroy {
     readonly ButtonSize = ButtonSize;
 
     course?: Course;
-
-    @Input() showCourseEditButtons = false;
 
     private paramSub: Subscription;
     private courseSub: Subscription;
