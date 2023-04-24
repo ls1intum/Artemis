@@ -12,12 +12,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.metis.conversation.ConversationDTOService;
 import de.tum.in.www1.artemis.service.metis.conversation.ConversationService;
 import de.tum.in.www1.artemis.service.metis.conversation.OneToOneChatService;
 import de.tum.in.www1.artemis.service.metis.conversation.auth.OneToOneChatAuthorizationService;
+import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.OneToOneChatDTO;
 
@@ -37,14 +39,18 @@ public class OneToOneChatResource extends ConversationManagementResource {
 
     private final ConversationService conversationService;
 
-    public OneToOneChatResource(OneToOneChatAuthorizationService oneToOneChatAuthorizationService, ConversationDTOService conversationDTOService, UserRepository userRepository,
-            CourseRepository courseRepository, OneToOneChatService oneToOneChatService, ConversationService conversationService) {
+    private final SingleUserNotificationService singleUserNotificationService;
+
+    public OneToOneChatResource(SingleUserNotificationService singleUserNotificationService, OneToOneChatAuthorizationService oneToOneChatAuthorizationService,
+            ConversationDTOService conversationDTOService, UserRepository userRepository, CourseRepository courseRepository, OneToOneChatService oneToOneChatService,
+            ConversationService conversationService) {
         super(courseRepository);
         this.oneToOneChatAuthorizationService = oneToOneChatAuthorizationService;
         this.conversationDTOService = conversationDTOService;
         this.userRepository = userRepository;
         this.oneToOneChatService = oneToOneChatService;
         this.conversationService = conversationService;
+        this.singleUserNotificationService = singleUserNotificationService;
     }
 
     /**
@@ -75,6 +81,12 @@ public class OneToOneChatResource extends ConversationManagementResource {
         var userB = chatMembers.get(1);
 
         var oneToOneChat = oneToOneChatService.startOneToOneChat(course, userA, userB);
+        var userToBeNotified = userA.getLogin().equals(requestingUser.getLogin()) ? userB : userA;
+        singleUserNotificationService.notifyClientAboutConversationCreationOrDeletion(oneToOneChat, userToBeNotified, requestingUser,
+                NotificationType.CONVERSATION_CREATE_ONE_TO_ONE_CHAT);
+        // also send notification to the author in order for the author to subscribe to the new chat (this notification won't be saved and shown to author)
+        singleUserNotificationService.notifyClientAboutConversationCreationOrDeletion(oneToOneChat, requestingUser, requestingUser,
+                NotificationType.CONVERSATION_CREATE_ONE_TO_ONE_CHAT);
         return ResponseEntity.created(new URI("/api/one-to-one-chats/" + oneToOneChat.getId())).body(conversationDTOService.convertOneToOneChatToDto(requestingUser, oneToOneChat));
     }
 }

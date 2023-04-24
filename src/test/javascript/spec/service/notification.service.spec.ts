@@ -2,10 +2,10 @@ import { HttpClientTestingModule, HttpTestingController } from '@angular/common/
 import { NotificationService } from 'app/shared/notification/notification.service';
 import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateTestingModule } from '../helpers/mocks/service/mock-translate.service';
-import { Notification } from 'app/entities/notification.model';
+import { CONVERSATION_CREATE_GROUP_CHAT_TITLE, CONVERSATION_REMOVE_USER_GROUP_CHAT_TITLE, NEW_MESSAGE_TITLE, Notification } from 'app/entities/notification.model';
 import { MockRouter } from '../helpers/mocks/mock-router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -23,6 +23,9 @@ import { MockMetisService } from '../helpers/mocks/service/mock-metis-service.se
 import { TutorialGroupsNotificationService } from 'app/course/tutorial-groups/services/tutorial-groups-notification.service';
 import { MockProvider } from 'ng-mocks';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
+import { CourseConversationsNotificationsService } from 'app/overview/course-conversations-notifications-service';
+import { OneToOneChat } from 'app/entities/metis/conversation/one-to-one-chat.model';
+import { GroupChat } from 'app/entities/metis/conversation/group-chat.model';
 
 describe('Notification Service', () => {
     let notificationService: NotificationService;
@@ -31,11 +34,19 @@ describe('Notification Service', () => {
 
     let websocketService: JhiWebsocketService;
     let wsSubscribeStub: jest.SpyInstance;
+    let wsUnSubscribeStub: jest.SpyInstance;
     let wsReceiveNotificationStub: jest.SpyInstance;
     let wsNotificationSubject: Subject<Notification | undefined>;
     let tutorialGroupNotificationService: TutorialGroupsNotificationService;
     let getTutorialGroupsForNotificationsSpy: jest.SpyInstance;
     let tutorialGroup: TutorialGroup;
+
+    let conversationNotificationService: CourseConversationsNotificationsService;
+    let getConversationsForNotificationsSpy: jest.SpyInstance;
+    const conversation: OneToOneChat = new OneToOneChat();
+    const groupChat: GroupChat = new GroupChat();
+    conversation.id = 99;
+    groupChat.id = 100;
 
     let wsQuizExerciseSubject: Subject<QuizExercise | undefined>;
 
@@ -80,6 +91,47 @@ describe('Notification Service', () => {
 
     const tutorialGroupNotification = generateTutorialGroupNotification();
 
+    const generateConversationsNotification = () => {
+        const generatedNotification = { title: NEW_MESSAGE_TITLE, text: 'This is a simple new message notification' } as Notification;
+        generatedNotification.target = JSON.stringify({ message: 'new-message', entity: 'message', mainPage: 'courses', id: 10, course: course.id, conversation: conversation.id });
+        generatedNotification.notificationDate = dayjs();
+        return generatedNotification;
+    };
+
+    const conversationNotification = generateConversationsNotification();
+
+    const generateConversationsCreationNotification = () => {
+        const generatedNotification = { title: CONVERSATION_CREATE_GROUP_CHAT_TITLE, text: 'This is a simple new group chat notification' } as Notification;
+        generatedNotification.target = JSON.stringify({
+            message: 'conversation-creation',
+            entity: 'conversation',
+            mainPage: 'courses',
+            id: 124,
+            course: course.id,
+            conversation: groupChat.id,
+        });
+        generatedNotification.notificationDate = dayjs();
+        return generatedNotification;
+    };
+
+    const conversationCreationNotification = generateConversationsCreationNotification();
+
+    const generateConversationsDeletionNotification = () => {
+        const generatedNotification = { title: CONVERSATION_REMOVE_USER_GROUP_CHAT_TITLE, text: 'This is a simple group chat deletion notification' } as Notification;
+        generatedNotification.target = JSON.stringify({
+            message: 'conversation-deletion',
+            entity: 'conversation',
+            mainPage: 'courses',
+            id: 124,
+            course: course.id,
+            conversation: groupChat.id,
+        });
+        generatedNotification.notificationDate = dayjs();
+        return generatedNotification;
+    };
+
+    const conversationDeletionNotification = generateConversationsDeletionNotification();
+
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [HttpClientTestingModule, TranslateTestingModule, RouterTestingModule.withRoutes([])],
@@ -91,7 +143,20 @@ describe('Notification Service', () => {
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: JhiWebsocketService, useClass: MockWebsocketService },
                 { provide: MetisService, useClass: MockMetisService },
+                {
+                    provide: ActivatedRoute,
+                    useValue: {
+                        snapshot: {
+                            firstChild: {
+                                params: {
+                                    courseId: 1,
+                                },
+                            },
+                        },
+                    },
+                },
                 MockProvider(TutorialGroupsNotificationService),
+                MockProvider(CourseConversationsNotificationsService),
             ],
         })
             .compileComponents()
@@ -102,6 +167,7 @@ describe('Notification Service', () => {
 
                 websocketService = TestBed.inject(JhiWebsocketService);
                 wsSubscribeStub = jest.spyOn(websocketService, 'subscribe');
+                wsUnSubscribeStub = jest.spyOn(websocketService, 'unsubscribe');
                 wsNotificationSubject = new Subject<Notification | undefined>();
                 wsReceiveNotificationStub = jest.spyOn(websocketService, 'receive').mockReturnValue(wsNotificationSubject);
 
@@ -111,6 +177,9 @@ describe('Notification Service', () => {
                 tutorialGroup = new TutorialGroup();
                 tutorialGroup.id = 99;
                 getTutorialGroupsForNotificationsSpy = jest.spyOn(tutorialGroupNotificationService, 'getTutorialGroupsForNotifications').mockReturnValue(of([]));
+
+                conversationNotificationService = TestBed.inject(CourseConversationsNotificationsService);
+                getConversationsForNotificationsSpy = jest.spyOn(conversationNotificationService, 'getConversationsForNotifications').mockReturnValue(of([]));
 
                 courseManagementService = TestBed.inject(CourseManagementService);
                 cmCoursesSubject = new Subject<[Course] | undefined>();
@@ -134,11 +203,19 @@ describe('Notification Service', () => {
         });
 
         it('should navigate to notification target', () => {
-            jest.spyOn(router, 'navigate').mockImplementation();
+            jest.spyOn(router, 'navigate').mockReturnValue(Promise.resolve(true));
 
             notificationService.interpretNotification(quizNotification);
 
             expect(router.navigate).toHaveBeenCalledOnce();
+        });
+
+        it('should navigate to new group chat notification target', () => {
+            const navigateToNotificationTarget = jest.spyOn(notificationService, 'navigateToNotificationTarget');
+            jest.spyOn(router, 'navigate').mockReturnValue(Promise.resolve(true));
+            notificationService.interpretNotification(conversationCreationNotification);
+            expect(router.navigate).toHaveBeenCalledOnce();
+            expect(navigateToNotificationTarget).toHaveBeenCalledOnce();
         });
 
         it('should convert date array from server', fakeAsync(() => {
@@ -154,6 +231,52 @@ describe('Notification Service', () => {
             const req = httpMock.expectOne({ method: 'GET' });
             req.flush(serverResponse);
             tick();
+        }));
+
+        it('should subscribe to newly created conversation and receive new single user notification', fakeAsync(() => {
+            notificationService.subscribeToNotificationUpdates().subscribe((notification) => {
+                expect(notification).toEqual(conversationCreationNotification);
+            });
+            tick(); // position of tick is very important here !
+            const userId = 99; // based on MockAccountService
+            const notificationTopic = `/topic/user/${userId}/notifications`;
+            expect(wsSubscribeStub).toHaveBeenCalledOnce();
+            expect(wsSubscribeStub).toHaveBeenCalledWith(notificationTopic);
+            // websocket correctly subscribed to the topic
+            expect(wsReceiveNotificationStub).toHaveBeenCalledOnce();
+            // websocket "receive" called
+
+            // add new single user notification
+            // calls addNotificationToObserver i.e. calls next on subscribeToNotificationUpdates' ReplaySubject
+            wsNotificationSubject.next(conversationCreationNotification);
+
+            // websocket subscribe and receive called again for the new conversation
+            const conversationId = groupChat.id;
+            const conversationNotificationTopic = `/topic/conversation/${conversationId}/notifications`;
+            expect(wsSubscribeStub).toHaveBeenCalledTimes(2);
+            expect(wsSubscribeStub).toHaveBeenCalledWith(conversationNotificationTopic);
+            expect(wsReceiveNotificationStub).toHaveBeenCalledTimes(2);
+        }));
+
+        it('should unsubscribe from deleted conversation', fakeAsync(() => {
+            notificationService.subscribeToNotificationUpdates().subscribe((notification) => {
+                expect(notification).toEqual(conversationDeletionNotification);
+            });
+            tick(); // position of tick is very important here !
+            const userId = 99; // based on MockAccountService
+            const notificationTopic = `/topic/user/${userId}/notifications`;
+            expect(wsSubscribeStub).toHaveBeenCalledOnce();
+            expect(wsSubscribeStub).toHaveBeenCalledWith(notificationTopic);
+            // websocket correctly subscribed to the topic
+            expect(wsReceiveNotificationStub).toHaveBeenCalledOnce();
+            // websocket "receive" called
+
+            // add new single user notification
+            // calls addNotificationToObserver i.e. calls next on subscribeToNotificationUpdates' ReplaySubject
+            wsNotificationSubject.next(conversationDeletionNotification);
+
+            // websocket unsubscribe called for the deleted conversation
+            expect(wsUnSubscribeStub).toHaveBeenCalledOnce();
         }));
 
         it('should subscribe to single user notification updates and receive new single user notification', fakeAsync(() => {
@@ -189,6 +312,20 @@ describe('Notification Service', () => {
             expect(wsSubscribeStub).toHaveBeenCalledWith(notificationTopic);
             expect(wsReceiveNotificationStub).toHaveBeenCalledOnce();
             wsNotificationSubject.next(tutorialGroupNotification);
+        }));
+
+        it('should subscribe to conversation notification updates and receive new message notifications', fakeAsync(() => {
+            getConversationsForNotificationsSpy = jest.spyOn(conversationNotificationService, 'getConversationsForNotifications').mockReturnValue(of([conversation]));
+
+            notificationService.subscribeToNotificationUpdates().subscribe((notification) => {
+                expect(notification).toEqual(conversationNotification);
+            });
+            expect(getConversationsForNotificationsSpy).toHaveBeenCalledOnce();
+            const notificationTopic = `/topic/conversation/${tutorialGroup.id}/notifications`;
+            expect(wsSubscribeStub).toHaveBeenCalledOnce();
+            expect(wsSubscribeStub).toHaveBeenCalledWith(notificationTopic);
+            expect(wsReceiveNotificationStub).toHaveBeenCalledOnce();
+            wsNotificationSubject.next(conversationNotification);
         }));
 
         it('should subscribe to group notification updates and receive new group notification', fakeAsync(() => {

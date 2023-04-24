@@ -1,12 +1,14 @@
 package de.tum.in.www1.artemis.service.notifications;
 
 import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.*;
+import static de.tum.in.www1.artemis.domain.notification.NotificationConstants.*;
 import static de.tum.in.www1.artemis.domain.notification.SingleUserNotificationFactory.createNotification;
 import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsCommunicationChannel.*;
 
 import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -18,6 +20,7 @@ import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.metis.Posting;
+import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
 import de.tum.in.www1.artemis.domain.notification.NotificationConstants;
 import de.tum.in.www1.artemis.domain.notification.SingleUserNotification;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -75,6 +78,12 @@ public class SingleUserNotificationService {
             case TUTORIAL_GROUP_REGISTRATION_STUDENT, TUTORIAL_GROUP_DEREGISTRATION_STUDENT, TUTORIAL_GROUP_REGISTRATION_TUTOR, TUTORIAL_GROUP_DEREGISTRATION_TUTOR, TUTORIAL_GROUP_MULTIPLE_REGISTRATION_TUTOR, TUTORIAL_GROUP_ASSIGNED, TUTORIAL_GROUP_UNASSIGNED -> createNotification(
                     ((TutorialGroupNotificationSubject) notificationSubject).tutorialGroup, notificationType, ((TutorialGroupNotificationSubject) notificationSubject).users,
                     ((TutorialGroupNotificationSubject) notificationSubject).responsibleUser);
+            // Conversation creation related
+            case CONVERSATION_CREATE_ONE_TO_ONE_CHAT, CONVERSATION_CREATE_GROUP_CHAT, CONVERSATION_ADD_USER_GROUP_CHAT, CONVERSATION_ADD_USER_CHANNEL, CONVERSATION_REMOVE_USER_GROUP_CHAT, CONVERSATION_REMOVE_USER_CHANNEL, CONVERSATION_DELETE_CHANNEL -> createNotification(
+                    ((ConversationNotificationSubject) notificationSubject).conversation, notificationType, ((ConversationNotificationSubject) notificationSubject).user,
+                    ((ConversationNotificationSubject) notificationSubject).responsibleUser);
+            case CONVERSATION_NEW_REPLY_MESSAGE -> createNotification(((NewReplyNotificationSubject) notificationSubject).answerPost, notificationType,
+                    ((NewReplyNotificationSubject) notificationSubject).user, ((NewReplyNotificationSubject) notificationSubject).responsibleUser);
             default -> throw new UnsupportedOperationException("Can not create notification for type : " + notificationType);
         };
         saveAndSend(singleUserNotification, notificationSubject);
@@ -301,6 +310,41 @@ public class SingleUserNotificationService {
     }
 
     /**
+     * Record to store conversation, user and responsible user in one notification subject.
+     */
+    public record ConversationNotificationSubject(Conversation conversation, User user, User responsibleUser) {
+    }
+
+    /**
+     * Record to store Answer post, users and responsible user in one notification subject.
+     */
+    public record NewReplyNotificationSubject(AnswerPost answerPost, User user, User responsibleUser) {
+    }
+
+    /**
+     * Notify a user about new chat creation or conversation deletion.
+     *
+     * @param conversation     the conversation the student has been added for or removed from
+     * @param user             the user that has been added for the conversation or removed from the conversation
+     * @param responsibleUser  the responsibleUser that has registered/removed the user for the conversation
+     * @param notificationType the type of notification to be sent
+     */
+    public void notifyClientAboutConversationCreationOrDeletion(Conversation conversation, User user, User responsibleUser, NotificationType notificationType) {
+        notifyRecipientWithNotificationType(new ConversationNotificationSubject(conversation, user, responsibleUser), notificationType, null, null);
+    }
+
+    /**
+     * Notify a user about new message reply in a conversation.
+     *
+     * @param answerPost      the answerPost of the user involved
+     * @param user            the user that is involved in the message reply
+     * @param responsibleUser the responsibleUser sending the message reply
+     */
+    public void notifyUserAboutNewMessageReply(AnswerPost answerPost, User user, User responsibleUser) {
+        notifyRecipientWithNotificationType(new NewReplyNotificationSubject(answerPost, user, responsibleUser), CONVERSATION_NEW_REPLY_MESSAGE, null, null);
+    }
+
+    /**
      * Saves the given notification in database and sends it to the client via websocket.
      * Also creates and sends an email.
      *
@@ -308,13 +352,30 @@ public class SingleUserNotificationService {
      * @param notificationSubject which information will be extracted to create the email
      */
     private void saveAndSend(SingleUserNotification notification, Object notificationSubject) {
-        singleUserNotificationRepository.save(notification);
+        // do not save notifications that are not relevant for the user
+        if (shouldNotificationBeSaved(notification)) {
+            singleUserNotificationRepository.save(notification);
+        }
         // we only want to notify one individual user therefore we can check the settings and filter preemptively
         boolean isAllowedBySettings = notificationSettingsService.checkIfNotificationOrEmailIsAllowedBySettingsForGivenUser(notification, notification.getRecipient(), WEBAPP);
         if (isAllowedBySettings) {
             messagingTemplate.convertAndSend(notification.getTopic(), notification);
             prepareSingleUserNotificationEmail(notification, notificationSubject);
         }
+    }
+
+    private boolean shouldNotificationBeSaved(SingleUserNotification notification) {
+        if (Objects.equals(notification.getTitle(), CONVERSATION_CREATE_ONE_TO_ONE_CHAT_TITLE)) {
+            return false;
+        }
+        else if (Objects.equals(notification.getTitle(), CONVERSATION_CREATE_GROUP_CHAT_TITLE) || Objects.equals(notification.getTitle(), CONVERSATION_DELETE_CHANNEL_TITLE)
+                || Objects.equals(notification.getTitle(), CONVERSATION_ADD_USER_CHANNEL_TITLE) || Objects.equals(notification.getTitle(), CONVERSATION_ADD_USER_GROUP_CHAT_TITLE)
+                || Objects.equals(notification.getTitle(), CONVERSATION_REMOVE_USER_CHANNEL_TITLE)
+                || Objects.equals(notification.getTitle(), CONVERSATION_REMOVE_USER_GROUP_CHAT_TITLE)
+                || Objects.equals(notification.getTitle(), MESSAGE_REPLY_IN_CONVERSATION_TITLE)) {
+            return (!Objects.equals(notification.getAuthor().getLogin(), notification.getRecipient().getLogin()));
+        }
+        return true;
     }
 
     /**

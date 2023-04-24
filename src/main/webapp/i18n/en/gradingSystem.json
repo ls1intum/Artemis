@@ -92,7 +92,8 @@
             },
             "detailedTab": {
                 "title": "Detailed"
-            }
+            },
+            "gradingStepsAboveMaxPointsWarning": "At least one grading step exceeds the maximum number of points for this course."
         },
         "gradingScale": {
             "created": "Grading key has been created",
