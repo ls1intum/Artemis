@@ -38,6 +38,9 @@ artemis:
     androidAppPackage: "de.tum.informatics.www1.artemis.native_app.android"
     androidSha256CertFingerprints: "D4:5C:58:77:B2:4E:2F:15:60:59:BB:C0:9C:1C:B0:A9:FD:3D:D8:F3:88:A8:B3:EA:DB:05:06:3B:7E:AF:0C:4F"
 
+    # activate the following line if you want to support push notifications for the mobile clients.
+    # More information about the TUM hosted hermes service can be found here: https://github.com/ls1intum/Hermes
+#    TODO: comment out following line
     push-notification-relay: https://hermes-sandbox.artemis.cit.tum.de
 
     continuous-integration:

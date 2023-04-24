@@ -31,6 +31,7 @@ Push Notifications
 ^^^^^^^^^^^^^^^^^^
 
 Artemis can also send out push notification to the Artemis native iOS and Android apps.
+To support push notifications admins have to explicitly activate this in the artemis configuration.
 
 This notifications are e2e encrypted and sent via the TUM hosted Hermes service ( https://hermes.artemis.cit.tum.de/ ).
 Users explicitly have to opt-in via their mobile application to receive push notifications and can deactivate them at any time.
