@@ -186,7 +186,7 @@ public class CourseResource {
         if (courseUpdate.getPresentationScore() != null && courseUpdate.getPresentationScore() > 0) {
             Optional<GradingScale> gradingScale = gradingScaleService.findGradingScaleByCourseId(courseUpdate.getId());
             if (gradingScale.isPresent() && gradingScale.get().getPresentationsNumber() != null) {
-                throw new BadRequestAlertException("You can not set a presentation score if the grading scale is already set up for graded presentations", Course.ENTITY_NAME,
+                throw new BadRequestAlertException("You cannot set a presentation score if the grading scale is already set up for graded presentations", Course.ENTITY_NAME,
                         "gradedPresentationAlreadySet", true);
             }
         }
