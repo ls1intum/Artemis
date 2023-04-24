@@ -1,7 +1,15 @@
 package de.tum.in.www1.artemis.config.localvcci;
 
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.nio.file.Path;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,11 +19,18 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 
 import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.api.command.PullImageResultCallback;
+import com.github.dockerjava.api.exception.BadRequestException;
+import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.DockerClientImpl;
 import com.github.dockerjava.httpclient5.ApacheDockerHttpClient;
 import com.github.dockerjava.transport.DockerHttpClient;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
+
+import de.tum.in.www1.artemis.exception.LocalCIException;
+import de.tum.in.www1.artemis.service.ResourceLoaderService;
 
 /**
  * Creates beans needed for the local CI system.
@@ -25,10 +40,19 @@ import com.github.dockerjava.transport.DockerHttpClient;
 @Profile("localci")
 public class LocalCIConfiguration {
 
+    private final ResourceLoaderService resourceLoaderService;
+
     private final Logger log = LoggerFactory.getLogger(LocalCIConfiguration.class);
 
     @Value("${artemis.continuous-integration.thread-pool-size:1}")
     int threadPoolSize;
+
+    @Value("${artemis.continuous-integration.build.images.java.default}")
+    String dockerImage;
+
+    public LocalCIConfiguration(ResourceLoaderService resourceLoaderService) {
+        this.resourceLoaderService = resourceLoaderService;
+    }
 
     /**
      * Creates an executor service that manages the queue of build jobs.
@@ -38,7 +62,20 @@ public class LocalCIConfiguration {
     @Bean
     public ExecutorService localCIBuildExecutorService() {
         log.info("Using ExecutorService with thread pool size: " + threadPoolSize);
-        return Executors.newFixedThreadPool(threadPoolSize);
+        ThreadFactory customThreadFactory = new ThreadFactoryBuilder().setNameFormat("local-ci-build-%d")
+                .setUncaughtExceptionHandler((thread, exception) -> log.error("Uncaught exception in thread " + thread.getName(), exception)).build();
+        return new ThreadPoolExecutor(threadPoolSize, threadPoolSize, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(), customThreadFactory);
+    }
+
+    @Bean
+    public ExecutorService buildQueueLogger(ExecutorService localCIBuildExecutorService) {
+        ScheduledExecutorService buildQueueLogger = Executors.newSingleThreadScheduledExecutor();
+        buildQueueLogger.scheduleAtFixedRate(() -> {
+            ThreadPoolExecutor threadPoolExecutor = (ThreadPoolExecutor) localCIBuildExecutorService;
+            // Report on the current state of the local CI ExecutorService queue every 10 seconds.
+            log.info("Current queue size of local CI ExecutorService: {}", threadPoolExecutor.getQueue().size());
+        }, 0, 3, TimeUnit.SECONDS);
+        return buildQueueLogger;
     }
 
     /**
@@ -63,6 +100,52 @@ public class LocalCIConfiguration {
 
         log.info("Docker client created with connection URI: " + dockerConnectionUri);
 
+        // If the Docker image used for the local CI build job containers is not available on the local machine, pull it from Docker Hub.
+        pullDockerImage(dockerClient, dockerImage);
+
         return dockerClient;
+    }
+
+    /**
+     * Provides the path to the build script used for local CI build jobs.
+     * To bind the build script into the Docker container running the build job, we need to get a File or Path object directly pointing to the resource.
+     * However, if the application is packaged (like it is in production), the Java runtime does not provide direct access to the file system for embedded resources.
+     * To make the path available, the resource is retrieved as an InputStream and written to a temporary file.
+     * This is a rather costly operation, so we only do it once and then provide the Path object via this Bean.
+     *
+     * @return the Path to the build script.
+     */
+    @Bean
+    public Path buildScriptFilePath() {
+        Path resourcePath = Path.of("templates", "localci", "java", "build_and_run_tests.sh");
+        Path scriptPath;
+        try {
+            scriptPath = resourceLoaderService.getResourceFilePath(resourcePath);
+            log.info("Providing build script at {}", scriptPath);
+        }
+        catch (IOException | URISyntaxException | IllegalArgumentException e) {
+            throw new LocalCIException("Could not retrieve build script.", e);
+        }
+
+        return scriptPath;
+    }
+
+    private void pullDockerImage(DockerClient dockerClient, String dockerImage) {
+        try {
+            dockerClient.inspectImageCmd(dockerImage).exec();
+        }
+        catch (NotFoundException e) {
+            // Image does not exist locally, pull it from Docker Hub.
+            log.info("Pulling docker image {}", dockerImage);
+            try {
+                dockerClient.pullImageCmd(dockerImage).exec(new PullImageResultCallback()).awaitCompletion();
+            }
+            catch (InterruptedException ie) {
+                throw new LocalCIException("Interrupted while pulling docker image " + dockerImage, ie);
+            }
+        }
+        catch (BadRequestException e) {
+            throw new LocalCIException("Error while inspecting docker image " + dockerImage, e);
+        }
     }
 }

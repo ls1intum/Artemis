@@ -5,8 +5,8 @@
 # ===================================================================
 artemis:
     continuous-integration:
-        # The number of threads that are used to execute the CI jobs. Choose a thread pool size of 0 to synchronously execute tasks.
-        thread-pool-size: 2
+        # The number of threads that are used to execute the CI jobs.
+        thread-pool-size: 1
         # If true, the CI jobs will be executed asynchronously. If false, the CI jobs will be executed synchronously (e.g. for debugging and tests).
         asynchronous: true
         # The maximum number of seconds that a CI job is allowed to run. If the job exceeds this time, it will be terminated.

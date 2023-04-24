@@ -2,13 +2,11 @@ package de.tum.in.www1.artemis.service.connectors.localci;
 
 import java.io.IOException;
 import java.io.StringReader;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -40,8 +38,6 @@ import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.async.ResultCallback;
 import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.command.ExecCreateCmdResponse;
-import com.github.dockerjava.api.command.PullImageResultCallback;
-import com.github.dockerjava.api.exception.BadRequestException;
 import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.model.Bind;
 import com.github.dockerjava.api.model.Container;
@@ -59,7 +55,6 @@ import de.tum.in.www1.artemis.exception.localvc.LocalVCInternalException;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
-import de.tum.in.www1.artemis.service.ResourceLoaderService;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildResult;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUrl;
@@ -83,8 +78,6 @@ public class LocalCIBuildJobExecutionService {
 
     private final DockerClient dockerClient;
 
-    private final ResourceLoaderService resourceLoaderService;
-
     private final ProgrammingMessagingService programmingMessagingService;
 
     private final TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
@@ -92,6 +85,9 @@ public class LocalCIBuildJobExecutionService {
     private final SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
 
     private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
+
+    // The Path to the script file located in the resources folder. The script file contains the steps that run the tests on the Docker container.
+    private final Path buildScriptFilePath;
 
     @Value("${artemis.version-control.url}")
     private URL localVCBaseUrl;
@@ -109,38 +105,17 @@ public class LocalCIBuildJobExecutionService {
     private boolean runBuildJobsAsynchronously;
 
     public LocalCIBuildJobExecutionService(Optional<VersionControlService> versionControlService, ExecutorService localCIBuildExecutorService, DockerClient dockerClient,
-            ResourceLoaderService resourceLoaderService, ProgrammingMessagingService programmingMessagingService,
-            TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
+            ProgrammingMessagingService programmingMessagingService, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
-            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository) {
+            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, Path buildScriptFilePath) {
         this.versionControlService = versionControlService;
         this.localCIBuildExecutorService = localCIBuildExecutorService;
         this.dockerClient = dockerClient;
-        this.resourceLoaderService = resourceLoaderService;
         this.programmingMessagingService = programmingMessagingService;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
-    }
-
-    /**
-     * @param assignmentRepositoryPath The path to the assignment repository.
-     * @param testsRepositoryPath      The path to the test repository.
-     * @param scriptPath               The path to the shell script that should be executed in the container.
-     * @param branch                   The branch that should be built.
-     * @return the container id of the created container.
-     * @throws LocalCIException if the container could not be created.
-     */
-    private String prepareDockerContainer(Path assignmentRepositoryPath, Path testsRepositoryPath, Path scriptPath, String branch) {
-        HostConfig volumeConfig = createVolumeConfig(assignmentRepositoryPath, testsRepositoryPath, scriptPath);
-
-        // If the docker image is not available on the local machine, pull it from Docker Hub.
-        pullDockerImage(dockerClient, dockerImage);
-
-        // Create the container from the "ls1tum/artemis-maven-template" image with the local paths to the Git repositories and the shell script bound to it.
-        CreateContainerResponse container = createContainer(volumeConfig, branch);
-
-        return container.getId();
+        this.buildScriptFilePath = buildScriptFilePath;
     }
 
     /**
@@ -157,45 +132,46 @@ public class LocalCIBuildJobExecutionService {
             throw new LocalCIException("Project type must be Gradle.");
         }
 
-        LocalVCRepositoryUrl assignmentRepositoryUrl;
-        LocalVCRepositoryUrl testsRepositoryUrl;
-        try {
-            assignmentRepositoryUrl = new LocalVCRepositoryUrl(participation.getRepositoryUrl(), localVCBaseUrl);
-            testsRepositoryUrl = new LocalVCRepositoryUrl(participation.getProgrammingExercise().getTestRepositoryUrl(), localVCBaseUrl);
-        }
-        catch (LocalVCInternalException e) {
-            throw new LocalCIException("Error while creating LocalVCRepositoryUrl", e);
-        }
-
-        Path assignmentRepositoryPath = assignmentRepositoryUrl.getLocalRepositoryPath(localVCBasePath).toAbsolutePath();
-        Path testsRepositoryPath = testsRepositoryUrl.getLocalRepositoryPath(localVCBasePath).toAbsolutePath();
-
-        // Get script file out of resources.
-        Path scriptPath = getBuildScriptPath();
-
-        String branch;
-        try {
-            branch = versionControlService.orElseThrow().getOrRetrieveBranchOfParticipation(participation);
-        }
-        catch (LocalVCInternalException e) {
-            throw new LocalCIException("Error while getting branch of participation", e);
-        }
-
-        // Prepare the Docker container before submitting the build job to the executor service, so we can remove the container if something goes wrong.
-        String containerId;
-        try {
-            containerId = prepareDockerContainer(assignmentRepositoryPath, testsRepositoryPath, scriptPath, branch);
-        }
-        catch (LocalCIException e) {
-            // Remove the temporary build script file.
-            deleteTemporaryBuildScript(scriptPath);
-            throw new LocalCIException("Error while preparing Docker container", e);
-        }
+        // Prepare the Docker container name before submitting the build job to the executor service, so we can remove the container if something goes wrong.
+        String containerName = "artemis-local-ci-" + participation.getId() + "-" + ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS"));
 
         Callable<LocalCIBuildResult> buildJob = () -> {
             // Add "_BUILDING" to the build plan id to indicate that the build plan is currently building.
             updateBuildPlanStatus(participation, ContinuousIntegrationService.BuildStatus.BUILDING);
-            return runBuildJob(participation, containerId, branch, scriptPath);
+
+            // Retrieve the paths to the repositories that the build jobs needs.
+            // This includes the assignment repository (the one to be tested, e.g. the student's repository, or the template repository), and the tests repository which includes
+            // the tests to be executed.
+            LocalVCRepositoryUrl assignmentRepositoryUrl;
+            LocalVCRepositoryUrl testsRepositoryUrl;
+            try {
+                assignmentRepositoryUrl = new LocalVCRepositoryUrl(participation.getRepositoryUrl(), localVCBaseUrl);
+                testsRepositoryUrl = new LocalVCRepositoryUrl(participation.getProgrammingExercise().getTestRepositoryUrl(), localVCBaseUrl);
+            }
+            catch (LocalVCInternalException e) {
+                throw new LocalCIException("Error while creating LocalVCRepositoryUrl", e);
+            }
+
+            Path assignmentRepositoryPath = assignmentRepositoryUrl.getLocalRepositoryPath(localVCBasePath).toAbsolutePath();
+            Path testsRepositoryPath = testsRepositoryUrl.getLocalRepositoryPath(localVCBasePath).toAbsolutePath();
+
+            String branch;
+            try {
+                branch = versionControlService.orElseThrow().getOrRetrieveBranchOfParticipation(participation);
+            }
+            catch (LocalVCInternalException e) {
+                throw new LocalCIException("Error while getting branch of participation", e);
+            }
+
+            // Create the volume configuration for the container. The assignment repository, the tests repository, and the build script are bound into the container to be used by
+            // the build job.
+            HostConfig volumeConfig = createVolumeConfig(assignmentRepositoryPath, testsRepositoryPath);
+
+            // Create the container from the "ls1tum/artemis-maven-template" image with the local paths to the Git repositories and the shell script bound to it. This does not
+            // start the container yet.
+            CreateContainerResponse container = createContainer(containerName, volumeConfig, branch);
+
+            return runBuildJob(participation, containerName, container.getId(), branch);
         };
 
         // Submit the build job to the executor service. This runs in a separate thread, so it does not block the main thread.
@@ -232,8 +208,7 @@ public class LocalCIBuildJobExecutionService {
                 // SolutionProgrammingExerciseParticipation, which all extend Participation.
                 programmingMessagingService.notifyUserAboutSubmissionError((Participation) participation, error);
 
-                stopContainer(containerId);
-                deleteTemporaryBuildScript(scriptPath);
+                stopContainer(containerName);
 
                 // Wrap the exception in a CompletionException so that the future is completed exceptionally and the thenAccept block is not run.
                 throw new CompletionException(e);
@@ -266,30 +241,18 @@ public class LocalCIBuildJobExecutionService {
         }
     }
 
-    private Path getBuildScriptPath() {
-        Path resourcePath = Path.of("templates", "localci", "java", "build_and_run_tests.sh");
-        Path scriptPath;
-        try {
-            scriptPath = resourceLoaderService.getResourceFilePath(resourcePath);
-        }
-        catch (IOException | URISyntaxException | IllegalArgumentException e) {
-            throw new LocalCIException("Could not retrieve build script.", e);
-        }
-
-        return scriptPath;
-    }
-
     /**
      * Runs the build job. This includes creating and starting a Docker container, executing the build script, and processing the build result.
      *
      * @param participation The participation for which the build job should be run.
+     * @param containerName The name of the container that should be used for the build job. This is used to remove the container and is also accessible from outside build job
+     *                          running in its own thread.
      * @param containerId   The id of the container that should be used for the build job.
      * @param branch        The branch that should be built.
-     * @param scriptPath    The path to the build script.
      * @return The build result.
      * @throws LocalCIException if something went wrong while running the build job.
      */
-    private LocalCIBuildResult runBuildJob(ProgrammingExerciseParticipation participation, String containerId, String branch, Path scriptPath) {
+    private LocalCIBuildResult runBuildJob(ProgrammingExerciseParticipation participation, String containerName, String containerId, String branch) {
 
         long timeNanoStart = System.nanoTime();
 
@@ -309,8 +272,7 @@ public class LocalCIBuildJobExecutionService {
         catch (NotFoundException | IOException e) {
             // Could not read commit hash from .git folder. Stop the container and return a build result that indicates that the build failed (empty list for failed tests and
             // empty list for successful tests).
-            stopContainer(containerId);
-            deleteTemporaryBuildScript(scriptPath);
+            stopContainer(containerName);
             return constructFailedBuildResult(branch, assignmentRepoCommitHash, testsRepoCommitHash, buildCompletedDate);
         }
 
@@ -326,13 +288,11 @@ public class LocalCIBuildJobExecutionService {
         catch (NotFoundException e) {
             // If the test results are not found, this means that something went wrong during the build and testing of the submission.
             // Stop the container and return a build results that indicates that the build failed.
-            stopContainer(containerId);
-            deleteTemporaryBuildScript(scriptPath);
+            stopContainer(containerName);
             return constructFailedBuildResult(branch, assignmentRepoCommitHash, testsRepoCommitHash, buildCompletedDate);
         }
 
-        stopContainer(containerId);
-        deleteTemporaryBuildScript(scriptPath);
+        stopContainer(containerName);
 
         LocalCIBuildResult buildResult;
         try {
@@ -385,8 +345,9 @@ public class LocalCIBuildJobExecutionService {
         }
     }
 
-    private CreateContainerResponse createContainer(HostConfig volumeConfig, String branch) {
-        return dockerClient.createContainerCmd(dockerImage).withHostConfig(volumeConfig).withEnv("ARTEMIS_BUILD_TOOL=gradle", "ARTEMIS_DEFAULT_BRANCH=" + branch)
+    private CreateContainerResponse createContainer(String containerName, HostConfig volumeConfig, String branch) {
+        return dockerClient.createContainerCmd(dockerImage).withName(containerName).withHostConfig(volumeConfig)
+                .withEnv("ARTEMIS_BUILD_TOOL=gradle", "ARTEMIS_DEFAULT_BRANCH=" + branch)
                 // Command to run when the container starts. This is the command that will be executed in the container's main process, which runs in the foreground and blocks the
                 // container from exiting until it finishes.
                 // It waits until the script that is running the tests (see below execCreateCmdResponse) is completed, and until the result files are extracted which is indicated
@@ -397,73 +358,44 @@ public class LocalCIBuildJobExecutionService {
                 .exec();
     }
 
-    private HostConfig createVolumeConfig(Path assignmentRepositoryPath, Path testRepositoryPath, Path scriptPath) {
+    private HostConfig createVolumeConfig(Path assignmentRepositoryPath, Path testRepositoryPath) {
         // Configure the volumes of the container such that it can access the assignment repository, the test repository, and the build script.
         return HostConfig.newHostConfig().withAutoRemove(true) // Automatically remove the container when it exits.
                 .withBinds(new Bind(assignmentRepositoryPath.toString(), new Volume("/assignment-repository")),
-                        new Bind(testRepositoryPath.toString(), new Volume("/test-repository")), new Bind(scriptPath.toString(), new Volume("/script.sh")));
-    }
-
-    private void pullDockerImage(DockerClient dockerClient, String dockerImage) {
-        try {
-            dockerClient.inspectImageCmd(dockerImage).exec();
-        }
-        catch (NotFoundException e) {
-            // Image does not exist locally, pull it from Docker Hub.
-            log.info("Pulling docker image {}", dockerImage);
-            try {
-                dockerClient.pullImageCmd(dockerImage).exec(new PullImageResultCallback()).awaitCompletion();
-            }
-            catch (InterruptedException ie) {
-                throw new LocalCIException("Interrupted while pulling docker image " + dockerImage, ie);
-            }
-        }
-        catch (BadRequestException e) {
-            throw new LocalCIException("Error while inspecting docker image " + dockerImage, e);
-        }
+                        new Bind(testRepositoryPath.toString(), new Volume("/test-repository")), new Bind(buildScriptFilePath.toString(), new Volume("/script.sh")));
     }
 
     /**
      * Stops the container with the given id by creating a file "stop_container.txt" in its root directory.
      * The container was created in such a way that it waits for this file to appear and then stops running, causing it to be removed at the same time.
      *
-     * @param containerId The id of the container to stop.
+     * @param containerName The name of the container to stop. Cannot use the container id, because this method might have to be called from the main thread (not the thread started
+     *                          for the build job) where the container ID is not available.
      */
-    private void stopContainer(String containerId) {
-        if (!isContainerRunning(containerId)) {
+    private void stopContainer(String containerName) {
+        // List all containers, including the non-running ones.
+        List<Container> containers = dockerClient.listContainersCmd().withShowAll(true).exec();
+
+        // Check if there's a container with the given name.
+        Optional<Container> containerOptional = containers.stream().filter(container -> container.getNames()[0].equals("/" + containerName)).findFirst();
+        if (containerOptional.isEmpty()) {
             return;
         }
+
+        // Check if the container is running. Return if it's not.
+        boolean isContainerRunning = containerOptional.get().getState().equals("running");
+        if (!isContainerRunning) {
+            return;
+        }
+
+        // Get the container ID.
+        String containerId = containerOptional.get().getId();
+
         // Create a file "stop_container.txt" in the root directory of the container to indicate that the test results have been extracted or that the container should be stopped
         // for some other reason.
         // The container's main process is waiting for this file to appear and then stops the main process, thus stopping and removing the container.
         ExecCreateCmdResponse createStopContainerFileCmdResponse = dockerClient.execCreateCmd(containerId).withCmd("touch", "stop_container.txt").exec();
         dockerClient.execStartCmd(createStopContainerFileCmdResponse.getId()).exec(new ResultCallback.Adapter<>());
-    }
-
-    private boolean isContainerRunning(String containerId) {
-        // List all containers, including the non-running ones.
-        List<Container> containers = dockerClient.listContainersCmd().withShowAll(true).exec();
-
-        // Check if there's a container with the given ID and if it's running.
-        return containers.stream().filter(container -> container.getId().equals(containerId)).findFirst().map(container -> container.getState().equals("running")).orElse(false);
-    }
-
-    /**
-     * Deletes the build script if it was created as a temporary file.
-     *
-     * @param scriptPath The path of the build script.
-     */
-    private void deleteTemporaryBuildScript(Path scriptPath) {
-        // If the script was created as a temporary file, delete it.
-        Path tempDir = Paths.get(System.getProperty("java.io.tmpdir"));
-        if (scriptPath.startsWith(tempDir)) {
-            try {
-                Files.deleteIfExists(scriptPath);
-            }
-            catch (IOException e) {
-                log.error("Could not delete temporary file {}", scriptPath);
-            }
-        }
     }
 
     private LocalCIBuildResult parseTestResults(TarArchiveInputStream testResultsTarInputStream, String assignmentRepoBranchName, String assignmentRepoCommitHash,
