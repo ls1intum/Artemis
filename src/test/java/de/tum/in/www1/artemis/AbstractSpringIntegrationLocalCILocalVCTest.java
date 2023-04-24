@@ -213,6 +213,11 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     }
 
     @Override
+    public void mockConnectorRequestForImportFromFile(ProgrammingExercise exerciseForImport) {
+        // Not implemented for local VC and local CI
+    }
+
+    @Override
     public void mockImportProgrammingExerciseWithFailingEnablePlan(ProgrammingExercise sourceExercise, ProgrammingExercise exerciseToBeImported, boolean planExistsInCi,
             boolean shouldPlanEnableFail) {
         // Not implemented for local VC and local CI
