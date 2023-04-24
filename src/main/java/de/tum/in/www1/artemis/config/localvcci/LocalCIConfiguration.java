@@ -50,8 +50,8 @@ public class LocalCIConfiguration {
     @Value("${artemis.continuous-integration.thread-pool-size:1}")
     int threadPoolSize;
 
-    @Value("${artemis.continuous-integration.rate-limit:0.1")
-    int rateLimit;
+    @Value("${artemis.continuous-integration.rate-limit:1}")
+    double rateLimit;
 
     @Value("${artemis.continuous-integration.build.images.java.default}")
     String dockerImage;
@@ -91,7 +91,7 @@ public class LocalCIConfiguration {
     }
 
     /**
-     * Used to control the rate at which build jobs are added to the queue.
+     * Creates a rate limiter to control the rate at which build jobs are added to the queue.
      *
      * @return the rate limiter bean.
      */
@@ -103,6 +103,8 @@ public class LocalCIConfiguration {
 
     /**
      * Creates an XMLInputFactory that is used to parse the test results during execution of the local CI build jobs.
+     *
+     * @return The XMLInputFactory bean.
      */
     @Bean
     public XMLInputFactory localCIXMLInputFactory() {
@@ -112,7 +114,7 @@ public class LocalCIConfiguration {
     /**
      * Creates a Docker client that is used to communicate with the Docker daemon.
      *
-     * @return The Docker client bean.
+     * @return The DockerClient bean.
      */
     @Bean
     public DockerClient dockerClient() {
