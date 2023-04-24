@@ -98,7 +98,7 @@ public class LearningGoalResource {
      */
     @GetMapping("learning-goals")
     @PreAuthorize("hasRole('EDITOR')")
-    public ResponseEntity<SearchResultPageDTO<LearningGoal>> getAllLecturesOnPage(PageableSearchDTO<String> search) {
+    public ResponseEntity<SearchResultPageDTO<LearningGoal>> getAllLearningGoalsOnPage(PageableSearchDTO<String> search) {
         final var user = userRepository.getUserWithGroupsAndAuthorities();
         return ResponseEntity.ok(learningGoalService.getAllOnPageWithSize(search, user));
     }
@@ -214,6 +214,34 @@ public class LearningGoalResource {
         linkLectureUnitsToLearningGoal(persistedLearningGoal, learningGoal.getLectureUnits(), Set.of());
 
         return ResponseEntity.created(new URI("/api/courses/" + courseId + "/learning-goals/" + persistedLearningGoal.getId())).body(persistedLearningGoal);
+    }
+
+    /**
+     * POST /courses/:courseId/learning-goals/import : imports a new competency.
+     *
+     * @param courseId           the id of the course to which the learning goal should be imported to
+     * @param competencyToImport the competency that should be imported
+     * @return the ResponseEntity with status 201 (Created) and with body containing the imported competency
+     * @throws URISyntaxException if the Location URI syntax is incorrect
+     */
+    @PostMapping("/courses/{courseId}/learning-goals/import")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
+    public ResponseEntity<LearningGoal> importCompetency(@PathVariable long courseId, @RequestBody LearningGoal competencyToImport) throws URISyntaxException {
+        log.info("REST request to import a competency: {}", competencyToImport.getId());
+
+        var course = courseRepository.findWithEagerLearningGoalsByIdElseThrow(courseId);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, competencyToImport.getCourse(), null);
+
+        if (competencyToImport.getCourse().getId().equals(courseId)) {
+            throw new ConflictException("The competency is already added to this course", "LearningGoal", "learningGoalCycle");
+        }
+
+        competencyToImport.setCourse(course);
+        competencyToImport.setId(null);
+        competencyToImport = learningGoalRepository.save(competencyToImport);
+
+        return ResponseEntity.created(new URI("/api/courses/" + courseId + "/learning-goals/" + competencyToImport.getId())).body(competencyToImport);
     }
 
     /**

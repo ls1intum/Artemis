@@ -775,6 +775,32 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void importLearningGoal_asInstructor_shouldImportLearningGoal() throws Exception {
+        var existingLearningGoal = learningGoalRepository.findByIdElseThrow(idOfLearningGoal);
+        var importedLearningGoal = request.postWithResponseBody("/api/courses/" + idOfCourseTwo + "/learning-goals/import", existingLearningGoal, LearningGoal.class,
+                HttpStatus.CREATED);
+
+        assertThat(learningGoalRepository.findById(importedLearningGoal.getId())).isNotEmpty();
+        assertThat(importedLearningGoal.getTitle()).isEqualTo(existingLearningGoal.getTitle());
+        assertThat(importedLearningGoal.getDescription()).isEqualTo(existingLearningGoal.getDescription());
+        assertThat(importedLearningGoal.getMasteryThreshold()).isEqualTo(existingLearningGoal.getMasteryThreshold());
+        assertThat(importedLearningGoal.getTaxonomy()).isEqualTo(existingLearningGoal.getTaxonomy());
+        assertThat(importedLearningGoal.getExercises()).isEmpty();
+        assertThat(importedLearningGoal.getLectureUnits()).isEmpty();
+        assertThat(importedLearningGoal.getConsecutiveCourses()).isEmpty();
+        assertThat(importedLearningGoal.getUserProgress().isEmpty());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor42", roles = "INSTRUCTOR")
+    void importLearningGoal_instructorNotInCourse_shouldReturnForbidden() throws Exception {
+        LearningGoal learningGoal = new LearningGoal();
+        learningGoal.setTitle("Example Title");
+        request.postWithResponseBody("/api/courses/" + idOfCourseTwo + "/learning-goals/import", learningGoal, LearningGoal.class, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "instructor42", roles = "INSTRUCTOR")
     void testInstructorGetsOnlyResultsFromOwningCourses() throws Exception {
         final var search = database.configureSearch("");

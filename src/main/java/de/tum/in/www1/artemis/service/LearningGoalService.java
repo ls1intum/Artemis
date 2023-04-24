@@ -72,14 +72,14 @@ public class LearningGoalService {
     public SearchResultPageDTO<LearningGoal> getAllOnPageWithSize(final PageableSearchDTO<String> search, final User user) {
         final var pageable = PageUtil.createLearningGoalPageRequest(search);
         final var searchTerm = search.getSearchTerm();
-        final Page<LearningGoal> lecturePage;
+        final Page<LearningGoal> learningGoalPage;
         if (authCheckService.isAdmin(user)) {
-            lecturePage = learningGoalRepository.findByTitleIgnoreCaseContainingOrCourse_TitleIgnoreCaseContaining(searchTerm, searchTerm, pageable);
+            learningGoalPage = learningGoalRepository.findByTitleIgnoreCaseContainingOrCourse_TitleIgnoreCaseContaining(searchTerm, searchTerm, pageable);
         }
         else {
-            lecturePage = learningGoalRepository.findByTitleInLectureOrCourseAndUserHasAccessToCourse(searchTerm, searchTerm, user.getGroups(), pageable);
+            learningGoalPage = learningGoalRepository.findByTitleInLectureOrCourseAndUserHasAccessToCourse(searchTerm, searchTerm, user.getGroups(), pageable);
         }
-        return new SearchResultPageDTO<>(lecturePage.getContent(), lecturePage.getTotalPages());
+        return new SearchResultPageDTO<>(learningGoalPage.getContent(), learningGoalPage.getTotalPages());
     }
 
     /**

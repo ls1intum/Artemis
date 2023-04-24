@@ -64,8 +64,8 @@ export class CourseUpdateComponent implements OnInit {
     faQuestionCircle = faQuestionCircle;
     faExclamationTriangle = faExclamationTriangle;
 
-    communicationEnabled = false;
-    messagingEnabled = false;
+    communicationEnabled = true;
+    messagingEnabled = true;
 
     // NOTE: These constants are used to define the maximum length of complaints and complaint responses.
     // This is the maximum value allowed in our database. These values must be the same as in Constants.java
