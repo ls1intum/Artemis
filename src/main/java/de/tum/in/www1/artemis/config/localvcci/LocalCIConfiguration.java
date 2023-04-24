@@ -50,7 +50,7 @@ public class LocalCIConfiguration {
     @Value("${artemis.continuous-integration.thread-pool-size:1}")
     int threadPoolSize;
 
-    @Value("${artemis.continuous-integration.queue-size-limit:3}")
+    @Value("${artemis.continuous-integration.queue-size-limit:20}")
     int queueSizeLimit;
 
     @Value("${artemis.continuous-integration.queue-timeout-seconds:300}")

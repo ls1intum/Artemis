@@ -157,7 +157,7 @@ public class LocalCIBuildJobExecutionService {
                 throw new LocalCIException("Error while creating LocalVCRepositoryUrl", e);
             }
 
-            log.info("URetrieved repository URLs for build job " + containerName);
+            log.info("Retrieved repository URLs for build job " + containerName);
 
             Path assignmentRepositoryPath = assignmentRepositoryUrl.getLocalRepositoryPath(localVCBasePath).toAbsolutePath();
             Path testsRepositoryPath = testsRepositoryUrl.getLocalRepositoryPath(localVCBasePath).toAbsolutePath();

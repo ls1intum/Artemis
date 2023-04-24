@@ -12,6 +12,6 @@ artemis:
         # The maximum number of seconds that a CI job is allowed to run. If the job exceeds this time, it will be terminated.
         timeout-seconds: 120
         # The number of builds that can be in the local CI queue at the same time. Choosing a small value can prevent the CI system from being overloaded on slow machines. The thread adding the build job to the queue will block until the queue has space for the new job or discard the job after queue-timeout-seconds.
-        queue-size-limit: 3
+        queue-size-limit: 20
         # The number of seconds that the thread adding the build job to the queue will wait until the queue has space for the new job. If the queue is full, the thread will discard the job after queue-timeout-seconds.
         queue-timeout-seconds: 300
