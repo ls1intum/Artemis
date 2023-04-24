@@ -43,10 +43,10 @@ describe('Quiz Exercise Management', () => {
         });
 
         // TODO: Fix the drag and drop
-        it.skip('Creates a Quiz with Drag and Drop', () => {
-            quizExerciseCreation.addDragAndDropQuestion(quizQuestionTitle);
-            saveAndVerifyQuizCreation();
-        });
+        // it.skip('Creates a Quiz with Drag and Drop', () => {
+        //     quizExerciseCreation.addDragAndDropQuestion(quizQuestionTitle);
+        //     saveAndVerifyQuizCreation();
+        // });
     });
 
     describe('Quiz Exercise deletion', () => {

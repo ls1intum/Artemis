@@ -17,7 +17,9 @@ export class ProgrammingExerciseGradingComponent {
 
     private translationBasePath = 'artemisApp.programmingExercise.wizardMode.gradingLabels.';
 
+    @Input() isImportFromExistingExercise: boolean;
     @Input() isImport: boolean;
+    @Input() isExamMode: boolean;
     @Input() programmingExercise: ProgrammingExercise;
     @Input() showSummary = false;
 

@@ -90,30 +90,31 @@ describe('Test exam test run', () => {
     });
 
     // Skip since this functionality is not yet supported
-    it.skip('Change test run working time', () => {
-        const hour = 1;
-        const minutes = 20;
-        const seconds = 45;
+    // TODO: Activate test as soon as editing test run working times for test exams is possible
+    // it.skip('Change test run working time', () => {
+    //     const hour = 1;
+    //     const minutes = 20;
+    //     const seconds = 45;
 
-        cy.login(instructor);
-        examTestRun.openTestRunPage(course, exam);
-        examTestRun.changeWorkingTime(testRun.id);
-        examTestRun.setWorkingTimeHours(hour);
-        examTestRun.setWorkingTimeMinutes(minutes);
-        examTestRun.setWorkingTimeSeconds(seconds);
-        examTestRun.saveTestRun().then((testRunResponse: Interception) => {
-            const testRun = testRunResponse.response!.body;
+    //     cy.login(instructor);
+    //     examTestRun.openTestRunPage(course, exam);
+    //     examTestRun.changeWorkingTime(testRun.id);
+    //     examTestRun.setWorkingTimeHours(hour);
+    //     examTestRun.setWorkingTimeMinutes(minutes);
+    //     examTestRun.setWorkingTimeSeconds(seconds);
+    //     examTestRun.saveTestRun().then((testRunResponse: Interception) => {
+    //         const testRun = testRunResponse.response!.body;
 
-            expect(testRun.id).to.eq(testRun.id);
-            expect(testRunResponse.response!.statusCode).to.eq(200);
-            expect(testRun.workingTime).to.eq(hour * 3600 + minutes * 60 + seconds);
+    //         expect(testRun.id).to.eq(testRun.id);
+    //         expect(testRunResponse.response!.statusCode).to.eq(200);
+    //         expect(testRun.workingTime).to.eq(hour * 3600 + minutes * 60 + seconds);
 
-            examTestRun.openTestRunPage(course, exam);
-            examTestRun.getWorkingTime(testRun.id).contains(`${hour}h ${minutes}min ${seconds}s`);
-            examTestRun.getStarted(testRun.id).contains('No');
-            examTestRun.getSubmitted(testRun.id).contains('No');
-        });
-    });
+    //         examTestRun.openTestRunPage(course, exam);
+    //         examTestRun.getWorkingTime(testRun.id).contains(`${hour}h ${minutes}min ${seconds}s`);
+    //         examTestRun.getStarted(testRun.id).contains('No');
+    //         examTestRun.getSubmitted(testRun.id).contains('No');
+    //     });
+    // });
 
     it('Conducts a test run', () => {
         examTestRun.startParticipation(instructor, course, exam, testRun.id);
