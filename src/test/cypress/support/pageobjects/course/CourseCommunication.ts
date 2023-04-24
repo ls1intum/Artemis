@@ -37,8 +37,9 @@ export class CourseCommunicationPage {
     }
 
     filterByContext(context: string) {
-        cy.get('#filter-context').click().get('mat-option').contains(context);
         cy.get('#filter-context').click();
+        cy.get('mat-option').filter(`:contains("${context}")`).find('.mat-pseudo-checkbox').click();
+        cy.get('.cdk-overlay-backdrop').click();
     }
 
     filterByOwn() {
