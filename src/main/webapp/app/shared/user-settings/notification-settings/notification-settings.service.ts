@@ -1,6 +1,13 @@
 import { Injectable } from '@angular/core';
 import {
     ATTACHMENT_CHANGE_TITLE,
+    CONVERSATION_ADD_USER_CHANNEL_TITLE,
+    CONVERSATION_ADD_USER_GROUP_CHAT_TITLE,
+    CONVERSATION_CREATE_GROUP_CHAT_TITLE,
+    CONVERSATION_CREATE_ONE_TO_ONE_CHAT_TITLE,
+    CONVERSATION_DELETE_CHANNEL_TITLE,
+    CONVERSATION_REMOVE_USER_CHANNEL_TITLE,
+    CONVERSATION_REMOVE_USER_GROUP_CHAT_TITLE,
     COURSE_ARCHIVE_STARTED_TITLE,
     EXAM_ARCHIVE_STARTED_TITLE,
     EXERCISE_PRACTICE_TITLE,
@@ -9,9 +16,11 @@ import {
     NEW_COURSE_POST_TITLE,
     NEW_EXERCISE_POST_TITLE,
     NEW_LECTURE_POST_TITLE,
+    NEW_MESSAGE_TITLE,
     NEW_REPLY_FOR_COURSE_POST_TITLE,
     NEW_REPLY_FOR_EXERCISE_POST_TITLE,
     NEW_REPLY_FOR_LECTURE_POST_TITLE,
+    NEW_REPLY_MESSAGE_TITLE,
     Notification,
     NotificationType,
     TUTORIAL_GROUP_ASSIGNED_TITLE,
@@ -55,6 +64,20 @@ export class NotificationSettingsService {
             SettingId.NOTIFICATION__TUTORIAL_GROUP_NOTIFICATION__TUTORIAL_GROUP_REGISTRATION,
             [TUTORIAL_GROUP_DEREGISTRATION_STUDENT_TITLE, TUTORIAL_GROUP_REGISTRATION_STUDENT_TITLE],
         ],
+        [
+            SettingId.NOTIFICATION__USER_NOTIFICATION__CONVERSATION_MESSAGE,
+            [
+                NEW_MESSAGE_TITLE,
+                CONVERSATION_CREATE_ONE_TO_ONE_CHAT_TITLE,
+                CONVERSATION_CREATE_GROUP_CHAT_TITLE,
+                CONVERSATION_ADD_USER_GROUP_CHAT_TITLE,
+                CONVERSATION_ADD_USER_CHANNEL_TITLE,
+                CONVERSATION_DELETE_CHANNEL_TITLE,
+                CONVERSATION_REMOVE_USER_CHANNEL_TITLE,
+                CONVERSATION_REMOVE_USER_GROUP_CHAT_TITLE,
+            ],
+        ],
+        [SettingId.NOTIFICATION__USER_NOTIFICATION__NEW_REPLY_IN_CONVERSATION_MESSAGE, [NEW_REPLY_MESSAGE_TITLE]],
         [SettingId.NOTIFICATION__TUTOR_NOTIFICATION__TUTORIAL_GROUP_ASSIGN_UNASSIGN, [TUTORIAL_GROUP_ASSIGNED_TITLE, TUTORIAL_GROUP_UNASSIGNED_TITLE]],
         [SettingId.NOTIFICATION__TUTORIAL_GROUP_NOTIFICATION__TUTORIAL_GROUP_DELETE_UPDATE, [TUTORIAL_GROUP_DELETED_TITLE, TUTORIAL_GROUP_UPDATED_TITLE]],
     ]);
@@ -97,7 +120,12 @@ export class NotificationSettingsService {
      * @return true if this notification (title) is activated in the settings, else return false
      */
     public isNotificationAllowedBySettings(notification: Notification, notificationTitleActivationMap: Map<string, boolean>): boolean {
-        if (notification instanceof GroupNotification || notification.notificationType === NotificationType.GROUP || notification.notificationType === NotificationType.SINGLE) {
+        if (
+            notification instanceof GroupNotification ||
+            notification.notificationType === NotificationType.GROUP ||
+            notification.notificationType === NotificationType.SINGLE ||
+            notification.notificationType === NotificationType.CONVERSATION
+        ) {
             if (notification.title) {
                 return notificationTitleActivationMap.get(notification.title) ?? true;
             }

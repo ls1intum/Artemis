@@ -64,6 +64,7 @@
                     *ngFor="let post of posts; trackBy: postsTrackByFn"
                     [lastReadDate]="_activeConversation?.lastReadDate"
                     [hasChannelModerationRights]="!!getAsChannel(_activeConversation)?.hasChannelModerationRights"
+                    [id]="'item-' + post.id"
                     [post]="post"
                     [showAnswers]="false"
                     [readOnlyMode]="!!getAsChannel(_activeConversation)?.isArchived"
