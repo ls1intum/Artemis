@@ -43,6 +43,7 @@ import com.github.dockerjava.api.model.Bind;
 import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.HostConfig;
 import com.github.dockerjava.api.model.Volume;
+import com.google.common.util.concurrent.RateLimiter;
 
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
@@ -86,8 +87,12 @@ public class LocalCIBuildJobExecutionService {
 
     private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
 
+    private final RateLimiter localCIBuildJobRateLimiter;
+
     // The Path to the script file located in the resources folder. The script file contains the steps that run the tests on the Docker container.
     private final Path buildScriptFilePath;
+
+    private final XMLInputFactory localCIXMLInputFactory;
 
     @Value("${artemis.version-control.url}")
     private URL localVCBaseUrl;
@@ -107,7 +112,8 @@ public class LocalCIBuildJobExecutionService {
     public LocalCIBuildJobExecutionService(Optional<VersionControlService> versionControlService, ExecutorService localCIBuildExecutorService, DockerClient dockerClient,
             ProgrammingMessagingService programmingMessagingService, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
-            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, Path buildScriptFilePath) {
+            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, RateLimiter localCIBuildJobRateLimiter, Path buildScriptFilePath,
+            XMLInputFactory localCIXMLInputFactory) {
         this.versionControlService = versionControlService;
         this.localCIBuildExecutorService = localCIBuildExecutorService;
         this.dockerClient = dockerClient;
@@ -115,7 +121,9 @@ public class LocalCIBuildJobExecutionService {
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
+        this.localCIBuildJobRateLimiter = localCIBuildJobRateLimiter;
         this.buildScriptFilePath = buildScriptFilePath;
+        this.localCIXMLInputFactory = localCIXMLInputFactory;
     }
 
     /**
@@ -176,6 +184,10 @@ public class LocalCIBuildJobExecutionService {
 
         // Submit the build job to the executor service. This runs in a separate thread, so it does not block the main thread.
         CompletableFuture<LocalCIBuildResult> futureResult = createCompletableFuture(() -> {
+
+            // Acquire a permit from the RateLimiter before submitting the job.
+            localCIBuildJobRateLimiter.acquire();
+
             // Submit the task and get a Future.
             // Use Future to be able to interrupt the build job's thread if running the build job takes too long.
             // Canceling a CompletableFuture would merely mark the CompletableFuture as completed exceptionally but steps running inside the CompletableFuture will never throw an
@@ -406,8 +418,6 @@ public class LocalCIBuildJobExecutionService {
         List<LocalCIBuildResult.LocalCITestJobDTO> failedTests = new ArrayList<>();
         List<LocalCIBuildResult.LocalCITestJobDTO> successfulTests = new ArrayList<>();
 
-        XMLInputFactory xmlInputFactory = XMLInputFactory.newInstance();
-
         TarArchiveEntry tarEntry;
         while ((tarEntry = testResultsTarInputStream.getNextTarEntry()) != null) {
 
@@ -419,7 +429,7 @@ public class LocalCIBuildJobExecutionService {
             String xmlString = IOUtils.toString(testResultsTarInputStream, StandardCharsets.UTF_8);
 
             // Create an XML stream reader for the string.
-            XMLStreamReader xmlStreamReader = xmlInputFactory.createXMLStreamReader(new StringReader(xmlString));
+            XMLStreamReader xmlStreamReader = localCIXMLInputFactory.createXMLStreamReader(new StringReader(xmlString));
 
             // Move to the first start element.
             while (xmlStreamReader.hasNext() && !xmlStreamReader.isStartElement()) {

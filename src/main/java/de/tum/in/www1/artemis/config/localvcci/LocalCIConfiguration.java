@@ -11,6 +11,8 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+import javax.xml.stream.XMLInputFactory;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -27,6 +29,7 @@ import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.DockerClientImpl;
 import com.github.dockerjava.httpclient5.ApacheDockerHttpClient;
 import com.github.dockerjava.transport.DockerHttpClient;
+import com.google.common.util.concurrent.RateLimiter;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import de.tum.in.www1.artemis.exception.LocalCIException;
@@ -46,6 +49,9 @@ public class LocalCIConfiguration {
 
     @Value("${artemis.continuous-integration.thread-pool-size:1}")
     int threadPoolSize;
+
+    @Value("${artemis.continuous-integration.rate-limit:0.1")
+    int rateLimit;
 
     @Value("${artemis.continuous-integration.build.images.java.default}")
     String dockerImage;
@@ -67,6 +73,12 @@ public class LocalCIConfiguration {
         return new ThreadPoolExecutor(threadPoolSize, threadPoolSize, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(), customThreadFactory);
     }
 
+    /**
+     * Creates a scheduled executor service that logs the current state of the local CI ExecutorService queue.
+     *
+     * @param localCIBuildExecutorService The local CI ExecutorService bean.
+     * @return The scheduled executor service bean.
+     */
     @Bean
     public ExecutorService buildQueueLogger(ExecutorService localCIBuildExecutorService) {
         ScheduledExecutorService buildQueueLogger = Executors.newSingleThreadScheduledExecutor();
@@ -76,6 +88,25 @@ public class LocalCIConfiguration {
             log.info("Current queue size of local CI ExecutorService: {}", threadPoolExecutor.getQueue().size());
         }, 0, 3, TimeUnit.SECONDS);
         return buildQueueLogger;
+    }
+
+    /**
+     * Used to control the rate at which build jobs are added to the queue.
+     *
+     * @return the rate limiter bean.
+     */
+    @Bean
+    public RateLimiter localCIBuildJobRateLimiter() {
+        log.info("Using RateLimiter with rate limit: " + rateLimit + " per second.");
+        return RateLimiter.create(rateLimit);
+    }
+
+    /**
+     * Creates an XMLInputFactory that is used to parse the test results during execution of the local CI build jobs.
+     */
+    @Bean
+    public XMLInputFactory localCIXMLInputFactory() {
+        return XMLInputFactory.newInstance();
     }
 
     /**
