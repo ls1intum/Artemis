@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { Component, DoCheck, Input, OnDestroy } from '@angular/core';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { Exercise } from 'app/entities/exercise.model';
 import { Authority } from 'app/shared/constants/authority.constants';
@@ -34,7 +34,7 @@ import { GradingScale } from 'app/entities/grading-scale.model';
     `,
     styleUrls: ['../../shared/exercise/_exercise-update.scss'],
 })
-export class PresentationScoreComponent implements OnInit, OnDestroy {
+export class PresentationScoreComponent implements DoCheck, OnDestroy {
     @Input() exercise: Exercise;
 
     Authority = Authority;
@@ -42,12 +42,12 @@ export class PresentationScoreComponent implements OnInit, OnDestroy {
     faQuestionCircle = faQuestionCircle;
 
     private gradingScale?: GradingScale;
-    private gradingScaleSub: Subscription;
+    private gradingScaleSub?: Subscription;
 
     constructor(private gradingSystemService: GradingSystemService) {}
 
-    ngOnInit(): void {
-        if (this.exercise.course?.id) {
+    ngDoCheck(): void {
+        if (!this.gradingScaleSub && this.exercise.course?.id) {
             this.gradingScaleSub = this.gradingSystemService.findGradingScaleForCourse(this.exercise.course.id).subscribe((gradingScale) => {
                 if (gradingScale.body) {
                     this.gradingScale = gradingScale.body;
