@@ -1007,9 +1007,18 @@ public class CourseResource {
 
             List<String> channelNames = Arrays.asList("tech-support", "announcement", "organization", "random");
 
-            channelRepository.findChannelsByCourseId(course.getId()).stream().filter(channel -> channelNames.contains(channel.getName())).forEach(channel -> {
-                conversationService.registerUsersToConversation(course, Set.of(userToAddToGroup.get()), channel, Optional.empty());
-            });
+            List<Course> courses = switch (role) {
+                case STUDENT -> courseRepository.findCoursesByStudentGroupName(group);
+                case TEACHING_ASSISTANT -> courseRepository.findCoursesByTeachingAssistantGroupName(group);
+                case INSTRUCTOR -> courseRepository.findCoursesByInstructorGroupName(group);
+                default -> List.of();
+            };
+
+            for (Course c : courses) {
+                channelRepository.findChannelsByCourseId(c.getId()).stream().filter(channel -> channelNames.contains(channel.getName())).forEach(channel -> {
+                    conversationService.registerUsersToConversation(c, Set.of(userToAddToGroup.get()), channel, Optional.empty());
+                });
+            }
 
             return ResponseEntity.ok().body(null);
         }
