@@ -113,7 +113,7 @@ jobs:
         username: ${{ github.repository_owner }}
         password: ${{ secrets.GITHUB_TOKEN }}
     - name: Build and Push to GitHub Container Registry
-      uses: docker/build-push-action@v3
+      uses: docker/build-push-action@v4
       if: ${{ steps.compute-tag.outputs.result != 'FALSE' }}
       with:
         # TODO: maybe even add arm/v7 for older DevBoards and arm64 for Mac M1 and new DevBoards
