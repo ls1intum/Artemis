@@ -111,6 +111,7 @@ export abstract class BaseGradingSystemComponent implements OnInit {
                 } else {
                     this.courseService.find(this.courseId!).subscribe((courseResponse) => {
                         this.course = courseResponse.body!;
+                        this.gradingScale.course = this.course;
                         this.maxPoints = this.course?.maxPoints;
                         this.onChangeMaxPoints(this.course?.maxPoints);
                     });
@@ -298,11 +299,8 @@ export abstract class BaseGradingSystemComponent implements OnInit {
             if (this.presentationsConfig.presentationsNumber !== undefined || this.presentationsConfig.presentationsWeight !== undefined) {
                 return false;
             }
-            // The presentationScore must be 0 or undefined
-            if ((this.course?.presentationScore ?? 0) > 0) {
-                this.invalidGradeStepsMessage = this.translateService.instant('artemisApp.gradingSystem.error.invalidBasicPresentationIsEnabled');
-                return false;
-            }
+            // The presentationScore must be 0 or undefined // edit in followup, when presentationScore is moved to
+            // grading key page
         }
         if (this.presentationsConfig.presentationType === PresentationType.BASIC) {
             // The presentationsNumber and presentationsWeight must be undefined
@@ -695,6 +693,7 @@ export abstract class BaseGradingSystemComponent implements OnInit {
         return {
             gradeSteps,
             gradeType: GradeType.GRADE,
+            course: this.course,
         };
     }
 
