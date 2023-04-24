@@ -10,6 +10,8 @@
             "409": "There was a conflict while processing your request.",
             "500": "Internal server error."
         },
+        "exerciseJsonNotValidOrFound": "The JSON file for the exercise details could not be found or is not valid.",
+        "repositoriesInZipNotValid": "The zip file doesn't contain the template, solution or tests repository or they do not follow the naming scheme.",
         "cannotDeleteYourself": "You cannot delete your own account!",
         "fileUploadSavingError": "Error! The upload failed. Make sure you are connected to the Internet!",
         "concurrencyFailure": "Another user modified this data at the same time as you. Your changes were rejected.",

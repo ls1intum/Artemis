@@ -39,7 +39,12 @@
                     "exam": "Exam",
                     "examQuestion": "Exam Question",
                     "doImport": "Import"
-                }
+                },
+                "tabTitle": "From instance"
+            },
+            "importFromFile": {
+                "tabTitle": "From file",
+                "notSupportedExerciseType": "The exercise type {{ exerciseType }} is not supported for importing from file."
             },
             "exercise": "Exercise",
             "results": "Results",
