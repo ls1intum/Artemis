@@ -5,7 +5,6 @@ import { CourseManagementService } from '../course/manage/course-management.serv
 import { ActivatedRoute, Router } from '@angular/router';
 import { Observable, Subject, Subscription, catchError, map, of, takeUntil, throwError } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { TeamService } from 'app/exercises/shared/team/team.service';
 import { TeamAssignmentPayload } from 'app/entities/team.model';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
@@ -21,6 +20,7 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { TutorialGroupsConfigurationService } from 'app/course/tutorial-groups/services/tutorial-groups-configuration.service';
+import { CourseStorageService } from 'app/course/manage/course-storage.service';
 
 @Component({
     selector: 'jhi-course-overview',
@@ -69,7 +69,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     constructor(
         private courseService: CourseManagementService,
         private courseExerciseService: CourseExerciseService,
-        private courseCalculationService: CourseScoreCalculationService,
+        private courseStorageService: CourseStorageService,
         private learningGoalService: LearningGoalService,
         private route: ActivatedRoute,
         private teamService: TeamService,
@@ -89,7 +89,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
             this.courseId = parseInt(params['courseId'], 10);
         });
 
-        this.course = this.courseCalculationService.getCourse(this.courseId);
+        this.course = this.courseStorageService.getCourse(this.courseId);
 
         await this.loadCourse().toPromise();
         await this.initAfterCourseLoad();
@@ -221,8 +221,9 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         this.refreshingCourse = refresh;
         return this.courseService.findOneForDashboard(this.courseId, refresh).pipe(
             map((res: HttpResponse<Course>) => {
-                this.courseCalculationService.updateCourse(res.body!);
-                this.course = this.courseCalculationService.getCourse(this.courseId);
+                if (res.body) {
+                    this.course = res.body;
+                }
 
                 this.setUpConversationService();
 

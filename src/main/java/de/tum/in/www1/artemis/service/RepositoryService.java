@@ -13,6 +13,7 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.util.FileSystemUtils;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.File;
@@ -71,6 +72,26 @@ public class RepositoryService {
             }
         });
         return fileListWithContent;
+    }
+
+    /**
+     * Deletes all content in the repository except the .git folder
+     *
+     * @param repository the repository the content should be deleted from
+     **/
+    public void deleteAllContentInRepository(Repository repository) throws IOException {
+        try (var content = Files.list(repository.getLocalPath())) {
+            content.filter(path -> !".git".equals(path.getFileName().toString())).forEach(path -> {
+                try {
+                    FileSystemUtils.deleteRecursively(path);
+                }
+                catch (IOException e) {
+                    log.error("Error while deleting file {}", path, e);
+                }
+            });
+        }
+        // invalidate cache
+        repository.setContent(null);
     }
 
     /**
