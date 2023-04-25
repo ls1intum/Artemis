@@ -207,14 +207,16 @@
                     ></jhi-learning-goal-selection>
                 </div>
             </div>
-            <jhi-quiz-question-list-edit
-                #quizQuestionsEdit
-                [courseId]="courseId!"
-                [quizQuestions]="quizExercise.quizQuestions!"
-                (onQuestionAdded)="handleQuestionChanged()"
-                (onQuestionDeleted)="handleQuestionChanged()"
-                (onQuestionUpdated)="handleQuestionChanged()"
-            />
+            <ng-container *ngIf="courseId">
+                <jhi-quiz-question-list-edit
+                    #quizQuestionsEdit
+                    [courseId]="courseId"
+                    [quizQuestions]="quizExercise.quizQuestions ?? []"
+                    (onQuestionAdded)="handleQuestionChanged()"
+                    (onQuestionDeleted)="handleQuestionChanged()"
+                    (onQuestionUpdated)="handleQuestionChanged()"
+                />
+            </ng-container>
             <div class="edit-quiz-footer">
                 <div class="container">
                     <div class="edit-quiz-footer-content">
