@@ -1,5 +1,4 @@
 import { Component, HostListener, OnDestroy, OnInit, QueryList, ViewChildren } from '@angular/core';
-import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
@@ -128,7 +127,6 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     generateParticipationStatus: BehaviorSubject<GenerateParticipationStatus> = new BehaviorSubject('success');
 
     constructor(
-        private courseCalculationService: CourseScoreCalculationService,
         private websocketService: JhiWebsocketService,
         private route: ActivatedRoute,
         private router: Router,
