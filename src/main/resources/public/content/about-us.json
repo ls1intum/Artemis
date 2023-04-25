@@ -392,6 +392,10 @@
         {
             "fullName": "Tarlan Ismayilsoy",
             "photoDirectory": "public/images/about/Tarlan_Ismayilsoy.jpg"
+        },
+        {
+            "fullName": "Felix T.J. Dietrich",
+            "photoDirectory": "public/images/about/Felix_TJ_Dietrich.jpg"
         }
     ]
 }
