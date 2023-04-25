@@ -56,15 +56,10 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
 
     /** Constants for 'Add existing questions' and 'Import file' features **/
     showExistingQuestions = false;
-    showExistingQuestionsFromCourse = true;
-    showExistingQuestionsFromExam = false;
-    showExistingQuestionsFromFile = false;
 
     exams: Exam[] = [];
-    selectedExamId?: number;
 
     courses: Course[] = [];
-    selectedCourseId?: number;
     quizExercises: QuizExercise[];
     allExistingQuestions: QuizQuestion[];
     existingQuestions: QuizQuestion[];
