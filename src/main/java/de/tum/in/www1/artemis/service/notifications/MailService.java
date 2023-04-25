@@ -221,7 +221,7 @@ public class MailService implements InstantNotificationService {
         context.setVariable(NOTIFICATION_SUBJECT, notificationSubject);
 
         context.setVariable(TIME_SERVICE, this.timeService);
-        String subject = notification.getTitle();
+        String subject = messageSource.getMessage(notification.getTitle(), null, context.getLocale());
 
         if (notificationSubject instanceof Exercise exercise) {
             context.setVariable(EXERCISE_TYPE, exercise.getExerciseType());

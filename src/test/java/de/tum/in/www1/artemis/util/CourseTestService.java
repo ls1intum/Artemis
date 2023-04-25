@@ -639,7 +639,9 @@ public class CourseTestService {
     // Test
     public void testGetCourseForDashboard(boolean userRefresh) throws Exception {
         List<Course> courses = database.createCoursesWithExercisesAndLecturesAndLectureUnitsAndLearningGoals(userPrefix, true, false, numberOfTutors);
-        Course receivedCourse = request.get("/api/courses/" + courses.get(0).getId() + "/for-dashboard?refresh=" + userRefresh, HttpStatus.OK, Course.class);
+        CourseForDashboardDTO receivedCourseForDashboard = request.get("/api/courses/" + courses.get(0).getId() + "/for-dashboard?refresh=" + userRefresh, HttpStatus.OK,
+                CourseForDashboardDTO.class);
+        Course receivedCourse = receivedCourseForDashboard.course();
 
         // Test that the received course has five exercises
         assertThat(receivedCourse.getExercises()).as("Five exercises are returned").hasSize(5);
@@ -764,7 +766,9 @@ public class CourseTestService {
             registeredStudent.setExam(examRegistered);
             examRegistered.addExamUser(examUserRepository.save(registeredStudent));
 
-            Course receivedCourse = request.get("/api/courses/" + courses[i].getId() + "/for-dashboard?refresh=" + userRefresh, HttpStatus.OK, Course.class);
+            CourseForDashboardDTO receivedCourseForDashboard = request.get("/api/courses/" + courses[i].getId() + "/for-dashboard?refresh=" + userRefresh, HttpStatus.OK,
+                    CourseForDashboardDTO.class);
+            Course receivedCourse = receivedCourseForDashboard.course();
             assertThat(receivedCourse).isNotNull();
             if (i == 0) {
                 assertThat(receivedCourse.getExams()).isEmpty();
@@ -776,7 +780,8 @@ public class CourseTestService {
                 assertThat(receivedCourse.getExams()).containsExactlyInAnyOrder(examUnregistered, examRegistered, testExam);
             }
         }
-        List<Course> receivedCourses = request.getList("/api/courses/for-dashboard", HttpStatus.OK, Course.class);
+        List<CourseForDashboardDTO> receivedCoursesForDashboard = request.getList("/api/courses/for-dashboard", HttpStatus.OK, CourseForDashboardDTO.class);
+        List<Course> receivedCourses = receivedCoursesForDashboard.stream().map(CourseForDashboardDTO::course).toList();
         for (int i = 0; i < courses.length; i++) {
             Course receivedCourse = null;
             for (Course course : receivedCourses) {
@@ -808,7 +813,8 @@ public class CourseTestService {
         }
 
         // Perform the request that is being tested here
-        List<Course> courses = request.getList("/api/courses/for-dashboard", HttpStatus.OK, Course.class);
+        List<CourseForDashboardDTO> coursesForDashboard = request.getList("/api/courses/for-dashboard", HttpStatus.OK, CourseForDashboardDTO.class);
+        List<Course> courses = coursesForDashboard.stream().map(CourseForDashboardDTO::course).collect(Collectors.toList());
 
         Course activeCourse = coursesCreated.get(0);
         Course inactiveCourse = coursesCreated.get(1);
@@ -856,7 +862,8 @@ public class CourseTestService {
         Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), userPrefix + "student" + suffix, userPrefix + "tutor" + suffix,
                 userPrefix + "editor" + suffix, userPrefix + "instructor" + suffix);
         course = courseRepo.save(course);
-        List<Course> courses = request.getList("/api/courses/for-dashboard", HttpStatus.OK, Course.class);
+        List<CourseForDashboardDTO> coursesForDashboard = request.getList("/api/courses/for-dashboard", HttpStatus.OK, CourseForDashboardDTO.class);
+        List<Course> courses = coursesForDashboard.stream().map(CourseForDashboardDTO::course).toList();
         final var finalCourse = course;
         Course courseInList = courses.stream().filter(c -> c.getId().equals(finalCourse.getId())).findFirst().orElse(null);
         assertThat(courseInList).isNotNull();
@@ -876,7 +883,8 @@ public class CourseTestService {
         courseActive = courseRepo.save(courseActive);
         courseNotActivePast = courseRepo.save(courseNotActivePast);
         courseNotActiveFuture = courseRepo.save(courseNotActiveFuture);
-        List<Course> courses = request.getList("/api/courses/for-dashboard", HttpStatus.OK, Course.class);
+        List<CourseForDashboardDTO> coursesForDashboard = request.getList("/api/courses/for-dashboard", HttpStatus.OK, CourseForDashboardDTO.class);
+        List<Course> courses = coursesForDashboard.stream().map(CourseForDashboardDTO::course).toList();
 
         long courseNotActivePastId = courseNotActivePast.getId();
         long courseNotActiveFutureId = courseNotActiveFuture.getId();
