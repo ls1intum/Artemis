@@ -204,6 +204,7 @@ public class ResourceLoaderService {
 
             Path resourcePath = Files.createTempFile(UUID.randomUUID().toString(), "");
             Files.copy(resourceInputStream, resourcePath, StandardCopyOption.REPLACE_EXISTING);
+            resourceInputStream.close();
             // Delete the temporary file when the JVM exits.
             resourcePath.toFile().deleteOnExit();
             return resourcePath;

@@ -185,42 +185,15 @@ public class LocalCIBuildJobExecutionService {
             return runBuildJob(participation, containerName, container.getId(), branch);
         };
 
+        TimeoutCallable<LocalCIBuildResult> timedBuildJob = new TimeoutCallable<>(buildJob, timeoutSeconds);
+
         // Submit the build job to the executor service. This runs in a separate thread, so it does not block the main thread.
         CompletableFuture<LocalCIBuildResult> futureResult = createCompletableFuture(() -> {
-
-            // Submit the task and get a Future.
-            // Use Future to be able to interrupt the build job's thread if running the build job takes too long.
-            // Canceling a CompletableFuture would merely mark the CompletableFuture as completed exceptionally but steps running inside the CompletableFuture will never throw an
-            // InterruptedException and thus never stop execution.
-            Future<LocalCIBuildResult> future = localCIBuildExecutorService.submit(buildJob);
             try {
-                // Get the result of the build job at the latest after the timeout.
-                return future.get(timeoutSeconds, TimeUnit.SECONDS);
+                return localCIBuildExecutorService.submit(timedBuildJob).get();
             }
-            catch (InterruptedException | ExecutionException | TimeoutException e) {
-                // The InterruptedException is thrown if the thread is interrupted from somewhere else (e.g. the executor service is shut down).
-                // The ExecutionException is thrown if the build job throws an exception (i.e. a LocalCIException in this case).
-                // The TimeoutException is thrown if the build job takes too long.
-
-                log.error("Error while building and testing repository " + participation.getRepositoryUrl() + " with container name " + containerName, e);
-
-                if (!future.isDone()) {
-                    // Cancel the task if it is still running.
-                    future.cancel(true);
-                }
-
-                // Set the build status to "INACTIVE" to indicate that the build is not running anymore.
-                updateBuildPlanStatus(participation, ContinuousIntegrationService.BuildStatus.INACTIVE);
-
-                // Notify the user, that the build job produced an exception. This is also the case if the build job timed out.
-                BuildTriggerWebsocketError error = new BuildTriggerWebsocketError(
-                        e instanceof TimeoutException ? "Build timed out after " + timeoutSeconds + " seconds" : e.getMessage(), participation.getId());
-                // This cast to Participation is safe as the participation is either a ProgrammingExerciseStudentParticipation, a TemplateProgrammingExerciseParticipation, or a
-                // SolutionProgrammingExerciseParticipation, which all extend Participation.
-                programmingMessagingService.notifyUserAboutSubmissionError((Participation) participation, error);
-
-                stopContainer(containerName);
-
+            catch (InterruptedException | ExecutionException | CompletionException e) {
+                finishBuildJobExceptionally(participation, containerName, e);
                 // Wrap the exception in a CompletionException so that the future is completed exceptionally and the thenAccept block is not run.
                 throw new CompletionException(e);
             }
@@ -250,6 +223,28 @@ public class LocalCIBuildJobExecutionService {
             }
             return future;
         }
+    }
+
+    /**
+     * Finish the build job if an exception occurred while building and testing the repository.
+     *
+     * @param participation The participation of the repository for which the build job was executed.
+     * @param containerName The name of the Docker container that was used to execute the build job.
+     * @param exception     The exception that occurred while building and testing the repository.
+     */
+    private void finishBuildJobExceptionally(ProgrammingExerciseParticipation participation, String containerName, Exception exception) {
+        log.error("Error while building and testing repository " + participation.getRepositoryUrl(), exception);
+
+        // Set the build status to "INACTIVE" to indicate that the build is not running anymore.
+        updateBuildPlanStatus(participation, ContinuousIntegrationService.BuildStatus.INACTIVE);
+
+        // Notify the user, that the build job produced an exception.
+        BuildTriggerWebsocketError error = new BuildTriggerWebsocketError(exception.getMessage(), participation.getId());
+        // This cast to Participation is safe as the participation is either a ProgrammingExerciseStudentParticipation, a TemplateProgrammingExerciseParticipation, or a
+        // SolutionProgrammingExerciseParticipation, which all extend Participation.
+        programmingMessagingService.notifyUserAboutSubmissionError((Participation) participation, error);
+
+        stopContainer(containerName);
     }
 
     /**
@@ -335,6 +330,29 @@ public class LocalCIBuildJobExecutionService {
         return buildResult;
     }
 
+    private record TimeoutCallable<T> (Callable<T> delegate, long timeout) implements Callable<T> {
+
+        @Override
+        public T call() throws Exception {
+            Future<T> future = CompletableFuture.supplyAsync(() -> {
+                try {
+                    return delegate.call();
+                }
+                catch (Exception e) {
+                    throw new CompletionException(e);
+                }
+            });
+
+            try {
+                return future.get(timeout, TimeUnit.SECONDS);
+            }
+            catch (InterruptedException | ExecutionException | TimeoutException e) {
+                future.cancel(true);
+                throw e;
+            }
+        }
+    }
+
     private String getCommitHashOfBranch(String containerId, String repositoryName, String branchName) throws IOException {
         // Get an input stream of the file in .git folder of the repository that contains the current commit hash of the branch.
         TarArchiveInputStream repositoryTarInputStream = new TarArchiveInputStream(
@@ -351,6 +369,8 @@ public class LocalCIBuildJobExecutionService {
         // command has finished before trying to extract the results.
         ExecCreateCmdResponse execCreateCmdResponse = dockerClient.execCreateCmd(containerId).withAttachStdout(true).withAttachStderr(true).withCmd("sh", "script.sh").exec();
 
+        log.info("Created CMD for build job " + containerId);
+
         // Start the command and wait for it to complete.
         final CountDownLatch latch = new CountDownLatch(1);
         dockerClient.execStartCmd(execCreateCmdResponse.getId()).exec(new ResultCallback.Adapter<>() {
@@ -358,10 +378,12 @@ public class LocalCIBuildJobExecutionService {
             @Override
             public void onComplete() {
                 latch.countDown();
+                log.info("Completed waiting for CMD build job " + containerId);
             }
         });
 
         try {
+            log.info("Started CMD for build job " + containerId);
             // Block until the latch reaches 0 or until the thread is interrupted.
             latch.await();
         }
