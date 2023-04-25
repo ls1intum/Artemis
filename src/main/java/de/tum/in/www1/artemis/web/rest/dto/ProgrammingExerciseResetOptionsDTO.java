@@ -10,9 +10,9 @@ public class ProgrammingExerciseResetOptionsDTO {
 
     private boolean deleteBuildPlans;
 
-    private boolean deleteStudentRepositories;
+    private boolean deleteRepositories;
 
-    private boolean deleteStudentParticipationsSubmissionsAndResults;
+    private boolean deleteParticipationsSubmissionsAndResults;
 
     private boolean recreateBuildPlans;
 
@@ -25,19 +25,19 @@ public class ProgrammingExerciseResetOptionsDTO {
     }
 
     public boolean isDeleteRepositories() {
-        return deleteStudentRepositories;
+        return deleteRepositories;
     }
 
-    public void setDeleteStudentRepositories(boolean deleteStudentRepositories) {
-        this.deleteStudentRepositories = deleteStudentRepositories;
+    public void setDeleteRepositories(boolean deleteRepositories) {
+        this.deleteRepositories = deleteRepositories;
     }
 
-    public boolean isDeleteStudentParticipationsSubmissionsAndResults() {
-        return deleteStudentParticipationsSubmissionsAndResults;
+    public boolean isDeleteParticipationsSubmissionsAndResults() {
+        return deleteParticipationsSubmissionsAndResults;
     }
 
-    public void setDeleteStudentParticipationsSubmissionsAndResults(boolean deleteStudentParticipationsSubmissionsAndResults) {
-        this.deleteStudentParticipationsSubmissionsAndResults = deleteStudentParticipationsSubmissionsAndResults;
+    public void setDeleteParticipationsSubmissionsAndResults(boolean deleteParticipationsSubmissionsAndResults) {
+        this.deleteParticipationsSubmissionsAndResults = deleteParticipationsSubmissionsAndResults;
     }
 
     public boolean isRecreateBuildPlans() {

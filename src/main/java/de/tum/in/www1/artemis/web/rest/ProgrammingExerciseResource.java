@@ -628,10 +628,13 @@ public class ProgrammingExerciseResource {
 
     /**
      * Consolidates the reset functionality for a programming exercise by performing a set of operations
-     * as specified in the ProgrammingExerciseResetOptionsDTO. The available operations include:
-     * 1. Deleting and recreating the BASE and SOLUTION build plans for the exercise.
-     * 2. Deleting all student participations associated with the exercise.
-     * 3. Deleting all student build plans (except BASE/SOLUTION) and optionally deleting and archiving all repositories of the exercise student participations.
+     * as specified in the ProgrammingExerciseResetOptionsDTO for an exercise given an exerciseId.
+     *
+     * The available operations include:
+     * 1. deleteBuildPlans: Deleting all student build plans (except BASE/SOLUTION).
+     * 2. deleteRepositories: Deleting all student repositories (requires: 1. deleteBuildPlans == true).
+     * 3. deleteParticipationsSubmissionsAndResults: Deleting all participations, submissions, and results.
+     * 4. recreateBuildPlans: Deleting and recreating the BASE and SOLUTION build plans.
      *
      * @param exerciseId                         - Id of the programming exercise to reset.
      * @param programmingExerciseResetOptionsDTO - Data Transfer Object specifying which operations to perform during the exercise reset.
@@ -650,7 +653,7 @@ public class ProgrammingExerciseResource {
             continuousIntegrationService.get().recreateBuildPlansForExercise(programmingExercise);
         }
 
-        if (programmingExerciseResetOptionsDTO.isDeleteStudentParticipationsSubmissionsAndResults()) {
+        if (programmingExerciseResetOptionsDTO.isDeleteParticipationsSubmissionsAndResults()) {
             exerciseDeletionService.reset(programmingExercise);
         }
 

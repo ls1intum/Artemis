@@ -34,8 +34,8 @@ export type ProgrammingExerciseTestCaseStateDTO = {
 
 export type ProgrammingExerciseResetOptions = {
     deleteBuildPlans: boolean;
-    deleteStudentRepositories: boolean;
-    deleteStudentParticipationsSubmissionsAndResults: boolean;
+    deleteRepositories: boolean;
+    deleteParticipationsSubmissionsAndResults: boolean;
     recreateBuildPlans: boolean;
 };
 

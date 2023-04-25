@@ -30,12 +30,12 @@
                     "title": "Lösche Build-Pläne der Studierenden (auf {{ ciPlatform }}).",
                     "info": "Die Build-Pläne werden automatisch neu erstellt, sobald Studierende erneut abgeben."
                 },
-                "deleteStudentRepositories": {
+                "deleteRepositories": {
                     "title": "Lösche Repositories der Studierenden (auf {{ vcPlatform }}).",
                     "warning": "Archivierung der Übung vor Aktivierung dieser Option wird empfohlen."
                 },
-                "deleteStudentParticipationsSubmissionsAndResults": "Lösche Teilnahmen, Abgaben und Ergebnisse der Studierenden (in Artemis).",
-                "artefactsWarning": "Das Auswählen der Optionen 2 oder 3 ohne vorherige Optionen kann zu nicht gelöschten Artefakten auf {{ vcPlatform }} und {{ ciPlatform }} führen. Bitte stellen Sie sicher, dass dies die gewünschte Aktion ist, bevor Sie fortfahren.",
+                "deleteParticipationsSubmissionsAndResults": "Lösche Teilnahmen, Abgaben und Ergebnisse der Studierenden (in Artemis).",
+                "artefactsWarning": "Das Auswählen der Option 3 ohne vorherige Optionen kann zu nicht gelöschten Artefakten auf {{ vcPlatform }} und {{ ciPlatform }} führen. Bitte stellen Sie sicher, dass dies die gewünschte Aktion ist, bevor Sie fortfahren.",
                 "recreateBuildPlans": "Erstelle Übungs-Build-Pläne (BASE und SOLUTION) erneut und überschreibe frühere Änderungen.",
                 "question": "<strong>Warnung:</strong> Diese Aktion kann <strong>NICHT</strong> rückgängig gemacht werden!<br>Um Ihre Auswahl zu bestätigen, geben Sie bitte den Namen der Übung ein: <strong>{{ title }}</strong>",
                 "successMessage": "Der Reset-Vorgang war erfolgreich."

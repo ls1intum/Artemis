@@ -30,12 +30,12 @@
                     "title": "Delete student build plans (on {{ ciPlatform }}).",
                     "info": "The build plans will be automatically recreated when students submit again."
                 },
-                "deleteStudentRepositories": {
+                "deleteRepositories": {
                     "title": "Delete student repositories (on {{ vcPlatform }}).",
                     "warning": "Before you activate this option, we recommend that you archive the exercise first."
                 },
-                "deleteStudentParticipationsSubmissionsAndResults": "Delete all student participations, submissions and results (on Artemis).",
-                "artefactsWarning": "Selecting Options 2 or 3 without all previous options may lead to undeleted artifacts on {{ vcPlatform }} and {{ ciPlatform }}. Please ensure this is your intended action before proceeding.",
+                "deleteParticipationsSubmissionsAndResults": "Delete all student participations, submissions and results (on Artemis).",
+                "artefactsWarning": "Selecting option 3 without all previous options may lead to undeleted artifacts on {{ vcPlatform }} and {{ ciPlatform }}. Please ensure this is your intended action before proceeding.",
                 "recreateBuildPlans": "Recreate the exercise build plans (BASE and SOLUTION) again from the latest exercise template, overwriting any previous changes.",
                 "question": "<strong>Warning:</strong> This action can <strong>NOT</strong> be undone!<br>To confirm your selection, please type in the name of the exercise: <strong>{{ title }}</strong>",
                 "successMessage": "Reset operation was successful."

@@ -96,8 +96,8 @@ describe('ProgrammingExerciseResetDialogComponent', () => {
         it('should return true when deleteBuildPlans is false and deleteStudentRepositories is true', () => {
             comp.programmingExerciseResetOptions = {
                 deleteBuildPlans: false,
-                deleteStudentRepositories: true,
-                deleteStudentParticipationsSubmissionsAndResults: false,
+                deleteRepositories: true,
+                deleteParticipationsSubmissionsAndResults: false,
                 recreateBuildPlans: false,
             };
             expect(comp.showUndeletedArtifactsWarning()).toBeTrue();
@@ -106,8 +106,8 @@ describe('ProgrammingExerciseResetDialogComponent', () => {
         it('should return true when deleteBuildPlans is false and deleteStudentParticipationsSubmissionsAndResults is true', () => {
             comp.programmingExerciseResetOptions = {
                 deleteBuildPlans: false,
-                deleteStudentRepositories: false,
-                deleteStudentParticipationsSubmissionsAndResults: true,
+                deleteRepositories: false,
+                deleteParticipationsSubmissionsAndResults: true,
                 recreateBuildPlans: false,
             };
             expect(comp.showUndeletedArtifactsWarning()).toBeTrue();
@@ -116,8 +116,8 @@ describe('ProgrammingExerciseResetDialogComponent', () => {
         it('should return false when deleteBuildPlans and deleteStudentRepositories are true', () => {
             comp.programmingExerciseResetOptions = {
                 deleteBuildPlans: true,
-                deleteStudentRepositories: true,
-                deleteStudentParticipationsSubmissionsAndResults: false,
+                deleteRepositories: true,
+                deleteParticipationsSubmissionsAndResults: false,
                 recreateBuildPlans: false,
             };
             expect(comp.showUndeletedArtifactsWarning()).toBeFalse();
@@ -126,8 +126,8 @@ describe('ProgrammingExerciseResetDialogComponent', () => {
         it('should return false when all options are false', () => {
             comp.programmingExerciseResetOptions = {
                 deleteBuildPlans: false,
-                deleteStudentRepositories: false,
-                deleteStudentParticipationsSubmissionsAndResults: false,
+                deleteRepositories: false,
+                deleteParticipationsSubmissionsAndResults: false,
                 recreateBuildPlans: false,
             };
             expect(comp.showUndeletedArtifactsWarning()).toBeFalse();
@@ -142,8 +142,8 @@ describe('ProgrammingExerciseResetDialogComponent', () => {
         comp.programmingExercise.id = exerciseId;
         comp.programmingExerciseResetOptions = {
             deleteBuildPlans: true,
-            deleteStudentRepositories: true,
-            deleteStudentParticipationsSubmissionsAndResults: true,
+            deleteRepositories: true,
+            deleteParticipationsSubmissionsAndResults: true,
             recreateBuildPlans: true,
         };
         comp.resetProgrammingExercise();
@@ -203,8 +203,8 @@ describe('ProgrammingExerciseResetDialogComponent', () => {
         it('should return false when all options are set to false', () => {
             comp.programmingExerciseResetOptions = {
                 deleteBuildPlans: false,
-                deleteStudentRepositories: false,
-                deleteStudentParticipationsSubmissionsAndResults: false,
+                deleteRepositories: false,
+                deleteParticipationsSubmissionsAndResults: false,
                 recreateBuildPlans: false,
             };
 
@@ -222,8 +222,8 @@ describe('ProgrammingExerciseResetDialogComponent', () => {
             for (const option in options) {
                 comp.programmingExerciseResetOptions = {
                     deleteBuildPlans: false,
-                    deleteStudentRepositories: false,
-                    deleteStudentParticipationsSubmissionsAndResults: false,
+                    deleteRepositories: false,
+                    deleteParticipationsSubmissionsAndResults: false,
                     recreateBuildPlans: false,
                 };
                 comp.programmingExerciseResetOptions[option] = true;

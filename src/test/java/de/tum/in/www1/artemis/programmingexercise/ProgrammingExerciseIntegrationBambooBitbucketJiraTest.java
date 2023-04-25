@@ -991,9 +991,15 @@ class ProgrammingExerciseIntegrationBambooBitbucketJiraTest extends AbstractSpri
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
-    void testResetOnlyRecreateBuildPlansSuccess() throws Exception {
-        programmingExerciseIntegrationTestService.testResetOnlyRecreateBuildPlansSuccess();
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testResetOnlyDeleteBuildPlansSuccess() throws Exception {
+        programmingExerciseIntegrationTestService.testResetOnlyDeleteBuildPlansSuccess();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testResetDeleteBuildPlansAndDeleteStudentRepositoriesSuccess() throws Exception {
+        programmingExerciseIntegrationTestService.testResetDeleteBuildPlansAndDeleteStudentRepositoriesSuccess();
     }
 
     @Test
@@ -1004,14 +1010,8 @@ class ProgrammingExerciseIntegrationBambooBitbucketJiraTest extends AbstractSpri
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testResetOnlyDeleteBuildPlansAndDeleteBuildPlansSuccess() throws Exception {
-        programmingExerciseIntegrationTestService.testResetOnlyDeleteBuildPlansAndDeleteBuildPlansSuccess();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testResetOnlyDeleteBuildPlansAndNotDeleteBuildPlansSuccess() throws Exception {
-        programmingExerciseIntegrationTestService.testResetOnlyDeleteBuildPlansAndNotDeleteBuildPlansSuccess();
+    void testResetOnlyRecreateBuildPlansSuccess() throws Exception {
+        programmingExerciseIntegrationTestService.testResetOnlyRecreateBuildPlansSuccess();
     }
 
     // Tests for export auxiliary repository for exercise endpoint

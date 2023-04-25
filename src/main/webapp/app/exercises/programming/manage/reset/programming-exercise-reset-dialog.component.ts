@@ -52,8 +52,8 @@ export class ProgrammingExerciseResetDialogComponent implements OnInit {
         this.resetInProgress = false;
         this.programmingExerciseResetOptions = {
             deleteBuildPlans: false,
-            deleteStudentRepositories: false,
-            deleteStudentParticipationsSubmissionsAndResults: false,
+            deleteRepositories: false,
+            deleteParticipationsSubmissionsAndResults: false,
             recreateBuildPlans: false,
         };
         this.isLoading = false;
@@ -73,8 +73,8 @@ export class ProgrammingExerciseResetDialogComponent implements OnInit {
     showUndeletedArtifactsWarning() {
         const options = [
             this.programmingExerciseResetOptions.deleteBuildPlans,
-            this.programmingExerciseResetOptions.deleteStudentRepositories,
-            this.programmingExerciseResetOptions.deleteStudentParticipationsSubmissionsAndResults,
+            this.programmingExerciseResetOptions.deleteRepositories,
+            this.programmingExerciseResetOptions.deleteParticipationsSubmissionsAndResults,
         ];
         return (!options[0] && (options[1] || options[2])) || (!options[1] && options[2]);
     }
@@ -120,8 +120,8 @@ export class ProgrammingExerciseResetDialogComponent implements OnInit {
     get hasSelectedOptions(): boolean {
         return (
             this.programmingExerciseResetOptions.deleteBuildPlans ||
-            this.programmingExerciseResetOptions.deleteStudentRepositories ||
-            this.programmingExerciseResetOptions.deleteStudentParticipationsSubmissionsAndResults ||
+            this.programmingExerciseResetOptions.deleteRepositories ||
+            this.programmingExerciseResetOptions.deleteParticipationsSubmissionsAndResults ||
             this.programmingExerciseResetOptions.recreateBuildPlans
         );
     }

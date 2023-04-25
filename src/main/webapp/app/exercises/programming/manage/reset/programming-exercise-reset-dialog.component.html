@@ -12,14 +12,24 @@
             <li>
                 <div class="checkbox">
                     <label class="control-label">
-                        <input class="form-check-input" type="checkbox" name="deleteBuildPlans" [(ngModel)]="this.programmingExerciseResetOptions.deleteBuildPlans" />
+                        <input
+                            class="form-check-input"
+                            type="checkbox"
+                            name="deleteBuildPlans"
+                            [(ngModel)]="this.programmingExerciseResetOptions.deleteBuildPlans"
+                            (ngModelChange)="
+                                this.programmingExerciseResetOptions.deleteRepositories = this.programmingExerciseResetOptions.deleteBuildPlans
+                                    ? this.programmingExerciseResetOptions.deleteRepositories
+                                    : false
+                            "
+                        />
                         <span jhiTranslate="artemisApp.programmingExercise.reset.deleteBuildPlans.title" [translateValues]="{ ciPlatform: continuousIntegrationName }">
                             Delete student build plans (on {{ continuousIntegrationName }})
                         </span>
                     </label>
                 </div>
             </li>
-            <div class="alert alert-info my-2" *ngIf="this.programmingExerciseResetOptions.deleteBuildPlans">
+            <div class="alert alert-info my-2" *ngIf="this.programmingExerciseResetOptions.deleteBuildPlans && !this.programmingExerciseResetOptions.deleteRepositories">
                 <span jhiTranslate="artemisApp.programmingExercise.reset.deleteBuildPlans.info"> The build plans will be automatically recreated when students submit again. </span>
             </div>
             <li>
@@ -28,10 +38,11 @@
                         <input
                             class="form-check-input"
                             type="checkbox"
-                            name="deleteStudentRepositories"
-                            [(ngModel)]="this.programmingExerciseResetOptions.deleteStudentRepositories"
+                            name="deleteRepositories"
+                            [(ngModel)]="this.programmingExerciseResetOptions.deleteRepositories"
+                            (ngModelChange)="this.programmingExerciseResetOptions.deleteBuildPlans = $event ? true : this.programmingExerciseResetOptions.deleteBuildPlans"
                         />
-                        <span jhiTranslate="artemisApp.programmingExercise.reset.deleteStudentRepositories.title" [translateValues]="{ vcPlatform: versionControlName }">
+                        <span jhiTranslate="artemisApp.programmingExercise.reset.deleteRepositories.title" [translateValues]="{ vcPlatform: versionControlName }">
                             Delete student repositories (on {{ versionControlName }}).
                         </span>
                     </label>
@@ -43,10 +54,10 @@
                         <input
                             class="form-check-input"
                             type="checkbox"
-                            name="deleteStudentParticipationsSubmissionsAndResults"
-                            [(ngModel)]="this.programmingExerciseResetOptions.deleteStudentParticipationsSubmissionsAndResults"
+                            name="deleteParticipationsSubmissionsAndResults"
+                            [(ngModel)]="this.programmingExerciseResetOptions.deleteParticipationsSubmissionsAndResults"
                         />
-                        <span jhiTranslate="artemisApp.programmingExercise.reset.deleteStudentParticipationsSubmissionsAndResults"
+                        <span jhiTranslate="artemisApp.programmingExercise.reset.deleteParticipationsSubmissionsAndResults"
                             >Delete all student participations, submissions and results (on Artemis).</span
                         >
                     </label>
@@ -57,8 +68,8 @@
                     jhiTranslate="artemisApp.programmingExercise.reset.artefactsWarning"
                     [translateValues]="{ vcPlatform: versionControlName, ciPlatform: continuousIntegrationName }"
                 >
-                    Selecting Options 2 and 3 without all previous options may lead to undeleted artifacts on {{ 'Bitbucket' }} and {{ 'Bamboo' }}. Please ensure this is your
-                    intended action before proceeding.
+                    Selecting Options 3 without all previous options may lead to undeleted artifacts on {{ 'Bitbucket' }} and {{ 'Bamboo' }}. Please ensure this is your intended
+                    action before proceeding.
                 </span>
             </div>
             <li *ngIf="programmingExercise.isAtLeastEditor">

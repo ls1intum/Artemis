@@ -1896,6 +1896,84 @@ class ProgrammingExerciseIntegrationTestService {
         request.put(defaultResetEndpoint(-1L), resetOptions, HttpStatus.NOT_FOUND);
     }
 
+    void testResetOnlyDeleteBuildPlansSuccess() throws Exception {
+        final var projectKey = programmingExercise.getProjectKey();
+        for (final var planName : List.of(userPrefix + "student1", userPrefix + "student2")) {
+            mockDelegate.mockDeleteBuildPlan(projectKey, projectKey + "-" + planName.toUpperCase(), false);
+        }
+
+        // Two participations exist with build plans before reset
+        var participations = programmingExerciseStudentParticipationRepository.findByExerciseId(programmingExercise.getId());
+        assertThat(participations).hasSize(2);
+        participations.forEach(participation -> {
+            assertThat(participation.getBuildPlanId()).isNotNull();
+        });
+
+        var resetOptions = new ProgrammingExerciseResetOptionsDTO();
+        resetOptions.setDeleteBuildPlans(true);
+        request.put(defaultResetEndpoint(programmingExercise.getId()), resetOptions, HttpStatus.OK);
+
+        // Two participations exist with build plans removed after reset
+        participations = programmingExerciseStudentParticipationRepository.findByExerciseId(programmingExercise.getId());
+        assertThat(participations).hasSize(2);
+        participations.forEach(participation -> {
+            assertThat(participation.getBuildPlanId()).isNull();
+        });
+    }
+
+    void testResetDeleteBuildPlansAndDeleteStudentRepositoriesSuccess() throws Exception {
+        final var projectKey = programmingExercise.getProjectKey();
+        for (final var planName : List.of(userPrefix + "student1", userPrefix + "student2")) {
+            mockDelegate.mockDeleteBuildPlan(projectKey, projectKey + "-" + planName.toUpperCase(), false);
+        }
+
+        for (final var repoName : List.of(userPrefix + "student1", userPrefix + "student2")) {
+            mockDelegate.mockDeleteRepository(projectKey, (projectKey + "-" + repoName).toLowerCase(), false);
+        }
+
+        // Two participations exist with build plans and repositories before reset
+        var participations = programmingExerciseStudentParticipationRepository.findByExerciseId(programmingExercise.getId());
+        assertThat(participations).hasSize(2);
+        participations.forEach(participation -> {
+            assertThat(participation.getRepositoryUrl()).isNotNull();
+            assertThat(participation.getBuildPlanId()).isNotNull();
+        });
+
+        var resetOptions = new ProgrammingExerciseResetOptionsDTO();
+        resetOptions.setDeleteBuildPlans(true);
+        resetOptions.setDeleteRepositories(true);
+        request.put(defaultResetEndpoint(programmingExercise.getId()), resetOptions, HttpStatus.OK);
+
+        // Two participations exist with build plans and repositories removed after reset
+        participations = programmingExerciseStudentParticipationRepository.findByExerciseId(programmingExercise.getId());
+        assertThat(participations).hasSize(2);
+        participations.forEach(participation -> {
+            assertThat(participation.getRepositoryUrl()).isNull();
+            assertThat(participation.getBuildPlanId()).isNull();
+        });
+    }
+
+    void testResetOnlyDeleteStudentParticipationsSubmissionsAndResultsSuccess() throws Exception {
+        final var projectKey = programmingExercise.getProjectKey();
+        for (final var planName : List.of(userPrefix + "student1", userPrefix + "student2")) {
+            mockDelegate.mockDeleteBuildPlan(projectKey, projectKey + "-" + planName.toUpperCase(), false);
+        }
+
+        for (final var repoName : List.of(userPrefix + "student1", userPrefix + "student2")) {
+            mockDelegate.mockDeleteRepository(projectKey, (projectKey + "-" + repoName).toLowerCase(), false);
+        }
+
+        // Two participations exist before reset
+        assertThat(programmingExerciseStudentParticipationRepository.findByExerciseId(programmingExercise.getId())).hasSize(2);
+
+        var resetOptions = new ProgrammingExerciseResetOptionsDTO();
+        resetOptions.setDeleteParticipationsSubmissionsAndResults(true);
+        request.put(defaultResetEndpoint(programmingExercise.getId()), resetOptions, HttpStatus.OK);
+
+        // No participations exist after reset
+        assertThat(programmingExerciseStudentParticipationRepository.findByExerciseId(programmingExercise.getId()).isEmpty());
+    }
+
     void testResetOnlyRecreateBuildPlansSuccess() throws Exception {
         addAuxiliaryRepositoryToExercise();
         mockDelegate.mockGetProjectKeyFromAnyUrl(programmingExercise.getProjectKey());
@@ -1910,18 +1988,6 @@ class ProgrammingExerciseIntegrationTestService {
         var resetOptions = new ProgrammingExerciseResetOptionsDTO();
         resetOptions.setRecreateBuildPlans(true);
         request.put(defaultResetEndpoint(), resetOptions, HttpStatus.OK);
-    }
-
-    void testResetOnlyDeleteStudentParticipationsSubmissionsAndResultsSuccess() throws Exception {
-
-    }
-
-    void testResetOnlyDeleteBuildPlansAndDeleteBuildPlansSuccess() throws Exception {
-
-    }
-
-    void testResetOnlyDeleteBuildPlansAndNotDeleteBuildPlansSuccess() throws Exception {
-
     }
 
     void testExportAuxiliaryRepositoryForbidden() throws Exception {
