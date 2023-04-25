@@ -88,7 +88,7 @@ export class JhiMainComponent implements OnInit {
      */
     private shouldShowSkeleton(url: string): boolean {
         const isStandaloneProblemStatement = url.match('\\/courses\\/\\d+\\/exercises\\/\\d+\\/problem-statement(\\/\\d*)?(\\/)?');
-        const isStandaloneFeedback = url.match('\\/courses\\/\\d+\\/exercises\\/\\d+\\/feedback\\/\\d+\\/\\d+\\/(true|false)(\\/)?');
+        const isStandaloneFeedback = url.match('\\/courses\\/\\d+\\/exercises\\/\\d+\\/participations\\/\\d+\\/results\\/\\d+\\/feedback(\\/)?');
         return !isStandaloneProblemStatement && !isStandaloneFeedback;
     }
 }
