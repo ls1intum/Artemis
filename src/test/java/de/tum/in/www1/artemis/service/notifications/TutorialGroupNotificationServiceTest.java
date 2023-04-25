@@ -76,6 +76,7 @@ class TutorialGroupNotificationServiceTest extends AbstractSpringIntegrationBamb
 
         doNothing().when(javaMailSender).send(any(MimeMessage.class));
         tutorialGroupNotificationRepository.deleteAll();
+        notificationSettingRepository.deleteAll();
     }
 
     private void verifyRepositoryCallWithCorrectNotification(int numberOfGroupsAndCalls, String expectedNotificationTitle) {
