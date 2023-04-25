@@ -55,11 +55,6 @@ describe('StandaloneFeedbackComponent', () => {
             });
     });
 
-    it('should set isTemplateStatusMissing correctly', () => {
-        fixture.detectChanges();
-        expect(component.isTemplateStatusMissing).toBeFalse();
-    });
-
     it('should set exercise, result and latestDueDate correctly', fakeAsync(() => {
         fixture.detectChanges();
         tick(500);
