@@ -4,7 +4,7 @@ import { mapValues } from 'lodash-es';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { Observable, Subscription } from 'rxjs';
 import { AlertService } from 'app/core/util/alert.service';
-import { faBan, faSpinner, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faCheck, faSpinner, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { ButtonType } from 'app/shared/components/button.component';
 
 @Component({
@@ -27,6 +27,8 @@ export class DeleteDialogComponent implements OnInit, OnDestroy {
     additionalChecks?: { [key: string]: string };
     additionalChecksValues: { [key: string]: boolean } = {};
     actionType: ActionType;
+    // do not use faTimes icon if it's a confirmation but not a delete dialog
+    useFaCheckIcon: boolean;
 
     // used by *ngFor in the template
     objectKeys = Object.keys;
@@ -35,6 +37,7 @@ export class DeleteDialogComponent implements OnInit, OnDestroy {
     faBan = faBan;
     faSpinner = faSpinner;
     faTimes = faTimes;
+    faCheck = faCheck;
 
     constructor(private activeModal: NgbActiveModal, private alertService: AlertService) {}
 
@@ -53,6 +56,7 @@ export class DeleteDialogComponent implements OnInit, OnDestroy {
         if (this.additionalChecks) {
             this.additionalChecksValues = mapValues(this.additionalChecks, () => false);
         }
+        this.useFaCheckIcon = this.buttonType !== ButtonType.ERROR;
     }
 
     /**

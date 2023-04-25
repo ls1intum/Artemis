@@ -68,8 +68,6 @@ public class DataExportService {
 
     private final DataExportRepository dataExportRepository;
 
-    private final SubmittedAnswerRepository submittedAnswerRepository;
-
     private final QuizQuestionRepository quizQuestionRepository;
 
     private final QuizSubmissionRepository quizSubmissionRepository;
@@ -96,7 +94,6 @@ public class DataExportService {
         this.fileUploadExerciseRepository = fileUploadExerciseRepository;
         this.quizExerciseRepository = quizExerciseRepository;
         this.dataExportRepository = dataExportRepository;
-        this.submittedAnswerRepository = submittedAnswerRepository;
         this.quizQuestionRepository = quizQuestionRepository;
         this.quizSubmissionRepository = quizSubmissionRepository;
     }
@@ -170,7 +167,7 @@ public class DataExportService {
             createCourseZipFile(course, outputDir);
         }
         addGeneralUserInformation(user);
-        // addGDPRInformationFile();
+        addGDPRInformationFile();
         return createDataExportZipFile(user.getLogin());
 
     }
@@ -446,12 +443,6 @@ public class DataExportService {
         }
         else if (submission instanceof QuizSubmission quizSubmission) {
             builder.add(quizSubmission.getScoreInPoints());
-        }
-        else if (submission instanceof FileUploadSubmission fileUploadSubmission) {
-            // do nothing, just prevent throwing the IllegalArgumentException
-        }
-        else {
-            throw new IllegalArgumentException("Submission type not supported");
         }
         return builder.build();
     }

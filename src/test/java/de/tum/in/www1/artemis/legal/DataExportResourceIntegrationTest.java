@@ -48,9 +48,7 @@ public class DataExportResourceIntegrationTest extends AbstractSpringIntegration
     @Autowired
     private ProgrammingExerciseTestService programmingExerciseTestService;
 
-    private Course course2;
-
-    private String testDataBaseFilePath = "src/test/resources/test-data/data-export/data-export.zip";
+    private static final String TEST_DATA_EXPORT_BASE_FILE_PATH = "src/test/resources/test-data/data-export/data-export.zip";
 
     private static final String FILE_FORMAT_CSV = ".csv";
 
@@ -67,7 +65,7 @@ public class DataExportResourceIntegrationTest extends AbstractSpringIntegration
         var submission = database.createProgrammingSubmission(participation, false, "abc");
         var submission2 = database.createProgrammingSubmission(participation, false, "def");
         database.addResultToSubmission(submission, AssessmentType.AUTOMATIC, null, 2.0, true, ZonedDateTime.now().minusHours(3));
-        var quizExercise = database.addQuizExerciseToCourseWithParticipationAndSubmissionForUser(course1, TEST_PREFIX + "student1");
+        database.addQuizExerciseToCourseWithParticipationAndSubmissionForUser(course1, TEST_PREFIX + "student1");
         database.addSubmission(participation, submission);
         database.addSubmission(participation, submission2);
         database.addResultToSubmission(submission, AssessmentType.AUTOMATIC, null, 3.0, true, ZonedDateTime.now().minusMinutes(2));
@@ -116,12 +114,9 @@ public class DataExportResourceIntegrationTest extends AbstractSpringIntegration
             assertThat(exerciseDirPath).isDirectoryContaining(path -> path.getFileName().toString().endsWith(".json"));
         }
         else if (exerciseDirPath.toString().contains("Text")) {
+            // submission text txt file
             assertThat(exerciseDirPath).isDirectoryContaining(path -> path.getFileName().toString().endsWith("_text.txt"));
         }
-
-    }
-
-    private void assertCorrectContentTextExercise() {
 
     }
 
@@ -133,10 +128,7 @@ public class DataExportResourceIntegrationTest extends AbstractSpringIntegration
 
     private List<Path> getExerciseDirectoryPaths(Path coursePath) throws IOException {
         try (var files = Files.list(coursePath).filter(Files::isDirectory)) {
-
-            var list = files.toList();
-            System.out.println("exercises: " + list.size());
-            return list;
+            return files.toList();
         }
     }
 
@@ -164,14 +156,14 @@ public class DataExportResourceIntegrationTest extends AbstractSpringIntegration
         dataExport.setRequestDate(ZonedDateTime.now().minusDays(2));
         dataExport.setCreationDate(ZonedDateTime.now().minusDays(1));
         // rename file to avoid duplicates in the temp directory
-        var newFilePath = testDataBaseFilePath + ZonedDateTime.now().toEpochSecond();
-        Files.move(Path.of(testDataBaseFilePath), Path.of(newFilePath));
+        var newFilePath = TEST_DATA_EXPORT_BASE_FILE_PATH + ZonedDateTime.now().toEpochSecond();
+        Files.move(Path.of(TEST_DATA_EXPORT_BASE_FILE_PATH), Path.of(newFilePath));
         dataExport.setFilePath(newFilePath);
         return dataExportRepository.save(dataExport);
     }
 
     private void restoreTestDataInitState(DataExport dataExport) throws IOException {
         // undo file renaming
-        Files.move(Path.of(dataExport.getFilePath()), Path.of(testDataBaseFilePath));
+        Files.move(Path.of(dataExport.getFilePath()), Path.of(TEST_DATA_EXPORT_BASE_FILE_PATH));
     }
 }

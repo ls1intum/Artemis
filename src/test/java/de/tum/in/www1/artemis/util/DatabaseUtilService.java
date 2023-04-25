@@ -343,6 +343,15 @@ public class DatabaseUtilService {
     @Autowired
     private QuizExerciseRepository quizExerciseRepository;
 
+    @Autowired
+    private SubmittedAnswerRepository submittedAnswerRepository;
+
+    @Autowired
+    private ShortAnswerSpotRepository shortAnswerSpotRepository;
+
+    @Autowired
+    private ShortAnswerMappingRepository shortAnswerMappingRepository;
+
     // TODO: this should probably be moved into another service
     public void changeUser(String username) {
         User user = getUserByLogin(username);
@@ -2526,6 +2535,34 @@ public class DatabaseUtilService {
         quizSubmission.setParticipation(studentParticipation);
         quizSubmission.setType(SubmissionType.MANUAL);
         quizSubmission.setScoreInPoints(2.0);
+        var submittedAnswerMC = new MultipleChoiceSubmittedAnswer();
+        MultipleChoiceQuestion multipleChoiceQuestion = (MultipleChoiceQuestion) (quizExercise.getQuizQuestions().get(0));
+        submittedAnswerMC.setSelectedOptions(Set.of(multipleChoiceQuestion.getAnswerOptions().get(0)));
+        submittedAnswerMC.setQuizQuestion(multipleChoiceQuestion);
+
+        var submittedShortAnswer = new ShortAnswerSubmittedAnswer();
+        ShortAnswerQuestion shortAnswerQuestion = (ShortAnswerQuestion) (quizExercise.getQuizQuestions().get(2));
+        ShortAnswerSubmittedText shortAnswerSubmittedText = new ShortAnswerSubmittedText();
+        shortAnswerQuestion.setExercise(quizExercise);
+        shortAnswerSubmittedText.setText("my text");
+        shortAnswerSubmittedText.setSubmittedAnswer(submittedShortAnswer);
+        submittedShortAnswer.addSubmittedTexts(shortAnswerSubmittedText);
+        ShortAnswerSpot shortAnswerSpot = new ShortAnswerSpot();
+        shortAnswerSpot.setSpotNr(1);
+        shortAnswerSubmittedText.setSpot(shortAnswerSpot);
+        ShortAnswerMapping mapping = new ShortAnswerMapping();
+        mapping.setQuestion(shortAnswerQuestion);
+        mapping.setShortAnswerSpotIndex(1);
+        shortAnswerQuestion.addCorrectMapping(mapping);
+        studentParticipationRepo.save(studentParticipation);
+        quizSubmissionRepository.save(quizSubmission);
+        submittedShortAnswer.setSubmission(quizSubmission);
+        submittedAnswerMC.setSubmission(quizSubmission);
+        shortAnswerSpotRepository.save(shortAnswerSpot);
+        submittedAnswerRepository.save(submittedAnswerMC);
+        submittedAnswerRepository.save(submittedShortAnswer);
+        quizSubmission.addSubmittedAnswers(submittedAnswerMC);
+        quizSubmission.addSubmittedAnswers(submittedShortAnswer);
         studentParticipation.addSubmission(quizSubmission);
         quizExercise = quizExerciseRepository.save(quizExercise);
         studentParticipationRepo.save(studentParticipation);
@@ -3943,7 +3980,7 @@ public class DatabaseUtilService {
     public QuizExercise createQuiz(Course course, ZonedDateTime releaseDate, ZonedDateTime dueDate, QuizMode quizMode) {
         QuizExercise quizExercise = ModelFactory.generateQuizExercise(releaseDate, dueDate, quizMode, course);
         initializeQuizExercise(quizExercise);
-        return quizExercise;
+        return quizExerciseRepository.save(quizExercise);
     }
 
     /**
