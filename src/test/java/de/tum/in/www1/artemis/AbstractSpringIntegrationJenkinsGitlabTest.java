@@ -116,6 +116,11 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
     }
 
     @Override
+    public void mockConnectorRequestForImportFromFile(ProgrammingExercise exerciseForImport) throws Exception {
+        mockConnectorRequestsForSetup(exerciseForImport, false);
+    }
+
+    @Override
     public void mockImportProgrammingExerciseWithFailingEnablePlan(ProgrammingExercise sourceExercise, ProgrammingExercise exerciseToBeImported, boolean planExistsInCi,
             boolean shouldPlanEnableFail) throws Exception {
         mockImportRepositories(exerciseToBeImported);
