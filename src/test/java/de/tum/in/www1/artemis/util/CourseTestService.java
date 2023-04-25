@@ -28,6 +28,8 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.test.context.TestSecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
@@ -440,7 +442,7 @@ public class CourseTestService {
 
         final List<String> defaultChannelNames = List.of("tech-support", "organization", "random", "announcement");
 
-        Course course1 = ModelFactory.generateCourse(1L, null, null, new HashSet<>());
+        Course course1 = ModelFactory.generateCourse(null, null, null, new HashSet<>());
         course1.setShortName("testdefaultchannels");
         mockDelegate.mockCreateGroupInUserManagement(course1.getDefaultStudentGroupName());
         mockDelegate.mockCreateGroupInUserManagement(course1.getDefaultTeachingAssistantGroupName());
@@ -448,6 +450,7 @@ public class CourseTestService {
         mockDelegate.mockCreateGroupInUserManagement(course1.getDefaultInstructorGroupName());
 
         var result = request.getMvc().perform(buildCreateCourse(course1)).andExpect(status().isCreated()).andReturn();
+        SecurityContextHolder.setContext(TestSecurityContextHolder.getContext());
         course1 = objectMapper.readValue(result.getResponse().getContentAsString(), Course.class);
         assertThat(courseRepo.findByIdElseThrow(course1.getId())).isNotNull();
         var channels = channelRepository.findChannelsByCourseId(course1.getId());
