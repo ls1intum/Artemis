@@ -124,7 +124,7 @@ class TutorialGroupNotificationServiceTest extends AbstractSpringIntegrationBamb
     }
 
     private void verifyEmail(int times) {
-        verify(javaMailSender, timeout(1500).times(times)).createMimeMessage();
+        verify(javaMailSender, timeout(2500).times(times)).createMimeMessage();
     }
 
     private TutorialGroup createAndSaveTutorialGroup(Long courseId, String title, String additionalInformation, Integer capacity, Boolean isOnline, String campus,

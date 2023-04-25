@@ -1,12 +1,10 @@
 package de.tum.in.www1.artemis.service.notifications.push_notifications;
 
-import static java.lang.Thread.sleep;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
-import static org.mockito.Mockito.atLeast;
 
 import java.util.Collections;
 import java.util.Date;
@@ -87,11 +85,10 @@ class AppleFirebasePushNotificationServiceTest {
         // When
         applePushNotificationService.sendNotification(notification, student, null);
         firebasePushNotificationService.sendNotification(notification, student, null);
-        sleep(1000);
 
         // Then
-        verify(appleRestTemplateMock, times(1)).postForObject(anyString(), any(HttpEntity.class), eq(String.class));
-        verify(firebaseRestTemplateMock, times(1)).postForObject(anyString(), any(HttpEntity.class), eq(String.class));
+        verify(appleRestTemplateMock, timeout(1000).times(1)).postForObject(anyString(), any(HttpEntity.class), eq(String.class));
+        verify(firebaseRestTemplateMock, timeout(1000).times(1)).postForObject(anyString(), any(HttpEntity.class), eq(String.class));
     }
 
     @Test
@@ -102,11 +99,10 @@ class AppleFirebasePushNotificationServiceTest {
         // When
         applePushNotificationService.sendNotification(notification, student, null);
         firebasePushNotificationService.sendNotification(notification, student, null);
-        sleep(5000);
 
         // Then
-        verify(appleRestTemplateMock, atLeast(2)).postForObject(anyString(), any(HttpEntity.class), any());
-        verify(firebaseRestTemplateMock, atLeast(2)).postForObject(anyString(), any(HttpEntity.class), any());
+        verify(appleRestTemplateMock, timeout(5000).atLeast(2)).postForObject(anyString(), any(HttpEntity.class), any());
+        verify(firebaseRestTemplateMock, timeout(5000).atLeast(2)).postForObject(anyString(), any(HttpEntity.class), any());
     }
 
     @Test
