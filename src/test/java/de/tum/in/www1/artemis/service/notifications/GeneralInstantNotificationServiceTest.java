@@ -118,18 +118,15 @@ class GeneralInstantNotificationServiceTest {
      */
     @Test
     void testSendAllNotificationsToMultipleUsers() {
-        when(notificationSettingsService.checkIfNotificationIsAllowedInCommunicationChannelBySettingsForGivenUser(notification, student1,
-                NotificationSettingsCommunicationChannel.EMAIL)).thenReturn(true);
-        when(notificationSettingsService.checkIfNotificationIsAllowedInCommunicationChannelBySettingsForGivenUser(notification, student1,
-                NotificationSettingsCommunicationChannel.PUSH)).thenReturn(true);
-        when(notificationSettingsService.checkIfNotificationIsAllowedInCommunicationChannelBySettingsForGivenUser(notification, student2,
-                NotificationSettingsCommunicationChannel.EMAIL)).thenReturn(true);
-        when(notificationSettingsService.checkIfNotificationIsAllowedInCommunicationChannelBySettingsForGivenUser(notification, student2,
-                NotificationSettingsCommunicationChannel.PUSH)).thenReturn(true);
-
         List<User> studentList = new ArrayList<>();
         studentList.add(student1);
         studentList.add(student2);
+
+        when(notificationSettingsService.filterUsersByNotificationIsAllowedInCommunicationChannelBySettings(notification, studentList,
+                NotificationSettingsCommunicationChannel.PUSH)).thenReturn(studentList);
+        when(notificationSettingsService.filterUsersByNotificationIsAllowedInCommunicationChannelBySettings(notification, studentList,
+                NotificationSettingsCommunicationChannel.EMAIL)).thenReturn(studentList);
+
         generalInstantNotificationService.sendNotification(notification, studentList, null);
 
         verify(applePushNotificationService, times(1)).sendNotification(notification, studentList, null);
@@ -139,18 +136,14 @@ class GeneralInstantNotificationServiceTest {
 
     @Test
     void testSendEmailOnlyToOneUser() {
-        when(notificationSettingsService.checkIfNotificationIsAllowedInCommunicationChannelBySettingsForGivenUser(notification, student1,
-                NotificationSettingsCommunicationChannel.EMAIL)).thenReturn(true);
-        when(notificationSettingsService.checkIfNotificationIsAllowedInCommunicationChannelBySettingsForGivenUser(notification, student1,
-                NotificationSettingsCommunicationChannel.PUSH)).thenReturn(true);
-        when(notificationSettingsService.checkIfNotificationIsAllowedInCommunicationChannelBySettingsForGivenUser(notification, student2,
-                NotificationSettingsCommunicationChannel.EMAIL)).thenReturn(false);
-        when(notificationSettingsService.checkIfNotificationIsAllowedInCommunicationChannelBySettingsForGivenUser(notification, student2,
-                NotificationSettingsCommunicationChannel.PUSH)).thenReturn(true);
-
         List<User> studentList = new ArrayList<>();
         studentList.add(student1);
         studentList.add(student2);
+        when(notificationSettingsService.filterUsersByNotificationIsAllowedInCommunicationChannelBySettings(notification, studentList,
+                NotificationSettingsCommunicationChannel.EMAIL)).thenReturn(Collections.singletonList(student1));
+        when(notificationSettingsService.filterUsersByNotificationIsAllowedInCommunicationChannelBySettings(notification, studentList,
+                NotificationSettingsCommunicationChannel.PUSH)).thenReturn(studentList);
+
         generalInstantNotificationService.sendNotification(notification, studentList, null);
 
         verify(applePushNotificationService, times(1)).sendNotification(notification, studentList, null);
@@ -160,18 +153,14 @@ class GeneralInstantNotificationServiceTest {
 
     @Test
     void testSendPushOnlyToOneUser() {
-        when(notificationSettingsService.checkIfNotificationIsAllowedInCommunicationChannelBySettingsForGivenUser(notification, student1,
-                NotificationSettingsCommunicationChannel.EMAIL)).thenReturn(true);
-        when(notificationSettingsService.checkIfNotificationIsAllowedInCommunicationChannelBySettingsForGivenUser(notification, student1,
-                NotificationSettingsCommunicationChannel.PUSH)).thenReturn(true);
-        when(notificationSettingsService.checkIfNotificationIsAllowedInCommunicationChannelBySettingsForGivenUser(notification, student2,
-                NotificationSettingsCommunicationChannel.EMAIL)).thenReturn(true);
-        when(notificationSettingsService.checkIfNotificationIsAllowedInCommunicationChannelBySettingsForGivenUser(notification, student2,
-                NotificationSettingsCommunicationChannel.PUSH)).thenReturn(false);
-
         List<User> studentList = new ArrayList<>();
         studentList.add(student1);
         studentList.add(student2);
+        when(notificationSettingsService.filterUsersByNotificationIsAllowedInCommunicationChannelBySettings(notification, studentList,
+                NotificationSettingsCommunicationChannel.EMAIL)).thenReturn(studentList);
+        when(notificationSettingsService.filterUsersByNotificationIsAllowedInCommunicationChannelBySettings(notification, studentList,
+                NotificationSettingsCommunicationChannel.PUSH)).thenReturn(Collections.singletonList(student1));
+
         generalInstantNotificationService.sendNotification(notification, studentList, null);
 
         verify(applePushNotificationService, times(1)).sendNotification(notification, Collections.singletonList(student1), null);
