@@ -8,7 +8,7 @@ import { GradingStepInputs } from 'app/exercises/programming/manage/update/wizar
     styleUrls: ['./programming-exercise-update-wizard.component.scss'],
 })
 export class ProgrammingExerciseUpdateWizardGradingComponent {
-    @Input() isImport: boolean;
+    @Input() isImportFromExistingExercise: boolean;
     @Input() programmingExercise: ProgrammingExercise;
 
     @Input() gradingStepInputs: GradingStepInputs;
