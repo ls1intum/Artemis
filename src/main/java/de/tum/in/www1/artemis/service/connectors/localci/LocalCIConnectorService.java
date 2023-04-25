@@ -156,7 +156,7 @@ public class LocalCIConnectorService {
             processNewPushToRepository(participation, commit);
 
         }
-        catch (LocalCIException | GitAPIException | IOException e) {
+        catch (GitAPIException | IOException e) {
             // This catch clause does not catch exceptions that happen during runBuildJob() as that method is called asynchronously.
             // For exceptions happening inside runBuildJob(), the user is notified. See the addBuildJobToQueue() method in the LocalCIBuildJobExecutionService for that.
             throw new LocalCIException("Could not process new push to repository " + localVCRepositoryUrl.getURI() + ". No build job was queued.", e);

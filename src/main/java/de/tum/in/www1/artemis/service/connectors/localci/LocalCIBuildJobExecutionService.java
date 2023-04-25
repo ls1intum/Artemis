@@ -44,6 +44,7 @@ import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.HostConfig;
 import com.github.dockerjava.api.model.Volume;
 
+import de.tum.in.www1.artemis.config.localvcci.LocalCIConfiguration;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
@@ -86,9 +87,15 @@ public class LocalCIBuildJobExecutionService {
 
     private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
 
-    // The Path to the script file located in the resources folder. The script file contains the steps that run the tests on the Docker container.
+    /**
+     * The Path to the script file located in the resources folder. The script file contains the steps that run the tests on the Docker container.
+     * This path is provided as a Bean, because the retrieval is quite costly in the production environment (see {@link LocalCIConfiguration#buildScriptFilePath()}).
+     */
     private final Path buildScriptFilePath;
 
+    /**
+     * Instead of creating a new XMLInputFactory for every build job, it is created once and provided as a Bean (see {@link LocalCIConfiguration#localCIXMLInputFactory()}).
+     */
     private final XMLInputFactory localCIXMLInputFactory;
 
     @Value("${artemis.version-control.url}")
@@ -138,56 +145,18 @@ public class LocalCIBuildJobExecutionService {
         // Prepare the Docker container name before submitting the build job to the executor service, so we can remove the container if something goes wrong.
         String containerName = "artemis-local-ci-" + participation.getId() + "-" + ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS"));
 
-        Callable<LocalCIBuildResult> buildJob = () -> {
-            // Add "_BUILDING" to the build plan id to indicate that the build plan is currently building.
-            updateBuildPlanStatus(participation, ContinuousIntegrationService.BuildStatus.BUILDING);
+        // Prepare a Callable that will later be called. It contains the actual steps needed to execute the build job.
+        Callable<LocalCIBuildResult> buildJob = () -> prepareAndRunBuildJob(participation, containerName);
 
-            log.info("Updated build plan status for build job " + containerName);
+        // Wrap the buildJob Callable in a BuildJobTimeoutCallable, so that the build job is cancelled if it takes too long.
+        BuildJobTimeoutCallable<LocalCIBuildResult> timedBuildJob = new BuildJobTimeoutCallable<>(buildJob, timeoutSeconds);
 
-            // Retrieve the paths to the repositories that the build jobs needs.
-            // This includes the assignment repository (the one to be tested, e.g. the student's repository, or the template repository), and the tests repository which includes
-            // the tests to be executed.
-            LocalVCRepositoryUrl assignmentRepositoryUrl;
-            LocalVCRepositoryUrl testsRepositoryUrl;
-            try {
-                assignmentRepositoryUrl = new LocalVCRepositoryUrl(participation.getRepositoryUrl(), localVCBaseUrl);
-                testsRepositoryUrl = new LocalVCRepositoryUrl(participation.getProgrammingExercise().getTestRepositoryUrl(), localVCBaseUrl);
-            }
-            catch (LocalVCInternalException e) {
-                throw new LocalCIException("Error while creating LocalVCRepositoryUrl", e);
-            }
-
-            log.info("Retrieved repository URLs for build job " + containerName);
-
-            Path assignmentRepositoryPath = assignmentRepositoryUrl.getLocalRepositoryPath(localVCBasePath).toAbsolutePath();
-            Path testsRepositoryPath = testsRepositoryUrl.getLocalRepositoryPath(localVCBasePath).toAbsolutePath();
-
-            String branch;
-            try {
-                branch = versionControlService.orElseThrow().getOrRetrieveBranchOfParticipation(participation);
-            }
-            catch (LocalVCInternalException e) {
-                throw new LocalCIException("Error while getting branch of participation", e);
-            }
-
-            log.info("Retrieved repository paths and branch for build job " + containerName);
-
-            // Create the volume configuration for the container. The assignment repository, the tests repository, and the build script are bound into the container to be used by
-            // the build job.
-            HostConfig volumeConfig = createVolumeConfig(assignmentRepositoryPath, testsRepositoryPath);
-
-            // Create the container from the "ls1tum/artemis-maven-template" image with the local paths to the Git repositories and the shell script bound to it. This does not
-            // start the container yet.
-            CreateContainerResponse container = createContainer(containerName, volumeConfig, branch);
-
-            log.info("Created container for build job " + containerName);
-
-            return runBuildJob(participation, containerName, container.getId(), branch);
-        };
-
-        TimeoutCallable<LocalCIBuildResult> timedBuildJob = new TimeoutCallable<>(buildJob, timeoutSeconds);
-
-        // Submit the build job to the executor service. This runs in a separate thread, so it does not block the main thread.
+        /*
+         * Submit the build job to the executor service. This runs in a separate thread, so it does not block the main thread.
+         * createCompletableFuture() is only used to provide a way to run build jobs synchronously for testing and debugging purposes and depends on the
+         * artemis.continuous-integration.asynchronous environment variable.
+         * Usually, when using asynchronous build jobs, it will just resolve to "CompletableFuture.supplyAsync".
+         */
         CompletableFuture<LocalCIBuildResult> futureResult = createCompletableFuture(() -> {
             try {
                 return localCIBuildExecutorService.submit(timedBuildJob).get();
@@ -195,6 +164,7 @@ public class LocalCIBuildJobExecutionService {
             catch (InterruptedException | ExecutionException | CompletionException e) {
                 finishBuildJobExceptionally(participation, containerName, e);
                 // Wrap the exception in a CompletionException so that the future is completed exceptionally and the thenAccept block is not run.
+                // This CompletionException will not resurface anywhere else as it is thrown in this completable future's separate thread.
                 throw new CompletionException(e);
             }
         });
@@ -205,46 +175,59 @@ public class LocalCIBuildJobExecutionService {
         return futureResult;
     }
 
-    private CompletableFuture<LocalCIBuildResult> createCompletableFuture(Supplier<LocalCIBuildResult> supplier) {
-        if (runBuildJobsAsynchronously) {
-            // Just use the normal supplyAsync.
-            return CompletableFuture.supplyAsync(supplier);
-        }
-        else {
-            // Use a synchronous CompletableFuture, e.g. in the test environment.
-            // Otherwise, tests will not wait for the CompletableFuture to complete before asserting on the database.
-            CompletableFuture<LocalCIBuildResult> future = new CompletableFuture<>();
-            try {
-                LocalCIBuildResult result = supplier.get();
-                future.complete(result);
-            }
-            catch (Exception e) {
-                future.completeExceptionally(e);
-            }
-            return future;
-        }
-    }
-
     /**
-     * Finish the build job if an exception occurred while building and testing the repository.
+     * Prepare the paths to the assignment and test repositories and then execute the build job.
      *
-     * @param participation The participation of the repository for which the build job was executed.
-     * @param containerName The name of the Docker container that was used to execute the build job.
-     * @param exception     The exception that occurred while building and testing the repository.
+     * @param participation The participation of the repository for which the build job should be executed.
+     * @param containerName The name of the Docker container that will be used to run the build job.
+     * @return The build result.
+     * @throws LocalCIException If some error occurs while preparing or running the build job.
      */
-    private void finishBuildJobExceptionally(ProgrammingExerciseParticipation participation, String containerName, Exception exception) {
-        log.error("Error while building and testing repository " + participation.getRepositoryUrl(), exception);
+    private LocalCIBuildResult prepareAndRunBuildJob(ProgrammingExerciseParticipation participation, String containerName) {
+        // Add "_BUILDING" to the build plan id to indicate that the build plan is currently building.
+        updateBuildPlanStatus(participation, ContinuousIntegrationService.BuildStatus.BUILDING);
 
-        // Set the build status to "INACTIVE" to indicate that the build is not running anymore.
-        updateBuildPlanStatus(participation, ContinuousIntegrationService.BuildStatus.INACTIVE);
+        log.info("Updated build plan status for build job " + containerName);
 
-        // Notify the user, that the build job produced an exception.
-        BuildTriggerWebsocketError error = new BuildTriggerWebsocketError(exception.getMessage(), participation.getId());
-        // This cast to Participation is safe as the participation is either a ProgrammingExerciseStudentParticipation, a TemplateProgrammingExerciseParticipation, or a
-        // SolutionProgrammingExerciseParticipation, which all extend Participation.
-        programmingMessagingService.notifyUserAboutSubmissionError((Participation) participation, error);
+        // Retrieve the paths to the repositories that the build jobs needs.
+        // This includes the assignment repository (the one to be tested, e.g. the student's repository, or the template repository), and the tests repository which includes
+        // the tests to be executed.
+        LocalVCRepositoryUrl assignmentRepositoryUrl;
+        LocalVCRepositoryUrl testsRepositoryUrl;
+        try {
+            assignmentRepositoryUrl = new LocalVCRepositoryUrl(participation.getRepositoryUrl(), localVCBaseUrl);
+            testsRepositoryUrl = new LocalVCRepositoryUrl(participation.getProgrammingExercise().getTestRepositoryUrl(), localVCBaseUrl);
+        }
+        catch (LocalVCInternalException e) {
+            throw new LocalCIException("Error while creating LocalVCRepositoryUrl", e);
+        }
 
-        stopContainer(containerName);
+        log.info("Retrieved repository URLs for build job " + containerName);
+
+        Path assignmentRepositoryPath = assignmentRepositoryUrl.getLocalRepositoryPath(localVCBasePath).toAbsolutePath();
+        Path testsRepositoryPath = testsRepositoryUrl.getLocalRepositoryPath(localVCBasePath).toAbsolutePath();
+
+        String branch;
+        try {
+            branch = versionControlService.orElseThrow().getOrRetrieveBranchOfParticipation(participation);
+        }
+        catch (LocalVCInternalException e) {
+            throw new LocalCIException("Error while getting branch of participation", e);
+        }
+
+        log.info("Retrieved repository paths and branch for build job " + containerName);
+
+        // Create the volume configuration for the container. The assignment repository, the tests repository, and the build script are bound into the container to be used by
+        // the build job.
+        HostConfig volumeConfig = createVolumeConfig(assignmentRepositoryPath, testsRepositoryPath);
+
+        // Create the container from the "ls1tum/artemis-maven-template" image with the local paths to the Git repositories and the shell script bound to it. This does not
+        // start the container yet.
+        CreateContainerResponse container = createContainer(containerName, volumeConfig, branch);
+
+        log.info("Created container for build job " + containerName);
+
+        return runBuildJob(participation, containerName, container.getId(), branch);
     }
 
     /**
@@ -330,24 +313,93 @@ public class LocalCIBuildJobExecutionService {
         return buildResult;
     }
 
-    private record TimeoutCallable<T> (Callable<T> delegate, long timeout) implements Callable<T> {
+    /**
+     * Create an asynchronous or a synchronous CompletableFuture depending on the runBuildJobsAsynchronously flag.
+     *
+     * @param supplier the supplier of the Future, i.e. the function that submits the build job
+     * @return the CompletableFuture
+     */
+    private CompletableFuture<LocalCIBuildResult> createCompletableFuture(Supplier<LocalCIBuildResult> supplier) {
+        if (runBuildJobsAsynchronously) {
+            // Just use the normal supplyAsync.
+            return CompletableFuture.supplyAsync(supplier);
+        }
+        else {
+            // Use a synchronous CompletableFuture, e.g. in the test environment.
+            // Otherwise, tests will not wait for the CompletableFuture to complete before asserting on the database.
+            CompletableFuture<LocalCIBuildResult> future = new CompletableFuture<>();
+            try {
+                LocalCIBuildResult result = supplier.get();
+                future.complete(result);
+            }
+            catch (Exception e) {
+                future.completeExceptionally(e);
+            }
+            return future;
+        }
+    }
 
+    /**
+     * Finish the build job if an exception occurred while building and testing the repository.
+     *
+     * @param participation The participation of the repository for which the build job was executed.
+     * @param containerName The name of the Docker container that was used to execute the build job.
+     * @param exception     The exception that occurred while building and testing the repository.
+     */
+    private void finishBuildJobExceptionally(ProgrammingExerciseParticipation participation, String containerName, Exception exception) {
+        log.error("Error while building and testing repository " + participation.getRepositoryUrl(), exception);
+
+        // Set the build status to "INACTIVE" to indicate that the build is not running anymore.
+        updateBuildPlanStatus(participation, ContinuousIntegrationService.BuildStatus.INACTIVE);
+
+        // Notify the user, that the build job produced an exception.
+        BuildTriggerWebsocketError error = new BuildTriggerWebsocketError(exception.getMessage(), participation.getId());
+        // This cast to Participation is safe as the participation is either a ProgrammingExerciseStudentParticipation, a TemplateProgrammingExerciseParticipation, or a
+        // SolutionProgrammingExerciseParticipation, which all extend Participation.
+        programmingMessagingService.notifyUserAboutSubmissionError((Participation) participation, error);
+
+        stopContainer(containerName);
+    }
+
+    /**
+     * Wrapper for the buildJob Callable that adds a timeout when the build job is called.
+     *
+     * @param buildJobCallable The build job that should be called.
+     * @param timeoutSeconds   The number of seconds after which the build job is cancelled.
+     */
+    private record BuildJobTimeoutCallable<LocalCIBuildResult> (Callable<LocalCIBuildResult> buildJobCallable, long timeoutSeconds) implements Callable<LocalCIBuildResult> {
+
+        /**
+         * Calls the buildJobCallable and waits for the result or for the timeout to pass.
+         *
+         * @return the LocalCIBuildResult
+         * @throws ExecutionException   if there was an error when calling the buildJobCallable or during the execution of the buildJobCallable, i.e. a LocalCIException.
+         * @throws InterruptedException if the thread was interrupted while waiting for the buildJobCallable to finish, e.g. if the ExecutorService was terminated from somewhere
+         *                                  else.
+         * @throws TimeoutException     if the timeout passed before the buildJobCallable finished.
+         */
         @Override
-        public T call() throws Exception {
-            Future<T> future = CompletableFuture.supplyAsync(() -> {
+        public LocalCIBuildResult call() throws ExecutionException, InterruptedException, TimeoutException {
+            Future<LocalCIBuildResult> future = CompletableFuture.supplyAsync(() -> {
                 try {
-                    return delegate.call();
+                    return buildJobCallable.call();
                 }
                 catch (Exception e) {
-                    throw new CompletionException(e);
+                    // Something went wrong while trying to call the build job.
+                    // The exception is stored in the Future and will resurface as an ExecutionException when running "future.get()" below.
+                    throw new RuntimeException(e);
                 }
             });
 
             try {
-                return future.get(timeout, TimeUnit.SECONDS);
+                // When the build job is called, wait for the result or for the timeout to pass.
+                return future.get(timeoutSeconds, TimeUnit.SECONDS);
             }
-            catch (InterruptedException | ExecutionException | TimeoutException e) {
+            catch (ExecutionException | InterruptedException | TimeoutException e) {
+                // Cancel the future if it is not completed or cancelled yet.
                 future.cancel(true);
+                // This exception will resurface in the catch block of "localCIBuildExecutorService.submit(timedBuildJob).get()" where the container is stopped and the user is
+                // notified.
                 throw e;
             }
         }

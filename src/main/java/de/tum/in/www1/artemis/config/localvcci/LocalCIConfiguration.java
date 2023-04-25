@@ -6,7 +6,6 @@ import java.nio.file.Path;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -50,11 +49,8 @@ public class LocalCIConfiguration {
     @Value("${artemis.continuous-integration.thread-pool-size:1}")
     int threadPoolSize;
 
-    @Value("${artemis.continuous-integration.queue-size-limit:20}")
+    @Value("${artemis.continuous-integration.queue-size-limit:30}")
     int queueSizeLimit;
-
-    @Value("${artemis.continuous-integration.queue-timeout-seconds:300}")
-    int queueTimeoutSeconds;
 
     @Value("${artemis.continuous-integration.build.images.java.default}")
     String dockerImage;
@@ -70,41 +66,10 @@ public class LocalCIConfiguration {
      */
     @Bean
     public ExecutorService localCIBuildExecutorService() {
-        log.info("Using ExecutorService with thread pool size: " + threadPoolSize);
+        log.info("Using ExecutorService with thread pool size {} and a queue size limit of {}.", threadPoolSize, queueSizeLimit);
         ThreadFactory customThreadFactory = new ThreadFactoryBuilder().setNameFormat("local-ci-build-%d")
                 .setUncaughtExceptionHandler((thread, exception) -> log.error("Uncaught exception in thread " + thread.getName(), exception)).build();
-        RejectedExecutionHandler customRejectedExecutionHandler = new TimedBlockingPolicy(queueTimeoutSeconds, TimeUnit.SECONDS);
-        return new ThreadPoolExecutor(threadPoolSize, threadPoolSize, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(queueSizeLimit), customThreadFactory,
-                customRejectedExecutionHandler);
-    }
-
-    class TimedBlockingPolicy implements RejectedExecutionHandler {
-
-        private final long timeout;
-
-        private final TimeUnit timeUnit;
-
-        public TimedBlockingPolicy(long timeout, TimeUnit timeUnit) {
-            this.timeout = timeout;
-            this.timeUnit = timeUnit;
-        }
-
-        @Override
-        public void rejectedExecution(Runnable r, ThreadPoolExecutor executor) {
-            if (executor.isShutdown()) {
-                return;
-            }
-
-            try {
-                if (!executor.getQueue().offer(r, timeout, timeUnit)) {
-                    // Task was not accepted after waiting for the specified timeout.
-                    log.error("Task was not accepted after waiting for the specified timeout: {}", r.toString());
-                }
-            }
-            catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-        }
+        return new ThreadPoolExecutor(threadPoolSize, threadPoolSize, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(queueSizeLimit), customThreadFactory);
     }
 
     /**
@@ -118,7 +83,7 @@ public class LocalCIConfiguration {
         ScheduledExecutorService buildQueueLogger = Executors.newSingleThreadScheduledExecutor();
         buildQueueLogger.scheduleAtFixedRate(() -> {
             ThreadPoolExecutor threadPoolExecutor = (ThreadPoolExecutor) localCIBuildExecutorService;
-            // Report on the current state of the local CI ExecutorService queue every 10 seconds.
+            // Report on the current state of the local CI ExecutorService queue every 3 seconds.
             log.info("Current queue size of local CI ExecutorService: {}", threadPoolExecutor.getQueue().size());
         }, 0, 3, TimeUnit.SECONDS);
         return buildQueueLogger;
@@ -162,6 +127,25 @@ public class LocalCIConfiguration {
         return dockerClient;
     }
 
+    private void pullDockerImage(DockerClient dockerClient, String dockerImage) {
+        try {
+            dockerClient.inspectImageCmd(dockerImage).exec();
+        }
+        catch (NotFoundException e) {
+            // Image does not exist locally, pull it from Docker Hub.
+            log.info("Pulling docker image {}", dockerImage);
+            try {
+                dockerClient.pullImageCmd(dockerImage).exec(new PullImageResultCallback()).awaitCompletion();
+            }
+            catch (InterruptedException ie) {
+                throw new LocalCIException("Interrupted while pulling docker image " + dockerImage, ie);
+            }
+        }
+        catch (BadRequestException e) {
+            throw new LocalCIException("Error while inspecting docker image " + dockerImage, e);
+        }
+    }
+
     /**
      * Provides the path to the build script used for local CI build jobs.
      * To bind the build script into the Docker container running the build job, we need to get a File or Path object directly pointing to the resource.
@@ -184,24 +168,5 @@ public class LocalCIConfiguration {
         }
 
         return scriptPath;
-    }
-
-    private void pullDockerImage(DockerClient dockerClient, String dockerImage) {
-        try {
-            dockerClient.inspectImageCmd(dockerImage).exec();
-        }
-        catch (NotFoundException e) {
-            // Image does not exist locally, pull it from Docker Hub.
-            log.info("Pulling docker image {}", dockerImage);
-            try {
-                dockerClient.pullImageCmd(dockerImage).exec(new PullImageResultCallback()).awaitCompletion();
-            }
-            catch (InterruptedException ie) {
-                throw new LocalCIException("Interrupted while pulling docker image " + dockerImage, ie);
-            }
-        }
-        catch (BadRequestException e) {
-            throw new LocalCIException("Error while inspecting docker image " + dockerImage, e);
-        }
     }
 }
