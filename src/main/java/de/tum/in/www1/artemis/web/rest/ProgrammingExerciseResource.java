@@ -647,7 +647,6 @@ public class ProgrammingExerciseResource {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, user);
 
         if (programmingExerciseResetOptionsDTO.isRecreateBuildPlans()) {
-            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, user);
             continuousIntegrationService.get().recreateBuildPlansForExercise(programmingExercise);
         }
 

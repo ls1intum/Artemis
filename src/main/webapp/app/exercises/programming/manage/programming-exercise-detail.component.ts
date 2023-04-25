@@ -31,6 +31,7 @@ import {
     faBook,
     faChartBar,
     faCheckDouble,
+    faEraser,
     faExclamationTriangle,
     faEye,
     faFileSignature,
@@ -96,6 +97,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     faWrench = faWrench;
     faCheckDouble = faCheckDouble;
     faTable = faTable;
+    faEraser = faEraser;
     faExclamationTriangle = faExclamationTriangle;
     faFileSignature = faFileSignature;
     faListAlt = faListAlt;
@@ -270,6 +272,23 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     disableTranslation: true,
                 });
             },
+        });
+    }
+
+    /**
+     * Deletes the template and solution build plans and recreates them from scratch.
+     */
+    recreateBuildPlans() {
+        this.programmingExerciseService.recreateBuildPlans(this.programmingExercise.id!).subscribe({
+            next: (res) => {
+                this.alertService.addAlert({
+                    type: AlertType.SUCCESS,
+                    message: res,
+                    disableTranslation: true,
+                });
+                this.dialogErrorSource.next('');
+            },
+            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         });
     }
 

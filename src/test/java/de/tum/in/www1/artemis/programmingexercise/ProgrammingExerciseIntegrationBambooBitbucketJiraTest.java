@@ -979,15 +979,15 @@ class ProgrammingExerciseIntegrationBambooBitbucketJiraTest extends AbstractSpri
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testResetExerciseNotFound() throws Exception {
-        programmingExerciseIntegrationTestService.testResetExerciseNotFound();
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testResetForbiddenEditor() throws Exception {
+        programmingExerciseIntegrationTestService.testResetForbidden();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testResetOnlyRecreateBuildPlansForbiddenInstructor() throws Exception {
-        programmingExerciseIntegrationTestService.testResetOnlyRecreateBuildPlansForbidden();
+    void testResetExerciseNotFound() throws Exception {
+        programmingExerciseIntegrationTestService.testResetExerciseNotFound();
     }
 
     @Test

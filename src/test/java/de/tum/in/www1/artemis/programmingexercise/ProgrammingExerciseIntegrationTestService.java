@@ -1891,12 +1891,6 @@ class ProgrammingExerciseIntegrationTestService {
         request.put(defaultResetEndpoint(), resetOptions, HttpStatus.FORBIDDEN);
     }
 
-    void testResetOnlyRecreateBuildPlansForbidden() throws Exception {
-        var resetOptions = new ProgrammingExerciseResetOptionsDTO();
-        resetOptions.setRecreateBuildPlans(true);
-        request.put(defaultResetEndpoint(), resetOptions, HttpStatus.FORBIDDEN);
-    }
-
     void testResetExerciseNotFound() throws Exception {
         var resetOptions = new ProgrammingExerciseResetOptionsDTO();
         request.put(defaultResetEndpoint(-1L), resetOptions, HttpStatus.NOT_FOUND);
