@@ -373,10 +373,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         // If it is an import, just get the course, otherwise handle the edit and new cases
         this.activatedRoute.url
             .pipe(
-                tap((segments) => {
-                    console.log(segments);
-                    this.isImport = segments.some((segment) => segment.path === 'import');
-                }),
+                tap((segments) => (this.isImport = segments.some((segment) => segment.path === 'import'))),
                 switchMap(() => this.activatedRoute.params),
                 tap((params) => {
                     if (this.isImport) {
