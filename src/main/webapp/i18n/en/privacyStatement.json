@@ -1,9 +1,0 @@
-{
-    "artemisApp": {
-        "privacyStatement": {
-            "title": "Privacy Statement",
-            "updatePrivacyStatement": "Update Privacy Statement",
-            "unsavedChangesWarning": "Your privacy statement contains unsaved changes. Do you really want to change the language and discard all unsaved changes?"
-        }
-    }
-}

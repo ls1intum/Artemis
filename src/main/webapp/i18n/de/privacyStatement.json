@@ -1,9 +1,0 @@
-{
-    "artemisApp": {
-        "privacyStatement": {
-            "title": "Datenschutzerklärung",
-            "updatePrivacyStatement": "Datenschutzerklärung aktualisieren",
-            "unsavedChangesWarning": "Die Datenschutzerklärung enthält ungespeicherte Änderungen. Möchtest du wirklich die Sprache wechseln und alle ungespeicherten Änderungen verwerfen?"
-        }
-    }
-}

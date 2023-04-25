@@ -31,8 +31,9 @@ public class ImprintResource {
      */
     @GetMapping("/imprint")
     public Imprint getImprint(@RequestParam("language") String language) {
-        if (!LegalDocumentLanguage.isValidShortName(language))
+        if (!LegalDocumentLanguage.isValidShortName(language)) {
             throw new BadRequestException("Language not supported");
+        }
         return legalDocumentService.getImprint(LegalDocumentLanguage.fromLanguageShortName(language));
     }
 

@@ -13,7 +13,7 @@ const routes: Routes = [
                 component: ImprintComponent,
                 data: {
                     authorities: [],
-                    pageTitle: 'artemisApp.imprint.title',
+                    pageTitle: 'artemisApp.legal.imprint.title',
                 },
             },
             {
@@ -21,7 +21,7 @@ const routes: Routes = [
                 component: ImprintComponent,
                 data: {
                     authorities: [],
-                    pageTitle: 'artemisApp.imprint.title',
+                    pageTitle: 'artemisApp.legal.imprint.title',
                 },
             },
         ],

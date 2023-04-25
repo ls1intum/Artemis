@@ -15,17 +15,12 @@ import { JhiLanguageHelper } from 'app/core/language/language.helper';
     templateUrl: './legal-document-update.component.html',
 })
 export class LegalDocumentUpdateComponent implements OnInit {
-    legalDocument: LegalDocument;
-    legalDocumentType: LegalDocumentType = LegalDocumentType.PRIVACY_STATEMENT;
-    supportedLanguages: LegalDocumentLanguage[] = [LegalDocumentLanguage.GERMAN, LegalDocumentLanguage.ENGLISH];
-    unsavedChanges = false;
-    faBan = faBan;
-    faSave = faSave;
-    faExclamationTriangle = faExclamationTriangle;
-    faCheckCircle = faCheckCircle;
-    faCircleNotch = faCircleNotch;
-    isSaving = false;
-    @ViewChild(MarkdownEditorComponent, { static: false }) markdownEditor: MarkdownEditorComponent;
+    readonly supportedLanguages: LegalDocumentLanguage[] = [LegalDocumentLanguage.GERMAN, LegalDocumentLanguage.ENGLISH];
+    readonly faBan = faBan;
+    readonly faSave = faSave;
+    readonly faExclamationTriangle = faExclamationTriangle;
+    readonly faCheckCircle = faCheckCircle;
+    readonly faCircleNotch = faCircleNotch;
     readonly languageOptions = this.supportedLanguages.map((language) => ({
         value: language,
         labelKey: 'artemisApp.legal.language.' + language,
@@ -34,6 +29,13 @@ export class LegalDocumentUpdateComponent implements OnInit {
     readonly defaultLanguage = LegalDocumentLanguage.GERMAN;
     readonly maxHeight = MarkdownEditorHeight.EXTRA_LARGE;
     readonly minHeight = MarkdownEditorHeight.MEDIUM;
+
+    legalDocument: LegalDocument;
+    legalDocumentType: LegalDocumentType = LegalDocumentType.PRIVACY_STATEMENT;
+    unsavedChanges = false;
+    isSaving = false;
+    @ViewChild(MarkdownEditorComponent, { static: false }) markdownEditor: MarkdownEditorComponent;
+
     currentLanguage = this.defaultLanguage;
     unsavedChangesWarning: NgbModalRef;
     titleKey: string;
@@ -51,11 +53,11 @@ export class LegalDocumentUpdateComponent implements OnInit {
             )
             .subscribe();
         if (this.legalDocumentType === LegalDocumentType.IMPRINT) {
-            this.languageHelper.updateTitle('artemisApp.imprint.updateImprint');
-            this.titleKey = 'artemisApp.imprint.updateImprint';
+            this.languageHelper.updateTitle('artemisApp.legal.imprint.updateImprint');
+            this.titleKey = 'artemisApp.legal.imprint.updateImprint';
         } else {
-            this.languageHelper.updateTitle('artemisApp.privacyStatement.updatePrivacyStatement');
-            this.titleKey = 'artemisApp.privacyStatement.updatePrivacyStatement';
+            this.languageHelper.updateTitle('artemisApp.legal.privacyStatement.updatePrivacyStatement');
+            this.titleKey = 'artemisApp.legal.privacyStatement.updatePrivacyStatement';
         }
         this.legalDocument = new LegalDocument(this.legalDocumentType, this.defaultLanguage);
         this.getLegalDocumentForUpdate(this.legalDocumentType, this.defaultLanguage).subscribe((document) => {
@@ -105,9 +107,9 @@ export class LegalDocumentUpdateComponent implements OnInit {
     showWarning(legalDocumentLanguage: any) {
         this.unsavedChangesWarning = this.modalService.open(UnsavedChangesWarningComponent, { size: 'lg', backdrop: 'static' });
         if (this.legalDocumentType === LegalDocumentType.PRIVACY_STATEMENT) {
-            this.unsavedChangesWarning.componentInstance.textMessage = 'artemisApp.privacyStatement.unsavedChangesWarning';
+            this.unsavedChangesWarning.componentInstance.textMessage = 'artemisApp.legal.privacyStatement.unsavedChangesWarning';
         } else {
-            this.unsavedChangesWarning.componentInstance.textMessage = 'artemisApp.imprint.unsavedChangesWarning';
+            this.unsavedChangesWarning.componentInstance.textMessage = 'artemisApp.legal.imprint.unsavedChangesWarning';
         }
 
         this.unsavedChangesWarning.result.then(() => {
