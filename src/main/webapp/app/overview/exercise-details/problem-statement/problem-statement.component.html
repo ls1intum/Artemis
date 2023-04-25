@@ -1,5 +1,5 @@
-<div *ngIf="isProgrammingExercise && participation && exercise; else exerciseTemplate" class="row mb-4">
-    <jhi-programming-exercise-instructions [exercise]="exercise!" [participation]="participation" [personalParticipation]="true"> </jhi-programming-exercise-instructions>
+<div *ngIf="isProgrammingExercise && exercise; else exerciseTemplate" class="row mb-4">
+    <jhi-programming-exercise-instructions [exercise]="exercise" [participation]="participation!" [personalParticipation]="true"> </jhi-programming-exercise-instructions>
 </div>
 <ng-template #exerciseTemplate>
     <div class="row mb-2 align-items-baseline" *ngIf="exercise?.problemStatement" id="problem-statement">
