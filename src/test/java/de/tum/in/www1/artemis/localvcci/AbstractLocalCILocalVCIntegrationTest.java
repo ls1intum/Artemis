@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.localvcci;
 
-import java.io.IOException;
 import java.time.ZonedDateTime;
 import java.util.List;
 
@@ -88,7 +87,7 @@ public class AbstractLocalCILocalVCIntegrationTest extends AbstractSpringIntegra
     protected String solutionRepositorySlug;
 
     @BeforeEach
-    void initUsersAndExercise() throws IOException {
+    void initUsersAndExercise() {
         // The port cannot be injected into the LocalVCLocalCITestService because {local.server.port} is not available when the class is instantiated.
         // Thus, "inject" the port from here.
         localVCLocalCITestService.setPort(port);
@@ -148,7 +147,5 @@ public class AbstractLocalCILocalVCIntegrationTest extends AbstractSpringIntegra
         programmingExerciseStudentParticipationRepository.save(instructorParticipation);
 
         localVCLocalCITestService.addTestCases(programmingExercise);
-
-        mockDockerClientMethods();
     }
 }

@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.localvcci;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.doReturn;
@@ -13,8 +12,6 @@ import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URISyntaxException;
-import java.nio.file.Path;
 import java.util.Map;
 import java.util.Set;
 
@@ -28,9 +25,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import com.github.dockerjava.api.command.CopyArchiveFromContainerCmd;
-import com.github.dockerjava.api.command.InspectImageCmd;
-import com.github.dockerjava.api.command.PullImageCmd;
-import com.github.dockerjava.api.command.PullImageResultCallback;
 import com.github.dockerjava.api.exception.NotFoundException;
 
 import de.tum.in.www1.artemis.domain.Team;
@@ -47,8 +41,6 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
     @Autowired
     private LocalCIConnectorService localCIConnectorService;
 
-    private static final String PRE_BUILD_ERROR_MESSAGE = "Could not process new push to repository";
-
     private LocalRepository studentAssignmentRepository;
 
     private String commitHash;
@@ -59,13 +51,12 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
         commitHash = localVCLocalCITestService.commitFile(studentAssignmentRepository.localRepoFile.toPath(), programmingExercise.getPackageFolderName(),
                 studentAssignmentRepository.localGit);
         studentAssignmentRepository.localGit.push().call();
-        // Mock dockerClient.copyArchiveFromContainerCmd() such that it returns the commitHash for the student repository.
-        localVCLocalCITestService.mockCommitHash(dockerClient, commitHash);
+        localVCLocalCITestService.mockCommitHash(commitHash);
         // Mock dockerClient.copyArchiveFromContainerCmd() such that it returns the XMLs containing the test results.
-        localVCLocalCITestService.mockTestResults(dockerClient, PARTLY_SUCCESSFUL_TEST_RESULTS_PATH);
+        localVCLocalCITestService.mockTestResults(PARTLY_SUCCESSFUL_TEST_RESULTS_PATH);
         // Mock dockerClient.copyArchiveFromContainerCmd() such that it returns a dummy commit hash for the tests repository.
-        localVCLocalCITestService.mockInputStreamReturnedFromContainer(dockerClient, "/repositories/test-repository/.git/refs/heads/[^/]+",
-                Map.of("testCommitHash", DUMMY_COMMIT_HASH), Map.of("testCommitHash", DUMMY_COMMIT_HASH));
+        localVCLocalCITestService.mockInputStreamReturnedFromContainer("/repositories/test-repository/.git/refs/heads/[^/]+", Map.of("testCommitHash", DUMMY_COMMIT_HASH),
+                Map.of("testCommitHash", DUMMY_COMMIT_HASH));
     }
 
     @AfterEach
@@ -170,16 +161,7 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
         // Call processNewPush with a wrong commit hash. This should throw an exception.
         LocalCIException exception = assertThrows(LocalCIException.class,
                 () -> localCIConnectorService.processNewPush(DUMMY_COMMIT_HASH, studentAssignmentRepository.originGit.getRepository()));
-        assertThat(exception.getMessage()).contains(PRE_BUILD_ERROR_MESSAGE);
-    }
-
-    @Test
-    void testCannotRetrieveBuildScriptPath() throws IOException, URISyntaxException {
-        when(resourceLoaderService.getResourceFilePath(Path.of("templates", "localci", "java", "build_and_run_tests.sh"))).thenThrow(new IOException("Resource does not exist"));
-        // Should throw an exception.
-        LocalCIException exception = assertThrows(LocalCIException.class,
-                () -> localCIConnectorService.processNewPush(commitHash, studentAssignmentRepository.originGit.getRepository()));
-        assertThat(exception.getMessage()).contains(PRE_BUILD_ERROR_MESSAGE);
+        assertThat(exception.getMessage()).contains("Could not resolve commit hash");
     }
 
     @Test
@@ -190,7 +172,7 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
         // Should throw an exception
         LocalCIException exception = assertThrows(LocalCIException.class,
                 () -> localCIConnectorService.processNewPush(commitHash, studentAssignmentRepository.originGit.getRepository()));
-        assertThat(exception.getMessage()).contains(PRE_BUILD_ERROR_MESSAGE);
+        assertThat(exception.getMessage()).contains("Project type must be Gradle");
     }
 
     @Test
@@ -205,28 +187,9 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
 
         // Should throw an exception.
         LocalCIException exception = assertThrows(LocalCIException.class, () -> localCIConnectorService.processNewPush(testsCommitHash, testsRepository.originGit.getRepository()));
-        assertThat(exception.getMessage()).contains(PRE_BUILD_ERROR_MESSAGE);
+        assertThat(exception.getMessage()).contains("Project type must be Gradle");
 
         testsRepository.resetLocalRepo();
-    }
-
-    @Test
-    void testImageNotFound() throws InterruptedException {
-        // dockerClient.inspectImageCmd().exec() throws NotFoundException.
-        InspectImageCmd inspectImageCmd = mock(InspectImageCmd.class);
-        when(dockerClient.inspectImageCmd(anyString())).thenReturn(inspectImageCmd);
-        when(inspectImageCmd.exec()).thenThrow(new NotFoundException("Image not found"));
-
-        PullImageCmd pullImageCmd = mock(PullImageCmd.class);
-        PullImageResultCallback resultCallback = mock(PullImageResultCallback.class);
-        when(dockerClient.pullImageCmd(anyString())).thenReturn(pullImageCmd);
-        when(pullImageCmd.exec(any())).thenReturn(resultCallback);
-        when(resultCallback.awaitCompletion()).thenThrow(new InterruptedException());
-
-        // Should throw an exception.
-        LocalCIException exception = assertThrows(LocalCIException.class,
-                () -> localCIConnectorService.processNewPush(commitHash, studentAssignmentRepository.originGit.getRepository()));
-        assertThat(exception.getMessage()).contains(PRE_BUILD_ERROR_MESSAGE);
     }
 
     @Test
@@ -282,15 +245,15 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
 
     @Test
     void testFaultyResultFiles() throws IOException {
-        localVCLocalCITestService.mockTestResults(dockerClient, FAULTY_FILES_TEST_RESULTS_PATH);
+        localVCLocalCITestService.mockTestResults(FAULTY_FILES_TEST_RESULTS_PATH);
         localCIConnectorService.processNewPush(commitHash, studentAssignmentRepository.originGit.getRepository());
         // Should notify the user.
         verifyUserNotification(studentParticipation);
     }
 
     private void verifyUserNotification(Participation participation) {
-        BuildTriggerWebsocketError expectedError = new BuildTriggerWebsocketError("de.tum.in.www1.artemis.exception.LocalCIException: Error while parsing test results",
-                participation.getId());
+        BuildTriggerWebsocketError expectedError = new BuildTriggerWebsocketError(
+                "java.util.concurrent.ExecutionException: de.tum.in.www1.artemis.exception.LocalCIException: Error while parsing test results", participation.getId());
         verify(programmingMessagingService).notifyUserAboutSubmissionError(Mockito.eq(participation), argThat((BuildTriggerWebsocketError actualError) -> {
             assertEquals(expectedError.getError(), actualError.getError());
             assertEquals(expectedError.getParticipationId(), actualError.getParticipationId());

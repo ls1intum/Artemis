@@ -1,11 +1,5 @@
 package de.tum.in.www1.artemis;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.io.IOException;
@@ -13,7 +7,6 @@ import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import org.gitlab4j.api.GitLabApiException;
@@ -27,21 +20,11 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import com.github.dockerjava.api.DockerClient;
-import com.github.dockerjava.api.async.ResultCallback;
-import com.github.dockerjava.api.command.CreateContainerCmd;
-import com.github.dockerjava.api.command.CreateContainerResponse;
-import com.github.dockerjava.api.command.ExecCreateCmd;
-import com.github.dockerjava.api.command.ExecCreateCmdResponse;
-import com.github.dockerjava.api.command.ExecStartCmd;
-import com.github.dockerjava.api.command.InspectImageCmd;
-import com.github.dockerjava.api.command.InspectImageResponse;
-import com.github.dockerjava.api.command.ListContainersCmd;
-import com.github.dockerjava.api.command.StartContainerCmd;
-import com.github.dockerjava.api.model.Container;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
@@ -51,6 +34,7 @@ import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.domain.participation.AbstractBaseProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.localvcci.LocalCITestConfiguration;
 import de.tum.in.www1.artemis.localvcci.LocalVCLocalCITestService;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
@@ -76,6 +60,7 @@ import io.zonky.test.db.AutoConfigureEmbeddedDatabase;
 @TestPropertySource(properties = { "server.port=49152", "artemis.version-control.url=http://localhost:49152", "artemis.version-control.local-vcs-repo-path=${java.io.tmpdir}",
         "artemis.continuous-integration.thread-pool-size=1", "artemis.continuous-integration.asynchronous=false",
         "artemis.continuous-integration.build.images.java.default=dummy-docker-image", "artemis.user-management.use-external=false" })
+@ContextConfiguration(classes = LocalCITestConfiguration.class)
 public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends AbstractArtemisIntegrationTest {
 
     @Autowired
@@ -99,7 +84,11 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     @Autowired
     protected ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
 
-    @SpyBean
+    /**
+     * This is the mock(DockerClient.class) provided by the {@link LocalCITestConfiguration}.
+     * Subclasses can use this to dynamically mock methods of the DockerClient.
+     */
+    @Autowired
     protected DockerClient dockerClient;
 
     @SpyBean
@@ -126,80 +115,14 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
 
     @AfterEach
     protected void resetSpyBeans() {
-        Mockito.reset(versionControlService, continuousIntegrationService, dockerClient, resourceLoaderService, programmingMessagingService);
+        Mockito.reset(versionControlService, continuousIntegrationService, resourceLoaderService, programmingMessagingService);
         super.resetSpyBeans();
-    }
-
-    protected void mockDockerClientMethods() throws IOException {
-        // Mock dockerClient.inspectImageCmd(String dockerImage).exec()
-        InspectImageCmd inspectImageCmd = mock(InspectImageCmd.class);
-        InspectImageResponse inspectImageResponse = new InspectImageResponse();
-        doReturn(inspectImageCmd).when(dockerClient).inspectImageCmd(anyString());
-        doReturn(inspectImageResponse).when(inspectImageCmd).exec();
-
-        String dummyContainerId = "1234567890";
-
-        // Mock dockerClient.createContainerCmd(String dockerImage).withHostConfig(HostConfig hostConfig).withEnv(String... env).withCmd(String... cmd).exec()
-        CreateContainerCmd createContainerCmd = mock(CreateContainerCmd.class);
-        CreateContainerResponse createContainerResponse = new CreateContainerResponse();
-        createContainerResponse.setId(dummyContainerId);
-        doReturn(createContainerCmd).when(dockerClient).createContainerCmd(anyString());
-        doReturn(createContainerCmd).when(createContainerCmd).withHostConfig(any());
-        doReturn(createContainerCmd).when(createContainerCmd).withEnv(anyString(), anyString());
-        doReturn(createContainerCmd).when(createContainerCmd).withCmd(anyString(), anyString(), anyString());
-        doReturn(createContainerResponse).when(createContainerCmd).exec();
-
-        // Mock dockerClient.startContainerCmd(String containerId)
-        StartContainerCmd startContainerCmd = mock(StartContainerCmd.class);
-        doReturn(startContainerCmd).when(dockerClient).startContainerCmd(anyString());
-
-        // Mock dockerClient.execCreateCmd(String containerId).withAttachStdout(Boolean attachStdout).withAttachStderr(Boolean attachStderr).withCmd(String... cmd).exec()
-        ExecCreateCmd execCreateCmd = mock(ExecCreateCmd.class);
-        ExecCreateCmdResponse execCreateCmdResponse = mock(ExecCreateCmdResponse.class);
-        doReturn(execCreateCmd).when(dockerClient).execCreateCmd(anyString());
-        doReturn(execCreateCmd).when(execCreateCmd).withAttachStdout(anyBoolean());
-        doReturn(execCreateCmd).when(execCreateCmd).withAttachStderr(anyBoolean());
-        doReturn(execCreateCmd).when(execCreateCmd).withCmd(anyString(), anyString());
-        doReturn(execCreateCmdResponse).when(execCreateCmd).exec();
-        doReturn("1234").when(execCreateCmdResponse).getId();
-
-        // Mock dockerClient.execStartCmd(String execId).exec(T resultCallback)
-        ExecStartCmd execStartCmd = mock(ExecStartCmd.class);
-        doReturn(execStartCmd).when(dockerClient).execStartCmd(anyString());
-        doAnswer(invocation -> {
-            // Stub the 'exec' method of the 'ExecStartCmd' to call the 'onComplete' method of the provided 'ResultCallback.Adapter', which simulates the command completing
-            // immediately.
-            ResultCallback.Adapter<?> callback = invocation.getArgument(0);
-            callback.onComplete();
-            return null;
-        }).when(execStartCmd).exec(any());
-
-        // Mock dockerClient.listContainersCmd().withShowAll(true).exec().
-        ListContainersCmd listContainersCmd = mock(ListContainersCmd.class);
-        doReturn(listContainersCmd).when(dockerClient).listContainersCmd();
-        doReturn(listContainersCmd).when(listContainersCmd).withShowAll(anyBoolean());
-        Container container = mock(Container.class);
-        doReturn(List.of(container)).when(listContainersCmd).exec();
-        doReturn(dummyContainerId).when(container).getId();
-        doReturn("running").when(container).getState();
-
-        // Mock dockerClient.copyArchiveFromContainerCmd() such that it returns a dummy commitHash for both the assignment and the tests repository.
-        // Note: The stub needs to receive the same object twice in case there are two requests to the same method. Usually, specifying one doReturn() is enough to make the stub
-        // return the same object on every subsequent call.
-        // However, in this case we have it return an InputStream, which will be consumed after returning it the first time, so we need to create two separate ones.
-        localVCLocalCITestService.mockInputStreamReturnedFromContainer(dockerClient, "/repositories/assignment-repository/.git/refs/heads/[^/]+",
-                Map.of("assignmentComitHash", DUMMY_COMMIT_HASH), Map.of("assignmentComitHash", DUMMY_COMMIT_HASH));
-        localVCLocalCITestService.mockInputStreamReturnedFromContainer(dockerClient, "/repositories/test-repository/.git/refs/heads/[^/]+",
-                Map.of("testsCommitHash", DUMMY_COMMIT_HASH), Map.of("testsCommitHash", DUMMY_COMMIT_HASH));
-        String mockData = "mockData";
-        localVCLocalCITestService.mockInputStreamReturnedFromContainer(dockerClient, "/repositories/test-repository/build/test-results/test", Map.of(mockData, mockData),
-                Map.of(mockData, mockData));
     }
 
     /**
      * Note: Mocking requests to the VC and CI server is not necessary for local VC and local CI.
      * The VC system is part of the application context and can thus be called directly.
-     * For the CI system, all communication with the DockerClient is mocked (see {@link #mockDockerClientMethods()}).
+     * For the CI system, all communication with the DockerClient is mocked (see {@link LocalCITestConfiguration}).
      */
 
     @Override

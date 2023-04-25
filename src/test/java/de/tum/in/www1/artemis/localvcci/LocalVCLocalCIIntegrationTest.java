@@ -59,8 +59,8 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         assignmentRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, assignmentRepositorySlug);
 
         // Mock dockerClient.copyArchiveFromContainerCmd() such that it returns a dummy commit hash for the tests repository.
-        localVCLocalCITestService.mockInputStreamReturnedFromContainer(dockerClient, "/repositories/test-repository/.git/refs/heads/[^/]+",
-                Map.of("testCommitHash", DUMMY_COMMIT_HASH), Map.of("testCommitHash", DUMMY_COMMIT_HASH));
+        localVCLocalCITestService.mockInputStreamReturnedFromContainer("/repositories/test-repository/.git/refs/heads/[^/]+", Map.of("testCommitHash", DUMMY_COMMIT_HASH),
+                Map.of("testCommitHash", DUMMY_COMMIT_HASH));
     }
 
     @AfterEach
@@ -91,15 +91,14 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         // Mock dockerClient.copyArchiveFromContainerCmd() such that it returns the commitHash of the tests repository for both the solution and the template repository.
         // Note: The stub needs to receive the same object twice. Usually, specifying one doReturn() is enough to make the stub return the same object on every subsequent call.
         // However, in this case we have it return an InputStream, which will be consumed after returning it the first time, so we need to create two separate ones.
-        localVCLocalCITestService.mockInputStreamReturnedFromContainer(dockerClient, "/repositories/assignment-repository/.git/refs/heads/[^/]+",
-                Map.of("testCommitHash", commitHash), Map.of("testCommitHash", commitHash));
+        localVCLocalCITestService.mockInputStreamReturnedFromContainer("/repositories/assignment-repository/.git/refs/heads/[^/]+", Map.of("testCommitHash", commitHash),
+                Map.of("testCommitHash", commitHash));
 
         // Mock dockerClient.copyArchiveFromContainerCmd() such that it returns the XMLs containing the test results.
         // Mock the results for the solution repository build and for the template repository build that will both be triggered as a result of updating the tests.
         Map<String, String> solutionBuildTestResults = localVCLocalCITestService.createMapFromTestResultsFolder(ALL_SUCCEED_TEST_RESULTS_PATH);
         Map<String, String> templateBuildTestResults = localVCLocalCITestService.createMapFromTestResultsFolder(ALL_FAIL_TEST_RESULTS_PATH);
-        localVCLocalCITestService.mockInputStreamReturnedFromContainer(dockerClient, "/repositories/test-repository/build/test-results/test", solutionBuildTestResults,
-                templateBuildTestResults);
+        localVCLocalCITestService.mockInputStreamReturnedFromContainer("/repositories/test-repository/build/test-results/test", solutionBuildTestResults, templateBuildTestResults);
 
         // Mock GitService.getOrCheckoutRepository().
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(testsRepository.localRepoFile.toPath(), null)).when(gitService)
@@ -129,8 +128,8 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
 
         String commitHash = localVCLocalCITestService.commitFile(solutionRepository.localRepoFile.toPath(), programmingExercise.getPackageFolderName(),
                 solutionRepository.localGit);
-        localVCLocalCITestService.mockCommitHash(dockerClient, commitHash);
-        localVCLocalCITestService.mockTestResults(dockerClient, ALL_SUCCEED_TEST_RESULTS_PATH);
+        localVCLocalCITestService.mockCommitHash(commitHash);
+        localVCLocalCITestService.mockTestResults(ALL_SUCCEED_TEST_RESULTS_PATH);
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(solutionRepository.localRepoFile.toPath(), null)).when(gitService)
                 .getOrCheckoutRepository(solutionParticipation);
 
@@ -154,8 +153,8 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
 
         String commitHash = localVCLocalCITestService.commitFile(templateRepository.localRepoFile.toPath(), programmingExercise.getPackageFolderName(),
                 templateRepository.localGit);
-        localVCLocalCITestService.mockCommitHash(dockerClient, commitHash);
-        localVCLocalCITestService.mockTestResults(dockerClient, ALL_FAIL_TEST_RESULTS_PATH);
+        localVCLocalCITestService.mockCommitHash(commitHash);
+        localVCLocalCITestService.mockTestResults(ALL_FAIL_TEST_RESULTS_PATH);
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(templateRepository.localRepoFile.toPath(), null)).when(gitService)
                 .getOrCheckoutRepository(templateParticipation);
 
@@ -176,9 +175,9 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         String commitHash = localVCLocalCITestService.commitFile(assignmentRepository.localRepoFile.toPath(), programmingExercise.getPackageFolderName(),
                 assignmentRepository.localGit);
         // Mock dockerClient.copyArchiveFromContainerCmd() such that it returns the commitHash for the assignment repository.
-        localVCLocalCITestService.mockCommitHash(dockerClient, commitHash);
+        localVCLocalCITestService.mockCommitHash(commitHash);
         // Mock dockerClient.copyArchiveFromContainerCmd() such that it returns the XMLs containing the test results.
-        localVCLocalCITestService.mockTestResults(dockerClient, PARTLY_SUCCESSFUL_TEST_RESULTS_PATH);
+        localVCLocalCITestService.mockTestResults(PARTLY_SUCCESSFUL_TEST_RESULTS_PATH);
         localVCLocalCITestService.testPushSuccessful(assignmentRepository.localGit, student1Login, projectKey1, assignmentRepositorySlug);
         localVCLocalCITestService.testLatestSubmission(studentParticipation.getId(), commitHash, 1, false);
 
@@ -451,8 +450,8 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         localVCLocalCITestService.testFetchSuccessful(assignmentRepository.localGit, student1Login, projectKey1, assignmentRepositorySlug);
         String commitHash = localVCLocalCITestService.commitFile(assignmentRepository.localRepoFile.toPath(), programmingExercise.getPackageFolderName(),
                 assignmentRepository.localGit);
-        localVCLocalCITestService.mockCommitHash(dockerClient, commitHash);
-        localVCLocalCITestService.mockTestResults(dockerClient, PARTLY_SUCCESSFUL_TEST_RESULTS_PATH);
+        localVCLocalCITestService.mockCommitHash(commitHash);
+        localVCLocalCITestService.mockTestResults(PARTLY_SUCCESSFUL_TEST_RESULTS_PATH);
         localVCLocalCITestService.testPushSuccessful(assignmentRepository.localGit, student1Login, projectKey1, assignmentRepositorySlug);
         localVCLocalCITestService.testLatestSubmission(studentParticipation.getId(), commitHash, 1, false);
         // tutor1 should be able to fetch but not push.
@@ -565,8 +564,8 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         localVCLocalCITestService.testFetchSuccessful(practiceRepository.localGit, student1Login, projectKey1, practiceRepositorySlug);
         String commitHash = localVCLocalCITestService.commitFile(practiceRepository.localRepoFile.toPath(), programmingExercise.getPackageFolderName(),
                 practiceRepository.localGit);
-        localVCLocalCITestService.mockCommitHash(dockerClient, commitHash);
-        localVCLocalCITestService.mockTestResults(dockerClient, PARTLY_SUCCESSFUL_TEST_RESULTS_PATH);
+        localVCLocalCITestService.mockCommitHash(commitHash);
+        localVCLocalCITestService.mockTestResults(PARTLY_SUCCESSFUL_TEST_RESULTS_PATH);
         localVCLocalCITestService.testPushSuccessful(practiceRepository.localGit, student1Login, projectKey1, practiceRepositorySlug);
         localVCLocalCITestService.testLatestSubmission(practiceParticipation.getId(), commitHash, 1, false);
 

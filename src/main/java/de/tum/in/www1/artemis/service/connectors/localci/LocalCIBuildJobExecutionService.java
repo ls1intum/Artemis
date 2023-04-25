@@ -161,7 +161,7 @@ public class LocalCIBuildJobExecutionService {
             try {
                 return localCIBuildExecutorService.submit(timedBuildJob).get();
             }
-            catch (InterruptedException | ExecutionException | CompletionException e) {
+            catch (InterruptedException | ExecutionException e) {
                 finishBuildJobExceptionally(participation, containerName, e);
                 // Wrap the exception in a CompletionException so that the future is completed exceptionally and the thenAccept block is not run.
                 // This CompletionException will not resurface anywhere else as it is thrown in this completable future's separate thread.
@@ -385,9 +385,9 @@ public class LocalCIBuildJobExecutionService {
                     return buildJobCallable.call();
                 }
                 catch (Exception e) {
-                    // Something went wrong while trying to call the build job.
+                    // Something went wrong while executing the build job.
                     // The exception is stored in the Future and will resurface as an ExecutionException when running "future.get()" below.
-                    throw new RuntimeException(e);
+                    throw new CompletionException(e);
                 }
             });
 
@@ -398,8 +398,8 @@ public class LocalCIBuildJobExecutionService {
             catch (ExecutionException | InterruptedException | TimeoutException e) {
                 // Cancel the future if it is not completed or cancelled yet.
                 future.cancel(true);
-                // This exception will resurface in the catch block of "localCIBuildExecutorService.submit(timedBuildJob).get()" where the container is stopped and the user is
-                // notified.
+                // This exception will resurface in the catch block of "localCIBuildExecutorService.submit(timedBuildJob).get()"
+                // where the container is stopped and the user is notified.
                 throw e;
             }
         }
