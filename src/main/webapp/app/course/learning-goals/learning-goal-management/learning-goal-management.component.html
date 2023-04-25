@@ -7,10 +7,15 @@
 <div *ngIf="!isLoading">
     <div class="d-flex flex-wrap">
         <div class="my-auto d-flex align-items-center">
-            <h2 jhiTranslate="artemisApp.learningGoal.manageLearningGoals.title">Learning Goal Management</h2>
+            <h2 jhiTranslate="artemisApp.learningGoal.manageLearningGoals.title">Competency Management</h2>
             <jhi-documentation-button [type]="documentationType"></jhi-documentation-button>
         </div>
         <div class="ms-auto text-truncate justify-content-end" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
+            <button class="btn btn-primary" id="learningGoalImportButton" (click)="openImportModal()">
+                <fa-icon [icon]="faPlus"></fa-icon>
+                <span>{{ 'artemisApp.learningGoal.manageLearningGoals.import' | artemisTranslate }}</span>
+            </button>
+
             <a class="btn btn-primary" [routerLink]="['/course-management', courseId, 'goal-management', 'create']">
                 <fa-icon [icon]="faPlus"></fa-icon>
                 <span>{{ 'artemisApp.learningGoal.manageLearningGoals.create' | artemisTranslate }}</span>
@@ -174,7 +179,7 @@
     <div class="d-flex flex-wrap">
         <h2 jhiTranslate="artemisApp.learningGoal.prerequisite.managePrerequisites.title">Prerequisite Management</h2>
         <div class="ms-auto text-truncate justify-content-end" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
-            <a class="btn btn-primary" (click)="openImportModal()">
+            <a class="btn btn-primary" (click)="openPrerequisiteSelectionModal()">
                 <fa-icon [icon]="faPlus"></fa-icon>
                 <span>{{ 'artemisApp.learningGoal.prerequisite.managePrerequisites.select' | artemisTranslate }}</span>
             </a>
