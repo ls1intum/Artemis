@@ -263,6 +263,23 @@ describe('CourseOverviewComponent', () => {
         expect(subscribeToTeamAssignmentUpdatesStub).toHaveBeenCalledOnce();
     });
 
+    it('should show an alert when loading the course fails', async () => {
+        findOneForDashboardStub.mockReturnValue(throwError(new HttpResponse({ status: 404 })));
+        const alertService = TestBed.inject(AlertService);
+        const alertServiceSpy = jest.spyOn(alertService, 'addAlert');
+
+        component.loadCourse().subscribe(
+            () => {
+                throw new Error('should not happen');
+            },
+            (error) => {
+                expect(error).toBeDefined();
+            },
+        );
+
+        expect(alertServiceSpy).toHaveBeenCalled();
+    });
+
     it('should load the course, even when just calling loadCourse by itself (for refreshing)', () => {
         // check that loadCourse already subscribes to the course itself
 
@@ -271,12 +288,12 @@ describe('CourseOverviewComponent', () => {
             subscriber.next(course1);
             subscriber.complete();
         });
-        const subscribeSpy = jest.spyOn(findOneForDashboardResponse, 'subscribe');
+        const subscribeStub = jest.spyOn(findOneForDashboardResponse, 'subscribe');
         findOneForDashboardStub.mockReturnValue(findOneForDashboardResponse);
 
         component.loadCourse();
 
-        expect(subscribeSpy).toHaveBeenCalledOnce();
+        expect(subscribeStub).toHaveBeenCalledOnce();
     });
 
     it('should not say that the user can register if the server returns 403', fakeAsync(() => {
