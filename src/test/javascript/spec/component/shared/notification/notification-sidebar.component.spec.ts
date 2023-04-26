@@ -11,7 +11,7 @@ import { ArtemisTestModule } from '../../../test.module';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { MockNotificationService } from '../../../helpers/mocks/service/mock-notification.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
-import { Notification } from 'app/entities/notification.model';
+import { NEW_MESSAGE_TITLE, Notification } from 'app/entities/notification.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 import { User } from 'app/core/user/user.model';
@@ -21,7 +21,6 @@ import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-router-link.directive';
 import { UserSettingsService } from 'app/shared/user-settings/user-settings.service';
-import { MockUserSettingsService } from '../../../helpers/mocks/service/mock-user-settings.service';
 import { NotificationSetting } from 'app/shared/user-settings/notification-settings/notification-settings-structure';
 import { SettingId } from 'app/shared/constants/user-settings.constants';
 import { NotificationSettingsService } from 'app/shared/user-settings/notification-settings/notification-settings.service';
@@ -33,6 +32,7 @@ describe('Notification Sidebar Component', () => {
     let notificationSidebarComponent: NotificationSidebarComponent;
     let notificationSidebarComponentFixture: ComponentFixture<NotificationSidebarComponent>;
     let notificationService: NotificationService;
+    let notificationSettingsService: NotificationSettingsService;
     let accountService: AccountService;
     let userService: UserService;
     let userSettingsService: UserSettingsService;
@@ -40,7 +40,7 @@ describe('Notification Sidebar Component', () => {
     let artemisTranslatePipe: ArtemisTranslatePipe;
 
     const notificationNow = { id: 1, notificationDate: dayjs() } as Notification;
-    const notificationPast = { id: 2, notificationDate: dayjs().subtract(2, 'day') } as Notification;
+    const notificationPast = { id: 2, notificationDate: dayjs().subtract(2, 'day'), title: NEW_MESSAGE_TITLE } as Notification;
     const notifications = [notificationNow, notificationPast] as Notification[];
 
     const notificationSettingA: NotificationSetting = {
@@ -86,6 +86,7 @@ describe('Notification Sidebar Component', () => {
                 notificationSidebarComponentFixture = TestBed.createComponent(NotificationSidebarComponent);
                 notificationSidebarComponent = notificationSidebarComponentFixture.componentInstance;
                 notificationService = TestBed.inject(NotificationService);
+                notificationSettingsService = TestBed.inject(NotificationSettingsService);
                 accountService = TestBed.inject(AccountService);
                 userService = TestBed.inject(UserService);
                 userSettingsService = TestBed.inject(UserSettingsService);
@@ -133,8 +134,77 @@ describe('Notification Sidebar Component', () => {
 
         it('should subscribe to notification updates for user', () => {
             jest.spyOn(notificationService, 'subscribeToNotificationUpdates');
+            jest.spyOn(notificationSettingsService, 'isNotificationAllowedBySettings').mockReturnValue(true);
             notificationSidebarComponent.ngOnInit();
             expect(notificationService.subscribeToNotificationUpdates).toHaveBeenCalledOnce();
+            expect(notificationSettingsService.isNotificationAllowedBySettings).toHaveBeenCalledOnce();
+        });
+    });
+
+    describe('Notification Translations', () => {
+        it('should get the notification title translation', () => {
+            notificationSidebarComponent.ngOnInit();
+
+            const notification = { id: 1, notificationDate: dayjs(), title: NEW_MESSAGE_TITLE } as Notification;
+            const notificationTitle = notificationSidebarComponent.getNotificationTitleTranslation(notification);
+            expect(notificationTitle).toEqual(artemisTranslatePipe.transform(NEW_MESSAGE_TITLE));
+        });
+
+        it('should be undefined if no title', () => {
+            notificationSidebarComponent.ngOnInit();
+
+            const notification = { id: 1, notificationDate: dayjs() } as Notification;
+            const notificationTitle = notificationSidebarComponent.getNotificationTitleTranslation(notification);
+            expect(notificationTitle).toBeUndefined();
+        });
+
+        it('should get the notification text translation', () => {
+            notificationSidebarComponent.ngOnInit();
+
+            const notification = { id: 1, notificationDate: dayjs(), text: 'test', textIsPlaceholder: true } as Notification;
+            const notificationTextTranslation = notificationSidebarComponent.getNotificationTextTranslation(notification);
+            expect(notificationTextTranslation).toEqual(artemisTranslatePipe.transform('test'));
+        });
+
+        it('should be undefined if no text', () => {
+            notificationSidebarComponent.ngOnInit();
+
+            const notification = { id: 1, notificationDate: dayjs(), textIsPlaceholder: true } as Notification;
+            const notificationTextTranslation = notificationSidebarComponent.getNotificationTextTranslation(notification);
+            expect(notificationTextTranslation).toBeUndefined();
+        });
+    });
+
+    describe('Notification Texts', () => {
+        it('should display the correct text for a notification with text', () => {
+            // Set up the component with a notification that has text
+            const notificationWithText = { id: 3, notificationDate: dayjs(), text: 'Test Notification' } as Notification;
+            notificationSidebarComponent.sortedNotifications = [notificationWithText];
+
+            // Trigger change detection to update the view
+            notificationSidebarComponentFixture.detectChanges();
+
+            // Find the notification element in the view
+            const notificationElement = notificationSidebarComponentFixture.debugElement.nativeElement.querySelector('.notification-text');
+            expect(notificationElement).not.toBeNull();
+            // Expect the notification text to be displayed correctly
+            expect(notificationElement?.textContent).toContain(notificationWithText.text);
+        });
+
+        it('should display No text found for a notification without text', () => {
+            // Set up the component with a notification that does not have text
+            const notificationWithoutText = { id: 4, notificationDate: dayjs() } as Notification;
+            const notTextFoundText = 'No text found';
+            notificationSidebarComponent.sortedNotifications = [notificationWithoutText];
+
+            // Trigger change detection to update the view
+            notificationSidebarComponentFixture.detectChanges();
+
+            // Find the notification element in the view
+            const notificationElement = notificationSidebarComponentFixture.debugElement.nativeElement.querySelector('.notification-text');
+            expect(notificationElement).not.toBeNull();
+            // Expect the notification text to be No text found if no text is found
+            expect(notificationElement.textContent).toBe(notTextFoundText);
         });
     });
 

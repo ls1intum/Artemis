@@ -6,10 +6,9 @@ import { onError } from 'app/shared/util/global.utils';
 import { HttpErrorResponse } from '@angular/common/http';
 import { LearningGoal } from 'app/entities/learningGoal.model';
 import { Subscription, forkJoin } from 'rxjs';
-import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { Course } from 'app/entities/course.model';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { faAngleDown, faAngleUp } from '@fortawesome/free-solid-svg-icons';
+import { CourseStorageService } from 'app/course/manage/course-storage.service';
 
 @Component({
     selector: 'jhi-course-learning-goals',
@@ -34,8 +33,7 @@ export class CourseLearningGoalsComponent implements OnInit {
     constructor(
         private activatedRoute: ActivatedRoute,
         private alertService: AlertService,
-        private courseCalculationService: CourseScoreCalculationService,
-        private courseManagementService: CourseManagementService,
+        private courseStorageService: CourseStorageService,
         private learningGoalService: LearningGoalService,
     ) {}
 
@@ -44,8 +42,8 @@ export class CourseLearningGoalsComponent implements OnInit {
             this.courseId = parseInt(params['courseId'], 10);
         });
 
-        this.setCourse(this.courseCalculationService.getCourse(this.courseId));
-        this.courseUpdateSubscription = this.courseManagementService.getCourseUpdates(this.courseId).subscribe((course) => this.setCourse(course));
+        this.setCourse(this.courseStorageService.getCourse(this.courseId));
+        this.courseUpdateSubscription = this.courseStorageService.subscribeToCourseUpdates(this.courseId).subscribe((course) => this.setCourse(course));
     }
 
     private setCourse(course?: Course) {
