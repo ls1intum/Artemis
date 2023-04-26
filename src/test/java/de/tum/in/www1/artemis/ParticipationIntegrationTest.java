@@ -691,9 +691,9 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @ParameterizedTest
-    @CsvSource({ "-42,0", "42,42", "420,100" })
+    @CsvSource({ "-42,true", "42,false", "420,true" })
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void updateParticipation_gradedPresentation(double input, double expectedOutput) throws Exception {
+    void updateParticipation_gradedPresentation(double input, boolean isBadRequest) throws Exception {
         Course course = textExercise.getCourseViaExerciseGroupOrCourseMember();
         course.setPresentationScore(0);
 
@@ -705,11 +705,18 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         participation = participationRepo.save(participation);
 
         participation.setPresentationScore(input);
-        StudentParticipation actualParticipation = request.putWithResponseBody("/api/exercises/" + textExercise.getId() + "/participations", participation,
-                StudentParticipation.class, HttpStatus.OK);
 
-        assertThat(actualParticipation).as("The participation was updated").isNotNull();
-        assertThat(actualParticipation.getPresentationScore()).as("Presentation score was set to " + expectedOutput).isEqualTo(expectedOutput);
+        if (isBadRequest) {
+            StudentParticipation actualParticipation = request.putWithResponseBody("/api/exercises/" + textExercise.getId() + "/participations", participation,
+                    StudentParticipation.class, HttpStatus.BAD_REQUEST);
+            assertThat(actualParticipation).as("The participation was not updated").isNull();
+        }
+        else {
+            StudentParticipation actualParticipation = request.putWithResponseBody("/api/exercises/" + textExercise.getId() + "/participations", participation,
+                    StudentParticipation.class, HttpStatus.OK);
+            assertThat(actualParticipation).as("The participation was updated").isNotNull();
+            assertThat(actualParticipation.getPresentationScore()).as("Presentation score was set to " + input).isEqualTo(input);
+        }
     }
 
     @Test

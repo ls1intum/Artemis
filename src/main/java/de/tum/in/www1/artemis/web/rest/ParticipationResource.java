@@ -427,13 +427,9 @@ public class ParticipationResource {
                 }
             }
             // Validity of presentationScore for graded presentations
-            if (gradingScale.isPresent() && gradingScale.get().getPresentationsNumber() != null) {
-                if (participation.getPresentationScore() > 100.) {
-                    participation.setPresentationScore(100.);
-                }
-                if (participation.getPresentationScore() < 0.) {
-                    participation.setPresentationScore(0.);
-                }
+            if (gradingScale.isPresent() && gradingScale.get().getPresentationsNumber() != null
+                    && (participation.getPresentationScore() > 100. || participation.getPresentationScore() < 0.)) {
+                throw new BadRequestAlertException("The presentation grade must be between 0 and 100", ENTITY_NAME, "presentationGradeInvalid");
             }
         }
         // Validity of presentationScore for no presentations
