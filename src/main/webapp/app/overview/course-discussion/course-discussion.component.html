@@ -59,17 +59,17 @@
                                     [value]="{ courseWideContext: context.value, title: 'artemisApp.metis.overview.' + context.value | artemisTranslate }"
                                     class="context-option"
                                 >
-                                    {{ 'artemisApp.metis.overview.' + context.value | artemisTranslate }}
+                                    <span class="context-option-text">{{ 'artemisApp.metis.overview.' + context.value | artemisTranslate }}</span>
                                 </mat-option>
                             </mat-optgroup>
                             <mat-optgroup *ngIf="lectures !== undefined && lectures!.length > 0" [label]="'artemisApp.metis.post.lectures' | artemisTranslate">
                                 <mat-option *ngFor="let lecture of lectures" [value]="{ lectureId: lecture.id, title: lecture.title }" class="context-option">
-                                    {{ lecture.title }}
+                                    <span class="context-option-text">{{ lecture.title }}</span>
                                 </mat-option>
                             </mat-optgroup>
                             <mat-optgroup *ngIf="exercises !== undefined && exercises!.length > 0" [label]="'artemisApp.metis.post.exercises' | artemisTranslate">
                                 <mat-option *ngFor="let exercise of exercises" [value]="{ exerciseId: exercise.id, title: exercise.title }" class="context-option">
-                                    {{ exercise.title }}
+                                    <span class="context-option-text">{{ exercise.title }}</span>
                                 </mat-option>
                             </mat-optgroup>
                         </mat-select>
