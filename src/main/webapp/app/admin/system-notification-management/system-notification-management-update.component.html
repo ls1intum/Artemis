@@ -28,7 +28,6 @@
                         formControlName="notificationDate"
                         [shouldDisplayTimeZoneWarning]="false"
                         (valueChange)="setIsInvalidNotificationDateAndValidate($event)"
-                        [error]="isDatesError"
                         name="notificationDate"
                     ></jhi-date-time-picker>
                 </div>
@@ -38,7 +37,6 @@
                         formControlName="expireDate"
                         [shouldDisplayTimeZoneWarning]="false"
                         (valueChange)="setIsInvalidExpireDateAndValidate($event)"
-                        [error]="isDatesError"
                         name="expireDate"
                     ></jhi-date-time-picker>
                     <span *ngIf="expireDate?.errors?.expireMustBeAfterNotification" class="text-danger">{{
@@ -50,12 +48,7 @@
                 <button id="cancelButton" type="button" class="btn btn-secondary" (click)="goToOverview()">
                     <fa-icon [icon]="faBan"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
                 </button>
-                <button
-                    id="saveButton"
-                    type="submit"
-                    [disabled]="editForm.form.invalid || isSaving || isInvalidExpireDate || isInvalidNotificationDate || isDatesError"
-                    class="btn btn-primary"
-                >
+                <button id="saveButton" type="submit" [disabled]="editForm.form.invalid || isSaving || isInvalidExpireDate || isInvalidNotificationDate" class="btn btn-primary">
                     <fa-icon [icon]="faSave"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>
                 </button>
             </div>

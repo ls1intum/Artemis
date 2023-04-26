@@ -24,7 +24,6 @@ export class SystemNotificationManagementUpdateComponent implements OnInit {
 
     isInvalidNotificationDate = false;
     isInvalidExpireDate = false;
-    isDatesError = false;
 
     // Icons
     faSave = faSave;
