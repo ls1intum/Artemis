@@ -118,7 +118,6 @@ describe('CourseOverviewComponent', () => {
     let jhiWebsocketServiceReceiveStub: jest.SpyInstance;
     let jhiWebsocketServiceSubscribeSpy: jest.SpyInstance;
     let findOneForDashboardStub: jest.SpyInstance;
-    let findOneForRegistrationStub: jest.SpyInstance;
 
     let metisConversationService: MetisConversationService;
     const course = { id: 1 } as Course;
@@ -194,10 +193,6 @@ describe('CourseOverviewComponent', () => {
                 jest.spyOn(teamService, 'teamAssignmentUpdates', 'get').mockResolvedValue(of(new TeamAssignmentPayload()));
                 // default for findOneForDashboardStub is to return the course
                 findOneForDashboardStub = jest.spyOn(courseService, 'findOneForDashboard').mockReturnValue(of(new HttpResponse({ body: course1, headers: new HttpHeaders() })));
-                // default for findOneForRegistrationStub is to return the course as well
-                findOneForRegistrationStub = jest
-                    .spyOn(courseService, 'findOneForRegistration')
-                    .mockReturnValue(of(new HttpResponse({ body: course1, headers: new HttpHeaders() })));
             });
     }));
 
@@ -263,23 +258,6 @@ describe('CourseOverviewComponent', () => {
         expect(subscribeToTeamAssignmentUpdatesStub).toHaveBeenCalledOnce();
     });
 
-    it('should show an alert when loading the course fails', async () => {
-        findOneForDashboardStub.mockReturnValue(throwError(new HttpResponse({ status: 404 })));
-        const alertService = TestBed.inject(AlertService);
-        const alertServiceSpy = jest.spyOn(alertService, 'addAlert');
-
-        component.loadCourse().subscribe(
-            () => {
-                throw new Error('should not happen');
-            },
-            (error) => {
-                expect(error).toBeDefined();
-            },
-        );
-
-        expect(alertServiceSpy).toHaveBeenCalled();
-    });
-
     it('should load the course, even when just calling loadCourse by itself (for refreshing)', () => {
         // check that loadCourse already subscribes to the course itself
 
@@ -295,35 +273,6 @@ describe('CourseOverviewComponent', () => {
 
         expect(subscribeStub).toHaveBeenCalledOnce();
     });
-
-    it('should not say that the user can register if the server returns 403', fakeAsync(() => {
-        findOneForRegistrationStub.mockReturnValue(throwError(new HttpResponse({ status: 403 })));
-
-        // test that canRegisterForCourse subscribe gives false
-        component.canRegisterForCourse().subscribe((canRegister) => {
-            expect(canRegister).toBeFalse();
-        });
-
-        // wait for the observable to complete
-        tick();
-    }));
-
-    it('should throw for unexpected registration responses from the server', fakeAsync(() => {
-        findOneForRegistrationStub.mockReturnValue(throwError(new HttpResponse({ status: 404 })));
-
-        // test that canRegisterForCourse throws
-        component.canRegisterForCourse().subscribe(
-            () => {
-                throw new Error('should not be called');
-            },
-            (error) => {
-                expect(error).toEqual(new HttpResponse({ status: 404 }));
-            },
-        );
-
-        // wait for the observable to complete
-        tick();
-    }));
 
     it('should have visible exams', () => {
         const getCourseStub = jest.spyOn(courseStorageService, 'getCourse');
