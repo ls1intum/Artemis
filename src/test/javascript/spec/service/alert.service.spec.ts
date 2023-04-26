@@ -299,4 +299,22 @@ describe('Alert Service Test', () => {
 
         flush();
     }));
+
+    it.each([400, 403, 405, 412])('should not show alerts with skipAlert=true', (statusCode) => {
+        // GIVEN
+        const response = new HttpErrorResponse({
+            url: 'http://localhost:8080/api/foos',
+            headers: new HttpHeaders().append('app-error', 'Error Message').append('app-params', 'foo'),
+            status: statusCode,
+            statusText: 'Some Error',
+            error: {
+                status: statusCode,
+                message: 'error.validation',
+                skipAlert: true,
+            },
+        });
+        eventManager.broadcast({ name: 'artemisApp.httpError', content: response });
+        // THEN
+        expect(service.get()).toBeEmpty();
+    });
 });
