@@ -56,7 +56,7 @@ export class CoursesComponent implements OnInit, OnChanges, OnDestroy {
     ) {}
 
     requestExport() {
-        this.dataExportService.requestExport().subscribe(
+        this.dataExportService.requestDataExport().subscribe(
             (response) => {
                 this.alertService.success('You successfully requested a data export');
                 this.dataExportId = response.id!;

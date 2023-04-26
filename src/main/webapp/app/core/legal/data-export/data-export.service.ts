@@ -9,7 +9,7 @@ import { DataExport } from 'app/entities/data-export.model';
 export class DataExportService {
     constructor(private http: HttpClient, private accountService: AccountService, private alertService: AlertService) {}
 
-    requestExport(): Observable<DataExport> {
+    requestDataExport(): Observable<DataExport> {
         const userId = this.accountService.userIdentity?.id;
         return this.http.put<DataExport>(`api/${userId}/data-export`, {});
     }

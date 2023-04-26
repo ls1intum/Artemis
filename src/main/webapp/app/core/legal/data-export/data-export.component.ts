@@ -6,6 +6,7 @@ import { DataExportService } from 'app/core/legal/data-export/data-export.servic
 import { AccountService } from 'app/core/auth/account.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
+import { downloadZipFileFromResponse } from 'app/shared/util/download.util';
 
 @Component({
     selector: 'jhi-data-export',
@@ -16,8 +17,6 @@ export class DataExportComponent implements OnInit {
     readonly ButtonSize = ButtonSize;
     readonly ButtonType = ButtonType;
 
-    exportRequested = false;
-    canRequestExport = true;
     protected dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
@@ -25,6 +24,7 @@ export class DataExportComponent implements OnInit {
 
     currentLogin: string | undefined;
     isAdmin = false;
+    dataExportId: number;
 
     constructor(private dataExportService: DataExportService, private accountService: AccountService, private alertService: AlertService) {}
 
@@ -34,16 +34,24 @@ export class DataExportComponent implements OnInit {
     }
 
     requestExport() {
-        this.dataExportService.requestExport().subscribe({
-            next: () => {
+        this.dataExportService.requestDataExport().subscribe({
+            next: (response) => {
                 this.dialogErrorSource.next('');
                 this.alertService.success('artemisApp.dataExport.requestSuccess');
                 this.canDownload = true;
+                this.dataExportId = response.id!;
             },
             error: (error: HttpErrorResponse) => {
                 this.dialogErrorSource.next(error.message);
                 this.alertService.error('artemisApp.dataExport.requestError');
             },
+        });
+    }
+
+    downloadDataExport() {
+        this.dataExportService.downloadDataExport(this.dataExportId).subscribe((response) => {
+            downloadZipFileFromResponse(response);
+            this.alertService.success('artemisApp.dataExport.downloadSuccess');
         });
     }
 }

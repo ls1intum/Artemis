@@ -5,6 +5,15 @@ import { User } from 'app/core/user/user.model';
 import { Exercise } from 'app/entities/exercise.model';
 
 export class MockAccountService implements IAccountService {
+    userIdentityValue: User | undefined;
+
+    get userIdentity() {
+        const user = new User();
+        user.id = 1;
+        user.login = 'test-user';
+        return user;
+    }
+
     identity = () => Promise.resolve({ id: 99 } as User);
     getAndClearPrefilledUsername = () => 'prefilledUsername';
     setPrefilledUsername = (username: string) => ({});
