@@ -14,6 +14,7 @@ import com.fasterxml.jackson.annotation.JsonIncludeProperties;
 
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.domain.metis.Post;
+import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 
 /**
  * A Lecture.
@@ -54,6 +55,10 @@ public class Lecture extends DomainObject {
     @ManyToOne
     @JsonIgnoreProperties(value = { "lectures", "exercises", "posts" }, allowSetters = true)
     private Course course;
+
+    @OneToOne(mappedBy = "lecture", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    @JsonIgnoreProperties(value = "lecture", allowSetters = true)
+    private Channel channel;
 
     public String getTitle() {
         return title;
@@ -148,5 +153,13 @@ public class Lecture extends DomainObject {
         public String getMappedColumnName() {
             return mappedColumnName;
         }
+    }
+
+    public Channel getChannel() {
+        return channel;
+    }
+
+    public void setChannel(Channel channel) {
+        this.channel = channel;
     }
 }

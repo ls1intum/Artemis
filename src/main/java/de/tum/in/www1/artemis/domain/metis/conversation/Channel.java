@@ -1,14 +1,15 @@
 package de.tum.in.www1.artemis.domain.metis.conversation;
 
 import javax.annotation.Nullable;
-import javax.persistence.Column;
-import javax.persistence.DiscriminatorValue;
-import javax.persistence.Entity;
+import javax.persistence.*;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.Lecture;
 
 @Entity
 @DiscriminatorValue("C")
@@ -63,6 +64,14 @@ public class Channel extends Conversation {
     @NotNull
     private Boolean isArchived;
 
+    @OneToOne
+    @JoinColumn(name = "lecture_id")
+    private Lecture lecture;
+
+    @OneToOne
+    @JoinColumn(name = "exercise_id")
+    private Exercise exercise;
+
     @Nullable
     public String getName() {
         return name;
@@ -113,5 +122,21 @@ public class Channel extends Conversation {
 
     public void setIsAnnouncementChannel(Boolean announcementChannel) {
         isAnnouncementChannel = announcementChannel;
+    }
+
+    public Lecture getLecture() {
+        return lecture;
+    }
+
+    public void setLecture(Lecture lecture) {
+        this.lecture = lecture;
+    }
+
+    public Exercise getExercise() {
+        return exercise;
+    }
+
+    public void setExercise(Exercise exercise) {
+        this.exercise = exercise;
     }
 }

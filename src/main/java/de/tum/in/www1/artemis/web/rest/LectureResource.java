@@ -19,6 +19,7 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
 import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
+import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
@@ -27,6 +28,7 @@ import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ExerciseService;
 import de.tum.in.www1.artemis.service.LectureImportService;
 import de.tum.in.www1.artemis.service.LectureService;
+import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -42,6 +44,8 @@ public class LectureResource {
     private final Logger log = LoggerFactory.getLogger(LectureResource.class);
 
     private static final String ENTITY_NAME = "lecture";
+
+    private final ChannelService channelService;
 
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
@@ -61,7 +65,7 @@ public class LectureResource {
     private final ExerciseService exerciseService;
 
     public LectureResource(LectureRepository lectureRepository, LectureService lectureService, LectureImportService lectureImportService, CourseRepository courseRepository,
-            UserRepository userRepository, AuthorizationCheckService authCheckService, ExerciseService exerciseService) {
+            UserRepository userRepository, AuthorizationCheckService authCheckService, ExerciseService exerciseService, ChannelService channelService) {
         this.lectureRepository = lectureRepository;
         this.lectureService = lectureService;
         this.lectureImportService = lectureImportService;
@@ -69,6 +73,7 @@ public class LectureResource {
         this.userRepository = userRepository;
         this.authCheckService = authCheckService;
         this.exerciseService = exerciseService;
+        this.channelService = channelService;
     }
 
     /**
@@ -87,8 +92,11 @@ public class LectureResource {
         }
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, lecture.getCourse(), null);
 
-        Lecture result = lectureRepository.save(lecture);
-        return ResponseEntity.created(new URI("/api/lectures/" + result.getId())).body(result);
+        Lecture savedLecture = lectureRepository.save(lecture);
+
+        createLectureChannel(savedLecture);
+
+        return ResponseEntity.created(new URI("/api/lectures/" + savedLecture.getId())).body(savedLecture);
     }
 
     /**
@@ -301,4 +309,18 @@ public class LectureResource {
         lectureService.delete(lecture);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, lectureId.toString())).build();
     }
+
+    private void createLectureChannel(Lecture lecture) {
+        Channel channelToCreate = new Channel();
+        Set<Lecture> lectures = lectureRepository.findAllByCourseId(lecture.getCourse().getId());
+        // TODO: Figure out whether two digits for the number are enough
+        channelToCreate.setName(String.format("l-%02d-%.15s", lectures.size(), lecture.getTitle().toLowerCase().replace(' ', '-')));
+        channelToCreate.setIsPublic(true);
+        channelToCreate.setIsAnnouncementChannel(false);
+        channelToCreate.setIsArchived(false);
+        channelToCreate.setDescription(lecture.getTitle());
+        channelToCreate.setLecture(lecture);
+        channelService.createChannel(lecture.getCourse(), channelToCreate, Optional.of(userRepository.getUserWithGroupsAndAuthorities()));
+    }
+
 }
