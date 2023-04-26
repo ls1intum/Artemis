@@ -2,10 +2,8 @@ package de.tum.in.www1.artemis.service;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.StringWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Stream;
@@ -16,6 +14,7 @@ import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
@@ -25,7 +24,6 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseExportService;
-import de.tum.in.www1.artemis.service.user.UserService;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryExportOptionsDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 
@@ -35,16 +33,14 @@ import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 @Service
 public class DataExportService {
 
+    private static final String ZIP_FILE_EXTENSION = ".zip";
+
+    private static final String CSV_FILE_EXTENSION = ".csv";
+
     @Value("${artemis.data-export-path}")
     private Path dataExportPath;
 
     private final CourseRepository courseRepository;
-
-    private final ParticipationRepository participationRepository;
-
-    private final SubmissionService submissionService;
-
-    private final UserService userService;
 
     private final UserRepository userRepository;
 
@@ -72,18 +68,16 @@ public class DataExportService {
 
     private final QuizSubmissionRepository quizSubmissionRepository;
 
+    private final ResourceLoaderService resourceLoaderService;
+
     private Path workingDirectory;
 
-    public DataExportService(CourseRepository courseRepository, ParticipationRepository participationRepository, SubmissionService submissionService, UserService userService,
-            UserRepository userRepository, AuthorizationCheckService authorizationCheckService, ZipFileService zipFileService,
+    public DataExportService(CourseRepository courseRepository, UserRepository userRepository, AuthorizationCheckService authorizationCheckService, ZipFileService zipFileService,
             ProgrammingExerciseExportService programmingExerciseExportService, ProgrammingExerciseRepository programmingExerciseRepository,
             ModelingExerciseRepository modelingExerciseRepository, TextExerciseRepository textExerciseRepository, FileUploadExerciseRepository fileUploadExerciseRepository,
-            QuizExerciseRepository quizExerciseRepository, DataExportRepository dataExportRepository, SubmittedAnswerRepository submittedAnswerRepository,
-            QuizQuestionRepository quizQuestionRepository, QuizSubmissionRepository quizSubmissionRepository) {
+            QuizExerciseRepository quizExerciseRepository, DataExportRepository dataExportRepository, QuizQuestionRepository quizQuestionRepository,
+            QuizSubmissionRepository quizSubmissionRepository, ResourceLoaderService resourceLoaderService) {
         this.courseRepository = courseRepository;
-        this.participationRepository = participationRepository;
-        this.submissionService = submissionService;
-        this.userService = userService;
         this.userRepository = userRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.zipFileService = zipFileService;
@@ -96,6 +90,7 @@ public class DataExportService {
         this.dataExportRepository = dataExportRepository;
         this.quizQuestionRepository = quizQuestionRepository;
         this.quizSubmissionRepository = quizSubmissionRepository;
+        this.resourceLoaderService = resourceLoaderService;
     }
 
     public DataExport requestDataExport(User user) throws IOException {
@@ -123,8 +118,13 @@ public class DataExportService {
     public DataExport downloadDataExport(long userId, long dataExportId) {
         var dataExport = dataExportRepository.findByIdElseThrow(dataExportId);
         var user = userRepository.findByIdElseThrow(userId);
-        if (!Objects.equals(dataExport.getUser().getId(), user.getId())) {
-            throw new AccessForbiddenException("Data export doesn't belong to user");
+        // check data export belongs to specified user
+        authorizationCheckService.isOwnerOfDataExportElseThrow(dataExport, user);
+        // check data export belongs to currently logged-in user
+        authorizationCheckService.isOwnerOfDataExportElseThrow(dataExport);
+
+        if (dataExport.getDataExportState() != DataExportState.EMAIL_SENT) {
+            throw new AccessForbiddenException("Data export is not ready for download yet");
         }
         dataExport.setDownloadDate(ZonedDateTime.now());
         dataExport.setDataExportState(DataExportState.DOWNLOADED);
@@ -134,11 +134,10 @@ public class DataExportService {
     }
 
     private Path createDataExport(User user) throws IOException {
-        log.error(user.getGroups().toString());
         var courses = courseRepository.getAllCoursesUserIsMemberOf(authorizationCheckService.isAdmin(user), user.getGroups());
         for (var course : courses) {
-            var courseWorkingDir = Files.createTempDirectory(workingDirectory, "course-" + course.getId());
-            var outputDir = retrieveOutputDirectoryCreateIfNotExistent(courseWorkingDir);
+            Path courseWorkingDir = Files.createTempDirectory(workingDirectory, "course_" + course.getId());
+            Path outputDir = retrieveOutputDirectoryCreateIfNotExistent(courseWorkingDir);
 
             var programmingExercises = programmingExerciseRepository
                     .getAllProgrammingExercisesWithEagerParticipationsSubmissionsAndResultsOfUserFromCourseByCourseAndUserId(course.getId(), user.getId());
@@ -174,26 +173,7 @@ public class DataExportService {
 
     private void addGDPRInformationFile() throws IOException {
         var outputDir = retrieveOutputDirectoryCreateIfNotExistent(workingDirectory);
-        // TODO place this info in a file
-        String art15GdprInformation = """
-                # General information in accordance with Art. 15 GDPR
-                ## Purposes of processing
-                The purposes of processing of personal data are teaching and examinations in an university context.
-
-                ## Categories of personal data
-                Artemis only processes general personal data
-
-                ## Recipients of personal data
-                As operator of the Artemis instance at TUM the Rechnerbetriebsgruppe processes personal data.
-
-                ## Right to lodge a complaint
-                According to Art. 15 1(f) GDPR you have the right to lodge a complaint with the supervisory authority
-
-                ## Right of rectification or erasure of personal data
-                According to Art. 15 1(e) GDPR you have the right to
-                            """;
-        Files.writeString(outputDir.resolve("README.md"), art15GdprInformation, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
-
+        FileUtils.copyFile(new ClassPathResource("templates/legal/art_15.md").getFile(), outputDir.resolve("README.md").toFile());
     }
 
     private void addGeneralUserInformation(User user) throws IOException {
@@ -294,7 +274,7 @@ public class DataExportService {
                     var submittedAnswer = quizSubmission.getSubmittedAnswerForQuestion(question);
                     // if this question wasn't answered, the submitted answer is null
                     if (submittedAnswer != null) {
-                        printer.printRecord(getSubmittedAnswerStreamToPrint(submittedAnswer, headers));
+                        printer.printRecord(getSubmittedAnswerStreamToPrint(submittedAnswer));
                     }
 
                 }
@@ -317,18 +297,16 @@ public class DataExportService {
         }
     }
 
-    Stream<?> getSubmittedAnswerStreamToPrint(SubmittedAnswer submittedAnswer, List<String> headers) {
+    Stream<?> getSubmittedAnswerStreamToPrint(SubmittedAnswer submittedAnswer) {
         var builder = Stream.builder();
         builder.add(submittedAnswer.getId()).add(submittedAnswer.getQuizQuestion().getTitle()).add(submittedAnswer.getSubmission().getId()).add(submittedAnswer.getScoreInPoints());
         if (submittedAnswer instanceof MultipleChoiceSubmittedAnswer multipleChoiceSubmittedAnswer) {
             for (var selectedOption : multipleChoiceSubmittedAnswer.getSelectedOptions()) {
-                headers.add("selected option for quiz question " + submittedAnswer.getQuizQuestion().getTitle());
                 builder.add(selectedOption.getText());
             }
         }
         else if (submittedAnswer instanceof ShortAnswerSubmittedAnswer shortAnswerSubmittedAnswer) {
             for (var submittedText : shortAnswerSubmittedAnswer.getSubmittedTexts()) {
-                headers.add("submitted text for quiz question spot " + submittedText.getSpot().getSpotNr());
                 builder.add(submittedText.getText());
             }
 
@@ -377,7 +355,7 @@ public class DataExportService {
     private void createNonProgrammingExerciseExport(Exercise exercise, Path workingDirectory, Path outputPath) throws IOException {
         Path exerciseWorkingDir = createParticipationsSubmissionsResultsExport(exercise, workingDirectory);
         zipFileService.createZipFileWithFolderContent(
-                outputPath.resolve(exercise.getCourseViaExerciseGroupOrCourseMember().getShortName() + "-" + exercise.getSanitizedExerciseTitle() + ".zip"),
+                outputPath.resolve(exercise.getCourseViaExerciseGroupOrCourseMember().getShortName() + "_" + exercise.getSanitizedExerciseTitle() + ".zip"),
                 retrieveOutputDirectoryCreateIfNotExistent(exerciseWorkingDir), null);
 
     }
@@ -392,7 +370,7 @@ public class DataExportService {
     }
 
     private void createCourseZipFile(Course course, Path exercisesOutputDir) throws IOException {
-        zipFileService.createZipFileWithFolderContent(retrieveOutputDirectoryCreateIfNotExistent(workingDirectory).resolve("course-" + course.getShortName() + ".zip"),
+        zipFileService.createZipFileWithFolderContent(retrieveOutputDirectoryCreateIfNotExistent(workingDirectory).resolve("course_" + course.getShortName() + ".zip"),
                 exercisesOutputDir, null);
 
     }
@@ -400,12 +378,12 @@ public class DataExportService {
     private Path createDataExportZipFile(String userLogin) throws IOException {
         // There should actually never exist more than one data export for a user at a time (once the feature is fully implemented), but to be sure the name is unique, we add the
         // current timestamp
-        return zipFileService.createZipFileWithFolderContent(dataExportPath.resolve("data-export-" + userLogin + ZonedDateTime.now().toEpochSecond() + ".zip"),
+        return zipFileService.createZipFileWithFolderContent(dataExportPath.resolve("data-export_" + userLogin + ZonedDateTime.now().toEpochSecond() + ".zip"),
                 retrieveOutputDirectoryCreateIfNotExistent(workingDirectory), null);
     }
 
     private void createSubmissionCsvFile(Submission submission, Path outputPath) throws IOException {
-        StringWriter sw = new StringWriter();
+
         List<String> headers = new ArrayList<>(List.of("id", "submissionDate", "type", "durationInMinutes"));
         if (submission instanceof ProgrammingSubmission) {
             headers.add("commitHash");
@@ -421,11 +399,12 @@ public class DataExportService {
         }
         CSVFormat csvFormat = CSVFormat.DEFAULT.builder().setHeader(headers.toArray(String[]::new)).build();
 
-        try (final CSVPrinter printer = new CSVPrinter(sw, csvFormat)) {
+        try (final CSVPrinter printer = new CSVPrinter(
+                Files.newBufferedWriter(outputPath.resolve("participation_" + submission.getParticipation().getId() + "_submission_" + submission.getId() + ".csv")), csvFormat)) {
             printer.printRecord(getSubmissionStreamToPrint(submission));
+            printer.flush();
 
         }
-        Files.writeString(outputPath.resolve("participation_" + submission.getParticipation().getId() + "_submission_" + submission.getId() + ".csv"), sw.toString());
     }
 
     private Stream<?> getSubmissionStreamToPrint(Submission submission) {

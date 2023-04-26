@@ -3,7 +3,6 @@ import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { Subject } from 'rxjs';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { DataExportService } from 'app/core/legal/data-export/data-export.service';
-import { UserService } from 'app/core/user/user.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
@@ -13,13 +12,15 @@ import { AlertService } from 'app/core/util/alert.service';
     templateUrl: './data-export.component.html',
 })
 export class DataExportComponent implements OnInit {
+    readonly ActionType = ActionType;
+    readonly ButtonSize = ButtonSize;
+    readonly ButtonType = ButtonType;
+
     exportRequested = false;
     canRequestExport = true;
     protected dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
-    readonly ActionType = ActionType;
-    readonly ButtonSize = ButtonSize;
-    readonly ButtonType = ButtonType;
+
     canDownload = false;
 
     currentLogin: string | undefined;

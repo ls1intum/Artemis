@@ -389,6 +389,37 @@ public class AuthorizationCheckService {
         }
     }
 
+    public void isOwnerOfDataExportElseThrow(@NotNull DataExport dataExport) {
+        if (!isOwnerOfDataExport(dataExport)) {
+            throw new AccessForbiddenException("data export", dataExport.getId());
+        }
+    }
+
+    public boolean isOwnerOfDataExport(DataExport dataExport) {
+        if (dataExport.getUser() == null) {
+            return false;
+        }
+        else {
+            return dataExport.getUser().getLogin().equals(SecurityUtils.getCurrentUserLogin().get());
+        }
+    }
+
+    public boolean isOwnerOfDataExport(DataExport dataExport, @Nullable User user) {
+        user = loadUserIfNeeded(user);
+        if (dataExport.getUser() == null) {
+            return false;
+        }
+        else {
+            return dataExport.getUser().equals(user);
+        }
+    }
+
+    public void isOwnerOfDataExportElseThrow(DataExport dataExport, @Nullable User user) {
+        if (!isOwnerOfDataExport(dataExport, user)) {
+            throw new AccessForbiddenException("data export", dataExport.getId());
+        }
+    }
+
     /**
      * checks if the currently logged-in user is owner of the given team
      *
@@ -498,7 +529,7 @@ public class AuthorizationCheckService {
 
     /**
      * Checks if the user is allowed to see the exam result. Returns true if
-     *
+     * <p>
      * - the current user is at least teaching assistant in the course
      * - OR if the exercise is not part of an exam
      * - OR if the exam has not ended

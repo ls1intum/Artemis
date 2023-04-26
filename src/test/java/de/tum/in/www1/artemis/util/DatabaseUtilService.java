@@ -2542,6 +2542,7 @@ public class DatabaseUtilService {
 
         var submittedShortAnswer = new ShortAnswerSubmittedAnswer();
         ShortAnswerQuestion shortAnswerQuestion = (ShortAnswerQuestion) (quizExercise.getQuizQuestions().get(2));
+        submittedShortAnswer.setQuizQuestion(shortAnswerQuestion);
         ShortAnswerSubmittedText shortAnswerSubmittedText = new ShortAnswerSubmittedText();
         shortAnswerQuestion.setExercise(quizExercise);
         shortAnswerSubmittedText.setText("my text");

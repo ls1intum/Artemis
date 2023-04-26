@@ -607,4 +607,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
         return findById(userId).orElseThrow(() -> new EntityNotFoundException("User", userId));
     }
 
+    default User findOneWithGroupsAndAuthoritiesByIdOrElseThrow(long userId) {
+        return findOneWithGroupsAndAuthoritiesById(userId).orElseThrow(() -> new EntityNotFoundException("User", userId));
+    }
 }
