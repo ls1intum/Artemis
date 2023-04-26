@@ -43,7 +43,6 @@ describe('Alert Service Test', () => {
         });
         service = TestBed.inject(AlertService);
         eventManager = TestBed.inject(EventManager);
-        jest.useFakeTimers();
     });
 
     it('should produce a proper alert object and fetch it', () => {
@@ -89,6 +88,8 @@ describe('Alert Service Test', () => {
     });
 
     it('should close an alert on timeout correctly', () => {
+        jest.useFakeTimers();
+
         const alert = { type: AlertType.INFO, message: 'Hello Jhipster info', onClose: jest.fn() } as AlertCreationProperties;
         service.addAlert(alert);
 
