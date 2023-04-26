@@ -137,7 +137,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
         checkCreatedMessagePost(postToSave, createdPost);
         assertThat(createdPost.getConversation().getId()).isNotNull();
 
-        PostContextFilter postContextFilter = new PostContextFilter();
+        PostContextFilter postContextFilter = new PostContextFilter(courseId);
         postContextFilter.setConversationId(createdPost.getConversation().getId());
         assertThat(conversationMessageRepository.findMessages(postContextFilter, Pageable.unpaged())).hasSize(1);
 
@@ -165,7 +165,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
 
         Post postToSave = createPostWithOneToOneChat(TEST_PREFIX);
 
-        PostContextFilter postContextFilter = new PostContextFilter();
+        PostContextFilter postContextFilter = new PostContextFilter(courseId);
         postContextFilter.setConversationId(postToSave.getConversation().getId());
         var numberOfPostsBefore = conversationMessageRepository.findMessages(postContextFilter, Pageable.unpaged()).getSize();
 
@@ -191,7 +191,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
         // attempt to save new post under someone else's conversation
         postToSave.setConversation(existingConversationPosts.get(0).getConversation());
 
-        PostContextFilter postContextFilter = new PostContextFilter();
+        PostContextFilter postContextFilter = new PostContextFilter(courseId);
         postContextFilter.setConversationId(postToSave.getConversation().getId());
         var numberOfPostsBefore = conversationMessageRepository.findMessages(postContextFilter, Pageable.unpaged()).getSize();
 

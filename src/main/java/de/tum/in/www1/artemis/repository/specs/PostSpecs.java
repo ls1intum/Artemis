@@ -18,26 +18,18 @@ public class PostSpecs {
     /**
      * Creates a specification to fetch Posts belonging to a Course
      *
-     * @param courseId   id of course the posts belong to
-     * @param lectureId  id of lecture the posts belong to
-     * @param exerciseId id of exercise the posts belong to
+     * @param courseId id of course the posts belong to
      * @return specification used to chain DB operations
      */
-    public static Specification<Post> getCourseSpecification(Long courseId, Long[] lectureId, Long[] exerciseId) {
+    public static Specification<Post> getCourseSpecification(Long courseId) {
         return (root, query, criteriaBuilder) -> {
-            if (lectureId != null || exerciseId != null) {
-                // if lectureId or exerciseId is provided, lecture/exercise specifications will be activated to fetch lecture/exercise posts
-                return null;
-            }
-            else {
-                Join<Post, Lecture> joinedLectures = root.join(Post_.LECTURE, JoinType.LEFT);
-                Join<Post, Exercise> joinedExercises = root.join(Post_.EXERCISE, JoinType.LEFT);
+            Join<Post, Lecture> joinedLectures = root.join(Post_.LECTURE, JoinType.LEFT);
+            Join<Post, Exercise> joinedExercises = root.join(Post_.EXERCISE, JoinType.LEFT);
 
-                Predicate coursePosts = criteriaBuilder.equal(root.get(Post_.COURSE), courseId);
-                Predicate coursePostsWithLectureContext = criteriaBuilder.equal(joinedLectures.get(Lecture_.COURSE).get(Course_.ID), courseId);
-                Predicate coursePostsWithExerciseContext = criteriaBuilder.equal(joinedExercises.get(Exercise_.COURSE).get(Course_.ID), courseId);
-                return criteriaBuilder.or(coursePosts, coursePostsWithLectureContext, coursePostsWithExerciseContext);
-            }
+            Predicate coursePosts = criteriaBuilder.equal(root.get(Post_.COURSE), courseId);
+            Predicate coursePostsWithLectureContext = criteriaBuilder.equal(joinedLectures.get(Lecture_.COURSE).get(Course_.ID), courseId);
+            Predicate coursePostsWithExerciseContext = criteriaBuilder.equal(joinedExercises.get(Exercise_.COURSE).get(Course_.ID), courseId);
+            return criteriaBuilder.or(coursePosts, coursePostsWithLectureContext, coursePostsWithExerciseContext);
         };
     }
 

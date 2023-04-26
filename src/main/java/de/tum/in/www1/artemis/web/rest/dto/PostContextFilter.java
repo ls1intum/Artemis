@@ -36,6 +36,10 @@ public class PostContextFilter {
 
     private SortingOrder sortingOrder;
 
+    public PostContextFilter(long courseId) {
+        this.courseId = courseId;
+    }
+
     public Long getCourseId() {
         return courseId;
     }

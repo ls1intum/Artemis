@@ -474,8 +474,7 @@ public class PostService extends PostingService {
      * @return list of similar posts
      */
     public List<Post> getSimilarPosts(Long courseId, Post post) {
-        PostContextFilter postContextFilter = new PostContextFilter();
-        postContextFilter.setCourseId(courseId);
+        PostContextFilter postContextFilter = new PostContextFilter(courseId);
         List<Post> coursePosts = this.getCoursePosts(postContextFilter, false, null).stream().collect(Collectors.toCollection(ArrayList::new));
 
         // sort course posts by calculated similarity scores

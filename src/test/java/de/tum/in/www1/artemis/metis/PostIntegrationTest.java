@@ -179,7 +179,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         database.assertSensitiveInformationHidden(createdPost);
         checkCreatedPost(postToSave, createdPost);
 
-        PostContextFilter postContextFilter = new PostContextFilter();
+        PostContextFilter postContextFilter = new PostContextFilter(courseId);
         postContextFilter.setExerciseId(new Long[] { firstExerciseId });
         assertThat(postsBelongingToFirstExercise).hasSize(postRepository.findPosts(postContextFilter, null, false, null).getSize() - 1);
         verify(groupNotificationService, times(1)).notifyAllGroupsAboutNewPostForExercise(createdPost, course);
@@ -210,7 +210,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         Post notCreatedPost = request.postWithResponseBody("/api/courses/" + courseId + "/posts", postToSave, Post.class, HttpStatus.BAD_REQUEST);
 
         assertThat(notCreatedPost).isNull();
-        PostContextFilter postContextFilter = new PostContextFilter();
+        PostContextFilter postContextFilter = new PostContextFilter(courseId);
         postContextFilter.setExerciseId(new Long[] { firstExerciseId });
         assertThat(postsBelongingToFirstExercise).hasSameSizeAs(postRepository.findPosts(postContextFilter, null, false, null));
 
@@ -232,7 +232,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         request.postWithResponseBody("/api/courses/" + courseId + "/posts", postToSave, Post.class, HttpStatus.BAD_REQUEST);
 
-        PostContextFilter postContextFilter = new PostContextFilter();
+        PostContextFilter postContextFilter = new PostContextFilter(courseId);
         postContextFilter.setExerciseId(new Long[] { firstExerciseId });
         assertThat(postsBelongingToFirstExercise).hasSameSizeAs(postRepository.findPosts(postContextFilter, null, false, null));
         verify(groupNotificationService, times(0)).notifyAllGroupsAboutNewPostForExercise(any(), any());
@@ -250,7 +250,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         database.assertSensitiveInformationHidden(createdPost);
         checkCreatedPost(postToSave, createdPost);
 
-        PostContextFilter postContextFilter = new PostContextFilter();
+        PostContextFilter postContextFilter = new PostContextFilter(courseId);
         postContextFilter.setLectureId(new Long[] { firstLectureId });
         assertThat(postsBelongingToFirstLecture).hasSize(postRepository.findPosts(postContextFilter, null, false, null).getSize() - 1);
         verify(groupNotificationService, times(1)).notifyAllGroupsAboutNewPostForLecture(createdPost, course);
@@ -267,7 +267,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         database.assertSensitiveInformationHidden(createdPost);
         checkCreatedPost(postToSave, createdPost);
 
-        PostContextFilter postContextFilter = new PostContextFilter();
+        PostContextFilter postContextFilter = new PostContextFilter(courseId);
         postContextFilter.setCourseId(courseId);
 
         List<Post> updatedCourseWidePosts = postRepository.findPosts(postContextFilter, null, false, null).stream().filter(post -> post.getCourseWideContext() != null).toList();
@@ -282,7 +282,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         postToSave.setCourse(course);
         postToSave.setCourseWideContext(CourseWideContext.ANNOUNCEMENT);
 
-        PostContextFilter postContextFilter = new PostContextFilter();
+        PostContextFilter postContextFilter = new PostContextFilter(courseId);
         postContextFilter.setCourseId(course.getId());
         postContextFilter.setCourseWideContext(new CourseWideContext[] { CourseWideContext.ANNOUNCEMENT });
         var numberOfPostsBefore = postRepository.findPosts(postContextFilter, null, false, null).getSize();
@@ -304,7 +304,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         postToSave.setCourse(course);
         postToSave.setCourseWideContext(CourseWideContext.ANNOUNCEMENT);
 
-        PostContextFilter postContextFilter = new PostContextFilter();
+        PostContextFilter postContextFilter = new PostContextFilter(courseId);
         postContextFilter.setCourseId(course.getId());
         postContextFilter.setCourseWideContext(new CourseWideContext[] { CourseWideContext.ANNOUNCEMENT });
         var numberOfPostsBefore = postRepository.findPosts(postContextFilter, null, false, null).getSize();
@@ -341,7 +341,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     void testCreateExistingPost_badRequest() throws Exception {
         Post existingPostToSave = existingPosts.get(0);
 
-        PostContextFilter postContextFilter = new PostContextFilter();
+        PostContextFilter postContextFilter = new PostContextFilter(courseId);
         postContextFilter.setCourseId(courseId);
         var sizeBefore = postRepository.findPosts(postContextFilter, null, false, null).getSize();
 
