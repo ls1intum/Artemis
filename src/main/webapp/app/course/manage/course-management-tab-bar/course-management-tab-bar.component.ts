@@ -72,13 +72,10 @@ export class CourseManagementTabBarComponent implements OnInit, OnDestroy {
      * On init load the course information and subscribe to listen for changes in courses.
      */
     ngOnInit() {
-        let courseId = 0;
         this.paramSub = this.route.params.subscribe((params) => {
-            courseId = params['courseId'];
-        });
-
-        this.courseSub = this.courseManagementService.find(courseId).subscribe((courseResponse) => {
-            this.course = courseResponse.body!;
+            this.courseSub = this.courseManagementService.find(params['courseId']).subscribe((courseResponse) => {
+                this.course = courseResponse.body!;
+            });
         });
     }
 
