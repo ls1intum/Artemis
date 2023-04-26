@@ -123,6 +123,16 @@
                 "title": "Aktualisiere Template",
                 "description": "Durch Aktivierung dieser Option werden die Template-Dateien in den Repositories aktualisiert. Dies ist sinnvoll, wenn die importierte Aufgabe veraltete Abhängigkeiten enthält. Für Java ersetzt Artemis JUnit4 durch Ares (enthält JUnit5) und aktualisiert die Abhängigkeiten und Plugins mit den Versionen aus dem neusten Template. Danach musst du wahrscheinlich die Testcases anpassen."
             },
+            "importFromFile": {
+                "title": "Programmieraufgabe aus Datei importieren",
+                "description": "Die Datei muss ein Zip-Archiv sein, das die Aufgabenkonfiguration im JSON Format auf der obersten Ebene enthält und für jedes Repository (template, solution, tests) ein Zip Archiv enthält. Eine solche Datei kann mit dem Aufgabenexport erstellt werden.",
+                "uploadForImport": "Programmieraufgabe für den Import hochladen",
+                "fileTooBigError": "Die Datei {{ fileName }} ist zu groß. Die maximale Dateigröße beträgt 20 MB.",
+                "fileTypeNotSupportedError": "Der Dateityp wird nicht unterstützt. Bitte wähle eine Datei mit der Endung .zip.",
+                "noExerciseDetailsJsonAtRootLevel": "Es konnte keine .json-Datei im Wurzelverzeichnis des Zip-Archivs gefunden werden, die die Aufgabendetails enthält.",
+                "notSupportedProgrammingLanguage": "Die Programmiersprache {{ programmingLanguage }} wird noch nicht für den Import aus einer Datei unterstützt.",
+                "GccNotSupportedForC": "Der Projekttyp GCC wird noch nicht für den Import aus einer Datei unterstützt."
+            },
             "programmingLanguage": "Programmiersprache",
             "projectType": "Projekttyp",
             "testRepositoryProjectType": "Projekttyp des Test-Repository",

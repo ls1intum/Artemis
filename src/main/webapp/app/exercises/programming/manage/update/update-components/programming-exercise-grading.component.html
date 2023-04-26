@@ -13,7 +13,7 @@
                 class="form-check-input custom-control-input"
                 id="field_staticCodeAnalysisEnabled"
                 name="staticCodeAnalysisEnabled"
-                [disabled]="!!programmingExercise.sequentialTestRuns || (!isImport && !!programmingExercise.id)"
+                [disabled]="!!programmingExercise.sequentialTestRuns || (!isImportFromExistingExercise && !!programmingExercise.id)"
                 [(ngModel)]="programmingExercise.staticCodeAnalysisEnabled"
                 (change)="gradingInputs.onStaticCodeAnalysisChanged()"
             />
