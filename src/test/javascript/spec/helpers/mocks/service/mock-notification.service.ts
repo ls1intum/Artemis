@@ -8,4 +8,5 @@ export class MockNotificationService {
     subscribeToNotificationUpdates = (): BehaviorSubject<Notification | null> => new BehaviorSubject(null);
     interpretNotification = (notification: GroupNotification): void => {};
     cleanUp = () => {};
+    forceComponentReload = () => {};
 }

@@ -8,7 +8,7 @@ import { InfoStepInputs } from 'app/exercises/programming/manage/update/wizard-m
     styleUrls: ['../../programming-exercise-form.scss'],
 })
 export class ProgrammingExerciseInformationComponent {
-    @Input() isImport: boolean;
+    @Input() isImportFromExistingExercise: boolean;
     @Input() isExamMode: boolean;
     @Input() isEdit: boolean;
     @Input() programmingExercise: ProgrammingExercise;

@@ -12,7 +12,13 @@ import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storag
 import { MockNotificationService } from '../../../helpers/mocks/service/mock-notification.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
-import { LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE, Notification, QUIZ_EXERCISE_STARTED_TEXT, QUIZ_EXERCISE_STARTED_TITLE } from 'app/entities/notification.model';
+import {
+    LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE,
+    NEW_MESSAGE_TITLE,
+    Notification,
+    QUIZ_EXERCISE_STARTED_TEXT,
+    QUIZ_EXERCISE_STARTED_TITLE,
+} from 'app/entities/notification.model';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockPipe } from 'ng-mocks';
@@ -42,6 +48,13 @@ describe('Notification Popup Component', () => {
         return generatedNotification;
     };
     const quizNotification = generateQuizNotification(1);
+
+    const generateNewMessageNotification = (notificationId: number) => {
+        const generatedNotification = { id: notificationId, title: NEW_MESSAGE_TITLE, text: 'New message from user. In course' } as Notification;
+        generatedNotification.target = JSON.stringify({ mainPage: 'courses', course: 1, entity: 'message', id: 20, conversation: 1 });
+        return generatedNotification;
+    };
+    const newMessageNotification = generateNewMessageNotification(2);
 
     const generateExamExerciseUpdateNotification = () => {
         const generatedNotification = { title: LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE, text: 'Fixed mistake' } as Notification;
@@ -125,6 +138,20 @@ describe('Notification Popup Component', () => {
                 expect(notificationPopupComponent.navigateToTarget).toHaveBeenCalledOnce();
                 expect(router.navigateByUrl).toHaveBeenCalledOnce();
             });
+        });
+
+        it('should navigate to conversation target when New message notification is clicked', () => {
+            notificationPopupComponent.notifications.push(newMessageNotification);
+            notificationPopupComponentFixture.detectChanges();
+
+            jest.spyOn(notificationPopupComponent, 'navigateToTarget');
+            jest.spyOn(notificationService, 'forceComponentReload');
+            jest.spyOn(router, 'navigate').mockReturnValue(Promise.resolve(true));
+
+            const button = notificationPopupComponentFixture.debugElement.query(By.css('.notification-popup-container > div button'));
+            button.nativeElement.click();
+            expect(notificationPopupComponent.navigateToTarget).toHaveBeenCalledOnce();
+            expect(notificationService.forceComponentReload).toHaveBeenCalledOnce();
         });
 
         it('should navigate to exam exercise target when ExamExerciseUpdate notification is clicked', () => {

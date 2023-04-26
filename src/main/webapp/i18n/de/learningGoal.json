@@ -40,7 +40,19 @@
             },
             "manageLearningGoals": {
                 "title": "Kompetenzmanagement",
+                "import": "Kompetenz importieren",
                 "create": "Kompetenz erstellen"
+            },
+            "importCompetency": {
+                "title": "Kompetenz importieren",
+                "search": "Suche nach einer Kompetenz:",
+                "loading": "Lade...",
+                "table": {
+                    "title": "Titel",
+                    "course": "Kurs",
+                    "semester": "Semester",
+                    "doSelect": "Auswählen"
+                }
             },
             "createLearningGoal": {
                 "title": "Erstelle eine neue Kompetenz",
