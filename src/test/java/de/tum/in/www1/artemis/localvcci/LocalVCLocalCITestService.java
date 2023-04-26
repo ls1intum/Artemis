@@ -122,7 +122,7 @@ public class LocalVCLocalCITestService {
         }
 
         if (dataToReturn.length > 2) {
-            throw new IllegalArgumentException("Only two dataToReturn entries are supported.");
+            throw new IllegalArgumentException("At most two dataToReturn entries are supported.");
         }
 
         if (dataToReturn.length == 1) {
