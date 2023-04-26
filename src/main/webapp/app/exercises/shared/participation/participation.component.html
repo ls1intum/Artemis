@@ -252,7 +252,7 @@
                                 [shouldDisplayTimeZoneWarning]="false"
                                 [min]="exercise.dueDate!"
                                 [disabled]="!exercise.isAtLeastInstructor || isSaving"
-                                (valueChange)="changedIndividualDueDate(row)"
+                                (valueValidity)="changedIndividualDueDate(row)"
                             ></jhi-date-time-picker>
                             &nbsp;
                             <button

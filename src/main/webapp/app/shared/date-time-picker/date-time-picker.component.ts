@@ -26,7 +26,7 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
     @Input() min: dayjs.Dayjs; // Dates before this date are not selectable.
     @Input() max: dayjs.Dayjs; // Dates after this date are not selectable.
     @Input() shouldDisplayTimeZoneWarning = true; // Displays a warning that the current time zone might differ from the participants'.
-    @Output() valueChange: EventEmitter<boolean> = new EventEmitter();
+    @Output() valueValidity: EventEmitter<boolean> = new EventEmitter(); // emits the validity of the new value selected
 
     isInvalidDate = false;
 
@@ -43,7 +43,7 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
      * Emits the value change from component.
      */
     valueChanged() {
-        this.valueChange.emit(this.isInvalidDate);
+        this.valueValidity.emit(this.isInvalidDate);
     }
 
     /**

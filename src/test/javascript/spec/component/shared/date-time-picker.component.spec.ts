@@ -26,7 +26,7 @@ describe('FormDateTimePickerComponent', () => {
     });
 
     it('should emit if a value is changed', () => {
-        const emitStub = jest.spyOn(component.valueChange, 'emit').mockImplementation();
+        const emitStub = jest.spyOn(component.valueValidity, 'emit').mockImplementation();
         component.isInvalidDate = true;
 
         component.valueChanged();

@@ -27,7 +27,7 @@
                         [labelName]="'artemisApp.systemNotification.notificationDate' | artemisTranslate"
                         formControlName="notificationDate"
                         [shouldDisplayTimeZoneWarning]="false"
-                        (valueChange)="setIsInvalidNotificationDateAndValidate($event)"
+                        (valueValidity)="setIsInvalidNotificationDateAndValidate($event)"
                         name="notificationDate"
                     ></jhi-date-time-picker>
                 </div>
@@ -36,7 +36,7 @@
                         [labelName]="'artemisApp.systemNotification.expireDate' | artemisTranslate"
                         formControlName="expireDate"
                         [shouldDisplayTimeZoneWarning]="false"
-                        (valueChange)="setIsInvalidExpireDateAndValidate($event)"
+                        (valueValidity)="setIsInvalidExpireDateAndValidate($event)"
                         name="expireDate"
                     ></jhi-date-time-picker>
                     <span *ngIf="expireDate?.errors?.expireMustBeAfterNotification" class="text-danger">{{

@@ -119,7 +119,7 @@
                                     labelName="{{ 'artemisApp.quizExercise.releaseDate' | artemisTranslate }}"
                                     labelTooltip="{{ 'artemisApp.quizExercise.releaseDateExplanation.' + quizExercise.quizMode | artemisTranslate }}"
                                     [(ngModel)]="quizExercise.releaseDate"
-                                    (valueChange)="setIsInvalidReleaseDateAndValidateCache($event)"
+                                    (valueValidity)="setIsInvalidReleaseDateAndValidateCache($event)"
                                     [error]="false"
                                     name="releaseDate"
                                 ></jhi-date-time-picker>
@@ -131,7 +131,7 @@
                                     name="dueDate"
                                     [error]="!!quizExercise.dueDateError"
                                     labelName="{{ 'artemisApp.exercise.dueDate' | artemisTranslate }}"
-                                    (valueChange)="setIsInvalidDueDateAndValidateCache($event)"
+                                    (valueValidity)="setIsInvalidDueDateAndValidateCache($event)"
                                     [(ngModel)]="quizExercise.dueDate"
                                 ></jhi-date-time-picker>
                                 <span *ngIf="quizExercise.dueDateError" class="invalid-feedback">{{ 'artemisApp.quizExercise.dueDateError' | artemisTranslate }}</span>
@@ -161,7 +161,7 @@
                                         [shouldDisplayTimeZoneWarning]="first"
                                         labelName="{{ 'artemisApp.quizExercise.startTime' | artemisTranslate }}"
                                         [error]="quizBatch.startTimeError ?? false"
-                                        (valueChange)="setIsInvalidBachModeStartTimeAndValidateCache($event)"
+                                        (valueValidity)="setIsInvalidBachModeStartTimeAndValidateCache($event)"
                                         [(ngModel)]="quizBatch.startTime"
                                     ></jhi-date-time-picker>
                                     <span *ngIf="quizBatch.startTimeError" class="invalid-feedback">{{
