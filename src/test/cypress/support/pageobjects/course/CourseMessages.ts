@@ -19,10 +19,14 @@ export class CourseMessagesPage {
     }
 
     getChannelIdByName(name: string) {
-        return cy.get('.channels-overview').find('.list-group-item').filter(`:contains("${name}")`).invoke('attr', 'id')
-        .then((id) => {
-          return id?.replace('channel-', '');
-        });
+        return cy
+            .get('.channels-overview')
+            .find('.list-group-item')
+            .filter(`:contains("${name}")`)
+            .invoke('attr', 'id')
+            .then((id) => {
+                return id?.replace('channel-', '');
+            });
     }
 
     joinChannel(channelID: number) {
