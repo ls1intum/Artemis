@@ -118,12 +118,18 @@ class TutorialGroupNotificationServiceTest extends AbstractSpringIntegrationBamb
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void notifyAboutTutorialGroupDeletion_shouldSaveAndSend() {
-        var setting = prepareNotificationSettingForTest(student1, NOTIFICATION__TUTORIAL_GROUP_NOTIFICATION__TUTORIAL_GROUP_DELETE_UPDATE);
+        List<Long> studentSettings = IntStream.range(1, StudentCount + 1).mapToLong((studentId) -> {
+            var student = userRepository.findOneByLogin(TEST_PREFIX + "student" + studentId).get();
+            return prepareNotificationSettingForTest(student, NOTIFICATION__TUTORIAL_GROUP_NOTIFICATION__TUTORIAL_GROUP_DELETE_UPDATE).getId();
+        }).boxed().toList();
+
+        var settingTutor = prepareNotificationSettingForTest(tutor1, NOTIFICATION__TUTORIAL_GROUP_NOTIFICATION__TUTORIAL_GROUP_DELETE_UPDATE);
         tutorialGroupNotificationService.notifyAboutTutorialGroupDeletion(tutorialGroup);
         verifyRepositoryCallWithCorrectNotification(1, TUTORIAL_GROUP_DELETED_TITLE);
-        verifyEmail(1);
+        verifyEmail(StudentCount + 1);
 
-        notificationSettingRepository.deleteById(setting.getId());
+        studentSettings.forEach((settingId) -> notificationSettingRepository.deleteById(settingId));
+        notificationSettingRepository.deleteById(settingTutor.getId());
     }
 
     private NotificationSetting prepareNotificationSettingForTest(User user, String notificationSettingIdentifier) {
