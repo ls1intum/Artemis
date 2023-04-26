@@ -300,7 +300,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
                     assertThat(programmingExerciseExercise.getTestRepositoryUrl()).as("Test repository url was filtered out").isNull();
                     assertThat(programmingExerciseExercise.getTemplateBuildPlanId()).as("Template build plan was filtered out").isNull();
                     assertThat(programmingExerciseExercise.getSolutionBuildPlanId()).as("Solution build plan was filtered out").isNull();
-                    assertThat(programmingExerciseExercise.getStudentParticipations()).as("Number of participations is correct").isEmpty();
+                    assertThat(programmingExerciseExercise.getStudentParticipations()).as("Number of participations is correct").hasSize(2);
                 }
                 else if (exerciseWithDetails instanceof QuizExercise quizExercise) {
                     assertThat(quizExercise.getDuration()).as("Duration was set correctly").isEqualTo(10);
@@ -576,7 +576,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
                     assertThat(stats.getNumberOfSubmissions().inTime()).as("Number of in-time submissions for modeling exercise is correct").isEqualTo(2);
                 }
                 if (exercise instanceof ProgrammingExercise) {
-                    assertThat(stats.getNumberOfSubmissions().inTime()).as("Number of in-time submissions for programming exercise is correct").isZero();
+                    assertThat(stats.getNumberOfSubmissions().inTime()).as("Number of in-time submissions for programming exercise is correct").isEqualTo(1);
                 }
                 if (exercise instanceof QuizExercise) {
                     assertThat(stats.getNumberOfSubmissions().inTime()).as("Number of in-time submissions for quiz exercise is correct").isZero();
