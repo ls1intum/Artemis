@@ -1079,29 +1079,36 @@ public class DatabaseUtilService {
 
     public List<Post> createPostsWithinCourse(String userPrefix) {
 
-        Course course1 = createCourse();
-        TextExercise textExercise = ModelFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course1);
-        course1.addExercises(textExercise);
-        textExercise = exerciseRepo.save(textExercise);
+        List<Exercise> testExercises = new ArrayList<>();
+        List<Lecture> testLectures = new ArrayList<>();
 
-        Lecture lecture = ModelFactory.generateLecture(pastTimestamp, futureFutureTimestamp, course1);
-        course1.addLectures(lecture);
-        lecture = lectureRepo.save(lecture);
+        Course course1 = createCourse();
+        for (int i = 0; i < 2; i++) {
+            TextExercise textExercise = ModelFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course1);
+            course1.addExercises(textExercise);
+            textExercise = exerciseRepo.save(textExercise);
+            testExercises.add(textExercise);
+
+            Lecture lecture = ModelFactory.generateLecture(pastTimestamp, futureFutureTimestamp, course1);
+            course1.addLectures(lecture);
+            lecture = lectureRepo.save(lecture);
+            testLectures.add(lecture);
+        }
 
         courseRepo.save(course1);
 
         PlagiarismCase plagiarismCase = new PlagiarismCase();
-        plagiarismCase.setExercise(textExercise);
+        plagiarismCase.setExercise(testExercises.get(0));
         plagiarismCase.setStudent(userRepo.findOneByLogin(userPrefix + "student1").get());
         plagiarismCase = plagiarismCaseRepository.save(plagiarismCase);
 
         List<Post> posts = new ArrayList<>();
 
         // add posts to exercise
-        posts.addAll(createBasicPosts(textExercise, userPrefix));
+        posts.addAll(createBasicPosts(testExercises.toArray(Exercise[]::new), userPrefix));
 
         // add posts to lecture
-        posts.addAll(createBasicPosts(lecture, userPrefix));
+        posts.addAll(createBasicPosts(testLectures.toArray(Lecture[]::new), userPrefix));
 
         // add post to plagiarismCase
         posts.add(createBasicPost(plagiarismCase, userPrefix));
@@ -1140,24 +1147,29 @@ public class DatabaseUtilService {
         return posts;
     }
 
-    private List<Post> createBasicPosts(Exercise exerciseContext, String userPrefix) {
+    private List<Post> createBasicPosts(Exercise[] exerciseContexts, String userPrefix) {
         List<Post> posts = new ArrayList<>();
-        for (int i = 0; i < 4; i++) {
-            Post postToAdd = createBasicPost(i, userPrefix + "student");
-            postToAdd.setExercise(exerciseContext);
-            postRepository.save(postToAdd);
-            posts.add(postToAdd);
+        for (Exercise exerciseContext : exerciseContexts) {
+            for (int i = 0; i < 4; i++) {
+                Post postToAdd = createBasicPost(i, userPrefix + "student");
+                postToAdd.setExercise(exerciseContext);
+                postRepository.save(postToAdd);
+                posts.add(postToAdd);
+            }
         }
+
         return posts;
     }
 
-    private List<Post> createBasicPosts(Lecture lectureContext, String userPrefix) {
+    private List<Post> createBasicPosts(Lecture[] lectureContexts, String userPrefix) {
         List<Post> posts = new ArrayList<>();
-        for (int i = 0; i < 4; i++) {
-            Post postToAdd = createBasicPost(i, userPrefix + "tutor");
-            postToAdd.setLecture(lectureContext);
-            postRepository.save(postToAdd);
-            posts.add(postToAdd);
+        for (Lecture lectureContext : lectureContexts) {
+            for (int i = 0; i < 4; i++) {
+                Post postToAdd = createBasicPost(i, userPrefix + "tutor");
+                postToAdd.setLecture(lectureContext);
+                postRepository.save(postToAdd);
+                posts.add(postToAdd);
+            }
         }
         return posts;
     }
