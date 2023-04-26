@@ -648,6 +648,13 @@ public class ProgrammingExercise extends Exercise {
         return participation.getResults().stream().filter(this::checkForAssessedResult).collect(Collectors.toSet());
     }
 
+    /**
+     * Find relevant participations for this exercise. Normally there are only one practice and graded participation.
+     * In case there are multiple, they are filtered as implemented in {@link Exercise#findRelevantParticipation(List)}
+     *
+     * @param participations the list of available participations
+     * @return the found participation in a list or the empty list, if none exists
+     */
     @Override
     public List<StudentParticipation> findRelevantParticipation(List<StudentParticipation> participations) {
         List<StudentParticipation> participationOfExercise = participations.stream()
