@@ -3,8 +3,6 @@ package de.tum.in.www1.artemis.service.connectors.jenkins;
 import static de.tum.in.www1.artemis.config.Constants.NEW_RESULT_RESOURCE_API_PATH;
 
 import java.io.IOException;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import javax.xml.transform.TransformerException;
 
@@ -62,9 +60,7 @@ public class JenkinsMigrationService implements CIMigrationService {
     private Document replaceNotificationUrlInJobConfig(Document config) throws TransformerException {
         String stringConfig = XmlFileUtils.writeToString(config);
         // Pattern captures the current notification URL and additionally everything around in order to replace the URL
-        Pattern pattern = Pattern.compile("(.*?notificationUrl: ')(.+?)('.*?)");
-        Matcher matcher = pattern.matcher(stringConfig);
-        String newStringConfig = matcher.replaceAll("$1" + artemisServerUrl + NEW_RESULT_RESOURCE_API_PATH + "$3");
+        String newStringConfig = stringConfig.replaceAll("(.*?notificationUrl: ')(.+?)('.*?)", "$1" + artemisServerUrl + NEW_RESULT_RESOURCE_API_PATH + "$3");
         return XmlFileUtils.readFromString(newStringConfig);
     }
 }
