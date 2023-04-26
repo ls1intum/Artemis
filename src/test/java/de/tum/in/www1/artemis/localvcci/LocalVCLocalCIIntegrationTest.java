@@ -480,7 +480,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
     }
 
     @Test
-    void testFetchPush_instructorExamTestRun() throws GitAPIException, IOException, URISyntaxException {
+    void testFetchPush_instructorExamTestRun() throws Exception {
         Exam exam = database.addExamWithExerciseGroup(course, true);
         ExerciseGroup exerciseGroup = exerciseGroupRepository.findByExamId(exam.getId()).stream().findFirst().orElseThrow();
 
@@ -516,7 +516,12 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
 
         // Instructor should be able to fetch and push.
         localVCLocalCITestService.testFetchSuccessful(instructorExamTestRunRepository.localGit, instructor1Login, projectKey1, repositorySlug);
+        String commitHash = localVCLocalCITestService.commitFile(instructorExamTestRunRepository.localRepoFile.toPath(), programmingExercise.getPackageFolderName(),
+                instructorExamTestRunRepository.localGit);
+        localVCLocalCITestService.mockCommitHash(dockerClient, commitHash);
+        localVCLocalCITestService.mockTestResults(dockerClient, PARTLY_SUCCESSFUL_TEST_RESULTS_PATH);
         localVCLocalCITestService.testPushSuccessful(instructorExamTestRunRepository.localGit, instructor1Login, projectKey1, repositorySlug);
+        localVCLocalCITestService.testLatestSubmission(instructorTestRunParticipation.getId(), commitHash, 1, false);
 
         // Start test run
         instructorExam.setStarted(true);
