@@ -435,15 +435,14 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
      * @param participations the list of available participations
      * @return the found participation, or null, if none exist
      */
-    @Nullable
-    public StudentParticipation findRelevantParticipation(List<StudentParticipation> participations) {
+    public List<StudentParticipation> findRelevantParticipation(List<StudentParticipation> participations) {
         StudentParticipation relevantParticipation = null;
         for (StudentParticipation participation : participations) {
             if (participation.getExercise() != null && participation.getExercise().equals(this)) {
                 if (participation.getInitializationState() == InitializationState.INITIALIZED) {
                     // InitializationState INITIALIZED is preferred
                     // => if we find one, we can return immediately
-                    return participation;
+                    return List.of(participation);
                 }
                 else if (participation.getInitializationState() == InitializationState.INACTIVE) {
                     // InitializationState INACTIVE is also ok
@@ -454,11 +453,11 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
                 else if (participation.getExercise() instanceof ModelingExercise || participation.getExercise() instanceof TextExercise
                         || participation.getExercise() instanceof FileUploadExercise
                         || (participation.getExercise() instanceof ProgrammingExercise && participation.getInitializationState() == InitializationState.FINISHED)) {
-                    return participation;
+                    return List.of(participation);
                 }
             }
         }
-        return relevantParticipation;
+        return relevantParticipation != null ? List.of(relevantParticipation) : Collections.emptyList();
     }
 
     /**
@@ -487,9 +486,11 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
             boolean isAssessmentOver = ignoreAssessmentDueDate || getAssessmentDueDate() == null || getAssessmentDueDate().isBefore(ZonedDateTime.now());
             boolean isProgrammingExercise = participation.getExercise() instanceof ProgrammingExercise;
             // Check that submission was submitted in time (rated). For non programming exercises we check if the assessment due date has passed (if set)
-            if (Boolean.TRUE.equals(result.isRated()) && (!isProgrammingExercise && isAssessmentOver
-                    // For programming exercises we check that the assessment due date has passed (if set) for manual results otherwise we always show the automatic result
-                    || isProgrammingExercise && ((result.isManual() && isAssessmentOver) || result.isAutomatic()))) {
+            boolean ratedOrPractice = Boolean.TRUE.equals(result.isRated()) || participation.isTestRun();
+            boolean noProgrammingAndAssessmentOver = !isProgrammingExercise && isAssessmentOver;
+            // For programming exercises we check that the assessment due date has passed (if set) for manual results otherwise we always show the automatic result
+            boolean programmingAfterAssessmentOrAutomatic = isProgrammingExercise && ((result.isManual() && isAssessmentOver) || result.isAutomatic());
+            if (ratedOrPractice && (noProgrammingAndAssessmentOver || programmingAfterAssessmentOrAutomatic)) {
                 // take the first found result that fulfills the above requirements
                 if (latestSubmission == null) {
                     latestSubmission = submission;

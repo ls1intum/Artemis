@@ -341,15 +341,15 @@ public class QuizExercise extends Exercise {
     }
 
     @Override
-    public StudentParticipation findRelevantParticipation(List<StudentParticipation> participations) {
+    public List<StudentParticipation> findRelevantParticipation(List<StudentParticipation> participations) {
         for (StudentParticipation participation : participations) {
             if (participation.getExercise() != null && participation.getExercise().equals(this)) {
                 // in quiz exercises we don't care about the InitializationState
                 // => return the first participation we find
-                return participation;
+                return List.of(participation);
             }
         }
-        return null;
+        return Collections.emptyList();
     }
 
     @Override

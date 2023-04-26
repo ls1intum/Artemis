@@ -114,8 +114,8 @@ class ExerciseTest {
 
     @Test
     void findRelevantParticipation() {
-        StudentParticipation relevantParticipation = exercise.findRelevantParticipation(studentParticipations);
-        assertThat(relevantParticipation).isEqualTo(studentParticipationInitialized);
+        List<StudentParticipation> relevantParticipations = exercise.findRelevantParticipation(studentParticipations);
+        assertThat(relevantParticipations).containsExactly(studentParticipationInitialized);
     }
 
     @Test
@@ -125,14 +125,14 @@ class ExerciseTest {
         when(desiredStudentParticipationInactive.getExercise()).thenReturn(exercise);
         studentParticipations = Arrays.asList(studentParticipationInactive, studentParticipationFinished, studentParticipationUninitialized, desiredStudentParticipationInactive);
 
-        StudentParticipation relevantParticipation = exercise.findRelevantParticipation(studentParticipations);
-        assertThat(relevantParticipation).isEqualTo(desiredStudentParticipationInactive);
+        List<StudentParticipation> relevantParticipations = exercise.findRelevantParticipation(studentParticipations);
+        assertThat(relevantParticipations).containsExactly(desiredStudentParticipationInactive);
     }
 
     @Test
     void findRelevantParticipation_empty() {
-        StudentParticipation relevantParticipation = exercise.findRelevantParticipation(new ArrayList<>());
-        assertThat(relevantParticipation).isNull();
+        List<StudentParticipation> relevantParticipations = exercise.findRelevantParticipation(new ArrayList<>());
+        assertThat(relevantParticipations).isEmpty();
     }
 
     @Test
@@ -144,8 +144,8 @@ class ExerciseTest {
         when(studentParticipationFinished.getExercise()).thenReturn(modelingExercise);
         when(studentParticipationUninitialized.getExercise()).thenReturn(modelingExercise);
 
-        StudentParticipation relevantParticipation = modelingExercise.findRelevantParticipation(studentParticipations);
-        assertThat(relevantParticipation).isEqualTo(studentParticipationFinished);
+        List<StudentParticipation> relevantParticipations = modelingExercise.findRelevantParticipation(studentParticipations);
+        assertThat(relevantParticipations).containsExactly(studentParticipationFinished);
     }
 
     @Test
@@ -157,8 +157,8 @@ class ExerciseTest {
         when(studentParticipationFinished.getExercise()).thenReturn(textExercise);
         when(studentParticipationUninitialized.getExercise()).thenReturn(textExercise);
 
-        StudentParticipation relevantParticipation = textExercise.findRelevantParticipation(studentParticipations);
-        assertThat(relevantParticipation).isEqualTo(studentParticipationFinished);
+        List<StudentParticipation> relevantParticipations = textExercise.findRelevantParticipation(studentParticipations);
+        assertThat(relevantParticipations).containsExactly(studentParticipationFinished);
     }
 
     /* Primarily the functionality of findAppropriateSubmissionByResults() is tested with the following tests */
@@ -181,7 +181,7 @@ class ExerciseTest {
     @Test
     void filterForCourseDashboard_nullParticipations() {
         exerciseService.filterForCourseDashboard(exercise, null, "student", true);
-        assertThat(exercise.getStudentParticipations()).isNull();
+        assertThat(exercise.getStudentParticipations()).isEmpty();
     }
 
     @Test
@@ -198,7 +198,7 @@ class ExerciseTest {
     @Test
     void filterForCourseDashboard_emptyParticipations() {
         exerciseService.filterForCourseDashboard(exercise, new ArrayList<>(), "student", true);
-        assertThat(exercise.getStudentParticipations()).isNull();
+        assertThat(exercise.getStudentParticipations()).isEmpty();
     }
 
     @Test

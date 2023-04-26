@@ -186,9 +186,10 @@ public class CourseScoreCalculationService {
             // TODO: Look into refactoring the fetchParticipationsWithSubmissionsAndResultsForCourses method in the CourseService to always initialize the participations (to an
             // empty list if there aren't any). This way you don't need this very unintuitive check for the initialization state.
             if (Hibernate.isInitialized(exercise.getStudentParticipations())) {
-                var exerciseParticipation = exercise.getStudentParticipations().iterator().next();
-                exerciseParticipation.setExercise(exercise);
-                studentParticipations.add(exerciseParticipation);
+                exercise.getStudentParticipations().forEach(participation -> {
+                    participation.setExercise(exercise);
+                    studentParticipations.add(participation);
+                });
             }
         }
 

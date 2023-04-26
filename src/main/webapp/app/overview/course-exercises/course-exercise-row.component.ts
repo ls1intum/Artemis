@@ -50,15 +50,8 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy, OnChanges 
     ) {}
 
     ngOnInit() {
-        if (this.exercise.id) {
-            this.exerciseService.getExerciseDetails(this.exercise.id).subscribe((exerciseResponse: HttpResponse<Exercise>) => {
-                if (exerciseResponse.body) {
-                    this.exercise = exerciseResponse.body!;
-                    if (this.exercise.studentParticipations?.length) {
-                        this.gradedStudentParticipation = this.participationService.getSpecificStudentParticipation(this.exercise.studentParticipations, false);
-                    }
-                }
-            });
+        if (this.exercise?.studentParticipations?.length) {
+            this.gradedStudentParticipation = this.participationService.getSpecificStudentParticipation(this.exercise.studentParticipations, false);
         }
 
         this.participationUpdateListener = this.participationWebsocketService.subscribeForParticipationChanges().subscribe((changedParticipation: StudentParticipation) => {
