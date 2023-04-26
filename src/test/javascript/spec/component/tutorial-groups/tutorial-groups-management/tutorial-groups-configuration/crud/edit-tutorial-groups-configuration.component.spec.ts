@@ -14,14 +14,14 @@ import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutoria
 import { TutorialGroupsConfigurationService } from 'app/course/tutorial-groups/services/tutorial-groups-configuration.service';
 import { generateExampleTutorialGroupsConfiguration, tutorialsGroupsConfigurationToFormData } from '../../../helpers/tutorialGroupsConfigurationExampleModels';
 import { mockedActivatedRoute } from '../../../../../helpers/mocks/activated-route/mock-activated-route-query-param-map';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
+import { CourseStorageService } from 'app/course/manage/course-storage.service';
 
 describe('EditTutorialGroupsConfigurationComponent', () => {
     let fixture: ComponentFixture<EditTutorialGroupsConfigurationComponent>;
     let component: EditTutorialGroupsConfigurationComponent;
     let configurationService: TutorialGroupsConfigurationService;
-    let courseManagementService: CourseManagementService;
+    let courseStorageService: CourseStorageService;
     let findConfigurationSpy: jest.SpyInstance;
     let exampleConfiguration: TutorialGroupsConfiguration;
     const course = { id: 1, title: 'Example' } as Course;
@@ -38,7 +38,7 @@ describe('EditTutorialGroupsConfigurationComponent', () => {
             providers: [
                 MockProvider(TutorialGroupsConfigurationService),
                 MockProvider(AlertService),
-                MockProvider(CourseManagementService),
+                MockProvider(CourseStorageService),
                 { provide: Router, useValue: router },
                 mockedActivatedRoute(
                     {
@@ -58,7 +58,7 @@ describe('EditTutorialGroupsConfigurationComponent', () => {
 
                 exampleConfiguration = generateExampleTutorialGroupsConfiguration({ id: 2 });
                 course.tutorialGroupsConfiguration = exampleConfiguration;
-                courseManagementService = TestBed.inject(CourseManagementService);
+                courseStorageService = TestBed.inject(CourseStorageService);
 
                 findConfigurationSpy = jest.spyOn(configurationService, 'getOneOfCourse').mockReturnValue(of(new HttpResponse({ body: exampleConfiguration })));
                 fixture.detectChanges();
@@ -96,7 +96,7 @@ describe('EditTutorialGroupsConfigurationComponent', () => {
             status: 200,
         });
 
-        const updateCourseSpy = jest.spyOn(courseManagementService, 'courseWasUpdated');
+        const updateCourseSpy = jest.spyOn(courseStorageService, 'updateCourse');
         const updatedStub = jest.spyOn(configurationService, 'update').mockReturnValue(of(updateResponse));
         const navigateSpy = jest.spyOn(router, 'navigate');
 

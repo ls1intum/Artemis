@@ -52,7 +52,10 @@ describe('Exercise Groups Component', () => {
     let alertService: AlertService;
 
     const data = of({ exam });
-    const route = { snapshot: { paramMap: convertToParamMap({ courseId: course.id, examId: exam.id }) }, data } as any as ActivatedRoute;
+    const route = {
+        snapshot: { paramMap: convertToParamMap({ courseId: course.id, examId: exam.id }) },
+        data,
+    } as any as ActivatedRoute;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -190,9 +193,12 @@ describe('Exercise Groups Component', () => {
     });
 
     it.each([[ExerciseType.PROGRAMMING], [ExerciseType.TEXT], [ExerciseType.MODELING], [ExerciseType.QUIZ], [ExerciseType.FILE_UPLOAD]])(
-        'opens the import modal',
+        'opens the import modal and navigates to import page',
         fakeAsync((exerciseType: ExerciseType) => {
-            const mockReturnValue = { result: Promise.resolve({ id: 1 } as Exercise), componentInstance: {} } as NgbModalRef;
+            const mockReturnValue = {
+                result: Promise.resolve({ id: 1 } as Exercise),
+                componentInstance: {},
+            } as NgbModalRef;
             jest.spyOn(modalService, 'open').mockReturnValue(mockReturnValue);
             jest.spyOn(router, 'navigate');
 
@@ -201,6 +207,28 @@ describe('Exercise Groups Component', () => {
 
             expect(modalService.open).toHaveBeenCalledOnce();
             expect(router.navigate).toHaveBeenCalledOnce();
+            expect(router.navigate).toHaveBeenCalledWith(['/course-management', 456, 'exams', 123, 'exercise-groups', 0, `${exerciseType}-exercises`, 'import', 1]);
+            expect(mockReturnValue.componentInstance.exerciseType).toEqual(exerciseType);
+        }),
+    );
+    it.each([[ExerciseType.PROGRAMMING], [ExerciseType.TEXT], [ExerciseType.MODELING], [ExerciseType.QUIZ], [ExerciseType.FILE_UPLOAD]])(
+        'opens the import modal and navigates to import from file page',
+        fakeAsync((exerciseType: ExerciseType) => {
+            const mockReturnValue = {
+                result: Promise.resolve({ id: undefined } as Exercise),
+                componentInstance: {},
+            } as NgbModalRef;
+            jest.spyOn(modalService, 'open').mockReturnValue(mockReturnValue);
+            jest.spyOn(router, 'navigate');
+
+            comp.openImportModal(groups[0], exerciseType);
+            tick();
+            expect(modalService.open).toHaveBeenCalledOnce();
+            expect(router.navigate).toHaveBeenCalledOnce();
+            expect(router.navigate).toHaveBeenCalledWith(
+                ['/course-management', 456, 'exams', 123, 'exercise-groups', 0, `${exerciseType}-exercises`, 'import-from-file'],
+                expect.anything(),
+            );
             expect(mockReturnValue.componentInstance.exerciseType).toEqual(exerciseType);
         }),
     );

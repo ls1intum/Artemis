@@ -72,7 +72,7 @@ public class NotificationConstants {
 
     public static final String TUTORIAL_GROUP_DEREGISTRATION_TUTOR_TITLE = "artemisApp.singleUserNotification.title.tutorialGroupDeregistrationTutor";
 
-    public static final String TUTORIAL_GROUP_REGISTRATION_MULTIPLE_TUTOR_TITLE = "artemisApp.singleUserNotification.title.tutorialGroupRegistrationMultipleTutor";
+    public static final String TUTORIAL_GROUP_REGISTRATION_MULTIPLE_TUTOR_TITLE = "artemisApp.singleUserNotification.title.tutorialGroupMultipleRegistrationTutor";
 
     public static final String TUTORIAL_GROUP_DELETED_TITLE = "artemisApp.tutorialGroupNotification.title.tutorialGroupDeleted";
 
@@ -165,6 +165,46 @@ public class NotificationConstants {
 
     public static final String TUTORIAL_GROUP_UNASSIGNED_TEXT = "artemisApp.singleUserNotification.text.tutorialGroupUnassigned";
 
+    public static final String NEW_MESSAGE_TITLE = "artemisApp.conversationNotification.title.newMessage";
+
+    public static final String NEW_MESSAGE_CHANNEL_TEXT = "artemisApp.conversationNotification.text.newMessageChannel";
+
+    public static final String NEW_MESSAGE_GROUP_CHAT_TEXT = "artemisApp.conversationNotification.text.newMessageGroupChat";
+
+    public static final String NEW_MESSAGE_DIRECT_TEXT = "artemisApp.conversationNotification.text.newMessageDirect";
+
+    public static final String MESSAGE_REPLY_IN_CONVERSATION_TITLE = "artemisApp.singleUserNotification.title.messageReply";
+
+    public static final String MESSAGE_REPLY_IN_CONVERSATION_TEXT = "artemisApp.singleUserNotification.text.messageReply";
+
+    public static final String CONVERSATION_CREATE_ONE_TO_ONE_CHAT_TITLE = "artemisApp.singleUserNotification.title.createOneToOneChat";
+
+    public static final String CONVERSATION_CREATE_ONE_TO_ONE_CHAT_TEXT = "artemisApp.singleUserNotification.text.createOneToOneChat";
+
+    public static final String CONVERSATION_CREATE_GROUP_CHAT_TITLE = "artemisApp.singleUserNotification.title.createGroupChat";
+
+    public static final String CONVERSATION_CREATE_GROUP_CHAT_TEXT = "artemisApp.singleUserNotification.text.createGroupChat";
+
+    public static final String CONVERSATION_ADD_USER_CHANNEL_TITLE = "artemisApp.singleUserNotification.title.addUserChannel";
+
+    public static final String CONVERSATION_ADD_USER_CHANNEL_TEXT = "artemisApp.singleUserNotification.text.addUserChannel";
+
+    public static final String CONVERSATION_ADD_USER_GROUP_CHAT_TITLE = "artemisApp.singleUserNotification.title.addUserGroupChat";
+
+    public static final String CONVERSATION_ADD_USER_GROUP_CHAT_TEXT = "artemisApp.singleUserNotification.text.addUserGroupChat";
+
+    public static final String CONVERSATION_REMOVE_USER_GROUP_CHAT_TITLE = "artemisApp.singleUserNotification.title.removeUserGroupChat";
+
+    public static final String CONVERSATION_REMOVE_USER_GROUP_CHAT_TEXT = "artemisApp.singleUserNotification.text.removeUserGroupChat";
+
+    public static final String CONVERSATION_REMOVE_USER_CHANNEL_TITLE = "artemisApp.singleUserNotification.title.removeUserChannel";
+
+    public static final String CONVERSATION_REMOVE_USER_CHANNEL_TEXT = "artemisApp.singleUserNotification.text.removeUserChannel";
+
+    public static final String CONVERSATION_DELETE_CHANNEL_TITLE = "artemisApp.singleUserNotification.title.deleteChannel";
+
+    public static final String CONVERSATION_DELETE_CHANNEL_TEXT = "artemisApp.singleUserNotification.text.deleteChannel";
+
     // bidirectional map
     private static final BiMap<NotificationType, String> NOTIFICATION_TYPE_AND_TITLE_MAP = new ImmutableBiMap.Builder<NotificationType, String>()
             .put(EXERCISE_SUBMISSION_ASSESSED, EXERCISE_SUBMISSION_ASSESSED_TITLE).put(ATTACHMENT_CHANGE, ATTACHMENT_CHANGE_TITLE).put(EXERCISE_RELEASED, EXERCISE_RELEASED_TITLE)
@@ -182,7 +222,12 @@ public class NotificationConstants {
             .put(TUTORIAL_GROUP_DEREGISTRATION_STUDENT, TUTORIAL_GROUP_DEREGISTRATION_STUDENT_TITLE).put(TUTORIAL_GROUP_REGISTRATION_TUTOR, TUTORIAL_GROUP_REGISTRATION_TUTOR_TITLE)
             .put(TUTORIAL_GROUP_DEREGISTRATION_TUTOR, TUTORIAL_GROUP_DEREGISTRATION_TUTOR_TITLE).put(TUTORIAL_GROUP_DELETED, TUTORIAL_GROUP_DELETED_TITLE)
             .put(TUTORIAL_GROUP_UPDATED, TUTORIAL_GROUP_UPDATED_TITLE).put(TUTORIAL_GROUP_MULTIPLE_REGISTRATION_TUTOR, TUTORIAL_GROUP_REGISTRATION_MULTIPLE_TUTOR_TITLE)
-            .put(TUTORIAL_GROUP_ASSIGNED, TUTORIAL_GROUP_ASSIGNED_TITLE).put(TUTORIAL_GROUP_UNASSIGNED, TUTORIAL_GROUP_UNASSIGNED_TITLE).build();
+            .put(TUTORIAL_GROUP_ASSIGNED, TUTORIAL_GROUP_ASSIGNED_TITLE).put(TUTORIAL_GROUP_UNASSIGNED, TUTORIAL_GROUP_UNASSIGNED_TITLE)
+            .put(CONVERSATION_NEW_MESSAGE, NEW_MESSAGE_TITLE).put(CONVERSATION_NEW_REPLY_MESSAGE, MESSAGE_REPLY_IN_CONVERSATION_TITLE)
+            .put(CONVERSATION_CREATE_ONE_TO_ONE_CHAT, CONVERSATION_CREATE_ONE_TO_ONE_CHAT_TITLE).put(CONVERSATION_CREATE_GROUP_CHAT, CONVERSATION_CREATE_GROUP_CHAT_TITLE)
+            .put(CONVERSATION_ADD_USER_CHANNEL, CONVERSATION_ADD_USER_CHANNEL_TITLE).put(CONVERSATION_ADD_USER_GROUP_CHAT, CONVERSATION_ADD_USER_GROUP_CHAT_TITLE)
+            .put(CONVERSATION_REMOVE_USER_GROUP_CHAT, CONVERSATION_REMOVE_USER_GROUP_CHAT_TITLE).put(CONVERSATION_REMOVE_USER_CHANNEL, CONVERSATION_REMOVE_USER_CHANNEL_TITLE)
+            .put(CONVERSATION_DELETE_CHANNEL, CONVERSATION_DELETE_CHANNEL_TITLE).build();
 
     /**
      * Finds the corresponding NotificationType for the provided notification title

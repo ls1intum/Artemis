@@ -28,6 +28,7 @@ import de.tum.in.www1.artemis.domain.plagiarism.modeling.ModelingPlagiarismResul
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.util.*;
 import de.tum.in.www1.artemis.util.InvalidExamExerciseDatesArgumentProvider.InvalidExamExerciseDateConfiguration;
+import de.tum.in.www1.artemis.web.rest.dto.CourseForDashboardDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 
 class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -896,7 +897,9 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
         classExercise.setExampleSolutionPublicationDate(null);
         modelingExerciseRepository.save(classExercise);
 
-        Course course = request.get("/api/courses/" + classExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK, Course.class);
+        CourseForDashboardDTO courseForDashboard = request.get("/api/courses/" + classExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK,
+                CourseForDashboardDTO.class);
+        Course course = courseForDashboard.course();
         ModelingExercise modelingExercise = modelingExerciseGetter.apply(course);
 
         if (isStudent) {
@@ -912,7 +915,9 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
         classExercise.setExampleSolutionPublicationDate(ZonedDateTime.now().minusHours(1));
         modelingExerciseRepository.save(classExercise);
 
-        course = request.get("/api/courses/" + classExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK, Course.class);
+        courseForDashboard = request.get("/api/courses/" + classExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK,
+                CourseForDashboardDTO.class);
+        course = courseForDashboard.course();
         modelingExercise = modelingExerciseGetter.apply(course);
 
         assertThat(modelingExercise.getExampleSolutionModel()).isEqualTo(classExercise.getExampleSolutionModel());
@@ -922,7 +927,9 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
         classExercise.setExampleSolutionPublicationDate(ZonedDateTime.now().plusHours(1));
         modelingExerciseRepository.save(classExercise);
 
-        course = request.get("/api/courses/" + classExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK, Course.class);
+        courseForDashboard = request.get("/api/courses/" + classExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK,
+                CourseForDashboardDTO.class);
+        course = courseForDashboard.course();
         modelingExercise = modelingExerciseGetter.apply(course);
 
         if (isStudent) {
