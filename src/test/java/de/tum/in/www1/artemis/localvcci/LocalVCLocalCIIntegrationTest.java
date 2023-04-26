@@ -101,12 +101,6 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         localVCLocalCITestService.mockInputStreamReturnedFromContainer(dockerClient, "/repositories/test-repository/build/test-results/test", solutionBuildTestResults,
                 templateBuildTestResults);
 
-        // Mock GitService.getOrCheckoutRepository().
-        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(testsRepository.localRepoFile.toPath(), null)).when(gitService)
-                .getOrCheckoutRepository(solutionParticipation);
-        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(testsRepository.localRepoFile.toPath(), null)).when(gitService)
-                .getOrCheckoutRepository(templateParticipation);
-
         localVCLocalCITestService.testPushSuccessful(testsRepository.localGit, instructor1Login, projectKey1, testsRepositorySlug);
 
         // Solution submissions created as a result from a push to the tests repository should contain the last commit of the tests repository.
@@ -498,21 +492,21 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         instructorExam.setExercises(List.of(programmingExercise));
         instructorExam.setTestRun(true);
         studentExamRepository.save(instructorExam);
-        ProgrammingExerciseStudentParticipation instructorTestRunParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, instructor1Login);
-        instructorTestRunParticipation.setTestRun(true);
-        programmingExerciseStudentParticipationRepository.save(instructorTestRunParticipation);
 
         // Add repository
         String repositorySlug = projectKey1.toLowerCase() + "-" + instructor1Login;
         LocalRepository instructorExamTestRunRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, repositorySlug);
 
-        // Student should not able to fetch or push.
-        localVCLocalCITestService.testFetchReturnsError(instructorExamTestRunRepository.localGit, student1Login, projectKey1, repositorySlug, NOT_AUTHORIZED);
-        localVCLocalCITestService.testPushReturnsError(instructorExamTestRunRepository.localGit, student1Login, projectKey1, repositorySlug, NOT_AUTHORIZED);
+        // First try without participation present.
+        programmingExerciseStudentParticipationRepository.delete(instructorParticipation);
+        localVCLocalCITestService.testFetchReturnsError(instructorExamTestRunRepository.localGit, instructor1Login, projectKey1, repositorySlug, INTERNAL_SERVER_ERROR);
 
-        // Tutor should be able to fetch but not push.
-        localVCLocalCITestService.testFetchSuccessful(instructorExamTestRunRepository.localGit, tutor1Login, projectKey1, repositorySlug);
-        localVCLocalCITestService.testPushReturnsError(instructorExamTestRunRepository.localGit, tutor1Login, projectKey1, repositorySlug, NOT_AUTHORIZED);
+        // Add participation.
+        ProgrammingExerciseStudentParticipation instructorTestRunParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, instructor1Login);
+        instructorTestRunParticipation.setRepositoryUrl(String.format(localVCBaseUrl + "/git/%s/%s.git", projectKey1, (projectKey1 + "-" + instructor1Login).toLowerCase()));
+        instructorTestRunParticipation.setBranch(defaultBranch);
+        instructorTestRunParticipation.setTestRun(true);
+        programmingExerciseStudentParticipationRepository.save(instructorTestRunParticipation);
 
         // Instructor should be able to fetch and push.
         localVCLocalCITestService.testFetchSuccessful(instructorExamTestRunRepository.localGit, instructor1Login, projectKey1, repositorySlug);
@@ -522,6 +516,14 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         localVCLocalCITestService.mockTestResults(dockerClient, PARTLY_SUCCESSFUL_TEST_RESULTS_PATH);
         localVCLocalCITestService.testPushSuccessful(instructorExamTestRunRepository.localGit, instructor1Login, projectKey1, repositorySlug);
         localVCLocalCITestService.testLatestSubmission(instructorTestRunParticipation.getId(), commitHash, 1, false);
+
+        // Student should not able to fetch or push.
+        localVCLocalCITestService.testFetchReturnsError(instructorExamTestRunRepository.localGit, student1Login, projectKey1, repositorySlug, NOT_AUTHORIZED);
+        localVCLocalCITestService.testPushReturnsError(instructorExamTestRunRepository.localGit, student1Login, projectKey1, repositorySlug, NOT_AUTHORIZED);
+
+        // Tutor should be able to fetch but not push.
+        localVCLocalCITestService.testFetchSuccessful(instructorExamTestRunRepository.localGit, tutor1Login, projectKey1, repositorySlug);
+        localVCLocalCITestService.testPushReturnsError(instructorExamTestRunRepository.localGit, tutor1Login, projectKey1, repositorySlug, NOT_AUTHORIZED);
 
         // Start test run
         instructorExam.setStarted(true);

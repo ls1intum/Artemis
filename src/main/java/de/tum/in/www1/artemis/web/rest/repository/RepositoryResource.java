@@ -10,11 +10,11 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -268,7 +268,7 @@ public abstract class RepositoryResource {
             // Trigger a build, and process the result. Only implemented for local CI.
             // For Bitbucket + Bamboo and GitLab + Jenkins, webhooks were added when creating the repository,
             // that notify the CI system when the commit happens and thus trigger the build.
-            if (Arrays.asList(this.environment.getActiveProfiles()).contains(Constants.PROFILE_LOCALCI)) {
+            if (Set.of(this.environment.getActiveProfiles()).contains(Constants.PROFILE_LOCALCI)) {
                 localCIConnectorService.orElseThrow().processNewPush(null, repository);
             }
             return new ResponseEntity<>(HttpStatus.OK);

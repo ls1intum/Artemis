@@ -224,9 +224,11 @@ public class LocalCIConnectorService {
             try {
                 programmingTriggerService.triggerTemplateBuildAndNotifyUser(exercise.getId(), submission.getCommitHash(), SubmissionType.TEST);
             }
-            catch (EntityNotFoundException e) {
-                // programmingMessagingService.notifyUserAboutBuildTriggerError() does not work here, as this exception means that the template participation is not available.
-                throw new LocalCIException("Could not trigger template build as no template participation was available", e);
+            catch (EntityNotFoundException | LocalCIException e) {
+                // Something went wrong while retrieving the template participation or triggering the template build.
+                // At this point, programmingMessagingService.notifyUserAboutSubmissionError() does not work, because the template participation is not available.
+                // The instructor will see in the UI that no build of the template repository was conducted and will receive an error message when triggering the build manually.
+                log.error("Something went wrong while triggering the template build for exercise " + exercise.getId() + " after the solution build was finished.", e);
             }
         });
     }

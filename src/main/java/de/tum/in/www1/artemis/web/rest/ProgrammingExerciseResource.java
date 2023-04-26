@@ -194,7 +194,7 @@ public class ProgrammingExerciseResource {
                 staticCodeAnalysisService.createDefaultCategories(newProgrammingExercise);
             }
 
-            if (Arrays.asList(this.environment.getActiveProfiles()).contains(Constants.PROFILE_LOCALCI)) {
+            if (Set.of(this.environment.getActiveProfiles()).contains(Constants.PROFILE_LOCALCI)) {
                 // Automatically trigger builds for the template and solution participation. For Bamboo and Jenkins, this happens automatically when publishing the build plans.
                 // At the moment this cannot happen at the same place for local CI (in the createBuildPlanForExercise method in the ContinuousIntegrationService), because the
                 // participation is modified during the execution of the build job
@@ -588,7 +588,7 @@ public class ProgrammingExerciseResource {
     public ResponseEntity<Void> unlockAllRepositories(@PathVariable Long exerciseId) {
         // Locking and unlocking repositories is not supported when using the local version control system. Repository access is checked in the LocalVCFetchFilter and
         // LocalVCPushFilter.
-        if (Arrays.asList(this.environment.getActiveProfiles()).contains(Constants.PROFILE_LOCALVC)) {
+        if (Set.of(this.environment.getActiveProfiles()).contains(Constants.PROFILE_LOCALVC)) {
             return ResponseEntity.badRequest().build();
         }
         var programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
@@ -609,7 +609,7 @@ public class ProgrammingExerciseResource {
     public ResponseEntity<Void> lockAllRepositories(@PathVariable Long exerciseId) {
         // Locking and unlocking repositories is not supported when using the local version control system. Repository access is checked in the LocalVCFetchFilter and
         // LocalVCPushFilter.
-        if (Arrays.asList(this.environment.getActiveProfiles()).contains(Constants.PROFILE_LOCALVC)) {
+        if (Set.of(this.environment.getActiveProfiles()).contains(Constants.PROFILE_LOCALVC)) {
             return ResponseEntity.badRequest().build();
         }
         var programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
