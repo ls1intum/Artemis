@@ -67,9 +67,6 @@ public class LocalVCLocalCITestService {
     @Autowired
     private GitUtilService gitUtilService;
 
-    @Autowired
-    private DockerClient dockerClient;
-
     @Value("${artemis.version-control.url}")
     private URL localVCBaseUrl;
 
@@ -86,24 +83,27 @@ public class LocalVCLocalCITestService {
     /**
      * Mock dockerClient.copyArchiveFromContainerCmd() such that it returns the commitHash for the assignment repository.
      *
-     * @param commitHash the commit hash to return.
+     * @param dockerClient the DockerClient to mock.
+     * @param commitHash   the commit hash to return.
      */
-    public void mockCommitHash(String commitHash) throws IOException {
-        mockInputStreamReturnedFromContainer("/repositories/assignment-repository/.git/refs/heads/[^/]+", Map.of("assignmentCommitHash", commitHash));
+    public void mockCommitHash(DockerClient dockerClient, String commitHash) throws IOException {
+        mockInputStreamReturnedFromContainer(dockerClient, "/repositories/assignment-repository/.git/refs/heads/[^/]+", Map.of("assignmentCommitHash", commitHash));
     }
 
     /**
      * Mock dockerClient.copyArchiveFromContainerCmd() such that it returns the XMLs containing the test results.
      *
+     * @param dockerClient    the DockerClient to mock.
      * @param testResultsPath the path to the directory containing the test results in the resources folder.
      */
-    public void mockTestResults(Path testResultsPath) throws IOException {
-        mockInputStreamReturnedFromContainer("/repositories/test-repository/build/test-results/test", createMapFromTestResultsFolder(testResultsPath));
+    public void mockTestResults(DockerClient dockerClient, Path testResultsPath) throws IOException {
+        mockInputStreamReturnedFromContainer(dockerClient, "/repositories/test-repository/build/test-results/test", createMapFromTestResultsFolder(testResultsPath));
     }
 
     /**
      * Mocks the InputStream returned by dockerClient.copyArchiveFromContainerCmd(String containerId, String resource).exec()
      *
+     * @param dockerClient         the DockerClient to mock.
      * @param resourceRegexPattern the regex pattern that the resource path must match. The resource path is the path of the file or directory inside the container.
      * @param dataToReturn         the data to return inside the InputStream in form of a map. Each entry of the map will be one TarArchiveEntry with the key denoting the
      *                                 tarArchiveEntry.getName() and the value being the content of the TarArchiveEntry. There can be up to two dataToReturn entries, in which case
@@ -111,7 +111,7 @@ public class LocalVCLocalCITestService {
      * @throws IOException if the InputStream cannot be created.
      */
     @SafeVarargs
-    public final void mockInputStreamReturnedFromContainer(String resourceRegexPattern, Map<String, String>... dataToReturn) throws IOException {
+    public final void mockInputStreamReturnedFromContainer(DockerClient dockerClient, String resourceRegexPattern, Map<String, String>... dataToReturn) throws IOException {
         // Mock dockerClient.copyArchiveFromContainerCmd(String containerId, String resource).exec()
         CopyArchiveFromContainerCmd copyArchiveFromContainerCmd = mock(CopyArchiveFromContainerCmd.class);
         ArgumentMatcher<String> expectedPathMatcher = path -> path.matches(resourceRegexPattern);

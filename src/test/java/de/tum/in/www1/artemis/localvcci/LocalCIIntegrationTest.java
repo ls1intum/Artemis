@@ -51,12 +51,12 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
         commitHash = localVCLocalCITestService.commitFile(studentAssignmentRepository.localRepoFile.toPath(), programmingExercise.getPackageFolderName(),
                 studentAssignmentRepository.localGit);
         studentAssignmentRepository.localGit.push().call();
-        localVCLocalCITestService.mockCommitHash(commitHash);
+        localVCLocalCITestService.mockCommitHash(dockerClient, commitHash);
         // Mock dockerClient.copyArchiveFromContainerCmd() such that it returns the XMLs containing the test results.
-        localVCLocalCITestService.mockTestResults(PARTLY_SUCCESSFUL_TEST_RESULTS_PATH);
+        localVCLocalCITestService.mockTestResults(dockerClient, PARTLY_SUCCESSFUL_TEST_RESULTS_PATH);
         // Mock dockerClient.copyArchiveFromContainerCmd() such that it returns a dummy commit hash for the tests repository.
-        localVCLocalCITestService.mockInputStreamReturnedFromContainer("/repositories/test-repository/.git/refs/heads/[^/]+", Map.of("testCommitHash", DUMMY_COMMIT_HASH),
-                Map.of("testCommitHash", DUMMY_COMMIT_HASH));
+        localVCLocalCITestService.mockInputStreamReturnedFromContainer(dockerClient, "/repositories/test-repository/.git/refs/heads/[^/]+",
+                Map.of("testCommitHash", DUMMY_COMMIT_HASH), Map.of("testCommitHash", DUMMY_COMMIT_HASH));
     }
 
     @AfterEach
@@ -245,7 +245,7 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
 
     @Test
     void testFaultyResultFiles() throws IOException {
-        localVCLocalCITestService.mockTestResults(FAULTY_FILES_TEST_RESULTS_PATH);
+        localVCLocalCITestService.mockTestResults(dockerClient, FAULTY_FILES_TEST_RESULTS_PATH);
         localCIConnectorService.processNewPush(commitHash, studentAssignmentRepository.originGit.getRepository());
         // Should notify the user.
         verifyUserNotification(studentParticipation);

@@ -108,16 +108,17 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractSpringInt
         // repository).
         // Usually, specifying one doReturn() is enough to make the stub return the same object on every subsequent call.
         // However, in this case we have it return an InputStream, which will be consumed after returning it the first time, so we need to create two separate ones.
-        localVCLocalCITestService.mockInputStreamReturnedFromContainer("/repositories/assignment-repository/.git/refs/heads/[^/]+",
+        localVCLocalCITestService.mockInputStreamReturnedFromContainer(dockerClient, "/repositories/assignment-repository/.git/refs/heads/[^/]+",
                 Map.of("assignmentComitHash", DUMMY_COMMIT_HASH), Map.of("assignmentComitHash", DUMMY_COMMIT_HASH));
-        localVCLocalCITestService.mockInputStreamReturnedFromContainer("/repositories/test-repository/.git/refs/heads/[^/]+", Map.of("testsCommitHash", DUMMY_COMMIT_HASH),
-                Map.of("testsCommitHash", DUMMY_COMMIT_HASH));
+        localVCLocalCITestService.mockInputStreamReturnedFromContainer(dockerClient, "/repositories/test-repository/.git/refs/heads/[^/]+",
+                Map.of("testsCommitHash", DUMMY_COMMIT_HASH), Map.of("testsCommitHash", DUMMY_COMMIT_HASH));
 
         // Mock dockerClient.copyArchiveFromContainerCmd() such that it returns the XMLs containing the test results.
         // Mock the results for the template repository build and for the solution repository build that will both be triggered as a result of creating the exercise.
         Map<String, String> templateBuildTestResults = localVCLocalCITestService.createMapFromTestResultsFolder(ALL_FAIL_TEST_RESULTS_PATH);
         Map<String, String> solutionBuildTestResults = localVCLocalCITestService.createMapFromTestResultsFolder(ALL_SUCCEED_TEST_RESULTS_PATH);
-        localVCLocalCITestService.mockInputStreamReturnedFromContainer("/repositories/test-repository/build/test-results/test", templateBuildTestResults, solutionBuildTestResults);
+        localVCLocalCITestService.mockInputStreamReturnedFromContainer(dockerClient, "/repositories/test-repository/build/test-results/test", templateBuildTestResults,
+                solutionBuildTestResults);
 
         ProgrammingExercise createdExercise = request.postWithResponseBody(ROOT + SETUP, newExercise, ProgrammingExercise.class, HttpStatus.CREATED);
 
