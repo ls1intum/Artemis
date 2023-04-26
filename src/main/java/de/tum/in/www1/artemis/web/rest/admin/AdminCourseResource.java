@@ -139,8 +139,8 @@ public class AdminCourseResource {
     /**
      * Helper function, that's creates a channel within a course
      *
-     * @param course the course, where the channel should be created
-     * @param name the name of the channel
+     * @param course         the course, where the channel should be created
+     * @param name           the name of the channel
      * @param isAnnouncement whether the channel is a announcement channel
      */
     private void createChannel(Course course, String name, Boolean isAnnouncement) {
