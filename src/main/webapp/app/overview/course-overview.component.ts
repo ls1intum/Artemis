@@ -219,7 +219,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
      */
     loadCourse(refresh = false): Observable<void> {
         this.refreshingCourse = refresh;
-        return this.courseService.findOneForDashboard(this.courseId, refresh).pipe(
+        const observable = this.courseService.findOneForDashboard(this.courseId, refresh).pipe(
             map((res: HttpResponse<Course>) => {
                 if (res.body) {
                     this.course = res.body;
@@ -249,6 +249,10 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
                 return throwError(() => error);
             }),
         );
+        // Start fetching, even if we don't subscribe to the result.
+        // This enables just calling this method to refresh the course, without subscribing to it:
+        observable.subscribe();
+        return observable;
     }
 
     ngOnDestroy() {
