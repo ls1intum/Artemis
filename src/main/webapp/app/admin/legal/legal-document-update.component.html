@@ -28,15 +28,16 @@
             </div>
         </div>
         <div class="btn-below-editor">
-            <jhi-button
-                id="update-legal-document-btn"
+            <button
+                type="submit"
                 (click)="updateLegalDocument()"
-                [isLoading]="isSaving"
+                class="btn btn-primary"
+                id="update-legal-document-btn"
                 [disabled]="!markdownEditor?.markdown || markdownEditor?.markdown?.trim() === '' || isSaving"
-                [title]="'entity.action.save'"
-                [icon]="faSave"
-                >Save
-            </jhi-button>
+            >
+                <fa-icon [icon]="faSave"></fa-icon>
+                <span jhiTranslate="entity.action.save">Save</span>
+            </button>
             <jhi-mode-picker [options]="languageOptions" [value]="currentLanguage" (valueChange)="onLanguageChange($event!)"></jhi-mode-picker>
         </div>
     </div>
