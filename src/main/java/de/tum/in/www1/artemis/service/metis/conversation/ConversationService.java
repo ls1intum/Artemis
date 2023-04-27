@@ -18,6 +18,7 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
+import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
@@ -25,6 +26,7 @@ import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ConversationRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.GroupChatRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.OneToOneChatRepository;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.ConversationDTO;
@@ -54,9 +56,14 @@ public class ConversationService {
 
     private final GroupChatRepository groupChatRepository;
 
+    private final AuthorizationCheckService authorizationCheckService;
+
+    private final CourseRepository courseRepository;
+
     public ConversationService(ConversationDTOService conversationDTOService, UserRepository userRepository, ChannelRepository channelRepository,
             ConversationParticipantRepository conversationParticipantRepository, ConversationRepository conversationRepository, SimpMessageSendingOperations messagingTemplate,
-            OneToOneChatRepository oneToOneChatRepository, PostRepository postRepository, GroupChatRepository groupChatRepository) {
+            OneToOneChatRepository oneToOneChatRepository, PostRepository postRepository, GroupChatRepository groupChatRepository,
+            AuthorizationCheckService authorizationCheckService, CourseRepository courseRepository) {
         this.conversationDTOService = conversationDTOService;
         this.userRepository = userRepository;
         this.channelRepository = channelRepository;
@@ -66,6 +73,8 @@ public class ConversationService {
         this.oneToOneChatRepository = oneToOneChatRepository;
         this.postRepository = postRepository;
         this.groupChatRepository = groupChatRepository;
+        this.authorizationCheckService = authorizationCheckService;
+        this.courseRepository = courseRepository;
     }
 
     /**
@@ -103,8 +112,26 @@ public class ConversationService {
 
         var conversations = new ArrayList<Conversation>();
         conversations.addAll(oneToOneChatsOfUser);
-        conversations.addAll(channelsOfUser);
         conversations.addAll(groupChatsOfUser);
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        if (authorizationCheckService.isOnlyStudentInCourse(course, requestingUser)) {
+            var filteredChannelsOfUser = channelsOfUser.stream().filter(channel -> {
+                if (channel.getExercise() != null) {
+                    return channel.getExercise().getStartDate() == null || channel.getExercise().getStartDate().isBefore(ZonedDateTime.now());
+                }
+                else if (channel.getLecture() != null) {
+                    return channel.getLecture().getStartDate() == null || channel.getLecture().getStartDate().isBefore(ZonedDateTime.now());
+                }
+                else {
+                    return true;
+                }
+            }).toList();
+            conversations.addAll(filteredChannelsOfUser);
+        }
+        else {
+            conversations.addAll(channelsOfUser);
+        }
+
         return conversations.stream().map(conversation -> conversationDTOService.convertToDTO(conversation, requestingUser)).toList();
     }
 
