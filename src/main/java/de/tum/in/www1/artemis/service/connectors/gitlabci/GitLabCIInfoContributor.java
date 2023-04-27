@@ -12,7 +12,7 @@ import de.tum.in.www1.artemis.config.Constants;
 
 @Component
 @Profile("gitlabci")
-public class GitLabCIBuildPlanLinkInfoContributor implements InfoContributor {
+public class GitLabCIInfoContributor implements InfoContributor {
 
     @Value("${server.url}")
     private URL artemisServerUrl;

@@ -12,7 +12,7 @@ import de.tum.in.www1.artemis.config.Constants;
 
 @Component
 @Profile("jenkins")
-public class JenkinsBuildPlanLinkInfoContributor implements InfoContributor {
+public class JenkinsInfoContributor implements InfoContributor {
 
     @Value("${artemis.continuous-integration.url}")
     private URL JENKINS_SERVER_URL;

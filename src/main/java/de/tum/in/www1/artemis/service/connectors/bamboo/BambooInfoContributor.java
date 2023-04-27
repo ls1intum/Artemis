@@ -12,7 +12,7 @@ import de.tum.in.www1.artemis.config.Constants;
 
 @Component
 @Profile("bamboo")
-public class BambooBuildPlanLinkInfoContributor implements InfoContributor {
+public class BambooInfoContributor implements InfoContributor {
 
     @Value("${artemis.continuous-integration.url}")
     private URL bambooServerUrl;
