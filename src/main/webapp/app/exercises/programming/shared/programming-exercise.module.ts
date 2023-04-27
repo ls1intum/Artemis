@@ -3,7 +3,6 @@ import { ProgrammingExerciseComponent } from 'app/exercises/programming/manage/p
 import { ArtemisProgrammingExerciseStatusModule } from 'app/exercises/programming/manage/status/programming-exercise-status.module';
 import { OrionModule } from 'app/shared/orion/orion.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { RouterModule } from '@angular/router';
 import { ArtemisProgrammingExerciseGradingModule } from 'app/exercises/programming/manage/grading/programming-exercise-grading.module';
 import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
@@ -11,13 +10,12 @@ import { ArtemisExerciseScoresModule } from 'app/exercises/shared/exercise-score
 import { OrionProgrammingExerciseComponent } from 'app/orion/management/orion-programming-exercise.component';
 import { ArtemisProgrammingAssessmentModule } from 'app/exercises/programming/assess/programming-assessment.module';
 import { ExerciseCategoriesModule } from 'app/shared/exercise-categories/exercise-categories.module';
-import { ProgrammingExerciseResetButtonComponent } from 'app/exercises/programming/manage/reset/programming-exercise-reset-button.component';
+import { ProgrammingExerciseResetButtonDirective } from 'app/exercises/programming/manage/reset/programming-exercise-reset-button.directive';
 import { ProgrammingExerciseResetDialogComponent } from 'app/exercises/programming/manage/reset/programming-exercise-reset-dialog.component';
 
 @NgModule({
     imports: [
         ArtemisSharedModule,
-        ArtemisSharedComponentModule,
         FeatureToggleModule,
         RouterModule,
         OrionModule,
@@ -27,7 +25,7 @@ import { ProgrammingExerciseResetDialogComponent } from 'app/exercises/programmi
         ArtemisProgrammingAssessmentModule,
         ExerciseCategoriesModule,
     ],
-    declarations: [ProgrammingExerciseComponent, OrionProgrammingExerciseComponent, ProgrammingExerciseResetButtonComponent, ProgrammingExerciseResetDialogComponent],
-    exports: [ProgrammingExerciseComponent, OrionProgrammingExerciseComponent, ProgrammingExerciseResetButtonComponent],
+    declarations: [ProgrammingExerciseComponent, OrionProgrammingExerciseComponent, ProgrammingExerciseResetButtonDirective, ProgrammingExerciseResetDialogComponent],
+    exports: [ProgrammingExerciseComponent, OrionProgrammingExerciseComponent, ProgrammingExerciseResetButtonDirective],
 })
 export class ArtemisProgrammingExerciseModule {}

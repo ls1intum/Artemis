@@ -197,9 +197,19 @@
                         <fa-icon [icon]="faEraser"></fa-icon>
                         <span jhiTranslate="artemisApp.programmingExercise.recreateBuildPlans.buttonText">Build Plan</span>
                     </button>
-                    <jhi-programming-exercise-reset [programmingExercise]="programmingExercise" class="me-1"></jhi-programming-exercise-reset>
                     <button
-                        *ngIf="programmingExercise.course != undefined && programmingExercise.isAtLeastInstructor"
+                        *ngIf="programmingExercise.isAtLeastInstructor"
+                        [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
+                        jhiProgrammingExerciseResetButton
+                        [programmingExercise]="programmingExercise"
+                        class="me-1"
+                        id="reset-exercise"
+                    >
+                        <fa-icon [icon]="faTimes"></fa-icon>
+                        <span jhiTranslate="entity.action.reset">Reset</span>
+                    </button>
+                    <button
+                        *ngIf="programmingExercise.course !== undefined && programmingExercise.isAtLeastInstructor"
                         jhiDeleteButton
                         [entityTitle]="programmingExercise.title || ''"
                         deleteQuestion="artemisApp.programmingExercise.delete.question"
