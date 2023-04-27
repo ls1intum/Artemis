@@ -38,9 +38,6 @@ export class ProgrammingExerciseResetDialogComponent implements OnInit {
         public activeModal: NgbActiveModal,
     ) {}
 
-    /**
-     * Life cycle hook called by Angular to indicate that Angular is done creating the component
-     */
     ngOnInit() {
         this.isLoading = true;
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
@@ -67,19 +64,6 @@ export class ProgrammingExerciseResetDialogComponent implements OnInit {
     }
 
     /**
-     * Determines whether to show the undeleted artifacts warning message
-     * @returns {boolean} true if the warning message should be displayed, false otherwise
-     */
-    showUndeletedArtifactsWarning() {
-        const options = [
-            this.programmingExerciseResetOptions.deleteBuildPlans,
-            this.programmingExerciseResetOptions.deleteRepositories,
-            this.programmingExerciseResetOptions.deleteParticipationsSubmissionsAndResults,
-        ];
-        return (!options[0] && (options[1] || options[2])) || (!options[1] && options[2]);
-    }
-
-    /**
      * Resets the programming exercise with the given reset options
      */
     resetProgrammingExercise() {
@@ -91,6 +75,7 @@ export class ProgrammingExerciseResetDialogComponent implements OnInit {
         this.programmingExerciseService.reset(this.programmingExercise.id, this.programmingExerciseResetOptions).subscribe({
             next: this.handleResetResponse,
             error: () => {
+                this.alertService.error('artemisApp.programmingExercise.reset.errorMessage');
                 this.resetInProgress = false;
             },
         });
@@ -105,12 +90,11 @@ export class ProgrammingExerciseResetDialogComponent implements OnInit {
     };
 
     /**
-     * Check if all security checks are fulfilled
-     * if the programmingExercise.title and entered confirmation matches
-     * @returns {boolean} true if security checks are fulfilled, false otherwise
+     * Check if all security checks are fulfilled and the user can submit the reset
+     * @returns {boolean} true if the user can submit, false otherwise
      */
-    get areSecurityChecksFulfilled(): boolean {
-        return this.confirmText === this.programmingExercise.title;
+    get canSubmit(): boolean {
+        return this.confirmText === this.programmingExercise.title && this.hasSelectedOptions && !this.resetInProgress;
     }
 
     /**

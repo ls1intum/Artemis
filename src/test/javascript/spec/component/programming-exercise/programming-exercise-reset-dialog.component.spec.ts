@@ -73,13 +73,12 @@ describe('ProgrammingExerciseResetDialogComponent', () => {
         jest.restoreAllMocks();
     });
 
-
-    it('Programming exercise service should find the correct programming exercise', () => {
+    it('should find the correct programming exercise', () => {
         fixture.detectChanges();
         expect(comp.programmingExercise).toEqual(programmingExercise);
     });
 
-    it('clear() should close the modal dialog', () => {
+    it('should close the modal dialog', () => {
         const activeModal = fixture.debugElement.injector.get(NgbActiveModal);
         jest.spyOn(activeModal, 'dismiss').mockImplementation();
 
@@ -88,49 +87,7 @@ describe('ProgrammingExerciseResetDialogComponent', () => {
         expect(activeModal.dismiss).toHaveBeenCalledWith('cancel');
     });
 
-    describe('showUndeletedArtifactsWarning()', () => {
-        it('should return true when deleteBuildPlans is false and deleteStudentRepositories is true', () => {
-            comp.programmingExerciseResetOptions = {
-                deleteBuildPlans: false,
-                deleteRepositories: true,
-                deleteParticipationsSubmissionsAndResults: false,
-                recreateBuildPlans: false,
-            };
-            expect(comp.showUndeletedArtifactsWarning()).toBeTrue();
-        });
-
-        it('should return true when deleteBuildPlans is false and deleteStudentParticipationsSubmissionsAndResults is true', () => {
-            comp.programmingExerciseResetOptions = {
-                deleteBuildPlans: false,
-                deleteRepositories: false,
-                deleteParticipationsSubmissionsAndResults: true,
-                recreateBuildPlans: false,
-            };
-            expect(comp.showUndeletedArtifactsWarning()).toBeTrue();
-        });
-
-        it('should return false when deleteBuildPlans and deleteStudentRepositories are true', () => {
-            comp.programmingExerciseResetOptions = {
-                deleteBuildPlans: true,
-                deleteRepositories: true,
-                deleteParticipationsSubmissionsAndResults: false,
-                recreateBuildPlans: false,
-            };
-            expect(comp.showUndeletedArtifactsWarning()).toBeFalse();
-        });
-
-        it('should return false when all options are false', () => {
-            comp.programmingExerciseResetOptions = {
-                deleteBuildPlans: false,
-                deleteRepositories: false,
-                deleteParticipationsSubmissionsAndResults: false,
-                recreateBuildPlans: false,
-            };
-            expect(comp.showUndeletedArtifactsWarning()).toBeFalse();
-        });
-    });
-
-    it('resetProgrammingExercise() should make the correct service call and call handleResetResponse()', () => {
+    it('resetProgrammingExercise should make the correct service call and call handleResetResponse()', () => {
         const resetResponse = of('');
         jest.spyOn(programmingExerciseService, 'reset').mockReturnValue(resetResponse);
         jest.spyOn(comp, 'handleResetResponse').mockImplementation();
@@ -148,7 +105,7 @@ describe('ProgrammingExerciseResetDialogComponent', () => {
         expect(comp.handleResetResponse).toHaveBeenCalled();
     });
 
-    describe('handleResetResponse()', () => {
+    describe('handleResetResponse', () => {
         it('should show the correct success message and dismiss the active modal', () => {
             const activeModal = fixture.debugElement.injector.get(NgbActiveModal);
             const alertService = fixture.debugElement.injector.get(AlertService);
@@ -175,23 +132,46 @@ describe('ProgrammingExerciseResetDialogComponent', () => {
         }));
     });
 
-    describe('areSecurityChecksFulfilled', () => {
+    describe('canSubmit', () => {
+        beforeEach(() => {
+            comp.confirmText = 'Programming Exercise';
+            comp.resetInProgress = false;
+        });
+
         it('should return false when confirmation text is empty', () => {
             comp.confirmText = '';
 
-            expect(comp.areSecurityChecksFulfilled).toBeFalse();
+            expect(comp.canSubmit).toBeFalse();
         });
 
         it('should return false when confirmation text is not filled correctly', () => {
             comp.confirmText = 'Incorrect Name';
 
-            expect(comp.areSecurityChecksFulfilled).toBeFalse();
+            expect(comp.canSubmit).toBeFalse();
         });
 
-        it('should return true when confirmation text is filled correctly', () => {
-            comp.confirmText = 'Programming Exercise';
+        it('should return true when confirmation text is filled correctly and at least one option is selected', () => {
+            comp.programmingExerciseResetOptions.deleteBuildPlans = true;
 
-            expect(comp.areSecurityChecksFulfilled).toBeTrue();
+            expect(comp.canSubmit).toBeTrue();
+        });
+
+        it('should return false when confirmation text is filled correctly, but no option is selected', () => {
+            comp.programmingExerciseResetOptions = {
+                deleteBuildPlans: false,
+                deleteRepositories: false,
+                deleteParticipationsSubmissionsAndResults: false,
+                recreateBuildPlans: false,
+            };
+
+            expect(comp.canSubmit).toBeFalse();
+        });
+
+        it('should return false when confirmation text is filled correctly, at least one option is selected, but reset is in progress', () => {
+            comp.programmingExerciseResetOptions.deleteBuildPlans = true;
+            comp.resetInProgress = true;
+
+            expect(comp.canSubmit).toBeFalse();
         });
     });
 
@@ -207,24 +187,21 @@ describe('ProgrammingExerciseResetDialogComponent', () => {
             expect(comp.hasSelectedOptions).toBeFalse();
         });
 
-        it('should return true when at least one option is set to true', () => {
-            const options = {
-                deleteBuildPlans: true,
-                deleteStudentRepositories: true,
-                deleteStudentParticipationsSubmissionsAndResults: true,
-                recreateBuildPlans: true,
+        it.each`
+            option
+            ${'deleteBuildPlans'}
+            ${'deleteRepositories'}
+            ${'deleteParticipationsSubmissionsAndResults'}
+            ${'recreateBuildPlans'}
+        `('should return true when $option is set to true', ({ option }) => {
+            comp.programmingExerciseResetOptions = {
+                deleteBuildPlans: false,
+                deleteRepositories: false,
+                deleteParticipationsSubmissionsAndResults: false,
+                recreateBuildPlans: false,
             };
-
-            for (const option in options) {
-                comp.programmingExerciseResetOptions = {
-                    deleteBuildPlans: false,
-                    deleteRepositories: false,
-                    deleteParticipationsSubmissionsAndResults: false,
-                    recreateBuildPlans: false,
-                };
-                comp.programmingExerciseResetOptions[option] = true;
-                expect(comp.hasSelectedOptions).toBeTrue();
-            }
+            comp.programmingExerciseResetOptions[option] = true;
+            expect(comp.hasSelectedOptions).toBeTrue();
         });
     });
 });

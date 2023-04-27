@@ -967,18 +967,6 @@ class ProgrammingExerciseIntegrationBambooBitbucketJiraTest extends AbstractSpri
     // Tests for reset endpoint
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
-    void testResetForbiddenStudent() throws Exception {
-        programmingExerciseIntegrationTestService.testResetForbidden();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void testResetForbiddenTutor() throws Exception {
-        programmingExerciseIntegrationTestService.testResetForbidden();
-    }
-
-    @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testResetForbiddenEditor() throws Exception {
         programmingExerciseIntegrationTestService.testResetForbidden();

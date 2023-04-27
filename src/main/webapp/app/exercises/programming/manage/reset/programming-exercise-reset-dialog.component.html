@@ -18,9 +18,8 @@
                             name="deleteBuildPlans"
                             [(ngModel)]="this.programmingExerciseResetOptions.deleteBuildPlans"
                             (ngModelChange)="
-                                this.programmingExerciseResetOptions.deleteRepositories = this.programmingExerciseResetOptions.deleteBuildPlans
-                                    ? this.programmingExerciseResetOptions.deleteRepositories
-                                    : false
+                                this.programmingExerciseResetOptions.deleteRepositories =
+                                    this.programmingExerciseResetOptions.deleteBuildPlans && this.programmingExerciseResetOptions.deleteRepositories
                             "
                         />
                         <span jhiTranslate="artemisApp.programmingExercise.reset.deleteBuildPlans.title" [translateValues]="{ ciPlatform: continuousIntegrationName }">
@@ -40,7 +39,7 @@
                             type="checkbox"
                             name="deleteRepositories"
                             [(ngModel)]="this.programmingExerciseResetOptions.deleteRepositories"
-                            (ngModelChange)="this.programmingExerciseResetOptions.deleteBuildPlans = $event ? true : this.programmingExerciseResetOptions.deleteBuildPlans"
+                            (ngModelChange)="this.programmingExerciseResetOptions.deleteBuildPlans = !!$event || this.programmingExerciseResetOptions.deleteBuildPlans"
                         />
                         <span jhiTranslate="artemisApp.programmingExercise.reset.deleteRepositories.title" [translateValues]="{ vcPlatform: versionControlName }">
                             Delete student repositories (on {{ versionControlName }}).
@@ -57,13 +56,16 @@
                             name="deleteParticipationsSubmissionsAndResults"
                             [(ngModel)]="this.programmingExerciseResetOptions.deleteParticipationsSubmissionsAndResults"
                         />
-                        <span jhiTranslate="artemisApp.programmingExercise.reset.deleteParticipationsSubmissionsAndResults"
-                            >Delete all student participations, submissions and results (on Artemis).</span
-                        >
+                        <span jhiTranslate="artemisApp.programmingExercise.reset.deleteParticipationsSubmissionsAndResults">
+                            Delete all student participations, submissions and results (on Artemis).
+                        </span>
                     </label>
                 </div>
             </li>
-            <div class="alert alert-warning my-2" *ngIf="showUndeletedArtifactsWarning()">
+            <div
+                class="alert alert-warning my-2"
+                *ngIf="!this.programmingExerciseResetOptions.deleteRepositories && this.programmingExerciseResetOptions.deleteParticipationsSubmissionsAndResults"
+            >
                 <span
                     jhiTranslate="artemisApp.programmingExercise.reset.artefactsWarning"
                     [translateValues]="{ vcPlatform: versionControlName, ciPlatform: continuousIntegrationName }"
@@ -76,9 +78,9 @@
                 <div class="checkbox">
                     <label class="control-label">
                         <input class="form-check-input" type="checkbox" name="recreateBuildPlans" [(ngModel)]="this.programmingExerciseResetOptions.recreateBuildPlans" />
-                        <span jhiTranslate="artemisApp.programmingExercise.reset.recreateBuildPlans"
-                            >Recreate the exercise build plans (BASE and SOLUTION) again from the latest exercise template, overwriting any previous changes.</span
-                        >
+                        <span jhiTranslate="artemisApp.programmingExercise.reset.recreateBuildPlans">
+                            Recreate the exercise build plans (BASE and SOLUTION) again from the latest exercise template, overwriting any previous changes.
+                        </span>
                     </label>
                 </div>
             </li>
@@ -99,16 +101,12 @@
         <button type="button" class="btn btn-secondary" data-dismiss="modal" (click)="clear()" [disabled]="resetInProgress">
             <fa-icon [icon]="faBan"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
         </button>
-        <button
-            id="confirm"
-            type="submit"
-            class="btn btn-danger"
-            [style.cursor]="resetForm.form.invalid || !areSecurityChecksFulfilled || !hasSelectedOptions || resetInProgress ? 'not-allowed' : 'pointer'"
-            [disabled]="resetForm.form.invalid || !areSecurityChecksFulfilled || !hasSelectedOptions || resetInProgress"
-        >
-            <span *ngIf="resetInProgress"><fa-icon [icon]="faSpinner" [spin]="true">&nbsp;</fa-icon>&nbsp;</span><fa-icon [icon]="faTimes"></fa-icon>&nbsp;
-            <span jhiTranslate="entity.action.reset">Reset</span>
-        </button>
+        <div [style.cursor]="this.resetForm.form.invalid || !this.canSubmit ? 'not-allowed' : 'pointer'">
+            <button type="submit" class="btn btn-danger" [disabled]="this.resetForm.form.invalid || !this.canSubmit">
+                <span *ngIf="resetInProgress"><fa-icon [icon]="faSpinner" [spin]="true">&nbsp;</fa-icon>&nbsp;</span><fa-icon [icon]="faTimes"></fa-icon>&nbsp;
+                <span jhiTranslate="entity.action.reset">Reset</span>
+            </button>
+        </div>
     </div>
 </form>
 <ng-template #loadingContainer>
