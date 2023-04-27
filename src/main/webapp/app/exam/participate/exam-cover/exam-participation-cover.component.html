@@ -120,7 +120,7 @@
             [targetDate]="exam.startDate!"
             [waitForStartText]="'artemisApp.examParticipation.waitForStart' | artemisTranslate : { title: exam.title }"
             [timeUntilPlannedStartText]="'artemisApp.examParticipation.timeUntilPlannedStart' | artemisTranslate"
-            (onFinish)="startExam()"
+            (onFinish)="onExamStarted.emit(studentExam)"
         ></jhi-countdown-overlay>
     </ng-container>
 </div>
