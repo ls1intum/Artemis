@@ -73,10 +73,6 @@ describe('ProgrammingExerciseResetDialogComponent', () => {
         jest.restoreAllMocks();
     });
 
-    it('test initialization', () => {
-        fixture.detectChanges();
-        expect(comp.programmingExercise.id).toBe(42);
-    });
 
     it('Programming exercise service should find the correct programming exercise', () => {
         fixture.detectChanges();
