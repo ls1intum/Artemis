@@ -182,16 +182,6 @@ export class ExerciseService {
     }
 
     /**
-     * Delete student build plans (except BASE/SOLUTION) and optionally git repositories of all exercise student participations.
-     * @param { number } exerciseId - programming exercise for which build plans in respective student participations are deleted
-     * @param { boolean } deleteRepositories - if true, the repositories get deleted
-     */
-    cleanup(exerciseId: number, deleteRepositories: boolean): Observable<HttpResponse<void>> {
-        const params = new HttpParams().set('deleteRepositories', deleteRepositories.toString());
-        return this.http.delete<void>(`${this.resourceUrl}/${exerciseId}/cleanup`, { params, observe: 'response' });
-    }
-
-    /**
      * Resets an exercise with exerciseId by deleting all its participations.
      * @param { number } exerciseId - Id of exercise that should be reset
      */

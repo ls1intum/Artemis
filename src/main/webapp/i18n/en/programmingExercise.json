@@ -20,10 +20,6 @@
                 "studentRepos": "Additionally delete all student repositories (Be careful: this can NOT be undone!). Before you activate this option, we recommend that you archive the exercise first!",
                 "baseReposBuildPlans": "Additionally delete template, solution, test, and auxiliary repos and build plans (Be careful: this can NOT be undone!). Before you activate this option, we recommend that you back up these build plans and repos first!"
             },
-            "cleanup": {
-                "successMessage": "Cleanup was successful. All build plans have been deleted. Students may resume participating.",
-                "successMessageWithRepositories": "Cleanup was successful. All build plans and repositories have been deleted. All participation has been marked as Finished."
-            },
             "reset": {
                 "pleaseSelectOperations": "Please select the operations you want to perform for <strong>{{ title }}</strong>:",
                 "deleteBuildPlans": {

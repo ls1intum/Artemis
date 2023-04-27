@@ -627,8 +627,8 @@ public class ProgrammingExerciseResource {
     }
 
     /**
-     * Consolidates the reset functionality for a programming exercise by performing a set of operations
-     * as specified in the ProgrammingExerciseResetOptionsDTO for an exercise given an exerciseId.
+     * Reset a programming exercise by performing a set of operations as specified in the
+     * ProgrammingExerciseResetOptionsDTO for an exercise given an exerciseId.
      *
      * The available operations include:
      * 1. deleteBuildPlans: Deleting all student build plans (except BASE/SOLUTION).
