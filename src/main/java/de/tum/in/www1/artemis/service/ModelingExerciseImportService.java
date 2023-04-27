@@ -7,6 +7,7 @@ import java.util.Set;
 
 import javax.validation.constraints.NotNull;
 
+import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -23,10 +24,13 @@ public class ModelingExerciseImportService extends ExerciseImportService {
 
     private final ModelingExerciseRepository modelingExerciseRepository;
 
+    private final ChannelService channelService;
+
     public ModelingExerciseImportService(ModelingExerciseRepository modelingExerciseRepository, ExampleSubmissionRepository exampleSubmissionRepository,
-            SubmissionRepository submissionRepository, ResultRepository resultRepository) {
+            SubmissionRepository submissionRepository, ResultRepository resultRepository, ChannelService channelService) {
         super(exampleSubmissionRepository, submissionRepository, resultRepository);
         this.modelingExerciseRepository = modelingExerciseRepository;
+        this.channelService = channelService;
     }
 
     /**
@@ -46,6 +50,7 @@ public class ModelingExerciseImportService extends ExerciseImportService {
         ModelingExercise newExercise = copyModelingExerciseBasis(importedExercise, gradingInstructionCopyTracker);
         newExercise.setKnowledge(templateExercise.getKnowledge());
         modelingExerciseRepository.save(newExercise);
+        channelService.createExerciseChannel(newExercise);
         newExercise.setExampleSubmissions(copyExampleSubmission(templateExercise, newExercise, gradingInstructionCopyTracker));
         return newExercise;
     }

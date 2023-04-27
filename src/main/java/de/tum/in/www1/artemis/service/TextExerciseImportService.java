@@ -6,6 +6,7 @@ import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
 
+import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -26,14 +27,17 @@ public class TextExerciseImportService extends ExerciseImportService {
 
     private final TextSubmissionRepository textSubmissionRepository;
 
+    private final ChannelService channelService;
+
     public TextExerciseImportService(TextExerciseRepository textExerciseRepository, ExampleSubmissionRepository exampleSubmissionRepository,
             SubmissionRepository submissionRepository, ResultRepository resultRepository, TextBlockRepository textBlockRepository, FeedbackRepository feedbackRepository,
-            TextSubmissionRepository textSubmissionRepository) {
+            TextSubmissionRepository textSubmissionRepository, ChannelService channelService) {
         super(exampleSubmissionRepository, submissionRepository, resultRepository);
         this.textBlockRepository = textBlockRepository;
         this.textExerciseRepository = textExerciseRepository;
         this.feedbackRepository = feedbackRepository;
         this.textSubmissionRepository = textSubmissionRepository;
+        this.channelService = channelService;
     }
 
     /**
@@ -53,6 +57,7 @@ public class TextExerciseImportService extends ExerciseImportService {
         TextExercise newExercise = copyTextExerciseBasis(importedExercise, gradingInstructionCopyTracker);
         newExercise.setKnowledge(templateExercise.getKnowledge());
         textExerciseRepository.save(newExercise);
+        channelService.createExerciseChannel(newExercise);
         newExercise.setExampleSubmissions(copyExampleSubmission(templateExercise, newExercise, gradingInstructionCopyTracker));
         return newExercise;
     }

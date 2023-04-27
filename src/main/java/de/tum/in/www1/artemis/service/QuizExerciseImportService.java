@@ -4,6 +4,7 @@ import java.util.*;
 
 import javax.validation.constraints.NotNull;
 
+import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -22,11 +23,14 @@ public class QuizExerciseImportService extends ExerciseImportService {
 
     private final FileService fileService;
 
+    private final ChannelService channelService;
+
     public QuizExerciseImportService(QuizExerciseService quizExerciseService, FileService fileService, ExampleSubmissionRepository exampleSubmissionRepository,
-            SubmissionRepository submissionRepository, ResultRepository resultRepository) {
+            SubmissionRepository submissionRepository, ResultRepository resultRepository, ChannelService channelService) {
         super(exampleSubmissionRepository, submissionRepository, resultRepository);
         this.quizExerciseService = quizExerciseService;
         this.fileService = fileService;
+        this.channelService = channelService;
     }
 
     /**
@@ -43,6 +47,7 @@ public class QuizExerciseImportService extends ExerciseImportService {
     public QuizExercise importQuizExercise(final QuizExercise templateExercise, QuizExercise importedExercise) {
         log.debug("Creating a new Exercise based on exercise {}", templateExercise);
         QuizExercise newExercise = copyQuizExerciseBasis(importedExercise);
+        channelService.createExerciseChannel(newExercise);
         copyQuizQuestions(importedExercise, newExercise);
         copyQuizBatches(importedExercise, newExercise);
         return quizExerciseService.save(newExercise);
