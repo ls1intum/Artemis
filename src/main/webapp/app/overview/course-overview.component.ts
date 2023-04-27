@@ -3,9 +3,8 @@ import { Course, isCommunicationEnabled, isMessagingEnabled } from 'app/entities
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { CourseManagementService } from '../course/manage/course-management.service';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Observable, Subject, Subscription, catchError, forkJoin, map, of, takeUntil, throwError } from 'rxjs';
+import { Observable, Subject, Subscription, catchError, map, of, takeUntil, throwError } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { TeamService } from 'app/exercises/shared/team/team.service';
 import { TeamAssignmentPayload } from 'app/entities/team.model';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
@@ -21,6 +20,7 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { TutorialGroupsConfigurationService } from 'app/course/tutorial-groups/services/tutorial-groups-configuration.service';
+import { CourseStorageService } from 'app/course/manage/course-storage.service';
 
 @Component({
     selector: 'jhi-course-overview',
@@ -69,7 +69,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     constructor(
         private courseService: CourseManagementService,
         private courseExerciseService: CourseExerciseService,
-        private courseCalculationService: CourseScoreCalculationService,
+        private courseStorageService: CourseStorageService,
         private learningGoalService: LearningGoalService,
         private route: ActivatedRoute,
         private teamService: TeamService,
@@ -89,18 +89,10 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
             this.courseId = parseInt(params['courseId'], 10);
         });
 
-        this.course = this.courseCalculationService.getCourse(this.courseId);
+        this.course = this.courseStorageService.getCourse(this.courseId);
 
-        if (this.course) {
-            // If the course is present but without learning goals or tutorial groups (e.g. loaded in Artemis overview), we only need to fetch those
-            if (!this.course.learningGoals || !this.course.prerequisites || !this.course.tutorialGroups || !this.course.tutorialGroupsConfiguration) {
-                this.loadLearningGoalsAndTutorialGroups();
-            }
-            await this.initAfterCourseLoad();
-        } else {
-            await this.loadCourse().toPromise();
-            await this.initAfterCourseLoad();
-        }
+        await this.loadCourse().toPromise();
+        await this.initAfterCourseLoad();
     }
 
     async initAfterCourseLoad() {
@@ -112,7 +104,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     private setUpConversationService() {
         if (isMessagingEnabled(this.course) && !this.conversationServiceInstantiated) {
             this.metisConversationService
-                .setUpConversationService(this.courseId)
+                .setUpConversationService(this.course!)
                 .pipe(takeUntil(this.ngUnsubscribe))
                 .subscribe({
                     complete: () => {
@@ -229,8 +221,9 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         this.refreshingCourse = refresh;
         return this.courseService.findOneForDashboard(this.courseId, refresh).pipe(
             map((res: HttpResponse<Course>) => {
-                this.courseCalculationService.updateCourse(res.body!);
-                this.course = this.courseCalculationService.getCourse(this.courseId);
+                if (res.body) {
+                    this.course = res.body;
+                }
 
                 this.setUpConversationService();
 
@@ -287,28 +280,6 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
                 }
             });
         }
-    }
-
-    loadLearningGoalsAndTutorialGroups() {
-        forkJoin([
-            this.learningGoalService.getAllForCourse(this.courseId),
-            this.learningGoalService.getAllPrerequisitesForCourse(this.courseId),
-            this.tutorialGroupService.getAllForCourse(this.courseId),
-            this.tutorialGroupsConfigurationService.getOneOfCourse(this.courseId),
-        ]).subscribe({
-            next: ([learningGoals, prerequisites, tutorialGroups, configuration]) => {
-                if (this.course) {
-                    this.course.learningGoals = learningGoals.body!;
-                    this.course.prerequisites = prerequisites.body!;
-                    this.course.tutorialGroups = tutorialGroups.body!;
-                    if (configuration.body) {
-                        this.course.tutorialGroupsConfiguration = configuration.body!;
-                    }
-                    this.courseCalculationService.updateCourse(this.course);
-                }
-            },
-            error: () => {},
-        });
     }
 
     /**
