@@ -92,7 +92,8 @@
             },
             "detailedTab": {
                 "title": "Ausführlich"
-            }
+            },
+            "gradingStepsAboveMaxPointsWarning": "Mindestens eine Notenstufe überschreitet die maximale Punktzahl für diesen Kurs."
         },
         "gradingScale": {
             "created": "Notenschlüssel wurde erstellt",

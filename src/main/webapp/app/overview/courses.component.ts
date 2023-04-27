@@ -6,7 +6,6 @@ import { AlertService } from 'app/core/util/alert.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { courseOverviewTour } from 'app/guided-tour/tours/course-overview-tour';
-import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { Exercise } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { TeamService } from 'app/exercises/shared/team/team.service';
@@ -44,7 +43,6 @@ export class CoursesComponent implements OnInit, OnChanges, OnDestroy {
         private exerciseService: ExerciseService,
         private alertService: AlertService,
         private accountService: AccountService,
-        private courseScoreCalculationService: CourseScoreCalculationService,
         private guidedTourService: GuidedTourService,
         private teamService: TeamService,
         private jhiWebsocketService: JhiWebsocketService,
@@ -74,27 +72,28 @@ export class CoursesComponent implements OnInit, OnChanges, OnDestroy {
     loadAndFilterCourses() {
         this.courseService.findAllForDashboard().subscribe({
             next: (res: HttpResponse<Course[]>) => {
-                this.courses = res.body!.sort((a, b) => (a.title ?? '').localeCompare(b.title ?? ''));
-                this.courseScoreCalculationService.setCourses(this.courses);
-                this.courseForGuidedTour = this.guidedTourService.enableTourForCourseOverview(this.courses, courseOverviewTour, true);
+                if (res.body) {
+                    this.courses = res.body!.sort((a, b) => (a.title ?? '').localeCompare(b.title ?? ''));
+                    this.courseForGuidedTour = this.guidedTourService.enableTourForCourseOverview(this.courses, courseOverviewTour, true);
 
-                // get all exams of courses
-                this.courses.forEach((course) => {
-                    if (course.exams) {
-                        // set course for exam as it is not loaded within the server call
-                        course.exams.forEach((exam) => {
-                            exam.course = course;
-                            this.exams.push(exam);
-                        });
-                    }
-                });
-                // Used as constant to limit the number of calls
-                const timeNow = this.serverDateService.now();
-                this.nextRelevantExams = this.exams.filter(
-                    // TestExams should not be displayed as upcoming exams
-                    (exam) => !exam.testExam! && timeNow.isBefore(exam.endDate!) && timeNow.isAfter(exam.visibleDate!),
-                );
-                this.nextRelevantExercise = this.findNextRelevantExercise();
+                    // get all exams of courses
+                    this.courses.forEach((course) => {
+                        if (course.exams) {
+                            // set course for exam as it is not loaded within the server call
+                            course.exams.forEach((exam) => {
+                                exam.course = course;
+                                this.exams.push(exam);
+                            });
+                        }
+                    });
+                    // Used as constant to limit the number of calls
+                    const timeNow = this.serverDateService.now();
+                    this.nextRelevantExams = this.exams.filter(
+                        // TestExams should not be displayed as upcoming exams
+                        (exam) => !exam.testExam! && timeNow.isBefore(exam.endDate!) && timeNow.isAfter(exam.visibleDate!),
+                    );
+                    this.nextRelevantExercise = this.findNextRelevantExercise();
+                }
             },
         });
     }
