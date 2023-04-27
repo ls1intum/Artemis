@@ -92,7 +92,7 @@
                     [smallButton]="smallButtons"
                     [hideLabelMobile]="false"
                     [overwriteDisabled]="isBeforeStartDateAndStudent"
-                    *ngIf="!gradedParticipation && isStartExerciseAvailable()"
+                    *ngIf="!gradedParticipation && (!exercise.teamMode || exercise.studentAssignedTeamId) && isStartExerciseAvailable()"
                     (click)="startExercise()"
                 ></button>
             </span>
@@ -290,7 +290,7 @@
                     [smallButton]="smallButtons"
                     [hideLabelMobile]="false"
                     [overwriteDisabled]="isBeforeStartDateAndStudent"
-                    *ngIf="!gradedParticipation && isStartExerciseAvailable()"
+                    *ngIf="!gradedParticipation && (!exercise.teamMode || exercise.studentAssignedTeamId) && isStartExerciseAvailable()"
                     (click)="startExercise()"
                 ></button>
             </span>
@@ -358,7 +358,7 @@
                     [buttonIcon]="faPlayCircle"
                     [buttonLabel]="'artemisApp.exerciseActions.startExercise' | artemisTranslate"
                     [buttonLoading]="!!exercise.loading"
-                    *ngIf="!gradedParticipation && isStartExerciseAvailable()"
+                    *ngIf="!gradedParticipation && (!exercise.teamMode || exercise.studentAssignedTeamId) && isStartExerciseAvailable()"
                     [smallButton]="smallButtons"
                     [hideLabelMobile]="false"
                     [overwriteDisabled]="isBeforeStartDateAndStudent"
