@@ -109,11 +109,11 @@ public class AdminCourseResource {
             course.setCourseIcon(pathString);
         }
 
-        Course course = courseRepository.save(course);
+        Course createdCourse = courseRepository.save(course);
 
         DEFAULT_CHANNEL_NAMES.forEach(channelName -> this.createDefaultChannel(course, channelName, "announcement".equals(channelName)));
 
-        return ResponseEntity.created(new URI("/api/courses/" + course.getId())).body(course);
+        return ResponseEntity.created(new URI("/api/courses/" + createdCourse.getId())).body(createdCourse);
     }
 
     /**
