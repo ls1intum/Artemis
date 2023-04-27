@@ -214,7 +214,8 @@
             [targetDate]="startDate!"
             [waitForStartText]="'artemisApp.quizExercise.quizInstructions.waitForStart' | artemisTranslate"
             [timeUntilPlannedStartText]="'artemisApp.quizExercise.quizInstructions.timeUntilPlannedStart' | artemisTranslate"
-        >
+        />
+        <jhi-overlay-centered *ngIf="!quizBatch && quizExercise.quizMode !== QuizMode.SYNCHRONIZED" class="alert-info">
             <ng-container *ngIf="!quizBatch && quizExercise.quizMode === QuizMode.BATCHED && (quizExercise.remainingNumberOfAttempts ?? 1) > 0">
                 <div jhiTranslate="artemisApp.quizExercise.quizInstructions.enterPassword"></div>
                 <input id="join-patch-password" [(ngModel)]="password" />
@@ -228,7 +229,7 @@
                 <div jhiTranslate="artemisApp.quizExercise.quizInstructions.noMoreAttempts" *ngIf="(quizExercise.allowedNumberOfAttempts ?? 0) > 1"></div>
                 <div jhiTranslate="artemisApp.quizExercise.quizInstructions.alreadyAttempted" *ngIf="quizExercise.allowedNumberOfAttempts === 1"></div>
             </ng-container>
-        </jhi-countdown-overlay>
+        </jhi-overlay-centered>
     </ng-container>
     <div class="quiz-refresh-overlay" [class.active]="refreshingQuiz">
         <fa-icon size="lg" [icon]="faCircleNotch" [spin]="true"></fa-icon>
