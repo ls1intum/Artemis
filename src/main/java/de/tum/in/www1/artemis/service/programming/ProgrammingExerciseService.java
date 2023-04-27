@@ -32,12 +32,14 @@ import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseSolutionEntry;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
+import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseGitDiffReportRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseSolutionEntryRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseTaskRepository;
+import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.service.ExerciseSpecificationService;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.SubmissionPolicyService;
@@ -125,6 +127,8 @@ public class ProgrammingExerciseService {
 
     private final Optional<ProgrammingLanguageFeatureService> programmingLanguageFeatureService;
 
+    private final ChannelRepository channelRepository;
+
     public ProgrammingExerciseService(ProgrammingExerciseRepository programmingExerciseRepository, GitService gitService, Optional<VersionControlService> versionControlService,
             Optional<ContinuousIntegrationService> continuousIntegrationService,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
@@ -135,7 +139,7 @@ public class ProgrammingExerciseService {
             ProgrammingExerciseSolutionEntryRepository programmingExerciseSolutionEntryRepository, ProgrammingExerciseTaskService programmingExerciseTaskService,
             ProgrammingExerciseGitDiffReportRepository programmingExerciseGitDiffReportRepository, ExerciseSpecificationService exerciseSpecificationService,
             ProgrammingExerciseRepositoryService programmingExerciseRepositoryService, AuxiliaryRepositoryService auxiliaryRepositoryService,
-            SubmissionPolicyService submissionPolicyService, Optional<ProgrammingLanguageFeatureService> programmingLanguageFeatureService) {
+            SubmissionPolicyService submissionPolicyService, Optional<ProgrammingLanguageFeatureService> programmingLanguageFeatureService, ChannelRepository channelRepository) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.gitService = gitService;
         this.versionControlService = versionControlService;
@@ -159,6 +163,7 @@ public class ProgrammingExerciseService {
         this.auxiliaryRepositoryService = auxiliaryRepositoryService;
         this.submissionPolicyService = submissionPolicyService;
         this.programmingLanguageFeatureService = programmingLanguageFeatureService;
+        this.channelRepository = channelRepository;
     }
 
     /**
@@ -419,6 +424,12 @@ public class ProgrammingExerciseService {
         setURLsForAuxiliaryRepositoriesOfExercise(updatedProgrammingExercise);
         connectAuxiliaryRepositoriesToExercise(updatedProgrammingExercise);
 
+        if (programmingExerciseBeforeUpdate.getChannel() != null) {
+            // Make sure that the original references are preserved.
+            Channel originalChannel = channelRepository.findByIdElseThrow(programmingExerciseBeforeUpdate.getChannel().getId());
+            programmingExerciseBeforeUpdate.setChannel(originalChannel);
+        }
+
         ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(updatedProgrammingExercise);
 
         participationRepository.removeIndividualDueDatesIfBeforeDueDate(savedProgrammingExercise, programmingExerciseBeforeUpdate.getDueDate());
@@ -479,6 +490,13 @@ public class ProgrammingExerciseService {
         programmingExercise.setExampleSolutionPublicationDate(updatedProgrammingExercise.getExampleSolutionPublicationDate());
 
         programmingExercise.validateDates();
+
+        if (programmingExerciseBeforeUpdate.getChannel() != null) {
+            // Make sure that the original references are preserved.
+            Channel originalChannel = channelRepository.findByIdElseThrow(programmingExerciseBeforeUpdate.getChannel().getId());
+            programmingExerciseBeforeUpdate.setChannel(originalChannel);
+        }
+
         ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
         groupNotificationScheduleService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(programmingExerciseBeforeUpdate, savedProgrammingExercise, notificationText);
         return savedProgrammingExercise;

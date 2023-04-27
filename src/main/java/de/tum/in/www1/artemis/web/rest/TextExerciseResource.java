@@ -15,9 +15,11 @@ import org.springframework.web.bind.annotation.*;
 
 import de.jplag.exceptions.ExitException;
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismResultRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.*;
@@ -98,6 +100,8 @@ public class TextExerciseResource {
 
     private final ChannelService channelService;
 
+    private final ChannelRepository channelRepository;
+
     public TextExerciseResource(TextExerciseRepository textExerciseRepository, TextExerciseService textExerciseService, FeedbackRepository feedbackRepository,
             ExerciseDeletionService exerciseDeletionService, PlagiarismResultRepository plagiarismResultRepository, UserRepository userRepository,
             AuthorizationCheckService authCheckService, CourseService courseService, StudentParticipationRepository studentParticipationRepository,
@@ -105,7 +109,7 @@ public class TextExerciseResource {
             TextSubmissionExportService textSubmissionExportService, ExampleSubmissionRepository exampleSubmissionRepository, ExerciseService exerciseService,
             GradingCriterionRepository gradingCriterionRepository, TextBlockRepository textBlockRepository, GroupNotificationScheduleService groupNotificationScheduleService,
             InstanceMessageSendService instanceMessageSendService, TextPlagiarismDetectionService textPlagiarismDetectionService, CourseRepository courseRepository,
-            TextAssessmentKnowledgeService textAssessmentKnowledgeService, ChannelService channelService) {
+            TextAssessmentKnowledgeService textAssessmentKnowledgeService, ChannelService channelService, ChannelRepository channelRepository) {
         this.feedbackRepository = feedbackRepository;
         this.exerciseDeletionService = exerciseDeletionService;
         this.plagiarismResultRepository = plagiarismResultRepository;
@@ -129,6 +133,7 @@ public class TextExerciseResource {
         this.courseRepository = courseRepository;
         this.textAssessmentKnowledgeService = textAssessmentKnowledgeService;
         this.channelService = channelService;
+        this.channelRepository = channelRepository;
     }
 
     /**
@@ -206,6 +211,12 @@ public class TextExerciseResource {
 
         // Forbid conversion between normal course exercise and exam exercise
         exerciseService.checkForConversionBetweenExamAndCourseExercise(textExercise, textExerciseBeforeUpdate, ENTITY_NAME);
+
+        if (textExercise.getChannel() != null) {
+            // Make sure that the original references are preserved.
+            Channel originalChannel = channelRepository.findByIdElseThrow(textExercise.getChannel().getId());
+            textExercise.setChannel(originalChannel);
+        }
 
         TextExercise updatedTextExercise = textExerciseRepository.save(textExercise);
         exerciseService.logUpdate(updatedTextExercise, updatedTextExercise.getCourseViaExerciseGroupOrCourseMember(), user);

@@ -20,10 +20,12 @@ import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.QuizMode;
+import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.quiz.QuizBatch;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.exception.QuizJoinException;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
@@ -92,12 +94,14 @@ public class QuizExerciseResource {
 
     private final ChannelService channelService;
 
+    private final ChannelRepository channelRepository;
+
     public QuizExerciseResource(QuizExerciseService quizExerciseService, QuizExerciseRepository quizExerciseRepository, CourseService courseService, UserRepository userRepository,
             ExerciseDeletionService exerciseDeletionServiceService, QuizScheduleService quizScheduleService, QuizStatisticService quizStatisticService,
             QuizExerciseImportService quizExerciseImportService, AuthorizationCheckService authCheckService, CourseRepository courseRepository,
             GroupNotificationService groupNotificationService, ExerciseService exerciseService, ExamDateService examDateService, QuizMessagingService quizMessagingService,
             GroupNotificationScheduleService groupNotificationScheduleService, StudentParticipationRepository studentParticipationRepository, QuizBatchService quizBatchService,
-            QuizBatchRepository quizBatchRepository, SubmissionRepository submissionRepository, ChannelService channelService) {
+            QuizBatchRepository quizBatchRepository, SubmissionRepository submissionRepository, ChannelService channelService, ChannelRepository channelRepository) {
         this.quizExerciseService = quizExerciseService;
         this.quizExerciseRepository = quizExerciseRepository;
         this.exerciseDeletionService = exerciseDeletionServiceService;
@@ -118,6 +122,7 @@ public class QuizExerciseResource {
         this.quizBatchRepository = quizBatchRepository;
         this.submissionRepository = submissionRepository;
         this.channelService = channelService;
+        this.channelRepository = channelRepository;
     }
 
     /**
@@ -204,6 +209,12 @@ public class QuizExerciseResource {
         // don't allow changing batches except in synchronized mode as the client doesn't have the full list and saving the exercise could otherwise end up deleting a bunch
         if (quizExercise.getQuizMode() != QuizMode.SYNCHRONIZED || quizExercise.getQuizBatches() == null || quizExercise.getQuizBatches().size() > 1) {
             quizExercise.setQuizBatches(batches);
+        }
+
+        if (quizExercise.getChannel() != null) {
+            // Make sure that the original references are preserved.
+            Channel originalChannel = channelRepository.findByIdElseThrow(quizExercise.getChannel().getId());
+            quizExercise.setChannel(originalChannel);
         }
 
         quizExercise = quizExerciseService.save(quizExercise);

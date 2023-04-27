@@ -118,7 +118,7 @@ public class ConversationService {
         if (authorizationCheckService.isOnlyStudentInCourse(course, requestingUser)) {
             var filteredChannelsOfUser = channelsOfUser.stream().filter(channel -> {
                 if (channel.getExercise() != null) {
-                    return channel.getExercise().getStartDate() == null || channel.getExercise().getStartDate().isBefore(ZonedDateTime.now());
+                    return channel.getExercise().getReleaseDate() == null || channel.getExercise().getReleaseDate().isBefore(ZonedDateTime.now());
                 }
                 else if (channel.getLecture() != null) {
                     return channel.getLecture().getStartDate() == null || channel.getLecture().getStartDate().isBefore(ZonedDateTime.now());
