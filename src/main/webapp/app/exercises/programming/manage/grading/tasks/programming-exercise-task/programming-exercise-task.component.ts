@@ -23,6 +23,7 @@ export class ProgrammingExerciseTaskComponent implements OnInit {
 
     readonly NOT_ASSIGNED_TO_TASK_NAME = 'Not assigned to task';
     open: boolean;
+    onlyViewTestCases: boolean;
     testCaseVisibilityList = Object.entries(Visibility).map(([name, value]) => ({ value, name }));
 
     get numParticipations(): number {
@@ -34,8 +35,9 @@ export class ProgrammingExerciseTaskComponent implements OnInit {
     ngOnInit(): void {
         this.openSubject.subscribe((open) => (this.open = open));
 
-        // If this is the only task have it open by default
+        // If this is the only task have it open by default and hide the task
         if (this.programmingExerciseTaskService.currentTasks.length == 1) {
+            this.onlyViewTestCases = true;
             this.open = true;
         }
     }

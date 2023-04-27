@@ -113,21 +113,31 @@ export class ProgrammingExerciseGradingTasksTableComponent implements OnInit {
             resulting: this.compareNumForAttribute('resultingPoints'),
             type: this.compareStringForAttribute('type'),
         };
-        const comparator = (a: ProgrammingExerciseTask, b: ProgrammingExerciseTask) => {
+
+        let comparator = (a: ProgrammingExerciseTask, b: ProgrammingExerciseTask) => {
             const order = comparators[this.currentSort!['by']](a, b);
             return this.currentSort?.descending ? order : -order;
         };
 
         this.tasks = this.tasks.sort(comparator);
+
+        // the objects task and test have their name attribute named differently, making this necessary
+        if (this.currentSort?.by === 'name') {
+            comparator = (a: ProgrammingExerciseTask, b: ProgrammingExerciseTask) => {
+                const order = this.compareStringForAttribute('testName')(a, b);
+                return this.currentSort?.descending ? order : -order;
+            };
+        }
+        this.tasks.forEach((task) => task.testCases.sort(comparator));
     };
 
-    private compareNumForAttribute = (attributeKey: keyof ProgrammingExerciseTask): TaskComparator => {
+    private compareNumForAttribute = (attributeKey: string): TaskComparator => {
         return (a, b) => {
             return ((a[attributeKey] as number) ?? 0) - ((b[attributeKey] as number) ?? 0);
         };
     };
 
-    private compareStringForAttribute = (attributeKey: keyof ProgrammingExerciseTask): TaskComparator => {
+    private compareStringForAttribute = (attributeKey: string): TaskComparator => {
         return (a, b) => {
             const aType = a[attributeKey] ?? '';
             const bType = b[attributeKey] ?? '';

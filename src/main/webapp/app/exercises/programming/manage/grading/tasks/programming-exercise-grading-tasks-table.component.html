@@ -3,11 +3,23 @@
 
     <div class="d-flex justify-content-between">
         <div>
-            <jhi-button [shouldSubmit]="false" (click)="toggleAllTasksExpanded(true)" title="artemisApp.programmingExercise.configureGrading.expandAll" [icon]="faAngleDown">
+            <jhi-button
+                *ngIf="tasks.length !== 1"
+                [shouldSubmit]="false"
+                (click)="toggleAllTasksExpanded(true)"
+                title="artemisApp.programmingExercise.configureGrading.expandAll"
+                [icon]="faAngleDown"
+            >
                 Expand all
             </jhi-button>
 
-            <jhi-button [shouldSubmit]="false" (click)="toggleAllTasksExpanded(false)" title="artemisApp.programmingExercise.configureGrading.collapseAll" [icon]="faAngleRight">
+            <jhi-button
+                *ngIf="tasks.length !== 1"
+                [shouldSubmit]="false"
+                (click)="toggleAllTasksExpanded(false)"
+                title="artemisApp.programmingExercise.configureGrading.collapseAll"
+                [icon]="faAngleRight"
+            >
                 Collapse all
             </jhi-button>
         </div>
