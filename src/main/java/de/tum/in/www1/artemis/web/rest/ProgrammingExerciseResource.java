@@ -642,6 +642,7 @@ public class ProgrammingExerciseResource {
      */
     @PutMapping(RESET)
     @PreAuthorize("hasRole('INSTRUCTOR')")
+    @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> reset(@PathVariable Long exerciseId, @RequestBody ProgrammingExerciseResetOptionsDTO programmingExerciseResetOptionsDTO) {
         log.debug("REST request to reset ProgrammingExercise : {}", exerciseId);
         var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesElseThrow(exerciseId);
