@@ -1887,12 +1887,12 @@ class ProgrammingExerciseIntegrationTestService {
     }
 
     void testResetForbidden() throws Exception {
-        var resetOptions = new ProgrammingExerciseResetOptionsDTO();
+        var resetOptions = new ProgrammingExerciseResetOptionsDTO(false, false, false, false);
         request.put(defaultResetEndpoint(), resetOptions, HttpStatus.FORBIDDEN);
     }
 
     void testResetExerciseNotFound() throws Exception {
-        var resetOptions = new ProgrammingExerciseResetOptionsDTO();
+        var resetOptions = new ProgrammingExerciseResetOptionsDTO(false, false, false, false);
         request.put(defaultResetEndpoint(-1L), resetOptions, HttpStatus.NOT_FOUND);
     }
 
@@ -1909,8 +1909,7 @@ class ProgrammingExerciseIntegrationTestService {
             assertThat(participation.getBuildPlanId()).isNotNull();
         });
 
-        var resetOptions = new ProgrammingExerciseResetOptionsDTO();
-        resetOptions.setDeleteBuildPlans(true);
+        var resetOptions = new ProgrammingExerciseResetOptionsDTO(true, false, false, false);
         request.put(defaultResetEndpoint(programmingExercise.getId()), resetOptions, HttpStatus.OK);
 
         // Two participations exist with build plans removed after reset
@@ -1939,9 +1938,7 @@ class ProgrammingExerciseIntegrationTestService {
             assertThat(participation.getBuildPlanId()).isNotNull();
         });
 
-        var resetOptions = new ProgrammingExerciseResetOptionsDTO();
-        resetOptions.setDeleteBuildPlans(true);
-        resetOptions.setDeleteRepositories(true);
+        var resetOptions = new ProgrammingExerciseResetOptionsDTO(true, true, false, false);
         request.put(defaultResetEndpoint(programmingExercise.getId()), resetOptions, HttpStatus.OK);
 
         // Two participations exist with build plans and repositories removed after reset
@@ -1966,8 +1963,7 @@ class ProgrammingExerciseIntegrationTestService {
         // Two participations exist before reset
         assertThat(programmingExerciseStudentParticipationRepository.findByExerciseId(programmingExercise.getId())).hasSize(2);
 
-        var resetOptions = new ProgrammingExerciseResetOptionsDTO();
-        resetOptions.setDeleteParticipationsSubmissionsAndResults(true);
+        var resetOptions = new ProgrammingExerciseResetOptionsDTO(false, false, true, false);
         request.put(defaultResetEndpoint(programmingExercise.getId()), resetOptions, HttpStatus.OK);
 
         // No participations exist after reset
@@ -1985,8 +1981,7 @@ class ProgrammingExerciseIntegrationTestService {
         mockDelegate.mockDeleteBuildPlan(programmingExercise.getProjectKey(), solutionBuildPlanName, false);
         mockDelegate.mockConnectorRequestsForSetup(programmingExercise, false);
 
-        var resetOptions = new ProgrammingExerciseResetOptionsDTO();
-        resetOptions.setRecreateBuildPlans(true);
+        var resetOptions = new ProgrammingExerciseResetOptionsDTO(false, false, false, true);
         request.put(defaultResetEndpoint(), resetOptions, HttpStatus.OK);
     }
 

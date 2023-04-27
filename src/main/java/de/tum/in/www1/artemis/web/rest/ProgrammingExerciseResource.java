@@ -649,16 +649,16 @@ public class ProgrammingExerciseResource {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, user);
 
-        if (programmingExerciseResetOptionsDTO.isRecreateBuildPlans()) {
+        if (programmingExerciseResetOptionsDTO.recreateBuildPlans()) {
             continuousIntegrationService.get().recreateBuildPlansForExercise(programmingExercise);
         }
 
-        if (programmingExerciseResetOptionsDTO.isDeleteParticipationsSubmissionsAndResults()) {
+        if (programmingExerciseResetOptionsDTO.deleteParticipationsSubmissionsAndResults()) {
             exerciseDeletionService.reset(programmingExercise);
         }
 
-        if (programmingExerciseResetOptionsDTO.isDeleteBuildPlans()) {
-            boolean deleteRepositories = programmingExerciseResetOptionsDTO.isDeleteRepositories();
+        if (programmingExerciseResetOptionsDTO.deleteBuildPlans()) {
+            boolean deleteRepositories = programmingExerciseResetOptionsDTO.deleteRepositories();
             exerciseDeletionService.cleanup(exerciseId, deleteRepositories);
         }
 
