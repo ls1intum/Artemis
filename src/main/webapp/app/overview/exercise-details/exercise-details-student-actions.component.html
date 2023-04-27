@@ -75,7 +75,7 @@
                 jhi-exercise-action-button
                 [buttonIcon]="faUsers"
                 [buttonLabel]="'artemisApp.exerciseActions.viewTeam' | artemisTranslate"
-                *ngIf="exercise.teamMode && exercise.studentAssignedTeamIdComputed && !exercise.studentAssignedTeamId"
+                *ngIf="exercise.teamMode && exercise.studentAssignedTeamIdComputed && exercise.studentAssignedTeamId"
                 [smallButton]="smallButtons"
                 [hideLabelMobile]="true"
                 [routerLink]="['/courses', courseId, 'exercises', exercise.id, 'teams', assignedTeamId]"
@@ -274,7 +274,7 @@
                 jhi-exercise-action-button
                 [buttonIcon]="faUsers"
                 [buttonLabel]="'artemisApp.exerciseActions.viewTeam' | artemisTranslate"
-                *ngIf="exercise.teamMode && exercise.studentAssignedTeamIdComputed && !exercise.studentAssignedTeamId"
+                *ngIf="exercise.teamMode && exercise.studentAssignedTeamIdComputed && exercise.studentAssignedTeamId"
                 [smallButton]="smallButtons"
                 [hideLabelMobile]="true"
                 [routerLink]="['/courses', courseId, 'exercises', exercise.id, 'teams', assignedTeamId]"
@@ -346,7 +346,7 @@
                 jhi-exercise-action-button
                 [buttonIcon]="faUsers"
                 [buttonLabel]="'artemisApp.exerciseActions.viewTeam' | artemisTranslate"
-                *ngIf="exercise.teamMode && exercise.studentAssignedTeamIdComputed && !exercise.studentAssignedTeamId"
+                *ngIf="exercise.teamMode && exercise.studentAssignedTeamIdComputed && exercise.studentAssignedTeamId"
                 [smallButton]="smallButtons"
                 [hideLabelMobile]="true"
             ></button>
