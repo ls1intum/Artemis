@@ -182,6 +182,9 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
                 participation.results![index].durationInMinutes = dayjs(result.completionDate).diff(participation.initializationDate, 'seconds');
             });
             participation.results?.sort((result1, result2) => (result1.id ?? 0) - (result2.id ?? 0));
+            if (participation.results?.[0].submission) {
+                participation.submissions = [participation.results?.[0].submission];
+            }
         });
         this.filteredParticipations = this.filterByScoreRange(this.participations);
         if (this.exercise.type === ExerciseType.PROGRAMMING) {
@@ -218,7 +221,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
             case FilterProp.UNSUCCESSFUL:
                 return !participation.results?.[0]?.successful;
             case FilterProp.BUILD_FAILED:
-                return !!(participation.results?.[0]?.submission && (participation.results?.[0]?.submission as ProgrammingSubmission).buildFailed);
+                return !!(participation.submissions?.[0] && (participation.submissions?.[0] as ProgrammingSubmission).buildFailed);
             case FilterProp.MANUAL:
                 return !!participation.results?.[0] && Result.isManualResult(participation.results[0]!);
             case FilterProp.AUTOMATIC:
@@ -388,8 +391,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     }
 
     getAssessmentLink(participation: Participation, correctionRound = 0) {
-        const newAssessment = !participation.results?.[correctionRound]?.assessmentType || participation.results?.[correctionRound].assessmentType === AssessmentType.AUTOMATIC;
-        if (!this.exercise.type || !this.exercise.id || !this.course.id || (!participation.results?.[correctionRound]?.submission?.id && !newAssessment)) {
+        if (!this.exercise.type || !this.exercise.id || !this.course.id || !participation.submissions?.[0]?.id) {
             return;
         }
         return getLinkToSubmissionAssessment(
@@ -397,7 +399,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
             this.course.id,
             this.exercise.id,
             participation.id,
-            newAssessment ? 'new' : participation.results![correctionRound].submission!.id!,
+            participation.submissions?.[0]?.id,
             this.exercise.exerciseGroup?.exam?.id,
             this.exercise.exerciseGroup?.id,
             participation.results?.[correctionRound]?.id,
