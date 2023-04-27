@@ -44,6 +44,8 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
 
     // Rendered embedded view for controls in the bar so we can destroy it if needed
     private controlsEmbeddedView?: EmbeddedViewRef<any>;
+    // Subscription for the course fetching
+    private loadCourseSubscription?: Subscription;
     // Subscription to listen to changes on the control configuration
     private controlsSubscription?: Subscription;
     // Subscription to listen for the ng-container for controls to be mounted
@@ -251,7 +253,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         );
         // Start fetching, even if we don't subscribe to the result.
         // This enables just calling this method to refresh the course, without subscribing to it:
-        observable.subscribe();
+        this.loadCourseSubscription = observable.subscribe();
         return observable;
     }
 
@@ -262,6 +264,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         if (this.quizExercisesChannel) {
             this.jhiWebsocketService.unsubscribe(this.quizExercisesChannel);
         }
+        this.loadCourseSubscription?.unsubscribe();
         this.controlsSubscription?.unsubscribe();
         this.vcSubscription?.unsubscribe();
         this.ngUnsubscribe.next();
