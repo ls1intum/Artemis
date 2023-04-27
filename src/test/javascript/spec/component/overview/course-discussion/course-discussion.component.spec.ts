@@ -341,7 +341,12 @@ describe('CourseDiscussionComponent', () => {
         tick();
         fixture.detectChanges();
         expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledTimes(3);
-        expect(component.posts).toHaveLength(metisLecturePosts.length + metisExercisePosts.length + metisCoursePostsWithCourseWideContext.length);
+        expect(metisServiceGetFilteredPostsSpy.mock.calls[2][0]).toEqual({
+            ...component.currentPostContextFilter,
+            courseWideContexts: [CourseWideContext.TECH_SUPPORT, CourseWideContext.RANDOM, CourseWideContext.ORGANIZATION],
+            lectureIds: [metisLecture.id],
+            exerciseIds: [metisExercise.id],
+        });
     }));
 
     it('should invoke metis service forcing a reload when sort criterion changed', fakeAsync(() => {
