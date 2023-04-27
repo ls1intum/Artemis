@@ -9,6 +9,7 @@ import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockPipe, MockProviders } from 'ng-mocks';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { LearningGoalSelectionComponent } from 'app/shared/learning-goal-selection/learning-goal-selection.component';
+import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
 
 describe('AttachmentUnitFormComponent', () => {
     let attachmentUnitFormComponentFixture: ComponentFixture<AttachmentUnitFormComponent>;
@@ -152,5 +153,19 @@ describe('AttachmentUnitFormComponent', () => {
         const fileInput = attachmentUnitFormComponentFixture.debugElement.nativeElement.querySelector('#fileInput');
         fileInput.dispatchEvent(new Event('change'));
         expect(onFileChangeStub).toHaveBeenCalledOnce();
+    });
+
+    it('should disable submit button for too big file', () => {
+        const fakeFile = new File([''], 'Test-File.pdf', { type: 'application/pdf', lastModified: Date.now() });
+
+        // Set file size to exceed the maximum file size
+        Object.defineProperty(fakeFile, 'size', { value: MAX_FILE_SIZE + 1 });
+
+        attachmentUnitFormComponent.onFileChange({ target: { files: [fakeFile] } });
+        attachmentUnitFormComponentFixture.detectChanges();
+
+        const submitButton = attachmentUnitFormComponentFixture.debugElement.nativeElement.querySelector('#submitButton');
+        expect(attachmentUnitFormComponent.isFileTooBig).toBeTrue();
+        expect(submitButton.disabled).toBeTrue();
     });
 });
