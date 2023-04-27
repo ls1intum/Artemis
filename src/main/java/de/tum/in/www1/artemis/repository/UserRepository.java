@@ -118,7 +118,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
      * @return list of found users that match the search criteria
      */
     @EntityGraph(type = LOAD, attributePaths = { "groups" })
-    @Query("select user from User user where user.isDeleted = false and " + "(:#{#groupName} member of user.groups and "
+    @Query("select user from User user where user.isDeleted = false and (:#{#groupName} member of user.groups and "
             + "(user.login like :#{#loginOrName}% or concat_ws(' ', user.firstName, user.lastName) like %:#{#loginOrName}%))")
     List<User> searchByLoginOrNameInGroup(@Param("groupName") String groupName, @Param("loginOrName") String loginOrName);
 
