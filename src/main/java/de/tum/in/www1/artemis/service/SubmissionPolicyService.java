@@ -312,10 +312,11 @@ public class SubmissionPolicyService {
      */
     private int getParticipationSubmissionCount(Participation participation) {
         final Long participationId = participation.getId();
-        int submissionCompensation = 0;
         participation = participationRepository.findByIdWithLatestSubmissionAndResult(participationId)
                 .orElseThrow(() -> new EntityNotFoundException("Participation", participationId));
         var submissions = participation.getSubmissions();
+        // If there is no
+        int submissionCompensation = 0;
         if (submissions != null && !submissions.isEmpty()) {
             submissionCompensation = submissions.iterator().next().getResults().isEmpty() ? 1 : 0;
         }
