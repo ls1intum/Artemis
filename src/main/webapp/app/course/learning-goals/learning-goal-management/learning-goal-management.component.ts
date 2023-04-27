@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { LearningGoalService } from 'app/course/learning-goals/learningGoal.service';
 import { AlertService } from 'app/core/util/alert.service';
-import { CourseLearningGoalProgress, LearningGoal, LearningGoalRelation, getIcon, getIconTooltip } from 'app/entities/learningGoal.model';
+import { CourseLearningGoalProgress, LearningGoal, LearningGoalRelation, LearningGoalRelationError, getIcon, getIconTooltip } from 'app/entities/learningGoal.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { filter, finalize, map, switchMap } from 'rxjs/operators';
 import { onError } from 'app/shared/util/global.utils';
@@ -34,6 +34,8 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
     edges: Edge[] = [];
     clusters: ClusterNode[] = [];
     containsCircularRelation = false;
+    learningGoalRelationError = LearningGoalRelationError;
+    relationError: LearningGoalRelationError = LearningGoalRelationError.NONE;
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -71,9 +73,42 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
         });
     }
 
-    updateContainsCircularRelation() {
+    validate(): void {
+        if (this.headLearningGoal && this.tailLearningGoal && this.relationType && this.headLearningGoal === this.tailLearningGoal) {
+            this.relationError = LearningGoalRelationError.SELF;
+            return;
+        }
+        if (this.doesRelationAlreadyExist()) {
+            this.relationError = LearningGoalRelationError.EXISTING;
+            return;
+        }
+        if (this.updateContainsCircularRelation()) {
+            this.relationError = LearningGoalRelationError.CIRCULAR;
+            return;
+        }
+        this.relationError = LearningGoalRelationError.NONE;
+    }
+
+    getErrorMessage(error: LearningGoalRelationError): string {
+        switch (error) {
+            case LearningGoalRelationError.CIRCULAR: {
+                return 'artemisApp.learningGoal.relation.createsCircularRelation';
+            }
+            case LearningGoalRelationError.EXISTING: {
+                return 'artemisApp.learningGoal.relation.relationAlreadyExists';
+            }
+            case LearningGoalRelationError.SELF: {
+                return 'artemisApp.learningGoal.relation.selfRelation';
+            }
+            case LearningGoalRelationError.NONE: {
+                throw new TypeError('There is no error message if there is no error.');
+            }
+        }
+    }
+
+    updateContainsCircularRelation(): boolean {
         if (this.headLearningGoal !== this.tailLearningGoal) {
-            this.containsCircularRelation = !!(
+            return !!(
                 this.tailLearningGoal &&
                 this.headLearningGoal &&
                 this.relationType &&
@@ -83,7 +118,13 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
                     label: this.relationType!,
                 } as Edge)
             );
+        } else {
+            return false;
         }
+    }
+
+    private doesRelationAlreadyExist(): boolean {
+        return this.edges.find((edge) => edge.source === this.tailLearningGoal?.toString() && edge.target === this.headLearningGoal?.toString()) !== undefined;
     }
 
     identify(index: number, learningGoal: LearningGoal) {
@@ -239,8 +280,18 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
     }
 
     createRelation() {
-        if (this.containsCircularRelation) {
-            throw new TypeError('Creation of circular relations is not allowed.');
+        if (this.relationError !== LearningGoalRelationError.NONE) {
+            switch (this.relationError) {
+                case LearningGoalRelationError.CIRCULAR: {
+                    throw new TypeError('Creation of circular relations is not allowed.');
+                }
+                case LearningGoalRelationError.EXISTING: {
+                    throw new TypeError('Creation of an already existing relation is not allowed.');
+                }
+                case LearningGoalRelationError.SELF: {
+                    throw new TypeError('Creation of a self relation is not allowed.');
+                }
+            }
         }
         this.learningGoalService
             .createLearningGoalRelation(this.tailLearningGoal!, this.headLearningGoal!, this.relationType!, this.courseId)

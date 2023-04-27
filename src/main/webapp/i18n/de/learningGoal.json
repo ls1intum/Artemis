@@ -139,7 +139,8 @@
                 "matches": "Stimmt überein mit",
                 "createRelation": "Beziehung erstellen",
                 "createsCircularRelation": "Du kannst keine kreisförmigen Beziehungen zwischen Kompetenzen erstellen.",
-                "selfRelation": "Du kannst keine Beziehung zwischen einer Kompetenz und sich selbst erstellen."
+                "selfRelation": "Du kannst keine Beziehung zwischen einer Kompetenz und sich selbst erstellen.",
+                "relationAlreadyExists": "Diese Beziehung existiert bereits."
             }
         }
     }

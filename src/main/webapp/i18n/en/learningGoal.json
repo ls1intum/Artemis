@@ -138,7 +138,8 @@
                 "matches": "Matches",
                 "createRelation": "Create Relation",
                 "createsCircularRelation": "You can not create circular relations between competencies.",
-                "selfRelation": "You can not create a relation between a competency and itself."
+                "selfRelation": "You can not create a relation between a competency and itself.",
+                "relationAlreadyExists": "This relation already exists."
             }
         }
     }
