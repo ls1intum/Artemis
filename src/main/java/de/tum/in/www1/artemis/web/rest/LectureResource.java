@@ -12,16 +12,15 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.Lecture;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
 import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
+import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ExerciseService;
@@ -63,8 +62,11 @@ public class LectureResource {
 
     private final ExerciseService exerciseService;
 
+    private final ChannelRepository channelRepository;
+
     public LectureResource(LectureRepository lectureRepository, LectureService lectureService, LectureImportService lectureImportService, CourseRepository courseRepository,
-            UserRepository userRepository, AuthorizationCheckService authCheckService, ExerciseService exerciseService, ChannelService channelService) {
+            UserRepository userRepository, AuthorizationCheckService authCheckService, ExerciseService exerciseService, ChannelService channelService,
+            ChannelRepository channelRepository) {
         this.lectureRepository = lectureRepository;
         this.lectureService = lectureService;
         this.lectureImportService = lectureImportService;
@@ -73,6 +75,7 @@ public class LectureResource {
         this.authCheckService = authCheckService;
         this.exerciseService = exerciseService;
         this.channelService = channelService;
+        this.channelRepository = channelRepository;
     }
 
     /**
@@ -119,6 +122,10 @@ public class LectureResource {
 
         // NOTE: Make sure that all references are preserved here
         lecture.setLectureUnits(originalLecture.getLectureUnits());
+
+        // Make sure that the original references are preserved.
+        Channel originalChannel = channelRepository.findByIdElseThrow(originalLecture.getChannel().getId());
+        lecture.setChannel(originalChannel);
 
         Lecture result = lectureRepository.save(lecture);
         return ResponseEntity.ok().body(result);

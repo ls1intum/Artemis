@@ -114,6 +114,7 @@ public class ConversationService {
         conversations.addAll(oneToOneChatsOfUser);
         conversations.addAll(groupChatsOfUser);
         Course course = courseRepository.findByIdElseThrow(courseId);
+        // if the user is only a student in the course, we filter out all channels that are not yet open
         if (authorizationCheckService.isOnlyStudentInCourse(course, requestingUser)) {
             var filteredChannelsOfUser = channelsOfUser.stream().filter(channel -> {
                 if (channel.getExercise() != null) {
