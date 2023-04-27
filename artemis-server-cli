@@ -91,7 +91,7 @@ function docker_deploy {
 
     ssh -J "$2" -o "StrictHostKeyChecking=no" "$1" << COMMAND
 cd $5
-sudo ./artemis-docker.sh restart $3 $4
+/usr/bin/bash ./artemis-docker.sh restart $3 $4
 COMMAND
 }
 
