@@ -26,6 +26,7 @@ import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
+import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationScheduleService;
 import de.tum.in.www1.artemis.service.plagiarism.ModelingPlagiarismDetectionService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
@@ -83,12 +84,14 @@ public class ModelingExerciseResource {
 
     private final ModelAssessmentKnowledgeService modelAssessmentKnowledgeService;
 
+    private final ChannelService channelService;
+
     public ModelingExerciseResource(ModelingExerciseRepository modelingExerciseRepository, UserRepository userRepository, CourseService courseService,
             AuthorizationCheckService authCheckService, CourseRepository courseRepository, ParticipationRepository participationRepository,
             ModelingExerciseService modelingExerciseService, ExerciseDeletionService exerciseDeletionService, PlagiarismResultRepository plagiarismResultRepository,
             ModelingExerciseImportService modelingExerciseImportService, SubmissionExportService modelingSubmissionExportService, ExerciseService exerciseService,
             GroupNotificationScheduleService groupNotificationScheduleService, GradingCriterionRepository gradingCriterionRepository,
-            ModelingPlagiarismDetectionService modelingPlagiarismDetectionService, ModelAssessmentKnowledgeService modelAssessmentKnowledgeService) {
+            ModelingPlagiarismDetectionService modelingPlagiarismDetectionService, ModelAssessmentKnowledgeService modelAssessmentKnowledgeService, ChannelService channelService) {
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.courseService = courseService;
         this.modelingExerciseService = modelingExerciseService;
@@ -105,6 +108,7 @@ public class ModelingExerciseResource {
         this.gradingCriterionRepository = gradingCriterionRepository;
         this.modelingPlagiarismDetectionService = modelingPlagiarismDetectionService;
         this.modelAssessmentKnowledgeService = modelAssessmentKnowledgeService;
+        this.channelService = channelService;
     }
 
     // TODO: most of these calls should be done in the context of a course
@@ -140,6 +144,7 @@ public class ModelingExerciseResource {
         // if exercise is created from scratch we create new knowledge instance
         modelingExercise.setKnowledge(modelAssessmentKnowledgeService.createNewKnowledge());
         ModelingExercise result = modelingExerciseRepository.save(modelingExercise);
+        channelService.createExerciseChannel(result);
         modelingExerciseService.scheduleOperations(result.getId());
         groupNotificationScheduleService.checkNotificationsForNewExercise(modelingExercise);
 

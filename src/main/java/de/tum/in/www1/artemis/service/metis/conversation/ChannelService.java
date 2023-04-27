@@ -10,6 +10,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
@@ -200,6 +202,30 @@ public class ChannelService {
         channel.setIsArchived(false);
         var updatedChannel = channelRepository.save(channel);
         conversationService.notifyAllConversationMembersAboutUpdate(updatedChannel);
+    }
+
+    public void createLectureChannel(Lecture lecture) {
+        Channel channelToCreate = new Channel();
+        // TODO: Figure out whether two digits for the number are enough
+        channelToCreate.setName(String.format("l-%02d-%.15s", lecture.getId(), lecture.getTitle().toLowerCase().replace(' ', '-')));
+        channelToCreate.setIsPublic(true);
+        channelToCreate.setIsAnnouncementChannel(false);
+        channelToCreate.setIsArchived(false);
+        channelToCreate.setDescription("Channel for lecture - " + lecture.getTitle());
+        channelToCreate.setLecture(lecture);
+        createChannel(lecture.getCourse(), channelToCreate, Optional.of(userRepository.getUserWithGroupsAndAuthorities()));
+    }
+
+    public void createExerciseChannel(Exercise exercise) {
+        Channel channelToCreate = new Channel();
+        // TODO: Figure out whether two digits for the number are enough
+        channelToCreate.setName(String.format("e-%02d-%.15s", exercise.getId(), exercise.getTitle().toLowerCase().replace(' ', '-')));
+        channelToCreate.setIsPublic(true);
+        channelToCreate.setIsAnnouncementChannel(false);
+        channelToCreate.setIsArchived(false);
+        channelToCreate.setDescription("Channel for exercise - " + exercise.getTitle());
+        channelToCreate.setExercise(exercise);
+        createChannel(exercise.getCourseViaExerciseGroupOrCourseMember(), channelToCreate, Optional.of(userRepository.getUserWithGroupsAndAuthorities()));
     }
 
 }
