@@ -331,6 +331,6 @@ jobs:
           TAG: ${{ steps.compute-tag.outputs.result }}
       run: |
           for host in $DEPLOYMENT_HOSTS; do
-            ./artemis-server-cli docker-deploy "$DEPLOYMENT_USER@$host" -g "$GATEWAY_USER@$GATEWAY_HOST" -t $TAG -p $GITHUB_HEAD_REF -c $DEPLOYMENT_FOLDER -y
+            ./artemis-server-cli docker-deploy "$DEPLOYMENT_USER@$host" -g "$GATEWAY_USER@$GATEWAY_HOST" -t $TAG -b $GITHUB_HEAD_REF -d $DEPLOYMENT_FOLDER -y
             sleep 20
           done
