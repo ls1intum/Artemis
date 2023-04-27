@@ -350,7 +350,7 @@ function docker_deploy_menu {
     local directory=''
 
     local OPTIND
-    while getopts ":hy:g:t:b:d" opt; do
+    while getopts ":hyg:t:b:d:" opt; do
         case ${opt} in
             h )
                 deploy_help
