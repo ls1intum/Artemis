@@ -189,7 +189,9 @@ public class ProgrammingExerciseResource {
         try {
             // Setup all repositories etc
             ProgrammingExercise newProgrammingExercise = programmingExerciseService.createProgrammingExercise(programmingExercise);
-            channelService.createExerciseChannel(newProgrammingExercise);
+            if(newProgrammingExercise.isCourseExercise()) {
+                channelService.createExerciseChannel(newProgrammingExercise);
+            }
 
             // Create default static code analysis categories
             if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled())) {

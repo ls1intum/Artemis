@@ -282,8 +282,11 @@ public class ProgrammingExerciseImportService {
         programmingExerciseService.checkIfProjectExists(newExercise);
 
         final var importedProgrammingExercise = programmingExerciseImportBasicService.importProgrammingExerciseBasis(originalProgrammingExercise, newExercise);
-        channelService.createExerciseChannel(importedProgrammingExercise);
         importRepositories(originalProgrammingExercise, importedProgrammingExercise);
+
+        if(importedProgrammingExercise.isCourseExercise()) {
+            channelService.createExerciseChannel(importedProgrammingExercise);
+        }
 
         // Update the template files
         if (updateTemplate) {

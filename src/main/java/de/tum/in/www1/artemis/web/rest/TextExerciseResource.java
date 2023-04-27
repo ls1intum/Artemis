@@ -168,7 +168,9 @@ public class TextExerciseResource {
         // if exercise is created from scratch we create new knowledge instance
         textExercise.setKnowledge(textAssessmentKnowledgeService.createNewKnowledge());
         TextExercise result = textExerciseRepository.save(textExercise);
-        channelService.createExerciseChannel(result);
+        if(result.isCourseExercise()) {
+            channelService.createExerciseChannel(result);
+        }
         instanceMessageSendService.sendTextExerciseSchedule(result.getId());
         groupNotificationScheduleService.checkNotificationsForNewExercise(textExercise);
         return ResponseEntity.created(new URI("/api/text-exercises/" + result.getId())).body(result);

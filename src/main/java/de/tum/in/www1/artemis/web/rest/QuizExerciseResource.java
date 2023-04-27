@@ -155,7 +155,9 @@ public class QuizExerciseResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
 
         quizExercise = quizExerciseService.save(quizExercise);
-        channelService.createExerciseChannel(quizExercise);
+        if(quizExercise.isCourseExercise()) {
+            channelService.createExerciseChannel(quizExercise);
+        }
 
         return ResponseEntity.created(new URI("/api/quiz-exercises/" + quizExercise.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, quizExercise.getId().toString())).body(quizExercise);
