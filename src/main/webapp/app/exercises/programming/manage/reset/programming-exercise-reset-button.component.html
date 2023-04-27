@@ -1,0 +1,20 @@
+<button
+    *ngIf="programmingExercise.isAtLeastInstructor"
+    [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
+    class="btn btn-danger btn-sm"
+    style="display: flex; justify-content: center; align-items: center"
+    (click)="openResetDialog($event)"
+    [ngClass]="{ 'd-inline-flex': !fullWidth }"
+    [ngStyle]="{
+        width: fullWidth ? '100%' : '',
+        'border-top-left-radius': !roundedCornersTop ? '0' : '',
+        'border-top-right-radius': !roundedCornersTop ? '0' : '',
+        'border-bottom-left-radius': !roundedCornersBottom ? '0' : '',
+        'border-bottom-right-radius': !roundedCornersBottom ? '0' : ''
+    }"
+>
+    <div>
+        <fa-icon [icon]="faTimes"></fa-icon>
+        <span jhiTranslate="entity.action.reset">Reset</span>
+    </div>
+</button>
