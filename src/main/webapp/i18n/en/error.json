@@ -30,7 +30,7 @@
         "groupNotFound": "The group you entered was not found.",
         "studentNotFound": "That student could not be found in this course.",
         "noLegalDocumentFile": "The requested document was not found.",
-        "emptyLegalDocument": "The {{ documentType }} file must not be empty.",
+        "emptyLegalDocument": "The privacy statement or the imprint must not be empty.",
         "cantSaveFile": "The uploaded file {{ fileName }} could not be saved.",
         "emptyFile": "The uploaded file {{ fileName }} is empty. Please check the file and try again.",
         "externalSubmissionBeforeDueDate": "External submissions are not supported before the exercise due date.",

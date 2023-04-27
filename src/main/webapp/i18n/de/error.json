@@ -30,7 +30,7 @@
         "unknownAction": "Diese Aktion kann nicht durchgeführt werden.",
         "groupNotFound": "Die von dir eingegebene Gruppe wurde nicht gefunden.",
         "noLegalDocumentFile": "Das angeforderte Dokument konnte nicht gefunden werden.",
-        "emptyLegalDocument": "Die Datei {{ documentType }} darf nicht leer sein.",
+        "emptyLegalDocument": "Das Impressum oder die Datenschutzerklärung darf nicht leer sein.",
         "studentNotFound": "Studierende:r konnte in diesem Kurs nicht gefunden werden.",
         "cantSaveFile": "Die hochgeladene Datei {{ fileName }} konnte nicht gespeichert werden.",
         "emptyFile": "Die hochgeladene Datei {{ fileName }} ist leer. Bitte überprüfe die Datei und versuche es erneut.",

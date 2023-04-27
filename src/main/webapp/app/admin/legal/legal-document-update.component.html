@@ -32,7 +32,7 @@
                 id="update-legal-document-btn"
                 (click)="updateLegalDocument()"
                 [isLoading]="isSaving"
-                [disabled]="!markdownEditor?.markdown || markdownEditor?.markdown?.trim() === ''"
+                [disabled]="!markdownEditor?.markdown || markdownEditor?.markdown?.trim() === '' || isSaving"
                 [title]="'entity.action.save'"
                 [icon]="faSave"
                 >Save
