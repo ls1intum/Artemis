@@ -1,6 +1,6 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnChanges } from '@angular/core';
 import dayjs from 'dayjs/esm';
-import { QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
+import { QuizQuestion, QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
 import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
 import { AnswerOption } from 'app/entities/quiz/answer-option.model';
 import { DragAndDropMapping } from 'app/entities/quiz/drag-and-drop-mapping.model';
@@ -8,18 +8,18 @@ import { ShortAnswerSubmittedText } from 'app/entities/quiz/short-answer-submitt
 import { MultipleChoiceSubmittedAnswer } from 'app/entities/quiz/multiple-choice-submitted-answer.model';
 import { DragAndDropSubmittedAnswer } from 'app/entities/quiz/drag-and-drop-submitted-answer.model';
 import { ShortAnswerSubmittedAnswer } from 'app/entities/quiz/short-answer-submitted-answer.model';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
 import { Exam } from 'app/entities/exam.model';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { Result } from 'app/entities/result.model';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 
 @Component({
     selector: 'jhi-quiz-exam-summary',
     templateUrl: './quiz-exam-summary.component.html',
 })
-export class QuizExamSummaryComponent implements OnInit {
+export class QuizExamSummaryComponent implements OnChanges {
     readonly DRAG_AND_DROP = QuizQuestionType.DRAG_AND_DROP;
     readonly MULTIPLE_CHOICE = QuizQuestionType.MULTIPLE_CHOICE;
     readonly SHORT_ANSWER = QuizQuestionType.SHORT_ANSWER;
@@ -29,7 +29,10 @@ export class QuizExamSummaryComponent implements OnInit {
     shortAnswerSubmittedTexts = new Map<number, ShortAnswerSubmittedText[]>();
 
     @Input()
-    exercise: QuizExercise;
+    quizQuestions: QuizQuestion[];
+
+    @Input()
+    studentParticipations: StudentParticipation[] | undefined;
 
     @Input()
     submission: QuizSubmission;
@@ -44,15 +47,16 @@ export class QuizExamSummaryComponent implements OnInit {
 
     constructor(private exerciseService: QuizExerciseService, private serverDateService: ArtemisServerDateService) {}
 
-    ngOnInit(): void {
+    ngOnChanges(): void {
         this.updateViewFromSubmission();
-        this.result =
-            this.exercise.studentParticipations &&
-            this.exercise.studentParticipations.length > 0 &&
-            this.exercise.studentParticipations[0].results &&
-            this.exercise.studentParticipations[0].results.length > 0
-                ? this.exercise.studentParticipations[0].results[0]
-                : undefined;
+        if (this.studentParticipations) {
+            this.result =
+                this.studentParticipations.length > 0 && this.studentParticipations[0].results && this.studentParticipations[0].results.length > 0
+                    ? this.studentParticipations[0].results[0]
+                    : undefined;
+        } else {
+            this.result = this.submission.results && this.submission.results.length > 0 ? this.submission.results[0] : undefined;
+        }
     }
 
     /**
@@ -68,9 +72,9 @@ export class QuizExamSummaryComponent implements OnInit {
         this.dragAndDropMappings = new Map<number, DragAndDropMapping[]>();
         this.shortAnswerSubmittedTexts = new Map<number, ShortAnswerSubmittedText[]>();
 
-        if (this.exercise && this.exercise.quizQuestions && this.submission) {
+        if (this.quizQuestions && this.submission) {
             // iterate through all questions of this quiz
-            this.exercise.quizQuestions.forEach((question) => {
+            this.quizQuestions.forEach((question) => {
                 // find the submitted answer that belongs to this question, only when submitted answers already exist
                 const submittedAnswer = this.submission.submittedAnswers
                     ? this.submission.submittedAnswers.find((answer) => {
@@ -128,11 +132,8 @@ export class QuizExamSummaryComponent implements OnInit {
      * We only show the notice when there is a publishResultsDate that has already passed by now and the result is missing
      */
     get showMissingResultsNotice(): boolean {
-        if (this.exam && this.exam.publishResultsDate && this.exercise && this.exercise.studentParticipations && this.exercise.studentParticipations.length > 0) {
-            return (
-                dayjs(this.exam.publishResultsDate).isBefore(this.serverDateService.now()) &&
-                (!this.exercise.studentParticipations[0].results || this.exercise.studentParticipations[0].results.length <= 0)
-            );
+        if (this.exam && this.exam.publishResultsDate && this.studentParticipations && this.studentParticipations.length > 0) {
+            return dayjs(this.exam.publishResultsDate).isBefore(this.serverDateService.now()) && !this.result;
         }
         return false;
     }

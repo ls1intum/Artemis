@@ -1,10 +1,9 @@
 import { ChangeDetectorRef, Component, Input, OnInit, QueryList, ViewChildren } from '@angular/core';
-import { QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
+import { QuizQuestion, QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
 import { MultipleChoiceQuestionComponent } from 'app/exercises/quiz/shared/questions/multiple-choice-question/multiple-choice-question.component';
 import { DragAndDropQuestionComponent } from 'app/exercises/quiz/shared/questions/drag-and-drop-question/drag-and-drop-question.component';
 import { ShortAnswerQuestionComponent } from 'app/exercises/quiz/shared/questions/short-answer-question/short-answer-question.component';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import * as smoothscroll from 'smoothscroll-polyfill';
 import { AnswerOption } from 'app/entities/quiz/answer-option.model';
 import { DragAndDropMapping } from 'app/entities/quiz/drag-and-drop-mapping.model';
@@ -12,12 +11,12 @@ import { ShortAnswerSubmittedText } from 'app/entities/quiz/short-answer-submitt
 import { MultipleChoiceSubmittedAnswer } from 'app/entities/quiz/multiple-choice-submitted-answer.model';
 import { DragAndDropSubmittedAnswer } from 'app/entities/quiz/drag-and-drop-submitted-answer.model';
 import { ShortAnswerSubmittedAnswer } from 'app/entities/quiz/short-answer-submitted-answer.model';
-import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
 import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-submission.component';
 import { cloneDeep } from 'lodash-es';
 import { ArtemisQuizService } from 'app/shared/quiz/quiz.service';
 import { Submission } from 'app/entities/submission.model';
-import { Exercise, IncludedInOverallScore } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
+import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
 
 @Component({
     selector: 'jhi-quiz-submission-exam',
@@ -47,7 +46,18 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
     @Input()
     studentSubmission: QuizSubmission;
 
-    @Input() exercise: QuizExercise;
+    @Input() exerciseId: number | undefined;
+
+    @Input() quizQuestions: QuizQuestion[] | undefined;
+
+    @Input() randomizeQuizQuestions: boolean | undefined;
+
+    @Input() title: string | undefined;
+
+    @Input() maxPoints: number | undefined;
+
+    @Input() includedInOverallScore: IncludedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY;
+
     selectedAnswerOptions = new Map<number, AnswerOption[]>();
     dragAndDropMappings = new Map<number, DragAndDropMapping[]>();
     shortAnswerSubmittedTexts = new Map<number, ShortAnswerSubmittedText[]>();
@@ -67,7 +77,7 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
     }
 
     getExercise(): Exercise {
-        return this.exercise;
+        return { id: this.exerciseId, type: ExerciseType.QUIZ } as Exercise;
     }
 
     /**
@@ -75,14 +85,14 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
      */
     initQuiz() {
         // randomize order
-        this.quizService.randomizeOrder(this.exercise);
+        this.quizService.randomizeOrder(this.quizQuestions, this.randomizeQuizQuestions);
         // prepare selection arrays for each question
         this.selectedAnswerOptions = new Map<number, AnswerOption[]>();
         this.dragAndDropMappings = new Map<number, DragAndDropMapping[]>();
         this.shortAnswerSubmittedTexts = new Map<number, ShortAnswerSubmittedText[]>();
 
-        if (this.exercise.quizQuestions) {
-            this.exercise.quizQuestions.forEach((question) => {
+        if (this.quizQuestions) {
+            this.quizQuestions.forEach((question) => {
                 if (question.type === QuizQuestionType.MULTIPLE_CHOICE) {
                     // add the array of selected options to the dictionary (add an empty array, if there is no submittedAnswer for this question)
                     this.selectedAnswerOptions.set(question.id!, []);
@@ -131,9 +141,9 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
         this.dragAndDropMappings = new Map<number, DragAndDropMapping[]>();
         this.shortAnswerSubmittedTexts = new Map<number, ShortAnswerSubmittedText[]>();
 
-        if (this.exercise.quizQuestions) {
+        if (this.quizQuestions) {
             // iterate through all questions of this quiz
-            this.exercise.quizQuestions.forEach((question) => {
+            this.quizQuestions.forEach((question) => {
                 // find the submitted answer that belongs to this question, only when submitted answers already exist
                 const submittedAnswer = this.studentSubmission?.submittedAnswers?.find((answer) => {
                     return answer.quizQuestion?.id === question.id;
@@ -206,7 +216,7 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
         // for multiple-choice questions
         this.selectedAnswerOptions.forEach((answerOptions, questionID) => {
             // find the question object for the given question id
-            const question = this.exercise?.quizQuestions?.find(function (selectedQuestion) {
+            const question = this.quizQuestions?.find(function (selectedQuestion) {
                 return selectedQuestion.id === Number(questionID);
             });
             if (!question) {
@@ -223,7 +233,7 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
         // for drag-and-drop questions
         this.dragAndDropMappings.forEach((mappings, questionID) => {
             // find the question object for the given question id
-            const question = this.exercise.quizQuestions?.find(function (localQuestion) {
+            const question = this.quizQuestions?.find(function (localQuestion) {
                 return localQuestion.id === Number(questionID);
             });
             if (!question) {
@@ -239,7 +249,7 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
         // for short-answer questions
         this.shortAnswerSubmittedTexts.forEach((submittedTexts, questionID) => {
             // find the question object for the given question id
-            const question = this.exercise.quizQuestions?.find(function (localQuestion) {
+            const question = this.quizQuestions?.find(function (localQuestion) {
                 return localQuestion.id === Number(questionID);
             });
             if (!question) {

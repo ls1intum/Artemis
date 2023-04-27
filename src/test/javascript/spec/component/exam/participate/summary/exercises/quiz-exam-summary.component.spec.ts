@@ -86,7 +86,8 @@ describe('QuizExamSummaryComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(QuizExamSummaryComponent);
                 component = fixture.componentInstance;
-                component.exercise = exercise;
+                component.quizQuestions = exercise.quizQuestions!;
+                component.studentParticipations = exercise.studentParticipations;
                 component.submission = { id: 2, submittedAnswers: [] };
                 component.resultsPublished = true;
                 component.exam = { id: 1 } as Exam;
@@ -103,7 +104,7 @@ describe('QuizExamSummaryComponent', () => {
 
     it('should initialize the solution dictionaries correctly', () => {
         component.submission = submissionWithAnswers;
-        fixture.detectChanges();
+        component.ngOnChanges();
         expect(component.selectedAnswerOptions.get(1)![0]).toEqual(correctAnswerOption);
         expect(component.getScoreForQuizQuestion(1)).toBe(1);
         expect(component.dragAndDropMappings.get(2)![0]).toEqual(correctDragAndDropMapping);

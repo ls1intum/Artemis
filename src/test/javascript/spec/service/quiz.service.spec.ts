@@ -184,14 +184,14 @@ describe('Quiz Service', () => {
 
     it('shuffles order of Answer options', () => {
         const quizExercise: any = Object.assign({}, quiz, { quizQuestions: [multipleChoice] });
-        service.randomizeOrder(quizExercise);
+        service.randomizeOrder(quizExercise.quizQuestions, quizExercise.randomizeQuestionOrder);
         expect(quizExercise.quizQuestions[0].answerOptions).toStrictEqual(shuffledAnswers);
     });
 
     it('switches order of Quiz Questions', () => {
-        const quizExercise = Object.assign({}, quiz, { quizQuestions: [shortAnswer, multipleChoice] });
+        const quizExercise: any = Object.assign({}, quiz, { quizQuestions: [shortAnswer, multipleChoice] });
         const expected = Object.assign({}, quiz, { quizQuestions: [multipleChoice, shortAnswer] });
-        service.randomizeOrder(quizExercise);
+        service.randomizeOrder(quizExercise.quizQuestions, quizExercise.randomizeQuestionOrder);
         expect(quizExercise).toStrictEqual(expected);
     });
 });
