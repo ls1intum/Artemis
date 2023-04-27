@@ -8,6 +8,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { getElement } from '../../../helpers/utils/general.utils';
+import { By } from '@angular/platform-browser';
 import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -266,8 +267,8 @@ describe('CourseDiscussionComponent', () => {
                 },
             ],
         });
-        const contextOptions = getElement(fixture.debugElement, 'mat-select[name=context]');
-        contextOptions.dispatchEvent(new Event('change'));
+        const contextOptions = fixture.debugElement.query(By.css('mat-select[name=context]'));
+        contextOptions.triggerEventHandler('openedChange', false);
         tick();
         fixture.detectChanges();
         expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledTimes(3);
@@ -285,8 +286,8 @@ describe('CourseDiscussionComponent', () => {
                 },
             ],
         });
-        const contextOptions = getElement(fixture.debugElement, 'mat-select[name=context]');
-        contextOptions.dispatchEvent(new Event('change'));
+        const contextOptions = fixture.debugElement.query(By.css('mat-select[name=context]'));
+        contextOptions.triggerEventHandler('openedChange', false);
         tick();
         fixture.detectChanges();
         expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledTimes(3);
@@ -304,12 +305,43 @@ describe('CourseDiscussionComponent', () => {
                 },
             ],
         });
-        const contextOptions = getElement(fixture.debugElement, 'mat-select[name=context]');
-        contextOptions.dispatchEvent(new Event('change'));
+        const contextOptions = fixture.debugElement.query(By.css('mat-select[name=context]'));
+        contextOptions.triggerEventHandler('openedChange', false);
         tick();
         fixture.detectChanges();
         expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledTimes(3);
         expect(component.posts).toEqual(metisLecturePosts);
+    }));
+
+    it('should fetch new posts when multiple context filters are selected', fakeAsync(() => {
+        component.ngOnInit();
+        tick();
+        fixture.detectChanges();
+        component.formGroup.patchValue({
+            context: [
+                {
+                    lectureId: metisLecture.id,
+                },
+                {
+                    exerciseId: metisExercise.id,
+                },
+                {
+                    courseWideContext: CourseWideContext.TECH_SUPPORT,
+                },
+                {
+                    courseWideContext: CourseWideContext.RANDOM,
+                },
+                {
+                    courseWideContext: CourseWideContext.ORGANIZATION,
+                },
+            ],
+        });
+        const contextOptions = fixture.debugElement.query(By.css('mat-select[name=context]'));
+        contextOptions.triggerEventHandler('openedChange', false);
+        tick();
+        fixture.detectChanges();
+        expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledTimes(3);
+        expect(component.posts).toHaveLength(metisLecturePosts.length + metisExercisePosts.length + metisCoursePostsWithCourseWideContext.length);
     }));
 
     it('should invoke metis service forcing a reload when sort criterion changed', fakeAsync(() => {

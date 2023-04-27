@@ -36,7 +36,6 @@
                             id="filter-context"
                             class="form-select course-discussion-select"
                             panelClass="mat-select-panel"
-                            (change)="onSelectContext()"
                             (openedChange)="$event === false ? onSelectContext() : null"
                             name="context"
                             placeholder="{{ course.title + ' ' + ('artemisApp.metis.overview.courseFilterExplanation' | artemisTranslate) }}"
