@@ -18,7 +18,7 @@ import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { Observable, of } from 'rxjs';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTestModule } from '../../../test.module';
-import { UsersImportButtonComponent } from 'app/shared/import/users-import-button.component';
+import { UsersImportButtonComponent } from 'app/shared/user-import/users-import-button.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ExamUserDTO } from 'app/entities/exam-user-dto.model';
 import { ExamUser } from 'app/entities/exam-user.model';
