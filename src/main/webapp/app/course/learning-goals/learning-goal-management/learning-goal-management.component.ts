@@ -33,7 +33,6 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
     nodes: Node[] = [];
     edges: Edge[] = [];
     clusters: ClusterNode[] = [];
-    containsCircularRelation = false;
     learningGoalRelationError = LearningGoalRelationError;
     relationError: LearningGoalRelationError = LearningGoalRelationError.NONE;
 
@@ -82,7 +81,7 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
             this.relationError = LearningGoalRelationError.EXISTING;
             return;
         }
-        if (this.updateContainsCircularRelation()) {
+        if (this.containsCircularRelation()) {
             this.relationError = LearningGoalRelationError.CIRCULAR;
             return;
         }
@@ -104,27 +103,6 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
                 throw new TypeError('There is no error message if there is no error.');
             }
         }
-    }
-
-    updateContainsCircularRelation(): boolean {
-        if (this.headLearningGoal !== this.tailLearningGoal) {
-            return !!(
-                this.tailLearningGoal &&
-                this.headLearningGoal &&
-                this.relationType &&
-                this.doesCreateCircularRelation(this.nodes, this.edges, {
-                    source: this.tailLearningGoal! + '',
-                    target: this.headLearningGoal! + '',
-                    label: this.relationType!,
-                } as Edge)
-            );
-        } else {
-            return false;
-        }
-    }
-
-    private doesRelationAlreadyExist(): boolean {
-        return this.edges.find((edge) => edge.source === this.tailLearningGoal?.toString() && edge.target === this.headLearningGoal?.toString()) !== undefined;
     }
 
     identify(index: number, learningGoal: LearningGoal) {
@@ -316,6 +294,27 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
         });
     }
 
+    private containsCircularRelation(): boolean {
+        if (this.headLearningGoal !== this.tailLearningGoal) {
+            return !!(
+                this.tailLearningGoal &&
+                this.headLearningGoal &&
+                this.relationType &&
+                this.doesCreateCircularRelation(this.nodes, this.edges, {
+                    source: this.tailLearningGoal! + '',
+                    target: this.headLearningGoal! + '',
+                    label: this.relationType!,
+                } as Edge)
+            );
+        } else {
+            return false;
+        }
+    }
+
+    private doesRelationAlreadyExist(): boolean {
+        return this.edges.find((edge) => edge.source === this.tailLearningGoal?.toString() && edge.target === this.headLearningGoal?.toString()) !== undefined;
+    }
+
     /**
      * Checks if adding an edge would create a circular relation
      * @param   {Node[]} nodes an array of all existing nodes of a graph
@@ -360,7 +359,6 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
                 }
                 // create a merged vertex
                 const mergedVertex = new Vertex(tailVertex.getLabel() + ', ' + headVertex.getLabel());
-                //change to set
                 // add all neighbours to merged vertex
                 mergedVertex.getAdjacencyList().push(...headVertex.getAdjacencyList());
                 mergedVertex.getAdjacencyList().push(...tailVertex.getAdjacencyList());
