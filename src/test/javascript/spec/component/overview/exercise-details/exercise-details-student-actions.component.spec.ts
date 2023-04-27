@@ -33,6 +33,7 @@ import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { MockCourseExerciseService } from '../../../helpers/mocks/service/mock-course-exercise.service';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { ArtemisTestModule } from '../../../test.module';
+import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 
 describe('ExerciseDetailsStudentActionsComponent', () => {
     let comp: ExerciseDetailsStudentActionsComponent;
@@ -45,7 +46,7 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
     let getProfileInfoSub: jest.SpyInstance;
 
     const team = { id: 1, students: [{ id: 99 } as User] } as Team;
-    const programmingExercise: ProgrammingExercise = {
+    const programmingExercise: Exercise = {
         id: 42,
         type: ExerciseType.PROGRAMMING,
         studentParticipations: [],
@@ -53,7 +54,7 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         secondCorrectionEnabled: false,
         studentAssignedTeamIdComputed: false,
     };
-    const teamExerciseWithoutTeamAssigned: ProgrammingExercise = {
+    const teamExerciseWithoutTeamAssigned: Exercise = {
         ...programmingExercise,
         mode: ExerciseMode.TEAM,
         teamMode: true,
@@ -102,38 +103,46 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         jest.restoreAllMocks();
     });
 
-    it('should not show the buttons "Team" and "Start exercise" for a team exercise when not assigned to a team yet', fakeAsync(() => {
-        comp.exercise = teamExerciseWithoutTeamAssigned;
+    it.each([ExerciseType.MODELING, ExerciseType.FILE_UPLOAD, ExerciseType.PROGRAMMING, ExerciseType.TEXT])(
+        'should not show the buttons "Team" and "Start exercise" for a team exercise when not assigned to a team yet',
+        fakeAsync((exerciseType: ExerciseType) => {
+            comp.exercise = { ...teamExerciseWithoutTeamAssigned, type: exerciseType };
 
-        fixture.detectChanges();
-        tick();
+            fixture.detectChanges();
+            tick();
 
-        const viewTeamButton = fixture.debugElement.query(By.css('.view-team'));
-        expect(viewTeamButton).toBeNull();
+            const viewTeamButton = fixture.debugElement.query(By.css('.view-team'));
+            expect(viewTeamButton).toBeNull();
 
-        const startExerciseButton = fixture.debugElement.query(By.css('.start-exercise'));
-        expect(startExerciseButton).toBeNull();
-    }));
+            const startExerciseButton = fixture.debugElement.query(By.css('.start-exercise'));
+            expect(startExerciseButton).toBeNull();
+        }),
+    );
 
-    it('should show the button "Team" for a team exercise for a student to view his team when assigned to a team', fakeAsync(() => {
-        comp.exercise = teamExerciseWithTeamAssigned;
+    it.each([ExerciseType.TEXT, ExerciseType.MODELING, ExerciseType.FILE_UPLOAD, ExerciseType.PROGRAMMING])(
+        'should show the button "Team" for a team exercise for a student to view his team when assigned to a team',
+        fakeAsync((exerciseType: ExerciseType) => {
+            comp.exercise = { ...teamExerciseWithTeamAssigned, type: exerciseType };
+            fixture.detectChanges();
+            tick();
 
-        fixture.detectChanges();
-        tick();
+            const viewTeamButton = fixture.debugElement.query(By.css('.view-team'));
+            expect(viewTeamButton).not.toBeNull();
+        }),
+    );
 
-        const viewTeamButton = fixture.debugElement.query(By.css('.view-team'));
-        expect(viewTeamButton).not.toBeNull();
-    }));
+    it.each([ExerciseType.PROGRAMMING, ExerciseType.TEXT, ExerciseType.FILE_UPLOAD, ExerciseType.MODELING])(
+        'should show the button "Start exercise" for a team exercise when assigned to a team',
+        fakeAsync((exerciseType: ExerciseType) => {
+            comp.exercise = { ...teamExerciseWithTeamAssigned, type: exerciseType };
 
-    it('should show the button "Start exercise" for a team exercise when assigned to a team', fakeAsync(() => {
-        comp.exercise = teamExerciseWithTeamAssigned;
+            fixture.detectChanges();
+            tick();
 
-        fixture.detectChanges();
-        tick();
-
-        const startExerciseButton = fixture.debugElement.query(By.css('.start-exercise'));
-        expect(startExerciseButton).not.toBeNull();
-    }));
+            const startExerciseButton = fixture.debugElement.query(By.css('.start-exercise'));
+            expect(startExerciseButton).not.toBeNull();
+        }),
+    );
 
     it('should reflect the correct participation state when team exercise was started', fakeAsync(() => {
         const inactivePart = { id: 2, initializationState: InitializationState.UNINITIALIZED } as StudentParticipation;
