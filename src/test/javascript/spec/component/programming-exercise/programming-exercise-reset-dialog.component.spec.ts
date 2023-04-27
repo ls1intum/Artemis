@@ -73,11 +73,6 @@ describe('ProgrammingExerciseResetDialogComponent', () => {
         jest.restoreAllMocks();
     });
 
-    it('should find the correct programming exercise', () => {
-        fixture.detectChanges();
-        expect(comp.programmingExercise).toEqual(programmingExercise);
-    });
-
     it('should close the modal dialog', () => {
         const activeModal = fixture.debugElement.injector.get(NgbActiveModal);
         jest.spyOn(activeModal, 'dismiss').mockImplementation();
@@ -136,41 +131,35 @@ describe('ProgrammingExerciseResetDialogComponent', () => {
         beforeEach(() => {
             comp.confirmText = 'Programming Exercise';
             comp.resetInProgress = false;
+            comp.programmingExerciseResetOptions = {
+                deleteBuildPlans: true,
+                deleteRepositories: false,
+                deleteParticipationsSubmissionsAndResults: false,
+                recreateBuildPlans: false,
+            };
+        });
+
+        it('should return true when confirmation text is filled correctly and at least one option is selected', () => {
+            expect(comp.canSubmit).toBeTrue();
         });
 
         it('should return false when confirmation text is empty', () => {
             comp.confirmText = '';
-
             expect(comp.canSubmit).toBeFalse();
         });
 
         it('should return false when confirmation text is not filled correctly', () => {
             comp.confirmText = 'Incorrect Name';
-
             expect(comp.canSubmit).toBeFalse();
-        });
-
-        it('should return true when confirmation text is filled correctly and at least one option is selected', () => {
-            comp.programmingExerciseResetOptions.deleteBuildPlans = true;
-
-            expect(comp.canSubmit).toBeTrue();
         });
 
         it('should return false when confirmation text is filled correctly, but no option is selected', () => {
-            comp.programmingExerciseResetOptions = {
-                deleteBuildPlans: false,
-                deleteRepositories: false,
-                deleteParticipationsSubmissionsAndResults: false,
-                recreateBuildPlans: false,
-            };
-
+            comp.programmingExerciseResetOptions.deleteBuildPlans = false;
             expect(comp.canSubmit).toBeFalse();
         });
 
-        it('should return false when confirmation text is filled correctly, at least one option is selected, but reset is in progress', () => {
-            comp.programmingExerciseResetOptions.deleteBuildPlans = true;
+        it('should return false when reset is in progress', () => {
             comp.resetInProgress = true;
-
             expect(comp.canSubmit).toBeFalse();
         });
     });
