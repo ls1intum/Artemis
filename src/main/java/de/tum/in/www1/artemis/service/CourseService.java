@@ -39,10 +39,12 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.notification.GroupNotification;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
 import de.tum.in.www1.artemis.domain.statistics.StatisticsEntry;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.exception.GroupAlreadyExistsException;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupsConfigurationRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
@@ -139,6 +141,8 @@ public class CourseService {
 
     private final TutorialGroupsConfigurationRepository tutorialGroupsConfigurationRepository;
 
+    private final PlagiarismCaseRepository plagiarismCaseRepository;
+
     public CourseService(Environment env, ArtemisAuthenticationProvider artemisAuthenticationProvider, CourseRepository courseRepository, ExerciseService exerciseService,
             ExerciseDeletionService exerciseDeletionService, AuthorizationCheckService authCheckService, UserRepository userRepository, LectureService lectureService,
             GroupNotificationRepository groupNotificationRepository, ExerciseGroupRepository exerciseGroupRepository, AuditEventRepository auditEventRepository,
@@ -148,7 +152,8 @@ public class CourseService {
             RatingRepository ratingRepository, ComplaintService complaintService, ComplaintRepository complaintRepository, ResultRepository resultRepository,
             ComplaintResponseRepository complaintResponseRepository, SubmissionRepository submissionRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             ExerciseRepository exerciseRepository, ParticipantScoreRepository participantScoreRepository, TutorialGroupRepository tutorialGroupRepository,
-            TutorialGroupService tutorialGroupService, TutorialGroupsConfigurationRepository tutorialGroupsConfigurationRepository) {
+            TutorialGroupService tutorialGroupService, TutorialGroupsConfigurationRepository tutorialGroupsConfigurationRepository,
+            PlagiarismCaseRepository plagiarismCaseRepository) {
         this.env = env;
         this.artemisAuthenticationProvider = artemisAuthenticationProvider;
         this.courseRepository = courseRepository;
@@ -183,6 +188,7 @@ public class CourseService {
         this.tutorialGroupRepository = tutorialGroupRepository;
         this.tutorialGroupService = tutorialGroupService;
         this.tutorialGroupsConfigurationRepository = tutorialGroupsConfigurationRepository;
+        this.plagiarismCaseRepository = plagiarismCaseRepository;
     }
 
     /**
@@ -207,6 +213,23 @@ public class CourseService {
                     exercise.filterSensitiveInformation();
                 }
             }
+        }
+    }
+
+    /**
+     * Add plagiarism cases to each exercise.
+     *
+     * @param exercises the course exercises for which the plagiarism cases should be fetched.
+     * @param userId    the user for which the plagiarism cases should be fetched.
+     */
+    public void fetchPlagiarismCasesForCourseExercises(Set<Exercise> exercises, Long userId) {
+        Set<Long> exerciseIds = exercises.stream().map(Exercise::getId).collect(Collectors.toSet());
+        List<PlagiarismCase> plagiarismCasesOfUserInCourseExercises = plagiarismCaseRepository.findByStudentIdAndExerciseIds(userId, exerciseIds);
+        for (Exercise exercise : exercises) {
+            // Add plagiarism cases to each exercise.
+            Set<PlagiarismCase> plagiarismCasesForExercise = plagiarismCasesOfUserInCourseExercises.stream()
+                    .filter(plagiarismCase -> plagiarismCase.getExercise().getId().equals(exercise.getId())).collect(Collectors.toSet());
+            exercise.setPlagiarismCases(plagiarismCasesForExercise);
         }
     }
 

@@ -20,8 +20,9 @@ import { ThemeService } from 'app/core/theme/theme.service';
 import { BonusService } from 'app/grading-system/bonus/bonus.service';
 import { Bonus } from 'app/entities/bonus.model';
 import { HttpResponse } from '@angular/common/http';
-import { CourseScoreCalculationService, ScoreType } from 'app/overview/course-score-calculation.service';
-import { Course } from 'app/entities/course.model';
+import { CourseStorageService } from 'app/course/manage/course-storage.service';
+import { ScoresStorageService } from 'app/course/course-scores/scores-storage.service';
+import { CourseScores, StudentScores } from 'app/course/course-scores/course-scores';
 
 describe('GradeKeyOverviewComponent', () => {
     let fixture: ComponentFixture<GradingKeyOverviewComponent>;
@@ -86,7 +87,8 @@ describe('GradeKeyOverviewComponent', () => {
                 { provide: Router, useClass: MockRouter },
                 MockProvider(GradingSystemService),
                 MockProvider(BonusService),
-                MockProvider(CourseScoreCalculationService),
+                MockProvider(CourseStorageService),
+                MockProvider(ScoresStorageService),
                 MockProvider(ArtemisNavigationUtilService),
                 { provide: LocalStorageService, useClass: MockLocalStorageService },
             ],
@@ -179,11 +181,9 @@ describe('GradeKeyOverviewComponent', () => {
         route.parent!.parent!.snapshot!.params.examId = undefined;
         const courseId = route.parent!.parent!.snapshot!.params.courseId;
         const reachablePoints = 200;
-        const course = { id: courseId, exercises: [{ id: 35 }] } as Course;
-        const courseCalculationService = fixture.debugElement.injector.get(CourseScoreCalculationService);
 
-        const getCourseSpy = jest.spyOn(courseCalculationService, 'getCourse').mockReturnValue(course);
-        const calculateTotalScoresSpy = jest.spyOn(courseCalculationService, 'calculateTotalScores').mockReturnValue(new Map([[ScoreType.REACHABLE_POINTS, reachablePoints]]));
+        const scoresStorageService = fixture.debugElement.injector.get(ScoresStorageService);
+        const getStoredScoresStub = jest.spyOn(scoresStorageService, 'getStoredTotalScores').mockReturnValue(new CourseScores(250, 200, new StudentScores()));
         const gradingSystemServiceSpy = jest.spyOn(gradingSystemService, 'setGradePoints');
 
         jest.spyOn(gradingSystemService, 'findGradeSteps').mockReturnValue(of(gradeStepsDto));
@@ -200,11 +200,8 @@ describe('GradeKeyOverviewComponent', () => {
         expect(comp.isBonus).toBeTrue();
         expect(comp.isExam).toBeFalse();
 
-        expect(getCourseSpy).toHaveBeenCalledOnce();
-        expect(getCourseSpy).toHaveBeenCalledWith(courseId);
-
-        expect(calculateTotalScoresSpy).toHaveBeenCalledOnce();
-        expect(calculateTotalScoresSpy).toHaveBeenCalledWith(course.exercises, course);
+        expect(getStoredScoresStub).toHaveBeenCalledOnce();
+        expect(getStoredScoresStub).toHaveBeenCalledWith(courseId);
 
         expect(gradingSystemServiceSpy).toHaveBeenCalledOnce();
         expect(gradingSystemServiceSpy).toHaveBeenCalledWith([gradeStep1, gradeStep2], reachablePoints);
