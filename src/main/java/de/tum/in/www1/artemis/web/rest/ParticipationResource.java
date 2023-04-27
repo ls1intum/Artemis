@@ -492,10 +492,10 @@ public class ParticipationResource {
             participations = studentParticipationRepository.findByExerciseIdWithLatestAndManualResults(exerciseId);
             participations.forEach(participation -> {
                 participation.setSubmissionCount(participation.getSubmissions().size());
-                if (participation.getResults() != null && participation.getResults().size() != 0) {
+                if (participation.getResults() != null && !participation.getResults().isEmpty()) {
                     participation.setSubmissions(null);
                 }
-                else {
+                else if (participation.getSubmissions() != null && !participation.getSubmissions().isEmpty()) {
                     participation.setSubmissions(Set
                             .of(participation.getSubmissions().stream().filter(submission -> submission.getType() != SubmissionType.ILLEGAL).max(Comparator.naturalOrder()).get()));
                 }
