@@ -19,6 +19,7 @@ import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
 
+import org.assertj.core.data.Offset;
 import org.mockito.ArgumentMatchers;
 import org.mockito.MockedStatic;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -140,6 +141,9 @@ public class CourseTestService {
 
     @Autowired
     private ExamUserRepository examUserRepository;
+
+    @Autowired
+    private ParticipationRepository participationRepository;
 
     private static final int numberOfStudents = 8;
 
@@ -800,6 +804,49 @@ public class CourseTestService {
                 assertThat(receivedCourse.getExams()).hasSize(3);
             }
         }
+    }
+
+    // Test
+    public void testGetCoursesForDashboardPracticeRepositories() throws Exception {
+        User student1 = database.getUserByLogin(userPrefix + "student1");
+
+        Course course = database.createCourse();
+        ProgrammingExercise programmingExercise = database.addProgrammingExerciseToCourse(course, false);
+        programmingExercise.setReleaseDate(ZonedDateTime.now().minusDays(2));
+        programmingExercise.setDueDate(ZonedDateTime.now().minusHours(2));
+        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().minusMinutes(90));
+        programmingExerciseRepository.save(programmingExercise);
+        Result gradedResult = database.addProgrammingParticipationWithResultForExercise(programmingExercise, userPrefix + "student1");
+        gradedResult.completionDate(ZonedDateTime.now().minusHours(3)).assessmentType(AssessmentType.AUTOMATIC).score(42D);
+        resultRepo.save(gradedResult);
+        StudentParticipation gradedParticipation = (StudentParticipation) gradedResult.getParticipation();
+        gradedParticipation.setInitializationState(InitializationState.FINISHED);
+        participationRepository.save(gradedParticipation);
+        database.addProgrammingSubmissionToResultAndParticipation(gradedResult, gradedParticipation, "asdf");
+        StudentParticipation practiceParticipation = ModelFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INITIALIZED, programmingExercise, student1);
+        practiceParticipation.setTestRun(true);
+        participationRepository.save(practiceParticipation);
+        Result practiceResult = database.addResultToParticipation(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusHours(1), practiceParticipation);
+        practiceResult.setRated(false);
+        resultRepo.save(practiceResult);
+        database.addProgrammingSubmissionToResultAndParticipation(practiceResult, practiceParticipation, "ghjk");
+        database.addProgrammingParticipationWithResultForExercise(programmingExercise, userPrefix + "student2");
+
+        List<CourseForDashboardDTO> receivedCoursesForDashboard = request.getList("/api/courses/for-dashboard", HttpStatus.OK, CourseForDashboardDTO.class);
+        CourseForDashboardDTO receivedCourseForDashboard = request.get("/api/courses/" + course.getId() + "/for-dashboard", HttpStatus.OK, CourseForDashboardDTO.class);
+        CourseForDashboardDTO receivedCourseForDashboardFromGeneralCall = receivedCoursesForDashboard.stream().filter(dto -> dto.course().getId().equals(course.getId()))
+                .findFirst().get();
+
+        assertThat(receivedCourseForDashboardFromGeneralCall.participationResults()).hasSize(1);
+        assertThat(receivedCourseForDashboard.participationResults()).hasSize(1);
+
+        assertThat(receivedCourseForDashboardFromGeneralCall.course().getExercises().stream().findFirst().get().getStudentParticipations()).hasSize(1);
+        assertThat(receivedCourseForDashboard.course().getExercises().stream().findFirst().get().getStudentParticipations()).hasSize(2);
+
+        assertThat(receivedCourseForDashboardFromGeneralCall.totalScores().studentScores().absoluteScore()).isEqualTo(0.42 * 42, Offset.offset(0.1));
+        assertThat(receivedCourseForDashboard.totalScores().studentScores().absoluteScore()).isEqualTo(0.42 * 42, Offset.offset(0.1));
+        assertThat(receivedCourseForDashboardFromGeneralCall.programmingScores().studentScores().absoluteScore()).isEqualTo(0.42 * 42, Offset.offset(0.1));
+        assertThat(receivedCourseForDashboard.programmingScores().studentScores().absoluteScore()).isEqualTo(0.42 * 42, Offset.offset(0.1));
     }
 
     // Test

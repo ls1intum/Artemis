@@ -197,9 +197,9 @@ public class CourseService {
      * @param courses the courses for which the participations should be fetched
      * @param user    the user for which the participations should be fetched
      */
-    public void fetchParticipationsWithSubmissionsAndResultsForCourses(List<Course> courses, User user) {
+    public void fetchParticipationsWithSubmissionsAndResultsForCourses(List<Course> courses, User user, boolean includeTestRuns) {
         Set<Exercise> exercises = courses.stream().flatMap(course -> course.getExercises().stream()).collect(Collectors.toSet());
-        List<StudentParticipation> participationsOfUserInExercises = studentParticipationRepository.getAllParticipationsOfUserInExercises(user, exercises);
+        List<StudentParticipation> participationsOfUserInExercises = studentParticipationRepository.getAllParticipationsOfUserInExercises(user, exercises, includeTestRuns);
         if (participationsOfUserInExercises.isEmpty()) {
             return;
         }

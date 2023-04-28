@@ -260,7 +260,7 @@ public class ExerciseService {
             throw new IllegalArgumentException("All exercises must be from the same course!");
         }
         Course course = courses.stream().findFirst().get();
-        List<StudentParticipation> participationsOfUserInExercises = studentParticipationRepository.getAllParticipationsOfUserInExercises(user, exercises);
+        List<StudentParticipation> participationsOfUserInExercises = studentParticipationRepository.getAllParticipationsOfUserInExercises(user, exercises, false);
         boolean isStudent = !authCheckService.isAtLeastTeachingAssistantInCourse(course, user);
         for (Exercise exercise : exercises) {
             // add participation with submission and result to each exercise
