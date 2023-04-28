@@ -157,6 +157,7 @@ public class ProgrammingExerciseExportService {
 
     /**
      * Export instructor repositories and optionally students' repositories in a zip file.
+     *
      * The outputDir is used to store the zip file and temporary files used for zipping so make
      * sure to delete it if it's no longer used.
      *
@@ -236,6 +237,7 @@ public class ProgrammingExerciseExportService {
     /**
      * Exports a repository available for an instructor/tutor for a given programming exercise. This can be a template,
      * solution, or tests repository.
+     *
      * The repository download directory is used as the output directory and is destroyed after 5 minutes.
      *
      * @param exerciseId     The id of the programming exercise that has the repository
@@ -264,6 +266,7 @@ public class ProgrammingExerciseExportService {
 
     /**
      * Exports an auxiliary repository available for an instructor/editor/tutor for a given programming exercise.
+     *
      * The repository download directory is used as the output directory and is destroyed after 5 minutes.
      *
      * @param exerciseId          The id of the programming exercise that has the repository
