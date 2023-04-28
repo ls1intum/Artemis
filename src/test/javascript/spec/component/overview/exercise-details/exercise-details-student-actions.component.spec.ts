@@ -33,7 +33,6 @@ import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { MockCourseExerciseService } from '../../../helpers/mocks/service/mock-course-exercise.service';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { ArtemisTestModule } from '../../../test.module';
-import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 
 describe('ExerciseDetailsStudentActionsComponent', () => {
     let comp: ExerciseDetailsStudentActionsComponent;
@@ -46,7 +45,7 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
     let getProfileInfoSub: jest.SpyInstance;
 
     const team = { id: 1, students: [{ id: 99 } as User] } as Team;
-    const programmingExercise: Exercise = {
+    const exercise: Exercise = {
         id: 42,
         type: ExerciseType.PROGRAMMING,
         studentParticipations: [],
@@ -55,7 +54,7 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         studentAssignedTeamIdComputed: false,
     };
     const teamExerciseWithoutTeamAssigned: Exercise = {
-        ...programmingExercise,
+        ...exercise,
         mode: ExerciseMode.TEAM,
         teamMode: true,
         studentAssignedTeamIdComputed: true,
@@ -264,7 +263,7 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
             individualDueDate: undefined,
         };
 
-        comp.exercise = { ...programmingExercise, allowManualFeedbackRequests: true };
+        comp.exercise = { ...exercise, allowManualFeedbackRequests: true };
         comp.gradedParticipation = participation;
 
         expect(comp.isFeedbackRequestButtonDisabled()).toBeTrue();
@@ -277,7 +276,7 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
             individualDueDate: undefined,
         };
 
-        comp.exercise = { ...programmingExercise, allowManualFeedbackRequests: true };
+        comp.exercise = { ...exercise, allowManualFeedbackRequests: true };
         comp.gradedParticipation = participation;
 
         expect(comp.isFeedbackRequestButtonDisabled()).toBeFalse();
