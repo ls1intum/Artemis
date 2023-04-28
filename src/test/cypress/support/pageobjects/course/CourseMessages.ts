@@ -1,4 +1,4 @@
-import { BASE_API, POST } from '../../constants';
+import { BASE_API, DELETE, POST, PUT } from '../../constants';
 
 /**
  * A class which encapsulates UI selectors and actions for the course creation page.
@@ -91,11 +91,96 @@ export class CourseMessagesPage {
 
     editDescription(newDescription: string) {
         cy.get('#description-section').find('.action-button').click();
-        cy.get('.channels-overview').find('#description').clear().type(newDescription);
+        cy.get('.channels-overview').find('#description').type(newDescription);
         cy.get('#submitButton').click();
     }
 
     closeEditPanel() {
         cy.get('.conversation-detail-dialog').find('.btn-close').click();
+    }
+
+    writeMessage(message: string) {
+        cy.get('.markdown-editor').find('.ace_editor').click().type(message, { delay: 8 });
+    }
+
+    checkMessage(messageId: number, message: string) {
+        this.getSinglePost(messageId).find('.markdown-preview').contains(message);
+    }
+
+    editMessage(messageId: number, message: string) {
+        this.getSinglePost(messageId).find('.editIcon').click();
+        this.getSinglePost(messageId).find('.markdown-editor').find('.ace_editor').click().type(message, { delay: 8 });
+        cy.intercept(PUT, BASE_API + 'courses/*/messages/*').as('updateMessage');
+        this.getSinglePost(messageId).find('#save').click();
+        cy.wait('@updateMessage');
+    }
+
+    deleteMessage(messageId: number) {
+        cy.intercept(DELETE, BASE_API + 'courses/*/messages/*').as('deleteMessage');
+        this.getSinglePost(messageId).find('.deleteIcon').click();
+        this.getSinglePost(messageId).find('.deleteIcon').click();
+        cy.wait('@deleteMessage');
+    }
+
+    getSinglePost(postID: number) {
+        return cy.get(`#item-${postID}`);
+    }
+
+    save() {
+        cy.intercept(POST, BASE_API + 'courses/*/messages').as('createMessage');
+        cy.get('#save').click();
+        return cy.wait('@createMessage');
+    }
+
+    createGroupChatButton() {
+        cy.get('#createGroupChat').click();
+    }
+
+    createGroupChat() {
+        cy.intercept(POST, BASE_API + 'courses/*/group-chats').as('createGroupChat');
+        cy.get('#submitButton').click();
+        return cy.wait('@createGroupChat');
+    }
+
+    updateGroupChat() {
+        cy.intercept(POST, BASE_API + 'courses/*/group-chats/*/register').as('updateGroupChat');
+        cy.get('#submitButton').click();
+        cy.wait('@updateGroupChat');
+    }
+
+    addUserToGroupChat(user: string) {
+        cy.get('#users-selector0-user-input').type(user);
+        cy.get('#ngb-typeahead-0')
+            .contains(new RegExp('\\(' + user + '\\)'))
+            .click();
+    }
+
+    addUserToGroupChatButton() {
+        cy.get('.addUsers').click();
+    }
+
+    listMembersButton(courseID: number, conversationID: number) {
+        cy.visit(`/courses/${courseID}/messages?conversationId=${conversationID}`);
+        cy.get('.members').click();
+    }
+
+    checkMemberList(name: string) {
+        cy.get('jhi-conversation-members').contains(name);
+    }
+
+    openSettingsTab() {
+        cy.get('.settings-tab').click();
+    }
+
+    leaveGroupChat() {
+        cy.get('.leave-conversation').click();
+    }
+
+    checkGroupChatExists(name: string, exist: boolean) {
+        if (exist) {
+            cy.get('.conversation-list').should('contain.text', name);
+        } else {
+            cy.get('.conversation-list').should('not.contain.text', name);
+        }
     }
 }

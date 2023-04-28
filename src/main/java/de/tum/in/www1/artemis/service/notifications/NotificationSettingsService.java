@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.service.notifications;
 
 import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.*;
-import static de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants.findCorrespondingNotificationType;
+import static de.tum.in.www1.artemis.domain.notification.NotificationConstants.findCorrespondingNotificationType;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -12,7 +12,7 @@ import de.tum.in.www1.artemis.domain.NotificationSetting;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.notification.Notification;
-import de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants;
+import de.tum.in.www1.artemis.domain.notification.NotificationConstants;
 import de.tum.in.www1.artemis.repository.NotificationSettingRepository;
 
 @Service
@@ -68,6 +68,11 @@ public class NotificationSettingsService {
     // instructor notification setting group
     public static final String NOTIFICATION__INSTRUCTOR_NOTIFICATION__COURSE_AND_EXAM_ARCHIVING_STARTED = "notification.instructor-notification.course-and-exam-archiving-started";
 
+    // user notification setting group
+    public static final String NOTIFICATION__USER_NOTIFICATION__CONVERSATION_NEW_MESSAGE = "notification.user-notification.conversation-message";
+
+    public static final String NOTIFICATION__USER_NOTIFICATION__NEW_REPLY_IN_CONVERSATION_MESSAGE = "notification.user-notification.new-reply-in-conversation";
+
     // if webapp or email is not explicitly set for a specific setting -> no support for this communication channel for this setting
     // this has to match the properties in the notification settings structure file on the client that hides the related UI elements
     public static final Set<NotificationSetting> DEFAULT_NOTIFICATION_SETTINGS = new HashSet<>(Arrays.asList(
@@ -97,7 +102,10 @@ public class NotificationSettingsService {
             new NotificationSetting(true, false, NOTIFICATION__EDITOR_NOTIFICATION__PROGRAMMING_TEST_CASES_CHANGED),
             // instructor notification setting group
             new NotificationSetting(true, false, NOTIFICATION__INSTRUCTOR_NOTIFICATION__COURSE_AND_EXAM_ARCHIVING_STARTED),
-            new NotificationSetting(true, false, NOTIFICATION__TUTOR_NOTIFICATION__TUTORIAL_GROUP_ASSIGN_UNASSIGN)));
+            new NotificationSetting(true, false, NOTIFICATION__TUTOR_NOTIFICATION__TUTORIAL_GROUP_ASSIGN_UNASSIGN),
+            // user new message notification setting group
+            new NotificationSetting(true, false, NOTIFICATION__USER_NOTIFICATION__CONVERSATION_NEW_MESSAGE),
+            new NotificationSetting(true, false, NOTIFICATION__USER_NOTIFICATION__NEW_REPLY_IN_CONVERSATION_MESSAGE)));
 
     /**
      * This is the place where the mapping between SettingId and NotificationTypes happens on the server side
@@ -123,7 +131,11 @@ public class NotificationSettingsService {
                     new NotificationType[] { TUTORIAL_GROUP_REGISTRATION_TUTOR, TUTORIAL_GROUP_DEREGISTRATION_TUTOR, TUTORIAL_GROUP_MULTIPLE_REGISTRATION_TUTOR }),
             Map.entry(NOTIFICATION__TUTORIAL_GROUP_NOTIFICATION__TUTORIAL_GROUP_REGISTRATION,
                     new NotificationType[] { TUTORIAL_GROUP_REGISTRATION_STUDENT, TUTORIAL_GROUP_DEREGISTRATION_STUDENT }),
-            Map.entry(NOTIFICATION__TUTOR_NOTIFICATION__TUTORIAL_GROUP_ASSIGN_UNASSIGN, new NotificationType[] { TUTORIAL_GROUP_ASSIGNED, TUTORIAL_GROUP_UNASSIGNED }));
+            Map.entry(NOTIFICATION__TUTOR_NOTIFICATION__TUTORIAL_GROUP_ASSIGN_UNASSIGN, new NotificationType[] { TUTORIAL_GROUP_ASSIGNED, TUTORIAL_GROUP_UNASSIGNED }),
+            Map.entry(NOTIFICATION__USER_NOTIFICATION__CONVERSATION_NEW_MESSAGE,
+                    new NotificationType[] { CONVERSATION_NEW_MESSAGE, CONVERSATION_CREATE_ONE_TO_ONE_CHAT, CONVERSATION_CREATE_GROUP_CHAT, CONVERSATION_ADD_USER_GROUP_CHAT,
+                            CONVERSATION_ADD_USER_CHANNEL }),
+            Map.entry(NOTIFICATION__USER_NOTIFICATION__NEW_REPLY_IN_CONVERSATION_MESSAGE, new NotificationType[] { CONVERSATION_NEW_REPLY_MESSAGE }));
 
     // This set has to equal the UI configuration in the client notification settings structure file!
     private static final Set<NotificationType> NOTIFICATION_TYPES_WITH_EMAIL_SUPPORT = Set.of(EXERCISE_RELEASED, EXERCISE_PRACTICE, ATTACHMENT_CHANGE, NEW_ANNOUNCEMENT_POST,
@@ -197,7 +209,7 @@ public class NotificationSettingsService {
      * @return the converted String Set
      */
     public Set<String> convertNotificationTypesToTitles(Set<NotificationType> types) {
-        return types.stream().map(NotificationTitleTypeConstants::findCorrespondingNotificationTitle).collect(Collectors.toSet());
+        return types.stream().map(NotificationConstants::findCorrespondingNotificationTitle).collect(Collectors.toSet());
     }
 
     /**

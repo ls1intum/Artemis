@@ -5,13 +5,11 @@ import { ActivatedRoute } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { LocalStorageService } from 'ngx-webstorage';
 import { Course } from 'app/entities/course.model';
 import { Lecture } from 'app/entities/lecture.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { CourseLecturesComponent, LectureSortingOrder } from 'app/overview/course-lectures/course-lectures.component';
-import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SidePanelComponent } from 'app/shared/side-panel/side-panel.component';
@@ -20,6 +18,7 @@ import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 
 @Component({ selector: 'jhi-course-lecture-row', template: '' })
@@ -67,14 +66,12 @@ describe('CourseLectures', () => {
                 MockDirective(TranslateDirective),
             ],
             providers: [
-                MockProvider(CourseManagementService, {
-                    getCourseUpdates: () => {
-                        return of(course);
-                    },
-                }),
-                MockProvider(CourseScoreCalculationService, {
+                MockProvider(CourseStorageService, {
                     getCourse: () => {
                         return course;
+                    },
+                    subscribeToCourseUpdates: () => {
+                        return of(course);
                     },
                 }),
                 { provide: TranslateService, useClass: MockTranslateService },
