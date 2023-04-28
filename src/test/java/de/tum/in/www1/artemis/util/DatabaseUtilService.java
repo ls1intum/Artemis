@@ -2522,7 +2522,7 @@ public class DatabaseUtilService {
     }
 
     public QuizExercise addQuizExerciseToCourseWithParticipationAndSubmissionForUser(Course course, String login) {
-        QuizExercise quizExercise = createQuiz(course, futureTimestamp, futureFutureTimestamp, QuizMode.SYNCHRONIZED);
+        QuizExercise quizExercise = createAndSaveQuiz(course, futureTimestamp, futureFutureTimestamp, QuizMode.SYNCHRONIZED);
         quizExercise.setTitle("quiz");
         quizExercise.setDuration(120);
         assertThat(quizExercise.getQuizQuestions()).isNotEmpty();
@@ -3981,6 +3981,11 @@ public class DatabaseUtilService {
     public QuizExercise createQuiz(Course course, ZonedDateTime releaseDate, ZonedDateTime dueDate, QuizMode quizMode) {
         QuizExercise quizExercise = ModelFactory.generateQuizExercise(releaseDate, dueDate, quizMode, course);
         initializeQuizExercise(quizExercise);
+        return quizExercise;
+    }
+
+    public QuizExercise createAndSaveQuiz(Course course, ZonedDateTime releaseDate, ZonedDateTime dueDate, QuizMode quizMode) {
+        var quizExercise = createQuiz(course, releaseDate, dueDate, quizMode);
         return quizExerciseRepository.save(quizExercise);
     }
 

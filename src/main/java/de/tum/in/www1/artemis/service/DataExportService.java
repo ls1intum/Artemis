@@ -159,35 +159,53 @@ public class DataExportService {
             Path courseWorkingDir = Files.createTempDirectory(workingDirectory, "course_" + course.getId());
             Path outputDir = retrieveOutputDirectoryCreateIfNotExistent(courseWorkingDir);
 
-            var programmingExercises = programmingExerciseRepository
-                    .getAllProgrammingExercisesWithEagerParticipationsSubmissionsAndResultsOfUserFromCourseByCourseAndUserId(course.getId(), user.getId());
-            for (var programmingExercise : programmingExercises) {
-                createProgrammingExerciseExport(programmingExercise, courseWorkingDir, outputDir);
-            }
-            var modelingExercises = modelingExerciseRepository.getAllModelingExercisesWithEagerParticipationsSubmissionsAndResultsOfUserFromCourseByCourseAndUserId(course.getId(),
-                    user.getId());
-            for (var modelingExercise : modelingExercises) {
-                createNonProgrammingExerciseExport(modelingExercise, courseWorkingDir, outputDir);
-            }
-            var textExercises = textExerciseRepository.getAllTextExercisesWithEagerParticipationsSubmissionsAndResultsOfUserFromCourseByCourseAndUserId(course.getId(),
-                    user.getId());
-            for (var textExercise : textExercises) {
-                createNonProgrammingExerciseExport(textExercise, courseWorkingDir, outputDir);
-            }
-            var fileUploadExercises = fileUploadExerciseRepository
-                    .getAllFileUploadExercisesWithEagerParticipationsSubmissionsAndResultsOfUserFromCourseByCourseAndUserId(course.getId(), user.getId());
-            for (var fileUploadExercise : fileUploadExercises) {
-                createNonProgrammingExerciseExport(fileUploadExercise, courseWorkingDir, outputDir);
-            }
-            var quizExercises = quizExerciseRepository.getAllQuizExercisesWithEagerParticipationsSubmissionsOfUserFromCourseByCourseAndUserId(course.getId(), user.getId());
-            for (var quizExercise : quizExercises) {
-                createNonProgrammingExerciseExport(quizExercise, courseWorkingDir, outputDir);
-            }
+            createExportForProgrammingExercises(user.getId(), course.getId(), courseWorkingDir, outputDir);
+            createExportForModelingExercises(user.getId(), course.getId(), courseWorkingDir, outputDir);
+            createExportForTextExercises(user.getId(), course.getId(), courseWorkingDir, outputDir);
+            createExportForFileUploadExercises(user.getId(), course.getId(), courseWorkingDir, outputDir);
+            createExportForQuizExercises(user.getId(), course.getId(), courseWorkingDir, outputDir);
             createCourseZipFile(course, outputDir);
         }
         addGeneralUserInformation(user);
         return createDataExportZipFile(user.getLogin());
 
+    }
+
+    private void createExportForQuizExercises(long userId, long courseId, Path courseWorkingDir, Path outputDir) throws IOException {
+        var quizExercises = quizExerciseRepository.getAllQuizExercisesWithEagerParticipationsSubmissionsOfUserFromCourseByCourseAndUserId(courseId, userId);
+        for (var quizExercise : quizExercises) {
+            createNonProgrammingExerciseExport(quizExercise, courseWorkingDir, outputDir);
+        }
+    }
+
+    private void createExportForProgrammingExercises(long userId, long courseId, Path courseWorkingDir, Path outputDir) throws IOException {
+        var programmingExercises = programmingExerciseRepository.getAllProgrammingExercisesWithEagerParticipationsSubmissionsAndResultsOfUserFromCourseByCourseAndUserId(courseId,
+                userId);
+        for (var programmingExercise : programmingExercises) {
+            createProgrammingExerciseExport(programmingExercise, courseWorkingDir, outputDir);
+        }
+    }
+
+    private void createExportForModelingExercises(long userId, long courseId, Path courseWorkingDir, Path outputDir) throws IOException {
+        var modelingExercises = modelingExerciseRepository.getAllModelingExercisesWithEagerParticipationsSubmissionsAndResultsOfUserFromCourseByCourseAndUserId(courseId, userId);
+        for (var modelingExercise : modelingExercises) {
+            createNonProgrammingExerciseExport(modelingExercise, courseWorkingDir, outputDir);
+        }
+    }
+
+    private void createExportForTextExercises(long userId, long courseId, Path courseWorkingDir, Path outputDir) throws IOException {
+        var textExercises = textExerciseRepository.getAllTextExercisesWithEagerParticipationsSubmissionsAndResultsOfUserFromCourseByCourseAndUserId(courseId, userId);
+        for (var textExercise : textExercises) {
+            createNonProgrammingExerciseExport(textExercise, courseWorkingDir, outputDir);
+        }
+    }
+
+    private void createExportForFileUploadExercises(long userId, long courseId, Path courseWorkingDir, Path outputDir) throws IOException {
+        var fileUploadExercises = fileUploadExerciseRepository.getAllFileUploadExercisesWithEagerParticipationsSubmissionsAndResultsOfUserFromCourseByCourseAndUserId(courseId,
+                userId);
+        for (var fileUploadExercise : fileUploadExercises) {
+            createNonProgrammingExerciseExport(fileUploadExercise, courseWorkingDir, outputDir);
+        }
     }
 
     private void addGeneralUserInformation(User user) throws IOException {

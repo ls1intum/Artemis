@@ -219,9 +219,9 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
     }
 
     @ParameterizedTest
-    @EnumSource(value = DataExportState.class, names = { "REQUESTED", "IN_CREATION" })
+    @EnumSource(value = DataExportState.class, names = { "REQUESTED", "IN_CREATION", "DELETED", "DOWNLOADED_DELETED" })
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testDataExport_notYetFullyCreated_accessForbidden(DataExportState state) throws Exception {
+    void testDataExport_notYetFullyCreatedOrDeleted_accessForbidden(DataExportState state) throws Exception {
         var userForExport = userRepository.getUserWithGroupsAndAuthorities(TEST_PREFIX + "student1");
         DataExport dataExport = new DataExport();
         dataExport.setUser(userForExport);
