@@ -119,7 +119,7 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
     );
 
     it.each([ExerciseType.TEXT, ExerciseType.MODELING, ExerciseType.FILE_UPLOAD, ExerciseType.PROGRAMMING])(
-        'should show the button "Team" for a team exercise for a student to view his team when assigned to a team',
+        'should show the buttons "Team" and "Start exercise" for a team exercise for a student to view his team when assigned to a team',
         fakeAsync((exerciseType: ExerciseType) => {
             comp.exercise = { ...teamExerciseWithTeamAssigned, type: exerciseType };
             fixture.detectChanges();
@@ -127,17 +127,6 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
 
             const viewTeamButton = fixture.debugElement.query(By.css('.view-team'));
             expect(viewTeamButton).not.toBeNull();
-        }),
-    );
-
-    it.each([ExerciseType.PROGRAMMING, ExerciseType.TEXT, ExerciseType.FILE_UPLOAD, ExerciseType.MODELING])(
-        'should show the button "Start exercise" for a team exercise when assigned to a team',
-        fakeAsync((exerciseType: ExerciseType) => {
-            comp.exercise = { ...teamExerciseWithTeamAssigned, type: exerciseType };
-
-            fixture.detectChanges();
-            tick();
-
             const startExerciseButton = fixture.debugElement.query(By.css('.start-exercise'));
             expect(startExerciseButton).not.toBeNull();
         }),
