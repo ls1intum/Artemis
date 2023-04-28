@@ -44,24 +44,26 @@ public class SlideSplitterService {
      */
     @Async
     public void splitAttachmentUnitIntoSingleSlides(AttachmentUnit attachmentUnit) {
-        splitAttachmentUnitIntoSingleSlides(null, attachmentUnit);
+        String attachmentPath = fileService.actualPathForPublicPath(attachmentUnit.getAttachment().getLink());
+        File file = new File(attachmentPath);
+        try (PDDocument document = PDDocument.load(file)) {
+            String pdfFilename = file.getName();
+            splitAttachmentUnitIntoSingleSlides(document, attachmentUnit, pdfFilename);
+        }
+        catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /**
-     * Splits an Attachment Unit file into single slides and saves them as PNG files.
+     * Splits an Attachment Unit file into single slides and saves them as PNG files. Document is closed where this method is called.
      *
      * @param attachmentUnit The attachment unit to which the slides belong.
      * @param document       The PDF document that is already loaded.
      */
-    public void splitAttachmentUnitIntoSingleSlides(PDDocument document, AttachmentUnit attachmentUnit) {
+    public void splitAttachmentUnitIntoSingleSlides(PDDocument document, AttachmentUnit attachmentUnit, String pdfFilename) {
         log.debug("Splitting Attachment Unit file {} into single slides", attachmentUnit.getAttachment().getName());
         try {
-            String attachmentPath = fileService.actualPathForPublicPath(attachmentUnit.getAttachment().getLink());
-            File file = new File(attachmentPath);
-            if (document == null) {
-                document = PDDocument.load(file);
-            }
-            String pdfFilename = file.getName();
             String fileNameWithOutExt = FilenameUtils.removeExtension(pdfFilename);
             int numPages = document.getNumberOfPages();
             PDFRenderer pdfRenderer = new PDFRenderer(document);
@@ -77,8 +79,6 @@ public class SlideSplitterService {
                 slideEntity.setAttachmentUnit(attachmentUnit);
                 slideRepository.save(slideEntity);
             }
-
-            document.close(); // make sure to close the document
         }
         catch (IOException e) {
             log.error("Error while splitting Attachment Unit into single slides", e);

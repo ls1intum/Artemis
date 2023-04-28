@@ -94,8 +94,8 @@ public class LectureUnitProcessingService {
 
                 MultipartFile multipartFile = fileService.convertByteArrayToMultipart(lectureUnit.unitName(), ".pdf", outputStream.toByteArray());
                 AttachmentUnit savedAttachmentUnit = saveAttachmentUnit(attachmentUnit, attachment, multipartFile, lecture);
-                slideSplitterService.splitAttachmentUnitIntoSingleSlides(documentUnits.get(0), savedAttachmentUnit);
-
+                slideSplitterService.splitAttachmentUnitIntoSingleSlides(documentUnits.get(0), savedAttachmentUnit, multipartFile.getOriginalFilename());
+                documentUnits.get(0).close(); // make sure to close the document
                 units.add(savedAttachmentUnit);
             }
             lectureRepository.save(lecture);
