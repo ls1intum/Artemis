@@ -202,7 +202,7 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbuc
         Notification lastCapturedNotification = capturedNotifications.get(capturedNotifications.size() - 1);
         assertThat(lastCapturedNotification.getTitle()).as("The title of the captured notification should be equal to the expected one").isEqualTo(expectedNotificationTitle);
         assertThat(capturedNotifications).as("The number of created notification should be the same as the number of notified groups/authorities")
-                .hasSize(numberOfGroupsAndCalls - notificationCountBeforeTest);
+                .hasSize(numberOfGroupsAndCalls + notificationCountBeforeTest);
     }
 
     /// Exercise Update / Release & Scheduling related Tests
