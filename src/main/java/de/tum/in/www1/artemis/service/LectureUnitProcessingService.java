@@ -55,14 +55,14 @@ public class LectureUnitProcessingService {
     }
 
     /**
-     * Split units from given file according to given split information.
+     * Split units from given file according to given split information and saves them.
      *
      * @param lectureUnitInformationDTO The split information
      * @param file                      The file (lecture slide) to be split
      * @param lecture                   The lecture that the attachment unit belongs to
      * @return The prepared units to be saved
      */
-    public List<AttachmentUnit> splitUnits(LectureUnitInformationDTO lectureUnitInformationDTO, MultipartFile file, Lecture lecture) throws IOException {
+    public List<AttachmentUnit> splitAndSaveUnits(LectureUnitInformationDTO lectureUnitInformationDTO, MultipartFile file, Lecture lecture) throws IOException {
 
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream(); PDDocument document = PDDocument.load(file.getBytes())) {
             List<AttachmentUnit> units = new ArrayList<>();
