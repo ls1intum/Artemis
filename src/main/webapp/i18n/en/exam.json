@@ -20,7 +20,12 @@
                 "room": "Room",
                 "seat": "Seat",
                 "saveImages": "Save Images",
-                "numberOfImagesSaved": "Images saved"
+                "numberOfImagesSaved": "Images saved",
+                "attendanceStatus": "Status",
+                "attendanceStatusTitle": "Exam Attendance Status",
+                "attendanceCheckFailed": "Attendance check failed",
+                "attendanceCheckPassed": "Attendance check passed",
+                "didNotAttend": "Did not attend"
             },
             "overview": {
                 "start": "Start: {{start}}",
@@ -460,7 +465,8 @@
                 "registrationNumberNotChecked": "Registration number was not checked",
                 "noSignature": "No signature",
                 "registeredStudents": "Registered students",
-                "notCheckedStudents": "Not checked students",
+                "notCheckedStudents": "Number of students not checked",
+                "allStudentsCheckedPassed": "All the students have been checked successfully",
                 "searchResults": "search results",
                 "usersPerPage": "{{number}} students per page",
                 "showAllUsers": "Show all students",

@@ -20,7 +20,12 @@
                 "room": "Raum",
                 "seat": "Sitz",
                 "saveImages": "Bilder speichern",
-                "numberOfImagesSaved": "Gespeicherte Bilder"
+                "numberOfImagesSaved": "Gespeicherte Bilder",
+                "attendanceStatus": "Status",
+                "attendanceStatusTitle": "Status der Prüfungsteilnahme",
+                "attendanceCheckFailed": "Anwesenheitskontrolle nicht bestanden",
+                "attendanceCheckPassed": "Anwesenheitskontrolle bestanden",
+                "didNotAttend": "Hat nicht teilgenommen"
             },
             "overview": {
                 "start": "Beginn: {{start}}",
@@ -459,7 +464,8 @@
                 "registrationNumberChecked": "Matrikelnummer wurde erfolgreich geprüft",
                 "registrationNumberNotChecked": "Matrikelnummer wurde nicht überprüft",
                 "registeredStudents": "Angemeldete Studierende",
-                "notCheckedStudents": "Nicht überprüfte Studierende",
+                "notCheckedStudents": "Anzahl der nicht überprüften Studenten",
+                "allStudentsCheckedPassed": "Alle Studenten wurden erfolgreich geprüft",
                 "searchResults": "Suchergebnisse",
                 "usersPerPage": "{{number}} Studierende pro Seite",
                 "showAllUsers": "Alle Studierenden anzeigen",
