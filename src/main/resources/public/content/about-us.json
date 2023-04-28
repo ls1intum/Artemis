@@ -400,6 +400,10 @@
         {
             "fullName": "Simon Huang",
             "photoDirectory": "public/images/about/Simon_Huang.jpg"
+        },
+        {
+            "fullName": "Pellumb Baboci",
+            "photoDirectory": "public/images/about/Pellumb_Baboci.jpg"
         }
     ]
 }
