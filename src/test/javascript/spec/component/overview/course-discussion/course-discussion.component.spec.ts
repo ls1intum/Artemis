@@ -268,7 +268,7 @@ describe('CourseDiscussionComponent', () => {
             ],
         });
         const contextOptions = fixture.debugElement.query(By.css('mat-select[name=context]'));
-        contextOptions.triggerEventHandler('openedChange', false);
+        contextOptions.triggerEventHandler('selectionChange', false);
         tick();
         fixture.detectChanges();
         expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledTimes(3);
@@ -287,7 +287,7 @@ describe('CourseDiscussionComponent', () => {
             ],
         });
         const contextOptions = fixture.debugElement.query(By.css('mat-select[name=context]'));
-        contextOptions.triggerEventHandler('openedChange', false);
+        contextOptions.triggerEventHandler('selectionChange', false);
         tick();
         fixture.detectChanges();
         expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledTimes(3);
@@ -306,7 +306,7 @@ describe('CourseDiscussionComponent', () => {
             ],
         });
         const contextOptions = fixture.debugElement.query(By.css('mat-select[name=context]'));
-        contextOptions.triggerEventHandler('openedChange', false);
+        contextOptions.triggerEventHandler('selectionChange', false);
         tick();
         fixture.detectChanges();
         expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledTimes(3);
@@ -337,7 +337,7 @@ describe('CourseDiscussionComponent', () => {
             ],
         });
         const contextOptions = fixture.debugElement.query(By.css('mat-select[name=context]'));
-        contextOptions.triggerEventHandler('openedChange', false);
+        contextOptions.triggerEventHandler('selectionChange', false);
         tick();
         fixture.detectChanges();
         expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledTimes(3);
