@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
 import { Participation } from 'app/entities/participation/participation.model';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
@@ -33,6 +33,7 @@ import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modelin
 import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
 import { FileUploadAssessmentService } from 'app/exercises/file-upload/assess/file-upload-assessment.service';
 import { getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
+import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 
 /**
  * Filter properties for a result
@@ -72,6 +73,9 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
         new Range(80, 90),
         new Range(90, 100),
     ];
+
+    @ViewChild('popover')
+    private popover: NgbPopover;
 
     course: Course;
     exercise: Exercise;
@@ -402,5 +406,9 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
             this.exercise.exerciseGroup?.id,
             participation.results?.[correctionRound]?.id,
         );
+    }
+
+    closePopover() {
+        this.popover?.close();
     }
 }
