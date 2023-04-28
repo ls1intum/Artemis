@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 
 import { LegalDocumentUpdateComponent } from 'app/admin/legal/legal-document-update.component';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
@@ -113,28 +113,34 @@ describe('LegalDocumentUpdateComponent', () => {
         expect(component.unsavedChanges).toBeTrue();
     });
 
-    it.each([LegalDocumentType.PRIVACY_STATEMENT, LegalDocumentType.IMPRINT])('should update legal document when clicking save', (documentType: LegalDocumentType) => {
-        const returnValue = new LegalDocument(documentType, LegalDocumentLanguage.GERMAN);
-        returnValue.text = 'text';
-        setupRoutes(documentType);
-        component.ngOnInit();
-        let updateFile;
-        if (documentType === LegalDocumentType.PRIVACY_STATEMENT) {
-            updateFile = jest.spyOn(legalDocumentService, 'updatePrivacyStatement').mockReturnValue(of(returnValue));
-        } else {
-            updateFile = jest.spyOn(legalDocumentService, 'updateImprint').mockReturnValue(of(returnValue));
-        }
-        component.markdownEditor.markdown = 'text';
-        component.unsavedChanges = true;
-        const expected = new LegalDocument(documentType, LegalDocumentLanguage.GERMAN);
-        expected.text = 'text';
-        fixture.nativeElement.querySelector('#update-legal-document-btn').click();
-
-        expect(updateFile).toHaveBeenCalledOnce();
-        expect(updateFile).toHaveBeenCalledWith(expected);
-        expect(component.legalDocument.text).toBe('text');
-        expect(component.unsavedChanges).toBeFalse();
-    });
+    it.each([LegalDocumentType.PRIVACY_STATEMENT, LegalDocumentType.IMPRINT])(
+        'should call update legal document service method on update',
+        fakeAsync((documentType: LegalDocumentType) => {
+            const returnValue = new LegalDocument(documentType, LegalDocumentLanguage.GERMAN);
+            returnValue.text = 'text';
+            setupRoutes(documentType);
+            component.ngOnInit();
+            let updateFile;
+            if (documentType === LegalDocumentType.PRIVACY_STATEMENT) {
+                updateFile = jest.spyOn(legalDocumentService, 'updatePrivacyStatement').mockReturnValue(of(returnValue));
+            } else {
+                updateFile = jest.spyOn(legalDocumentService, 'updateImprint').mockReturnValue(of(returnValue));
+            }
+            component.markdownEditor.markdown = 'text';
+            component.unsavedChanges = true;
+            const expected = new LegalDocument(documentType, LegalDocumentLanguage.GERMAN);
+            expected.text = 'text';
+            fixture.detectChanges();
+            const button = fixture.nativeElement.querySelector('#update-legal-document-btn');
+            button.click();
+            tick(100);
+            fixture.detectChanges();
+            expect(updateFile).toHaveBeenCalledOnce();
+            expect(updateFile).toHaveBeenCalledWith(expected);
+            expect(component.legalDocument.text).toBe('text');
+            expect(component.unsavedChanges).toBeFalse();
+        }),
+    );
 
     function setupRoutes(documentType: LegalDocumentType) {
         if (documentType === LegalDocumentType.PRIVACY_STATEMENT) {
