@@ -15,6 +15,7 @@ describe('DataExportService', () => {
     let service: DataExportService;
     const resourceUrl = SERVER_API_URL + 'api';
     let httpMock: HttpTestingController;
+    let accountService: AccountService;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -28,6 +29,7 @@ describe('DataExportService', () => {
         });
         service = TestBed.inject(DataExportService);
         httpMock = TestBed.inject(HttpTestingController);
+        accountService = TestBed.inject(AccountService);
     });
 
     it('should make PUT request to request data export', fakeAsync(() => {
@@ -37,6 +39,7 @@ describe('DataExportService', () => {
         dataExport.id = 1;
         dataExport.requestDate = dayjs();
         dataExport.creationDate = dayjs();
+        accountService.userIdentity = dataExport.user;
         let req;
         service.requestDataExport().subscribe((resp) => expect(resp).toEqual(dataExport));
         req = httpMock.expectOne({ method: 'PUT', url: `${resourceUrl}/1/data-export` });
@@ -45,6 +48,9 @@ describe('DataExportService', () => {
     }));
 
     it('should make GET request to download data export', fakeAsync(() => {
+        const user = new User();
+        user.id = 1;
+        accountService.userIdentity = user;
         service.downloadDataExport(1).subscribe();
         const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/1/data-export/1` });
         req.flush(new Blob());

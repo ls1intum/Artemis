@@ -8,10 +8,10 @@ export class MockAccountService implements IAccountService {
     userIdentityValue: User | undefined;
 
     get userIdentity() {
-        const user = new User();
-        user.id = 1;
-        user.login = 'test-user';
-        return user;
+        return this.userIdentityValue;
+    }
+    set userIdentity(user: User | undefined) {
+        this.userIdentityValue = user;
     }
 
     identity = () => Promise.resolve({ id: 99 } as User);
