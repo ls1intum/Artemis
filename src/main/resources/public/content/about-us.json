@@ -396,6 +396,10 @@
         {
             "fullName": "Felix T.J. Dietrich",
             "photoDirectory": "public/images/about/Felix_TJ_Dietrich.jpg"
+        },
+        {
+            "fullName": "Simon Huang",
+            "photoDirectory": "public/images/about/Simon_Huang.jpg"
         }
     ]
 }
