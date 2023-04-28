@@ -404,17 +404,16 @@ public class FileService implements DisposableBean {
             return "/api/files/attachments/attachment-unit/" + id + "/" + filename;
         }
         if (actualPathString.contains(FilePathService.getSlideImageFilePath())) {
-            final long attachmentUnitId;
             try {
                 // The last name is the file name, the one before that is the slide number and the one before that is the attachmentUnitId, in which we are interested
                 // (e.g. uploads/attachments/slides/attachment-unit/941/slide/1/State_pattern_941_Slide_1.png)
                 final var shouldBeAttachmentUnitId = actualPath.getName(actualPath.getNameCount() - 4).toString();
-                attachmentUnitId = Long.parseLong(shouldBeAttachmentUnitId);
+                final long attachmentUnitId = Long.parseLong(shouldBeAttachmentUnitId);
+                return "/api/files/attachments/slides/attachment-unit/" + attachmentUnitId + "/slide/" + id + "/" + filename;
             }
             catch (IllegalArgumentException e) {
                 throw new FilePathParsingException("Unexpected String in upload file path. AttachmentUnit ID should be present here: " + actualPathString);
             }
-            return "/api/files/attachments/slides/attachment-unit/" + attachmentUnitId + "/slide/" + id + "/" + filename;
         }
         if (actualPathString.contains(FilePathService.getFileUploadExercisesFilePath())) {
             final long exerciseId;

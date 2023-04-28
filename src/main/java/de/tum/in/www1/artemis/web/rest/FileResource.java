@@ -54,7 +54,7 @@ public class FileResource {
 
     private final Logger log = LoggerFactory.getLogger(FileResource.class);
 
-    private final static int DAYS_TO_CACHE = 1;
+    private static final int DAYS_TO_CACHE = 1;
 
     private final FileService fileService;
 

@@ -14,7 +14,6 @@ import de.tum.in.www1.artemis.service.FileService;
 
 @Entity
 @Table(name = "slide")
-@DiscriminatorValue("S")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class Slide extends DomainObject {
 

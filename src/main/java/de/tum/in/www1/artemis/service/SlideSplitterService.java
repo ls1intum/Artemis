@@ -66,7 +66,7 @@ public class SlideSplitterService {
             int numPages = document.getNumberOfPages();
             PDFRenderer pdfRenderer = new PDFRenderer(document);
 
-            for (int page = 0; page < numPages; ++page) {
+            for (int page = 0; page < numPages; page++) {
                 BufferedImage bufferedImage = pdfRenderer.renderImageWithDPI(page, 72, ImageType.RGB);
                 byte[] imageInByte = bufferedImageToByteArray(bufferedImage, "png");
                 MultipartFile slideFile = fileService.convertByteArrayToMultipart(fileNameWithOutExt + "_" + attachmentUnit.getId() + "_Slide_" + (page + 1), ".png", imageInByte);
