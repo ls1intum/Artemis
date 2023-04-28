@@ -18,7 +18,7 @@ export class ExamUser implements BaseEntity {
     public exam?: Exam;
 
     // helper attributes
-    public didExamUserAttendExam: boolean;
+    public didExamUserAttendExam?: boolean;
 
     constructor() {
         this.didExamUserAttendExam = false;
