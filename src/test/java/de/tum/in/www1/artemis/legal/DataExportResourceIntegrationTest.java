@@ -251,4 +251,11 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
         request.get("/api/" + userForExport.getId() + "/data-export/999999", HttpStatus.NOT_FOUND, Resource.class);
 
     }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testUserIdNotExistent_notFound() throws Exception {
+        request.get("/api/" + 999999999 + "/data-export/999999", HttpStatus.NOT_FOUND, Resource.class);
+
+    }
 }
