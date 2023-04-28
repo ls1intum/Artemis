@@ -11,12 +11,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
@@ -161,7 +163,7 @@ public class LocalCIBuildJobExecutionService {
             try {
                 return localCIBuildExecutorService.submit(timedBuildJob).get();
             }
-            catch (InterruptedException | ExecutionException e) {
+            catch (RejectedExecutionException | CancellationException | ExecutionException | InterruptedException e) {
                 finishBuildJobExceptionally(participation, containerName, e);
                 // Wrap the exception in a CompletionException so that the future is completed exceptionally and the thenAccept block is not run.
                 // This CompletionException will not resurface anywhere else as it is thrown in this completable future's separate thread.

@@ -6,6 +6,8 @@ import java.nio.file.Path;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -67,9 +69,16 @@ public class LocalCIConfiguration {
     @Bean
     public ExecutorService localCIBuildExecutorService() {
         log.info("Using ExecutorService with thread pool size {} and a queue size limit of {}.", threadPoolSize, queueSizeLimit);
+
         ThreadFactory customThreadFactory = new ThreadFactoryBuilder().setNameFormat("local-ci-build-%d")
                 .setUncaughtExceptionHandler((thread, exception) -> log.error("Uncaught exception in thread " + thread.getName(), exception)).build();
-        return new ThreadPoolExecutor(threadPoolSize, threadPoolSize, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(queueSizeLimit), customThreadFactory);
+
+        RejectedExecutionHandler customRejectedExecutionHandler = (runnable, executor) -> {
+            throw new RejectedExecutionException("Task " + runnable.toString() + " rejected from " + executor.toString());
+        };
+
+        return new ThreadPoolExecutor(threadPoolSize, threadPoolSize, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(queueSizeLimit), customThreadFactory,
+                customRejectedExecutionHandler);
     }
 
     /**
