@@ -121,4 +121,5 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationBambooBitbu
             assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> authCheckService.checkUserAllowedToSelfRegisterForCourseElseThrow(this.student1, course));
         }
     }
+
 }

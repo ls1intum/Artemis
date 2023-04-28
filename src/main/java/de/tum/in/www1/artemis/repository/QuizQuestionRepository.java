@@ -12,7 +12,6 @@ import de.tum.in.www1.artemis.domain.quiz.QuizQuestion;
 /**
  * Spring Data JPA repository for the QuizQuestion entity.
  */
-@SuppressWarnings("unused")
 @Repository
 public interface QuizQuestionRepository extends JpaRepository<QuizQuestion, Long> {
 

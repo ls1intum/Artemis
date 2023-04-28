@@ -198,6 +198,18 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testDataExportDoesntBelongToLoggedInUser_forbidden() throws Exception {
+        var user2 = userRepository.findOneByLogin(TEST_PREFIX + "student2").get();
+        var dataExport = new DataExport();
+        dataExport.setDataExportState(DataExportState.EMAIL_SENT);
+        dataExport.setUser(user2);
+        dataExport = dataExportRepository.save(dataExport);
+        request.get("/api/" + user2.getId() + "/data-export/" + dataExport.getId(), HttpStatus.FORBIDDEN, Resource.class);
+
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testDataExportErrorDuringCreation_internalServerError() throws Exception {
         var userForExport = userRepository.getUserWithGroupsAndAuthorities(TEST_PREFIX + "student1");
         when(dataExportService.requestDataExport(userForExport)).thenThrow(new RuntimeException("Error!"));
@@ -229,6 +241,14 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
         dataExport.setDataExportState(state);
         dataExport = dataExportRepository.save(dataExport);
         request.get("/api/" + userForExport.getId() + "/data-export/" + dataExport.getId(), HttpStatus.FORBIDDEN, Resource.class);
+
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testDataExportIdNotExistent_notFound() throws Exception {
+        var userForExport = userRepository.getUserWithGroupsAndAuthorities(TEST_PREFIX + "student1");
+        request.get("/api/" + userForExport.getId() + "/data-export/999999", HttpStatus.NOT_FOUND, Resource.class);
 
     }
 }
