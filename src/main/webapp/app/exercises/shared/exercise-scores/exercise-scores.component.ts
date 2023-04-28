@@ -74,8 +74,8 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
         new Range(90, 100),
     ];
 
-    @ViewChild('popover')
-    private popover: NgbPopover;
+    @ViewChild('exportPopover')
+    private exportPopover: NgbPopover;
 
     course: Course;
     exercise: Exercise;
@@ -408,7 +408,10 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
         );
     }
 
-    closePopover() {
-        this.popover?.close();
+    /**
+     * Close popover for export options, since it would obstruct the newly opened modal
+     */
+    closeExportPopover() {
+        this.exportPopover?.close();
     }
 }

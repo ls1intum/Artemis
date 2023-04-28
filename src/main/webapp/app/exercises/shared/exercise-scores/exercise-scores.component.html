@@ -103,7 +103,7 @@
                     [autoClose]="'outside'"
                     placement="bottom-right auto"
                     container="body"
-                    #popover="ngbPopover"
+                    #exportPopover="ngbPopover"
                 ></button>
                 <ng-template #popContent>
                     <h5 jhiTranslate="artemisApp.exercise.export.options"></h5>
@@ -116,7 +116,7 @@
                         *ngIf="exercise.type === ExerciseType.PROGRAMMING"
                         [programmingExercises]="[exercise]"
                         class="me-1"
-                        (buttonPressed)="closePopover()"
+                        (buttonPressed)="closeExportPopover()"
                     ></jhi-programming-assessment-repo-export>
                     <jhi-exercise-submission-export
                         *ngIf="
