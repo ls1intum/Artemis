@@ -6,7 +6,6 @@ import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsC
 import java.util.List;
 
 import org.jetbrains.annotations.NotNull;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -25,16 +24,12 @@ import de.tum.in.www1.artemis.service.notifications.push_notifications.FirebaseP
 @Service
 public class GeneralInstantNotificationService implements InstantNotificationService {
 
-    @Autowired
     private final ApplePushNotificationService applePushNotificationService;
 
-    @Autowired
     private final FirebasePushNotificationService firebasePushNotificationService;
 
-    @Autowired
     private final MailService mailService;
 
-    @Autowired
     private final NotificationSettingsService notificationSettingsService;
 
     public GeneralInstantNotificationService(ApplePushNotificationService applePushNotificationService, FirebasePushNotificationService firebasePushNotificationService,
