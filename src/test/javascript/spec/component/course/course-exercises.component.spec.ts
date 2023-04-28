@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ArtemisTestModule } from '../../test.module';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
@@ -20,7 +19,6 @@ import { MockTranslateService, TranslatePipeMock } from '../../helpers/mocks/ser
 import { ActivatedRoute } from '@angular/router';
 import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
 import { Exercise, IncludedInOverallScore } from 'app/entities/exercise.model';
-import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import dayjs from 'dayjs/esm';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
@@ -31,18 +29,18 @@ import { SortDirective } from 'app/shared/sort/sort.directive';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ParticipationType } from 'app/entities/participation/participation.model';
 import { FormsModule } from '@angular/forms';
+import { CourseStorageService } from 'app/course/manage/course-storage.service';
 
 describe('CourseExercisesComponent', () => {
     let fixture: ComponentFixture<CourseExercisesComponent>;
     let component: CourseExercisesComponent;
-    let service: CourseManagementService;
-    let courseCalculation: CourseScoreCalculationService;
+    let courseStorageService: CourseStorageService;
     let exerciseService: ExerciseService;
     let localStorageService: LocalStorageService;
 
     let course: Course;
     let exercise: Exercise;
-    let courseCalculationSpy: jest.SpyInstance;
+    let courseStorageStub: jest.SpyInstance;
 
     const parentRoute = { params: of({ courseId: '123' }) } as any as ActivatedRoute;
     const route = { parent: parentRoute } as any as ActivatedRoute;
@@ -77,8 +75,7 @@ describe('CourseExercisesComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(CourseExercisesComponent);
                 component = fixture.componentInstance;
-                service = TestBed.inject(CourseManagementService);
-                courseCalculation = TestBed.inject(CourseScoreCalculationService);
+                courseStorageService = TestBed.inject(CourseStorageService);
                 exerciseService = TestBed.inject(ExerciseService);
                 localStorageService = TestBed.inject(LocalStorageService);
 
@@ -88,9 +85,9 @@ describe('CourseExercisesComponent', () => {
                 exercise.dueDate = dayjs('2021-01-13T16:11:00+01:00').add(1, 'days');
                 exercise.releaseDate = dayjs('2021-01-13T16:11:00+01:00').subtract(1, 'days');
                 course.exercises = [exercise];
-                jest.spyOn(service, 'getCourseUpdates').mockReturnValue(of(course));
+                jest.spyOn(courseStorageService, 'subscribeToCourseUpdates').mockReturnValue(of(course));
                 jest.spyOn(localStorageService, 'retrieve').mockReturnValue('OVERDUE,NEEDS_WORK');
-                courseCalculationSpy = jest.spyOn(courseCalculation, 'getCourse').mockReturnValue(course);
+                courseStorageStub = jest.spyOn(courseStorageService, 'getCourse').mockReturnValue(course);
 
                 fixture.detectChanges();
             });
@@ -102,9 +99,8 @@ describe('CourseExercisesComponent', () => {
 
     it('should initialize', () => {
         expect(component.course).toEqual(course);
-        expect(courseCalculationSpy.mock.calls).toHaveLength(2);
-        expect(courseCalculationSpy.mock.calls[0][0]).toBe(course.id);
-        expect(courseCalculationSpy.mock.calls[1][0]).toBe(course.id);
+        expect(courseStorageStub.mock.calls).toHaveLength(1);
+        expect(courseStorageStub.mock.calls[0][0]).toBe(course.id);
     });
 
     it('should react to changes', () => {
