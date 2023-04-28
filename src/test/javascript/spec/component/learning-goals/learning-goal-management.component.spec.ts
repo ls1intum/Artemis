@@ -17,7 +17,7 @@ import { NgbModal, NgbModalRef, NgbPanel, NgbProgressbar } from '@ng-bootstrap/n
 import { AlertService } from 'app/core/util/alert.service';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { PrerequisiteImportComponent } from 'app/course/learning-goals/learning-goal-management/prerequisite-import.component';
-import { Node, Edge } from '@swimlane/ngx-graph';
+import { Edge, Node } from '@swimlane/ngx-graph';
 import { Component } from '@angular/core';
 import { CompetencyImportComponent } from 'app/course/learning-goals/learning-goal-management/competency-import.component';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
@@ -225,7 +225,7 @@ describe('LearningGoalManagementComponent', () => {
                 target: '16',
                 label: 'EXTENDS',
             } as Edge),
-        ).toBe(true);
+        ).toBeTrue();
     });
 
     it('should remove learning goal relation', () => {
