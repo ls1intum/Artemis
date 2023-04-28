@@ -128,7 +128,7 @@ export class ProgrammingExerciseGradingTasksTableComponent implements OnInit {
                 return this.currentSort?.descending ? order : -order;
             };
         }
-        this.tasks.forEach((task) => task.testCases.sort(comparator));
+        this.tasks.filter(({ testCases }) => testCases).forEach((task) => task.testCases.sort(comparator));
     };
 
     private compareNumForAttribute = (attributeKey: string): TaskComparator => {
