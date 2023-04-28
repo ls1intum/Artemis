@@ -38,7 +38,7 @@ class DatabaseQueryCountTest extends AbstractSpringIntegrationBambooBitbucketJir
             var userCourses = request.getList("/api/courses/for-dashboard", HttpStatus.OK, Course.class);
             log.info("Finish courses for dashboard call for multiple courses");
             return userCourses;
-        }).hasBeenCalledAtMostTimes(16);
+        }).hasBeenCalledAtMostTimes(17);
         // 1 DB call to get the user from the DB
         // 1 DB call to get the course with exercise, lectures
         // 1 DB call to load all exercises
@@ -46,6 +46,7 @@ class DatabaseQueryCountTest extends AbstractSpringIntegrationBambooBitbucketJir
         // 10 DB calls to get the quiz batches for active quiz exercises
         // 1 DB call to get all individual student participations with submissions and results
         // 1 DB call to get all team student participations with submissions and results
+        // 1 DB call to get all plagiarism cases
 
         var course = courses.get(0);
         assertThatDb(() -> {
@@ -53,7 +54,7 @@ class DatabaseQueryCountTest extends AbstractSpringIntegrationBambooBitbucketJir
             var userCourse = request.get("/api/courses/" + course.getId() + "/for-dashboard", HttpStatus.OK, Course.class);
             log.info("Finish courses for dashboard call for one course");
             return userCourse;
-        }).hasBeenCalledAtMostTimes(10);
+        }).hasBeenCalledAtMostTimes(11);
         // 1 DB call to get the user from the DB
         // 1 DB call to get the course with exercise, lectures, exams
         // 1 DB call to load all exercises
@@ -64,5 +65,6 @@ class DatabaseQueryCountTest extends AbstractSpringIntegrationBambooBitbucketJir
         // 1 DB call to load the tutorial group configuration
         // 1 DB call to get all individual student participations with submissions and results
         // 1 DB call to get all team student participations with submissions and results
+        // 1 DB call to get all plagiarism cases
     }
 }
