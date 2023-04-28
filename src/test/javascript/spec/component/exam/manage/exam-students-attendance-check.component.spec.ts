@@ -69,12 +69,13 @@ describe('ExamStudentsAttendanceCheckComponent', () => {
         expect(component).not.toBeNull();
         expect(component.courseId).toEqual(course.id);
         expect(component.exam).toEqual(examWithCourse);
-        expect(component.isLoading).toBeFalse();
+        expect(component.hasExamStarted).toBeTrue();
     });
 
     it('should test on error', () => {
         component.onError('ErrorString');
         expect(component.isTransitioning).toBeFalse();
+        expect(component.isLoading).toBeFalse();
     });
 
     it('should test on sort', () => {
@@ -105,5 +106,6 @@ describe('ExamStudentsAttendanceCheckComponent', () => {
         expect(examServiceStub).toHaveBeenCalledWith(course.id, examWithCourse.id);
         expect(component.allExamUsersAttendanceCheck).toEqual(response);
         expect(component.allExamUsersAttendanceCheck).toHaveLength(1);
+        expect(component.isLoading).toBeFalse();
     });
 });
