@@ -404,6 +404,10 @@
         {
             "fullName": "Pellumb Baboci",
             "photoDirectory": "public/images/about/Pellumb_Baboci.jpg"
+        },
+        {
+            "fullName": "Frederik Kutsch",
+            "photoDirectory": "public/images/about/Frederik_Kutsch.jpg"
         }
     ]
 }
