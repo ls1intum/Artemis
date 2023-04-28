@@ -17,6 +17,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { faCheck, faInfoCircle, faPlus, faTimes, faUpload, faUserSlash, faUserTimes } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
+import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
 
 const cssClasses = {
     alreadyRegistered: 'already-registered',
@@ -75,6 +76,7 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
         private examManagementService: ExamManagementService,
         private userService: UserService,
         private accountService: AccountService,
+        private studentExamService: StudentExamService,
     ) {}
 
     ngOnInit() {
@@ -97,13 +99,31 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
         this.exam = exam;
         this.hasExamStarted = exam.startDate?.isBefore(dayjs()) || false;
         this.hasExamEnded = exam.endDate?.isBefore(dayjs()) || false;
-        this.allRegisteredUsers =
-            exam.examUsers?.map((examUser) => {
-                return {
-                    ...examUser.user!,
-                    ...examUser,
-                };
-            }) || [];
+
+        if (this.hasExamEnded) {
+            this.studentExamService.findAllForExam(this.courseId, exam.id!).subscribe((res) => {
+                const studentExams = res.body;
+                if (studentExams!.length > 0) {
+                    this.allRegisteredUsers =
+                        exam.examUsers?.map((examUser) => {
+                            const exam = studentExams!.filter((studentExam) => studentExam.user?.id === examUser.user!.id).first();
+                            return {
+                                ...examUser.user!,
+                                ...examUser,
+                                didExamUserAttendExam: !!exam!.started,
+                            };
+                        }) || [];
+                }
+            });
+        } else {
+            this.allRegisteredUsers =
+                exam.examUsers?.map((examUser) => {
+                    return {
+                        ...examUser.user!,
+                        ...examUser,
+                    };
+                }) || [];
+        }
         this.isTestExam = this.exam.testExam!;
         this.isLoading = false;
     }

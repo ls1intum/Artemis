@@ -206,20 +206,32 @@
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
                         <div
-                            *ngIf="!value.didCheckLogin || !value.didCheckImage || !value.didCheckName || !value.didCheckRegistrationNumber || !value.signingImagePath"
+                            *ngIf="
+                                value.didExamUserAttendExam &&
+                                hasExamEnded &&
+                                (!value.didCheckLogin || !value.didCheckImage || !value.didCheckName || !value.didCheckRegistrationNumber || !value.signingImagePath)
+                            "
                             title="{{ 'artemisApp.exam.examUsers.attendanceCheckFailed' | artemisTranslate }}"
                         >
                             <fa-icon [icon]="faTimes" style="color: red" class="fa-2x"></fa-icon>
                         </div>
                         <div
-                            *ngIf="value.didCheckLogin && value.didCheckImage && value.didCheckName && value.didCheckRegistrationNumber && value.signingImagePath && exam.started"
+                            *ngIf="
+                                value.didExamUserAttendExam &&
+                                value.didCheckLogin &&
+                                value.didCheckImage &&
+                                value.didCheckName &&
+                                value.didCheckRegistrationNumber &&
+                                value.signingImagePath &&
+                                hasExamEnded
+                            "
                             title="{{ 'artemisApp.exam.examUsers.attendanceCheckPassed' | artemisTranslate }}"
                         >
                             <fa-icon [icon]="faCheck" style="color: green" class="fa-2x"></fa-icon>
                         </div>
-                        <!--                        <div *ngIf="!exam.started" title="{{ 'artemisApp.exam.examUsers.didNotAttend' | artemisTranslate }}">-->
-                        <!--                            <fa-icon [icon]="faUserTimes" class="fa-2x"></fa-icon>-->
-                        <!--                        </div>-->
+                        <div *ngIf="!value.didExamUserAttendExam" title="{{ 'artemisApp.exam.examUsers.didNotAttend' | artemisTranslate }}">
+                            <fa-icon [icon]="faUserTimes" class="fa-2x"></fa-icon>
+                        </div>
                     </ng-template>
                 </ngx-datatable-column>
 
