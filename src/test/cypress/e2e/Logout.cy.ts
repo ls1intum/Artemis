@@ -1,7 +1,7 @@
 import { Course } from '../../../main/webapp/app/entities/course.model';
 import { ModelingExercise } from '../../../main/webapp/app/entities/modeling-exercise.model';
 import { courseManagementRequest, courseOverview, modelingExerciseEditor } from '../support/artemis';
-import { convertCourseAfterMultiPart } from '../support/requests/CourseManagementRequests';
+import { convertModelAfterMultiPart } from '../support/requests/CourseManagementRequests';
 import { admin, studentOne, studentTwo } from '../support/users';
 
 describe('Logout tests', () => {
@@ -12,7 +12,7 @@ describe('Logout tests', () => {
         cy.login(admin);
 
         courseManagementRequest.createCourse(true).then((response) => {
-            course = convertCourseAfterMultiPart(response);
+            course = convertModelAfterMultiPart(response);
             courseManagementRequest.createModelingExercise({ course }).then((resp: Cypress.Response<ModelingExercise>) => {
                 modelingExercise = resp.body;
             });

@@ -1,7 +1,7 @@
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { Course } from 'app/entities/course.model';
 import scaSubmission from '../../../fixtures/exercise/programming/static_code_analysis/submission.json';
-import { convertCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
+import { convertModelAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
 import { courseManagementRequest, programmingExerciseEditor, programmingExerciseScaFeedback, programmingExercisesScaConfig } from '../../../support/artemis';
 import { admin, studentOne } from '../../../support/users';
 
@@ -32,7 +32,7 @@ describe('Static code analysis tests', () => {
     function setupCourseAndProgrammingExercise() {
         cy.login(admin);
         courseManagementRequest.createCourse(true).then((response) => {
-            course = convertCourseAfterMultiPart(response);
+            course = convertModelAfterMultiPart(response);
             courseManagementRequest.addStudentToCourse(course, studentOne);
             courseManagementRequest.createProgrammingExercise({ course }, 50).then((dto) => {
                 exercise = dto.body;

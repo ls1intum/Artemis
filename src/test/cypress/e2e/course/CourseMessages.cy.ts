@@ -2,7 +2,7 @@ import { Channel } from 'app/entities/metis/conversation/channel.model';
 import { Course } from 'app/entities/course.model';
 import { GroupChat } from 'app/entities/metis/conversation/group-chat.model';
 import { courseManagementRequest, courseMessages } from '../../support/artemis';
-import { convertCourseAfterMultiPart } from '../../support/requests/CourseManagementRequests';
+import { convertModelAfterMultiPart } from '../../support/requests/CourseManagementRequests';
 import { admin, instructor, studentOne, studentTwo, tutor, users } from '../../support/users';
 import { generateUUID } from '../../support/utils';
 
@@ -20,7 +20,7 @@ describe('Course messages', () => {
         courseName = 'Cypress course' + uid;
         courseShortName = 'cypress' + uid;
         courseManagementRequest.createCourse(false, courseName, courseShortName).then((response) => {
-            course = convertCourseAfterMultiPart(response);
+            course = convertModelAfterMultiPart(response);
             courseId = course.id!;
             courseManagementRequest.addInstructorToCourse(course, instructor);
             courseManagementRequest.addTutorToCourse(course, tutor);

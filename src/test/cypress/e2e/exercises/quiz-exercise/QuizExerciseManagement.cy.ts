@@ -5,7 +5,7 @@ import { generateUUID } from '../../../support/utils';
 import multipleChoiceTemplate from '../../../fixtures/exercise/quiz/multiple_choice/template.json';
 import { DELETE } from '../../../support/constants';
 import { courseManagement, courseManagementExercises, courseManagementRequest, quizExerciseCreation } from '../../../support/artemis';
-import { convertCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
+import { convertModelAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
 import { admin } from '../../../support/users';
 
 // Common primitives
@@ -16,7 +16,7 @@ describe('Quiz Exercise Management', () => {
     before('Set up course', () => {
         cy.login(admin);
         courseManagementRequest.createCourse().then((response) => {
-            course = convertCourseAfterMultiPart(response);
+            course = convertModelAfterMultiPart(response);
         });
     });
 
@@ -55,7 +55,7 @@ describe('Quiz Exercise Management', () => {
         beforeEach('Create Quiz Exercise', () => {
             cy.login(admin);
             courseManagementRequest.createQuizExercise({ course }, [multipleChoiceTemplate]).then((quizResponse) => {
-                quizExercise = quizResponse.body;
+                quizExercise = convertModelAfterMultiPart(quizResponse);
             });
         });
 

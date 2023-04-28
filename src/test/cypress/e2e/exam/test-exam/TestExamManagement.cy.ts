@@ -1,6 +1,6 @@
 import { Exam } from 'app/entities/exam.model';
 import { Course } from 'app/entities/course.model';
-import { ExamBuilder, convertCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
+import { ExamBuilder, convertModelAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
 import { generateUUID } from '../../../support/utils';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import {
@@ -30,7 +30,7 @@ describe('Test Exam management', () => {
     before(() => {
         cy.login(admin);
         courseManagementRequest.createCourse(true).then((response) => {
-            course = convertCourseAfterMultiPart(response);
+            course = convertModelAfterMultiPart(response);
             courseManagementRequest.addStudentToCourse(course, studentOne);
             const examConfig = new ExamBuilder(course).title(examTitle).testExam().build();
             courseManagementRequest.createExam(examConfig).then((examResponse) => {

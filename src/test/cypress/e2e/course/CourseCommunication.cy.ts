@@ -2,7 +2,7 @@ import { TextExercise } from 'app/entities/text-exercise.model';
 import { Course } from '../../../../main/webapp/app/entities/course.model';
 import { courseCommunication, courseManagementRequest, navigationBar } from '../../support/artemis';
 import { CourseWideContext } from '../../support/constants';
-import { convertCourseAfterMultiPart } from '../../support/requests/CourseManagementRequests';
+import { convertModelAfterMultiPart } from '../../support/requests/CourseManagementRequests';
 import { admin, instructor, studentOne, studentThree, studentTwo } from '../../support/users';
 import { generateUUID, titleCaseWord } from '../../support/utils';
 import { Lecture } from 'app/entities/lecture.model';
@@ -21,7 +21,7 @@ describe('Course communication', () => {
         courseName = 'Cypress course' + uid;
         courseShortName = 'cypress' + uid;
         courseManagementRequest.createCourse(false, courseName, courseShortName).then((response) => {
-            course = convertCourseAfterMultiPart(response);
+            course = convertModelAfterMultiPart(response);
             courseId = course.id!;
             courseManagementRequest.addInstructorToCourse(course, instructor);
             courseManagementRequest.addStudentToCourse(course, studentOne);

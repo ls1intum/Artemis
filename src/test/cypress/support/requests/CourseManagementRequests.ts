@@ -25,6 +25,7 @@ import { Channel } from 'app/entities/metis/conversation/channel.model';
 import { Post } from 'app/entities/metis/post.model';
 import { Lecture } from 'app/entities/lecture.model';
 import { GroupChat } from 'app/entities/metis/conversation/group-chat.model';
+import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 
 export const COURSE_BASE = BASE_API + 'courses/';
 export const COURSE_ADMIN_BASE = BASE_API + 'admin/courses';
@@ -488,7 +489,7 @@ export class CourseManagementRequests {
         title = 'Cypress quiz exercise' + generateUUID(),
         releaseDate = day().add(1, 'year'),
         duration = 600,
-    ) {
+    ): Cypress.Chainable<Cypress.Response<QuizExercise>> {
         const quizExercise: any = {
             ...quizTemplate,
             title,
@@ -505,10 +506,14 @@ export class CourseManagementRequests {
         } else {
             newQuizExercise = Object.assign({}, quizExercise, body);
         }
+
+        const formData = new FormData();
+        formData.append('exercise', new File([JSON.stringify(newQuizExercise)], 'exercise', { type: 'application/json' }));
+
         return cy.request({
             url: QUIZ_EXERCISE_BASE,
             method: POST,
-            body: newQuizExercise,
+            body: formData,
         });
     }
 
@@ -780,7 +785,7 @@ export enum ProgrammingExerciseAssessmentType {
     MANUAL,
 }
 
-export function convertCourseAfterMultiPart(response: Cypress.Response<Course>): Course {
+export function convertModelAfterMultiPart<T>(response: Cypress.Response<T>): T {
     // Cypress currently has some issues with our multipart request, parsing this not as an object but as an ArrayBuffer
     // Once this is fixed (and hence the expect statements below fail), we can remove the additional parsing
     expect(response.body).not.to.be.an('object');

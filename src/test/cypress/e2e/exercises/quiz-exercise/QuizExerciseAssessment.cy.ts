@@ -2,7 +2,7 @@ import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { Course } from 'app/entities/course.model';
 import shortAnswerQuizTemplate from '../../../fixtures/exercise/quiz/short_answer/template.json';
 import multipleChoiceQuizTemplate from '../../../fixtures/exercise/quiz/multiple_choice/template.json';
-import { convertCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
+import { convertModelAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
 import { courseManagementRequest } from '../../../support/artemis';
 import { admin, studentOne, tutor } from '../../../support/users';
 
@@ -16,7 +16,7 @@ describe('Quiz Exercise Assessment', () => {
     before('Set up course', () => {
         cy.login(admin);
         courseManagementRequest.createCourse().then((response) => {
-            course = convertCourseAfterMultiPart(response);
+            course = convertModelAfterMultiPart(response);
             courseManagementRequest.addStudentToCourse(course, studentOne);
             courseManagementRequest.addTutorToCourse(course, tutor);
         });
@@ -65,7 +65,7 @@ describe('Quiz Exercise Assessment', () => {
 function createQuiz(quizQuestions: any = multipleChoiceQuizTemplate) {
     cy.login(admin);
     courseManagementRequest.createQuizExercise({ course }, [quizQuestions], undefined, undefined, 1).then((quizResponse) => {
-        quizExercise = quizResponse.body;
+        quizExercise = convertModelAfterMultiPart(quizResponse);
         courseManagementRequest.setQuizVisible(quizExercise.id!);
         courseManagementRequest.startQuizNow(quizExercise.id!);
     });

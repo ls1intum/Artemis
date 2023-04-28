@@ -1,5 +1,5 @@
 import { Exam } from 'app/entities/exam.model';
-import { ExamBuilder, convertCourseAfterMultiPart } from '../../support/requests/CourseManagementRequests';
+import { ExamBuilder, convertModelAfterMultiPart } from '../../support/requests/CourseManagementRequests';
 import dayjs from 'dayjs/esm';
 import submission from '../../fixtures/exercise/programming/all_successful/submission.json';
 import { Course } from 'app/entities/course.model';
@@ -24,7 +24,7 @@ describe('Exam participation', () => {
     before('Create course', () => {
         cy.login(admin);
         courseManagementRequest.createCourse(true).then((response) => {
-            course = convertCourseAfterMultiPart(response);
+            course = convertModelAfterMultiPart(response);
             courseManagementRequest.addStudentToCourse(course, studentOne);
             courseManagementRequest.addStudentToCourse(course, studentTwo);
             courseManagementRequest.addStudentToCourse(course, studentThree);
