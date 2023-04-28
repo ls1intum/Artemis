@@ -252,6 +252,7 @@ public class ProgrammingExerciseExportService {
 
     /**
      * Exports a solution repository available for an instructor/tutor/student for a given programming exercise.
+     *
      * The repository download directory is used as the output directory and is destroyed after 5 minutes.
      *
      * @param exerciseId   The id of the programming exercise that has the repository
@@ -431,6 +432,7 @@ public class ProgrammingExerciseExportService {
 
     /**
      * Get participations of programming exercises of a requested list of students packed together in one zip file.
+     *
      * The repository download directory is used as the output directory and is destroyed after 5 minutes.
      *
      * @param programmingExerciseId   the id of the exercise entity
