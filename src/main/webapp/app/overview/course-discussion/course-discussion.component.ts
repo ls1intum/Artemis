@@ -164,6 +164,23 @@ export class CourseDiscussionComponent extends CourseDiscussionDirective impleme
     }
 
     /**
+     * required for distinguishing different select options for the context selector,
+     * Angular needs to be able to identify the currently selected option
+     */
+    compareContextFilterOptionFn(option1: any, option2: any) {
+        if (option1.exerciseId && option2.exerciseId) {
+            return option1.exerciseId === option2.exerciseId;
+        } else if (option1.lectureId && option2.lectureId) {
+            return option1.lectureId === option2.lectureId;
+        } else if (option1.courseWideContext && option2.courseWideContext) {
+            return option1.courseWideContext === option2.courseWideContext;
+        } else if (option1.courseId && option2.courseId) {
+            return option1.courseId === option2.courseId;
+        }
+        return false;
+    }
+
+    /**
      * required for distinguishing different select options for the sort selector (sortBy, and sortDirection),
      * Angular needs to be able to identify the currently selected option
      */
