@@ -4,7 +4,6 @@ import { AccountInformationComponent } from 'app/shared/user-settings/account-in
 import { NotificationSettingsComponent } from 'app/shared/user-settings/notification-settings/notification-settings.component';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { Authority } from 'app/shared/constants/authority.constants';
-import { DataExportComponent } from 'app/core/legal/data-export/data-export.component';
 
 export const userSettingsState: Routes = [
     {
@@ -33,13 +32,6 @@ export const userSettingsState: Routes = [
                 component: NotificationSettingsComponent,
                 data: {
                     pageTitle: 'artemisApp.userSettings.categories.NOTIFICATION_SETTINGS',
-                },
-            },
-            {
-                path: 'data-export',
-                component: DataExportComponent,
-                data: {
-                    pageTitle: 'artemisApp.userSettings.dataExport',
                 },
             },
         ],

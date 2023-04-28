@@ -157,7 +157,6 @@ public class ProgrammingExerciseExportService {
 
     /**
      * Export instructor repositories and optionally students' repositories in a zip file.
-     * <p>
      * The outputDir is used to store the zip file and temporary files used for zipping so make
      * sure to delete it if it's no longer used.
      *
@@ -237,7 +236,6 @@ public class ProgrammingExerciseExportService {
     /**
      * Exports a repository available for an instructor/tutor for a given programming exercise. This can be a template,
      * solution, or tests repository.
-     * <p>
      * The repository download directory is used as the output directory and is destroyed after 5 minutes.
      *
      * @param exerciseId     The id of the programming exercise that has the repository
@@ -252,7 +250,6 @@ public class ProgrammingExerciseExportService {
 
     /**
      * Exports a solution repository available for an instructor/tutor/student for a given programming exercise.
-     * <p>
      * The repository download directory is used as the output directory and is destroyed after 5 minutes.
      *
      * @param exerciseId   The id of the programming exercise that has the repository
@@ -267,7 +264,6 @@ public class ProgrammingExerciseExportService {
 
     /**
      * Exports an auxiliary repository available for an instructor/editor/tutor for a given programming exercise.
-     * <p>
      * The repository download directory is used as the output directory and is destroyed after 5 minutes.
      *
      * @param exerciseId          The id of the programming exercise that has the repository
@@ -432,7 +428,6 @@ public class ProgrammingExerciseExportService {
 
     /**
      * Get participations of programming exercises of a requested list of students packed together in one zip file.
-     * <p>
      * The repository download directory is used as the output directory and is destroyed after 5 minutes.
      *
      * @param programmingExerciseId   the id of the exercise entity
@@ -467,6 +462,7 @@ public class ProgrammingExerciseExportService {
      * @param programmingExercise     the programming exercise
      * @param participations          participations that should be exported
      * @param repositoryExportOptions the options that should be used for the export
+     * @param workingDir              The directory used to clone the repositories
      * @param outputDir               The directory used for store the zip file
      * @param exportErrors            A list of errors that occurred during export (populated by this function)
      * @return List of zip file paths

@@ -33,6 +33,12 @@ public class DataExportResource {
         this.userRepository = userRepository;
     }
 
+    /**
+     * Request a data export for the given user
+     *
+     * @param userId the id of the user to request the data export for
+     * @return the data export object
+     */
     @PutMapping("/{userId}/data-export")
     @PreAuthorize("hasRole('USER')")
     public DataExport requestDataExport(@PathVariable long userId) {
@@ -44,21 +50,30 @@ public class DataExportResource {
             return dataExportService.requestDataExport(user);
         }
         catch (Exception e) {
+            log.error("Could not create data export", e);
             throw new InternalServerErrorException("Could not create data export");
         }
 
     }
 
+    /**
+     * Download the data export for the given user
+     *
+     * @param userId       the id of the user to download the data export for
+     * @param dataExportId the id of the data export to download
+     * @return A resource containing the data export zip file
+     */
     @GetMapping("/{userId}/data-export/{dataExportId}")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Resource> downloadDataExport(@PathVariable long userId, @PathVariable long dataExportId) {
-        var dataExport = dataExportService.downloadDataExport(userId, dataExportId);
-        var finalZipFile = new File(dataExport.getFilePath());
+        var dataExportPath = dataExportService.downloadDataExport(userId, dataExportId);
+        var finalZipFile = new File(dataExportPath);
         InputStreamResource resource;
         try {
             resource = new InputStreamResource(new FileInputStream(finalZipFile));
         }
         catch (FileNotFoundException e) {
+            log.error("Could not find data export file", e);
             throw new InternalServerErrorException("Could not find data export file");
         }
         return ResponseEntity.ok().contentLength(finalZipFile.length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", finalZipFile.getName()).body(resource);

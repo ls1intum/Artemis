@@ -14,7 +14,6 @@ import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
@@ -68,8 +67,6 @@ public class DataExportService {
 
     private final QuizSubmissionRepository quizSubmissionRepository;
 
-    private final ResourceLoaderService resourceLoaderService;
-
     private Path workingDirectory;
 
     public DataExportService(CourseRepository courseRepository, UserRepository userRepository, AuthorizationCheckService authorizationCheckService, ZipFileService zipFileService,
@@ -90,9 +87,15 @@ public class DataExportService {
         this.dataExportRepository = dataExportRepository;
         this.quizQuestionRepository = quizQuestionRepository;
         this.quizSubmissionRepository = quizSubmissionRepository;
-        this.resourceLoaderService = resourceLoaderService;
     }
 
+    /**
+     * Requests a data export for the given user.
+     * This will create a new DataExport object in the database and start the creation of the data export.
+     *
+     * @param user the user for which to create the data export
+     * @return the created DataExport object
+     **/
     public DataExport requestDataExport(User user) throws IOException {
         DataExport dataExport = new DataExport();
         dataExport.setDataExportState(DataExportState.REQUESTED);
@@ -115,7 +118,14 @@ public class DataExportService {
 
     }
 
-    public DataExport downloadDataExport(long userId, long dataExportId) {
+    /**
+     * Download the data export for the given user id and data export id.
+     *
+     * @param userId       the id of the user for which to download the data export
+     * @param dataExportId the id of the data export to download
+     * @return the file path where the data export is stored
+     */
+    public String downloadDataExport(long userId, long dataExportId) {
         var dataExport = dataExportRepository.findByIdElseThrow(dataExportId);
         var user = userRepository.findByIdElseThrow(userId);
         // check data export belongs to specified user
@@ -123,15 +133,25 @@ public class DataExportService {
         // check data export belongs to currently logged-in user
         authorizationCheckService.isOwnerOfDataExportElseThrow(dataExport);
 
-        if (dataExport.getDataExportState() != DataExportState.EMAIL_SENT) {
+        // the first condition checks that the export has been created and the second that it has not yet been deleted (we allow multiple downloads as long as the export is not
+        // deleted
+        if (dataExport.getDataExportState() != DataExportState.EMAIL_SENT && dataExport.getDataExportState() != DataExportState.DOWNLOADED) {
             throw new AccessForbiddenException("Data export is not ready for download yet");
         }
         dataExport.setDownloadDate(ZonedDateTime.now());
         dataExport.setDataExportState(DataExportState.DOWNLOADED);
         dataExport = dataExportRepository.save(dataExport);
-        return dataExport;
+        return dataExport.getFilePath();
 
     }
+
+    /**
+     * Creates the data export for the given user.
+     * Retrieves all courses and exercises the user has participated in from the database.
+     *
+     * @param user the user for which to create the data export
+     * @return the path to the created data export
+     **/
 
     private Path createDataExport(User user) throws IOException {
         var courses = courseRepository.getAllCoursesUserIsMemberOf(authorizationCheckService.isAdmin(user), user.getGroups());
@@ -166,14 +186,8 @@ public class DataExportService {
             createCourseZipFile(course, outputDir);
         }
         addGeneralUserInformation(user);
-        addGDPRInformationFile();
         return createDataExportZipFile(user.getLogin());
 
-    }
-
-    private void addGDPRInformationFile() throws IOException {
-        var outputDir = retrieveOutputDirectoryCreateIfNotExistent(workingDirectory);
-        FileUtils.copyFile(new ClassPathResource("templates/legal/art_15.md").getFile(), outputDir.resolve("README.md").toFile());
     }
 
     private void addGeneralUserInformation(User user) throws IOException {
