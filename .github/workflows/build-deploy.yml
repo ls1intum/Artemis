@@ -116,7 +116,6 @@ jobs:
       uses: docker/build-push-action@v4
       if: ${{ steps.compute-tag.outputs.result != 'FALSE' }}
       with:
-        # TODO: maybe even add arm/v7 for older DevBoards
         # beware that the linux/arm64 build from the registry is using an amd64 compiled .war file as
         # the GitHub runners don't support arm64 and QEMU takes too long for emulating the build
         platforms: linux/amd64,linux/arm64
