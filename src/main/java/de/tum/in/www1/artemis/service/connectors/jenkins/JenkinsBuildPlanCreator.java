@@ -253,9 +253,11 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
             StaticCodeAnalysisTool tool = StaticCodeAnalysisTool.getToolsForProgrammingLanguage(programmingLanguage).get(0);
             // Copy swiftlint configuration into student's repository
             script.append("cp .swiftlint.yml assignment || true").append(lineEnding);
-            // Execute swiftlint within the student's repository and save the report into the sca directory
-            // sh command: swiftlint lint assignment > <scaDir>/<result>.xml
-            script.append("swiftlint lint assignment > ").append(STATIC_CODE_ANALYSIS_REPORT_DIR).append("/").append(tool.getFilePattern()).append(lineEnding);
+            // Change into the student's repository
+            script.append("cd assignment").append(lineEnding);
+            // Execute swiftlint and save the report into the sca directory
+            // sh command: swiftlint > ../<scaDir>/<result>.xml
+            script.append("swiftlint > ../").append(STATIC_CODE_ANALYSIS_REPORT_DIR).append("/").append(tool.getFilePattern()).append(lineEnding);
         }
         return script.toString();
     }

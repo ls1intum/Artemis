@@ -85,6 +85,8 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbuc
 
     private User instructor;
 
+    private int notificationCountBeforeTest;
+
     // Problem statement of an exam exercise where the length is larger than the allowed max notification target size in the db
     // allowed <= 255, this one has ~ 500
     private static final String EXAM_PROBLEM_STATEMENT = "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore "
@@ -178,6 +180,9 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbuc
 
         // explicitly change the user to prevent issues in the following server call due to userRepository.getUser() (@WithMockUser is not working here)
         database.changeUser(TEST_PREFIX + "instructor1");
+
+        // store the current notification count to let tests work even if notifications are created in other tests
+        notificationCountBeforeTest = notificationRepository.findAll().size();
     }
 
     @AfterEach
@@ -196,7 +201,8 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbuc
         List<Notification> capturedNotifications = notificationRepository.findAll();
         Notification lastCapturedNotification = capturedNotifications.get(capturedNotifications.size() - 1);
         assertThat(lastCapturedNotification.getTitle()).as("The title of the captured notification should be equal to the expected one").isEqualTo(expectedNotificationTitle);
-        assertThat(capturedNotifications).as("The number of created notification should be the same as the number of notified groups/authorities").hasSize(numberOfGroupsAndCalls);
+        assertThat(capturedNotifications).as("The number of created notification should be the same as the number of notified groups/authorities")
+                .hasSize(numberOfGroupsAndCalls + notificationCountBeforeTest);
     }
 
     /// Exercise Update / Release & Scheduling related Tests
