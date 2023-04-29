@@ -89,11 +89,11 @@ public final class Constants {
     // Used as a value for <sourceDirectory> for the Java template pom.xml
     public static final String STUDENT_WORKING_DIRECTORY = ASSIGNMENT_DIRECTORY + "src";
 
-    public static final String USER_FIRST_NAME_AFTER_SOFT_DELETE = "Anonymous";
+    public static final String USER_FIRST_NAME_AFTER_SOFT_DELETE = "Deleted";
 
     public static final String USER_LAST_NAME_AFTER_SOFT_DELETE = "User";
 
-    public static final String USER_EMAIL_DOMAIN_AFTER_SOFT_DELETE = "@user.anonymous";
+    public static final String USER_EMAIL_DOMAIN_AFTER_SOFT_DELETE = "@user.deleted";
 
     // TODO: the following numbers should be configurable in the yml files
 
