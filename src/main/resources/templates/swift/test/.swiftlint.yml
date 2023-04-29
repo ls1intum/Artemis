@@ -4,8 +4,6 @@
 
 # The only_rules configuration also includes rules that are enabled by default to provide a good overview of all rules.
 only_rules:
-  - anyobject_protocol
-    # Prefer using AnyObject over class for class-only protocols.
   - array_init
     # Prefer using Array(seq) over seq.map { $0 } to convert a sequence into an Array.
   - block_based_kvo
@@ -48,7 +46,7 @@ only_rules:
     # Discouraged direct initialization of types that can be harmful. e.g. UIDevice(), Bundle()
   - discouraged_optional_boolean
     # Prefer non-optional booleans over optional booleans.
-  # - discouraged_optional_collection # Enable as soon as https://github.com/realm/SwiftLint/issues/2298 is fixed
+  - discouraged_optional_collection
     # Prefer empty collection over optional collection.
   - duplicate_imports
     # Duplicate Imports
@@ -101,8 +99,6 @@ only_rules:
     # Comparing two identical operands is likely a mistake.
   - implicit_getter
     # Computed read-only properties and subscripts should avoid using the get keyword.
-  - inert_defer
-    # If defer is at the end of its parent scope, it will be executed right where it is anyway.
   - is_disjoint
     # Prefer using Set.isDisjoint(with:) over Set.intersection(_:).isEmpty.
   - joined_default_parameter
@@ -259,8 +255,6 @@ only_rules:
     # Parentheses are not needed when declaring closure arguments.
   - untyped_error_in_catch
     # Catch statements should not declare error variables without type casting.
-  - unused_capture_list
-    # Unused reference in a capture list should be removed.
   - unused_closure_parameter
     # Unused parameter in a closure should be replaced with _.
   - unused_control_flow_label
@@ -294,14 +288,6 @@ only_rules:
     # Delegates should be weak to avoid reference cycles.
   - xctfail_message
     # An XCTFail call should include a description of the assertion.
-
-excluded: # paths to ignore during linting. Takes precedence over `included`.
-  - Carthage
-  - Pods
-  - .build
-  - .swiftpm
-  - R.generated.swift
-  - Tests
 
 closure_body_length: # Closure bodies should not span too many lines.
   - 35 # warning - default: 20
@@ -361,6 +347,14 @@ unused_optional_binding:
 
 vertical_whitespace: # Limit vertical whitespace to a single empty line.
   max_empty_lines: 2 # warning - default: 1
+  
+excluded: # paths to ignore during linting. Takes precedence over `included`.
+    - Carthage
+    - Pods
+    - .build
+    - .swiftpm
+    - R.generated.swift
+    - Tests
 
 # reporter type (xcode, json, csv, checkstyle, codeclimate, junit, html, emoji, sonarqube, markdown, github-actions-logging)
 reporter: checkstyle
