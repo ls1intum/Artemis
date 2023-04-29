@@ -382,15 +382,17 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
 
     @Test
     void testConversationNotificationsOneToOneChatCreation() {
+        var notificationsBefore = (int) notificationRepository.count();
         singleUserNotificationService.notifyClientAboutConversationCreationOrDeletion(oneToOneChat, user, userTwo, CONVERSATION_CREATE_ONE_TO_ONE_CHAT);
         List<Notification> capturedNotifications = notificationRepository.findAll();
-        assertThat(capturedNotifications).as("Notification should not have been saved").hasSize(0);
+        assertThat(capturedNotifications).as("Notification should not have been saved").hasSize(notificationsBefore);
         // notification should be sent
         verify(messagingTemplate, times(1)).convertAndSend(eq("/topic/user/" + user.getId() + "/notifications"), (Object) any());
     }
 
     @Test
     void testConversationNotificationsGroupChatCreation() {
+        int notificationsBefore = (int) notificationRepository.count();
         singleUserNotificationService.notifyClientAboutConversationCreationOrDeletion(groupChat, user, userTwo, CONVERSATION_CREATE_GROUP_CHAT);
         verify(messagingTemplate, times(1)).convertAndSend(eq("/topic/user/" + user.getId() + "/notifications"), (Object) any());
 
@@ -398,7 +400,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
         verify(messagingTemplate, times(1)).convertAndSend(eq("/topic/user/" + userThree.getId() + "/notifications"), (Object) any());
 
         List<Notification> capturedNotifications = notificationRepository.findAll();
-        assertThat(capturedNotifications).as("Both notifications should have been saved").hasSize(2);
+        assertThat(capturedNotifications).as("Both notifications should have been saved").hasSize(notificationsBefore + 2);
         capturedNotifications.forEach(capturedNotification -> {
             assertThat(capturedNotification.getTitle()).as("Title of the captured notification should be equal to the expected one")
                     .isEqualTo(CONVERSATION_CREATE_GROUP_CHAT_TITLE);
