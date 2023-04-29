@@ -65,8 +65,8 @@ export const round = (value: any, exp?: number) => {
     value = +value;
     exp = +exp;
 
-    if (isNaN(value) || !(exp % 1 === 0)) {
-        return NaN;
+    if (isNaN(value) || exp % 1 !== 0) {
+        return 0;
     }
 
     // Shift
