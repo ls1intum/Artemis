@@ -129,7 +129,7 @@
               "vendorChunk": false,
               "buildOptimizer": true,
               "serviceWorker": true,
-              "ngswConfigPath": "ngsw-config.json",
+              "ngswConfigPath": "src/main/webapp/ngsw-config.json",
               "budgets": [
                 {
                   "type": "initial",
