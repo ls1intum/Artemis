@@ -50,7 +50,8 @@
               "dagre",
               "webcola",
               "rfdc",
-              "js-zip"
+              "jszip",
+              "react-dom/client"
             ],
             "outputPath": "build/resources/main/static/",
             "index": "src/main/webapp/index.html",
@@ -132,8 +133,8 @@
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "2.4mb",
-                  "maximumError": "2.5mb"
+                  "maximumWarning": "2.5mb",
+                  "maximumError": "2.6mb"
                 },
                 {
                   "type": "anyComponentStyle",
