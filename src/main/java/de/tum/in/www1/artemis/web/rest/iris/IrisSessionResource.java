@@ -65,7 +65,7 @@ public class IrisSessionResource {
      * POST programming-exercises/{exerciseId}/session: Retrieve the current iris session for the programming exercise.
      *
      * @param exerciseId of the exercise
-     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the current iris session for the exercise
+     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the new iris session for the exercise
      */
     @PostMapping("programming-exercises/{exerciseId}/sessions")
     @PreAuthorize("hasRole('USER')")

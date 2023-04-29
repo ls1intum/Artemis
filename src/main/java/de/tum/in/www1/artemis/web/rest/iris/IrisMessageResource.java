@@ -49,7 +49,7 @@ public class IrisMessageResource {
      * GET session/{sessionId}/message: Retrieve the messages for the iris session.
      *
      * @param sessionId of the session
-     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the current iris session for the exercise
+     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the list of messages, or with status {@code 404 (Not Found)} if the session could not be found.
      */
     @GetMapping("sessions/{sessionId}/messages")
     @PreAuthorize("hasRole('USER')")
@@ -93,10 +93,11 @@ public class IrisMessageResource {
     }
 
     /**
-     * POST session/{sessionId}/message: Retrieve the messages for the iris session.
+     * POST sessions/{sessionId}/messages: Send a new message from the user to the LLM
      *
      * @param sessionId of the session
-     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the current iris session for the exercise
+     * @param message   to send
+     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the created message, or with status {@code 404 (Not Found)} if the session could not be found.
      */
     @PostMapping("sessions/{sessionId}/messages")
     @PreAuthorize("hasRole('USER')")
@@ -112,10 +113,13 @@ public class IrisMessageResource {
     }
 
     /**
-     * PUT session/{sessionId}/message: Retrieve the messages for the iris session.
+     * PUT sessions/{sessionId}/messages/{messageId}/helpful/{helpful}: Set the helpful attribute of the message
      *
      * @param sessionId of the session
-     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the current iris session for the exercise
+     * @param messageId of the message
+     * @param helpful   true if the message was helpful, false otherwise, null as default
+     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the updated message, or with status {@code 404 (Not Found)} if the session or message could not
+     *         be found.
      */
     @PutMapping("sessions/{sessionId}/messages/{messageId}/helpful/{helpful}")
     @PreAuthorize("hasRole('USER')")
