@@ -107,9 +107,9 @@ test {
     maxHeapSize = "3072m" // maximum heap size
 }
 
-task testReport(type: TestReport) {
+tasks.register('testReport', TestReport) {
     destinationDirectory = file("$buildDir/reports/tests")
-    reportOn test
+    testResults.from(test)
 }
 
 jacoco {
@@ -367,12 +367,12 @@ dependencyManagement {
     }
 }
 
-task cleanResources(type: Delete) {
+tasks.register('cleanResources', Delete) {
     delete "build/resources"
 }
 
 // Taken from here: https://stackoverflow.com/questions/3963708/gradle-how-to-display-test-results-in-the-console-in-real-time
-tasks.withType(Test) {
+tasks.withType(Test).configureEach {
     testLogging {
         // set options for log level LIFECYCLE
         events TestLogEvent.FAILED,
@@ -401,7 +401,8 @@ wrapper {
     gradleVersion = "8.1.1"
 }
 
-task stage(dependsOn: "bootWar") {
+tasks.register('stage') {
+    dependsOn "bootWar"
 }
 
 node {
@@ -435,7 +436,7 @@ tasks.named("dependencyUpdates").configure {
 
     resolutionStrategy {
         componentSelection {
-            all {
+            configureEach {
                 if (isNonStable(it.candidate.version) && !isNonStable(it.currentVersion)) {
                     reject("Release candidate")
                 }
