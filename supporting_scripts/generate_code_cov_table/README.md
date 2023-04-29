@@ -1,21 +1,41 @@
 # Generate Code Coverage Table Script
-By Felix Dietrich and improved by Paul Schwind
+
+This script generates a code coverage report for changed files in a Bamboo build, comparing a specified Git branch against the develop branch. 
+The generated report is copied to the clipboard, ready for pasting into a pull request or documentation.
 
 ## Setup
 
-1. Optionally create a virtual environment:
+### Prerequisites
+
+- Python 3.6 or higher
+- pip
+- git
+
+### Installation
+
+1. Optionally, create and activate a virtual environment:
 ```
 python3 -m venv venv
+```
+On Linux or macOS:
+```
 source venv/bin/activate
 ```
+On Windows (CMD):
+```
+venv\Scripts\activate.bat
+```
+On Windows (PowerShell):
+```
+venv\Scripts\Activate.ps1
+```
 
-2. Install requirements with pip:
+2. Install the required packages:
 ```
 pip install -r requirements.txt
 ```
 
-3. Fill in environment variables in `.env` file (copy `env.example`) for convenience:
-Alternatively, you can use the command line arguments `--username` (and `--password`) to pass the credentials.
+3. Configure environment variables by copying the `env.example` file to `.env`:
 ```
 cp env.example .env
 ```
@@ -25,31 +45,41 @@ BAMBOO_USERNAME=ab12cd
 BAMBOO_PASSWORD=123456
 ```
 
+Alternatively, you can use the command line arguments `--username` (and `--password`) to pass the credentials.
+
 ## Usage
 
-### Current Branch (default)
+### Generate Code Coverage Report for Current Branch (default)
 
-Run the script with:
+Run the script:
 ```
 python3 generate_code_cov_table.py
 ```
+For additional options, use `--help`.
 
-Use `--help` for additional info.
+### Generate Code Coverage Report for a Specific Branch
 
-### Specific Branch
-
-Run the script with:
+Run the script with the --branch-name option:
 ```
-python3 generate_code_cov_table.py --branch-name <branch_name>
+python3 generate_code_cov_table.py
 ```
+For additional options, use `--help`.
 
-Use `--help` for additional info.
+### Enable Verbose Logging
 
-### Verbose Logging
-
-Run the script with `--verbose` to get more detailed logging:
+Use the `--verbose` option for more detailed logging:
 ```
 python3 generate_code_cov_table.py --verbose
 ```
+With verbose logging, you will see which files are being skipped and processed, as well as the generated result.
 
-You will see which files are being skipped and which are being processed, as well as the result.
+## Output
+
+After running the script, the code coverage report will be copied to your clipboard. 
+The output will be separated into client and server sections, each containing a table with the following columns:
+
+- Class/File: The changed file with a link to its coverage report
+- Line Coverage: Percentage of lines covered by tests
+- Confirmation (assert/expect): A checkbox for manual confirmation of test coverage
+
+
