@@ -75,7 +75,7 @@ public class CourseScoreCalculationService {
                 continue;
             }
             var maxPointsReachableInExercise = exercise.getMaxPoints();
-            if (exercise.getIncludedInOverallScore() == IncludedInOverallScore.INCLUDED_COMPLETELY) {
+            if (exercise.getIncludedInOverallScore() == IncludedInOverallScore.INCLUDED_COMPLETELY && maxPointsReachableInExercise != null) {
                 maxPoints += maxPointsReachableInExercise;
                 if (isAssessmentDone(exercise)) {
                     reachableMaxPoints += maxPointsReachableInExercise;
