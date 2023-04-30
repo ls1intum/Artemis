@@ -40,7 +40,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         this.metisService.posts.pipe(takeUntil(this.ngUnsubscribe)).subscribe((posts: Post[]) => {
             if (this.postInThread?.id && posts) {
                 this.postInThread = posts.find((post) => post.id === this.postInThread?.id);
-                this.cdr.detectChanges();
+                this.cdr.markForCheck();
             }
         });
     }
@@ -63,7 +63,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
                 this.subscribeToLoading();
                 this.isServiceSetUp = true;
                 this.updateQueryParameters();
-                this.cdr.detectChanges();
+                this.cdr.markForCheck();
             }
         });
     }
@@ -97,21 +97,21 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
             this.activeConversation = conversation;
             this.postInThread = undefined;
             this.updateQueryParameters();
-            this.cdr.detectChanges();
+            this.cdr.markForCheck();
         });
     }
 
     private subscribeToConversationsOfUser() {
         this.metisConversationService.conversationsOfUser$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversations: ConversationDto[]) => {
             this.conversationsOfUser = conversations ?? [];
-            this.cdr.detectChanges();
+            this.cdr.markForCheck();
         });
     }
 
     private subscribeToLoading() {
         this.metisConversationService.isLoading$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((isLoading: boolean) => {
             this.isLoading = isLoading;
-            this.cdr.detectChanges();
+            this.cdr.markForCheck();
         });
     }
 }

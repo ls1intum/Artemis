@@ -85,7 +85,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         this.subscribeToSearch();
         this.subscribeToMetis();
         this.subscribeToActiveConversation();
-        this.cdr.detectChanges();
+        this.cdr.markForCheck();
     }
 
     private subscribeToActiveConversation() {
@@ -130,7 +130,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
                 this.searchText = '';
             }
             this.setPosts([]);
-            this.cdr.detectChanges();
+            this.cdr.markForCheck();
             this.onSearch();
             this.createEmptyPost();
         }
@@ -139,11 +139,11 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         this.metisService.posts.pipe(takeUntil(this.ngUnsubscribe)).subscribe((posts: Post[]) => {
             this.setPosts(posts);
             this.isFetchingPosts = false;
-            this.cdr.detectChanges();
+            this.cdr.markForCheck();
         });
         this.metisService.totalNumberOfPosts.pipe(takeUntil(this.ngUnsubscribe)).subscribe((totalNumberOfPosts: number) => {
             this.totalNumberOfPosts = totalNumberOfPosts;
-            this.cdr.detectChanges();
+            this.cdr.markForCheck();
         });
     }
 
@@ -181,7 +181,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         if (this.currentPostContextFilter) {
             this.isFetchingPosts = true; // will be set to false in subscription
             this.metisService.getFilteredPosts(this.currentPostContextFilter, forceUpdate);
-            this.cdr.detectChanges();
+            this.cdr.markForCheck();
         }
     }
 
@@ -189,7 +189,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         this.page = 1;
         this.setPosts([]);
         this.commandMetisToFetchPosts(true);
-        this.cdr.detectChanges();
+        this.cdr.markForCheck();
     }
 
     createEmptyPost(): void {

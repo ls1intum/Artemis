@@ -105,7 +105,7 @@ export class ConversationSidebarEntryComponent implements OnInit, OnDestroy {
                 next: () => {
                     this.conversation.isHidden = shouldHide;
                     this.conversationHiddenStatusChange.emit();
-                    this.cdr.detectChanges();
+                    this.cdr.markForCheck();
                 },
                 error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
             });
@@ -115,7 +115,7 @@ export class ConversationSidebarEntryComponent implements OnInit, OnDestroy {
                 next: () => {
                     this.conversation.isFavorite = shouldFavorite;
                     this.conversationFavoriteStatusChange.emit();
-                    this.cdr.detectChanges();
+                    this.cdr.markForCheck();
                 },
                 error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
             });

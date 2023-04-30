@@ -186,7 +186,7 @@ export class CourseUsersSelectorComponent implements ControlValueAccessor, OnIni
     writeValue(selectedUsers: UserPublicInfoDTO[]): void {
         if (!selectedUsers) {
             this.selectedUsers = [];
-            this.cdr.detectChanges();
+            this.cdr.markForCheck();
             return;
         }
 
@@ -195,7 +195,7 @@ export class CourseUsersSelectorComponent implements ControlValueAccessor, OnIni
         } else {
             this.selectedUsers = selectedUsers?.length ? [selectedUsers[0]] : [];
         }
-        this.cdr.detectChanges();
+        this.cdr.markForCheck();
     }
     // === END CONTROL VALUE ACCESSOR ===
 

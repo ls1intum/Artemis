@@ -25,7 +25,7 @@ export class EmojiPickerComponent implements OnDestroy {
         this.themeSubscription = themeService.getCurrentThemeObservable().subscribe((theme) => {
             this.dark = theme === Theme.DARK;
             this.singleImageFunction = this.dark ? EmojiUtils.singleDarkModeEmojiUrlFn : () => '';
-            this.cdr.detectChanges();
+            this.cdr.markForCheck();
         });
     }
 

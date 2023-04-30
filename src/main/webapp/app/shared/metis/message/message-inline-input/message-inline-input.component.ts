@@ -40,7 +40,7 @@ export class MessageInlineInputComponent extends PostingCreateEditDirective<Post
             // the pattern ensures that the content must include at least one non-whitespace character
             content: [this.posting.content, [Validators.required, Validators.maxLength(this.maxContentLength), PostContentValidationPattern]],
         });
-        this.cdr.detectChanges();
+        this.cdr.markForCheck();
     }
 
     /**
@@ -53,11 +53,11 @@ export class MessageInlineInputComponent extends PostingCreateEditDirective<Post
             next: (post: Post) => {
                 this.isLoading = false;
                 this.onCreate.emit(post);
-                this.cdr.detectChanges();
+                this.cdr.markForCheck();
             },
             error: () => {
                 this.isLoading = false;
-                this.cdr.detectChanges();
+                this.cdr.markForCheck();
             },
         });
     }
@@ -68,11 +68,11 @@ export class MessageInlineInputComponent extends PostingCreateEditDirective<Post
             next: () => {
                 this.isLoading = false;
                 this.isModalOpen.emit();
-                this.cdr.detectChanges();
+                this.cdr.markForCheck();
             },
             error: () => {
                 this.isLoading = false;
-                this.cdr.detectChanges();
+                this.cdr.markForCheck();
             },
         });
     }
@@ -80,6 +80,6 @@ export class MessageInlineInputComponent extends PostingCreateEditDirective<Post
     closeAlert() {
         this.warningDismissed = true;
         this.localStorageService.store('chatWarningDismissed', true);
-        this.cdr.detectChanges();
+        this.cdr.markForCheck();
     }
 }

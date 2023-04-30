@@ -40,7 +40,7 @@ export class MessageReplyInlineInputComponent extends PostingCreateEditDirective
             // the pattern ensures that the content must include at least one non-whitespace character
             content: [this.posting.content, [Validators.required, Validators.maxLength(this.maxContentLength), PostContentValidationPattern]],
         });
-        this.cdr.detectChanges();
+        this.cdr.markForCheck();
     }
 
     /**
@@ -54,11 +54,11 @@ export class MessageReplyInlineInputComponent extends PostingCreateEditDirective
                 this.resetFormGroup();
                 this.isLoading = false;
                 this.onCreate.emit(answerPost);
-                this.cdr.detectChanges();
+                this.cdr.markForCheck();
             },
             error: () => {
                 this.isLoading = false;
-                this.cdr.detectChanges();
+                this.cdr.markForCheck();
             },
         });
     }
@@ -72,11 +72,11 @@ export class MessageReplyInlineInputComponent extends PostingCreateEditDirective
         this.metisService.updateAnswerPost(this.posting).subscribe({
             next: () => {
                 this.isLoading = false;
-                this.cdr.detectChanges();
+                this.cdr.markForCheck();
             },
             error: () => {
                 this.isLoading = false;
-                this.cdr.detectChanges();
+                this.cdr.markForCheck();
             },
         });
     }
@@ -84,6 +84,6 @@ export class MessageReplyInlineInputComponent extends PostingCreateEditDirective
     closeAlert() {
         this.warningDismissed = true;
         this.localStorageService.store('chatWarningDismissed', true);
-        this.cdr.detectChanges();
+        this.cdr.markForCheck();
     }
 }

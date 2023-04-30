@@ -62,7 +62,7 @@ export class ConversationHeaderComponent implements OnInit, OnDestroy {
     private subscribeToActiveConversation() {
         this.metisConversationService.activeConversation$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversation: ConversationDto) => {
             this.activeConversation = conversation;
-            this.cdr.detectChanges();
+            this.cdr.markForCheck();
         });
     }
 

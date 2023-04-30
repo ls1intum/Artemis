@@ -123,7 +123,7 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit, OnI
                         this.displayedOneToOneChats.length +
                         this.displayedGroupChats.length;
 
-                    this.cdr.detectChanges();
+                    this.cdr.markForCheck();
                 },
             });
     }
@@ -136,7 +136,7 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit, OnI
     private subscribeToActiveConversation() {
         this.metisConversationService.activeConversation$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((activeConversation: ConversationDto) => {
             this.activeConversation = activeConversation;
-            this.cdr.detectChanges();
+            this.cdr.markForCheck();
         });
     }
 
@@ -194,7 +194,7 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit, OnI
             searchTerm: this.searchTerm,
             force: true,
         });
-        this.cdr.detectChanges();
+        this.cdr.markForCheck();
     }
 
     ngAfterViewInit(): void {

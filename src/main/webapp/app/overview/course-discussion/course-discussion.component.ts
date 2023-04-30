@@ -89,17 +89,17 @@ export class CourseDiscussionComponent extends CourseDiscussionDirective impleme
                     this.resetCurrentFilter();
                     this.createEmptyPost();
                     this.resetFormGroup();
-                    this.cdr.detectChanges();
+                    this.cdr.markForCheck();
                 });
         });
         this.postsSubscription = this.metisService.posts.pipe().subscribe((posts: Post[]) => {
             this.posts = posts;
             this.isLoading = false;
-            this.cdr.detectChanges();
+            this.cdr.markForCheck();
         });
         this.totalItemsSubscription = this.metisService.totalNumberOfPosts.pipe().subscribe((totalItems: number) => {
             this.totalItems = totalItems;
-            this.cdr.detectChanges();
+            this.cdr.markForCheck();
         });
     }
 
@@ -114,7 +114,7 @@ export class CourseDiscussionComponent extends CourseDiscussionDirective impleme
             filterToOwn: false,
             filterToAnsweredOrReacted: false,
         });
-        this.cdr.detectChanges();
+        this.cdr.markForCheck();
     }
 
     ngOnDestroy(): void {
@@ -128,7 +128,7 @@ export class CourseDiscussionComponent extends CourseDiscussionDirective impleme
     private onSelectPage(): void {
         this.setFilterAndSort();
         this.metisService.getFilteredPosts(this.currentPostContextFilter, false);
-        this.cdr.detectChanges();
+        this.cdr.markForCheck();
     }
 
     /**
@@ -140,7 +140,7 @@ export class CourseDiscussionComponent extends CourseDiscussionDirective impleme
         // will scroll to the top of the posts
         this.forceReload = true;
         super.onSelectContext();
-        this.cdr.detectChanges();
+        this.cdr.markForCheck();
     }
 
     /**
@@ -203,7 +203,7 @@ export class CourseDiscussionComponent extends CourseDiscussionDirective impleme
             this.exercises?.find((exercise) => exercise.id === this.currentPostContextFilter.exerciseId),
             this.lectures?.find((lecture) => lecture.id === this.currentPostContextFilter.lectureId),
         );
-        this.cdr.detectChanges();
+        this.cdr.markForCheck();
     }
 
     /**

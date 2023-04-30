@@ -62,7 +62,7 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
             const { params, queryParams } = routeParams;
             const courseId = params.courseId;
             this.currentPostId = +queryParams.postId;
-            this.cdr.detectChanges();
+            this.cdr.markForCheck();
             this.courseManagementService.findOneForDashboard(courseId).subscribe((res: HttpResponse<Course>) => {
                 if (res.body !== undefined) {
                     this.course = res.body!;
@@ -74,7 +74,7 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
                     });
                     this.createEmptyPost();
                     this.resetFormGroup();
-                    this.cdr.detectChanges();
+                    this.cdr.markForCheck();
                 }
             });
         });
@@ -84,7 +84,7 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
             if (this.currentPostId && this.posts.length > 0) {
                 this.currentPost = this.posts.find((post) => post.id === this.currentPostId);
             }
-            this.cdr.detectChanges();
+            this.cdr.markForCheck();
         });
     }
 
@@ -116,7 +116,7 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
             }
         }
         this.posts.sort(this.sectionSortFn);
-        this.cdr.detectChanges();
+        this.cdr.markForCheck();
     }
 
     /**
@@ -174,7 +174,7 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
      */
     createEmptyPost(): void {
         this.createdPost = this.metisService.createEmptyPostForContext(undefined, this.exercise, this.lecture);
-        this.cdr.detectChanges();
+        this.cdr.markForCheck();
     }
 
     /**
@@ -235,7 +235,7 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
             },
             queryParamsHandling: 'merge',
         });
-        this.cdr.detectChanges();
+        this.cdr.markForCheck();
     }
 
     /**
@@ -249,7 +249,7 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
             filterToOwn: false,
             filterToAnsweredOrReacted: false,
         });
-        this.cdr.detectChanges();
+        this.cdr.markForCheck();
     }
 
     /**
