@@ -87,7 +87,7 @@ describe('ResultComponent', () => {
         expect(component.submission).toEqual(submission1);
         expect(component.textColorClass).toBe('text-secondary');
         expect(component.resultIconClass).toEqual(faQuestionCircle);
-        expect(component.resultString).toBe('artemisApp.result.resultString.programming (artemisApp.result.preliminary)');
+        expect(component.resultString).toBe('artemisApp.result.resultString.programmingShort (artemisApp.result.preliminary)');
     });
 
     it('should set results for modeling exercise', () => {
@@ -105,7 +105,7 @@ describe('ResultComponent', () => {
         expect(component.submission).toEqual(submission1);
         expect(component.textColorClass).toBe('text-danger');
         expect(component.resultIconClass).toEqual(faTimesCircle);
-        expect(component.resultString).toBe('artemisApp.result.resultString.nonProgramming');
+        expect(component.resultString).toBe('artemisApp.result.resultString.short');
         expect(component.templateStatus).toBe(ResultTemplateStatus.HAS_RESULT);
     });
 });
