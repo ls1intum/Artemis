@@ -174,6 +174,6 @@ export class ConversationMembersComponent implements OnInit, OnDestroy {
             this.activeConversation.numberOfMembers = this.totalItems;
         }
         this.members = members || [];
-        this.cdr.markForCheck();
+        this.cdr.detectChanges();
     }
 }
