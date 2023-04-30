@@ -1,7 +1,7 @@
 import { HeaderCourseComponent } from 'app/overview/header-course.component';
 import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
-import { EMPTY, Subject, of, throwError } from 'rxjs';
+import { EMPTY, Observable, Subject, of, throwError } from 'rxjs';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ArtemisTestModule } from '../../test.module';
@@ -256,6 +256,22 @@ describe('CourseOverviewComponent', () => {
         expect(getCourseStub).toHaveBeenCalledOnce();
         expect(subscribeForQuizChangesStub).toHaveBeenCalledOnce();
         expect(subscribeToTeamAssignmentUpdatesStub).toHaveBeenCalledOnce();
+    });
+
+    it('should load the course, even when just calling loadCourse by itself (for refreshing)', () => {
+        // check that loadCourse already subscribes to the course itself
+
+        // create observable httpResponse with course1, where we detect whether it was called
+        const findOneForDashboardResponse = new Observable((subscriber) => {
+            subscriber.next(course1);
+            subscriber.complete();
+        });
+        const subscribeStub = jest.spyOn(findOneForDashboardResponse, 'subscribe');
+        findOneForDashboardStub.mockReturnValue(findOneForDashboardResponse);
+
+        component.loadCourse();
+
+        expect(subscribeStub).toHaveBeenCalledOnce();
     });
 
     it('should have visible exams', () => {
