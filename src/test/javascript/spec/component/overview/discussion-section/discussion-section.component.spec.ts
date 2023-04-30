@@ -48,6 +48,7 @@ import {
     postsWithCreationDate,
 } from '../../../helpers/sample/metis-sample-data';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { ChangeDetectorRef } from '@angular/core';
 
 describe('PageDiscussionSectionComponent', () => {
     let component: DiscussionSectionComponent;
@@ -194,6 +195,8 @@ describe('PageDiscussionSectionComponent', () => {
         tick();
         fixture.detectChanges();
         component.posts = metisCoursePostsWithCourseWideContext;
+
+        fixture.componentRef.injector.get(ChangeDetectorRef).markForCheck();
         fixture.detectChanges();
         const newPostButtons = getElements(fixture.debugElement, '.btn-primary');
         expect(newPostButtons).not.toBeNull();

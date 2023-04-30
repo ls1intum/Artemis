@@ -17,6 +17,7 @@ import {
     ConversationDetailDialogComponent,
     ConversationDetailTabs,
 } from 'app/overview/course-conversations/dialogs/conversation-detail-dialog/conversation-detail-dialog.component';
+import { ChangeDetectorRef } from '@angular/core';
 const examples: ConversationDto[] = [generateOneToOneChatDTO({}), generateExampleGroupChatDTO({}), generateExampleChannelDTO({})];
 
 examples.forEach((activeConversation) => {
@@ -24,8 +25,9 @@ examples.forEach((activeConversation) => {
         let component: ConversationHeaderComponent;
         let fixture: ComponentFixture<ConversationHeaderComponent>;
         let metisConversationService: MetisConversationService;
+        let conversationService: ConversationService;
+        let realCdr: ChangeDetectorRef;
         const course = { id: 1 } as any;
-        const canAddUsers = jest.fn();
 
         beforeEach(waitForAsync(() => {
             TestBed.configureTestingModule({
@@ -41,17 +43,18 @@ examples.forEach((activeConversation) => {
         }));
 
         beforeEach(() => {
-            canAddUsers.mockReturnValue(true);
             metisConversationService = TestBed.inject(MetisConversationService);
             Object.defineProperty(metisConversationService, 'course', { get: () => course });
             Object.defineProperty(metisConversationService, 'activeConversation$', { get: () => new BehaviorSubject(activeConversation).asObservable() });
             Object.defineProperty(metisConversationService, 'forceRefresh', { value: () => EMPTY });
 
+            conversationService = TestBed.inject(ConversationService);
+            Object.defineProperty(conversationService, 'getConversationName', { value: () => 'dummy' });
+
             fixture = TestBed.createComponent(ConversationHeaderComponent);
             component = fixture.componentInstance;
-            component.getConversationName = () => 'dummy';
-            component.canAddUsers = canAddUsers;
             fixture.detectChanges();
+            realCdr = fixture.componentRef.injector.get(ChangeDetectorRef);
         });
 
         it('should create', () => {
@@ -60,11 +63,13 @@ examples.forEach((activeConversation) => {
         });
 
         it('should open the add users dialog', fakeAsync(() => {
-            canAddUsers.mockReturnValue(false);
+            component.canAddUsers = false;
+            realCdr.markForCheck();
             fixture.detectChanges();
             expect(fixture.debugElement.nativeElement.querySelector('.addUsers')).toBeFalsy();
 
-            canAddUsers.mockReturnValue(true);
+            component.canAddUsers = true;
+            realCdr.markForCheck();
             fixture.detectChanges();
             const addUsersButton = fixture.debugElement.nativeElement.querySelector('.addUsers');
             expect(addUsersButton).toBeTruthy();

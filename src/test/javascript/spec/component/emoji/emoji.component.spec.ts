@@ -3,7 +3,8 @@ import { ArtemisTestModule } from '../../test.module';
 import { EmojiComponent } from 'app/shared/metis/emoji/emoji.component';
 import { Theme, ThemeService } from 'app/core/theme/theme.service';
 import { of } from 'rxjs';
-
+import { MockComponent } from 'ng-mocks';
+import { EmojiComponent as NgxEmojiComponent } from '@ctrl/ngx-emoji-mart/ngx-emoji';
 describe('EmojiComponent', () => {
     let fixture: ComponentFixture<EmojiComponent>;
     let comp: EmojiComponent;
@@ -13,7 +14,7 @@ describe('EmojiComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [],
+            declarations: [EmojiComponent, MockComponent(NgxEmojiComponent)],
             providers: [],
         })
             .compileComponents()
@@ -30,6 +31,7 @@ describe('EmojiComponent', () => {
     });
 
     it('should subscribe and unsubscribe to the theme service and set dark flag', () => {
+        fixture.detectChanges();
         expect(themeSpy).toHaveBeenCalledOnce();
         expect(comp.dark).toBeTrue();
         expect(comp.themeSubscription).toBeDefined();
