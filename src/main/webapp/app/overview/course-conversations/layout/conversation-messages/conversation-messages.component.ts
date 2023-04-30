@@ -1,5 +1,6 @@
 import {
     AfterViewInit,
+    ChangeDetectionStrategy,
     ChangeDetectorRef,
     Component,
     ElementRef,
@@ -32,6 +33,7 @@ import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
     templateUrl: './conversation-messages.component.html',
     styleUrls: ['./conversation-messages.component.scss'],
     encapsulation: ViewEncapsulation.None,
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnDestroy {
     private ngUnsubscribe = new Subject<void>();
@@ -127,6 +129,8 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
                 this.searchInput.nativeElement.value = '';
                 this.searchText = '';
             }
+            this.setPosts([]);
+            this.cdr.detectChanges();
             this.onSearch();
             this.createEmptyPost();
         }
@@ -135,9 +139,11 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         this.metisService.posts.pipe(takeUntil(this.ngUnsubscribe)).subscribe((posts: Post[]) => {
             this.setPosts(posts);
             this.isFetchingPosts = false;
+            this.cdr.detectChanges();
         });
         this.metisService.totalNumberOfPosts.pipe(takeUntil(this.ngUnsubscribe)).subscribe((totalNumberOfPosts: number) => {
             this.totalNumberOfPosts = totalNumberOfPosts;
+            this.cdr.detectChanges();
         });
     }
 
@@ -175,12 +181,15 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         if (this.currentPostContextFilter) {
             this.isFetchingPosts = true; // will be set to false in subscription
             this.metisService.getFilteredPosts(this.currentPostContextFilter, forceUpdate);
+            this.cdr.detectChanges();
         }
     }
 
     onSearch(): void {
         this.page = 1;
+        this.setPosts([]);
         this.commandMetisToFetchPosts(true);
+        this.cdr.detectChanges();
     }
 
     createEmptyPost(): void {

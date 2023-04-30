@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 import { PostingContentPart, ReferenceType } from '../../metis.util';
 import { FileService } from 'app/shared/http/file.service';
 import { faChalkboardUser, faCheckDouble, faFile, faFileUpload, faFont, faKeyboard, faMessage, faPaperclip, faProjectDiagram } from '@fortawesome/free-solid-svg-icons';
@@ -8,6 +8,7 @@ import { IconProp } from '@fortawesome/fontawesome-svg-core';
     selector: 'jhi-posting-content-part',
     templateUrl: './posting-content-part.component.html',
     styleUrls: ['./../../metis.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PostingContentPartComponent {
     @Input() postingContentPart: PostingContentPart;

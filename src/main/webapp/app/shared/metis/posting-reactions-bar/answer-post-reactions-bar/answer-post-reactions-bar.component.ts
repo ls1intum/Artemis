@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, OnChanges, OnInit } from '@angular/core';
 import { Reaction } from 'app/entities/metis/reaction.model';
 import { PostingsReactionsBarDirective } from 'app/shared/metis/posting-reactions-bar/posting-reactions-bar.component';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
@@ -9,6 +9,7 @@ import { MetisService } from 'app/shared/metis/metis.service';
     selector: 'jhi-answer-post-reactions-bar',
     templateUrl: './answer-post-reactions-bar.component.html',
     styleUrls: ['../posting-reactions-bar.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AnswerPostReactionsBarComponent extends PostingsReactionsBarDirective<AnswerPost> implements OnInit, OnChanges {
     @Input()

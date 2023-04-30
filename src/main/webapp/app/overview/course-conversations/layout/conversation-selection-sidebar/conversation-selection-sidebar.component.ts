@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import interact from 'interactjs';
 import { faChevronLeft, faChevronRight, faComments, faCompress, faExpand, faFilter, faGripLinesVertical, faPlus } from '@fortawesome/free-solid-svg-icons';
 
@@ -30,6 +30,7 @@ interface SearchQuery {
     styleUrls: ['./conversation-selection-sidebar.component.scss'],
     templateUrl: './conversation-selection-sidebar.component.html',
     encapsulation: ViewEncapsulation.None,
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ConversationSelectionSidebarComponent implements AfterViewInit, OnInit, OnDestroy {
     private ngUnsubscribe = new Subject<void>();
@@ -135,6 +136,7 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit, OnI
     private subscribeToActiveConversation() {
         this.metisConversationService.activeConversation$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((activeConversation: ConversationDto) => {
             this.activeConversation = activeConversation;
+            this.cdr.detectChanges();
         });
     }
 
@@ -192,6 +194,7 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit, OnI
             searchTerm: this.searchTerm,
             force: true,
         });
+        this.cdr.detectChanges();
     }
 
     ngAfterViewInit(): void {

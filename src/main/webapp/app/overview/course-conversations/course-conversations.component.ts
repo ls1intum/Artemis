@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
 import { Post } from 'app/entities/metis/post.model';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -15,6 +15,7 @@ import { PageType } from 'app/shared/metis/metis.util';
     styleUrls: ['./course-conversations.component.scss'],
     encapsulation: ViewEncapsulation.None,
     providers: [MetisService],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CourseConversationsComponent implements OnInit, OnDestroy {
     private ngUnsubscribe = new Subject<void>();
@@ -25,7 +26,13 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     activeConversation?: ConversationDto = undefined;
     conversationsOfUser: ConversationDto[] = [];
     // MetisConversationService is created in course overview, so we can use it here
-    constructor(private router: Router, private activatedRoute: ActivatedRoute, public metisConversationService: MetisConversationService, public metisService: MetisService) {}
+    constructor(
+        private router: Router,
+        private activatedRoute: ActivatedRoute,
+        public metisConversationService: MetisConversationService,
+        public metisService: MetisService,
+        private cdr: ChangeDetectorRef,
+    ) {}
 
     getAsChannel = getAsChannelDto;
 
@@ -33,6 +40,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         this.metisService.posts.pipe(takeUntil(this.ngUnsubscribe)).subscribe((posts: Post[]) => {
             if (this.postInThread?.id && posts) {
                 this.postInThread = posts.find((post) => post.id === this.postInThread?.id);
+                this.cdr.detectChanges();
             }
         });
     }
@@ -55,6 +63,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
                 this.subscribeToLoading();
                 this.isServiceSetUp = true;
                 this.updateQueryParameters();
+                this.cdr.detectChanges();
             }
         });
     }
@@ -88,18 +97,21 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
             this.activeConversation = conversation;
             this.postInThread = undefined;
             this.updateQueryParameters();
+            this.cdr.detectChanges();
         });
     }
 
     private subscribeToConversationsOfUser() {
         this.metisConversationService.conversationsOfUser$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversations: ConversationDto[]) => {
             this.conversationsOfUser = conversations ?? [];
+            this.cdr.detectChanges();
         });
     }
 
     private subscribeToLoading() {
         this.metisConversationService.isLoading$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((isLoading: boolean) => {
             this.isLoading = isLoading;
+            this.cdr.detectChanges();
         });
     }
 }

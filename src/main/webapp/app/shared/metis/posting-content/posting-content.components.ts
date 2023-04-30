@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, OnChanges, OnDestroy, OnInit } from '@angular/core';
 import { Params } from '@angular/router';
 import { faAngleDown, faAngleUp } from '@fortawesome/free-solid-svg-icons';
 import { Post } from 'app/entities/metis/post.model';
@@ -10,6 +10,7 @@ import { PatternMatch, PostingContentPart, ReferenceType } from '../metis.util';
     selector: 'jhi-posting-content',
     templateUrl: './posting-content.component.html',
     styleUrls: ['./posting-content.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
     @Input() content?: string;

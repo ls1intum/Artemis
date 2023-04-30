@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, EventEmitter, Input, Output } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
 import interact from 'interactjs';
 import { Post } from 'app/entities/metis/post.model';
 import { faArrowLeft, faChevronLeft, faGripLinesVertical, faXmark } from '@fortawesome/free-solid-svg-icons';
@@ -9,6 +9,7 @@ import { ConversationDto } from 'app/entities/metis/conversation/conversation.mo
     selector: 'jhi-conversation-thread-sidebar',
     templateUrl: './conversation-thread-sidebar.component.html',
     styleUrls: ['./conversation-thread-sidebar.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ConversationThreadSidebarComponent implements AfterViewInit {
     @Input()

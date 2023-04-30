@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { Post } from 'app/entities/metis/post.model';
 import { PostingHeaderDirective } from 'app/shared/metis/posting-header/posting-header.directive';
 import { MetisService } from 'app/shared/metis/metis.service';
@@ -11,6 +11,7 @@ import dayjs from 'dayjs/esm';
     selector: 'jhi-post-header',
     templateUrl: './post-header.component.html',
     styleUrls: ['../../metis.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PostHeaderComponent extends PostingHeaderDirective<Post> implements OnInit, OnDestroy {
     @Input()

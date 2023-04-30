@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { faUserGroup, faUserPlus } from '@fortawesome/free-solid-svg-icons';
 import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
@@ -21,6 +21,7 @@ import { catchError } from 'rxjs/operators';
     selector: 'jhi-conversation-header',
     templateUrl: './conversation-header.component.html',
     styleUrls: ['./conversation-header.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ConversationHeaderComponent implements OnInit, OnDestroy {
     private ngUnsubscribe = new Subject<void>();
@@ -39,6 +40,7 @@ export class ConversationHeaderComponent implements OnInit, OnDestroy {
         // instantiated at course-conversation.component.ts
         public metisConversationService: MetisConversationService,
         public conversationService: ConversationService,
+        private cdr: ChangeDetectorRef,
     ) {}
 
     getAsChannel = getAsChannelDto;
@@ -60,6 +62,7 @@ export class ConversationHeaderComponent implements OnInit, OnDestroy {
     private subscribeToActiveConversation() {
         this.metisConversationService.activeConversation$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversation: ConversationDto) => {
             this.activeConversation = conversation;
+            this.cdr.detectChanges();
         });
     }
 

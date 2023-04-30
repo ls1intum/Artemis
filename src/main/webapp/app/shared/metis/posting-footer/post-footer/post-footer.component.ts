@@ -1,4 +1,17 @@
-import { AfterContentChecked, ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, ViewChild, ViewContainerRef } from '@angular/core';
+import {
+    AfterContentChecked,
+    ChangeDetectionStrategy,
+    ChangeDetectorRef,
+    Component,
+    EventEmitter,
+    Input,
+    OnChanges,
+    OnDestroy,
+    OnInit,
+    Output,
+    ViewChild,
+    ViewContainerRef,
+} from '@angular/core';
 import { PostingFooterDirective } from 'app/shared/metis/posting-footer/posting-footer.directive';
 import { Post } from 'app/entities/metis/post.model';
 import { MetisService } from 'app/shared/metis/metis.service';
@@ -11,6 +24,7 @@ import dayjs from 'dayjs/esm';
     selector: 'jhi-post-footer',
     templateUrl: './post-footer.component.html',
     styleUrls: ['./post-footer.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PostFooterComponent extends PostingFooterDirective<Post> implements OnInit, OnChanges, OnDestroy, AfterContentChecked {
     @Input() lastReadDate?: dayjs.Dayjs;

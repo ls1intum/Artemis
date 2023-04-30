@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, ViewChild, ViewContainerRef } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output, ViewChild, ViewContainerRef } from '@angular/core';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { PostingDirective } from 'app/shared/metis/posting.directive';
 import dayjs from 'dayjs/esm';
@@ -7,6 +7,7 @@ import dayjs from 'dayjs/esm';
     selector: 'jhi-answer-post',
     templateUrl: './answer-post.component.html',
     styleUrls: ['./answer-post.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AnswerPostComponent extends PostingDirective<AnswerPost> {
     @Input() lastReadDate?: dayjs.Dayjs;

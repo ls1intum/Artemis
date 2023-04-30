@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewEncapsulation } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, ViewEncapsulation } from '@angular/core';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { FormBuilder, Validators } from '@angular/forms';
@@ -13,10 +13,17 @@ import { LocalStorageService } from 'ngx-webstorage';
     templateUrl: './message-inline-input.component.html',
     styleUrls: ['./message-inline-input.component.scss'],
     encapsulation: ViewEncapsulation.None,
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MessageInlineInputComponent extends PostingCreateEditDirective<Post | AnswerPost> implements OnInit {
     warningDismissed = false;
-    constructor(protected metisService: MetisService, protected modalService: NgbModal, protected formBuilder: FormBuilder, protected localStorageService: LocalStorageService) {
+    constructor(
+        protected metisService: MetisService,
+        protected modalService: NgbModal,
+        protected formBuilder: FormBuilder,
+        protected localStorageService: LocalStorageService,
+        private cdr: ChangeDetectorRef,
+    ) {
         super(metisService, modalService, formBuilder);
     }
 
@@ -33,6 +40,7 @@ export class MessageInlineInputComponent extends PostingCreateEditDirective<Post
             // the pattern ensures that the content must include at least one non-whitespace character
             content: [this.posting.content, [Validators.required, Validators.maxLength(this.maxContentLength), PostContentValidationPattern]],
         });
+        this.cdr.detectChanges();
     }
 
     /**
@@ -45,9 +53,11 @@ export class MessageInlineInputComponent extends PostingCreateEditDirective<Post
             next: (post: Post) => {
                 this.isLoading = false;
                 this.onCreate.emit(post);
+                this.cdr.detectChanges();
             },
             error: () => {
                 this.isLoading = false;
+                this.cdr.detectChanges();
             },
         });
     }
@@ -58,9 +68,11 @@ export class MessageInlineInputComponent extends PostingCreateEditDirective<Post
             next: () => {
                 this.isLoading = false;
                 this.isModalOpen.emit();
+                this.cdr.detectChanges();
             },
             error: () => {
                 this.isLoading = false;
+                this.cdr.detectChanges();
             },
         });
     }
@@ -68,5 +80,6 @@ export class MessageInlineInputComponent extends PostingCreateEditDirective<Post
     closeAlert() {
         this.warningDismissed = true;
         this.localStorageService.store('chatWarningDismissed', true);
+        this.cdr.detectChanges();
     }
 }

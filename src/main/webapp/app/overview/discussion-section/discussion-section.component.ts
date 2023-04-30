@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import interact from 'interactjs';
 import { Exercise } from 'app/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
@@ -21,6 +21,7 @@ import { FormBuilder } from '@angular/forms';
     templateUrl: './discussion-section.component.html',
     styleUrls: ['./discussion-section.component.scss'],
     providers: [MetisService],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DiscussionSectionComponent extends CourseDiscussionDirective implements OnInit, AfterViewInit, OnDestroy {
     @Input() exercise?: Exercise;
@@ -44,6 +45,7 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
         private courseManagementService: CourseManagementService,
         private router: Router,
         private formBuilder: FormBuilder,
+        private cdr: ChangeDetectorRef,
     ) {
         super(metisService);
     }
@@ -60,6 +62,7 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
             const { params, queryParams } = routeParams;
             const courseId = params.courseId;
             this.currentPostId = +queryParams.postId;
+            this.cdr.detectChanges();
             this.courseManagementService.findOneForDashboard(courseId).subscribe((res: HttpResponse<Course>) => {
                 if (res.body !== undefined) {
                     this.course = res.body!;
@@ -71,6 +74,7 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
                     });
                     this.createEmptyPost();
                     this.resetFormGroup();
+                    this.cdr.detectChanges();
                 }
             });
         });
@@ -80,6 +84,7 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
             if (this.currentPostId && this.posts.length > 0) {
                 this.currentPost = this.posts.find((post) => post.id === this.currentPostId);
             }
+            this.cdr.detectChanges();
         });
     }
 
@@ -111,6 +116,7 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
             }
         }
         this.posts.sort(this.sectionSortFn);
+        this.cdr.detectChanges();
     }
 
     /**
@@ -168,6 +174,7 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
      */
     createEmptyPost(): void {
         this.createdPost = this.metisService.createEmptyPostForContext(undefined, this.exercise, this.lecture);
+        this.cdr.detectChanges();
     }
 
     /**
@@ -228,6 +235,7 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
             },
             queryParamsHandling: 'merge',
         });
+        this.cdr.detectChanges();
     }
 
     /**
@@ -241,6 +249,7 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
             filterToOwn: false,
             filterToAnsweredOrReacted: false,
         });
+        this.cdr.detectChanges();
     }
 
     /**

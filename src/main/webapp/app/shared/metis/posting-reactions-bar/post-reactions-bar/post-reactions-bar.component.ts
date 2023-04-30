@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
 import { Reaction } from 'app/entities/metis/reaction.model';
 import { Post } from 'app/entities/metis/post.model';
 import { PostingsReactionsBarDirective } from 'app/shared/metis/posting-reactions-bar/posting-reactions-bar.component';
@@ -12,6 +12,7 @@ import dayjs from 'dayjs/esm';
     selector: 'jhi-post-reactions-bar',
     templateUrl: './post-reactions-bar.component.html',
     styleUrls: ['../posting-reactions-bar.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Post> implements OnInit, OnChanges {
     pinTooltip: string;

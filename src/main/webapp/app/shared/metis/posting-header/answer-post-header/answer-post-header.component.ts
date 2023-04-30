@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { PostingHeaderDirective } from 'app/shared/metis/posting-header/posting-header.directive';
 import { MetisService } from 'app/shared/metis/metis.service';
@@ -10,6 +10,7 @@ import dayjs from 'dayjs/esm';
     selector: 'jhi-answer-post-header',
     templateUrl: './answer-post-header.component.html',
     styleUrls: ['../../metis.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AnswerPostHeaderComponent extends PostingHeaderDirective<AnswerPost> implements OnInit {
     @Input()

@@ -1,7 +1,7 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Params } from '@angular/router';
 import { CourseWideContext, PageType, PostContextFilter, PostSortCriterion, SortDirection } from 'app/shared/metis/metis.util';
-import { Subscription, combineLatest } from 'rxjs';
+import { Subscription, combineLatest, filter } from 'rxjs';
 import { Course } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
@@ -19,6 +19,7 @@ import { DocumentationType } from 'app/shared/components/documentation-button/do
     templateUrl: './course-discussion.component.html',
     styleUrls: ['./course-discussion.component.scss'],
     providers: [MetisService],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CourseDiscussionComponent extends CourseDiscussionDirective implements OnInit, OnDestroy {
     entitiesPerPageTranslation = 'artemisApp.organizationManagement.userSearch.usersPerPage';
@@ -46,6 +47,7 @@ export class CourseDiscussionComponent extends CourseDiscussionDirective impleme
         private activatedRoute: ActivatedRoute,
         private courseManagementService: CourseManagementService,
         private formBuilder: FormBuilder,
+        private cdr: ChangeDetectorRef,
     ) {
         super(metisService);
     }
@@ -62,8 +64,10 @@ export class CourseDiscussionComponent extends CourseDiscussionDirective impleme
             const { params, queryParams } = routeParams;
             const courseId = params.courseId;
             this.searchText = queryParams.searchText;
-            this.courseManagementService.findOneForDashboard(courseId).subscribe((res: HttpResponse<Course>) => {
-                if (res.body !== undefined) {
+            this.courseManagementService
+                .findOneForDashboard(courseId)
+                .pipe(filter((res: HttpResponse<Course>) => res.body !== undefined))
+                .subscribe((res: HttpResponse<Course>) => {
                     this.course = res.body!;
                     if (this.course?.lectures) {
                         this.lectures = this.course.lectures.sort(this.overviewContextSortFn);
@@ -85,15 +89,17 @@ export class CourseDiscussionComponent extends CourseDiscussionDirective impleme
                     this.resetCurrentFilter();
                     this.createEmptyPost();
                     this.resetFormGroup();
-                }
-            });
+                    this.cdr.detectChanges();
+                });
         });
         this.postsSubscription = this.metisService.posts.pipe().subscribe((posts: Post[]) => {
             this.posts = posts;
             this.isLoading = false;
+            this.cdr.detectChanges();
         });
         this.totalItemsSubscription = this.metisService.totalNumberOfPosts.pipe().subscribe((totalItems: number) => {
             this.totalItems = totalItems;
+            this.cdr.detectChanges();
         });
     }
 
@@ -108,6 +114,7 @@ export class CourseDiscussionComponent extends CourseDiscussionDirective impleme
             filterToOwn: false,
             filterToAnsweredOrReacted: false,
         });
+        this.cdr.detectChanges();
     }
 
     ngOnDestroy(): void {
@@ -121,6 +128,7 @@ export class CourseDiscussionComponent extends CourseDiscussionDirective impleme
     private onSelectPage(): void {
         this.setFilterAndSort();
         this.metisService.getFilteredPosts(this.currentPostContextFilter, false);
+        this.cdr.detectChanges();
     }
 
     /**
@@ -132,6 +140,7 @@ export class CourseDiscussionComponent extends CourseDiscussionDirective impleme
         // will scroll to the top of the posts
         this.forceReload = true;
         super.onSelectContext();
+        this.cdr.detectChanges();
     }
 
     /**
@@ -194,7 +203,9 @@ export class CourseDiscussionComponent extends CourseDiscussionDirective impleme
             this.exercises?.find((exercise) => exercise.id === this.currentPostContextFilter.exerciseId),
             this.lectures?.find((lecture) => lecture.id === this.currentPostContextFilter.lectureId),
         );
+        this.cdr.detectChanges();
     }
+
     /**
      * defines a function that returns the post id as unique identifier,
      * by this means, Angular determines which post in the collection of posts has to be reloaded/destroyed on changes

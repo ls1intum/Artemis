@@ -1,4 +1,4 @@
-import { Component, HostBinding, Input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, HostBinding, Input } from '@angular/core';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
 
@@ -6,6 +6,7 @@ import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
     /* eslint-disable-next-line  @angular-eslint/component-selector */
     selector: 'button[jhi-posting-button]',
     templateUrl: './posting-button.component.html',
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PostingButtonComponent {
     @Input() buttonIcon: IconProp;

@@ -1,4 +1,4 @@
-import { AfterContentChecked, ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output, ViewEncapsulation, forwardRef } from '@angular/core';
+import { AfterContentChecked, ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output, ViewEncapsulation, forwardRef } from '@angular/core';
 import { Command } from 'app/shared/markdown-editor/commands/command';
 import { BoldCommand } from 'app/shared/markdown-editor/commands/bold.command';
 import { ItalicCommand } from 'app/shared/markdown-editor/commands/italic.command';
@@ -24,6 +24,7 @@ import { LectureAttachmentReferenceCommand } from 'app/shared/markdown-editor/co
         },
     ],
     encapsulation: ViewEncapsulation.None,
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PostingMarkdownEditorComponent implements OnInit, ControlValueAccessor, AfterContentChecked {
     @Input() maxContentLength: number;
@@ -72,6 +73,7 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
      */
     valueChanged() {
         this.valueChange.emit();
+        this.cdref.detectChanges();
     }
 
     /**
@@ -82,6 +84,7 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
     writeValue(value: any): void {
         if (value !== undefined) {
             this.content = value;
+            this.cdref.detectChanges();
         }
     }
 

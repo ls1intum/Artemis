@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
 import { PostingFooterDirective } from 'app/shared/metis/posting-footer/posting-footer.directive';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 
@@ -6,6 +6,7 @@ import { AnswerPost } from 'app/entities/metis/answer-post.model';
     selector: 'jhi-answer-post-footer',
     templateUrl: './answer-post-footer.component.html',
     styleUrls: ['./answer-post-footer.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AnswerPostFooterComponent extends PostingFooterDirective<AnswerPost> {
     @Input()

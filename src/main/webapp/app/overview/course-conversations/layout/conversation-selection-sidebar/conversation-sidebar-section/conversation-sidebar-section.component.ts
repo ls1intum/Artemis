@@ -1,4 +1,4 @@
-import { Component, ContentChild, EventEmitter, Input, OnInit, Output, TemplateRef, ViewEncapsulation } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ContentChild, EventEmitter, Input, OnInit, Output, TemplateRef, ViewEncapsulation } from '@angular/core';
 import { faChevronRight, faMessage } from '@fortawesome/free-solid-svg-icons';
 import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
@@ -11,6 +11,7 @@ import { LocalStorageService } from 'ngx-webstorage';
     templateUrl: './conversation-sidebar-section.component.html',
     styleUrls: ['./conversation-sidebar-section.component.scss'],
     encapsulation: ViewEncapsulation.None,
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ConversationSidebarSectionComponent implements OnInit {
     @Output() conversationSelected = new EventEmitter<ConversationDto>();

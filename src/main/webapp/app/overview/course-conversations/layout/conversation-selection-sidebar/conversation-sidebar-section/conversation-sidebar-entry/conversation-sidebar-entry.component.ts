@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, ViewEncapsulation } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnDestroy, OnInit, Output, ViewEncapsulation } from '@angular/core';
 import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
 import { getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
@@ -24,6 +24,7 @@ import { catchError } from 'rxjs/operators';
     templateUrl: './conversation-sidebar-entry.component.html',
     styleUrls: ['./conversation-sidebar-entry.component.scss'],
     encapsulation: ViewEncapsulation.None,
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ConversationSidebarEntryComponent implements OnInit, OnDestroy {
     private ngUnsubscribe = new Subject<void>();
@@ -51,7 +52,7 @@ export class ConversationSidebarEntryComponent implements OnInit, OnDestroy {
 
     faEllipsis = faEllipsis;
     faMessage = faMessage;
-    constructor(public conversationService: ConversationService, private alertService: AlertService, private modalService: NgbModal) {}
+    constructor(public conversationService: ConversationService, private alertService: AlertService, private modalService: NgbModal, private cdr: ChangeDetectorRef) {}
 
     get isConversationUnread(): boolean {
         // do not show unread count for open conversation that the user is currently reading
@@ -104,6 +105,7 @@ export class ConversationSidebarEntryComponent implements OnInit, OnDestroy {
                 next: () => {
                     this.conversation.isHidden = shouldHide;
                     this.conversationHiddenStatusChange.emit();
+                    this.cdr.detectChanges();
                 },
                 error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
             });
@@ -113,6 +115,7 @@ export class ConversationSidebarEntryComponent implements OnInit, OnDestroy {
                 next: () => {
                     this.conversation.isFavorite = shouldFavorite;
                     this.conversationFavoriteStatusChange.emit();
+                    this.cdr.detectChanges();
                 },
                 error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
             });

@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewEncapsulation } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, ViewEncapsulation } from '@angular/core';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { MetisService } from 'app/shared/metis/metis.service';
@@ -12,6 +12,7 @@ import { LocalStorageService } from 'ngx-webstorage';
     templateUrl: './message-reply-inline-input.component.html',
     styleUrls: ['./message-reply-inline-input.component.scss'],
     encapsulation: ViewEncapsulation.None,
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MessageReplyInlineInputComponent extends PostingCreateEditDirective<AnswerPost> implements OnInit {
     warningDismissed = false;
@@ -21,7 +22,13 @@ export class MessageReplyInlineInputComponent extends PostingCreateEditDirective
         this.warningDismissed = !!this.localStorageService.retrieve('chatWarningDismissed');
     }
 
-    constructor(protected metisService: MetisService, protected modalService: NgbModal, protected formBuilder: FormBuilder, protected localStorageService: LocalStorageService) {
+    constructor(
+        protected metisService: MetisService,
+        protected modalService: NgbModal,
+        protected formBuilder: FormBuilder,
+        protected localStorageService: LocalStorageService,
+        private cdr: ChangeDetectorRef,
+    ) {
         super(metisService, modalService, formBuilder);
     }
 
@@ -33,6 +40,7 @@ export class MessageReplyInlineInputComponent extends PostingCreateEditDirective
             // the pattern ensures that the content must include at least one non-whitespace character
             content: [this.posting.content, [Validators.required, Validators.maxLength(this.maxContentLength), PostContentValidationPattern]],
         });
+        this.cdr.detectChanges();
     }
 
     /**
@@ -46,9 +54,11 @@ export class MessageReplyInlineInputComponent extends PostingCreateEditDirective
                 this.resetFormGroup();
                 this.isLoading = false;
                 this.onCreate.emit(answerPost);
+                this.cdr.detectChanges();
             },
             error: () => {
                 this.isLoading = false;
+                this.cdr.detectChanges();
             },
         });
     }
@@ -62,9 +72,11 @@ export class MessageReplyInlineInputComponent extends PostingCreateEditDirective
         this.metisService.updateAnswerPost(this.posting).subscribe({
             next: () => {
                 this.isLoading = false;
+                this.cdr.detectChanges();
             },
             error: () => {
                 this.isLoading = false;
+                this.cdr.detectChanges();
             },
         });
     }
@@ -72,5 +84,6 @@ export class MessageReplyInlineInputComponent extends PostingCreateEditDirective
     closeAlert() {
         this.warningDismissed = true;
         this.localStorageService.store('chatWarningDismissed', true);
+        this.cdr.detectChanges();
     }
 }
