@@ -2,11 +2,8 @@ package de.tum.in.www1.artemis.domain;
 
 import static de.tum.in.www1.artemis.domain.enumeration.ExerciseType.TEXT;
 
-import java.util.List;
-
 import javax.persistence.*;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
@@ -23,15 +20,6 @@ public class TextExercise extends Exercise {
 
     @Column(name = "example_solution")
     private String exampleSolution;
-
-    @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE)
-    @JsonIgnore
-    private List<TextCluster> clusters;
-
-    @ManyToOne
-    @JoinColumn(table = "text_exercise_details")
-    @JsonIgnore
-    private TextAssessmentKnowledge knowledge;
 
     public String getExampleSolution() {
         return exampleSolution;
@@ -64,14 +52,6 @@ public class TextExercise extends Exercise {
     @Override
     public String toString() {
         return "TextExercise{" + "id=" + getId() + ", exampleSolution='" + getExampleSolution() + "'" + "}";
-    }
-
-    public TextAssessmentKnowledge getKnowledge() {
-        return knowledge;
-    }
-
-    public void setKnowledge(TextAssessmentKnowledge knowledge) {
-        this.knowledge = knowledge;
     }
 
 }

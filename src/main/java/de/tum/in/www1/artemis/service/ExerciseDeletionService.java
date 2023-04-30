@@ -50,10 +50,6 @@ public class ExerciseDeletionService {
 
     private final PlagiarismResultRepository plagiarismResultRepository;
 
-    private final TextAssessmentKnowledgeService textAssessmentKnowledgeService;
-
-    private final ModelAssessmentKnowledgeService modelAssessmentKnowledgeService;
-
     private final TextExerciseRepository textExerciseRepository;
 
     private final ModelingExerciseRepository modelingExerciseRepository;
@@ -62,8 +58,7 @@ public class ExerciseDeletionService {
             ProgrammingExerciseService programmingExerciseService, ModelingExerciseService modelingExerciseService, QuizExerciseService quizExerciseService,
             TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionService exampleSubmissionService, StudentExamRepository studentExamRepository,
             LectureUnitService lectureUnitService, TextExerciseRepository textExerciseRepository, PlagiarismResultRepository plagiarismResultRepository,
-            TextAssessmentKnowledgeService textAssessmentKnowledgeService, ModelingExerciseRepository modelingExerciseRepository,
-            ModelAssessmentKnowledgeService modelAssessmentKnowledgeService) {
+            ModelingExerciseRepository modelingExerciseRepository) {
         this.exerciseRepository = exerciseRepository;
         this.participationService = participationService;
         this.programmingExerciseService = programmingExerciseService;
@@ -75,8 +70,6 @@ public class ExerciseDeletionService {
         this.exerciseUnitRepository = exerciseUnitRepository;
         this.lectureUnitService = lectureUnitService;
         this.plagiarismResultRepository = plagiarismResultRepository;
-        this.textAssessmentKnowledgeService = textAssessmentKnowledgeService;
-        this.modelAssessmentKnowledgeService = modelAssessmentKnowledgeService;
         this.textExerciseRepository = textExerciseRepository;
         this.modelingExerciseRepository = modelingExerciseRepository;
     }
@@ -166,31 +159,6 @@ public class ExerciseDeletionService {
             programmingExerciseService.delete(exercise.getId(), deleteBaseReposBuildPlans);
         }
         else {
-            // delete text assessment knowledge if exercise is of type TextExercise and if no other exercise uses same knowledge
-            if (exercise instanceof TextExercise textExercise) {
-                // explicitly load the text exercise as such so that the knowledge is eagerly loaded as well
-                textExercise = textExerciseRepository.findByIdElseThrow(exercise.getId());
-                if (textExercise.getKnowledge() != null) {
-                    long knowledgeId = textExercise.getKnowledge().getId();
-                    // Remove knowledge to avoid foreign key constraint exception
-                    textExercise.setKnowledge(null);
-                    textExerciseRepository.save(textExercise);
-                    textAssessmentKnowledgeService.deleteKnowledgeIfUnused(knowledgeId);
-                }
-            }
-            // delete model assessment knowledge if exercise is of type ModelExercise and if no other exercise uses same knowledge
-            else if (exercise instanceof ModelingExercise modelingExercise) {
-                // explicitly load the modeling exercise as such so that the knowledge is eagerly loaded as well
-                modelingExercise = modelingExerciseRepository.findByIdElseThrow(exercise.getId());
-                if (modelingExercise.getKnowledge() != null) {
-                    long knowledgeId = modelingExercise.getKnowledge().getId();
-                    // Remove knowledge to avoid foreign key constraint exception
-                    modelingExercise.setKnowledge(null);
-                    modelingExerciseRepository.save(modelingExercise);
-                    modelAssessmentKnowledgeService.deleteKnowledgeIfUnused(knowledgeId);
-                }
-            }
-
             // fetch the exercise again to allow Hibernate to delete it properly
             exercise = exerciseRepository.findByIdWithStudentParticipationsElseThrow(exerciseId);
             exerciseRepository.delete(exercise);
