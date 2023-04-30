@@ -26,17 +26,20 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 public interface ProgrammingExerciseStudentParticipationRepository extends JpaRepository<ProgrammingExerciseStudentParticipation, Long> {
 
     @Query("""
-            select p from ProgrammingExerciseStudentParticipation p
-            left join fetch p.results pr
-            left join fetch pr.feedbacks
-            left join fetch pr.submission
-            where p.id = :participationId
-                and (pr.id = (select max(prr.id) from p.results prr
-                    where (prr.assessmentType = 'AUTOMATIC'
-                            or (prr.completionDate IS NOT NULL
-                                and (p.exercise.assessmentDueDate IS NULL
+            SELECT p
+            FROM ProgrammingExerciseStudentParticipation p
+                LEFT JOIN FETCH p.results pr
+                LEFT JOIN FETCH pr.feedbacks
+                LEFT JOIN FETCH pr.submission
+            WHERE p.id = :participationId
+                AND (pr.id = (
+                    SELECT max(prr.id)
+                    FROM p.results prr
+                    WHERE (prr.assessmentType = 'AUTOMATIC'
+                        OR (prr.completionDate IS NOT NULL
+                            AND (p.exercise.assessmentDueDate IS NULL
                                 OR p.exercise.assessmentDueDate < :#{#dateTime}))))
-                    or pr.id IS NULL)
+                    OR pr.id IS NULL)
             """)
     Optional<ProgrammingExerciseStudentParticipation> findByIdWithLatestResultAndFeedbacksAndRelatedSubmissions(@Param("participationId") Long participationId,
             @Param("dateTime") ZonedDateTime dateTime);
@@ -48,14 +51,18 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
      * @return a participation with all its manual results.
      */
     @Query("""
-            select p from ProgrammingExerciseStudentParticipation p
-            left join fetch p.results pr
-            left join fetch pr.feedbacks
-            left join fetch pr.submission
-            left join fetch pr.assessor
-            where p.id = :participationId
-                and pr.id in (select prr.id from p.results prr
-                    where prr.assessmentType = 'MANUAL' or prr.assessmentType = 'SEMI_AUTOMATIC')
+            SELECT p
+            FROM ProgrammingExerciseStudentParticipation p
+                LEFT JOIN FETCH p.results pr
+                LEFT JOIN FETCH pr.feedbacks
+                LEFT JOIN FETCH pr.submission
+                LEFT JOIN FETCH pr.assessor
+            WHERE p.id = :participationId
+                AND pr.id IN (
+                    SELECT prr.id
+                    FROM p.results prr
+                    WHERE prr.assessmentType = 'MANUAL'
+                        OR prr.assessmentType = 'SEMI_AUTOMATIC')
             """)
     Optional<ProgrammingExerciseStudentParticipation> findByIdWithAllManualOrSemiAutomaticResultsAndFeedbacksAndRelatedSubmissionAndAssessor(
             @Param("participationId") Long participationId);
@@ -63,7 +70,14 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
     @EntityGraph(type = LOAD, attributePaths = { "results", "exercise" })
     List<ProgrammingExerciseStudentParticipation> findByBuildPlanId(String buildPlanId);
 
-    @Query("select distinct p from ProgrammingExerciseStudentParticipation p left join fetch p.results where p.buildPlanId is not null and (p.student is not null or p.team is not null)")
+    @Query("""
+                SELECT DISTINCT p
+                FROM ProgrammingExerciseStudentParticipation p
+                    LEFT JOIN FETCH p.results
+                    WHERE p.buildPlanId IS NOT NULL
+                        AND (p.student IS NOT NULL
+                            OR p.team IS NOT NULL)
+            """)
     List<ProgrammingExerciseStudentParticipation> findAllWithBuildPlanIdWithResults();
 
     Optional<ProgrammingExerciseStudentParticipation> findByExerciseIdAndStudentLogin(Long exerciseId, String username);
@@ -85,10 +99,11 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
     Optional<ProgrammingExerciseStudentParticipation> findByExerciseIdAndTeamId(Long exerciseId, Long teamId);
 
     @Query("""
-            select participation from ProgrammingExerciseStudentParticipation participation
-            left join fetch participation.submissions
-            where participation.exercise.id = :#{#exerciseId}
-            and participation.team.id = :#{#teamId}
+            SELECT participation
+            FROM ProgrammingExerciseStudentParticipation participation
+                LEFT JOIN FETCH participation.submissions
+            WHERE participation.exercise.id = :#{#exerciseId}
+                AND participation.team.id = :#{#teamId}
             """)
     Optional<ProgrammingExerciseStudentParticipation> findWithSubmissionsByExerciseIdAndTeamId(@Param("exerciseId") Long exerciseId, @Param("teamId") Long teamId);
 
@@ -105,20 +120,22 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
      * @return filtered list of participations.
      */
     @Query("""
-            select participation from ProgrammingExerciseStudentParticipation participation
-            left join fetch participation.submissions
-            where participation.exercise.id = :#{#exerciseId}
-                and participation.id in :#{#participationIds}
+            SELECT participation
+            FROM ProgrammingExerciseStudentParticipation participation
+                LEFT JOIN FETCH participation.submissions
+            WHERE participation.exercise.id = :#{#exerciseId}
+                AND participation.id IN :#{#participationIds}
             """)
     List<ProgrammingExerciseStudentParticipation> findWithSubmissionsByExerciseIdAndParticipationIds(@Param("exerciseId") Long exerciseId,
             @Param("participationIds") Collection<Long> participationIds);
 
     @Query("""
-            select participation from ProgrammingExerciseStudentParticipation participation
-            left join fetch participation.submissions
-            where participation.exercise.id = :#{#exerciseId}
-            and participation.student.login = :#{#username}
-            and participation.testRun = :#{#testRun}
+            SELECT participation
+            FROM ProgrammingExerciseStudentParticipation participation
+                LEFT JOIN FETCH participation.submissions
+            WHERE participation.exercise.id = :#{#exerciseId}
+                AND participation.student.login = :#{#username}
+                AND participation.testRun = :#{#testRun}
             """)
     Optional<ProgrammingExerciseStudentParticipation> findWithSubmissionsByExerciseIdAndStudentLoginAndTestRun(@Param("exerciseId") Long exerciseId,
             @Param("username") String username, @Param("testRun") boolean testRun);
@@ -127,7 +144,7 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
             SELECT p
             FROM ProgrammingExerciseStudentParticipation p
             WHERE p.exercise.id = :#{#exerciseId}
-                AND p.individualDueDate IS NOT null
+                AND p.individualDueDate IS NOT NULL
             """)
     List<ProgrammingExerciseStudentParticipation> findWithIndividualDueDateByExerciseId(@Param("exerciseId") Long exerciseId);
 

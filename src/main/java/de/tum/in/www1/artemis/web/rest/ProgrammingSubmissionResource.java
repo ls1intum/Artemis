@@ -17,6 +17,7 @@ import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.SecurityUtils;
@@ -141,6 +142,10 @@ public class ProgrammingSubmissionResource {
             log.error("Participation with id {} is not a ProgrammingExerciseParticipation: processing submission for participation {} failed with request object {}: {}",
                     participationId, participationId, requestBody, ex);
             throw ex;
+        }
+        catch (VersionControlException ex) {
+            log.warn("User commited to the wrong branch for participation + " + participationId);
+            return ResponseEntity.status(HttpStatus.OK).build();
         }
 
         // Note: we should not really return status code other than 200, because Bitbucket might kill the webhook, if there are too many errors

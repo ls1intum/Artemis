@@ -20,6 +20,7 @@ import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
+import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.*;
@@ -98,6 +99,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * @throws EntityNotFoundException  if no ProgrammingExerciseParticipation could be found
      * @throws IllegalStateException    if a ProgrammingSubmission already exists
      * @throws IllegalArgumentException if the Commit hash could not be parsed for submission from participation
+     * @throws VersionControlException  if the commit belongs to the wrong branch (i.e. not the default branch for the participation).
      */
     public ProgrammingSubmission processNewProgrammingSubmission(ProgrammingExerciseParticipation participation, Object requestBody)
             throws EntityNotFoundException, IllegalStateException, IllegalArgumentException {
@@ -122,7 +124,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
         String branch = versionControlService.get().getOrRetrieveBranchOfParticipation(participation);
         if (commit.getBranch() != null && !commit.getBranch().equalsIgnoreCase(branch)) {
             // if the commit was made in a branch different from the default, ignore this
-            throw new IllegalStateException(
+            throw new VersionControlException(
                     "Submission for participation id " + participation.getId() + " in branch " + commit.getBranch() + " will be ignored! Only the default branch is considered");
         }
         if (artemisGitName.equalsIgnoreCase(commit.getAuthorName()) && artemisGitEmail.equalsIgnoreCase(commit.getAuthorEmail())

@@ -57,6 +57,9 @@ public class LocalCIConfiguration {
     @Value("${artemis.continuous-integration.build.images.java.default}")
     String dockerImage;
 
+    @Value("${artemis.continuous-integration.docker-connection-uri}")
+    String dockerConnectionUri;
+
     public LocalCIConfiguration(ResourceLoaderService resourceLoaderService) {
         this.resourceLoaderService = resourceLoaderService;
     }
@@ -115,15 +118,6 @@ public class LocalCIConfiguration {
      */
     @Bean
     public DockerClient dockerClient() {
-        String dockerConnectionUri;
-
-        if (System.getProperty("os.name").toLowerCase().contains("windows")) {
-            dockerConnectionUri = "tcp://localhost:2375";
-        }
-        else {
-            dockerConnectionUri = "unix:///var/run/docker.sock";
-        }
-
         DockerClientConfig config = DefaultDockerClientConfig.createDefaultConfigBuilder().withDockerHost(dockerConnectionUri).build();
         DockerHttpClient httpClient = new ApacheDockerHttpClient.Builder().dockerHost(config.getDockerHost()).sslConfig(config.getSSLConfig()).build();
         DockerClient dockerClient = DockerClientImpl.getInstance(config, httpClient);
@@ -131,12 +125,12 @@ public class LocalCIConfiguration {
         log.info("Docker client created with connection URI: " + dockerConnectionUri);
 
         // If the Docker image used for the local CI build job containers is not available on the local machine, pull it from Docker Hub.
-        pullDockerImage(dockerClient, dockerImage);
+        pullDockerImage(dockerClient);
 
         return dockerClient;
     }
 
-    private void pullDockerImage(DockerClient dockerClient, String dockerImage) {
+    private void pullDockerImage(DockerClient dockerClient) {
         try {
             dockerClient.inspectImageCmd(dockerImage).exec();
         }

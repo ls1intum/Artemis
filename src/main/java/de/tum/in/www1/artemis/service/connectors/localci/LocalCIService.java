@@ -91,12 +91,7 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
      */
     @Override
     public BuildStatus getBuildStatus(ProgrammingExerciseParticipation participation) {
-        if (participation.getBuildPlanId().endsWith(BuildStatus.QUEUED.name())) {
-            return BuildStatus.QUEUED;
-        }
-        else if (participation.getBuildPlanId().endsWith(BuildStatus.BUILDING.name())) {
-            return BuildStatus.BUILDING;
-        }
+        // TODO: Retrieve the correct status from the database once the table is implemented.
         return BuildStatus.INACTIVE;
     }
 

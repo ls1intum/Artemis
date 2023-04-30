@@ -50,14 +50,8 @@ import de.tum.in.www1.artemis.config.localvcci.LocalCIConfiguration;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
-import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
-import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.LocalCIException;
 import de.tum.in.www1.artemis.exception.localvc.LocalVCInternalException;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
-import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
-import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildResult;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUrl;
@@ -82,12 +76,6 @@ public class LocalCIBuildJobExecutionService {
     private final DockerClient dockerClient;
 
     private final ProgrammingMessagingService programmingMessagingService;
-
-    private final TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
-
-    private final SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
-
-    private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
 
     /**
      * The Path to the script file located in the resources folder. The script file contains the steps that run the tests on the Docker container.
@@ -116,22 +104,21 @@ public class LocalCIBuildJobExecutionService {
     private boolean runBuildJobsAsynchronously;
 
     public LocalCIBuildJobExecutionService(Optional<VersionControlService> versionControlService, ExecutorService localCIBuildExecutorService, DockerClient dockerClient,
-            ProgrammingMessagingService programmingMessagingService, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
-            SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
-            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, Path buildScriptFilePath, XMLInputFactory localCIXMLInputFactory) {
+            ProgrammingMessagingService programmingMessagingService, Path buildScriptFilePath, XMLInputFactory localCIXMLInputFactory) {
         this.versionControlService = versionControlService;
         this.localCIBuildExecutorService = localCIBuildExecutorService;
         this.dockerClient = dockerClient;
         this.programmingMessagingService = programmingMessagingService;
-        this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
-        this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
-        this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.buildScriptFilePath = buildScriptFilePath;
         this.localCIXMLInputFactory = localCIXMLInputFactory;
     }
 
     /**
      * Prepare paths to the assignment and test repositories and the build script and then submit the build job to the executor service.
+     * Note: As this method is independent of the commit hash of the submission, that led to this build, the build script will always check out the latest commit for the branch.
+     * This means, that if you submit multiple times in quick succession, the results might all be created for the latest submission.
+     * This is not an issue, as we assume that in this case, you would only need the result for the latest submission. This should be optimized though.
+     * TODO: Do not add a new build job to the queue, if there is already a build job for the latest submission.
      *
      * @param participation The participation of the repository for which the build job should be executed.
      * @return A future that will be completed with the build result.
@@ -587,37 +574,12 @@ public class LocalCIBuildJobExecutionService {
 
     /**
      * Updates the build plan status of the given participation to the given status.
-     * This method attaches the new status to the build plan id and saves it in the database. This way no new database table must be added just for this purpose.
-     * Inactive build plan id: "TESTCOURSE1TESTEX2-USER1"
-     * Queued build plan id: "TESTCOURSE1TESTEX2-USER1_QUEUED"
-     * Building build plan id: "TESTCOURSE1TESTEX2-USER1_BUILDING"
      *
      * @param participation  the participation for which the build plan status should be updated.
      * @param newBuildStatus the new build plan status.
      * @throws LocalCIException if the build plan id is null.
      */
     private void updateBuildPlanStatus(ProgrammingExerciseParticipation participation, ContinuousIntegrationService.BuildStatus newBuildStatus) {
-        String buildPlanId = participation.getBuildPlanId();
-        if (buildPlanId == null) {
-            throw new LocalCIException("Build plan id is null.");
-        }
-        buildPlanId = buildPlanId.replace("_" + ContinuousIntegrationService.BuildStatus.QUEUED.name(), "").replace("_" + ContinuousIntegrationService.BuildStatus.BUILDING.name(),
-                "");
-
-        if (!newBuildStatus.equals(ContinuousIntegrationService.BuildStatus.INACTIVE)) {
-            buildPlanId += "_" + newBuildStatus.name();
-        }
-
-        participation.setBuildPlanId(buildPlanId);
-
-        if (participation instanceof TemplateProgrammingExerciseParticipation templateParticipation) {
-            templateProgrammingExerciseParticipationRepository.save(templateParticipation);
-        }
-        else if (participation instanceof SolutionProgrammingExerciseParticipation solutionParticipation) {
-            solutionProgrammingExerciseParticipationRepository.save(solutionParticipation);
-        }
-        else {
-            programmingExerciseStudentParticipationRepository.save((ProgrammingExerciseStudentParticipation) participation);
-        }
+        // TODO: Update the build plan status in the database.
     }
 }

@@ -26,6 +26,7 @@ import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.LocalCIException;
+import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.exception.localvc.LocalVCInternalException;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
@@ -110,7 +111,8 @@ public class LocalCIConnectorService {
      *
      * @param commitHash the hash of the last commit.
      * @param repository the remote repository which was pushed to.
-     * @throws LocalCIException if something goes wrong preparing the queueing of the build job.
+     * @throws LocalCIException        if something goes wrong preparing the queueing of the build job.
+     * @throws VersionControlException if the commit belongs to the wrong branch (i.e. not the default branch of the participation).
      */
     public void processNewPush(String commitHash, Repository repository) {
         long timeNanoStart = System.nanoTime();
@@ -145,12 +147,12 @@ public class LocalCIConnectorService {
                 commitHash = getLatestCommitHash(repository);
             }
 
-            Commit commit = extractCommitInfo(commitHash, repository);
-
             if (repositoryTypeOrUserName.equals(RepositoryType.TESTS.getName())) {
                 processNewPushToTestsRepository(exercise, commitHash, (SolutionProgrammingExerciseParticipation) participation);
                 return;
             }
+
+            Commit commit = extractCommitInfo(commitHash, repository);
 
             // Process push to any repository other than the tests repository.
             processNewPushToRepository(participation, commit);
@@ -235,6 +237,11 @@ public class LocalCIConnectorService {
 
     /**
      * Process a new push to a student's repository or to the template or solution repository of the exercise.
+     *
+     * @param participation the participation for which the push was made
+     * @param commit        the commit that was pushed
+     * @throws LocalCIException        if something unexpected goes wrong creating the submission or triggering the build
+     * @throws VersionControlException if the commit belongs to the wrong branch (i.e. not the default branch of the participation)
      */
     private void processNewPushToRepository(ProgrammingExerciseParticipation participation, Commit commit) {
         // The 'user' is not properly logged into Artemis, this leads to an issue when accessing custom repository methods.
@@ -245,7 +252,7 @@ public class LocalCIConnectorService {
             submission = programmingSubmissionService.processNewProgrammingSubmission(participation, commit);
         }
         catch (EntityNotFoundException | IllegalStateException | IllegalArgumentException e) {
-            throw new LocalCIException("Could not process submission for participation", e);
+            throw new LocalCIException("Could not process submission for participation: " + e.getMessage(), e);
         }
 
         // Remove unnecessary information from the new submission.
