@@ -911,8 +911,9 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     /**
      * Gets all the participations of the user in the given exercises
      *
-     * @param user      the user to get the participations for
-     * @param exercises the exercise to get the participations for
+     * @param user            the user to get the participations for
+     * @param exercises       the exercise to get the participations for
+     * @param includeTestRuns flag that indicates whether test run participations should be included
      * @return an unmodifiable list of participations of the user in the exercises
      */
     default List<StudentParticipation> getAllParticipationsOfUserInExercises(User user, Set<Exercise> exercises, boolean includeTestRuns) {
