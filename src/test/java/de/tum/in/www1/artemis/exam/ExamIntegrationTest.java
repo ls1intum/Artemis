@@ -1890,7 +1890,12 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         return count;
     }
 
-    private void configureCourseAsBonusWithIndividualAndTeamResults(Course course, GradingScale bonusToGradingScale) {
+    private void configureCourseAsBonusWithIndividualAndTeamResults(Course course, Exam exam) {
+        GradingScale bonusToGradingScale = database.generateGradingScaleWithStickyStep(new double[] { 60, 25, 15, 50 }, Optional.of(new String[] { "5.0", "3.0", "1.0", "1.0+" }),
+                true, 1);
+        bonusToGradingScale.setExam(exam);
+        gradingScaleRepository.save(bonusToGradingScale);
+
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
         TextExercise textExercise = database.createIndividualTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
         Long individualTextExerciseId = textExercise.getId();
@@ -2081,13 +2086,10 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         exerciseWithNoUsers.setKnowledge(textAssessmentKnowledgeService.createNewKnowledge());
         exerciseRepo.save(exerciseWithNoUsers);
 
-        GradingScale gradingScale = database.generateGradingScaleWithStickyStep(new double[] { 60, 25, 15, 50 }, Optional.of(new String[] { "5.0", "3.0", "1.0", "1.0+" }), true,
-                1);
-        gradingScale.setExam(exam);
-        gradingScaleRepository.save(gradingScale);
+        await().until(() -> participantScoreScheduleService.isIdle());
 
         if (withCourseBonus) {
-            configureCourseAsBonusWithIndividualAndTeamResults(course, gradingScale);
+            configureCourseAsBonusWithIndividualAndTeamResults(course, exam);
         }
 
         await().timeout(Duration.ofMinutes(1)).until(() -> {
