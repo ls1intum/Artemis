@@ -13,7 +13,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -91,7 +90,7 @@ public class ConversationMessagingService extends PostingService {
         conversation.setLastMessageDate(ZonedDateTime.now());
         conversation = conversationService.updateConversation(conversation);
         // update last read date and unread message count of author
-        updateLastReadAsync(author, conversation.getId());
+        conversationParticipantRepository.updateLastReadAsync(author.getId(), conversation.getId(), ZonedDateTime.now());
 
         var createdMessage = conversationMessageRepository.save(newMessage);
         broadcastForPost(new PostDTO(createdMessage, MetisCrudAction.CREATE), course);
@@ -109,11 +108,6 @@ public class ConversationMessagingService extends PostingService {
         // send conversation with updated last message date to participants. This is necessary to show the unread messages badge in the client
         conversationService.notifyAllConversationMembersAboutNewMessage(conversation, author);
         return createdMessage;
-    }
-
-    @Async
-    protected void updateLastReadAsync(User author, Long conversationId) {
-        conversationParticipantRepository.updateConversation(author.getId(), conversationId, ZonedDateTime.now());
     }
 
     /**
@@ -155,7 +149,7 @@ public class ConversationMessagingService extends PostingService {
 
         log.info("author role done");
 
-        updateLastReadAsync(requestingUser, postContextFilter.getConversationId());
+        conversationParticipantRepository.updateLastReadAsync(requestingUser.getId(), postContextFilter.getConversationId(), ZonedDateTime.now());
 
         log.info("getMessages done");
 

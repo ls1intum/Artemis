@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.User;
@@ -38,6 +39,7 @@ public interface ConversationParticipantRepository extends JpaRepository<Convers
             """)
     Set<ConversationParticipant> findConversationParticipantByConversationId(@Param("conversationId") Long conversationId);
 
+    @Async
     @Transactional // ok because of modifying query
     @Modifying
     @Query("""
@@ -46,7 +48,7 @@ public interface ConversationParticipantRepository extends JpaRepository<Convers
             WHERE p.user.id = :userId
                 AND p.conversation.id = :conversationId
             """)
-    void updateConversation(@Param("userId") Long userId, @Param("conversationId") Long conversationId, @Param("now") ZonedDateTime now);
+    void updateLastReadAsync(@Param("userId") Long userId, @Param("conversationId") Long conversationId, @Param("now") ZonedDateTime now);
 
     boolean existsByConversationIdAndUserId(Long conversationId, Long userId);
 
