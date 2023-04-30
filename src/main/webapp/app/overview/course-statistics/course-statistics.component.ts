@@ -138,7 +138,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
 
     doughnutChartColors: string[] = [PROGRAMMING_EXERCISE_COLOR, QUIZ_EXERCISE_COLOR, MODELING_EXERCISE_COLOR, TEXT_EXERCISE_COLOR, FILE_UPLOAD_EXERCISE_COLOR, GraphColors.RED];
 
-    public exerciseTitles = new Map<ExerciseType, ExerciseTitle>();
+    exerciseTitles = new Map<ExerciseType, ExerciseTitle>();
 
     // ngx-charts
     ngxDoughnutData: YourOverallPointsEntry[] = [];
@@ -159,19 +159,8 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         domain: [], // colors: orange, turquoise, violet, bordeaux, green, red
     } as Color;
 
-    // arrays representing each exercise group
-    ngxModelingExercises: NgxExercise[] = [];
-    ngxProgrammingExercises: NgxExercise[] = [];
-    ngxQuizExercises: NgxExercise[] = [];
-    ngxFileUploadExercises: NgxExercise[] = [];
-    ngxTextExercises: NgxExercise[] = [];
-
     // flags determining for each exercise group if at least one exercise has presentation score enabled
-    quizPresentationScoreEnabled = false;
-    programmingPresentationScoreEnabled = false;
-    modelingPresentationScoreEnabled = false;
-    textPresentationScoreEnabled = false;
-    fileUploadPresentationScoreEnabled = false;
+    presentationScoreEnabled = new Map<ExerciseType, boolean>();
 
     ngxBarColor = {
         name: 'Score per exercise group',
@@ -292,28 +281,17 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
      * @private
      */
     private groupExercisesByType(exercises: Exercise[]): void {
-        const exerciseTypes: string[] = [];
-        this.ngxExerciseGroups = new Map<ExerciseType, NgxExercise[]>();
         // this reset is now necessary because of the filtering option that triggers the grouping again.
-        this.ngxModelingExercises = [];
-        this.ngxProgrammingExercises = [];
-        this.ngxQuizExercises = [];
-        this.ngxFileUploadExercises = [];
-        this.ngxTextExercises = [];
+        this.ngxExerciseGroups = new Map<ExerciseType, NgxExercise[]>();
+        Object.values(ExerciseType).forEach((exerciseType) => {
+            this.ngxExerciseGroups.set(exerciseType, []);
+            this.presentationScoreEnabled.set(exerciseType, false);
+        });
 
-        this.quizPresentationScoreEnabled = false;
-        this.programmingPresentationScoreEnabled = false;
-        this.modelingPresentationScoreEnabled = false;
-        this.textPresentationScoreEnabled = false;
-        this.fileUploadPresentationScoreEnabled = false;
         // adding several years to be sure that exercises without due date are sorted at the end. this is necessary for the order inside the statistic charts
         exercises = sortBy(exercises, [(exercise: Exercise) => (exercise.dueDate || dayjs().add(5, 'year')).valueOf()]);
         exercises.forEach((exercise) => {
             if (!exercise.dueDate || exercise.dueDate.isBefore(dayjs()) || exercise.type === ExerciseType.PROGRAMMING) {
-                const index = exerciseTypes.indexOf(exercise.type!);
-                if (index === -1) {
-                    exerciseTypes.push(exercise.type!);
-                }
                 const series = CourseStatisticsComponent.generateDefaultSeries();
 
                 if (!exercise.studentParticipations || exercise.studentParticipations.length === 0) {
@@ -373,14 +351,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
                 }
             }
         });
-        const allGroups = new Map<ExerciseType, NgxExercise[]>([
-            [ExerciseType.PROGRAMMING, this.ngxProgrammingExercises],
-            [ExerciseType.QUIZ, this.ngxQuizExercises],
-            [ExerciseType.MODELING, this.ngxModelingExercises],
-            [ExerciseType.TEXT, this.ngxTextExercises],
-            [ExerciseType.FILE_UPLOAD, this.ngxFileUploadExercises],
-        ]);
-        this.pushExerciseGroupsToData(allGroups);
+        this.pushExerciseGroupsToData();
     }
 
     toggleNotIncludedInScoreExercises() {
@@ -604,42 +575,24 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
      * @private
      */
     private pushToData(exercise: Exercise, allSeries: Series[]): void {
-        const ngxExercise = new NgxExercise(exercise.title, allSeries, exercise.type!);
-        switch (exercise.type!) {
-            case ExerciseType.MODELING:
-                this.ngxModelingExercises.push(ngxExercise);
-                this.modelingPresentationScoreEnabled = this.modelingPresentationScoreEnabled || exercise.presentationScoreEnabled!;
-                break;
-            case ExerciseType.PROGRAMMING:
-                allSeries.forEach((series: Series) => {
-                    series.isProgrammingExercise = true;
-                });
-                this.ngxProgrammingExercises.push(ngxExercise);
-                this.programmingPresentationScoreEnabled = this.programmingPresentationScoreEnabled || exercise.presentationScoreEnabled!;
-                break;
-            case ExerciseType.QUIZ:
-                this.ngxQuizExercises.push(ngxExercise);
-                this.quizPresentationScoreEnabled = this.quizPresentationScoreEnabled || exercise.presentationScoreEnabled!;
-                break;
-            case ExerciseType.FILE_UPLOAD:
-                this.ngxFileUploadExercises.push(ngxExercise);
-                this.fileUploadPresentationScoreEnabled = this.fileUploadPresentationScoreEnabled || exercise.presentationScoreEnabled!;
-                break;
-            case ExerciseType.TEXT:
-                this.ngxTextExercises.push(ngxExercise);
-                this.textPresentationScoreEnabled = this.textPresentationScoreEnabled || exercise.presentationScoreEnabled!;
-                break;
+        const exerciseType = exercise.type!;
+        const ngxExercise = new NgxExercise(exercise.title, allSeries, exerciseType);
+        this.ngxExerciseGroups.get(exerciseType)!.push(ngxExercise);
+        this.presentationScoreEnabled.set(exerciseType, (this.presentationScoreEnabled.get(exerciseType) ?? false) || (exercise.presentationScoreEnabled ?? false));
+        if (exerciseType == ExerciseType.PROGRAMMING) {
+            allSeries.forEach((series: Series) => {
+                series.isProgrammingExercise = true;
+            });
         }
     }
 
     /**
      * Adds some metadata to every non-empty exercise group and pushes it to ngxExerciseGroups
-     * @param exerciseGroups map containing the exercise groups: TODO: why do we use an array here?
      * @private
      */
-    private pushExerciseGroupsToData(exerciseGroups: Map<ExerciseType, NgxExercise[]>): void {
+    private pushExerciseGroupsToData(): void {
         Object.values(ExerciseType).forEach((exerciseType) => {
-            const exerciseGroup = exerciseGroups.get(exerciseType)!;
+            const exerciseGroup = this.ngxExerciseGroups.get(exerciseType)!;
             if (exerciseGroup.length > 0) {
                 const firstExerciseGroup = exerciseGroup[0];
                 firstExerciseGroup.absoluteScore = this.overallPointsPerExercise.get(exerciseType)!;
@@ -648,28 +601,12 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
                 firstExerciseGroup.currentRelativeScore = this.currentRelativeScoresPerExercise.get(exerciseType)!;
                 firstExerciseGroup.overallMaxPoints = this.overallMaxPointsPerExercise.get(exerciseType)!;
                 firstExerciseGroup.presentationScore = this.presentationScoresPerExercise.get(exerciseType)!;
-                firstExerciseGroup.presentationScoreEnabled = false;
+                firstExerciseGroup.presentationScoreEnabled = this.presentationScoreEnabled.get(exerciseType)!;
                 firstExerciseGroup.xScaleMax = this.setXScaleMax(exerciseGroup);
                 firstExerciseGroup.height = this.calculateChartHeight(exerciseGroup.length);
-
-                switch (exerciseType) {
-                    case ExerciseType.MODELING:
-                        firstExerciseGroup.presentationScoreEnabled = this.modelingPresentationScoreEnabled;
-                        break;
-                    case ExerciseType.PROGRAMMING:
-                        firstExerciseGroup.presentationScoreEnabled = this.programmingPresentationScoreEnabled;
-                        break;
-                    case ExerciseType.QUIZ:
-                        firstExerciseGroup.presentationScoreEnabled = this.quizPresentationScoreEnabled;
-                        break;
-                    case ExerciseType.FILE_UPLOAD:
-                        firstExerciseGroup.presentationScoreEnabled = this.fileUploadPresentationScoreEnabled;
-                        break;
-                    case ExerciseType.TEXT:
-                        firstExerciseGroup.presentationScoreEnabled = this.textPresentationScoreEnabled;
-                        break;
-                }
-                this.ngxExerciseGroups.set(exerciseType, exerciseGroup);
+            } else {
+                // prevent an error in html when there is no exercise of one specific type
+                this.ngxExerciseGroups.delete(exerciseType);
             }
         });
     }
