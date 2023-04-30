@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.repository.metis;
 
+import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.Set;
 
@@ -36,6 +37,18 @@ public interface ConversationParticipantRepository extends JpaRepository<Convers
             WHERE conversationParticipant.conversation.id = :#{#conversationId}
             """)
     Set<ConversationParticipant> findConversationParticipantByConversationId(@Param("conversationId") Long conversationId);
+
+    @Transactional // ok because of modifying query
+    @Modifying
+    @Query("""
+            UPDATE ConversationParticipant p
+            SET p.lastRead = :now, p.unreadMessagesCount = 0
+            WHERE p.user.id = :userId
+                AND p.conversation.id = :conversationId
+            """)
+    void updateConversation(@Param("userId") Long userId, @Param("conversationId") Long conversationId, @Param("now") ZonedDateTime now);
+
+    boolean existsByConversationIdAndUserId(Long conversationId, Long userId);
 
     Optional<ConversationParticipant> findConversationParticipantByConversationIdAndUserId(Long conversationId, Long userId);
 

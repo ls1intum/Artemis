@@ -8,9 +8,12 @@ import java.util.stream.Collectors;
 
 import javax.validation.Valid;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -38,6 +41,8 @@ import de.tum.in.www1.artemis.web.websocket.dto.metis.PostDTO;
 
 @Service
 public class ConversationMessagingService extends PostingService {
+
+    private final Logger log = LoggerFactory.getLogger(this.getClass());
 
     private final ConversationService conversationService;
 
@@ -86,10 +91,7 @@ public class ConversationMessagingService extends PostingService {
         conversation.setLastMessageDate(ZonedDateTime.now());
         conversation = conversationService.updateConversation(conversation);
         // update last read date and unread message count of author
-        var authorParticipant = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserIdElseThrow(conversation.getId(), author.getId());
-        authorParticipant.setLastRead(ZonedDateTime.now());
-        authorParticipant.setUnreadMessagesCount(0L);
-        conversationParticipantRepository.save(authorParticipant);
+        updateLastReadAsync(author, conversation.getId());
 
         var createdMessage = conversationMessageRepository.save(newMessage);
         broadcastForPost(new PostDTO(createdMessage, MetisCrudAction.CREATE), course);
@@ -109,6 +111,11 @@ public class ConversationMessagingService extends PostingService {
         return createdMessage;
     }
 
+    @Async
+    protected void updateLastReadAsync(User author, Long conversationId) {
+        conversationParticipantRepository.updateConversation(author.getId(), conversationId, ZonedDateTime.now());
+    }
+
     /**
      * fetch posts from database by conversationId
      *
@@ -117,24 +124,41 @@ public class ConversationMessagingService extends PostingService {
      * @return page of posts that match the given context
      */
     public Page<Post> getMessages(Pageable pageable, @Valid PostContextFilter postContextFilter) {
-        Page<Post> conversationPosts;
-        if (postContextFilter.getConversationId() != null) {
-            var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
-            var conversation = conversationService.mayInteractWithConversationElseThrow(postContextFilter.getConversationId(), requestingUser);
-            conversationPosts = conversationMessageRepository.findMessages(postContextFilter, pageable);
-            // protect sample solution, grading instructions, etc.
-            conversationPosts.stream().map(Post::getExercise).filter(Objects::nonNull).forEach(Exercise::filterSensitiveInformation);
-            setAuthorRoleOfPostings(conversationPosts.getContent());
 
-            var participantOfRequestingUser = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserIdElseThrow(conversation.getId(),
-                    requestingUser.getId());
-            participantOfRequestingUser.setLastRead(ZonedDateTime.now());
-            participantOfRequestingUser.setUnreadMessagesCount(0L);
-            conversationParticipantRepository.save(participantOfRequestingUser);
+        log.info("getMessages invoked");
+
+        if (postContextFilter.getConversationId() == null) {
+            throw new BadRequestAlertException("Messages must be associated with a conversion", METIS_POST_ENTITY_NAME, "conversationMissing");
         }
-        else {
-            throw new BadRequestAlertException("A new message post cannot be associated with more than one context", METIS_POST_ENTITY_NAME, "ambiguousContext");
+
+        var requestingUser = userRepository.getUser();
+        if (!conversationService.isMember(postContextFilter.getConversationId(), requestingUser.getId())) {
+            throw new AccessForbiddenException("User not allowed to access this conversation!");
         }
+
+        log.info("security checks done");
+
+        // TODO: this method involves 5 DB queries due to FetchType.EAGER:
+        // 1) Load posts
+        // 2) Load tags of posts
+        // 3) Load reactions of posts
+        // 4) Load answer posts of posts
+        // 5) Load reactions of answer posts
+        // Can we combine this in one query to be more efficient, i.e. using a similar approach as LEFT JOIN FETCH?
+        Page<Post> conversationPosts = conversationMessageRepository.findMessages(postContextFilter, pageable);
+
+        log.info("messages loaded");
+
+        // protect sample solution, grading instructions, etc.
+        conversationPosts.stream().map(Post::getExercise).filter(Objects::nonNull).forEach(Exercise::filterSensitiveInformation);
+        setAuthorRoleOfPostings(conversationPosts.getContent());
+
+        log.info("author role done");
+
+        updateLastReadAsync(requestingUser, postContextFilter.getConversationId());
+
+        log.info("getMessages done");
+
         return conversationPosts;
     }
 
@@ -226,7 +250,7 @@ public class ConversationMessagingService extends PostingService {
     }
 
     @Override
-    String getEntityName() {
+    public String getEntityName() {
         return METIS_POST_ENTITY_NAME;
     }
 }
