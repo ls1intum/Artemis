@@ -11,6 +11,8 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import javax.annotation.Nullable;
+
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.io.FileUtils;
@@ -79,6 +81,7 @@ public class DataExportService {
 
     private final DragAndDropQuizAnswerConversionService dragAndDropQuizAnswerConversionService;
 
+    // nullable in the constructor because otherwise the application doesn't start if the apollon profile is not set
     private final ApollonConversionService apollonConversionService;
 
     private Path workingDirectory;
@@ -94,7 +97,7 @@ public class DataExportService {
     public DataExportService(CourseRepository courseRepository, UserRepository userRepository, AuthorizationCheckService authorizationCheckService, ZipFileService zipFileService,
             ProgrammingExerciseExportService programmingExerciseExportService, DataExportRepository dataExportRepository, QuizQuestionRepository quizQuestionRepository,
             QuizSubmissionRepository quizSubmissionRepository, ExerciseRepository exerciseRepository, DragAndDropQuizAnswerConversionService dragAndDropQuizAnswerConversionService,
-            ApollonConversionService apollonConversionService, FileService fileService, PostRepository postRepository, AnswerPostRepository answerPostRepository,
+            @Nullable ApollonConversionService apollonConversionService, FileService fileService, PostRepository postRepository, AnswerPostRepository answerPostRepository,
             ReactionRepository reactionRepository) {
         this.courseRepository = courseRepository;
         this.userRepository = userRepository;
@@ -452,15 +455,19 @@ public class DataExportService {
     }
 
     private void storeModelingSubmissionContent(ModelingSubmission modelingSubmission, Path outputDir) throws IOException {
-        if (modelingSubmission.getModel() != null) {
-            try (var modelAsPdf = apollonConversionService.convertModel(modelingSubmission.getModel())) {
-                Files.write(outputDir.resolve("submission_" + modelingSubmission.getId() + PDF_FILE_EXTENSION), modelAsPdf.readAllBytes());
-            }
-        }
-        else {
+        if (modelingSubmission.getModel() == null) {
             log.warn("Cannot include modeling submission content in data export because content is null for submission with id: {}", modelingSubmission.getId());
-
+            return;
         }
+        if (apollonConversionService == null) {
+            log.warn("Cannot include modeling submission content in data export because apollon profile is not active");
+            return;
+        }
+
+        try (var modelAsPdf = apollonConversionService.convertModel(modelingSubmission.getModel())) {
+            Files.write(outputDir.resolve("submission_" + modelingSubmission.getId() + PDF_FILE_EXTENSION), modelAsPdf.readAllBytes());
+        }
+
     }
 
     private void storeTextSubmissionContent(TextSubmission textSubmission, Path outputDir) throws IOException {
