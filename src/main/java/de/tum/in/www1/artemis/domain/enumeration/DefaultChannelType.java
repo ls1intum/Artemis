@@ -1,5 +1,8 @@
 package de.tum.in.www1.artemis.domain.enumeration;
 
+/**
+ * Enumeration default channel types that are automatically
+ */
 public enum DefaultChannelType {
 
     ANNOUNCEMENT("announcement"), ORGANIZATION("organization"), RANDOM("random"), TECH_SUPPORT("tech-support"),;
