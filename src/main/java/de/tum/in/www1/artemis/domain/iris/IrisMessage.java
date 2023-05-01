@@ -37,7 +37,8 @@ public class IrisMessage extends DomainObject {
     @Enumerated(EnumType.STRING)
     private IrisMessageSender sender;
 
-    @OneToMany(mappedBy = "message", fetch = FetchType.LAZY)
+    @OrderColumn(name = "iris_message_content_order")
+    @OneToMany(mappedBy = "message", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private List<IrisMessageContent> content = new ArrayList<>();
 
     public IrisSession getSession() {

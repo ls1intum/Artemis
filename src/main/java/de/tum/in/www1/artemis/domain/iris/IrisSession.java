@@ -29,7 +29,9 @@ public class IrisSession extends DomainObject {
     @JsonIgnore
     private User user;
 
-    @OneToMany(mappedBy = "session", fetch = FetchType.LAZY)
+    @OrderColumn(name = "iris_message_order")
+    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    @OneToMany(mappedBy = "session", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private List<IrisMessage> messages = new ArrayList<>();
 
     public ProgrammingExercise getExercise() {
