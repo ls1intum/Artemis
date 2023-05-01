@@ -65,8 +65,6 @@ public class AttachmentUnitService {
         savedAttachmentUnit.setAttachment(savedAttachment);
         evictCache(file, savedAttachmentUnit);
 
-        slideSplitterService.splitAttachmentUnitIntoSingleSlides(savedAttachmentUnit);
-
         return savedAttachmentUnit;
     }
 
@@ -98,7 +96,8 @@ public class AttachmentUnitService {
         final int revision = existingAttachment.getVersion() == null ? 1 : existingAttachment.getVersion() + 1;
         existingAttachment.setVersion(revision);
         Attachment savedAttachment = attachmentRepository.saveAndFlush(existingAttachment);
-        prepareAttachmentUnitForClient(savedAttachmentUnit, savedAttachment);
+        savedAttachmentUnit.setAttachment(savedAttachment);
+        prepareAttachmentUnitForClient(savedAttachmentUnit);
         evictCache(updateFile, savedAttachmentUnit);
 
         if (existingAttachmentUnit.getSlides() != null && !existingAttachmentUnit.getSlides().isEmpty()) {
@@ -157,7 +156,7 @@ public class AttachmentUnitService {
      *
      * @param attachmentUnit The attachment unit to clean.
      */
-    public void prepareAttachmentUnitForClient(AttachmentUnit attachmentUnit, Attachment attachment) {
+    public void prepareAttachmentUnitForClient(AttachmentUnit attachmentUnit) {
         attachmentUnit.getLecture().setLectureUnits(null);
         attachmentUnit.getLecture().setAttachments(null);
         attachmentUnit.getLecture().setPosts(null);

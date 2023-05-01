@@ -19,10 +19,7 @@ import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
 import de.tum.in.www1.artemis.repository.AttachmentUnitRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.security.Role;
-import de.tum.in.www1.artemis.service.AttachmentUnitService;
-import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.LearningGoalProgressService;
-import de.tum.in.www1.artemis.service.LectureUnitProcessingService;
+import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.web.rest.dto.LectureUnitInformationDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -51,9 +48,11 @@ public class AttachmentUnitResource {
 
     private final LearningGoalProgressService learningGoalProgressService;
 
+    private final SlideSplitterService slideSplitterService;
+
     public AttachmentUnitResource(AttachmentUnitRepository attachmentUnitRepository, LectureRepository lectureRepository, LectureUnitProcessingService lectureUnitProcessingService,
             AuthorizationCheckService authorizationCheckService, GroupNotificationService groupNotificationService, AttachmentUnitService attachmentUnitService,
-            LearningGoalProgressService learningGoalProgressService) {
+            LearningGoalProgressService learningGoalProgressService, SlideSplitterService slideSplitterService) {
         this.attachmentUnitRepository = attachmentUnitRepository;
         this.lectureUnitProcessingService = lectureUnitProcessingService;
         this.lectureRepository = lectureRepository;
@@ -61,6 +60,7 @@ public class AttachmentUnitResource {
         this.groupNotificationService = groupNotificationService;
         this.attachmentUnitService = attachmentUnitService;
         this.learningGoalProgressService = learningGoalProgressService;
+        this.slideSplitterService = slideSplitterService;
     }
 
     /**
@@ -145,7 +145,8 @@ public class AttachmentUnitResource {
 
         AttachmentUnit savedAttachmentUnit = attachmentUnitService.createAttachmentUnit(attachmentUnit, attachment, lecture, file, keepFilename);
         lectureRepository.save(lecture);
-        attachmentUnitService.prepareAttachmentUnitForClient(savedAttachmentUnit, savedAttachmentUnit.getAttachment());
+        slideSplitterService.splitAttachmentUnitIntoSingleSlides(savedAttachmentUnit);
+        attachmentUnitService.prepareAttachmentUnitForClient(savedAttachmentUnit);
         learningGoalProgressService.updateProgressByLearningObjectAsync(savedAttachmentUnit);
 
         return ResponseEntity.created(new URI("/api/attachment-units/" + savedAttachmentUnit.getId())).body(savedAttachmentUnit);
@@ -173,7 +174,7 @@ public class AttachmentUnitResource {
 
         try {
             List<AttachmentUnit> savedAttachmentUnits = lectureUnitProcessingService.splitAndSaveUnits(lectureUnitInformationDTO, file, lecture);
-            savedAttachmentUnits.forEach(savedAttachmentUnit -> attachmentUnitService.prepareAttachmentUnitForClient(savedAttachmentUnit, savedAttachmentUnit.getAttachment()));
+            savedAttachmentUnits.forEach(attachmentUnitService::prepareAttachmentUnitForClient);
             savedAttachmentUnits.forEach(learningGoalProgressService::updateProgressByLearningObjectAsync);
             return ResponseEntity.ok().body(savedAttachmentUnits);
         }

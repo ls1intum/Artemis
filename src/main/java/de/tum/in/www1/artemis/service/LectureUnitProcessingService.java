@@ -12,7 +12,6 @@ import org.apache.pdfbox.pdmodel.PDDocumentInformation;
 import org.apache.pdfbox.text.PDFTextStripper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.cache.CacheManager;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -20,8 +19,6 @@ import de.tum.in.www1.artemis.domain.Attachment;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.enumeration.AttachmentType;
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
-import de.tum.in.www1.artemis.repository.AttachmentRepository;
-import de.tum.in.www1.artemis.repository.AttachmentUnitRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.web.rest.dto.LectureUnitInformationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.LectureUnitSplitDTO;
@@ -36,23 +33,14 @@ public class LectureUnitProcessingService {
 
     private final SlideSplitterService slideSplitterService;
 
-    private final AttachmentUnitRepository attachmentUnitRepository;
-
-    private final AttachmentRepository attachmentRepository;
-
-    private final CacheManager cacheManager;
-
     private final LectureRepository lectureRepository;
 
     private final AttachmentUnitService attachmentUnitService;
 
-    public LectureUnitProcessingService(SlideSplitterService slideSplitterService, FileService fileService, AttachmentUnitRepository attachmentUnitRepository,
-            AttachmentRepository attachmentRepository, CacheManager cacheManager, LectureRepository lectureRepository, AttachmentUnitService attachmentUnitService) {
+    public LectureUnitProcessingService(SlideSplitterService slideSplitterService, FileService fileService, LectureRepository lectureRepository,
+            AttachmentUnitService attachmentUnitService) {
         this.fileService = fileService;
         this.slideSplitterService = slideSplitterService;
-        this.attachmentUnitRepository = attachmentUnitRepository;
-        this.attachmentRepository = attachmentRepository;
-        this.cacheManager = cacheManager;
         this.lectureRepository = lectureRepository;
         this.attachmentUnitService = attachmentUnitService;
     }
@@ -96,7 +84,6 @@ public class LectureUnitProcessingService {
                 attachment.setUploadDate(ZonedDateTime.now());
 
                 MultipartFile multipartFile = fileService.convertByteArrayToMultipart(lectureUnit.unitName(), ".pdf", outputStream.toByteArray());
-                // AttachmentUnit savedAttachmentUnit = saveAttachmentUnit(attachmentUnit, attachment, multipartFile, lecture);
                 AttachmentUnit savedAttachmentUnit = attachmentUnitService.createAttachmentUnit(attachmentUnit, attachment, lecture, multipartFile, true);
                 slideSplitterService.splitAttachmentUnitIntoSingleSlides(documentUnits.get(0), savedAttachmentUnit, multipartFile.getOriginalFilename());
                 documentUnits.get(0).close(); // make sure to close the document
@@ -106,56 +93,6 @@ public class LectureUnitProcessingService {
             document.close();
             return units;
         }
-    }
-
-    /**
-     * Save the attachment unit with.
-     *
-     * @param attachmentUnit The attachment unit to be saved
-     * @param attachment     The attachment to be saved
-     * @param multipartFile  The file to be saved
-     * @param lecture        The lecture that the attachment unit belongs to
-     * @return The saved attachment unit
-     */
-    private AttachmentUnit saveAttachmentUnit(AttachmentUnit attachmentUnit, Attachment attachment, MultipartFile multipartFile, Lecture lecture) {
-        attachmentUnit.setLecture(null);
-        AttachmentUnit savedAttachmentUnit = attachmentUnitRepository.saveAndFlush(attachmentUnit);
-        attachmentUnit.setLecture(lecture);
-        lecture.addLectureUnit(savedAttachmentUnit);
-
-        handleFile(multipartFile, attachment);
-
-        attachment.setAttachmentUnit(savedAttachmentUnit);
-        attachment.setVersion(1);
-
-        Attachment savedAttachment = attachmentRepository.saveAndFlush(attachment);
-        attachmentUnit.setAttachment(savedAttachment);
-        evictCache(multipartFile, savedAttachmentUnit);
-        return savedAttachmentUnit;
-    }
-
-    /**
-     * If a file was provided the cache for that file gets evicted.
-     *
-     * @param file           Potential file to evict the cache for.
-     * @param attachmentUnit Attachment unit liked to the file.
-     */
-    private void evictCache(MultipartFile file, AttachmentUnit attachmentUnit) {
-        if (file != null && !file.isEmpty()) {
-            Objects.requireNonNull(this.cacheManager.getCache("files")).evict(fileService.actualPathForPublicPath(attachmentUnit.getAttachment().getLink()));
-        }
-    }
-
-    /**
-     * Handles the file after upload.
-     *
-     * @param file       Potential file to handle
-     * @param attachment Attachment linked to the file.
-     */
-    private void handleFile(MultipartFile file, Attachment attachment) {
-        String filePath = fileService.handleSaveFile(file, true, false);
-        attachment.setLink(filePath);
-        attachment.setUploadDate(ZonedDateTime.now());
     }
 
     /**
