@@ -227,8 +227,8 @@ describe('UserManagementComponent', () => {
 
         comp.deleteUser('test');
         expect(deleteSpy).toHaveBeenCalledOnce();
-        expect(deleteSpy).toHaveBeenCalledWith('test');
-        const reqD = httpMock.expectOne(SERVER_API_URL + 'api/admin/users/test');
+        expect(deleteSpy).toHaveBeenCalledWith('test', 'en');
+        const reqD = httpMock.expectOne(SERVER_API_URL + 'api/admin/users/test?adminLanguageKey=en');
         reqD.flush(null, { status, statusText });
 
         if (status === 200) {
@@ -404,7 +404,7 @@ describe('UserManagementComponent', () => {
 
         comp.deleteAllSelectedUsers();
         expect(deleteSpy).toHaveBeenCalledOnce();
-        expect(deleteSpy).toHaveBeenCalledWith([users[0].login, users[1].login]);
+        expect(deleteSpy).toHaveBeenCalledWith([users[0].login, users[1].login], 'en');
     });
 
     it('should add and remove user from selected users', () => {
