@@ -83,7 +83,7 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbu
 
     private void testAllPreAuthorize() throws Exception {
         request.getMvc().perform(buildUpdateAttachmentUnit(attachmentUnit, attachment)).andExpect(status().isForbidden());
-        request.getMvc().perform(buildCreateAttachmentUnit(attachmentUnit, attachment, "Hello World")).andExpect(status().isForbidden());
+        request.getMvc().perform(buildCreateAttachmentUnit(attachmentUnit, attachment)).andExpect(status().isForbidden());
         request.get("/api/lectures/" + lecture1.getId() + "/attachment-units/42", HttpStatus.FORBIDDEN, AttachmentUnit.class);
     }
 
@@ -104,8 +104,7 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         return builder.file(attachmentUnitPart).file(attachmentPart).contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
     }
 
-    private MockHttpServletRequestBuilder buildCreateAttachmentUnit(@NotNull AttachmentUnit attachmentUnit, @NotNull Attachment attachment, @NotNull String fileContent)
-            throws Exception {
+    private MockHttpServletRequestBuilder buildCreateAttachmentUnit(@NotNull AttachmentUnit attachmentUnit, @NotNull Attachment attachment) throws Exception {
         var attachmentUnitPart = new MockMultipartFile("attachmentUnit", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsString(attachmentUnit).getBytes());
         var attachmentPart = new MockMultipartFile("attachment", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsString(attachment).getBytes());
         var filePart = createAttachmentUnitPdf();
@@ -171,7 +170,7 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createAttachmentUnit_asInstructor_shouldCreateAttachmentUnit() throws Exception {
         CountDownLatch latch = new CountDownLatch(1);
-        var result = request.getMvc().perform(buildCreateAttachmentUnit(attachmentUnit, attachment, "Hello World")).andExpect(status().isCreated()).andReturn();
+        var result = request.getMvc().perform(buildCreateAttachmentUnit(attachmentUnit, attachment)).andExpect(status().isCreated()).andReturn();
         var persistedAttachmentUnit = mapper.readValue(result.getResponse().getContentAsString(), AttachmentUnit.class);
         assertThat(persistedAttachmentUnit.getId()).isNotNull();
         var persistedAttachment = persistedAttachmentUnit.getAttachment();
@@ -187,28 +186,28 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor42", roles = "INSTRUCTOR")
     void createAttachmentUnit_InstructorNotInCourse_shouldReturnForbidden() throws Exception {
-        request.getMvc().perform(buildCreateAttachmentUnit(attachmentUnit, attachment, "Hello World")).andExpect(status().isForbidden());
+        request.getMvc().perform(buildCreateAttachmentUnit(attachmentUnit, attachment)).andExpect(status().isForbidden());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createAttachmentUnit_withUnitId_shouldReturnBadRequest() throws Exception {
         attachmentUnit.setId(99L);
-        request.getMvc().perform(buildCreateAttachmentUnit(attachmentUnit, attachment, "Hello World")).andExpect(status().isBadRequest());
+        request.getMvc().perform(buildCreateAttachmentUnit(attachmentUnit, attachment)).andExpect(status().isBadRequest());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createAttachmentUnit_withAttachmentId_shouldReturnBadRequest() throws Exception {
         attachment.setId(99L);
-        request.getMvc().perform(buildCreateAttachmentUnit(attachmentUnit, attachment, "Hello World")).andExpect(status().isBadRequest());
+        request.getMvc().perform(buildCreateAttachmentUnit(attachmentUnit, attachment)).andExpect(status().isBadRequest());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateAttachmentUnit_asInstructor_shouldUpdateAttachmentUnit() throws Exception {
         CountDownLatch latch = new CountDownLatch(1);
-        var createResult = request.getMvc().perform(buildCreateAttachmentUnit(attachmentUnit, attachment, "Hello World")).andExpect(status().isCreated()).andReturn();
+        var createResult = request.getMvc().perform(buildCreateAttachmentUnit(attachmentUnit, attachment)).andExpect(status().isCreated()).andReturn();
         var attachmentUnit = mapper.readValue(createResult.getResponse().getContentAsString(), AttachmentUnit.class);
         var attachment = attachmentUnit.getAttachment();
         attachmentUnit.setDescription("Changed");
@@ -297,7 +296,7 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteAttachmentUnit_withAttachment_shouldDeleteAttachment() throws Exception {
-        var result = request.getMvc().perform(buildCreateAttachmentUnit(attachmentUnit, attachment, "Hello World")).andExpect(status().isCreated()).andReturn();
+        var result = request.getMvc().perform(buildCreateAttachmentUnit(attachmentUnit, attachment)).andExpect(status().isCreated()).andReturn();
         var persistedAttachmentUnit = mapper.readValue(result.getResponse().getContentAsString(), AttachmentUnit.class);
         assertThat(persistedAttachmentUnit.getId()).isNotNull();
         assertThat(slideRepository.findAllByAttachmentUnitId(persistedAttachmentUnit.getId())).hasSize(0);

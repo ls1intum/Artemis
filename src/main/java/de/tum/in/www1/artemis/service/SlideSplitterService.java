@@ -1,7 +1,9 @@
 package de.tum.in.www1.artemis.service;
 
 import java.awt.image.BufferedImage;
-import java.io.*;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
 
 import javax.imageio.ImageIO;
 
@@ -51,7 +53,8 @@ public class SlideSplitterService {
             splitAttachmentUnitIntoSingleSlides(document, attachmentUnit, pdfFilename);
         }
         catch (IOException e) {
-            throw new RuntimeException(e);
+            log.error("Error while splitting Attachment Unit {} into single slides", attachmentUnit.getId(), e);
+            throw new InternalServerErrorException("Could not split Attachment Unit into single slides");
         }
     }
 
@@ -60,6 +63,7 @@ public class SlideSplitterService {
      *
      * @param attachmentUnit The attachment unit to which the slides belong.
      * @param document       The PDF document that is already loaded.
+     * @param pdfFilename    The name of the PDF file.
      */
     public void splitAttachmentUnitIntoSingleSlides(PDDocument document, AttachmentUnit attachmentUnit, String pdfFilename) {
         log.debug("Splitting Attachment Unit file {} into single slides", attachmentUnit.getAttachment().getName());
@@ -81,7 +85,7 @@ public class SlideSplitterService {
             }
         }
         catch (IOException e) {
-            log.error("Error while splitting Attachment Unit into single slides", e);
+            log.error("Error while splitting Attachment Unit {} into single slides", attachmentUnit.getId(), e);
             throw new InternalServerErrorException("Could not split Attachment Unit into single slides");
         }
     }

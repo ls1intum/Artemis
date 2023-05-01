@@ -44,14 +44,17 @@ public class LectureUnitProcessingService {
 
     private final LectureRepository lectureRepository;
 
+    private final AttachmentUnitService attachmentUnitService;
+
     public LectureUnitProcessingService(SlideSplitterService slideSplitterService, FileService fileService, AttachmentUnitRepository attachmentUnitRepository,
-            AttachmentRepository attachmentRepository, CacheManager cacheManager, LectureRepository lectureRepository) {
+            AttachmentRepository attachmentRepository, CacheManager cacheManager, LectureRepository lectureRepository, AttachmentUnitService attachmentUnitService) {
         this.fileService = fileService;
         this.slideSplitterService = slideSplitterService;
         this.attachmentUnitRepository = attachmentUnitRepository;
         this.attachmentRepository = attachmentRepository;
         this.cacheManager = cacheManager;
         this.lectureRepository = lectureRepository;
+        this.attachmentUnitService = attachmentUnitService;
     }
 
     /**
@@ -93,7 +96,8 @@ public class LectureUnitProcessingService {
                 attachment.setUploadDate(ZonedDateTime.now());
 
                 MultipartFile multipartFile = fileService.convertByteArrayToMultipart(lectureUnit.unitName(), ".pdf", outputStream.toByteArray());
-                AttachmentUnit savedAttachmentUnit = saveAttachmentUnit(attachmentUnit, attachment, multipartFile, lecture);
+                // AttachmentUnit savedAttachmentUnit = saveAttachmentUnit(attachmentUnit, attachment, multipartFile, lecture);
+                AttachmentUnit savedAttachmentUnit = attachmentUnitService.createAttachmentUnit(attachmentUnit, attachment, lecture, multipartFile, true);
                 slideSplitterService.splitAttachmentUnitIntoSingleSlides(documentUnits.get(0), savedAttachmentUnit, multipartFile.getOriginalFilename());
                 documentUnits.get(0).close(); // make sure to close the document
                 units.add(savedAttachmentUnit);

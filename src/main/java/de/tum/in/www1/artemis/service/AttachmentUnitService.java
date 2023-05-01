@@ -11,7 +11,6 @@ import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
 import de.tum.in.www1.artemis.repository.AttachmentRepository;
 import de.tum.in.www1.artemis.repository.AttachmentUnitRepository;
-import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.SlideRepository;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 
@@ -26,19 +25,16 @@ public class AttachmentUnitService {
 
     private final CacheManager cacheManager;
 
-    private final LectureRepository lectureRepository;
-
     private final SlideSplitterService slideSplitterService;
 
     private final SlideRepository slideRepository;
 
     public AttachmentUnitService(SlideRepository slideRepository, SlideSplitterService slideSplitterService, AttachmentUnitRepository attachmentUnitRepository,
-            AttachmentRepository attachmentRepository, FileService fileService, CacheManager cacheManager, LectureRepository lectureRepository) {
+            AttachmentRepository attachmentRepository, FileService fileService, CacheManager cacheManager) {
         this.attachmentUnitRepository = attachmentUnitRepository;
         this.attachmentRepository = attachmentRepository;
         this.fileService = fileService;
         this.cacheManager = cacheManager;
-        this.lectureRepository = lectureRepository;
         this.slideSplitterService = slideSplitterService;
         this.slideRepository = slideRepository;
     }
@@ -59,7 +55,6 @@ public class AttachmentUnitService {
         AttachmentUnit savedAttachmentUnit = attachmentUnitRepository.saveAndFlush(attachmentUnit);
         attachmentUnit.setLecture(lecture);
         lecture.addLectureUnit(savedAttachmentUnit);
-        lectureRepository.save(lecture);
 
         handleFile(file, attachment, keepFilename);
         // Default attachment
@@ -67,7 +62,7 @@ public class AttachmentUnitService {
         attachment.setAttachmentUnit(savedAttachmentUnit);
 
         Attachment savedAttachment = attachmentRepository.saveAndFlush(attachment);
-        prepareAttachmentUnitForClient(savedAttachmentUnit, savedAttachment);
+        savedAttachmentUnit.setAttachment(savedAttachment);
         evictCache(file, savedAttachmentUnit);
 
         slideSplitterService.splitAttachmentUnitIntoSingleSlides(savedAttachmentUnit);
@@ -162,10 +157,9 @@ public class AttachmentUnitService {
      *
      * @param attachmentUnit The attachment unit to clean.
      */
-    private void prepareAttachmentUnitForClient(AttachmentUnit attachmentUnit, Attachment attachment) {
+    public void prepareAttachmentUnitForClient(AttachmentUnit attachmentUnit, Attachment attachment) {
         attachmentUnit.getLecture().setLectureUnits(null);
         attachmentUnit.getLecture().setAttachments(null);
         attachmentUnit.getLecture().setPosts(null);
-        attachmentUnit.setAttachment(attachment);
     }
 }

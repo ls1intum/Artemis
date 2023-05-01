@@ -144,7 +144,8 @@ public class AttachmentUnitResource {
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, lecture.getCourse(), null);
 
         AttachmentUnit savedAttachmentUnit = attachmentUnitService.createAttachmentUnit(attachmentUnit, attachment, lecture, file, keepFilename);
-
+        lectureRepository.save(lecture);
+        attachmentUnitService.prepareAttachmentUnitForClient(savedAttachmentUnit, savedAttachmentUnit.getAttachment());
         learningGoalProgressService.updateProgressByLearningObjectAsync(savedAttachmentUnit);
 
         return ResponseEntity.created(new URI("/api/attachment-units/" + savedAttachmentUnit.getId())).body(savedAttachmentUnit);
@@ -172,6 +173,7 @@ public class AttachmentUnitResource {
 
         try {
             List<AttachmentUnit> savedAttachmentUnits = lectureUnitProcessingService.splitAndSaveUnits(lectureUnitInformationDTO, file, lecture);
+            savedAttachmentUnits.forEach(savedAttachmentUnit -> attachmentUnitService.prepareAttachmentUnitForClient(savedAttachmentUnit, savedAttachmentUnit.getAttachment()));
             savedAttachmentUnits.forEach(learningGoalProgressService::updateProgressByLearningObjectAsync);
             return ResponseEntity.ok().body(savedAttachmentUnits);
         }
