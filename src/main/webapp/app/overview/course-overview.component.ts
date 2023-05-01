@@ -100,11 +100,10 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     async initAfterCourseLoad() {
         await this.subscribeToTeamAssignmentUpdates();
         this.subscribeForQuizChanges();
-        this.setUpConversationService();
     }
 
     private setUpConversationService() {
-        if (isMessagingEnabled(this.course) && !this.conversationServiceInstantiated) {
+        if (isMessagingEnabled(this.course) && !this.conversationServiceInstantiated && this.messagesRouteLoaded) {
             this.metisConversationService
                 .setUpConversationService(this.course!)
                 .pipe(takeUntil(this.ngUnsubscribe))
@@ -140,6 +139,8 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
      */
     onSubRouteActivate(componentRef: any) {
         this.messagesRouteLoaded = this.route.snapshot.firstChild?.routeConfig?.path === 'messages';
+
+        this.setUpConversationService();
 
         if (componentRef.controlConfiguration) {
             const provider = componentRef as BarControlConfigurationProvider;
