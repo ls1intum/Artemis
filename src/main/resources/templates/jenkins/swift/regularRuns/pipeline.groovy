@@ -64,7 +64,8 @@ private void staticCodeAnalysis() {
         rm -rf staticCodeAnalysisReports
         mkdir staticCodeAnalysisReports
         cp .swiftlint.yml assignment || true
-        swiftlint lint assignment > staticCodeAnalysisReports/swiftlint-result.xml
+        cd assignment
+        swiftlint staticCodeAnalysisReports/swiftlint-result.xml
         '''
     }
 }
@@ -80,7 +81,7 @@ void postBuildTasks() {
     mkdir results
     if [ -e assignment/tests.xml ]
     then
-        sed -i 's/<testsuites>//g ; s/<\\/testsuites>//g' assignment/tests.xml
+        sed -i 's/<testsuites>/<testsuite>/g ; s/<\\/testsuites>/<\\/testsuite>/g' assignment/tests.xml
         cp assignment/tests.xml $WORKSPACE/results/ || true
         sed -i 's/[^[:print:]\t]/�/g' $WORKSPACE/results/*.xml || true
     fi
