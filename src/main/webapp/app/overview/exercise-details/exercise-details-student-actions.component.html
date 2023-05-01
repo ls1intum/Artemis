@@ -352,6 +352,7 @@
                 *ngIf="isTeamAvailable()"
                 [smallButton]="smallButtons"
                 [hideLabelMobile]="true"
+                [routerLink]="['/courses', courseId, 'exercises', exercise.id, 'teams', assignedTeamId]"
             ></button>
             <span tabindex="0" [ngbTooltip]="isBeforeStartDateAndStudent ? ('artemisApp.exerciseActions.startExerciseBeforeDueDate' | artemisTranslate) : ''">
                 <button
