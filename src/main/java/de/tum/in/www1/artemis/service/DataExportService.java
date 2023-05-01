@@ -22,6 +22,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.exam.Exam;
+import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.metis.Reaction;
@@ -86,6 +88,8 @@ public class DataExportService {
 
     private Path workingDirectory;
 
+    private final StudentExamRepository studentExamRepository;
+
     private final FileService fileService;
 
     private final PostRepository postRepository;
@@ -97,8 +101,8 @@ public class DataExportService {
     public DataExportService(CourseRepository courseRepository, UserRepository userRepository, AuthorizationCheckService authorizationCheckService, ZipFileService zipFileService,
             ProgrammingExerciseExportService programmingExerciseExportService, DataExportRepository dataExportRepository, QuizQuestionRepository quizQuestionRepository,
             QuizSubmissionRepository quizSubmissionRepository, ExerciseRepository exerciseRepository, DragAndDropQuizAnswerConversionService dragAndDropQuizAnswerConversionService,
-            @Nullable ApollonConversionService apollonConversionService, FileService fileService, PostRepository postRepository, AnswerPostRepository answerPostRepository,
-            ReactionRepository reactionRepository) {
+            @Nullable ApollonConversionService apollonConversionService, StudentExamRepository studentExamRepository, FileService fileService, PostRepository postRepository,
+            AnswerPostRepository answerPostRepository, ReactionRepository reactionRepository) {
         this.courseRepository = courseRepository;
         this.userRepository = userRepository;
         this.authorizationCheckService = authorizationCheckService;
@@ -110,6 +114,7 @@ public class DataExportService {
         this.exerciseRepository = exerciseRepository;
         this.dragAndDropQuizAnswerConversionService = dragAndDropQuizAnswerConversionService;
         this.apollonConversionService = apollonConversionService;
+        this.studentExamRepository = studentExamRepository;
         this.fileService = fileService;
         this.postRepository = postRepository;
         this.answerPostRepository = answerPostRepository;
@@ -185,8 +190,8 @@ public class DataExportService {
         var posts = postRepository.findPostsByAuthorId(user.getId());
         var answerPosts = answerPostRepository.findAnswerPostsByAuthorId(user.getId());
         var reactions = reactionRepository.findReactionsByUserId(user.getId());
-        var courses = courseRepository.getAllCoursesUserIsMemberOf(authorizationCheckService.isAdmin(user), user.getGroups());
 
+        var courses = courseRepository.getAllCoursesWithExamsUserIsMemberOf(authorizationCheckService.isAdmin(user), user.getGroups());
         for (var course : courses) {
             Path courseDir = Files.createDirectory(workingDirectory.resolve("course_" + course.getShortName()));
             Set<Exercise> exercises = exerciseRepository.getAllExercisesUserParticipatedInWithEagerParticipationsSubmissionsResultsFeedbacksByCourseIdAndUserId(course.getId(),
@@ -207,10 +212,46 @@ public class DataExportService {
             createExportForFileUploadExercises(fileUploadExercises, courseDir);
             createExportForQuizExercises(quizExercises, courseDir);
             createCommunicationExport(posts, answerPosts, reactions, course.getId(), courseDir);
+            createExportForExams(user.getId(), course.getExams(), courseDir);
         }
         addGeneralUserInformation(user);
         return createDataExportZipFile(user.getLogin());
 
+    }
+
+    private void createExportForExams(long userId, Set<Exam> exams, Path courseWorkingDir) throws IOException {
+        for (var exam : exams) {
+            Optional<StudentExam> studentExam = studentExamRepository.findWithExercisesParticipationsSubmissionsResultsByUserIdAndExamId(userId, exam.getId());
+            if (studentExam.isPresent()) {
+                var examWorkingDir = Files.createDirectory(courseWorkingDir.resolve("exam_" + exam.getId()));
+                createStudentExamExport(studentExam.get(), examWorkingDir);
+            }
+
+        }
+    }
+
+    private void createStudentExamExport(StudentExam studentExam, Path examWorkingDir) throws IOException {
+        for (var exercise : studentExam.getExercises()) {
+            if (exercise instanceof ProgrammingExercise programmingExercise) {
+                createProgrammingExerciseExport(programmingExercise, examWorkingDir);
+            }
+            else {
+                createNonProgrammingExerciseExport(exercise, examWorkingDir);
+            }
+        }
+        addGeneralExamInformation(studentExam, examWorkingDir);
+    }
+
+    private void addGeneralExamInformation(StudentExam studentExam, Path examWorkingDir) throws IOException {
+        String[] headers = new String[] { "started", "testExam", "started at", "submitted", "submitted at", "working time", "individual end date" };
+        CSVFormat csvFormat = CSVFormat.DEFAULT.builder().setHeader(headers).build();
+
+        try (final CSVPrinter printer = new CSVPrinter(Files.newBufferedWriter(examWorkingDir.resolve("exam_" + studentExam.getId() + CSV_FILE_EXTENSION)), csvFormat)) {
+            printer.printRecord(studentExam.isStarted(), studentExam.isTestExam(), studentExam.getStartedDate(), studentExam.isSubmitted(), studentExam.getSubmissionDate(),
+                    studentExam.getWorkingTime(), studentExam.getIndividualEndDate());
+            printer.flush();
+
+        }
     }
 
     private void createExportForQuizExercises(Set<QuizExercise> quizExercises, Path courseDir) throws IOException {
@@ -284,7 +325,6 @@ public class DataExportService {
 
     private void createSubmissionsResultsExport(Exercise exercise, Path exerciseDir) throws IOException {
         for (var participation : exercise.getStudentParticipations()) {
-            // createParticipationCsvFile(participation, exerciseDir);
             for (var submission : participation.getSubmissions()) {
                 createSubmissionCsvFile(submission, exerciseDir);
                 if (submission instanceof FileUploadSubmission) {

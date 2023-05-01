@@ -151,6 +151,12 @@ public class ModelFactory {
         return quizExercise;
     }
 
+    public static QuizExercise generateQuizExerciseForExam(ExerciseGroup exerciseGroup, String title) {
+        var quizExercise = generateQuizExerciseForExam(exerciseGroup);
+        quizExercise.setTitle(title + UUID.randomUUID().toString().substring(0, 3));
+        return quizExercise;
+    }
+
     public static ProgrammingExercise generateProgrammingExercise(ZonedDateTime releaseDate, ZonedDateTime dueDate, Course course) {
         return generateProgrammingExercise(releaseDate, dueDate, course, ProgrammingLanguage.JAVA);
     }
@@ -163,6 +169,12 @@ public class ModelFactory {
 
     public static ProgrammingExercise generateProgrammingExerciseForExam(ExerciseGroup exerciseGroup) {
         return generateProgrammingExerciseForExam(exerciseGroup, ProgrammingLanguage.JAVA);
+    }
+
+    public static ProgrammingExercise generateProgrammingExerciseForExam(ExerciseGroup exerciseGroup, String title) {
+        var programmingExercise = (ProgrammingExercise) populateExerciseForExam(new ProgrammingExercise(), exerciseGroup, title);
+        populateProgrammingExercise(programmingExercise, ProgrammingLanguage.JAVA);
+        return programmingExercise;
     }
 
     public static ProgrammingExercise generateProgrammingExerciseForExam(ExerciseGroup exerciseGroup, ProgrammingLanguage programmingLanguage) {
@@ -211,6 +223,12 @@ public class ModelFactory {
         return modelingExercise;
     }
 
+    public static ModelingExercise generateModelingExerciseForExam(DiagramType diagramType, ExerciseGroup exerciseGroup, String title) {
+        var modelingExercise = (ModelingExercise) populateExerciseForExam(new ModelingExercise(), exerciseGroup, title);
+        modelingExercise.setDiagramType(diagramType);
+        return modelingExercise;
+    }
+
     public static TextExercise generateTextExercise(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, Course course) {
         var textExercise = (TextExercise) populateExercise(new TextExercise(), releaseDate, dueDate, assessmentDueDate, course);
         textExercise.setExampleSolution("This is my example solution");
@@ -221,6 +239,10 @@ public class ModelFactory {
         var textExercise = (TextExercise) populateExerciseForExam(new TextExercise(), exerciseGroup);
         textExercise.setExampleSolution("This is my example solution");
         return textExercise;
+    }
+
+    public static TextExercise generateTextExerciseForExam(ExerciseGroup exerciseGroup, String title) {
+        return (TextExercise) populateExerciseForExam(new TextExercise(), exerciseGroup, title);
     }
 
     public static FileUploadExercise generateFileUploadExercise(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, String filePattern,
@@ -235,6 +257,12 @@ public class ModelFactory {
         FileUploadExercise fileUploadExercise = new FileUploadExercise();
         fileUploadExercise.setFilePattern(filePattern);
         return (FileUploadExercise) populateExerciseForExam(fileUploadExercise, exerciseGroup);
+    }
+
+    public static FileUploadExercise generateFileUploadExerciseForExam(String filePattern, ExerciseGroup exerciseGroup, String title) {
+        FileUploadExercise fileUploadExercise = new FileUploadExercise();
+        fileUploadExercise.setFilePattern(filePattern);
+        return (FileUploadExercise) populateExerciseForExam(fileUploadExercise, exerciseGroup, title);
     }
 
     public static GitUtilService.MockFileRepositoryUrl getMockFileRepositoryUrl(LocalRepository repository) {
@@ -279,6 +307,12 @@ public class ModelFactory {
             exercise.setGradingCriteria(List.of(new GradingCriterion()));
         }
         return exercise;
+    }
+
+    private static Exercise populateExerciseForExam(Exercise exercise, ExerciseGroup exerciseGroup, String exerciseTitle) {
+        Exercise populatedExercise = populateExerciseForExam(exercise, exerciseGroup);
+        populatedExercise.setTitle(exerciseTitle + UUID.randomUUID().toString().substring(0, 3));
+        return populatedExercise;
     }
 
     public static List<User> generateActivatedUsers(String loginPrefix, String commonPasswordHash, String[] groups, Set<Authority> authorities, int amount) {

@@ -19,7 +19,7 @@ import de.tum.in.www1.artemis.service.DataExportService;
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("api/")
 public class DataExportResource {
 
     private final DataExportService dataExportService;
@@ -39,7 +39,7 @@ public class DataExportResource {
      * @param userId the id of the user to request the data export for
      * @return the data export object
      */
-    @PutMapping("/{userId}/data-export")
+    @PutMapping("{userId}/data-export")
     @PreAuthorize("hasRole('USER')")
     public DataExport requestDataExport(@PathVariable long userId) {
         // in the follow-ups, creating a data export will be a scheduled operation, therefore we split the endpoints for requesting and downloading
@@ -63,7 +63,7 @@ public class DataExportResource {
      * @param dataExportId the id of the data export to download
      * @return A resource containing the data export zip file
      */
-    @GetMapping("/{userId}/data-export/{dataExportId}")
+    @GetMapping("{userId}/data-export/{dataExportId}")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Resource> downloadDataExport(@PathVariable long userId, @PathVariable long dataExportId) {
         var dataExportPath = dataExportService.downloadDataExport(userId, dataExportId);

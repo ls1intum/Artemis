@@ -272,9 +272,10 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     @Query("""
             SELECT c
             FROM Course c
+            LEFT JOIN FETCH c.exams exams
             WHERE (:isAdmin = TRUE OR c.studentGroupName IN :userGroups OR c.teachingAssistantGroupName IN :userGroups OR c.editorGroupName IN :userGroups OR c.instructorGroupName IN :userGroups)
             """)
-    Set<Course> getAllCoursesUserIsMemberOf(@Param("isAdmin") boolean isAdmin, @Param("userGroups") Set<String> userGroups);
+    Set<Course> getAllCoursesWithExamsUserIsMemberOf(@Param("isAdmin") boolean isAdmin, @Param("userGroups") Set<String> userGroups);
 
     @NotNull
     default Course findByIdElseThrow(long courseId) throws EntityNotFoundException {
