@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.domain.enumeration;
 
 /**
- * Enumeration default channel types that are automatically
+ * Enumeration for default channel types that are automatically created on course creation
  */
 public enum DefaultChannelType {
 
