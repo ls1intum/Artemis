@@ -286,6 +286,13 @@ export class AccountService implements IAccountService {
     }
 
     /**
+     * Returns the language key of the user.
+     */
+    getCurrentLanguage(): string {
+        return this.translateService.currentLang;
+    }
+
+    /**
      * Sets a new language key for the current user
      *
      * @param languageKey The new languageKey

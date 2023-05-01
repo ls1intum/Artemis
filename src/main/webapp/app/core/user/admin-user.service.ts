@@ -47,22 +47,27 @@ export class AdminUserService {
     /**
      * Delete a user on the server.
      * @param login The login of the user to delete.
+     * @param adminLanguageKey The language key of the admin (used for setting some properties of the deleted user entity)
      * @return Observable<HttpResponse<void>>
      */
-    deleteUser(login: string): Observable<HttpResponse<void>> {
-        return this.http.delete<void>(`${this.resourceUrl}/${login}`, { observe: 'response' });
+    deleteUser(login: string, adminLanguageKey: string): Observable<HttpResponse<void>> {
+        let params = new HttpParams();
+        params = params.append('adminLanguageKey', adminLanguageKey);
+        return this.http.delete<void>(`${this.resourceUrl}/${login}`, { params, observe: 'response' });
     }
 
     /**
      * Delete users on the server.
      * @param logins The logins of the users to delete.
+     * @param adminLanguageKey The language key of the admin (used for setting some properties of the deleted user entity)
      * @return Observable<HttpResponse<void>>
      */
-    deleteUsers(logins: string[]): Observable<HttpResponse<void>> {
+    deleteUsers(logins: string[], adminLanguageKey: string): Observable<HttpResponse<void>> {
         let params = new HttpParams();
         for (const login of logins) {
             params = params.append('login', login);
         }
+        params = params.append('adminLanguageKey', adminLanguageKey);
         return this.http.delete<void>(`${this.resourceUrl}`, { params, observe: 'response' });
     }
 

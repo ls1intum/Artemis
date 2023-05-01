@@ -502,7 +502,8 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      */
     deleteAllSelectedUsers() {
         const logins = this.selectedUsers.map((user) => user.login!);
-        this.adminUserService.deleteUsers(logins).subscribe({
+        const langKey = this.accountService.getCurrentLanguage();
+        this.adminUserService.deleteUsers(logins, langKey).subscribe({
             next: () => {
                 this.eventManager.broadcast({
                     name: 'userListModification',
@@ -565,7 +566,8 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      * @param login of the user that should be deleted
      */
     deleteUser(login: string) {
-        this.adminUserService.deleteUser(login).subscribe({
+        const langKey = this.accountService.getCurrentLanguage();
+        this.adminUserService.deleteUser(login, langKey).subscribe({
             next: () => {
                 this.eventManager.broadcast({
                     name: 'userListModification',
