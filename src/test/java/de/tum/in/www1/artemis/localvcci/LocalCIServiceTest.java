@@ -23,12 +23,6 @@ class LocalCIServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
         ProgrammingExercise exercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
         ProgrammingExerciseStudentParticipation participation = database.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
         assertThat(continuousIntegrationService.getBuildStatus(participation)).isEqualTo(BuildStatus.INACTIVE);
-
-        participation.setBuildPlanId("MY-PLAN_QUEUED");
-        assertThat(continuousIntegrationService.getBuildStatus(participation)).isEqualTo(BuildStatus.QUEUED);
-
-        participation.setBuildPlanId("MY-PLAN_BUILDING");
-        assertThat(continuousIntegrationService.getBuildStatus(participation)).isEqualTo(BuildStatus.BUILDING);
     }
 
     @Test

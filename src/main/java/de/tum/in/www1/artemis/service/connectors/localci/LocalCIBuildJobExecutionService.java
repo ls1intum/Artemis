@@ -6,22 +6,9 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.Callable;
-import java.util.concurrent.CancellationException;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-import java.util.function.Supplier;
 
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamException;
@@ -37,18 +24,11 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import com.github.dockerjava.api.DockerClient;
-import com.github.dockerjava.api.async.ResultCallback;
 import com.github.dockerjava.api.command.CreateContainerResponse;
-import com.github.dockerjava.api.command.ExecCreateCmdResponse;
 import com.github.dockerjava.api.exception.NotFoundException;
-import com.github.dockerjava.api.model.Bind;
-import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.HostConfig;
-import com.github.dockerjava.api.model.Volume;
 
 import de.tum.in.www1.artemis.config.localvcci.LocalCIConfiguration;
-import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
-import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.LocalCIException;
 import de.tum.in.www1.artemis.exception.localvc.LocalVCInternalException;
@@ -56,12 +36,12 @@ import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildResult;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUrl;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
-import de.tum.in.www1.artemis.service.programming.ProgrammingMessagingService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
-import de.tum.in.www1.artemis.web.websocket.programmingSubmission.BuildTriggerWebsocketError;
 
 /**
- * This service is responsible for executing build jobs on the local CI server.
+ * This service contains the logic to execute a build job for a programming exercise participation in the local CI system.
+ * The {@link #runBuildJob(ProgrammingExerciseParticipation, String)} method is wrapped into a Callable by the {@link LocalCIBuildJobManagementService} and submitted to the
+ * executor service.
  */
 @Service
 @Profile("localci")
@@ -69,19 +49,13 @@ public class LocalCIBuildJobExecutionService {
 
     private final Logger log = LoggerFactory.getLogger(LocalCIBuildJobExecutionService.class);
 
-    private final Optional<VersionControlService> versionControlService;
+    private final LocalCIBuildPlanService localCIBuildPlanService;
 
-    private final ExecutorService localCIBuildExecutorService;
+    private final Optional<VersionControlService> versionControlService;
 
     private final DockerClient dockerClient;
 
-    private final ProgrammingMessagingService programmingMessagingService;
-
-    /**
-     * The Path to the script file located in the resources folder. The script file contains the steps that run the tests on the Docker container.
-     * This path is provided as a Bean, because the retrieval is quite costly in the production environment (see {@link LocalCIConfiguration#buildScriptFilePath()}).
-     */
-    private final Path buildScriptFilePath;
+    private final LocalCIContainerService localCIContainerService;
 
     /**
      * Instead of creating a new XMLInputFactory for every build job, it is created once and provided as a Bean (see {@link LocalCIConfiguration#localCIXMLInputFactory()}).
@@ -94,91 +68,48 @@ public class LocalCIBuildJobExecutionService {
     @Value("${artemis.version-control.local-vcs-repo-path}")
     private String localVCBasePath;
 
-    @Value("${artemis.continuous-integration.build.images.java.default}")
-    String dockerImage;
-
-    @Value("${artemis.continuous-integration.timeout-seconds:120}")
-    private int timeoutSeconds;
-
-    @Value("${artemis.continuous-integration.asynchronous:true}")
-    private boolean runBuildJobsAsynchronously;
-
-    public LocalCIBuildJobExecutionService(Optional<VersionControlService> versionControlService, ExecutorService localCIBuildExecutorService, DockerClient dockerClient,
-            ProgrammingMessagingService programmingMessagingService, Path buildScriptFilePath, XMLInputFactory localCIXMLInputFactory) {
+    public LocalCIBuildJobExecutionService(LocalCIBuildPlanService localCIBuildPlanService, Optional<VersionControlService> versionControlService, DockerClient dockerClient,
+            LocalCIContainerService localCIContainerService, XMLInputFactory localCIXMLInputFactory) {
+        this.localCIBuildPlanService = localCIBuildPlanService;
         this.versionControlService = versionControlService;
-        this.localCIBuildExecutorService = localCIBuildExecutorService;
         this.dockerClient = dockerClient;
-        this.programmingMessagingService = programmingMessagingService;
-        this.buildScriptFilePath = buildScriptFilePath;
+        this.localCIContainerService = localCIContainerService;
         this.localCIXMLInputFactory = localCIXMLInputFactory;
     }
 
-    /**
-     * Prepare paths to the assignment and test repositories and the build script and then submit the build job to the executor service.
-     * Note: As this method is independent of the commit hash of the submission, that led to this build, the build script will always check out the latest commit for the branch.
-     * This means, that if you submit multiple times in quick succession, the results might all be created for the latest submission.
-     * This is not an issue, as we assume that in this case, you would only need the result for the latest submission. This should be optimized though.
-     * TODO: Do not add a new build job to the queue, if there is already a build job for the latest submission.
-     *
-     * @param participation The participation of the repository for which the build job should be executed.
-     * @return A future that will be completed with the build result.
-     * @throws LocalCIException If the build job could not be submitted to the executor service.
-     */
-    public CompletableFuture<LocalCIBuildResult> addBuildJobToQueue(ProgrammingExerciseParticipation participation) {
+    public enum LocalCIBuildJobRepositoryType {
 
-        ProjectType projectType = participation.getProgrammingExercise().getProjectType();
-        if (projectType == null || !projectType.isGradle()) {
-            throw new LocalCIException("Project type must be Gradle.");
+        ASSIGNMENT("assignment"), TEST("test");
+
+        private final String name;
+
+        LocalCIBuildJobRepositoryType(String name) {
+            this.name = name;
         }
 
-        // Prepare the Docker container name before submitting the build job to the executor service, so we can remove the container if something goes wrong.
-        String containerName = "artemis-local-ci-" + participation.getId() + "-" + ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS"));
-
-        // Prepare a Callable that will later be called. It contains the actual steps needed to execute the build job.
-        Callable<LocalCIBuildResult> buildJob = () -> prepareAndRunBuildJob(participation, containerName);
-
-        // Wrap the buildJob Callable in a BuildJobTimeoutCallable, so that the build job is cancelled if it takes too long.
-        BuildJobTimeoutCallable<LocalCIBuildResult> timedBuildJob = new BuildJobTimeoutCallable<>(buildJob, timeoutSeconds);
-
-        /*
-         * Submit the build job to the executor service. This runs in a separate thread, so it does not block the main thread.
-         * createCompletableFuture() is only used to provide a way to run build jobs synchronously for testing and debugging purposes and depends on the
-         * artemis.continuous-integration.asynchronous environment variable.
-         * Usually, when using asynchronous build jobs, it will just resolve to "CompletableFuture.supplyAsync".
-         */
-        CompletableFuture<LocalCIBuildResult> futureResult = createCompletableFuture(() -> {
-            try {
-                return localCIBuildExecutorService.submit(timedBuildJob).get();
-            }
-            catch (RejectedExecutionException | CancellationException | ExecutionException | InterruptedException e) {
-                finishBuildJobExceptionally(participation, containerName, e);
-                // Wrap the exception in a CompletionException so that the future is completed exceptionally and the thenAccept block is not run.
-                // This CompletionException will not resurface anywhere else as it is thrown in this completable future's separate thread.
-                throw new CompletionException(e);
-            }
-        });
-
-        // Add "_QUEUED" to the build plan id to indicate that the build job is queued.
-        updateBuildPlanStatus(participation, ContinuousIntegrationService.BuildStatus.QUEUED);
-
-        return futureResult;
+        @Override
+        public String toString() {
+            return name;
+        }
     }
 
     /**
-     * Prepare the paths to the assignment and test repositories and then execute the build job.
+     * Prepare the paths to the assignment and test repositories, the branch to checkout, the volume configuration for the Docker container, and the container configuration,
+     * and then call {@link #runScriptAndParseResults(ProgrammingExerciseParticipation, String, String, String)} to execute the job.
      *
      * @param participation The participation of the repository for which the build job should be executed.
      * @param containerName The name of the Docker container that will be used to run the build job.
+     *                          It needs to be prepared beforehand to stop and remove the container if something goes wrong here.
      * @return The build result.
      * @throws LocalCIException If some error occurs while preparing or running the build job.
      */
-    private LocalCIBuildResult prepareAndRunBuildJob(ProgrammingExerciseParticipation participation, String containerName) {
-        // Add "_BUILDING" to the build plan id to indicate that the build plan is currently building.
-        updateBuildPlanStatus(participation, ContinuousIntegrationService.BuildStatus.BUILDING);
+    public LocalCIBuildResult runBuildJob(ProgrammingExerciseParticipation participation, String containerName) {
+        // Update the build plan status to "BUILDING".
+        localCIBuildPlanService.updateBuildPlanStatus(participation, ContinuousIntegrationService.BuildStatus.BUILDING);
 
         log.info("Updated build plan status for build job " + containerName);
 
-        // Retrieve the paths to the repositories that the build jobs needs.
+        // Retrieve the paths to the repositories that the build job needs.
         // This includes the assignment repository (the one to be tested, e.g. the student's repository, or the template repository), and the tests repository which includes
         // the tests to be executed.
         LocalVCRepositoryUrl assignmentRepositoryUrl;
@@ -208,15 +139,15 @@ public class LocalCIBuildJobExecutionService {
 
         // Create the volume configuration for the container. The assignment repository, the tests repository, and the build script are bound into the container to be used by
         // the build job.
-        HostConfig volumeConfig = createVolumeConfig(assignmentRepositoryPath, testsRepositoryPath);
+        HostConfig volumeConfig = localCIContainerService.createVolumeConfig(assignmentRepositoryPath, testsRepositoryPath);
 
         // Create the container from the "ls1tum/artemis-maven-template" image with the local paths to the Git repositories and the shell script bound to it. This does not
         // start the container yet.
-        CreateContainerResponse container = createContainer(containerName, volumeConfig, branch);
+        CreateContainerResponse container = localCIContainerService.configureContainer(containerName, volumeConfig, branch);
 
         log.info("Created container for build job " + containerName);
 
-        return runBuildJob(participation, containerName, container.getId(), branch);
+        return runScriptAndParseResults(participation, containerName, container.getId(), branch);
     }
 
     /**
@@ -230,32 +161,32 @@ public class LocalCIBuildJobExecutionService {
      * @return The build result.
      * @throws LocalCIException if something went wrong while running the build job.
      */
-    private LocalCIBuildResult runBuildJob(ProgrammingExerciseParticipation participation, String containerName, String containerId, String branch) {
+    private LocalCIBuildResult runScriptAndParseResults(ProgrammingExerciseParticipation participation, String containerName, String containerId, String branch) {
 
         long timeNanoStart = System.nanoTime();
 
-        dockerClient.startContainerCmd(containerId).exec();
+        localCIContainerService.startContainer(containerId);
 
         log.info("Started container for build job " + containerName);
 
-        runScriptInContainer(containerId);
+        localCIContainerService.runScriptInContainer(containerId);
 
         log.info("Ran script in container for build job " + containerName);
 
         ZonedDateTime buildCompletedDate = ZonedDateTime.now();
 
         String assignmentRepoCommitHash = "";
-        String testsRepoCommitHash = "";
+        String testRepoCommitHash = "";
 
         try {
-            assignmentRepoCommitHash = getCommitHashOfBranch(containerId, "assignment-repository", branch);
-            testsRepoCommitHash = getCommitHashOfBranch(containerId, "test-repository", branch);
+            assignmentRepoCommitHash = localCIContainerService.getCommitHashOfBranch(containerId, LocalCIBuildJobRepositoryType.ASSIGNMENT, branch);
+            testRepoCommitHash = localCIContainerService.getCommitHashOfBranch(containerId, LocalCIBuildJobRepositoryType.TEST, branch);
         }
         catch (NotFoundException | IOException e) {
             // Could not read commit hash from .git folder. Stop the container and return a build result that indicates that the build failed (empty list for failed tests and
             // empty list for successful tests).
-            stopContainer(containerName);
-            return constructFailedBuildResult(branch, assignmentRepoCommitHash, testsRepoCommitHash, buildCompletedDate);
+            localCIContainerService.stopContainer(containerName);
+            return constructFailedBuildResult(branch, assignmentRepoCommitHash, testRepoCommitHash, buildCompletedDate);
         }
 
         log.info("Retrieved commit hashes for build job " + containerName);
@@ -272,19 +203,19 @@ public class LocalCIBuildJobExecutionService {
         catch (NotFoundException e) {
             // If the test results are not found, this means that something went wrong during the build and testing of the submission.
             // Stop the container and return a build results that indicates that the build failed.
-            stopContainer(containerName);
-            return constructFailedBuildResult(branch, assignmentRepoCommitHash, testsRepoCommitHash, buildCompletedDate);
+            localCIContainerService.stopContainer(containerName);
+            return constructFailedBuildResult(branch, assignmentRepoCommitHash, testRepoCommitHash, buildCompletedDate);
         }
 
         log.info("Retrieved test results for build job " + containerName);
 
-        stopContainer(containerName);
+        localCIContainerService.stopContainer(containerName);
 
         log.info("Stopped container for build job " + containerName);
 
         LocalCIBuildResult buildResult;
         try {
-            buildResult = parseTestResults(testResultsTarInputStream, branch, assignmentRepoCommitHash, testsRepoCommitHash, buildCompletedDate);
+            buildResult = parseTestResults(testResultsTarInputStream, branch, assignmentRepoCommitHash, testRepoCommitHash, buildCompletedDate);
         }
         catch (IOException | XMLStreamException | IllegalStateException e) {
             throw new LocalCIException("Error while parsing test results", e);
@@ -293,198 +224,14 @@ public class LocalCIBuildJobExecutionService {
         log.info("Parsed test results for build job " + containerName);
 
         // Set the build status to "INACTIVE" to indicate that the build is not running anymore.
-        updateBuildPlanStatus(participation, ContinuousIntegrationService.BuildStatus.INACTIVE);
-
-        log.info("Updated build plan status to INACTIVE for build job " + containerName);
+        localCIBuildPlanService.updateBuildPlanStatus(participation, ContinuousIntegrationService.BuildStatus.INACTIVE);
 
         log.info("Building and testing submission for repository {} took {}", participation.getRepositoryUrl(), TimeLogUtil.formatDurationFrom(timeNanoStart));
 
         return buildResult;
     }
 
-    /**
-     * Create an asynchronous or a synchronous CompletableFuture depending on the runBuildJobsAsynchronously flag.
-     *
-     * @param supplier the supplier of the Future, i.e. the function that submits the build job
-     * @return the CompletableFuture
-     */
-    private CompletableFuture<LocalCIBuildResult> createCompletableFuture(Supplier<LocalCIBuildResult> supplier) {
-        if (runBuildJobsAsynchronously) {
-            // Just use the normal supplyAsync.
-            return CompletableFuture.supplyAsync(supplier);
-        }
-        else {
-            // Use a synchronous CompletableFuture, e.g. in the test environment.
-            // Otherwise, tests will not wait for the CompletableFuture to complete before asserting on the database.
-            CompletableFuture<LocalCIBuildResult> future = new CompletableFuture<>();
-            try {
-                LocalCIBuildResult result = supplier.get();
-                future.complete(result);
-            }
-            catch (Exception e) {
-                future.completeExceptionally(e);
-            }
-            return future;
-        }
-    }
-
-    /**
-     * Finish the build job if an exception occurred while building and testing the repository.
-     *
-     * @param participation The participation of the repository for which the build job was executed.
-     * @param containerName The name of the Docker container that was used to execute the build job.
-     * @param exception     The exception that occurred while building and testing the repository.
-     */
-    private void finishBuildJobExceptionally(ProgrammingExerciseParticipation participation, String containerName, Exception exception) {
-        log.error("Error while building and testing repository " + participation.getRepositoryUrl(), exception);
-
-        // Set the build status to "INACTIVE" to indicate that the build is not running anymore.
-        updateBuildPlanStatus(participation, ContinuousIntegrationService.BuildStatus.INACTIVE);
-
-        // Notify the user, that the build job produced an exception.
-        BuildTriggerWebsocketError error = new BuildTriggerWebsocketError(exception.getMessage(), participation.getId());
-        // This cast to Participation is safe as the participation is either a ProgrammingExerciseStudentParticipation, a TemplateProgrammingExerciseParticipation, or a
-        // SolutionProgrammingExerciseParticipation, which all extend Participation.
-        programmingMessagingService.notifyUserAboutSubmissionError((Participation) participation, error);
-
-        stopContainer(containerName);
-    }
-
-    /**
-     * Wrapper for the buildJob Callable that adds a timeout when the build job is called.
-     *
-     * @param buildJobCallable The build job that should be called.
-     * @param timeoutSeconds   The number of seconds after which the build job is cancelled.
-     */
-    private record BuildJobTimeoutCallable<LocalCIBuildResult> (Callable<LocalCIBuildResult> buildJobCallable, long timeoutSeconds) implements Callable<LocalCIBuildResult> {
-
-        /**
-         * Calls the buildJobCallable and waits for the result or for the timeout to pass.
-         *
-         * @return the LocalCIBuildResult
-         * @throws ExecutionException   if there was an error when calling the buildJobCallable or during the execution of the buildJobCallable, i.e. a LocalCIException.
-         * @throws InterruptedException if the thread was interrupted while waiting for the buildJobCallable to finish, e.g. if the ExecutorService was terminated from somewhere
-         *                                  else.
-         * @throws TimeoutException     if the timeout passed before the buildJobCallable finished.
-         */
-        @Override
-        public LocalCIBuildResult call() throws ExecutionException, InterruptedException, TimeoutException {
-            Future<LocalCIBuildResult> future = CompletableFuture.supplyAsync(() -> {
-                try {
-                    return buildJobCallable.call();
-                }
-                catch (Exception e) {
-                    // Something went wrong while executing the build job.
-                    // The exception is stored in the Future and will resurface as an ExecutionException when running "future.get()" below.
-                    throw new CompletionException(e);
-                }
-            });
-
-            try {
-                // When the build job is called, wait for the result or for the timeout to pass.
-                return future.get(timeoutSeconds, TimeUnit.SECONDS);
-            }
-            catch (ExecutionException | InterruptedException | TimeoutException e) {
-                // Cancel the future if it is not completed or cancelled yet.
-                future.cancel(true);
-                // This exception will resurface in the catch block of "localCIBuildExecutorService.submit(timedBuildJob).get()"
-                // where the container is stopped and the user is notified.
-                throw e;
-            }
-        }
-    }
-
-    private String getCommitHashOfBranch(String containerId, String repositoryName, String branchName) throws IOException {
-        // Get an input stream of the file in .git folder of the repository that contains the current commit hash of the branch.
-        TarArchiveInputStream repositoryTarInputStream = new TarArchiveInputStream(
-                dockerClient.copyArchiveFromContainerCmd(containerId, "/repositories/" + repositoryName + "/.git/refs/heads/" + branchName).exec());
-        repositoryTarInputStream.getNextTarEntry();
-        String commitHash = IOUtils.toString(repositoryTarInputStream, StandardCharsets.UTF_8).replace("\n", "");
-        repositoryTarInputStream.close();
-        return commitHash;
-    }
-
-    private void runScriptInContainer(String containerId) {
-        // The "sh script.sh" command specified here is run inside the container as an additional process. This command runs in the background, independent of the container's
-        // main process. The execution command can run concurrently with the main process. This setup with the ExecCreateCmdResponse gives us the ability to wait in code until the
-        // command has finished before trying to extract the results.
-        ExecCreateCmdResponse execCreateCmdResponse = dockerClient.execCreateCmd(containerId).withAttachStdout(true).withAttachStderr(true).withCmd("sh", "script.sh").exec();
-
-        log.info("Created CMD for build job " + containerId);
-
-        // Start the command and wait for it to complete.
-        final CountDownLatch latch = new CountDownLatch(1);
-        dockerClient.execStartCmd(execCreateCmdResponse.getId()).exec(new ResultCallback.Adapter<>() {
-
-            @Override
-            public void onComplete() {
-                latch.countDown();
-                log.info("Completed waiting for CMD build job " + containerId);
-            }
-        });
-
-        try {
-            log.info("Started CMD for build job " + containerId);
-            // Block until the latch reaches 0 or until the thread is interrupted.
-            latch.await();
-        }
-        catch (InterruptedException e) {
-            throw new LocalCIException("Interrupted while waiting for command to complete", e);
-        }
-    }
-
-    private CreateContainerResponse createContainer(String containerName, HostConfig volumeConfig, String branch) {
-        return dockerClient.createContainerCmd(dockerImage).withName(containerName).withHostConfig(volumeConfig)
-                .withEnv("ARTEMIS_BUILD_TOOL=gradle", "ARTEMIS_DEFAULT_BRANCH=" + branch)
-                // Command to run when the container starts. This is the command that will be executed in the container's main process, which runs in the foreground and blocks the
-                // container from exiting until it finishes.
-                // It waits until the script that is running the tests (see below execCreateCmdResponse) is completed, and until the result files are extracted which is indicated
-                // by the creation of a file "stop_container.txt" in the container's root directory.
-                .withCmd("sh", "-c", "while [ ! -f /stop_container.txt ]; do sleep 0.5; done")
-                // .withCmd("tail", "-f", "/dev/null") // Activate for debugging purposes instead of the above command to get a running container that you can peek into using
-                // "docker exec -it <container-id> /bin/bash".
-                .exec();
-    }
-
-    private HostConfig createVolumeConfig(Path assignmentRepositoryPath, Path testRepositoryPath) {
-        // Configure the volumes of the container such that it can access the assignment repository, the test repository, and the build script.
-        return HostConfig.newHostConfig().withAutoRemove(true) // Automatically remove the container when it exits.
-                .withBinds(new Bind(assignmentRepositoryPath.toString(), new Volume("/assignment-repository")),
-                        new Bind(testRepositoryPath.toString(), new Volume("/test-repository")), new Bind(buildScriptFilePath.toString(), new Volume("/script.sh")));
-    }
-
-    /**
-     * Stops the container with the given id by creating a file "stop_container.txt" in its root directory.
-     * The container was created in such a way that it waits for this file to appear and then stops running, causing it to be removed at the same time.
-     *
-     * @param containerName The name of the container to stop. Cannot use the container id, because this method might have to be called from the main thread (not the thread started
-     *                          for the build job) where the container ID is not available.
-     */
-    private void stopContainer(String containerName) {
-        // List all containers, including the non-running ones.
-        List<Container> containers = dockerClient.listContainersCmd().withShowAll(true).exec();
-
-        // Check if there's a container with the given name.
-        Optional<Container> containerOptional = containers.stream().filter(container -> container.getNames()[0].equals("/" + containerName)).findFirst();
-        if (containerOptional.isEmpty()) {
-            return;
-        }
-
-        // Check if the container is running. Return if it's not.
-        boolean isContainerRunning = containerOptional.get().getState().equals("running");
-        if (!isContainerRunning) {
-            return;
-        }
-
-        // Get the container ID.
-        String containerId = containerOptional.get().getId();
-
-        // Create a file "stop_container.txt" in the root directory of the container to indicate that the test results have been extracted or that the container should be stopped
-        // for some other reason.
-        // The container's main process is waiting for this file to appear and then stops the main process, thus stopping and removing the container.
-        ExecCreateCmdResponse createStopContainerFileCmdResponse = dockerClient.execCreateCmd(containerId).withCmd("touch", "stop_container.txt").exec();
-        dockerClient.execStartCmd(createStopContainerFileCmdResponse.getId()).exec(new ResultCallback.Adapter<>());
-    }
+    // --- Helper methods ----
 
     private LocalCIBuildResult parseTestResults(TarArchiveInputStream testResultsTarInputStream, String assignmentRepoBranchName, String assignmentRepoCommitHash,
             String testsRepoCommitHash, ZonedDateTime buildCompletedDate) throws IOException, XMLStreamException {
@@ -560,26 +307,37 @@ public class LocalCIBuildJobExecutionService {
         return constructBuildResult(failedTests, successfulTests, assignmentRepoBranchName, assignmentRepoCommitHash, testsRepoCommitHash, isBuildSuccessful, buildCompletedDate);
     }
 
+    /**
+     * Constructs a {@link LocalCIBuildResult} that indicates a failed build from the given parameters. The lists of failed and successful tests are both empty which will be
+     * interpreted as a failed build by Artemis.
+     *
+     * @param assignmentRepoBranchName The name of the branch of the assignment repository that was checked out for the build.
+     * @param assignmentRepoCommitHash The commit hash of the assignment repository that was checked out for the build.
+     * @param testsRepoCommitHash      The commit hash of the tests repository that was checked out for the build.
+     * @param buildRunDate             The date when the build was completed.
+     * @return a {@link LocalCIBuildResult} that indicates a failed build
+     */
     private LocalCIBuildResult constructFailedBuildResult(String assignmentRepoBranchName, String assignmentRepoCommitHash, String testsRepoCommitHash,
             ZonedDateTime buildRunDate) {
         return constructBuildResult(List.of(), List.of(), assignmentRepoBranchName, assignmentRepoCommitHash, testsRepoCommitHash, false, buildRunDate);
     }
 
+    /**
+     * Constructs a {@link LocalCIBuildResult} from the given parameters.
+     *
+     * @param failedTests              The list of failed tests.
+     * @param successfulTests          The list of successful tests.
+     * @param assignmentRepoBranchName The name of the branch of the assignment repository that was checked out for the build.
+     * @param assignmentRepoCommitHash The commit hash of the assignment repository that was checked out for the build.
+     * @param testsRepoCommitHash      The commit hash of the tests repository that was checked out for the build.
+     * @param isBuildSuccessful        Whether the build was successful or not.
+     * @param buildRunDate             The date when the build was completed.
+     * @return a {@link LocalCIBuildResult}
+     */
     private LocalCIBuildResult constructBuildResult(List<LocalCIBuildResult.LocalCITestJobDTO> failedTests, List<LocalCIBuildResult.LocalCITestJobDTO> successfulTests,
             String assignmentRepoBranchName, String assignmentRepoCommitHash, String testsRepoCommitHash, boolean isBuildSuccessful, ZonedDateTime buildRunDate) {
         LocalCIBuildResult.LocalCIJobDTO job = new LocalCIBuildResult.LocalCIJobDTO(failedTests, successfulTests);
 
         return new LocalCIBuildResult(assignmentRepoBranchName, assignmentRepoCommitHash, testsRepoCommitHash, isBuildSuccessful, buildRunDate, List.of(job));
-    }
-
-    /**
-     * Updates the build plan status of the given participation to the given status.
-     *
-     * @param participation  the participation for which the build plan status should be updated.
-     * @param newBuildStatus the new build plan status.
-     * @throws LocalCIException if the build plan id is null.
-     */
-    private void updateBuildPlanStatus(ProgrammingExerciseParticipation participation, ContinuousIntegrationService.BuildStatus newBuildStatus) {
-        // TODO: Update the build plan status in the database.
     }
 }

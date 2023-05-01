@@ -64,7 +64,7 @@ public class LocalCIConnectorService {
 
     private final ProgrammingTriggerService programmingTriggerService;
 
-    private final LocalCIBuildJobExecutionService localCIBuildJobExecutionService;
+    private final LocalCIBuildJobManagementService localCIBuildJobManagementService;
 
     private final ProgrammingExerciseGradingService programmingExerciseGradingService;
 
@@ -87,7 +87,7 @@ public class LocalCIConnectorService {
 
     public LocalCIConnectorService(ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingSubmissionService programmingSubmissionService,
             ProgrammingMessagingService programmingMessagingService, ProgrammingTriggerService programmingTriggerService,
-            LocalCIBuildJobExecutionService localCIBuildJobExecutionService, ProgrammingExerciseGradingService programmingExerciseGradingService,
+            LocalCIBuildJobManagementService localCIBuildJobManagementService, ProgrammingExerciseGradingService programmingExerciseGradingService,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, ProgrammingExerciseStudentParticipationRepository studentParticipationRepository,
             TemplateProgrammingExerciseParticipationRepository templateParticipationRepository, SolutionProgrammingExerciseParticipationRepository solutionParticipationRepository,
             LocalCITriggerService localCITriggerService, AuthorizationCheckService authorizationCheckService, UserRepository userRepository) {
@@ -95,7 +95,7 @@ public class LocalCIConnectorService {
         this.programmingSubmissionService = programmingSubmissionService;
         this.programmingMessagingService = programmingMessagingService;
         this.programmingTriggerService = programmingTriggerService;
-        this.localCIBuildJobExecutionService = localCIBuildJobExecutionService;
+        this.localCIBuildJobManagementService = localCIBuildJobManagementService;
         this.programmingExerciseGradingService = programmingExerciseGradingService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.studentParticipationRepository = studentParticipationRepository;
@@ -160,7 +160,7 @@ public class LocalCIConnectorService {
         }
         catch (GitAPIException | IOException e) {
             // This catch clause does not catch exceptions that happen during runBuildJob() as that method is called asynchronously.
-            // For exceptions happening inside runBuildJob(), the user is notified. See the addBuildJobToQueue() method in the LocalCIBuildJobExecutionService for that.
+            // For exceptions happening inside runBuildJob(), the user is notified. See the addBuildJobToQueue() method in the LocalCIBuildJobManagementService for that.
             throw new LocalCIException("Could not process new push to repository " + localVCRepositoryUrl.getURI() + ". No build job was queued.", e);
         }
 
@@ -213,7 +213,7 @@ public class LocalCIConnectorService {
         }
 
         // Trigger a build of the solution repository.
-        CompletableFuture<LocalCIBuildResult> futureSolutionBuildResult = localCIBuildJobExecutionService.addBuildJobToQueue(solutionParticipation);
+        CompletableFuture<LocalCIBuildResult> futureSolutionBuildResult = localCIBuildJobManagementService.addBuildJobToQueue(solutionParticipation);
         futureSolutionBuildResult.thenAccept(buildResult -> {
 
             // The 'user' is not properly logged into Artemis, this leads to an issue when accessing custom repository methods.

@@ -21,15 +21,15 @@ import de.tum.in.www1.artemis.service.programming.ProgrammingMessagingService;
 @Profile("localci")
 public class LocalCITriggerService implements ContinuousIntegrationTriggerService {
 
-    private final LocalCIBuildJobExecutionService localCIBuildJobExecutionService;
+    private final LocalCIBuildJobManagementService localCIBuildJobManagementService;
 
     private final ProgrammingExerciseGradingService programmingExerciseGradingService;
 
     private final ProgrammingMessagingService programmingMessagingService;
 
-    public LocalCITriggerService(LocalCIBuildJobExecutionService localCIBuildJobExecutionService, ProgrammingExerciseGradingService programmingExerciseGradingService,
+    public LocalCITriggerService(LocalCIBuildJobManagementService localCIBuildJobManagementService, ProgrammingExerciseGradingService programmingExerciseGradingService,
             ProgrammingMessagingService programmingMessagingService) {
-        this.localCIBuildJobExecutionService = localCIBuildJobExecutionService;
+        this.localCIBuildJobManagementService = localCIBuildJobManagementService;
         this.programmingExerciseGradingService = programmingExerciseGradingService;
         this.programmingMessagingService = programmingMessagingService;
     }
@@ -42,7 +42,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
      */
     @Override
     public void triggerBuild(ProgrammingExerciseParticipation participation) {
-        CompletableFuture<LocalCIBuildResult> futureResult = localCIBuildJobExecutionService.addBuildJobToQueue(participation);
+        CompletableFuture<LocalCIBuildResult> futureResult = localCIBuildJobManagementService.addBuildJobToQueue(participation);
         futureResult.thenAccept(buildResult -> {
             // The 'user' is not properly logged into Artemis, this leads to an issue when accessing custom repository methods.
             // Therefore, a mock auth object has to be created.
