@@ -60,7 +60,7 @@
                 "filterToUnresolved": "Ungeklärt",
                 "filterToOwn": "Eigene",
                 "filterToAnsweredOrReacted": "Reagiert",
-                "courseFilterExplanation": "(Alle Beiträge)",
+                "courseFilterExplanation": "{{ title }} (Alle Beiträge)",
                 "sortPostsBy": "Sortiere nach:",
                 "sortDescending": "Absteigend",
                 "sortAscending": "Aufsteigend",

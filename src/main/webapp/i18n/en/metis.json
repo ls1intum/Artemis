@@ -57,7 +57,7 @@
                 "postContextFilter": "Show posts for:",
                 "one_extra_context": "other",
                 "multiple_extra_contexts": "others",
-                "courseFilterExplanation": "(All posts)",
+                "courseFilterExplanation": "{{ title }} (All posts)",
                 "filterToUnresolved": "Unresolved",
                 "filterToOwn": "Own",
                 "filterToAnsweredOrReacted": "Reacted",
