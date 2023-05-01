@@ -77,6 +77,7 @@ import de.tum.in.www1.artemis.util.*;
 import de.tum.in.www1.artemis.util.GitUtilService.MockFileRepositoryUrl;
 import de.tum.in.www1.artemis.util.InvalidExamExerciseDatesArgumentProvider.InvalidExamExerciseDateConfiguration;
 import de.tum.in.www1.artemis.web.rest.dto.BuildLogStatisticsDTO;
+import de.tum.in.www1.artemis.web.rest.dto.CourseForDashboardDTO;
 
 /**
  * Note: this class should be independent of the actual VCS and CIS and contains common test logic for both scenarios:
@@ -1969,7 +1970,9 @@ public class ProgrammingExerciseTestService {
         exercise.setExampleSolutionPublicationDate(null);
         programmingExerciseRepository.save(exercise);
 
-        Course courseFromServer = request.get("/api/courses/" + exercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK, Course.class);
+        CourseForDashboardDTO courseForDashboardFromServer = request.get("/api/courses/" + exercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard",
+                HttpStatus.OK, CourseForDashboardDTO.class);
+        Course courseFromServer = courseForDashboardFromServer.course();
         ProgrammingExercise programmingExerciseFromApi = programmingExerciseGetter.apply(courseFromServer);
 
         assertThat(programmingExerciseFromApi.isExampleSolutionPublished()).isFalse();
@@ -1978,7 +1981,9 @@ public class ProgrammingExerciseTestService {
         exercise.setExampleSolutionPublicationDate(ZonedDateTime.now().minusHours(1));
         programmingExerciseRepository.save(exercise);
 
-        courseFromServer = request.get("/api/courses/" + exercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK, Course.class);
+        courseForDashboardFromServer = request.get("/api/courses/" + exercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK,
+                CourseForDashboardDTO.class);
+        courseFromServer = courseForDashboardFromServer.course();
         programmingExerciseFromApi = programmingExerciseGetter.apply(courseFromServer);
 
         assertThat(programmingExerciseFromApi.isExampleSolutionPublished()).isTrue();
@@ -1987,7 +1992,9 @@ public class ProgrammingExerciseTestService {
         exercise.setExampleSolutionPublicationDate(ZonedDateTime.now().plusHours(1));
         programmingExerciseRepository.save(exercise);
 
-        courseFromServer = request.get("/api/courses/" + exercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK, Course.class);
+        courseForDashboardFromServer = request.get("/api/courses/" + exercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK,
+                CourseForDashboardDTO.class);
+        courseFromServer = courseForDashboardFromServer.course();
         programmingExerciseFromApi = programmingExerciseGetter.apply(courseFromServer);
 
         assertThat(programmingExerciseFromApi.isExampleSolutionPublished()).isFalse();
