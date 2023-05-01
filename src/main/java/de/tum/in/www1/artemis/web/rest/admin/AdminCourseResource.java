@@ -17,6 +17,7 @@ import org.springframework.web.multipart.MultipartFile;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.DefaultChannelType;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
@@ -34,8 +35,6 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 public class AdminCourseResource {
 
     private final Logger log = LoggerFactory.getLogger(AdminCourseResource.class);
-
-    private static final List<String> DEFAULT_CHANNEL_NAMES = List.of("tech-support", "organization", "random", "announcement");
 
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
@@ -111,7 +110,7 @@ public class AdminCourseResource {
 
         Course createdCourse = courseRepository.save(course);
 
-        DEFAULT_CHANNEL_NAMES.forEach(channelName -> this.createChannel(createdCourse, channelName, "announcement".equals(channelName)));
+        Arrays.stream(DefaultChannelType.values()).toList().forEach(channelType -> this.createChannel(createdCourse, channelType));
 
         return ResponseEntity.created(new URI("/api/courses/" + createdCourse.getId())).body(createdCourse);
     }
@@ -137,17 +136,16 @@ public class AdminCourseResource {
     }
 
     /**
-     * Helper function, that's creates a channel within a course
+     * Helper function, that creates a channel within a course
      *
-     * @param course         the course, where the channel should be created
-     * @param name           the name of the channel
-     * @param isAnnouncement whether the channel is a announcement channel
+     * @param course      the course, where the channel should be created
+     * @param channelType the default channel type
      */
-    private void createChannel(Course course, String name, Boolean isAnnouncement) {
+    private void createChannel(Course course, DefaultChannelType channelType) {
         var channelToCreate = new Channel();
-        channelToCreate.setName(name);
+        channelToCreate.setName(channelType.getName());
         channelToCreate.setIsPublic(true);
-        channelToCreate.setIsAnnouncementChannel(isAnnouncement);
+        channelToCreate.setIsAnnouncementChannel(channelType.equals(DefaultChannelType.ANNOUNCEMENT));
         channelToCreate.setIsArchived(false);
         channelToCreate.setDescription(null);
         channelService.createChannel(course, channelToCreate, Optional.of(userRepository.getUserWithGroupsAndAuthorities()));

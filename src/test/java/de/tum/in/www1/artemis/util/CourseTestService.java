@@ -440,8 +440,6 @@ public class CourseTestService {
     // Test
     public void testCreateCourseWithDefaultChannels() throws Exception {
 
-        final List<String> defaultChannelNames = List.of("tech-support", "organization", "random", "announcement");
-
         Course course1 = ModelFactory.generateCourse(null, null, null, new HashSet<>());
         course1.setShortName("testdefaultchannels");
         mockDelegate.mockCreateGroupInUserManagement(course1.getDefaultStudentGroupName());
@@ -454,8 +452,8 @@ public class CourseTestService {
         course1 = objectMapper.readValue(result.getResponse().getContentAsString(), Course.class);
         assertThat(courseRepo.findByIdElseThrow(course1.getId())).isNotNull();
         var channels = channelRepository.findChannelsByCourseId(course1.getId());
-        assertThat(channels).hasSize(defaultChannelNames.size());
-        channels.forEach(channel -> assertThat(defaultChannelNames).contains(channel.getName()));
+        assertThat(channels).hasSize(DefaultChannelType.values().length);
+        channels.forEach(channel -> assertThat(Arrays.stream(DefaultChannelType.values()).map(DefaultChannelType::getName)).contains(channel.getName()));
     }
 
     // Test
