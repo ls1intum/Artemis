@@ -7,9 +7,9 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    if: ${{ matrix.deploy_on }}
     strategy:
       matrix:
-        deploy_on: [false]
         include:
           # Commented out environments are not yet available and will be enabled in the future
 
@@ -131,8 +131,6 @@ jobs:
           #    artemis-test10.artemis.cit.tum.de ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBCICiCLtljuYwnBxGKurZjMuDsYFfSJ/5UD8gaDa1+CWPqmM4cFTniw+ORglDpaySlusPbXwll+K0JPkIm8E6+Y=
           #    artemis-test10.artemis.cit.tum.de ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAF8QXj0d2na/rBaVTIXfGu3HgtFppoE04Oj1Od2O3kD
           #  deploy_on: ${{ contains(github.event.pull_request.labels.*.name, 'deploy:artemis-test10') }}
-        exclude:
-          - deploy_on: false
 
     environment:
       name: ${{ matrix.environment }}
