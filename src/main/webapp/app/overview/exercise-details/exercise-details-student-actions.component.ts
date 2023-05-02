@@ -102,7 +102,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
      * Starting an exercise is not possible in the exam or if it's a team exercise and the student is not yet assigned a team, otherwise see exercise.utils -> isStartExerciseAvailable
      */
     isStartExerciseAvailable(): boolean {
-        const individualExerciseOrTeamAssigned = (!this.exercise.teamMode || this.exercise.studentAssignedTeamId) as boolean;
+        const individualExerciseOrTeamAssigned = !!(!this.exercise.teamMode || this.exercise.studentAssignedTeamId);
         return !this.examMode && individualExerciseOrTeamAssigned && isStartExerciseAvailable(this.exercise, this.gradedParticipation);
     }
 
@@ -110,7 +110,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
      * Viewing the team is only possible if it's a team exercise and the student is already assigned to a team.
      */
     isTeamAvailable(): boolean {
-        return (this.exercise.teamMode && this.exercise.studentAssignedTeamIdComputed && this.exercise.studentAssignedTeamId) as boolean;
+        return !!(this.exercise.teamMode && this.exercise.studentAssignedTeamIdComputed && this.exercise.studentAssignedTeamId);
     }
 
     /**
