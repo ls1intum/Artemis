@@ -197,7 +197,7 @@ export const courseManagementState: Routes = [
                         canActivate: [UserRouteAccessService],
                     },
                     {
-                        path: 'goal-management',
+                        path: 'competency-management',
                         component: LearningGoalManagementComponent,
                         data: {
                             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
@@ -207,7 +207,7 @@ export const courseManagementState: Routes = [
                     },
                     {
                         // Create a new path without a component defined to prevent the LearningGoalManagementComponent from being always rendered
-                        path: 'goal-management',
+                        path: 'competency-management',
                         data: {
                             pageTitle: 'artemisApp.learningGoal.manageLearningGoals.title',
                         },
@@ -222,7 +222,7 @@ export const courseManagementState: Routes = [
                                 canActivate: [UserRouteAccessService],
                             },
                             {
-                                path: ':learningGoalId/edit',
+                                path: ':competencyId/edit',
                                 component: EditLearningGoalComponent,
                                 data: {
                                     authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
