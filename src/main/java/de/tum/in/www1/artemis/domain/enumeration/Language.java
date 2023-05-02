@@ -7,6 +7,9 @@ public enum Language {
 
     ENGLISH, GERMAN;
 
+    /**
+     * @return the language key corresponding to the current case
+     */
     public String getLanguageKey() {
         switch (this) {
             case ENGLISH -> {
