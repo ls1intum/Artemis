@@ -28,9 +28,6 @@ import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.exception.UsernameAlreadyUsedException;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.repository.hestia.ExerciseHintActivationRepository;
-import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRegistrationRepository;
-import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.SecurityUtils;
@@ -83,10 +80,6 @@ public class UserService {
 
     private final ArtemisAuthenticationProvider artemisAuthenticationProvider;
 
-    private final StudentScoreRepository studentScoreRepository;
-
-    private final LearningGoalProgressRepository learningGoalProgressRepository;
-
     private final CacheManager cacheManager;
 
     private final AuthorityRepository authorityRepository;
@@ -95,23 +88,10 @@ public class UserService {
 
     private final InstanceMessageSendService instanceMessageSendService;
 
-    private final ExerciseHintActivationRepository exerciseHintActivationRepository;
-
-    private final TutorialGroupRegistrationRepository tutorialGroupRegistrationRepository;
-
-    private final TutorialGroupRepository tutorialGroupRepository;
-
-    private final SingleUserNotificationRepository singleUserNotificationRepository;
-
-    private final NotificationRepository notificationRepository;
-
     public UserService(UserCreationService userCreationService, UserRepository userRepository, AuthorityService authorityService, AuthorityRepository authorityRepository,
             CacheManager cacheManager, Optional<LdapUserService> ldapUserService, GuidedTourSettingsRepository guidedTourSettingsRepository, PasswordService passwordService,
             Optional<VcsUserManagementService> optionalVcsUserManagementService, Optional<CIUserManagementService> optionalCIUserManagementService,
-            ArtemisAuthenticationProvider artemisAuthenticationProvider, StudentScoreRepository studentScoreRepository,
-            LearningGoalProgressRepository learningGoalProgressRepository, InstanceMessageSendService instanceMessageSendService,
-            ExerciseHintActivationRepository exerciseHintActivationRepository, TutorialGroupRegistrationRepository tutorialGroupRegistrationRepository,
-            TutorialGroupRepository tutorialGroupRepository, SingleUserNotificationRepository singleUserNotificationRepository, NotificationRepository notificationRepository) {
+            ArtemisAuthenticationProvider artemisAuthenticationProvider, InstanceMessageSendService instanceMessageSendService) {
         this.userCreationService = userCreationService;
         this.userRepository = userRepository;
         this.authorityService = authorityService;
@@ -123,14 +103,7 @@ public class UserService {
         this.optionalVcsUserManagementService = optionalVcsUserManagementService;
         this.optionalCIUserManagementService = optionalCIUserManagementService;
         this.artemisAuthenticationProvider = artemisAuthenticationProvider;
-        this.studentScoreRepository = studentScoreRepository;
-        this.learningGoalProgressRepository = learningGoalProgressRepository;
         this.instanceMessageSendService = instanceMessageSendService;
-        this.exerciseHintActivationRepository = exerciseHintActivationRepository;
-        this.tutorialGroupRegistrationRepository = tutorialGroupRegistrationRepository;
-        this.tutorialGroupRepository = tutorialGroupRepository;
-        this.singleUserNotificationRepository = singleUserNotificationRepository;
-        this.notificationRepository = notificationRepository;
     }
 
     /**
