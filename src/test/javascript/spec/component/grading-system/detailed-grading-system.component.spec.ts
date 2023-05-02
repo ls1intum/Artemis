@@ -21,6 +21,7 @@ import { ExportToCsv } from 'export-to-csv';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { MockCourseManagementService } from '../../helpers/mocks/service/mock-course-management.service';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { PresentationType } from 'app/grading-system/grading-system-presentations/grading-system-presentations.component';
 
 const generateCsv = jest.fn();
 
@@ -408,6 +409,7 @@ describe('Detailed Grading System Component', () => {
 
     it('should validate valid grading scale correctly', () => {
         expect(comp.validGradeSteps()).toBeTrue();
+        expect(comp.validPresentationsConfig()).toBeTrue();
         expect(comp.invalidGradeStepsMessage).toBeUndefined();
     });
 
@@ -567,6 +569,22 @@ describe('Detailed Grading System Component', () => {
         expect(comp.invalidGradeStepsMessage).toBe('invalid first grade step');
         expect(translateStub).toHaveBeenCalledWith('artemisApp.gradingSystem.error.invalidFirstAndLastStep');
         expect(translateStub).toHaveBeenCalledOnce();
+    });
+
+    it('should validate grading scale with basic presentations and invalid presentationScore', () => {
+        validateInvalidPresentationsConfig(PresentationType.BASIC, 'artemisApp.gradingSystem.error.invalidPresentationsNumber', 0);
+    });
+
+    it('should validate grading scale with graded presentations and invalid presentationsWeight', () => {
+        validateInvalidPresentationsConfig(PresentationType.GRADED, 'artemisApp.gradingSystem.error.invalidPresentationsWeight', 0, 2, 128);
+    });
+
+    it('should validate grading scale with graded presentations and invalid presentationsNumber', () => {
+        validateInvalidPresentationsConfig(PresentationType.GRADED, 'artemisApp.gradingSystem.error.invalidPresentationsNumber', 0, 0, 20);
+    });
+
+    it('should validate grading scale with graded presentations and invalid presentationScore', () => {
+        validateInvalidPresentationsConfig(PresentationType.GRADED, 'artemisApp.gradingSystem.error.invalidBasicPresentationIsEnabled', 2, 2, 20);
     });
 
     it('should detect that max points are valid', () => {
@@ -809,6 +827,29 @@ describe('Detailed Grading System Component', () => {
         const result = comp.shouldShowGradingStepsAboveMaxPointsWarning();
         expect(result).toBeTrue();
     });
+
+    // validating presentations config
+    function validateInvalidPresentationsConfig(
+        presentationType: PresentationType,
+        message: string,
+        presentationScore?: number,
+        presentationsNumber?: number,
+        presentationsWeight?: number,
+    ) {
+        comp.course = course;
+        comp.course.presentationScore = presentationScore;
+        comp.presentationsConfig = {
+            presentationType: presentationType,
+            presentationsNumber: presentationsNumber,
+            presentationsWeight: presentationsWeight,
+        };
+        translateStub.mockReturnValue('invalid presentations config');
+
+        expect(comp.validPresentationsConfig()).toBeFalse();
+        expect(comp.invalidGradeStepsMessage).toBe('invalid presentations config');
+        expect(translateStub).toHaveBeenCalledWith(message);
+        expect(translateStub).toHaveBeenCalledOnce();
+    }
 });
 
 // validating grade step rows
