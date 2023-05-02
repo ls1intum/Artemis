@@ -108,7 +108,7 @@ export class EntityTitleService {
                 resourceUrl += 'lectures';
                 break;
             case EntityType.LEARNING_GOAL:
-                resourceUrl += 'learning-goals';
+                resourceUrl += 'competencies';
                 break;
             case EntityType.HINT:
                 resourceUrl += `programming-exercises/${ids[1]}/exercise-hints`;
