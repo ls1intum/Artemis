@@ -1,5 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { faAngleDown, faAngleRight } from '@fortawesome/free-solid-svg-icons';
+import { FeedbackItem } from 'app/exercises/shared/feedback/item/feedback-item';
 
 @Component({
     selector: 'jhi-feedback-collapse',
@@ -13,11 +14,11 @@ import { faAngleDown, faAngleRight } from '@fortawesome/free-solid-svg-icons';
  */
 export class FeedbackCollapseComponent implements OnInit {
     /**
-     * amount of chars at which the text will be cut and the collapse functionality is enabled
+     * Number of chars at which the text will be cut and the collapse functionality is enabled
      */
     readonly FEEDBACK_PREVIEW_CHARACTER_LIMIT = 300;
 
-    @Input() text: string; // this is typically feedback.detailText
+    @Input() feedback: FeedbackItem;
     previewText?: string;
     isCollapsed = true;
 
@@ -26,7 +27,7 @@ export class FeedbackCollapseComponent implements OnInit {
     faAngleRight = faAngleRight;
 
     ngOnInit(): void {
-        this.previewText = this.computeFeedbackPreviewText(this.text);
+        this.previewText = this.computeFeedbackPreviewText(this.feedback.text);
     }
 
     /**
@@ -34,7 +35,11 @@ export class FeedbackCollapseComponent implements OnInit {
      * @param text The feedback detail text.
      * @return One line of text with at most {@link FEEDBACK_PREVIEW_CHARACTER_LIMIT} characters.
      */
-    private computeFeedbackPreviewText = (text?: string): string | undefined => {
+    private computeFeedbackPreviewText(text?: string): string | undefined {
+        if (this.feedback.feedbackReference.hasLongFeedbackText) {
+            return text?.slice(0, this.FEEDBACK_PREVIEW_CHARACTER_LIMIT);
+        }
+
         if (!text || text.length < this.FEEDBACK_PREVIEW_CHARACTER_LIMIT) {
             return undefined;
         }
@@ -46,5 +51,5 @@ export class FeedbackCollapseComponent implements OnInit {
         }
 
         return text.slice(0, this.FEEDBACK_PREVIEW_CHARACTER_LIMIT);
-    };
+    }
 }
