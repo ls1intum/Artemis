@@ -108,7 +108,7 @@ public class GradeStepResource {
             gradeStep.setGradingScale(null);
         }
         return new GradeStepsDTO(title, gradingScale.getGradeType(), gradeSteps, maxPoints, gradingScale.getPlagiarismGradeOrDefault(),
-                gradingScale.getNoParticipationGradeOrDefault());
+                gradingScale.getNoParticipationGradeOrDefault(), gradingScale.getPresentationsNumber(), gradingScale.getPresentationsWeight());
     }
 
     /**
