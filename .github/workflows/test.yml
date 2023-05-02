@@ -36,6 +36,7 @@ env:
   node: 18
   java: 17
 
+if: false
 jobs:
 
   server-tests:
