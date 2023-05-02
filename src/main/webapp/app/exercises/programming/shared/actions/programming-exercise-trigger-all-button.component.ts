@@ -60,7 +60,7 @@ export class ProgrammingExerciseTriggerAllButtonComponent implements OnInit {
         modalRef.result.then(() => {
             this.submissionService
                 .triggerInstructorBuildForAllParticipationsOfExercise(this.exercise.id!)
-                .pipe(catchError(() => of(null)))
+                .pipe(catchError(() => of()))
                 .subscribe(() => {
                     this.onBuildTriggered.emit();
                 });

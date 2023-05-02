@@ -202,7 +202,7 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges 
                 }),
             );
         }
-        return of(null);
+        return of();
     }
 
     /**
@@ -216,7 +216,7 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges 
             return;
         }
         // If there are unsaved changes, save them before trying to commit again.
-        of(null)
+        of()
             .pipe(
                 tap(() => (this.commitState = CommitState.COMMITTING)),
                 switchMap(() => {
