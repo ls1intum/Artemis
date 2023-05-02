@@ -15,6 +15,7 @@ import javax.validation.Validation;
 import javax.validation.Validator;
 import javax.validation.ValidatorFactory;
 
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -621,9 +622,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         // no request params set will fetch all course posts without any context filter
         var params = new LinkedMultiValueMap<String, String>();
 
-        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
-        // get amount of posts with that certain
-        database.assertSensitiveInformationHidden(returnedPosts);
+        List<Post> returnedPosts = getPosts(params);
         assertThat(returnedPosts).hasSameSizeAs(existingCoursePosts);
 
         assertThat(returnedPosts.stream().filter(post -> Arrays.asList(1L, 2L, 3L, 4L).contains(post.getId()))).allMatch(post -> post.getAuthorRole().equals(UserRole.USER));
@@ -640,8 +639,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         var params = new LinkedMultiValueMap<String, String>();
         params.add("courseWideContext", courseWideContext.toString());
 
-        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
-        database.assertSensitiveInformationHidden(returnedPosts);
+        List<Post> returnedPosts = getPosts(params);
         // get amount of posts with that certain course-wide context
         var expectedAmountOfFetchedPosts = existingCourseWidePosts.stream().filter(coursePost -> coursePost.getCourseWideContext() == courseWideContext).count();
         assertThat(returnedPosts.size()).isEqualTo(expectedAmountOfFetchedPosts);
@@ -654,8 +652,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         var params = new LinkedMultiValueMap<String, String>();
         params.add("exerciseId", firstExerciseId.toString());
 
-        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
-        database.assertSensitiveInformationHidden(returnedPosts);
+        List<Post> returnedPosts = getPosts(params);
         // get amount of posts with that certain exercise context
         assertThat(returnedPosts).hasSameSizeAs(postsBelongingToFirstExercise);
     }
@@ -667,8 +664,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         var params = new LinkedMultiValueMap<String, String>();
         params.add("lectureId", firstLectureId.toString());
 
-        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
-        database.assertSensitiveInformationHidden(returnedPosts);
+        List<Post> returnedPosts = getPosts(params);
         // get amount of posts with that lecture context
         assertThat(returnedPosts).hasSameSizeAs(postsBelongingToFirstLecture);
     }
@@ -680,8 +676,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         var params = new LinkedMultiValueMap<String, String>();
         params.add("courseWideContext", String.join(",", courseWideContexts));
 
-        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
-        database.assertSensitiveInformationHidden(returnedPosts);
+        List<Post> returnedPosts = getPosts(params);
 
         assertThat(returnedPosts).hasSameSizeAs(existingCourseWidePosts);
     }
@@ -693,8 +688,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         var params = new LinkedMultiValueMap<String, String>();
         params.add("exerciseId", String.join(",", existingExerciseIds));
 
-        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
-        database.assertSensitiveInformationHidden(returnedPosts);
+        List<Post> returnedPosts = getPosts(params);
         assertThat(returnedPosts).hasSameSizeAs(existingExercisePosts);
     }
 
@@ -705,8 +699,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         var params = new LinkedMultiValueMap<String, String>();
         params.add("lectureId", String.join(",", existingLectureIds));
 
-        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
-        database.assertSensitiveInformationHidden(returnedPosts);
+        List<Post> returnedPosts = getPosts(params);
         assertThat(returnedPosts).hasSameSizeAs(existingLecturePosts);
     }
 
@@ -718,8 +711,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         params.add("exerciseId", String.join(",", existingExerciseIds));
         params.add("courseWideContext", String.join(",", courseWideContexts));
 
-        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
-        database.assertSensitiveInformationHidden(returnedPosts);
+        List<Post> returnedPosts = getPosts(params);
         assertThat(returnedPosts).hasSize(existingLecturePosts.size() + existingExercisePosts.size() + existingCourseWidePosts.size());
     }
 
@@ -730,8 +722,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         var params = new LinkedMultiValueMap<String, String>();
         params.add("plagiarismCaseId", plagiarismCaseId.toString());
 
-        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
-        database.assertSensitiveInformationHidden(returnedPosts);
+        List<Post> returnedPosts = getPosts(params);
         // get amount of posts with certain plagiarism context
         assertThat(returnedPosts).hasSameSizeAs(existingPlagiarismPosts);
         assertThat(returnedPosts.get(0).getAuthorRole()).isEqualTo(UserRole.INSTRUCTOR);
@@ -744,9 +735,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         var params = new LinkedMultiValueMap<String, String>();
         params.add("plagiarismCaseId", plagiarismCaseId.toString());
 
-        // student1 is allowed to see the posts
-        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
-        database.assertSensitiveInformationHidden(returnedPosts);
+        List<Post> returnedPosts = getPosts(params);
         // get amount of posts with certain plagiarism context
         assertThat(returnedPosts).hasSameSizeAs(existingPlagiarismPosts);
     }
@@ -797,8 +786,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         var params = new LinkedMultiValueMap<String, String>();
         params.add("filterToOwn", "true");
 
-        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
-        database.assertSensitiveInformationHidden(returnedPosts);
+        List<Post> returnedPosts = getPosts(params);
         // get posts of current user and compare
         assertThat(returnedPosts).isEqualTo(existingPosts.stream().filter(post -> student1.getId().equals(post.getAuthor().getId())).toList());
     }
@@ -810,8 +798,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         var params = new LinkedMultiValueMap<String, String>();
         params.add("filterToUnresolved", "true");
 
-        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
-        database.assertSensitiveInformationHidden(returnedPosts);
+        List<Post> returnedPosts = getPosts(params);
         // get posts of current user without announcements and compare
         List<Post> postsWithoutAnnouncements = existingCoursePosts.stream()
                 .filter(post -> (post.getCourseWideContext() == null || !post.getCourseWideContext().equals(CourseWideContext.ANNOUNCEMENT))).toList();
@@ -827,8 +814,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         params.add("searchText", "#1");
         params.add("pagingEnabled", "true"); // search by text, only available in course discussions page where paging is enabled
 
-        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
-        database.assertSensitiveInformationHidden(returnedPosts);
+        List<Post> returnedPosts = getPosts(params);
         assertThat(returnedPosts).isEqualTo(existingPosts.stream().filter(post -> post.getId() == 1).toList());
     }
 
@@ -840,8 +826,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         params.add("searchText", searchText);
         params.add("pagingEnabled", "true"); // search by text
 
-        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
-        database.assertSensitiveInformationHidden(returnedPosts);
+        List<Post> returnedPosts = getPosts(params);
         assertThat(returnedPosts).hasSize(5);
     }
 
@@ -858,8 +843,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         params.add("postSortCriterion", PostSortCriterion.CREATION_DATE.toString());
         params.add("sortingOrder", SortingOrder.DESCENDING.toString());
 
-        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
-        database.assertSensitiveInformationHidden(returnedPosts);
+        List<Post> returnedPosts = getPosts(params);
         existingCoursePosts.sort(Comparator.comparing(Post::getCreationDate).reversed());
 
         assertThat(returnedPosts).isEqualTo(existingCoursePosts);
@@ -878,8 +862,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         params.add("postSortCriterion", PostSortCriterion.CREATION_DATE.toString());
         params.add("sortingOrder", SortingOrder.ASCENDING.toString());
 
-        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
-        database.assertSensitiveInformationHidden(returnedPosts);
+        List<Post> returnedPosts = getPosts(params);
         existingCoursePosts.sort(Comparator.comparing(Post::getCreationDate));
 
         assertThat(returnedPosts).isEqualTo(existingCoursePosts);
@@ -896,8 +879,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         params.add("page", "0");
         params.add("size", String.valueOf(MAX_POSTS_PER_PAGE));
 
-        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
-        database.assertSensitiveInformationHidden(returnedPosts);
+        List<Post> returnedPosts = getPosts(params);
         assertThat(returnedPosts.size()).isIn(returnedPosts.size(), MAX_POSTS_PER_PAGE);
     }
 
@@ -1003,4 +985,12 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         assertThat(createdPost.getExercise()).isEqualTo(expectedPost.getExercise());
         assertThat(createdPost.getLecture()).isEqualTo(expectedPost.getLecture());
     }
+
+    @NotNull
+    private List<Post> getPosts(LinkedMultiValueMap<String, String> params) throws Exception {
+        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
+        database.assertSensitiveInformationHidden(returnedPosts);
+        return returnedPosts;
+    }
+
 }
