@@ -2,7 +2,7 @@
     <!-- QUIZ EXERCISE ACTIONS START -->
     <ng-container *ngSwitchCase="ExerciseType.QUIZ">
         <!-- ACTIONS START -->
-        <div>
+        <div class="btn-group">
             <button
                 jhi-exercise-action-button
                 [buttonIcon]="faRedo"
@@ -40,7 +40,7 @@
         <!-- ACTIONS END -->
         <!-- INFORMATION START -->
         <!-- TODO using startExercise() in these buttons is misleading, we should rather insert the route here -->
-        <div class *ngIf="!actionsOnly">
+        <div class="btn-group" *ngIf="!actionsOnly">
             <button
                 id="view-submission"
                 jhi-exercise-action-button
@@ -70,7 +70,7 @@
     <!-- MODELING EXERCISE ACTIONS START -->
     <ng-container *ngSwitchCase="ExerciseType.MODELING">
         <!-- ACTIONS START -->
-        <div class="gap-3">
+        <div class="btn-group gap-1">
             <button
                 class="view-team"
                 jhi-exercise-action-button
@@ -112,8 +112,8 @@
         </div>
         <!-- ACTIONS END -->
         <!-- INFORMATION START -->
-        <div *ngIf="!actionsOnly">
-            <div>
+        <div class="btn-group" *ngIf="!actionsOnly">
+            <div class="btn-group">
                 <button
                     id="view-submission"
                     jhi-exercise-action-button
@@ -145,7 +145,7 @@
     <!-- PROGRAMMING EXERCISE ACTIONS START -->
     <ng-container *ngSwitchCase="ExerciseType.PROGRAMMING">
         <!-- ACTION START -->
-        <div class="gap-3">
+        <div class="btn-group gap-1">
             <button
                 class="view-team"
                 jhi-exercise-action-button
@@ -270,7 +270,7 @@
     <!-- TEXT EXERCISE ACTIONS START -->
     <ng-container *ngSwitchCase="ExerciseType.TEXT">
         <!-- ACTIONS START -->
-        <div class="gap-3">
+        <div class="btn-group gap-1">
             <button
                 class="view-team"
                 jhi-exercise-action-button
@@ -310,7 +310,7 @@
         </div>
         <!-- ACTIONS END -->
         <!-- INFORMATION START -->
-        <div *ngIf="!actionsOnly">
+        <div class="btn-group" *ngIf="!actionsOnly">
             <button
                 id="view-submission"
                 jhi-exercise-action-button
@@ -343,7 +343,7 @@
     <!-- FILE UPLOAD EXERCISE ACTIONS START -->
     <ng-container *ngSwitchCase="ExerciseType.FILE_UPLOAD">
         <!-- ACTIONS START -->
-        <div class="gap-3">
+        <div class="btn-group gap-1">
             <button
                 class="view-team"
                 jhi-exercise-action-button
@@ -382,7 +382,7 @@
         </div>
         <!-- ACTIONS END-->
         <!-- INFORMATION START -->
-        <div *ngIf="!actionsOnly">
+        <div class="btn-group" *ngIf="!actionsOnly">
             <button
                 id="view-submission"
                 jhi-exercise-action-button
