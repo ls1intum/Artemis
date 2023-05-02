@@ -263,31 +263,6 @@ public class PostService extends PostingService {
 
     /**
      * Checks course, user and post validity,
-     * retrieves and filters posts for a course by its id and optionally by its course-wide context
-     * and ensures that sensitive information is filtered out
-     *
-     * @param postContextFilter filter object
-     * @param pagingEnabled     whether to return a page or all records
-     * @param pageable          page object describing page number and row count per page to be fetched
-     * @return page of posts that belong to the course
-     */
-    public Page<Post> getCoursePosts(PostContextFilter postContextFilter, boolean pagingEnabled, Pageable pageable) {
-        final User user = userRepository.getUserWithGroupsAndAuthorities();
-
-        // checks
-        preCheckUserAndCourseForCommunication(user, postContextFilter.getCourseId());
-
-        // retrieve posts
-        Page<Post> coursePosts = postRepository.findPosts(postContextFilter, user.getId(), pagingEnabled, pageable);
-
-        // protect sample solution, grading instructions, etc.
-        coursePosts.stream().map(Post::getExercise).filter(Objects::nonNull).forEach(Exercise::filterSensitiveInformation);
-
-        return coursePosts;
-    }
-
-    /**
-     * Checks course, user and post validity,
      * retrieves and filters posts for a plagiarism case by its id
      * and ensures that sensitive information is filtered out
      *
@@ -355,90 +330,6 @@ public class PostService extends PostingService {
     }
 
     /**
-     * Method to (i) check if the exercise exists, (ii) check if requesting user is authorized in the exercise context,
-     * and (iii) compare the id of the course belonging to the exercise with the path variable courseId,
-     *
-     * @param user       requesting user
-     * @param courseId   id of the course that is used as path variable
-     * @param exerciseId id of the exercise that is used as path variable
-     */
-    private void preCheckExercise(User user, Long courseId, Long exerciseId) {
-        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-        authorizationCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
-        if (!exercise.getCourseViaExerciseGroupOrCourseMember().getId().equals(courseId)) {
-            throw new BadRequestAlertException("PathVariable courseId doesn't match the courseId of the Exercise", METIS_POST_ENTITY_NAME, "idNull");
-        }
-    }
-
-    /**
-     * Method to (i) check if the lecture exists, (ii) check if requesting user is authorized in the lecture context,
-     * and (iii) compare the id of the course belonging to the lecture with the path variable courseId,
-     *
-     * @param user      requesting user
-     * @param courseId  id of the course that is used as path variable
-     * @param lectureId id of the lecture that is used as path variable
-     */
-    private void preCheckLecture(User user, Long courseId, Long lectureId) {
-        Lecture lecture = lectureRepository.findByIdElseThrow(lectureId);
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, lecture.getCourse(), user);
-        if (!lecture.getCourse().getId().equals(courseId)) {
-            throw new BadRequestAlertException("PathVariable courseId doesn't match the courseId of the Lecture", METIS_POST_ENTITY_NAME, "idNull");
-        }
-    }
-
-    /**
-     * Sends notification to affected groups
-     *
-     * @param post post that triggered the notification
-     */
-    void sendNotification(Post post, Course course) {
-        // create post for notification
-        Post postForNotification = new Post();
-        postForNotification.setId(post.getId());
-        postForNotification.setAuthor(post.getAuthor());
-        postForNotification.setCourse(course);
-        postForNotification.setCourseWideContext(post.getCourseWideContext());
-        postForNotification.setLecture(post.getLecture());
-        postForNotification.setExercise(post.getExercise());
-        postForNotification.setCreationDate(post.getCreationDate());
-        postForNotification.setTitle(post.getTitle());
-
-        // create html content
-        Parser parser = Parser.builder().build();
-        String htmlPostContent;
-        try {
-            Node document = parser.parse(post.getContent());
-            HtmlRenderer renderer = HtmlRenderer.builder().build();
-            htmlPostContent = renderer.render(document);
-        }
-        catch (Exception e) {
-            htmlPostContent = "";
-        }
-        postForNotification.setContent(htmlPostContent);
-
-        // notify via course
-        if (post.getCourseWideContext() != null) {
-            if (post.getCourseWideContext() == CourseWideContext.ANNOUNCEMENT) {
-                groupNotificationService.notifyAllGroupsAboutNewAnnouncement(postForNotification, course);
-                return;
-            }
-            groupNotificationService.notifyAllGroupsAboutNewCoursePost(postForNotification, course);
-            return;
-        }
-        // notify via exercise
-        if (post.getExercise() != null) {
-            groupNotificationService.notifyAllGroupsAboutNewPostForExercise(postForNotification, course);
-            // protect sample solution, grading instructions, etc.
-            post.getExercise().filterSensitiveInformation();
-            return;
-        }
-        // notify via lecture
-        if (post.getLecture() != null) {
-            groupNotificationService.notifyAllGroupsAboutNewPostForLecture(postForNotification, course);
-        }
-    }
-
-    /**
      * Retrieve the entity name used in ResponseEntity
      */
     @Override
@@ -496,4 +387,124 @@ public class PostService extends PostingService {
             authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, user);
         }
     }
+
+    /**
+     * Checks course, user and post validity,
+     * retrieves and filters posts for a course by its id and optionally by its course-wide context
+     * and ensures that sensitive information is filtered out
+     *
+     * @param postContextFilter filter object
+     * @param pagingEnabled     whether to return a page or all records
+     * @param pageable          page object describing page number and row count per page to be fetched
+     * @return page of posts that belong to the course
+     */
+    private Page<Post> getCoursePosts(PostContextFilter postContextFilter, boolean pagingEnabled, Pageable pageable) {
+        final User user = userRepository.getUserWithGroupsAndAuthorities();
+
+        // checks
+        preCheckUserAndCourseForCommunication(user, postContextFilter.getCourseId());
+        if (postContextFilter.getLectureId() != null) {
+            for (Long lectureId : postContextFilter.getLectureId()) {
+                preCheckLecture(user, postContextFilter.getCourseId(), lectureId);
+            }
+        }
+        if (postContextFilter.getExerciseId() != null) {
+            for (Long exerciseId : postContextFilter.getExerciseId()) {
+                preCheckExercise(user, postContextFilter.getCourseId(), exerciseId);
+            }
+        }
+
+        // retrieve posts
+        Page<Post> coursePosts = postRepository.findPosts(postContextFilter, user.getId(), pagingEnabled, pageable);
+
+        // protect sample solution, grading instructions, etc.
+        coursePosts.stream().map(Post::getExercise).filter(Objects::nonNull).forEach(Exercise::filterSensitiveInformation);
+
+        return coursePosts;
+    }
+
+    /**
+     * Method to (i) check if the exercise exists, (ii) check if requesting user is authorized in the exercise context,
+     * and (iii) compare the id of the course belonging to the exercise with the path variable courseId,
+     *
+     * @param user       requesting user
+     * @param courseId   id of the course that is used as path variable
+     * @param exerciseId id of the exercise that is used as path variable
+     */
+    private void preCheckExercise(User user, Long courseId, Long exerciseId) {
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+        authorizationCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
+        if (!exercise.getCourseViaExerciseGroupOrCourseMember().getId().equals(courseId)) {
+            throw new BadRequestAlertException("PathVariable courseId doesn't match the courseId of the Exercise", METIS_POST_ENTITY_NAME, "idNull");
+        }
+    }
+
+    /**
+     * Method to (i) check if the lecture exists, (ii) check if requesting user is authorized in the lecture context,
+     * and (iii) compare the id of the course belonging to the lecture with the path variable courseId,
+     *
+     * @param user      requesting user
+     * @param courseId  id of the course that is used as path variable
+     * @param lectureId id of the lecture that is used as path variable
+     */
+    private void preCheckLecture(User user, Long courseId, Long lectureId) {
+        Lecture lecture = lectureRepository.findByIdElseThrow(lectureId);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, lecture.getCourse(), user);
+        if (!lecture.getCourse().getId().equals(courseId)) {
+            throw new BadRequestAlertException("PathVariable courseId doesn't match the courseId of the Lecture", METIS_POST_ENTITY_NAME, "idNull");
+        }
+    }
+
+    /**
+     * Sends notification to affected groups
+     *
+     * @param post post that triggered the notification
+     */
+    private void sendNotification(Post post, Course course) {
+        // create post for notification
+        Post postForNotification = new Post();
+        postForNotification.setId(post.getId());
+        postForNotification.setAuthor(post.getAuthor());
+        postForNotification.setCourse(course);
+        postForNotification.setCourseWideContext(post.getCourseWideContext());
+        postForNotification.setLecture(post.getLecture());
+        postForNotification.setExercise(post.getExercise());
+        postForNotification.setCreationDate(post.getCreationDate());
+        postForNotification.setTitle(post.getTitle());
+
+        // create html content
+        Parser parser = Parser.builder().build();
+        String htmlPostContent;
+        try {
+            Node document = parser.parse(post.getContent());
+            HtmlRenderer renderer = HtmlRenderer.builder().build();
+            htmlPostContent = renderer.render(document);
+        }
+        catch (Exception e) {
+            htmlPostContent = "";
+        }
+        postForNotification.setContent(htmlPostContent);
+
+        // notify via course
+        if (post.getCourseWideContext() != null) {
+            if (post.getCourseWideContext() == CourseWideContext.ANNOUNCEMENT) {
+                groupNotificationService.notifyAllGroupsAboutNewAnnouncement(postForNotification, course);
+                return;
+            }
+            groupNotificationService.notifyAllGroupsAboutNewCoursePost(postForNotification, course);
+            return;
+        }
+        // notify via exercise
+        if (post.getExercise() != null) {
+            groupNotificationService.notifyAllGroupsAboutNewPostForExercise(postForNotification, course);
+            // protect sample solution, grading instructions, etc.
+            post.getExercise().filterSensitiveInformation();
+            return;
+        }
+        // notify via lecture
+        if (post.getLecture() != null) {
+            groupNotificationService.notifyAllGroupsAboutNewPostForLecture(postForNotification, course);
+        }
+    }
+
 }

@@ -650,32 +650,32 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetPostsForCourse_WithExerciseIdRequestParam() throws Exception {
-        // request param courseWideContext will fetch all course posts that match this context filter
+        // request param exerciseId will fetch all course posts that match this context filter
         var params = new LinkedMultiValueMap<String, String>();
         params.add("exerciseId", firstExerciseId.toString());
 
         List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
         database.assertSensitiveInformationHidden(returnedPosts);
-        // get amount of posts with that certain course-wide context
+        // get amount of posts with that certain exercise context
         assertThat(returnedPosts).hasSameSizeAs(postsBelongingToFirstExercise);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetPostsForCourse_WithLectureIdRequestParam() throws Exception {
-        // request param courseWideContext will fetch all course posts that match this context filter
+        // request param lectureId will fetch all course posts that match this context filter
         var params = new LinkedMultiValueMap<String, String>();
         params.add("lectureId", firstLectureId.toString());
 
         List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
         database.assertSensitiveInformationHidden(returnedPosts);
-        // get amount of posts with that certain course-wide context
+        // get amount of posts with that lecture context
         assertThat(returnedPosts).hasSameSizeAs(postsBelongingToFirstLecture);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
-    void testGetPostsForCourse_WithCourseWideContextRequestParam_MultipleCourseWideContexts() throws Exception {
+    void testGetPostsForCourseWithCourseWideContextRequestParamMultipleCourseWideContexts() throws Exception {
         // request param courseWideContext will fetch all course posts that match this context filter
         var params = new LinkedMultiValueMap<String, String>();
         params.add("courseWideContext", String.join(",", courseWideContexts));
@@ -688,7 +688,8 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetPostsForCourse_WithExerciseIdRequestParam_MultipleExercises() throws Exception {
+    void testGetPostsForCourseWithExerciseIdRequestParamMultipleExercises() throws Exception {
+        // request param exerciseId will fetch all course posts that match this context filter
         var params = new LinkedMultiValueMap<String, String>();
         params.add("exerciseId", String.join(",", existingExerciseIds));
 
@@ -699,7 +700,8 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetPostsForCourse_WithLectureIdRequestParam_MultipleLectures() throws Exception {
+    void testGetPostsForCourseWithLectureIdRequestParamMultipleLectures() throws Exception {
+        // request param lectureId will fetch all course posts that match this context filter
         var params = new LinkedMultiValueMap<String, String>();
         params.add("lectureId", String.join(",", existingLectureIds));
 
@@ -710,7 +712,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetPostsForCourse_WithMultipleContextRequestParams() throws Exception {
+    void testGetPostsForCourseWithMultipleContextRequestParams() throws Exception {
         var params = new LinkedMultiValueMap<String, String>();
         params.add("lectureId", String.join(",", existingLectureIds));
         params.add("exerciseId", String.join(",", existingExerciseIds));
@@ -742,6 +744,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         var params = new LinkedMultiValueMap<String, String>();
         params.add("plagiarismCaseId", plagiarismCaseId.toString());
 
+        // student1 is allowed to see the posts
         List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
         database.assertSensitiveInformationHidden(returnedPosts);
         // get amount of posts with certain plagiarism context

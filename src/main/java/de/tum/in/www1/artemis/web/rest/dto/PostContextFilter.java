@@ -36,6 +36,11 @@ public class PostContextFilter {
 
     private SortingOrder sortingOrder;
 
+    /**
+     * Constructor for PostContextFilter, which sets every member as null, except boolean members and courseId
+     *
+     * @param courseId id of the course that the posts belong to
+     */
     public PostContextFilter(long courseId) {
         this.courseId = courseId;
     }
