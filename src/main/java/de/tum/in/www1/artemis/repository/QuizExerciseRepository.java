@@ -5,7 +5,6 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
@@ -48,19 +47,6 @@ public interface QuizExerciseRepository extends JpaRepository<QuizExercise, Long
             WHERE b.startTime > :#{#earliestReleaseDate}
             """)
     List<QuizExercise> findAllPlannedToStartAfter(ZonedDateTime earliestReleaseDate);
-
-    @Query("""
-            SELECT e
-            FROM Course c
-            LEFT JOIN  c.exercises e
-            LEFT JOIN FETCH e.studentParticipations p
-            LEFT JOIN FETCH p.submissions s
-            LEFT JOIN FETCH s.results
-            Where c.id = :courseId
-            AND p.student.id = :userId
-            AND TYPE(e) = QuizExercise
-            """)
-    Set<QuizExercise> getAllQuizExercisesWithEagerParticipationsSubmissionsOfUserFromCourseByCourseAndUserId(@Param("courseId") long courseId, @Param("userId") long userId);
 
     @EntityGraph(type = LOAD, attributePaths = { "quizQuestions", "quizPointStatistic", "quizQuestions.quizQuestionStatistic", "categories", "quizBatches" })
     Optional<QuizExercise> findWithEagerQuestionsAndStatisticsById(Long quizExerciseId);

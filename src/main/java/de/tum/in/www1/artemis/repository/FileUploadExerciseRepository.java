@@ -4,7 +4,6 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 import javax.validation.constraints.NotNull;
 
@@ -34,20 +33,6 @@ public interface FileUploadExerciseRepository extends JpaRepository<FileUploadEx
 
     @EntityGraph(type = LOAD, attributePaths = { "teamAssignmentConfig", "categories", "learningGoals" })
     Optional<FileUploadExercise> findWithEagerTeamAssignmentConfigAndCategoriesAndLearningGoalsById(Long exerciseId);
-
-    @Query("""
-            SELECT e
-            FROM Course c
-            LEFT JOIN  c.exercises e
-            LEFT JOIN FETCH e.studentParticipations p
-            LEFT JOIN FETCH p.submissions s
-            LEFT JOIN FETCH s.results r
-            Where c.id = :courseId
-            AND p.student.id = :userId
-            AND TYPE(e) = FileUploadExercise
-            """)
-    Set<FileUploadExercise> getAllFileUploadExercisesWithEagerParticipationsSubmissionsAndResultsOfUserFromCourseByCourseAndUserId(@Param("courseId") long courseId,
-            @Param("userId") long userId);
 
     /**
      * Get one file upload exercise by id.

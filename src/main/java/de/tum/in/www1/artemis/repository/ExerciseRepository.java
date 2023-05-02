@@ -494,4 +494,16 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
         exercise.setSecondCorrectionEnabled(!exercise.getSecondCorrectionEnabled());
         return save(exercise).getSecondCorrectionEnabled();
     }
+
+    @Query("""
+            SELECT e
+            FROM Course c
+            LEFT JOIN  c.exercises e
+            LEFT JOIN FETCH e.studentParticipations p
+            LEFT JOIN FETCH p.submissions s
+            LEFT JOIN FETCH s.results r
+            Where c.id = :courseId
+            AND p.student.id = :userId
+            """)
+    Set<Exercise> getAllExercisesUserParticipatedInWithEagerParticipationsSubmissionsResultsByCourseIdAndUserId(long courseId, long userId);
 }
