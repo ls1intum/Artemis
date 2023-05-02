@@ -50,11 +50,9 @@ export class CourseUpdateComponent implements OnInit {
     courseImageUploadFile?: File;
     croppedImage?: string;
     showCropper = false;
-    presentationScoreEnabled = false;
     complaintsEnabled = true; // default value
     requestMoreFeedbackEnabled = true; // default value
     customizeGroupNames = false; // default value
-    presentationScorePattern = /^[0-9]{0,4}$/; // makes sure that the presentation score is a positive natural integer greater than 0 and not too large
     courseOrganizations: Organization[];
     isAdmin = false;
     // Icons
@@ -193,17 +191,12 @@ export class CourseUpdateComponent implements OnInit {
                 registrationConfirmationMessage: new FormControl(this.course.registrationConfirmationMessage, {
                     validators: [Validators.maxLength(2000)],
                 }),
-                presentationScore: new FormControl({ value: this.course.presentationScore, disabled: this.course.presentationScore === 0 }, [
-                    Validators.min(1),
-                    regexValidator(this.presentationScorePattern),
-                ]),
                 color: new FormControl(this.course.color),
                 courseIcon: new FormControl(this.course.courseIcon),
             },
             { validators: CourseValidator },
         );
         this.croppedImage = this.course.courseIcon;
-        this.presentationScoreEnabled = this.course.presentationScore !== 0;
 
         this.featureToggleService
             .getFeatureToggleActive(FeatureToggle.TutorialGroups)
@@ -350,20 +343,6 @@ export class CourseUpdateComponent implements OnInit {
 
     get shortName() {
         return this.courseForm.get('shortName')!;
-    }
-
-    /**
-     * Enable or disable presentation score input field based on presentationScoreEnabled checkbox
-     */
-    changePresentationScoreInput() {
-        const presentationScoreControl = this.courseForm.controls['presentationScore'];
-        if (presentationScoreControl.disabled) {
-            presentationScoreControl.enable();
-            this.presentationScoreEnabled = true;
-        } else {
-            presentationScoreControl.reset({ value: 0, disabled: true });
-            this.presentationScoreEnabled = false;
-        }
     }
 
     /**

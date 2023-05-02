@@ -228,6 +228,7 @@
             </ng-container>
             <dt><span jhiTranslate="artemisApp.course.presentationScoreEnabled.title">Presentation Score Enabled</span></dt>
             <dd id="course-presentation-score-enabled">
+                <!-- TODO: add if presentation is basic or graded -->
                 <span *ngIf="course.presentationScore !== 0">{{ 'global.generic.yes' | artemisTranslate }}</span>
                 <span *ngIf="course.presentationScore === 0">{{ 'global.generic.no' | artemisTranslate }}</span>
             </dd>

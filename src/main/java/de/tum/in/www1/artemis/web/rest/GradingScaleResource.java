@@ -130,11 +130,8 @@ public class GradingScaleResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         validateGradingScale(existingGradingScale, gradingScale);
 
-        if (!Objects.equals(gradingScale.getCourse().getMaxPoints(), course.getMaxPoints())) {
-            course.setMaxPoints(gradingScale.getCourse().getMaxPoints());
-            courseRepository.save(course);
-        }
-        gradingScale.setCourse(course);
+        validatePresentationsConfiguration(gradingScale);
+        updateCourseForGradingScale(gradingScale, course);
 
         GradingScale savedGradingScale = gradingScaleService.saveGradingScale(gradingScale);
         return ResponseEntity.created(new URI("/api/courses/" + courseId + "/grading-scale/")).headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, ""))
@@ -151,7 +148,8 @@ public class GradingScaleResource {
         else if (gradingScale.getId() != null) {
             throw new BadRequestAlertException("A grading scale can't contain a predefined id", ENTITY_NAME, "gradingScaleHasId");
         }
-        else if (gradingScale.getPresentationsNumber() != null && gradingScale.getCourse().getPresentationScore() != null && gradingScale.getCourse().getPresentationScore() > 0) {
+        else if ((gradingScale.getPresentationsNumber() != null || gradingScale.getCourse().getPresentationScore() != null)
+                && gradingScale.getCourse().getPresentationScore() > 0) {
             throw new BadRequestAlertException("You cannot set up graded presentations if the course is already set up for basic presentations", ENTITY_NAME,
                     "basicPresentationAlreadySet");
         }
@@ -203,11 +201,10 @@ public class GradingScaleResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         gradingScale.setId(oldGradingScale.getId());
         gradingScale.setBonusFrom(oldGradingScale.getBonusFrom()); // bonusFrom should not be affected by this endpoint.
-        if (!Objects.equals(gradingScale.getCourse().getMaxPoints(), course.getMaxPoints())) {
-            course.setMaxPoints(gradingScale.getCourse().getMaxPoints());
-            courseRepository.save(course);
-        }
-        gradingScale.setCourse(course);
+
+        validatePresentationsConfiguration(gradingScale);
+        updateCourseForGradingScale(gradingScale, course);
+
         GradingScale savedGradingScale = gradingScaleService.saveGradingScale(gradingScale);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, "")).body(savedGradingScale);
     }
@@ -274,4 +271,50 @@ public class GradingScaleResource {
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, "")).build();
     }
 
+    private void updateCourseForGradingScale(GradingScale gradingScale, Course course) {
+        if (!Objects.equals(gradingScale.getCourse().getMaxPoints(), course.getMaxPoints())
+                || !Objects.equals(gradingScale.getCourse().getPresentationScore(), course.getPresentationScore())) {
+            course.setMaxPoints(gradingScale.getCourse().getMaxPoints());
+            course.setPresentationScore(gradingScale.getCourse().getPresentationScore());
+            courseRepository.save(course);
+        }
+        gradingScale.setCourse(course);
+    }
+
+    // TODO: add meaningful error messages
+    private void validatePresentationsConfiguration(GradingScale gradingScale) {
+        Course course = gradingScale.getCourse();
+        if (course == null) {
+            return;
+        }
+
+        // Check validity of basic presentation configuration
+        if (course.getPresentationScore() != null && course.getPresentationScore() != 0) {
+            // The presentationsNumber and presentationsWeight must be null
+            if (gradingScale.getPresentationsNumber() != null || gradingScale.getPresentationsWeight() != null) {
+                throw new BadRequestAlertException("You cannot set up graded presentations if the course is already set up for basic presentations", ENTITY_NAME,
+                        "basicPresentationAlreadySet");
+            }
+            // The presentationScore must be above 0
+            if (course.getPresentationScore() <= 0) {
+                throw new BadRequestAlertException("artemisApp.gradingSystem.error.invalidPresentationsNumber", ENTITY_NAME, "alert");
+            }
+        }
+
+        // Check validity of graded presentation configuration
+        if (gradingScale.getPresentationsNumber() != null || gradingScale.getPresentationsWeight() != null) {
+            // The presentationsNumber must be above 0
+            if (gradingScale.getPresentationsNumber() == null || gradingScale.getPresentationsNumber() < 1) {
+                throw new BadRequestAlertException("artemisApp.gradingSystem.error.invalidPresentationsNumber", ENTITY_NAME, "alert");
+            }
+            // The presentationsWeight must be between 0 and 100
+            if (gradingScale.getPresentationsWeight() == null || gradingScale.getPresentationsWeight() < 0 || gradingScale.getPresentationsWeight() > 100) {
+                throw new BadRequestAlertException("artemisApp.gradingSystem.error.invalidPresentationsWeight", ENTITY_NAME, "alert");
+            }
+            // The presentationScore must be 0 or null
+            if (course.getPresentationScore() != null && course.getPresentationScore() != 0) {
+                throw new BadRequestAlertException("artemisApp.gradingSystem.error.invalidBasicPresentationIsEnabled", ENTITY_NAME, "alert");
+            }
+        }
+    }
 }
