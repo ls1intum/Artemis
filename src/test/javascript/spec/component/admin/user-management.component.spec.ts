@@ -391,7 +391,7 @@ describe('UserManagementComponent', () => {
     });
 
     it('should delete all selected users', () => {
-        const deleteSpy = jest.spyOn(userService, 'deleteUsers').mockReturnValue(of());
+        const deleteSpy = jest.spyOn(userService, 'deleteUsers');
 
         // users
         const users = [1, 2, 3].map((id) => {
@@ -405,6 +405,7 @@ describe('UserManagementComponent', () => {
         comp.deleteAllSelectedUsers();
         expect(deleteSpy).toHaveBeenCalledOnce();
         expect(deleteSpy).toHaveBeenCalledWith([users[0].login, users[1].login], 'en');
+        httpMock.expectOne(SERVER_API_URL + 'api/admin/users?login=1&login=2&adminLanguageKey=en');
     });
 
     it('should add and remove user from selected users', () => {
