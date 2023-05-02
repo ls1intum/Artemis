@@ -1,8 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { SubmissionPolicy, SubmissionPolicyType } from 'app/entities/submission-policy.model';
-import { Submission } from 'app/entities/submission.model';
+import { SubmissionPolicy } from 'app/entities/submission-policy.model';
 
 export interface ISubmissionPolicyService {
     addSubmissionPolicyToProgrammingExercise: (submissionPolicy: SubmissionPolicy, exerciseId: number) => Observable<SubmissionPolicy>;
@@ -11,7 +10,6 @@ export interface ISubmissionPolicyService {
     enableSubmissionPolicyOfProgrammingExercise: (exerciseId: number) => Observable<HttpResponse<void>>;
     disableSubmissionPolicyOfProgrammingExercise: (exerciseId: number) => Observable<HttpResponse<void>>;
     updateSubmissionPolicyToProgrammingExercise: (submissionPolicy: SubmissionPolicy, exerciseId: number) => Observable<SubmissionPolicy>;
-    getSubmissionLockPolicyEnforced: (submissionPolicy?: SubmissionPolicy, submissions?: Submission[]) => boolean;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -93,20 +91,5 @@ export class SubmissionPolicyService implements ISubmissionPolicyService {
      */
     private requestUrl(exerciseId: number): string {
         return this.baseResourceUrl.replace('{exerciseId}', exerciseId + '');
-    }
-
-    /**
-     * Checks if the submission policy type is LOCK_REPOSITORY and the number of submissions is greater than the submission limit.
-     * @param submissionPolicy the submission policy of the exercise
-     * @param submissions the submissions for a participation
-     */
-    getSubmissionLockPolicyEnforced(submissionPolicy?: SubmissionPolicy, submissions?: Submission[]): boolean {
-        let submissionPolicyEnforced = false;
-
-        if (submissionPolicy && submissionPolicy.submissionLimit && submissions) {
-            submissionPolicyEnforced =
-                !!submissionPolicy.active && submissionPolicy.type === SubmissionPolicyType.LOCK_REPOSITORY && submissionPolicy.submissionLimit <= submissions.length;
-        }
-        return submissionPolicyEnforced;
     }
 }
