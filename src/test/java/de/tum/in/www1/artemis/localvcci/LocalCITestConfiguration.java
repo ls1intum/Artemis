@@ -36,6 +36,11 @@ import de.tum.in.www1.artemis.config.localvcci.LocalCIConfiguration;
 @Import(LocalCIConfiguration.class) // Fall back to the default configuration if no overwrite is provided here.
 public class LocalCITestConfiguration {
 
+    /**
+     * Provide a mocked DockerClient Bean that returns a mock value for all methods used.
+     *
+     * @return a mocked DockerClient Bean
+     */
     @Bean
     public DockerClient dockerClient() {
         DockerClient dockerClient = mock(DockerClient.class);

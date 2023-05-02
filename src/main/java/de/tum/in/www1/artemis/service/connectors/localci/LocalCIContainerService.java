@@ -171,7 +171,7 @@ public class LocalCIContainerService {
         }
 
         // Check if the container is running. Return if it's not.
-        boolean isContainerRunning = containerOptional.get().getState().equals("running");
+        boolean isContainerRunning = "running".equals(containerOptional.get().getState());
         if (!isContainerRunning) {
             return;
         }
