@@ -244,7 +244,7 @@ public class PostService extends PostingService {
 
         Page<Post> postsInCourse;
         // filter by plagiarism case
-        if (postContextFilter.getCourseWideContext() == null && postContextFilter.getExerciseId() == null && postContextFilter.getLectureId() == null
+        if (postContextFilter.getCourseWideContexts() == null && postContextFilter.getExerciseIds() == null && postContextFilter.getLectureIds() == null
                 && postContextFilter.getPlagiarismCaseId() != null) {
             postsInCourse = new PageImpl<>(this.getAllPlagiarismCasePosts(postContextFilter));
         }
@@ -403,13 +403,13 @@ public class PostService extends PostingService {
 
         // checks
         preCheckUserAndCourseForCommunication(user, postContextFilter.getCourseId());
-        if (postContextFilter.getLectureId() != null) {
-            for (Long lectureId : postContextFilter.getLectureId()) {
+        if (postContextFilter.getLectureIds() != null) {
+            for (Long lectureId : postContextFilter.getLectureIds()) {
                 preCheckLecture(user, postContextFilter.getCourseId(), lectureId);
             }
         }
-        if (postContextFilter.getExerciseId() != null) {
-            for (Long exerciseId : postContextFilter.getExerciseId()) {
+        if (postContextFilter.getExerciseIds() != null) {
+            for (Long exerciseId : postContextFilter.getExerciseIds()) {
                 preCheckExercise(user, postContextFilter.getCourseId(), exerciseId);
             }
         }

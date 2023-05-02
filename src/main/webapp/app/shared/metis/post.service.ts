@@ -49,13 +49,13 @@ export class PostService extends PostingService<Post> {
             params = params.set('sortingOrder', postContextFilter.sortingOrder.toString());
         }
         if (postContextFilter.courseWideContexts?.length) {
-            params = params.set('courseWideContext', postContextFilter.courseWideContexts.toString());
+            params = params.set('courseWideContexts', postContextFilter.courseWideContexts.toString());
         }
         if (postContextFilter.lectureIds?.length) {
-            params = params.set('lectureId', postContextFilter.lectureIds.toString());
+            params = params.set('lectureIds', postContextFilter.lectureIds.toString());
         }
         if (postContextFilter.exerciseIds?.length) {
-            params = params.set('exerciseId', postContextFilter.exerciseIds.toString());
+            params = params.set('exerciseIds', postContextFilter.exerciseIds.toString());
         }
         if (postContextFilter.plagiarismCaseId) {
             params = params.set('plagiarismCaseId', postContextFilter.plagiarismCaseId.toString());

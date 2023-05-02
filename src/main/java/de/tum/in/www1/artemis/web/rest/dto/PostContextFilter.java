@@ -14,11 +14,11 @@ public class PostContextFilter {
     @NotBlank
     private Long courseId;
 
-    private CourseWideContext[] courseWideContext;
+    private CourseWideContext[] courseWideContexts;
 
-    private Long[] exerciseId;
+    private Long[] exerciseIds;
 
-    private Long[] lectureId;
+    private Long[] lectureIds;
 
     private Long plagiarismCaseId;
 
@@ -53,28 +53,28 @@ public class PostContextFilter {
         this.courseId = courseId;
     }
 
-    public CourseWideContext[] getCourseWideContext() {
-        return courseWideContext;
+    public CourseWideContext[] getCourseWideContexts() {
+        return courseWideContexts;
     }
 
-    public void setCourseWideContext(CourseWideContext[] courseWideContext) {
-        this.courseWideContext = courseWideContext;
+    public void setCourseWideContexts(CourseWideContext[] courseWideContexts) {
+        this.courseWideContexts = courseWideContexts;
     }
 
-    public Long[] getExerciseId() {
-        return exerciseId;
+    public Long[] getExerciseIds() {
+        return exerciseIds;
     }
 
-    public void setExerciseId(Long[] exerciseId) {
-        this.exerciseId = exerciseId;
+    public void setExerciseIds(Long[] exerciseIds) {
+        this.exerciseIds = exerciseIds;
     }
 
-    public Long[] getLectureId() {
-        return lectureId;
+    public Long[] getLectureIds() {
+        return lectureIds;
     }
 
-    public void setLectureId(Long[] lectureId) {
-        this.lectureId = lectureId;
+    public void setLectureIds(Long[] lectureIds) {
+        this.lectureIds = lectureIds;
     }
 
     public Long getPlagiarismCaseId() {
