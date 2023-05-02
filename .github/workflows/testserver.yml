@@ -9,6 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
+        deploy_on: false
         include:
           # Commented out environments are not yet available and will be enabled in the future
 
