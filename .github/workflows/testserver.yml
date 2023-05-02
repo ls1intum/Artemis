@@ -1,4 +1,4 @@
-name: My Workflow
+name: Deploy to Testserver
 
 on:
   pull_request:
@@ -6,7 +6,6 @@ on:
 
 jobs:
   deploy:
-    needs: build.docker.result
     runs-on: ubuntu-latest
     strategy:
       matrix:
