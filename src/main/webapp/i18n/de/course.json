@@ -156,10 +156,10 @@
             "courseDashboard": "Kurs-Dashboard",
             "instructorDashboard": "Dashboard für Lehrende",
             "presentationScoreEnabled": {
-                "title": "Präsentationsbewertung aktiviert",
+                "title": "Präsentationen aktiviert",
                 "description": "Aktiviere diese Checkbox und definiere, wie viele Präsentationen Studierende halten müssen, um den Notenbonus für die Vorlesung zu erhalten. Nach der Aktivierung kannst du bei der Erstellung jeder Übung definieren, ob dieses Feature dafür aktiviert sein soll."
             },
-            "presentationScore": "Benötigtes Präsentationsergebnis für den Bonus",
+            "presentationScore": "Benötigte Präsentationen",
             "courseGroup": {
                 "outOf": "von",
                 "usersPerPage": "{{number}} Nutzer:innen pro Seite",
