@@ -6,6 +6,7 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -64,12 +65,12 @@ public class Channel extends Conversation {
     @NotNull
     private Boolean isArchived;
 
-    @OneToOne
-    @JoinColumn(name = "lecture_id")
+    @OneToOne(mappedBy = "channel")
+    @JsonIgnoreProperties(value = "channel", allowSetters = true)
     private Lecture lecture;
 
-    @OneToOne
-    @JoinColumn(name = "exercise_id")
+    @OneToOne(mappedBy = "channel")
+    @JsonIgnoreProperties(value = "channel", allowSetters = true)
     private Exercise exercise;
 
     @Nullable
@@ -128,15 +129,7 @@ public class Channel extends Conversation {
         return lecture;
     }
 
-    public void setLecture(Lecture lecture) {
-        this.lecture = lecture;
-    }
-
     public Exercise getExercise() {
         return exercise;
-    }
-
-    public void setExercise(Exercise exercise) {
-        this.exercise = exercise;
     }
 }

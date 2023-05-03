@@ -167,10 +167,11 @@ public class TextExerciseResource {
 
         // if exercise is created from scratch we create new knowledge instance
         textExercise.setKnowledge(textAssessmentKnowledgeService.createNewKnowledge());
-        TextExercise result = textExerciseRepository.save(textExercise);
-        if(result.isCourseExercise()) {
-            channelService.createExerciseChannel(result);
+        if (textExercise.isCourseExercise()) {
+            Channel createdChannel = channelService.createExerciseChannel(textExercise);
+            textExercise.setChannel(createdChannel);
         }
+        TextExercise result = textExerciseRepository.save(textExercise);
         instanceMessageSendService.sendTextExerciseSchedule(result.getId());
         groupNotificationScheduleService.checkNotificationsForNewExercise(textExercise);
         return ResponseEntity.created(new URI("/api/text-exercises/" + result.getId())).body(result);

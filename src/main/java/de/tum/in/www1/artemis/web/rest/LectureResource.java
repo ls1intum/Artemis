@@ -94,9 +94,10 @@ public class LectureResource {
         }
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, lecture.getCourse(), null);
 
-        Lecture savedLecture = lectureRepository.save(lecture);
+        Channel createdChannel = channelService.createLectureChannel(lecture);
 
-        channelService.createLectureChannel(savedLecture);
+        lecture.setChannel(createdChannel);
+        Lecture savedLecture = lectureRepository.save(lecture);
 
         return ResponseEntity.created(new URI("/api/lectures/" + savedLecture.getId())).body(savedLecture);
     }

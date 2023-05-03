@@ -4,15 +4,16 @@ import java.util.*;
 
 import javax.validation.constraints.NotNull;
 
-import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
+import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
 
 @Service
 public class QuizExerciseImportService extends ExerciseImportService {
@@ -47,8 +48,9 @@ public class QuizExerciseImportService extends ExerciseImportService {
     public QuizExercise importQuizExercise(final QuizExercise templateExercise, QuizExercise importedExercise) {
         log.debug("Creating a new Exercise based on exercise {}", templateExercise);
         QuizExercise newExercise = copyQuizExerciseBasis(importedExercise);
-        if(newExercise.isCourseExercise()) {
-            channelService.createExerciseChannel(newExercise);
+        if (newExercise.isCourseExercise()) {
+            Channel createdChannel = channelService.createExerciseChannel(newExercise);
+            newExercise.setChannel(createdChannel);
         }
         copyQuizQuestions(importedExercise, newExercise);
         copyQuizBatches(importedExercise, newExercise);

@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,12 +57,10 @@ public class ProgrammingExerciseImportService {
 
     private final ProgrammingExerciseImportBasicService programmingExerciseImportBasicService;
 
-    private final ChannelService channelService;
-
     public ProgrammingExerciseImportService(Optional<VersionControlService> versionControlService, Optional<ContinuousIntegrationService> continuousIntegrationService,
             ProgrammingExerciseService programmingExerciseService, GitService gitService, FileService fileService, UserRepository userRepository,
             AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, UrlService urlService, TemplateUpgradePolicy templateUpgradePolicy,
-            ProgrammingExerciseImportBasicService programmingExerciseImportBasicService, ChannelService channelService, Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService) {
+            ProgrammingExerciseImportBasicService programmingExerciseImportBasicService, Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService) {
         this.versionControlService = versionControlService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.continuousIntegrationTriggerService = continuousIntegrationTriggerService;
@@ -75,7 +72,6 @@ public class ProgrammingExerciseImportService {
         this.urlService = urlService;
         this.templateUpgradePolicy = templateUpgradePolicy;
         this.programmingExerciseImportBasicService = programmingExerciseImportBasicService;
-        this.channelService = channelService;
     }
 
     /**
@@ -283,10 +279,6 @@ public class ProgrammingExerciseImportService {
 
         final var importedProgrammingExercise = programmingExerciseImportBasicService.importProgrammingExerciseBasis(originalProgrammingExercise, newExercise);
         importRepositories(originalProgrammingExercise, importedProgrammingExercise);
-
-        if(importedProgrammingExercise.isCourseExercise()) {
-            channelService.createExerciseChannel(importedProgrammingExercise);
-        }
 
         // Update the template files
         if (updateTemplate) {

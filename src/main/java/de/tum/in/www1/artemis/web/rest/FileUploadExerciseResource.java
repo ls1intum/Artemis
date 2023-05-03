@@ -123,8 +123,12 @@ public class FileUploadExerciseResource {
         // Check that the user is authorized to create the exercise
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
 
+        if (fileUploadExercise.isCourseExercise()) {
+            Channel createdChannel = channelService.createExerciseChannel(fileUploadExercise);
+            fileUploadExercise.setChannel(createdChannel);
+        }
+
         FileUploadExercise result = fileUploadExerciseRepository.save(fileUploadExercise);
-        channelService.createExerciseChannel(result);
         groupNotificationScheduleService.checkNotificationsForNewExercise(fileUploadExercise);
 
         return ResponseEntity.created(new URI("/api/file-upload-exercises/" + result.getId())).body(result);
@@ -162,7 +166,6 @@ public class FileUploadExerciseResource {
         importedFileUploadExercise.validateGeneralSettings();
 
         final var newFileUploadExercise = fileUploadExerciseImportService.importFileUploadExercise(originalFileUploadExercise, importedFileUploadExercise);
-        fileUploadExerciseRepository.save(newFileUploadExercise);
         return ResponseEntity.created(new URI("/api/file-upload-exercises/" + newFileUploadExercise.getId())).body(newFileUploadExercise);
     }
 

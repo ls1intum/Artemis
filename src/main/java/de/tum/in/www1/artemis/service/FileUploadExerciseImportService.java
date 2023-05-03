@@ -9,10 +9,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.FileUploadExercise;
+import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
 import de.tum.in.www1.artemis.repository.FileUploadExerciseRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
+import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
 
 @Service
 public class FileUploadExerciseImportService extends ExerciseImportService {
@@ -21,10 +23,13 @@ public class FileUploadExerciseImportService extends ExerciseImportService {
 
     private final FileUploadExerciseRepository fileUploadExerciseRepository;
 
+    private final ChannelService channelService;
+
     public FileUploadExerciseImportService(ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository, ResultRepository resultRepository,
-            FileUploadExerciseRepository fileUploadExerciseRepository) {
+            FileUploadExerciseRepository fileUploadExerciseRepository, ChannelService channelService) {
         super(exampleSubmissionRepository, submissionRepository, resultRepository);
         this.fileUploadExerciseRepository = fileUploadExerciseRepository;
+        this.channelService = channelService;
     }
 
     /**
@@ -40,6 +45,12 @@ public class FileUploadExerciseImportService extends ExerciseImportService {
     public FileUploadExercise importFileUploadExercise(final FileUploadExercise templateExercise, FileUploadExercise importedExercise) {
         log.debug("Creating a new Exercise based on exercise {}", templateExercise);
         FileUploadExercise newExercise = copyFileUploadExerciseBasis(importedExercise);
+
+        if (newExercise.isCourseExercise()) {
+            Channel createdChannel = channelService.createExerciseChannel(newExercise);
+            newExercise.setChannel(createdChannel);
+        }
+
         return fileUploadExerciseRepository.save(newExercise);
     }
 

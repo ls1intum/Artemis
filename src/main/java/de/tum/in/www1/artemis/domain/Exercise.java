@@ -137,8 +137,8 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     @JsonIncludeProperties({ "id" })
     private Set<PlagiarismCase> plagiarismCases = new HashSet<>();
 
-    @OneToOne(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true)
-    @JsonIgnoreProperties(value = "exercise", allowSetters = true)
+    @OneToOne(cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JoinColumn(name = "channel_id")
     private Channel channel;
 
     // NOTE: Helpers variable names must be different from Getter name, so that Jackson ignores the @Transient annotation, but Hibernate still respects it

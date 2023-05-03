@@ -56,8 +56,8 @@ public class Lecture extends DomainObject {
     @JsonIgnoreProperties(value = { "lectures", "exercises", "posts" }, allowSetters = true)
     private Course course;
 
-    @OneToOne(mappedBy = "lecture", cascade = CascadeType.REMOVE, orphanRemoval = true)
-    @JsonIgnoreProperties(value = "lecture", allowSetters = true)
+    @OneToOne(cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JoinColumn(name = "channel_id")
     private Channel channel;
 
     public String getTitle() {

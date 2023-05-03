@@ -149,10 +149,11 @@ public class ModelingExerciseResource {
 
         // if exercise is created from scratch we create new knowledge instance
         modelingExercise.setKnowledge(modelAssessmentKnowledgeService.createNewKnowledge());
-        ModelingExercise result = modelingExerciseRepository.save(modelingExercise);
-        if(result.isCourseExercise()) {
-            channelService.createExerciseChannel(result);
+        if (modelingExercise.isCourseExercise()) {
+            Channel createdChannel = channelService.createExerciseChannel(modelingExercise);
+            modelingExercise.setChannel(createdChannel);
         }
+        ModelingExercise result = modelingExerciseRepository.save(modelingExercise);
         modelingExerciseService.scheduleOperations(result.getId());
         groupNotificationScheduleService.checkNotificationsForNewExercise(modelingExercise);
 

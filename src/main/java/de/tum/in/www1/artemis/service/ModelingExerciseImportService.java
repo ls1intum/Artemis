@@ -7,15 +7,16 @@ import java.util.Set;
 
 import javax.validation.constraints.NotNull;
 
-import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
 
 @Service
 public class ModelingExerciseImportService extends ExerciseImportService {
@@ -49,10 +50,11 @@ public class ModelingExerciseImportService extends ExerciseImportService {
         Map<Long, GradingInstruction> gradingInstructionCopyTracker = new HashMap<>();
         ModelingExercise newExercise = copyModelingExerciseBasis(importedExercise, gradingInstructionCopyTracker);
         newExercise.setKnowledge(templateExercise.getKnowledge());
-        modelingExerciseRepository.save(newExercise);
-        if(newExercise.isCourseExercise()) {
-            channelService.createExerciseChannel(newExercise);
+        if (newExercise.isCourseExercise()) {
+            Channel createdChannel = channelService.createExerciseChannel(newExercise);
+            newExercise.setChannel(createdChannel);
         }
+        modelingExerciseRepository.save(newExercise);
         newExercise.setExampleSubmissions(copyExampleSubmission(templateExercise, newExercise, gradingInstructionCopyTracker));
         return newExercise;
     }
