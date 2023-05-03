@@ -9,7 +9,7 @@
             >:
         </p>
         <ul class="list-unstyled">
-            <li>
+            <li *ngIf="programmingExercise.isAtLeastInstructor">
                 <div class="checkbox">
                     <label class="control-label">
                         <input
@@ -28,10 +28,13 @@
                     </label>
                 </div>
             </li>
-            <div class="alert alert-info my-2" *ngIf="this.programmingExerciseResetOptions.deleteBuildPlans && !this.programmingExerciseResetOptions.deleteRepositories">
+            <div
+                class="alert alert-info my-2"
+                *ngIf="programmingExercise.isAtLeastInstructor && this.programmingExerciseResetOptions.deleteBuildPlans && !this.programmingExerciseResetOptions.deleteRepositories"
+            >
                 <span jhiTranslate="artemisApp.programmingExercise.reset.deleteBuildPlans.info"> The build plans will be automatically recreated when students submit again. </span>
             </div>
-            <li>
+            <li *ngIf="programmingExercise.isAtLeastInstructor">
                 <div class="checkbox">
                     <label class="control-label">
                         <input
@@ -47,7 +50,7 @@
                     </label>
                 </div>
             </li>
-            <li>
+            <li *ngIf="programmingExercise.isAtLeastInstructor">
                 <div class="checkbox">
                     <label class="control-label">
                         <input
@@ -64,7 +67,11 @@
             </li>
             <div
                 class="alert alert-warning my-2"
-                *ngIf="!this.programmingExerciseResetOptions.deleteRepositories && this.programmingExerciseResetOptions.deleteParticipationsSubmissionsAndResults"
+                *ngIf="
+                    programmingExercise.isAtLeastInstructor &&
+                    !this.programmingExerciseResetOptions.deleteRepositories &&
+                    this.programmingExerciseResetOptions.deleteParticipationsSubmissionsAndResults
+                "
             >
                 <span
                     jhiTranslate="artemisApp.programmingExercise.reset.artefactsWarning"

@@ -70,14 +70,6 @@ export class ProgrammingExerciseService {
     }
 
     /**
-     * Recreates the BASE and SOLUTION build plan for this exercise
-     * @param exerciseId of the programming exercise for which the build plans should be recreated
-     */
-    recreateBuildPlans(exerciseId: number): Observable<string> {
-        return this.http.put<string>(`${this.resourceUrl}/${exerciseId}/recreate-build-plans`, { responseType: 'text' });
-    }
-
-    /**
      * Resets a programming exercise with the given exerciseId by performing a set of operations
      * as specified in the ProgrammingExerciseResetOptions. The available operations include:
      * 1. Recreating the BASE and SOLUTION build plans for the exercise.

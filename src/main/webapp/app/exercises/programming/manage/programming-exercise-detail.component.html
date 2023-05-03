@@ -183,22 +183,7 @@
                         <span jhiTranslate="artemisApp.programmingExercise.lockAllRepositories">Lock all repositories</span>
                     </button>
                     <button
-                        *ngIf="programmingExercise.isAtLeastEditor && !programmingExercise.isAtLeastInstructor"
-                        [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
-                        jhiDeleteButton
-                        [actionType]="ActionType.Reset"
-                        [entityTitle]="programmingExercise.title || ''"
-                        deleteQuestion="artemisApp.programmingExercise.recreateBuildPlans.question"
-                        (delete)="recreateBuildPlans()"
-                        [dialogError]="dialogError$"
-                        deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
-                        [additionalChecks]="{}"
-                    >
-                        <fa-icon [icon]="faEraser"></fa-icon>
-                        <span jhiTranslate="artemisApp.programmingExercise.recreateBuildPlans.buttonText">Build Plan</span>
-                    </button>
-                    <button
-                        *ngIf="programmingExercise.isAtLeastInstructor"
+                        *ngIf="programmingExercise.isAtLeastEditor"
                         [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
                         jhiProgrammingExerciseResetButton
                         [programmingExercise]="programmingExercise"

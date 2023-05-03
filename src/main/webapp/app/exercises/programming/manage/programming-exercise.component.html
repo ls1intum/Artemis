@@ -244,7 +244,7 @@
                             </div>
                             <div class="btn-group-vertical me-1">
                                 <button
-                                    *ngIf="programmingExercise.isAtLeastInstructor"
+                                    *ngIf="programmingExercise.isAtLeastEditor"
                                     [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
                                     jhiProgrammingExerciseResetButton
                                     [programmingExercise]="programmingExercise"

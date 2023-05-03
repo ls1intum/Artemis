@@ -610,23 +610,6 @@ public class ProgrammingExerciseResource {
     }
 
     /**
-     * Deletes BASE and SOLUTION build plan of a programming exercise and creates those again. This reuses the build plan creation logic of the programming exercise creation
-     * service.
-     *
-     * @param exerciseId of the programming exercise
-     * @return the ResponseEntity with status 200 (OK) if the recreation was successful.
-     */
-    @PutMapping(RECREATE_BUILD_PLANS)
-    @PreAuthorize("hasRole('EDITOR')")
-    public ResponseEntity<Void> recreateBuildPlans(@PathVariable Long exerciseId) {
-        var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesElseThrow(exerciseId);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, user);
-        continuousIntegrationService.get().recreateBuildPlansForExercise(programmingExercise);
-        return ResponseEntity.ok().build();
-    }
-
-    /**
      * Reset a programming exercise by performing a set of operations as specified in the
      * ProgrammingExerciseResetOptionsDTO for an exercise given an exerciseId.
      *
@@ -641,22 +624,25 @@ public class ProgrammingExerciseResource {
      * @return ResponseEntity<Void> - The ResponseEntity with status 200 (OK) if the reset was successful.
      */
     @PutMapping(RESET)
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @PreAuthorize("hasRole('EDITOR')")
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> reset(@PathVariable Long exerciseId, @RequestBody ProgrammingExerciseResetOptionsDTO programmingExerciseResetOptionsDTO) {
         log.debug("REST request to reset ProgrammingExercise : {}", exerciseId);
         var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesElseThrow(exerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, null);
+        final var user = userRepository.getUserWithGroupsAndAuthorities();
 
         if (programmingExerciseResetOptionsDTO.recreateBuildPlans()) {
+            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, user);
             continuousIntegrationService.get().recreateBuildPlansForExercise(programmingExercise);
         }
 
         if (programmingExerciseResetOptionsDTO.deleteParticipationsSubmissionsAndResults()) {
+            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, user);
             exerciseDeletionService.reset(programmingExercise);
         }
 
         if (programmingExerciseResetOptionsDTO.deleteBuildPlans()) {
+            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, user);
             boolean deleteRepositories = programmingExerciseResetOptionsDTO.deleteRepositories();
             exerciseDeletionService.cleanup(exerciseId, deleteRepositories);
         }

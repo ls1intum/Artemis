@@ -1865,29 +1865,23 @@ class ProgrammingExerciseIntegrationTestService {
         request.get(defaultGetAuxReposEndpoint(), HttpStatus.FORBIDDEN, List.class);
     }
 
-    void testRecreateBuildPlansForbidden() throws Exception {
-        request.put(defaultRecreateBuildPlanEndpoint(), programmingExercise, HttpStatus.FORBIDDEN);
-    }
-
-    void testRecreateBuildPlansExerciseNotFound() throws Exception {
-        request.put(defaultRecreateBuildPlanEndpoint(-1L), programmingExercise, HttpStatus.NOT_FOUND);
-    }
-
-    void testRecreateBuildPlansExerciseSuccess() throws Exception {
-        addAuxiliaryRepositoryToExercise();
-        mockDelegate.mockGetProjectKeyFromAnyUrl(programmingExercise.getProjectKey());
-        String templateBuildPlanName = programmingExercise.getProjectKey() + "-" + TEMPLATE.getName();
-        String solutionBuildPlanName = programmingExercise.getProjectKey() + "-" + SOLUTION.getName();
-        mockDelegate.mockGetBuildPlan(programmingExercise.getProjectKey(), templateBuildPlanName, true, true, false, false);
-        mockDelegate.mockGetBuildPlan(programmingExercise.getProjectKey(), solutionBuildPlanName, true, true, false, false);
-        mockDelegate.mockDeleteBuildPlan(programmingExercise.getProjectKey(), templateBuildPlanName, false);
-        mockDelegate.mockDeleteBuildPlan(programmingExercise.getProjectKey(), solutionBuildPlanName, false);
-        mockDelegate.mockConnectorRequestsForSetup(programmingExercise, false);
-        request.put(defaultRecreateBuildPlanEndpoint(), programmingExercise, HttpStatus.OK);
-    }
-
     void testResetForbidden() throws Exception {
         var resetOptions = new ProgrammingExerciseResetOptionsDTO(false, false, false, false);
+        request.put(defaultResetEndpoint(), resetOptions, HttpStatus.FORBIDDEN);
+    }
+
+    void testResetOnlyDeleteBuildPlansForbidden() throws Exception {
+        var resetOptions = new ProgrammingExerciseResetOptionsDTO(true, false, false, false);
+        request.put(defaultResetEndpoint(), resetOptions, HttpStatus.FORBIDDEN);
+    }
+
+    void testResetDeleteBuildPlansAndDeleteStudentRepositoriesForbidden() throws Exception {
+        var resetOptions = new ProgrammingExerciseResetOptionsDTO(true, true, false, false);
+        request.put(defaultResetEndpoint(), resetOptions, HttpStatus.FORBIDDEN);
+    }
+
+    void testResetOnlyDeleteStudentParticipationsSubmissionsAndResultsForbidden() throws Exception {
+        var resetOptions = new ProgrammingExerciseResetOptionsDTO(false, false, true, false);
         request.put(defaultResetEndpoint(), resetOptions, HttpStatus.FORBIDDEN);
     }
 
@@ -2020,10 +2014,6 @@ class ProgrammingExerciseIntegrationTestService {
         return ROOT + SETUP;
     }
 
-    private String defaultRecreateBuildPlanEndpoint() {
-        return defaultRecreateBuildPlanEndpoint(programmingExercise.getId());
-    }
-
     private String defaultResetEndpoint() {
         return defaultResetEndpoint(programmingExercise.getId());
     }
@@ -2034,10 +2024,6 @@ class ProgrammingExerciseIntegrationTestService {
 
     private String defaultExportInstructorAuxiliaryRepository(AuxiliaryRepository repository) {
         return defaultExportInstructorAuxiliaryRepository(programmingExercise.getId(), repository.getId());
-    }
-
-    private String defaultRecreateBuildPlanEndpoint(Long exerciseId) {
-        return ROOT + RECREATE_BUILD_PLANS.replace("{exerciseId}", exerciseId.toString());
     }
 
     private String defaultResetEndpoint(Long exerciseId) {

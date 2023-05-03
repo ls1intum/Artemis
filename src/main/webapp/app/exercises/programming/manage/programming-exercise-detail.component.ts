@@ -275,23 +275,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         });
     }
 
-    /**
-     * Deletes the template and solution build plans and recreates them from scratch.
-     */
-    recreateBuildPlans() {
-        this.programmingExerciseService.recreateBuildPlans(this.programmingExercise.id!).subscribe({
-            next: (res) => {
-                this.alertService.addAlert({
-                    type: AlertType.SUCCESS,
-                    message: res,
-                    disableTranslation: true,
-                });
-                this.dialogErrorSource.next('');
-            },
-            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
-        });
-    }
-
     deleteProgrammingExercise(event: { [key: string]: boolean }) {
         this.programmingExerciseService.delete(this.programmingExercise.id!, event.deleteStudentReposBuildPlans, event.deleteBaseReposBuildPlans).subscribe({
             next: () => {

@@ -708,33 +708,27 @@ class ProgrammingExerciseIntegrationJenkinsGitlabTest extends AbstractSpringInte
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
-    void testRecreateBuildPlansForbiddenStudent() throws Exception {
-        programmingExerciseIntegrationTestService.testRecreateBuildPlansForbidden();
-    }
-
-    @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void testRecreateBuildPlansForbiddenTutor() throws Exception {
-        programmingExerciseIntegrationTestService.testRecreateBuildPlansForbidden();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
-    void testRecreateBuildPlansExerciseNotFound() throws Exception {
-        programmingExerciseIntegrationTestService.testRecreateBuildPlansExerciseNotFound();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void recreateBuildPlansSuccess() throws Exception {
-        programmingExerciseIntegrationTestService.testRecreateBuildPlansExerciseSuccess();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
-    void testResetForbiddenEditor() throws Exception {
+    void testResetForbiddenTutor() throws Exception {
         programmingExerciseIntegrationTestService.testResetForbidden();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testResetOnlyDeleteBuildPlansForbiddenEditor() throws Exception {
+        programmingExerciseIntegrationTestService.testResetOnlyDeleteBuildPlansForbidden();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testResetDeleteBuildPlansAndDeleteStudentRepositoriesForbiddenEditor() throws Exception {
+        programmingExerciseIntegrationTestService.testResetDeleteBuildPlansAndDeleteStudentRepositoriesForbidden();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testResetOnlyDeleteStudentParticipationsSubmissionsAndResultsForbiddenEditor() throws Exception {
+        programmingExerciseIntegrationTestService.testResetOnlyDeleteStudentParticipationsSubmissionsAndResultsForbidden();
     }
 
     @Test
