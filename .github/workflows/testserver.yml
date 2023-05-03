@@ -135,16 +135,13 @@ jobs:
       #TS9: ${{ steps.filter.outputs.artemis-test9 || '' }}
       #TS10: ${{ steps.filter.outputs.artemis-test10 || '' }}
     steps:
-      - env:
-          DEPLOY_LABEL: 'deploy:${{ matrix.label-identifier }}'
-        run: |
+      - run: |
           echo "$DEPLOY_LABEL"
-          echo '${{ contains(github.event.pull_request.labels.*.name, env.DEPLOY_LABEL) }}'
+          echo '${{ contains(github.event.pull_request.labels.*.name, format('deploy:{0}', matrix.label-identifier)) }}'
       - id: filter
         env:
-          DEPLOY_LABEL: 'deploy:${{ matrix.label-identifier }}'
           MATRIX_JSON: ${{ toJSON(matrix) }}
-        if: ${{ contains(github.event.pull_request.labels.*.name, env.DEPLOY_LABEL) }}
+        if: ${{ contains(github.event.pull_request.labels.*.name, format('deploy:{0}', matrix.label-identifier)) }}
         run: |
           MATRIX_JSON=${MATRIX_JSON//$'\n'/}
           echo "${{ matrix.label-identifier }}=$MATRIX_JSON" >> $GITHUB_OUTPUT
