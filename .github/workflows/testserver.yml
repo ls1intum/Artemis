@@ -149,7 +149,7 @@ jobs:
 
     steps:
       - name: Early exit
-        if: ${{ !contains(github.event.pull_request.labels.*.name, "deploy:${{ matrix.lock_label }}") }}
+        if: contains(github.event.pull_request.labels.*.name, 'deploy:${{ matrix.lock_label }}') == false
         run: |
           gh run cancel ${{ github.run_id }}
           gh run watch ${{ github.run_id }}
