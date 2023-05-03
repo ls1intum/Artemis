@@ -106,7 +106,7 @@ public class AttachmentUnitService {
             if (existingAttachmentUnit.getSlides() != null && !existingAttachmentUnit.getSlides().isEmpty()) {
                 slideRepository.deleteAll(existingAttachmentUnit.getSlides());
             }
-            if (Objects.equals(updateFile.getContentType(), "application/pdf") || Objects.equals(FilenameUtils.getExtension(updateFile.getOriginalFilename()), "pdf")) {
+            if (Objects.equals(FilenameUtils.getExtension(updateFile.getOriginalFilename()), "pdf")) {
                 slideSplitterService.splitAttachmentUnitIntoSingleSlides(savedAttachmentUnit);
             }
         }

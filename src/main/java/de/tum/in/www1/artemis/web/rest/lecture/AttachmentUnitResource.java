@@ -151,7 +151,7 @@ public class AttachmentUnitResource {
 
         AttachmentUnit savedAttachmentUnit = attachmentUnitService.createAttachmentUnit(attachmentUnit, attachment, lecture, file, keepFilename);
         lectureRepository.save(lecture);
-        if (Objects.equals(file.getContentType(), "application/pdf") || Objects.equals(FilenameUtils.getExtension(file.getOriginalFilename()), "pdf")) {
+        if (Objects.equals(FilenameUtils.getExtension(file.getOriginalFilename()), "pdf")) {
             slideSplitterService.splitAttachmentUnitIntoSingleSlides(savedAttachmentUnit);
         }
         attachmentUnitService.prepareAttachmentUnitForClient(savedAttachmentUnit);
@@ -181,7 +181,7 @@ public class AttachmentUnitResource {
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, lecture.getCourse(), null);
 
         try {
-            if (!Objects.equals(file.getContentType(), "application/pdf") || !Objects.equals(FilenameUtils.getExtension(file.getOriginalFilename()), "pdf")) {
+            if (!Objects.equals(FilenameUtils.getExtension(file.getOriginalFilename()), "pdf")) {
                 throw new BadRequestAlertException("The file must be a pdf", ENTITY_NAME, "wrongFileType");
             }
             List<AttachmentUnit> savedAttachmentUnits = lectureUnitProcessingService.splitAndSaveUnits(lectureUnitInformationDTO, file, lecture);
