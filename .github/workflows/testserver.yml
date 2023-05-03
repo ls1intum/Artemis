@@ -6,6 +6,9 @@ on:
 
 concurrency: test-servers
 
+env:
+  RAW_URL: https://raw.githubusercontent.com/${{ github.repository }}/${{ github.sha }}
+
 jobs:
   filter-matrix:
     runs-on: ubuntu-latest
