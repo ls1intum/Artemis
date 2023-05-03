@@ -427,9 +427,19 @@ public class ParticipationResource {
                 }
             }
             // Validity of presentationScore for graded presentations
-            if (gradingScale.isPresent() && gradingScale.get().getPresentationsNumber() != null
-                    && (participation.getPresentationScore() > 100. || participation.getPresentationScore() < 0.)) {
-                throw new BadRequestAlertException("The presentation grade must be between 0 and 100", ENTITY_NAME, "presentationGradeInvalid");
+            if (gradingScale.isPresent() && gradingScale.get().getPresentationsNumber() != null) {
+                if ((participation.getPresentationScore() > 100. || participation.getPresentationScore() < 0.)) {
+                    throw new BadRequestAlertException("The presentation grade must be between 0 and 100", ENTITY_NAME, "presentationGradeInvalid");
+                }
+
+                long presentationCountForParticipant = studentParticipationRepository
+                        .findByCourseIdAndStudentIdWithRelevantResult(course.getId(), participation.getParticipant().getId()).stream()
+                        .filter(studentParticipation -> studentParticipation.getPresentationScore() != null).count();
+                if (presentationCountForParticipant >= gradingScale.get().getPresentationsNumber()) {
+                    throw new BadRequestAlertException("Participant already gave the maximum number of presentations", ENTITY_NAME,
+                            "invalid.presentations.maxNumberOfPresentationsExceeded",
+                            Map.of("name", participation.getParticipant().getName(), "presentationsNumber", gradingScale.get().getPresentationsNumber()));
+                }
             }
         }
         // Validity of presentationScore for no presentations
