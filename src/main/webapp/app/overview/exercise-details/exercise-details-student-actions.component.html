@@ -72,10 +72,11 @@
         <!-- ACTIONS START -->
         <div class="btn-group">
             <button
+                class="view-team"
                 jhi-exercise-action-button
                 [buttonIcon]="faUsers"
                 [buttonLabel]="'artemisApp.exerciseActions.viewTeam' | artemisTranslate"
-                *ngIf="exercise.teamMode && exercise.studentAssignedTeamIdComputed && !exercise.studentAssignedTeamId"
+                *ngIf="exercise.teamMode && exercise.studentAssignedTeamIdComputed && exercise.studentAssignedTeamId"
                 [smallButton]="smallButtons"
                 [hideLabelMobile]="true"
                 [routerLink]="['/courses', courseId, 'exercises', exercise.id, 'teams', assignedTeamId]"
@@ -92,7 +93,7 @@
                     [smallButton]="smallButtons"
                     [hideLabelMobile]="false"
                     [overwriteDisabled]="isBeforeStartDateAndStudent"
-                    *ngIf="!gradedParticipation && isStartExerciseAvailable()"
+                    *ngIf="!gradedParticipation && (!exercise.teamMode || exercise.studentAssignedTeamId) && isStartExerciseAvailable()"
                     (click)="startExercise()"
                 ></button>
             </span>
@@ -271,10 +272,11 @@
         <!-- ACTIONS START -->
         <div class="btn-group">
             <button
+                class="view-team"
                 jhi-exercise-action-button
                 [buttonIcon]="faUsers"
                 [buttonLabel]="'artemisApp.exerciseActions.viewTeam' | artemisTranslate"
-                *ngIf="exercise.teamMode && exercise.studentAssignedTeamIdComputed && !exercise.studentAssignedTeamId"
+                *ngIf="exercise.teamMode && exercise.studentAssignedTeamIdComputed && exercise.studentAssignedTeamId"
                 [smallButton]="smallButtons"
                 [hideLabelMobile]="true"
                 [routerLink]="['/courses', courseId, 'exercises', exercise.id, 'teams', assignedTeamId]"
@@ -290,7 +292,7 @@
                     [smallButton]="smallButtons"
                     [hideLabelMobile]="false"
                     [overwriteDisabled]="isBeforeStartDateAndStudent"
-                    *ngIf="!gradedParticipation && isStartExerciseAvailable()"
+                    *ngIf="!gradedParticipation && (!exercise.teamMode || exercise.studentAssignedTeamId) && isStartExerciseAvailable()"
                     (click)="startExercise()"
                 ></button>
             </span>
@@ -343,10 +345,11 @@
         <!-- ACTIONS START -->
         <div class="btn-group">
             <button
+                class="view-team"
                 jhi-exercise-action-button
                 [buttonIcon]="faUsers"
                 [buttonLabel]="'artemisApp.exerciseActions.viewTeam' | artemisTranslate"
-                *ngIf="exercise.teamMode && exercise.studentAssignedTeamIdComputed && !exercise.studentAssignedTeamId"
+                *ngIf="exercise.teamMode && exercise.studentAssignedTeamIdComputed && exercise.studentAssignedTeamId"
                 [smallButton]="smallButtons"
                 [hideLabelMobile]="true"
             ></button>
@@ -358,7 +361,7 @@
                     [buttonIcon]="faPlayCircle"
                     [buttonLabel]="'artemisApp.exerciseActions.startExercise' | artemisTranslate"
                     [buttonLoading]="!!exercise.loading"
-                    *ngIf="!gradedParticipation && isStartExerciseAvailable()"
+                    *ngIf="!gradedParticipation && (!exercise.teamMode || exercise.studentAssignedTeamId) && isStartExerciseAvailable()"
                     [smallButton]="smallButtons"
                     [hideLabelMobile]="false"
                     [overwriteDisabled]="isBeforeStartDateAndStudent"
