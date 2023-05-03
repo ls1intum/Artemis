@@ -70,8 +70,8 @@
                     jhiTranslate="artemisApp.programmingExercise.reset.artefactsWarning"
                     [translateValues]="{ vcPlatform: versionControlName, ciPlatform: continuousIntegrationName }"
                 >
-                    Selecting Options 3 without all previous options may lead to undeleted artifacts on {{ 'Bitbucket' }} and {{ 'Bamboo' }}. Please ensure this is your intended
-                    action before proceeding.
+                    Deleting student participations, submissions, and results without removing the associated repositories and build plans may lead to undeleted artifacts on
+                    {{ versionControlName }} and {{ continuousIntegrationName }}. Please carefully review if this is the desired action before proceeding.
                 </span>
             </div>
             <li *ngIf="programmingExercise.isAtLeastEditor">
