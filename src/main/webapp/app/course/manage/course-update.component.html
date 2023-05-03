@@ -433,7 +433,12 @@
                     <ng-container *ngTemplateOutlet="saveButtonTpl"></ng-container>
                 </span>
                 <ng-template #saveButtonTpl>
-                    <button type="submit" class="btn btn-primary ms-2" id="save-entity" [disabled]="courseForm.invalid || isSaving || !isValidConfiguration">
+                    <button
+                        type="submit"
+                        class="btn btn-primary ms-2"
+                        id="save-entity"
+                        [disabled]="courseForm.invalid || isSaving || this.areInvalidDates || this.isInvalidStartDate || this.isInvalidEndDate"
+                    >
                         <fa-icon [icon]="faSave"></fa-icon>
                         <span jhiTranslate="entity.action.save">Save</span>
                     </button>

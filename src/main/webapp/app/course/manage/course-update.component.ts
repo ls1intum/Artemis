@@ -532,10 +532,6 @@ export class CourseUpdateComponent implements OnInit {
         return !this.course.startDate || !this.course.endDate;
     }
 
-    get isValidConfiguration(): boolean {
-        return !this.areInvalidDates && !this.isInvalidStartDate && !this.isInvalidEndDate;
-    }
-
     /**
      * Deletes the course icon
      */
