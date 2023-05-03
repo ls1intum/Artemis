@@ -1,7 +1,9 @@
 package de.tum.in.www1.artemis.service;
 
 import java.time.ZonedDateTime;
+import java.util.Objects;
 
+import org.apache.commons.io.FilenameUtils;
 import org.springframework.cache.CacheManager;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -104,7 +106,9 @@ public class AttachmentUnitService {
             if (existingAttachmentUnit.getSlides() != null && !existingAttachmentUnit.getSlides().isEmpty()) {
                 slideRepository.deleteAll(existingAttachmentUnit.getSlides());
             }
-            slideSplitterService.splitAttachmentUnitIntoSingleSlides(savedAttachmentUnit);
+            if (Objects.equals(updateFile.getContentType(), "application/pdf") || Objects.equals(FilenameUtils.getExtension(updateFile.getOriginalFilename()), "pdf")) {
+                slideSplitterService.splitAttachmentUnitIntoSingleSlides(savedAttachmentUnit);
+            }
         }
 
         return savedAttachmentUnit;

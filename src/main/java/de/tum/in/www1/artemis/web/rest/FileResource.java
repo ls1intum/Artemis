@@ -409,7 +409,7 @@ public class FileResource {
      * @param slideNumber      the slideNumber of the file
      * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
      */
-    @GetMapping("files/attachments/slides/attachment-unit/{attachmentUnitId}/slide/{slideNumber}")
+    @GetMapping("files/attachments/attachment-unit/{attachmentUnitId}/slide/{slideNumber}")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<byte[]> getAttachmentUnitAttachmentSlide(@PathVariable Long attachmentUnitId, @PathVariable String slideNumber) {
         log.debug("REST request to get the slide : {}", slideNumber);

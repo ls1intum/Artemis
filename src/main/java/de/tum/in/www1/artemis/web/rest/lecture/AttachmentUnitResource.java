@@ -4,7 +4,9 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
+import java.util.Objects;
 
+import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
@@ -145,7 +147,9 @@ public class AttachmentUnitResource {
 
         AttachmentUnit savedAttachmentUnit = attachmentUnitService.createAttachmentUnit(attachmentUnit, attachment, lecture, file, keepFilename);
         lectureRepository.save(lecture);
-        slideSplitterService.splitAttachmentUnitIntoSingleSlides(savedAttachmentUnit);
+        if (Objects.equals(file.getContentType(), "application/pdf") || Objects.equals(FilenameUtils.getExtension(file.getOriginalFilename()), "pdf")) {
+            slideSplitterService.splitAttachmentUnitIntoSingleSlides(savedAttachmentUnit);
+        }
         attachmentUnitService.prepareAttachmentUnitForClient(savedAttachmentUnit);
         learningGoalProgressService.updateProgressByLearningObjectAsync(savedAttachmentUnit);
 
@@ -153,7 +157,7 @@ public class AttachmentUnitResource {
     }
 
     /**
-     * POST lectures/:lectureId/attachment-units/split : creates new attachment units.
+     * POST lectures/:lectureId/attachment-units/split : creates new attachment units. The provided file must be a pdf file.
      *
      * @param lectureId                 the id of the lecture to which the attachment units should be added
      * @param lectureUnitInformationDTO the units that should be created
@@ -173,6 +177,9 @@ public class AttachmentUnitResource {
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, lecture.getCourse(), null);
 
         try {
+            if (!Objects.equals(file.getContentType(), "application/pdf") || !Objects.equals(FilenameUtils.getExtension(file.getOriginalFilename()), "pdf")) {
+                throw new BadRequestAlertException("The file must be a pdf", ENTITY_NAME, "wrongFileType");
+            }
             List<AttachmentUnit> savedAttachmentUnits = lectureUnitProcessingService.splitAndSaveUnits(lectureUnitInformationDTO, file, lecture);
             savedAttachmentUnits.forEach(attachmentUnitService::prepareAttachmentUnitForClient);
             savedAttachmentUnits.forEach(learningGoalProgressService::updateProgressByLearningObjectAsync);

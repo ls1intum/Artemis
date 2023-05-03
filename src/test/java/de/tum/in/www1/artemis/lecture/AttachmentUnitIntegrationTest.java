@@ -42,7 +42,7 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbu
 
     private static final String TEST_PREFIX = "attachmentunitintegrationtest"; // only lower case is supported
 
-    private static final int SLIDE_COUNT = 5;
+    private static final int SLIDE_COUNT = 3;
 
     @Autowired
     private AttachmentRepository attachmentRepository;
@@ -216,7 +216,7 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         assertThat(slideRepository.findAllByAttachmentUnitId(attachmentUnit.getId())).hasSize(SLIDE_COUNT);
         List<Slide> oldSlides = slideRepository.findAllByAttachmentUnitId(attachmentUnit.getId());
         CountDownLatch latch1 = new CountDownLatch(1);
-        var updateResult = request.getMvc().perform(buildUpdateAttachmentUnit(attachmentUnit, attachment)).andExpect(status().isOk()).andReturn();
+        var updateResult = request.getMvc().perform(buildUpdateAttachmentUnit(attachmentUnit, attachment, "new File")).andExpect(status().isOk()).andReturn();
         attachmentUnit = mapper.readValue(updateResult.getResponse().getContentAsString(), AttachmentUnit.class);
         assertThat(attachmentUnit.getDescription()).isEqualTo("Changed");
         // Wait for async operation to complete (after attachment unit is updated, the new file gets split into slides)
