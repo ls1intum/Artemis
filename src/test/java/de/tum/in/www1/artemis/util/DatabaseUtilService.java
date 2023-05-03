@@ -4441,6 +4441,15 @@ public class DatabaseUtilService {
         return Set.of(gradeStep1, gradeStep2, gradeStep3);
     }
 
+    public GradingScale generateGradingScale(int gradeStepCount, double[] intervals, boolean lowerBoundInclusivity, int firstPassingIndex, Optional<String[]> gradeNames,
+            Course course, Integer presentationsNumber, Double presentationsWeight) {
+        GradingScale gradingScale = generateGradingScale(gradeStepCount, intervals, lowerBoundInclusivity, firstPassingIndex, gradeNames);
+        gradingScale.setCourse(course);
+        gradingScale.setPresentationsNumber(presentationsNumber);
+        gradingScale.setPresentationsWeight(presentationsWeight);
+        return gradingScale;
+    }
+
     public GradingScale generateGradingScale(int gradeStepCount, double[] intervals, boolean lowerBoundInclusivity, int firstPassingIndex, Optional<String[]> gradeNames) {
         if (gradeStepCount != intervals.length - 1 || firstPassingIndex >= gradeStepCount || firstPassingIndex < 0) {
             fail("Invalid grading scale parameters");

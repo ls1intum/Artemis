@@ -1,6 +1,9 @@
 package de.tum.in.www1.artemis.domain;
 
-import static de.tum.in.www1.artemis.config.Constants.FEEDBACK_DETAIL_TEXT_MAX_CHARACTERS;
+import static de.tum.in.www1.artemis.config.Constants.FEEDBACK_DETAIL_TEXT_DATABASE_MAX_LENGTH;
+import static de.tum.in.www1.artemis.config.Constants.FEEDBACK_DETAIL_TEXT_SOFT_MAX_LENGTH;
+import static de.tum.in.www1.artemis.config.Constants.FEEDBACK_PREVIEW_TEXT_MAX_LENGTH;
+import static de.tum.in.www1.artemis.config.Constants.LONG_FEEDBACK_MAX_LENGTH;
 
 import java.util.*;
 
@@ -8,6 +11,7 @@ import javax.annotation.Nullable;
 import javax.persistence.*;
 import javax.validation.constraints.Size;
 
+import org.apache.commons.lang3.StringUtils;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -34,16 +38,23 @@ public class Feedback extends DomainObject {
 
     public static final String SUBMISSION_POLICY_FEEDBACK_IDENTIFIER = "SubPolFeedbackIdentifier:";
 
+    private static final String DETAIL_TEXT_TRIMMED_MARKER = " [...]";
+
     @Size(max = 500)
     @Column(name = "text", length = 500)
     private String text;
 
-    @Size(max = FEEDBACK_DETAIL_TEXT_MAX_CHARACTERS)   // this ensures that the detail_text can be stored, even for long feedback
-    @Column(name = "detail_text", length = FEEDBACK_DETAIL_TEXT_MAX_CHARACTERS)
+    @Size(max = FEEDBACK_DETAIL_TEXT_DATABASE_MAX_LENGTH)   // this ensures that the detail_text can be stored, even for long feedback
+    @Column(name = "detail_text", length = FEEDBACK_DETAIL_TEXT_DATABASE_MAX_LENGTH)
     private String detailText;
 
     @Column(name = "has_long_feedback_text")
     private boolean hasLongFeedbackText = false;
+
+    // the fetch actually is lazy, since the primary key is mapped, so both sides of the relation have the join column
+    @OneToOne(mappedBy = "feedback", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @PrimaryKeyJoinColumn
+    private LongFeedbackText longFeedbackText;
 
     /**
      * Reference to the assessed element (e.g. model element id or text element string)
@@ -127,25 +138,84 @@ public class Feedback extends DomainObject {
     }
 
     /**
-     * sets the detail text of the feedback. In case the detail text is longer than 5000 characters, the additional characters are cut off to avoid database issues
+     * Sets the detail text by cutting it off at the maximum length the database can store.
+     * <p>
+     * If you want to store longer feedback, use {@link #setDetailText(String)} instead.
+     *
+     * @param detailText The detail text for this feedback.
+     */
+    public void setDetailTextTruncated(@Nullable final String detailText) {
+        this.detailText = StringUtils.truncate(detailText, FEEDBACK_DETAIL_TEXT_DATABASE_MAX_LENGTH);
+        this.longFeedbackText = null;
+        this.hasLongFeedbackText = false;
+    }
+
+    /**
+     * Sets the detail text of the feedback.
+     * <p>
+     * Always stores the whole detail text.
+     * In case the feedback is shorter than {@link de.tum.in.www1.artemis.config.Constants#FEEDBACK_DETAIL_TEXT_SOFT_MAX_LENGTH},
+     * the feedback is stored directly in the detail text.
+     * Otherwise, an associated {@link LongFeedbackText} is attached that holds the full feedback.
+     * In this case the actual detail text stored in this feedback only contains a short preview.
+     * <p>
+     * If you do <emph>not</emph> want a long feedback to be created, use {@link #setDetailTextTruncated(String)} instead.
      *
      * @param detailText the new detail text for the feedback, can be null
      */
-    public void setDetailText(@Nullable String detailText) {
-        if (detailText == null || detailText.length() <= FEEDBACK_DETAIL_TEXT_MAX_CHARACTERS) {
+    public void setDetailText(@Nullable final String detailText) {
+        if (detailText == null || detailText.length() <= FEEDBACK_DETAIL_TEXT_SOFT_MAX_LENGTH) {
             this.detailText = detailText;
+            setLongFeedbackText(null);
+            setHasLongFeedbackText(false);
         }
         else {
-            this.detailText = detailText.substring(0, FEEDBACK_DETAIL_TEXT_MAX_CHARACTERS);
+            final LongFeedbackText longFeedback = buildLongFeedback(detailText);
+
+            this.detailText = trimDetailText(detailText);
+            setLongFeedbackText(longFeedback);
+            setHasLongFeedbackText(true);
         }
     }
 
-    public boolean hasLongFeedbackText() {
+    private String trimDetailText(final String detailText) {
+        final int maxLength = FEEDBACK_PREVIEW_TEXT_MAX_LENGTH - DETAIL_TEXT_TRIMMED_MARKER.length();
+        return StringUtils.truncate(detailText, maxLength) + DETAIL_TEXT_TRIMMED_MARKER;
+    }
+
+    private LongFeedbackText buildLongFeedback(final String detailText) {
+        final LongFeedbackText longFeedback = new LongFeedbackText();
+        longFeedback.setText(StringUtils.truncate(detailText, LONG_FEEDBACK_MAX_LENGTH));
+        longFeedback.setFeedback(this);
+
+        return longFeedback;
+    }
+
+    public boolean getHasLongFeedbackText() {
         return hasLongFeedbackText;
     }
 
+    /**
+     * Only for JPA, do not use directly. Use {@link #setDetailText(String)} instead.
+     *
+     * @param hasLongFeedbackText True, if the feedback has a long feedback text.
+     */
     public void setHasLongFeedbackText(boolean hasLongFeedbackText) {
         this.hasLongFeedbackText = hasLongFeedbackText;
+    }
+
+    @JsonIgnore
+    public LongFeedbackText getLongFeedbackText() {
+        return longFeedbackText;
+    }
+
+    /**
+     * Only for JPA, do not use directly. Use {@link #setDetailText(String)} instead.
+     *
+     * @param longFeedbackText The long feedback text this feedback is linked to.
+     */
+    public void setLongFeedbackText(LongFeedbackText longFeedbackText) {
+        this.longFeedbackText = longFeedbackText;
     }
 
     public String getReference() {
@@ -360,29 +430,33 @@ public class Feedback extends DomainObject {
      * @return Copy of the automatic feedback without its original ID
      */
     public Feedback copyFeedback() {
-        var feedback = new Feedback();
+        final Feedback feedback = new Feedback();
+
         feedback.setDetailText(getDetailText());
-        feedback.setHasLongFeedbackText(hasLongFeedbackText());
         feedback.setType(getType());
         // For manual result each feedback needs to have a credit. If no credit is set, we set it to 0.0
         feedback.setCredits(Objects.requireNonNullElse(getCredits(), 0.0));
         feedback.setText(getText());
+
         if (isPositive() == null) {
             feedback.setPositiveViaCredits();
         }
         else {
             feedback.setPositive(isPositive());
         }
+
         feedback.setReference(getReference());
         feedback.setVisibility(getVisibility());
         feedback.setGradingInstruction(getGradingInstruction());
-        return feedback;
-    }
 
-    @Override
-    public String toString() {
-        return "Feedback{" + "id=" + getId() + ", text='" + getText() + "'" + ", detailText='" + getDetailText() + "'" + ", reference='" + getReference() + "'" + ", positive='"
-                + isPositive() + "'" + ", type='" + getType() + ", visibility=" + getVisibility() + ", gradingInstruction='" + getGradingInstruction() + "'" + "}";
+        feedback.setHasLongFeedbackText(getHasLongFeedbackText());
+        if (feedback.getHasLongFeedbackText()) {
+            final var copiedLongFeedback = getLongFeedbackText().copy();
+            copiedLongFeedback.setFeedback(feedback);
+            feedback.setLongFeedbackText(copiedLongFeedback);
+        }
+
+        return feedback;
     }
 
     /**
@@ -422,4 +496,9 @@ public class Feedback extends DomainObject {
         return totalScore;
     }
 
+    @Override
+    public String toString() {
+        return "Feedback{" + "text='" + text + '\'' + ", detailText='" + detailText + '\'' + ", hasLongFeedbackText=" + hasLongFeedbackText + ", reference='" + reference + '\''
+                + ", credits=" + credits + ", positive=" + positive + ", type=" + type + ", visibility=" + visibility + '}';
+    }
 }
