@@ -152,10 +152,24 @@ jobs:
       - name: Early exit
         if: contains(github.event.pull_request.labels.*.name, 'deploy:${{ matrix.lock_label }}') == false
         run: |
-          gh run cancel ${{ github.run_id }}
-          gh run watch ${{ github.run_id }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          echo "Cancelling the job, as it is the wrong environment..."
+          curl -X POST \
+            -H "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            https://api.github.com/repos/${{github.repository}}/actions/jobs/${{github.job_id}}/cancel
+          while true; do
+            status=$(curl -s -X GET \
+              -H "Authorization: Bearer ${{secrets.GITHUB_TOKEN}}" \
+              -H "Accept: application/vnd.github.v3+json" \
+              https://api.github.com/repos/${{github.repository}}/actions/jobs/${{github.job_id}} | jq -r '.status')
+            if [[ $status == "in_progress" ]]; then
+              echo "Job is still running"
+              sleep 10
+            else
+              echo "Job has been cancelled"
+              break
+            fi
+          done
 
       - uses: actions-ecosystem/action-remove-labels@v1
         with:
