@@ -15,7 +15,7 @@ jobs:
           # Commented out environments are not yet available and will be enabled in the future
 
           #- environment: artemis-test1.artemis.cit.tum.de
-          #  lock_label: artemis-test1
+          #  label-identifier: artemis-test1
           #  url: https://artemis-test1.artemis.cit.tum.de
           #  user: deployment
           #  hosts: artemis-test1.artemis.cit.tum.de
@@ -26,7 +26,7 @@ jobs:
           #    artemis-test1.artemis.cit.tum.de ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBGzlZUARYQBdq85FtCe4IALac1dSWoNsvQZmeCjPmS/
 
           #- environment: artemis-test2.artemis.cit.tum.de
-          #  lock_label: artemis-test2
+          #  label-identifier: artemis-test2
           #  url: https://artemis-test2.artemis.cit.tum.de
           #  user: deployment
           #  hosts: artemis-test2.artemis.cit.tum.de
@@ -37,7 +37,7 @@ jobs:
           #    artemis-test2.artemis.cit.tum.de ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMV70ACU6GdLtf1MwUklNltC78UoOPsasZruYh0Ord6n
 
           #- environment: artemis-test3.artemis.cit.tum.de
-          #  lock_label: artemis-test3
+          #  label-identifier: artemis-test3
           #  url: https://artemis-test3.artemis.cit.tum.de
           #  user: deployment
           #  hosts: artemis-test3.artemis.cit.tum.de
@@ -48,7 +48,7 @@ jobs:
           #    artemis-test3.artemis.cit.tum.de ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGE67ADXnCgvbyJfqDAmSvegYwmCzfOyAUKBbJpwh7oU
 
           - environment: artemis-test4.artemis.cit.tum.de
-            lock_label: artemis-test4
+            label-identifier: artemis-test4
             url: https://artemis-test4.artemis.cit.tum.de
             user: deployment
             hosts: artemis-test4.artemis.cit.tum.de
@@ -59,7 +59,7 @@ jobs:
               artemis-test4.artemis.cit.tum.de ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIE9lVNwikkOcJb/7BdV200KcEtpisvhkOHMcKZeF3Tvb
 
           - environment: artemis-test5.artemis.cit.tum.de
-            lock_label: artemis-test5
+            label-identifier: artemis-test5
             url: https://artemis-test5.artemis.cit.tum.de
             user: deployment
             hosts: artemis-test5.artemis.cit.tum.de
@@ -70,7 +70,7 @@ jobs:
               artemis-test5.artemis.cit.tum.de ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHonMyIKiEHw7miwe5PJMDvWO/PwTpQpFYsvi2DUXYrO
 
           - environment: artemis-test6.artemis.cit.tum.de
-            lock_label: artemis-test6
+            label-identifier: artemis-test6
             url: https://artemis-test6.artemis.cit.tum.de
             user: deployment
             hosts: artemis-test6.artemis.cit.tum.de
@@ -81,7 +81,7 @@ jobs:
               artemis-test6.artemis.cit.tum.de ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMZdVOmY8K39PId1WPGMZaQwJvtDbGqJTdJX26YtDXgI
 
           #- environment: artemis-test7.artemis.cit.tum.de
-          #  lock_label: artemis-test7
+          #  label-identifier: artemis-test7
           #  url: https://artemis-test7.artemis.cit.tum.de
           #  user: deployment
           #  hosts: artemis-test7.artemis.cit.tum.de
@@ -92,7 +92,7 @@ jobs:
           #    artemis-test7.artemis.cit.tum.de ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMCmfbFQB7wbdaocZlWn45BYn8CaMfFHKuymHcLNq+JA
 
           #- environment: artemis-test8.artemis.cit.tum.de
-          #  lock_label: artemis-test8
+          #  label-identifier: artemis-test8
           #  url: https://artemis-test8.artemis.cit.tum.de
           #  user: deployment
           #  hosts: artemis-test8.artemis.cit.tum.de
@@ -103,7 +103,7 @@ jobs:
           #    artemis-test8.artemis.cit.tum.de ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFN6fu1oNKX3xFE1pe6Ichl5XJ/eTYhihywVvkH0mWRF
 
           #- environment: artemis-test9.artemis.cit.tum.de
-          #  lock_label: artemis-test9
+          #  label-identifier: artemis-test9
           #  url: https://artemis-test9.artemis.cit.tum.de
           #  user: deployment
           #  hosts: artemis-test9.artemis.cit.tum.de
@@ -114,7 +114,7 @@ jobs:
           #    artemis-test9.artemis.cit.tum.de ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDbS/SXTRdYBE/qVjRHNMPXXMegsjBZrnuK6oAQJJstZ
 
           #- environment: artemis-test10.artemis.cit.tum.de
-          #  lock_label: artemis-test10
+          #  label-identifier: artemis-test10
           #  url: https://artemis-test10.artemis.cit.tum.de
           #  user: deployment
           #  hosts: artemis-test10.artemis.cit.tum.de
@@ -138,10 +138,10 @@ jobs:
       - id: filter
         env:
           MATRIX_JSON: ${{ toJSON(matrix) }}
-        if: ${{ contains(github.event.pull_request.labels.*.name, '${{ matrix.lock_label }}') }}
+        if: ${{ contains(github.event.pull_request.labels.*.name, 'deploy:${{ matrix.label-identifier }}') }}
         run: |
           MATRIX_JSON=${MATRIX_JSON//$'\n'/}
-          echo "${{ matrix.lock_label }}=$MATRIX_JSON" >> $GITHUB_OUTPUT
+          echo "${{ matrix.label-identifier }}=$MATRIX_JSON" >> $GITHUB_OUTPUT
 
 
   process-matrix:
@@ -187,7 +187,7 @@ jobs:
         with:
           github_token: ${{ secrets.github_token }}
           labels: |
-            deploy:${{ matrix.lock_label }}
+            deploy:${{ matrix.label-identifier }}
 
       - name: Check "lock:${{ matrix.environment }}" label
         uses: actions/github-script@v6
@@ -197,19 +197,19 @@ jobs:
             const opts = github.rest.issues.listForRepo.endpoint.merge({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              labels: ['lock:${{ matrix.lock_label }}']
+              labels: ['lock:${{ matrix.label-identifier }}']
             })
             const issues = await github.paginate(opts)
             if (issues.length == 1 && (!context.issue || issues[0].number != context.issue.number)) {
               core.setFailed(`Testserver "${{ matrix.environment }}" is already in use by PR #${issues[0].number}.`);
             } else if (issues.length > 1) {
-              core.setFailed('Testserver "${{ matrix.environment }}" is already in use by multiple PRs. Check PRs with label "lock:${{ matrix.lock_label }}"!');
+              core.setFailed('Testserver "${{ matrix.environment }}" is already in use by multiple PRs. Check PRs with label "lock:${{ matrix.label-identifier }}"!');
             } else if (context.issue && context.issue.number) {
               await github.rest.issues.addLabels({
                 issue_number: context.issue.number,
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                labels: ['lock:${{ matrix.lock_label }}']
+                labels: ['lock:${{ matrix.label-identifier }}']
               })
             }
 
