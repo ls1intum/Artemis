@@ -38,7 +38,7 @@ export class EditLearningGoalComponent implements OnInit {
             .pipe(
                 take(1),
                 switchMap(([params, parentParams]) => {
-                    const learningGoalId = Number(params.get('learningGoalId'));
+                    const learningGoalId = Number(params.get('competencyId'));
                     this.courseId = Number(parentParams.get('courseId'));
 
                     const learningGoalObservable = this.learningGoalService.findById(learningGoalId, this.courseId);
