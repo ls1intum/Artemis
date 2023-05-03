@@ -75,7 +75,7 @@ spotless {
             )
         }
         importOrderFile "artemis-spotless.importorder"
-        eclipse("4.19.0").configFile "artemis-spotless-style.xml"
+        eclipse("4.19").configFile "artemis-spotless-style.xml"
 
         removeUnusedImports()
         trimTrailingWhitespace()
@@ -180,6 +180,10 @@ repositories {
 ext['jackson.version'] = fasterxml_version
 
 dependencies {
+
+    // This will make sure that e.g. src/main/java/de/tum/in/www1/artemis/config/BeanInfoProcessor.java is invoked during the build
+    annotationProcessor "com.google.auto.service:auto-service:1.0.1"
+    compileOnly "com.google.auto.service:auto-service:1.0.1"
 
     // Note: jenkins-client is not well maintained and includes dependencies to libraries with critical security issues (e.g. CVE-2020-10683 for dom4j@1.6.1)
     //    implementation "com.offbytwo.jenkins:jenkins-client:0.3.8"
