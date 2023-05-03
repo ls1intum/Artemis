@@ -148,6 +148,7 @@ jobs:
       GATEWAY_HOST_PUBLIC_KEY: "[gateway.artemis.in.tum.de]:2010 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKtTLiKRILjKZ+Qg4ReWKsG7mLDXkzHfeY5nalSQUNQ4"
 
     steps:
+      - uses: actions/checkout@v3
       - name: Early exit
         if: contains(github.event.pull_request.labels.*.name, 'deploy:${{ matrix.lock_label }}') == false
         run: |
