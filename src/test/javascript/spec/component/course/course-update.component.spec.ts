@@ -143,7 +143,6 @@ describe('Course Management Update Component', () => {
             comp.ngOnInit();
             expect(comp.course).toEqual(course);
             expect(comp.courseOrganizations).toEqual([organization]);
-            expect(comp.presentationScoreEnabled).toBeTrue();
             expect(getOrganizationsStub).toHaveBeenCalledOnce();
             expect(getOrganizationsStub).toHaveBeenCalledWith(course.id);
             expect(getProfileStub).toHaveBeenCalledOnce();
@@ -177,7 +176,6 @@ describe('Course Management Update Component', () => {
             expect(comp.communicationEnabled).toBe(isCommunicationEnabled(course));
             expect(comp.courseForm.get(['registrationEnabled'])?.value).toBe(course.registrationEnabled);
             expect(comp.courseForm.get(['registrationConfirmationMessage'])?.value).toBe(course.registrationConfirmationMessage);
-            expect(comp.courseForm.get(['presentationScore'])?.value).toBe(course.presentationScore);
             expect(comp.courseForm.get(['color'])?.value).toBe(course.color);
             expect(comp.courseForm.get(['courseIcon'])?.value).toBe(course.courseIcon);
         }));
@@ -281,31 +279,6 @@ describe('Course Management Update Component', () => {
             expect(comp.showCropper).toBeFalse();
             comp.imageLoaded();
             expect(comp.showCropper).toBeTrue();
-        });
-    });
-
-    describe('changePresentationScoreInput', () => {
-        it('should enabled if control is disabled', () => {
-            const control = new FormControl(12);
-            control.disable();
-            comp.courseForm = new FormGroup({
-                presentationScore: control,
-            });
-            expect(comp.courseForm.controls['presentationScore'].disabled).toBeTrue();
-            comp.changePresentationScoreInput();
-            expect(comp.courseForm.controls['presentationScore'].disabled).toBeFalse();
-            expect(comp.presentationScoreEnabled).toBeTrue();
-        });
-        it('should reset if control has value', () => {
-            const control = new FormControl(12);
-            comp.courseForm = new FormGroup({
-                presentationScore: control,
-            });
-            expect(comp.courseForm.controls['presentationScore'].disabled).toBeFalse();
-            comp.changePresentationScoreInput();
-            expect(comp.courseForm.controls['presentationScore'].disabled).toBeTrue();
-            expect(comp.courseForm.controls['presentationScore'].value).toBe(0);
-            expect(comp.presentationScoreEnabled).toBeFalse();
         });
     });
 
