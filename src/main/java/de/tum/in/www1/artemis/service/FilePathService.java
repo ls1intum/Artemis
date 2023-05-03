@@ -48,7 +48,6 @@ public class FilePathService {
         return Path.of(fileUploadPath, "attachments", "lecture").toString();
     }
 
-    // TODO: recheck it is not working
     public static String getAttachmentUnitFilePath() {
         return Path.of(fileUploadPath, "attachments", "attachment-unit").toString();
     }
