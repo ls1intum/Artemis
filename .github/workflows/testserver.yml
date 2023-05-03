@@ -137,7 +137,7 @@ jobs:
     steps:
       - run: |
           echo 'deploy:${{ matrix.label-identifier }}'
-          echo '${{ contains(github.event.pull_request.labels.*.name, 'deploy:' + matrix.label-identifier) }}'
+          echo '${{ contains(github.event.pull_request.labels.*.name, join(['deploy', matrix.label-identifier], ':')) }}'
       - id: filter
         env:
           MATRIX_JSON: ${{ toJSON(matrix) }}
