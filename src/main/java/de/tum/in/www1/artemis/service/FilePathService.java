@@ -40,10 +40,6 @@ public class FilePathService {
         return Path.of(fileUploadPath, "images", "exam-user", "signatures").toString();
     }
 
-    public static String getSlideImageFilePath() {
-        return Path.of(fileUploadPath, "attachments", "slides", "attachment-unit").toString();
-    }
-
     public static String getStudentImageFilePath() {
         return Path.of(fileUploadPath, "images", "exam-user").toString();
     }
@@ -52,6 +48,7 @@ public class FilePathService {
         return Path.of(fileUploadPath, "attachments", "lecture").toString();
     }
 
+    // TODO: recheck it is not working
     public static String getAttachmentUnitFilePath() {
         return Path.of(fileUploadPath, "attachments", "attachment-unit").toString();
     }

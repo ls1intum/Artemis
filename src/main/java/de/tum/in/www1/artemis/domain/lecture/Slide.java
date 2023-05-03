@@ -82,7 +82,7 @@ public class Slide extends DomainObject {
 
     @PrePersist
     public void beforeCreate() {
-        var targetFolder = Path.of(FilePathService.getSlideImageFilePath(), getAttachmentUnit().getId().toString(), "slide", String.valueOf(getSlideNumber())).toString();
+        var targetFolder = Path.of(FilePathService.getAttachmentUnitFilePath(), getAttachmentUnit().getId().toString(), "slide", String.valueOf(getSlideNumber())).toString();
         slideImagePath = fileService.manageFilesForUpdatedFilePath(prevSlideImagePath, slideImagePath, targetFolder, (long) getSlideNumber(), false);
     }
 
@@ -101,14 +101,14 @@ public class Slide extends DomainObject {
     @PreUpdate
     public void onUpdate() {
         // move file and delete old file if necessary
-        var targetFolder = Path.of(FilePathService.getSlideImageFilePath(), getAttachmentUnit().getId().toString(), "slide", String.valueOf(getSlideNumber())).toString();
+        var targetFolder = Path.of(FilePathService.getAttachmentUnitFilePath(), getAttachmentUnit().getId().toString(), "slide", String.valueOf(getSlideNumber())).toString();
         slideImagePath = fileService.manageFilesForUpdatedFilePath(prevSlideImagePath, slideImagePath, targetFolder, (long) getSlideNumber(), false);
     }
 
     @PostRemove
     public void onDelete() {
         // delete old file if necessary
-        var targetFolder = Path.of(FilePathService.getSlideImageFilePath(), getAttachmentUnit().getId().toString(), "slide", String.valueOf(getSlideNumber())).toString();
+        var targetFolder = Path.of(FilePathService.getAttachmentUnitFilePath(), getAttachmentUnit().getId().toString(), "slide", String.valueOf(getSlideNumber())).toString();
         fileService.manageFilesForUpdatedFilePath(prevSlideImagePath, null, targetFolder, (long) getSlideNumber(), false);
     }
 }

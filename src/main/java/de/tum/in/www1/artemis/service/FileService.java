@@ -340,13 +340,13 @@ public class FileService implements DisposableBean {
             String lectureId = publicPath.replace(filename, "").replace("/api/files/attachments/lecture/", "");
             return Path.of(FilePathService.getLectureAttachmentFilePath(), lectureId, filename).toString();
         }
-        if (publicPath.contains("files/attachments/attachment-unit")) {
+        if (publicPath.contains("files/attachments/attachment-unit") && !publicPath.contains("/slide")) {
             String attachmentUnitId = publicPath.replace(filename, "").replace("/api/files/attachments/attachment-unit/", "");
             return Path.of(FilePathService.getAttachmentUnitFilePath(), attachmentUnitId, filename).toString();
         }
-        if (publicPath.contains("files/attachments/slides/attachment-unit")) {
+        if (publicPath.contains("files/attachments/slides/attachment-unit") && publicPath.contains("/slide")) {
             String attachmentUnitId = publicPath.replace(filename, "").replace("/api/files/attachments/slides/attachment-unit/", "");
-            return Path.of(FilePathService.getSlideImageFilePath(), attachmentUnitId, filename).toString();
+            return Path.of(FilePathService.getAttachmentUnitFilePath(), attachmentUnitId, filename).toString();
         }
         if (publicPath.contains("files/file-upload-exercises")) {
             final var uploadSubPath = publicPath.replace(filename, "").replace("/api/files/file-upload-exercises/", "").split("/");
@@ -403,11 +403,11 @@ public class FileService implements DisposableBean {
         if (actualPathString.contains(FilePathService.getAttachmentUnitFilePath())) {
             return "/api/files/attachments/attachment-unit/" + id + "/" + filename;
         }
-        if (actualPathString.contains(FilePathService.getSlideImageFilePath())) {
+        if (actualPathString.contains(FilePathService.getAttachmentUnitFilePath()) && actualPathString.contains("/slide")) {
             try {
                 // The last name is the file name, the one before that is the slide number and the one before that is the attachmentUnitId, in which we are interested
                 // (e.g. uploads/attachments/slides/attachment-unit/941/slide/1/State_pattern_941_Slide_1.png)
-                final var shouldBeAttachmentUnitId = actualPath.getName(actualPath.getNameCount() - 4).toString();
+                final var shouldBeAttachmentUnitId = actualPath.getName(actualPath.getNameCount() - 3).toString();
                 final long attachmentUnitId = Long.parseLong(shouldBeAttachmentUnitId);
                 return "/api/files/attachments/slides/attachment-unit/" + attachmentUnitId + "/slide/" + id + "/" + filename;
             }
@@ -458,14 +458,14 @@ public class FileService implements DisposableBean {
         if (targetFolder.equals(FilePathService.getStudentImageFilePath())) {
             filenameBase = "ExamUserImage_";
         }
-        if (targetFolder.contains(FilePathService.getSlideImageFilePath())) {
-            filenameBase = "AttachmentUnitSlide_";
-        }
         if (targetFolder.contains(FilePathService.getLectureAttachmentFilePath())) {
             filenameBase = "LectureAttachment_";
         }
         if (targetFolder.contains(FilePathService.getAttachmentUnitFilePath())) {
             filenameBase = "AttachmentUnit_";
+        }
+        if (targetFolder.contains(FilePathService.getAttachmentUnitFilePath()) && targetFolder.contains("/slide")) {
+            filenameBase = "AttachmentUnitSlide_";
         }
 
         // extract the file extension

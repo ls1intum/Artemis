@@ -431,8 +431,8 @@ public class FileResource {
         if (matcher.matches()) {
             String fileName = matcher.group(1);
             return buildFileResponse(
-                    Path.of(FilePathService.getSlideImageFilePath(), String.valueOf(attachmentUnit.getId()), "slide", String.valueOf(slide.getSlideNumber())).toString(), fileName,
-                    true);
+                    Path.of(FilePathService.getAttachmentUnitFilePath(), String.valueOf(attachmentUnit.getId()), "slide", String.valueOf(slide.getSlideNumber())).toString(),
+                    fileName, true);
         }
         else {
             throw new EntityNotFoundException("Slide", slideNumber);
