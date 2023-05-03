@@ -6,7 +6,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -215,7 +214,7 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         // Wait for async operation to complete (after attachment unit is saved, the file gets split into slides)
         latch.await(10, TimeUnit.SECONDS);
         assertThat(slideRepository.findAllByAttachmentUnitId(attachmentUnit.getId())).hasSize(SLIDE_COUNT);
-        Set<Slide> oldSlides = slideRepository.findAllByAttachmentUnitId(attachmentUnit.getId());
+        List<Slide> oldSlides = slideRepository.findAllByAttachmentUnitId(attachmentUnit.getId());
         CountDownLatch latch1 = new CountDownLatch(1);
         var updateResult = request.getMvc().perform(buildUpdateAttachmentUnit(attachmentUnit, attachment)).andExpect(status().isOk()).andReturn();
         attachmentUnit = mapper.readValue(updateResult.getResponse().getContentAsString(), AttachmentUnit.class);
@@ -223,7 +222,7 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         // Wait for async operation to complete (after attachment unit is updated, the new file gets split into slides)
         latch1.await(10, TimeUnit.SECONDS);
         assertThat(slideRepository.findAllByAttachmentUnitId(attachmentUnit.getId())).hasSize(SLIDE_COUNT);
-        Set<Slide> updatedSlides = slideRepository.findAllByAttachmentUnitId(attachmentUnit.getId());
+        List<Slide> updatedSlides = slideRepository.findAllByAttachmentUnitId(attachmentUnit.getId());
         assertThat(oldSlides).isNotEqualTo(updatedSlides);
         // testing if bidirectional relationship is kept
         attachmentUnit = attachmentUnitRepository.findById(attachmentUnit.getId()).get();

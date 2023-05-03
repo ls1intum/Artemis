@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.web.rest;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -168,10 +169,11 @@ public class LectureResource {
         log.debug("REST request to get all Lectures with slides of the units for the course with id : {}", courseId);
 
         Course course = courseRepository.findByIdElseThrow(courseId);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
 
-        Set<Lecture> lectures = lectureRepository.findAllByCourseIdWithAttachmentsAndLectureUnitsAndSlides(courseId);
-        lectures.forEach(lecture -> lectureService.filterActiveLectureUnits(lecture));
+        Set<Lecture> lectures = lectureRepository.findAllByCourseIdWithAttachmentsAndActiveLectureUnitsAndSlides(courseId, ZonedDateTime.now());
+        lectures.forEach(lecture -> lectureService.filterActiveAttachments(lecture, user));
         return ResponseEntity.ok().body(lectures);
     }
 
@@ -253,16 +255,14 @@ public class LectureResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Lecture> getLectureWithDetailsAndSlides(@PathVariable Long lectureId) {
         log.debug("REST request to get lecture {} with details with slides ", lectureId);
-        Lecture lecture = lectureRepository.findByIdWithLectureUnitsAndWithSlidesElseThrow(lectureId);
+        Lecture lecture = lectureRepository.findByIdWithActiveLectureUnitsAndWithSlidesElseThrow(lectureId);
         Course course = lecture.getCourse();
         if (course == null) {
             return ResponseEntity.badRequest().build();
         }
         User user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
-        lectureService.filterActiveLectureUnits(lecture);
         lectureService.filterActiveAttachments(lecture, user);
-
         return ResponseEntity.ok(lecture);
     }
 

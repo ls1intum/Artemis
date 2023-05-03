@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.repository;
 
+import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.Set;
 
@@ -44,11 +45,12 @@ public interface LectureRepository extends JpaRepository<Lecture, Long> {
             SELECT lecture
             FROM Lecture lecture
             LEFT JOIN FETCH lecture.attachments attachment
-            LEFT JOIN FETCH lecture.lectureUnits lu
-            LEFT JOIN FETCH lu.slides slides
-            WHERE lecture.course.id = :courseId
+            LEFT JOIN FETCH lecture.lectureUnits lectureUnit
+            LEFT JOIN FETCH lectureUnit.attachment luAttachment
+            LEFT JOIN FETCH lectureUnit.slides slides
+            WHERE lecture.course.id = :courseId AND (luAttachment.releaseDate <= :now OR luAttachment.releaseDate IS NULL)
             """)
-    Set<Lecture> findAllByCourseIdWithAttachmentsAndLectureUnitsAndSlides(@Param("courseId") Long courseId);
+    Set<Lecture> findAllByCourseIdWithAttachmentsAndActiveLectureUnitsAndSlides(@Param("courseId") Long courseId, @Param("now") ZonedDateTime now);
 
     @Query("""
             SELECT lecture
@@ -85,11 +87,12 @@ public interface LectureRepository extends JpaRepository<Lecture, Long> {
     @Query("""
             SELECT lecture
             FROM Lecture lecture
-            LEFT JOIN FETCH lecture.lectureUnits lu
-            LEFT JOIN FETCH lu.slides slides
-            WHERE lecture.id = :lectureId
+            LEFT JOIN FETCH lecture.lectureUnits lectureUnit
+            LEFT JOIN FETCH lectureUnit.attachment luAttachment
+            LEFT JOIN FETCH lectureUnit.slides slides
+            WHERE lecture.id = :lectureId AND (luAttachment.releaseDate <= :now OR luAttachment.releaseDate IS NULL)
             """)
-    Optional<Lecture> findByIdWithLectureUnitsAndWithSlides(@Param("lectureId") Long lectureId);
+    Optional<Lecture> findByIdWithActiveLectureUnitsAndWithSlides(@Param("lectureId") Long lectureId, @Param("now") ZonedDateTime now);
 
     @SuppressWarnings("PMD.MethodNamingConventions")
     Page<Lecture> findByTitleIgnoreCaseContainingOrCourse_TitleIgnoreCaseContaining(String partialTitle, String partialCourseTitle, Pageable pageable);
@@ -147,7 +150,7 @@ public interface LectureRepository extends JpaRepository<Lecture, Long> {
     }
 
     @NotNull
-    default Lecture findByIdWithLectureUnitsAndWithSlidesElseThrow(Long lectureId) {
-        return findByIdWithLectureUnitsAndWithSlides(lectureId).orElseThrow(() -> new EntityNotFoundException("Lecture", lectureId));
+    default Lecture findByIdWithActiveLectureUnitsAndWithSlidesElseThrow(Long lectureId) {
+        return findByIdWithActiveLectureUnitsAndWithSlides(lectureId, ZonedDateTime.now()).orElseThrow(() -> new EntityNotFoundException("Lecture", lectureId));
     }
 }

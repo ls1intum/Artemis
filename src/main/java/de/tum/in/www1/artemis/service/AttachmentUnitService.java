@@ -100,10 +100,12 @@ public class AttachmentUnitService {
         prepareAttachmentUnitForClient(savedAttachmentUnit);
         evictCache(updateFile, savedAttachmentUnit);
 
-        if (existingAttachmentUnit.getSlides() != null && !existingAttachmentUnit.getSlides().isEmpty()) {
-            slideRepository.deleteAll(existingAttachmentUnit.getSlides());
+        if (updateFile != null) {
+            if (existingAttachmentUnit.getSlides() != null && !existingAttachmentUnit.getSlides().isEmpty()) {
+                slideRepository.deleteAll(existingAttachmentUnit.getSlides());
+            }
+            slideSplitterService.splitAttachmentUnitIntoSingleSlides(savedAttachmentUnit);
         }
-        slideSplitterService.splitAttachmentUnitIntoSingleSlides(savedAttachmentUnit);
 
         return savedAttachmentUnit;
     }

@@ -1,8 +1,8 @@
 package de.tum.in.www1.artemis.domain.lecture;
 
 import java.time.ZonedDateTime;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.persistence.*;
 
@@ -26,7 +26,7 @@ public class AttachmentUnit extends LectureUnit {
 
     @OneToMany(mappedBy = "attachmentUnit", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnoreProperties("attachmentUnit")
-    private Set<Slide> slides = new HashSet<>();
+    private List<Slide> slides = new ArrayList<>();
 
     @Override
     public boolean isVisibleToStudents() {
@@ -54,11 +54,11 @@ public class AttachmentUnit extends LectureUnit {
         this.attachment = attachment;
     }
 
-    public Set<Slide> getSlides() {
+    public List<Slide> getSlides() {
         return slides;
     }
 
-    public void setSlides(Set<Slide> slides) {
+    public void setSlides(List<Slide> slides) {
         this.slides = slides;
     }
 

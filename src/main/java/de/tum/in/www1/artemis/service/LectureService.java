@@ -7,7 +7,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
@@ -46,25 +45,6 @@ public class LectureService {
         }
         lectureWithAttachments.setAttachments(filteredAttachments);
         return lectureWithAttachments;
-    }
-
-    /**
-     * Returns lecture with only active lectureUnits
-     *
-     * @param lectureWithLectureUnits lecture that has lectureUnits
-     * @return lecture with filtered lectureUnits
-     */
-    public Lecture filterActiveLectureUnits(Lecture lectureWithLectureUnits) {
-
-        List<LectureUnit> filteredLectureUnits = new ArrayList<>();
-        for (LectureUnit units : lectureWithLectureUnits.getLectureUnits()) {
-            if (units.getReleaseDate() == null || units.getReleaseDate().isBefore(ZonedDateTime.now())) {
-                filteredLectureUnits.add(units);
-            }
-        }
-
-        lectureWithLectureUnits.setLectureUnits(filteredLectureUnits);
-        return lectureWithLectureUnits;
     }
 
     /**
