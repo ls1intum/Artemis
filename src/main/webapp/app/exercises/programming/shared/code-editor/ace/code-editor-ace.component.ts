@@ -249,7 +249,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
                     }
                 }),
                 catchError(() => {
-                    return of();
+                    return of(undefined);
                 }),
             )
             .subscribe(() => {
