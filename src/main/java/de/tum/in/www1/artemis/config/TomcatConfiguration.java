@@ -15,6 +15,7 @@ public class TomcatConfiguration {
         return (TomcatServletWebServerFactory container) -> {
             container.addContextCustomizers((Context context) -> {
                 // This configuration is used to improve initialization performance.
+                // It prevents slow initial REST calls due to Spring Boot searching endlessly for BeanInfos
 
                 context.setResources(new ExtractingRoot());
                 context.setReloadable(false);
