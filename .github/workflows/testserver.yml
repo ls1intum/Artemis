@@ -4,10 +4,12 @@ on:
   pull_request:
     types: [labeled]
 
+permissions:
+  actions: 'write'
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    if: ${{ matrix.deploy_on }}
     strategy:
       matrix:
         include:
@@ -146,6 +148,14 @@ jobs:
       GATEWAY_HOST_PUBLIC_KEY: "[gateway.artemis.in.tum.de]:2010 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKtTLiKRILjKZ+Qg4ReWKsG7mLDXkzHfeY5nalSQUNQ4"
 
     steps:
+      - name: Early exit
+        if: ${{ !contains(github.event.pull_request.labels.*.name, "deploy:${{ matrix.lock_label }}") }}
+        run: |
+          gh run cancel ${{ github.run_id }}
+          gh run watch ${{ github.run_id }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - uses: actions-ecosystem/action-remove-labels@v1
         with:
           github_token: ${{ secrets.github_token }}
