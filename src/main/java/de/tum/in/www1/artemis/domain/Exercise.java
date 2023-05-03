@@ -433,7 +433,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
      * Find a relevant participation for this exercise (relevancy depends on InitializationState)
      *
      * @param participations the list of available participations
-     * @return the found participation in a list or the empty list, if none exists
+     * @return the found participation in an unmodifiable list or the empty list, if none exists
      */
     public List<StudentParticipation> findRelevantParticipation(List<StudentParticipation> participations) {
         StudentParticipation relevantParticipation = null;

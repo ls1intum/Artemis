@@ -653,7 +653,7 @@ public class ProgrammingExercise extends Exercise {
      * In case there are multiple, they are filtered as implemented in {@link Exercise#findRelevantParticipation(List)}
      *
      * @param participations the list of available participations
-     * @return the found participation in a list or the empty list, if none exists
+     * @return the found participation in an unmodifiable list or the empty list, if none exists
      */
     @Override
     public List<StudentParticipation> findRelevantParticipation(List<StudentParticipation> participations) {
