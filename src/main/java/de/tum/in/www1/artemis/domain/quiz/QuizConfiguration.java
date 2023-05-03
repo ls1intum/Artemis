@@ -71,6 +71,8 @@ public interface QuizConfiguration {
      *
      * @param components   the QuizQuestionComponent of which the given quizQuestion to be set to
      * @param quizQuestion the QuizQuestion to be set to
+     * @param <C>          the class that implements QuizQuestionComponent
+     * @param <Q>          the subclass of QuizQuestion to be set to
      */
     default <C extends QuizQuestionComponent<Q>, Q extends QuizQuestion> void setQuizQuestions(Collection<C> components, Q quizQuestion) {
         for (QuizQuestionComponent<Q> mapping : components) {
@@ -84,6 +86,10 @@ public interface QuizConfiguration {
      * @param statisticComponents   the QuizQuestionStatisticComponent of which the QuizQuestionStatistic to be set
      * @param quizQuestion          the QuizQuestion to be set to
      * @param quizQuestionStatistic the QuizQuestionStatistic to be set to
+     * @param <SC>                  the class that implements QuizQuestionStatisticComponent of which the QuizQuestionStatistic to be set
+     * @param <S>                   the subclass that implements QuizQuestionStatistic to be set to
+     * @param <C>                   the class that implements QuizQuestionComponent
+     * @param <Q>                   the subclass of QuizQuestion to be set to
      */
     default <SC extends QuizQuestionStatisticComponent<S, C, Q>, S extends QuizQuestionStatistic, C extends QuizQuestionComponent<Q>, Q extends QuizQuestion> void setQuizQuestionStatistics(
             Collection<SC> statisticComponents, Q quizQuestion, S quizQuestionStatistic) {
@@ -102,6 +108,7 @@ public interface QuizConfiguration {
      *
      * @param component    the QuizQuestionComponent of which the QuizQuestion to be set
      * @param quizQuestion the QuizQuestion to be set to
+     * @param <Q>          the subclass of QuizQuestion to be set to
      */
     default <Q extends QuizQuestion> void setQuizQuestion(QuizQuestionComponent<Q> component, Q quizQuestion) {
         if (component != null && component.getId() != null) {
