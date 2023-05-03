@@ -1,5 +1,5 @@
 <div class="feedback-text">
-    <p *ngIf="!previewText; else longText">{{ text }}</p>
+    <p *ngIf="!previewText; else longText">{{ feedback.text }}</p>
 </div>
 
 <ng-template #longText>
@@ -12,9 +12,9 @@
         <p>{{ previewText }} ...</p>
     </div>
     <ng-template #opened>
-        <div class="feedback-text">
+        <div>
             <fa-icon class="fa-angle" [icon]="faAngleDown" (click)="isCollapsed = !isCollapsed"></fa-icon>
-            <p>{{ text }}</p>
+            <jhi-feedback-text [feedback]="feedback"></jhi-feedback-text>
         </div>
     </ng-template>
 </ng-template>
