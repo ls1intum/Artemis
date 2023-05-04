@@ -1,0 +1,8 @@
+<div *ngIf="downloadText">
+    <span jhiTranslate="artemisApp.feedback.truncatedInfo">The feedback is too long to be displayed here.</span>
+    <a [href]="downloadText" [download]="downloadFilename" jhiTranslate="artemisApp.feedback.downloadFullFeedback">Download</a>
+</div>
+<br />
+<div class="feedback-text">
+    <p>{{ text }}</p>
+</div>
