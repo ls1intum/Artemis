@@ -23,13 +23,11 @@ public class TomcatConfiguration {
                  * The reason for this delay is that Spring needs to introspect the class used as a parameter
                  * for the request handler method. It does so by scanning the classpath with multiple classloaders
                  * to find BeanInfo files.
-                 *
                  * However, the Tomcat Embedded Classloader has two problems:
                  * 1. It is slow because it searches for JAR files inside other JAR files, which is a
                  * time-consuming operation.
                  * 2. By default, it discards its cache every 15 minutes, causing the performance issue
                  * to reappear later when the search is performed again.
-                 *
                  * To address these issues, we've customized the TomcatServletWebServerFactory with two
                  * changes:
                  * - Set the context's reloadable attribute to false, preventing Tomcat from discarding

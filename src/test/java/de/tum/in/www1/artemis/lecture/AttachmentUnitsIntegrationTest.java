@@ -79,7 +79,7 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationBambooBitb
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void splitLectureFile_asInstructor_shouldGetUnitsInformation() throws Exception {
-        var filePart = createLecturePdf();
+        var filePart = createLectureFile(true);
 
         LectureUnitInformationDTO lectureUnitSplitInfo = request.postWithMultipartFile("/api/lectures/" + lecture1.getId() + "/process-units", null, "process-units", filePart,
                 LectureUnitInformationDTO.class, HttpStatus.OK);
@@ -91,7 +91,7 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationBambooBitb
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void splitLectureFile_asInstructor_shouldCreateAttachmentUnits() throws Exception {
-        var filePart = createLecturePdf();
+        var filePart = createLectureFile(true);
 
         LectureUnitInformationDTO lectureUnitSplitInfo = request.postWithMultipartFile("/api/lectures/" + lecture1.getId() + "/process-units", null, "process-units", filePart,
                 LectureUnitInformationDTO.class, HttpStatus.OK);
@@ -116,8 +116,31 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void splitLectureFile_asInstructor_shouldThrowError() throws Exception {
+        var filePartWord = createLectureFile(false);
+        // if trying to process not the right pdf file then it should throw server error
+        request.postWithMultipartFile("/api/lectures/" + lecture1.getId() + "/process-units", null, "process-units", filePartWord, LectureUnitInformationDTO.class,
+                HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void splitLectureFile_asInstructor_createAttachmentUnits_shouldThrowError() throws Exception {
+        var filePartPDF = createLectureFile(true);
+        var filePartWord = createLectureFile(false);
+
+        LectureUnitInformationDTO lectureUnitSplitInfo = request.postWithMultipartFile("/api/lectures/" + lecture1.getId() + "/process-units", null, "process-units", filePartPDF,
+                LectureUnitInformationDTO.class, HttpStatus.OK);
+
+        // if trying to create multiple units with not the right pdf file then it should throw error
+        request.postWithMultipartFile("/api/lectures/" + lecture1.getId() + "/attachment-units/split", lectureUnitSplitInfo, "lectureUnitInformationDTO", filePartWord,
+                AttachmentUnit[].class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void splitLectureFile_asInstructor_shouldCreateAttachmentUnits_and_removeBreakSlides() throws Exception {
-        var filePart = createLecturePdf();
+        var filePart = createLectureFile(true);
 
         LectureUnitInformationDTO lectureUnitSplitInfo = request.postWithMultipartFile("/api/lectures/" + lecture1.getId() + "/process-units", null, "process-units", filePart,
                 LectureUnitInformationDTO.class, HttpStatus.OK);
@@ -145,64 +168,67 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationBambooBitb
     }
 
     private void testAllPreAuthorize() throws Exception {
-        request.postWithMultipartFile("/api/lectures/" + lecture1.getId() + "/process-units", null, "process-units", createLecturePdf(), LectureUnitInformationDTO.class,
+        request.postWithMultipartFile("/api/lectures/" + lecture1.getId() + "/process-units", null, "process-units", createLectureFile(true), LectureUnitInformationDTO.class,
                 HttpStatus.FORBIDDEN);
-        request.postWithMultipartFile("/api/lectures/" + lecture1.getId() + "/attachment-units/split", lectureUnitSplits, "lectureUnitInformationDTO", createLecturePdf(),
+        request.postWithMultipartFile("/api/lectures/" + lecture1.getId() + "/attachment-units/split", lectureUnitSplits, "lectureUnitInformationDTO", createLectureFile(true),
                 AttachmentUnit[].class, HttpStatus.FORBIDDEN);
     }
 
     /**
-     * Generates a lecture pdf file with 20 pages and with 2 slides that contain Outline
+     * Generates a lecture file with 20 pages and with 2 slides that contain Outline
      *
+     * @param shouldBePDF true if the file should be PDF, false if it should be word doc
      * @return MockMultipartFile lecture file
      */
-    private MockMultipartFile createLecturePdf() throws IOException {
+    private MockMultipartFile createLectureFile(boolean shouldBePDF) throws IOException {
 
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream(); PDDocument document = new PDDocument()) {
+            if (shouldBePDF) {
+                for (int i = 1; i <= 20; i++) {
+                    document.addPage(new PDPage());
+                    PDPageContentStream contentStream = new PDPageContentStream(document, document.getPage(i - 1));
 
-            for (int i = 1; i <= 20; i++) {
-                document.addPage(new PDPage());
-                PDPageContentStream contentStream = new PDPageContentStream(document, document.getPage(i - 1));
+                    if (i == 6 || i == 13) {
+                        contentStream.beginText();
+                        contentStream.setFont(PDType1Font.TIMES_ROMAN, 12);
+                        contentStream.newLineAtOffset(25, -15);
+                        contentStream.showText("itp20..");
+                        contentStream.newLineAtOffset(25, 500);
+                        contentStream.showText("Break");
+                        contentStream.newLineAtOffset(0, -15);
+                        contentStream.showText("Have fun");
+                        contentStream.close();
+                        continue;
+                    }
 
-                if (i == 6 || i == 13) {
+                    if (i == 7 || i == 14) {
+                        contentStream.beginText();
+                        contentStream.setFont(PDType1Font.TIMES_ROMAN, 12);
+                        contentStream.newLineAtOffset(25, -15);
+                        contentStream.showText("itp20..");
+                        contentStream.newLineAtOffset(25, 500);
+                        contentStream.showText("Outline");
+                        contentStream.newLineAtOffset(0, -15);
+                        contentStream.showText("First Unit");
+                        contentStream.newLineAtOffset(0, -15);
+                        contentStream.showText("Second Unit");
+                        contentStream.endText();
+                        contentStream.close();
+                        continue;
+                    }
                     contentStream.beginText();
                     contentStream.setFont(PDType1Font.TIMES_ROMAN, 12);
-                    contentStream.newLineAtOffset(25, -15);
-                    contentStream.showText("itp20..");
                     contentStream.newLineAtOffset(25, 500);
-                    contentStream.showText("Break");
-                    contentStream.newLineAtOffset(0, -15);
-                    contentStream.showText("Have fun");
-                    contentStream.close();
-                    continue;
-                }
-
-                if (i == 7 || i == 14) {
-                    contentStream.beginText();
-                    contentStream.setFont(PDType1Font.TIMES_ROMAN, 12);
-                    contentStream.newLineAtOffset(25, -15);
-                    contentStream.showText("itp20..");
-                    contentStream.newLineAtOffset(25, 500);
-                    contentStream.showText("Outline");
-                    contentStream.newLineAtOffset(0, -15);
-                    contentStream.showText("First Unit");
-                    contentStream.newLineAtOffset(0, -15);
-                    contentStream.showText("Second Unit");
+                    String text = "This is the sample document";
+                    contentStream.showText(text);
                     contentStream.endText();
                     contentStream.close();
-                    continue;
                 }
-                contentStream.beginText();
-                contentStream.setFont(PDType1Font.TIMES_ROMAN, 12);
-                contentStream.newLineAtOffset(25, 500);
-                String text = "This is the sample document";
-                contentStream.showText(text);
-                contentStream.endText();
-                contentStream.close();
+                document.save(outputStream);
+                document.close();
+                return new MockMultipartFile("file", "lectureFile.pdf", "application/json", outputStream.toByteArray());
             }
-            document.save(outputStream);
-            document.close();
-            return new MockMultipartFile("file", "lectureFile.pdf", "application/json", outputStream.toByteArray());
+            return new MockMultipartFile("file", "lectureFileWord.doc", "application/msword", outputStream.toByteArray());
         }
     }
 
