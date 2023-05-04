@@ -418,9 +418,11 @@ public class ConversationService {
         return channels.filter(channel -> {
             if (channel.getExercise() != null) {
                 return channel.getExercise().getReleaseDate() == null || channel.getExercise().getReleaseDate().isBefore(now);
-            } else if (channel.getLecture() != null) {
+            }
+            else if (channel.getLecture() != null) {
                 return channel.getLecture().getStartDate() == null || channel.getLecture().getStartDate().isBefore(now);
-            } else {
+            }
+            else {
                 return true;
             }
         });

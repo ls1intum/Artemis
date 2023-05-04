@@ -34,19 +34,6 @@ public interface FileUploadExerciseRepository extends JpaRepository<FileUploadEx
     @EntityGraph(type = LOAD, attributePaths = { "teamAssignmentConfig", "categories", "learningGoals" })
     Optional<FileUploadExercise> findWithEagerTeamAssignmentConfigAndCategoriesAndLearningGoalsById(Long exerciseId);
 
-    @Query("""
-            SELECT DISTINCT fileUploadExercise
-            FROM FileUploadExercise fileUploadExercise
-            LEFT JOIN FETCH fileUploadExercise.channel
-            WHERE fileUploadExercise.id = :exerciseId
-            """)
-    Optional<FileUploadExercise> findByIdWithChannel(long exerciseId);
-
-    @NotNull
-    default FileUploadExercise findByIdWithChannelElseThrow(long exerciseId) {
-        return findByIdWithChannel(exerciseId).orElseThrow(() -> new EntityNotFoundException("FileUpload Exercise", exerciseId));
-    }
-
     /**
      * Get one file upload exercise by id.
      *

@@ -214,9 +214,9 @@ public class QuizExerciseResource {
             quizExercise.setQuizBatches(batches);
         }
 
-        if (quizExercise.getChannel() != null) {
+        if (originalQuiz.getChannel() != null) {
             // Make sure that the original references are preserved.
-            Channel originalChannel = channelRepository.findByIdElseThrow(quizExercise.getChannel().getId());
+            Channel originalChannel = channelRepository.findByIdElseThrow(originalQuiz.getChannel().getId());
             quizExercise.setChannel(originalChannel);
         }
 
