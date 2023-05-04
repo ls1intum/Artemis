@@ -20,6 +20,8 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { setBuildPlanUrlForProgrammingParticipations } from 'app/exercises/shared/participation/participation.utils';
 import { faCircleNotch, faEraser, faFilePowerpoint, faTable, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { GradingSystemService } from 'app/grading-system/grading-system.service';
+import { GradeStepsDTO } from 'app/entities/grade-step.model';
 
 enum FilterProp {
     ALL = 'all',
@@ -41,12 +43,17 @@ export class ParticipationComponent implements OnInit, OnDestroy {
 
     participations: StudentParticipation[] = [];
     participationsChangedDueDate: Map<number, StudentParticipation> = new Map<number, StudentParticipation>();
+    participationsChangedPresentation: Map<number, StudentParticipation> = new Map<number, StudentParticipation>();
     filteredParticipationsSize = 0;
     eventSubscriber: Subscription;
     paramSub: Subscription;
     exercise: Exercise;
     hasLoadedPendingSubmissions = false;
-    presentationScoreEnabled = false;
+    basicPresentationEnabled = false;
+    gradedPresentationEnabled = false;
+
+    gradeStepsDTO?: GradeStepsDTO;
+    gradeStepsDTOSub: Subscription;
 
     private dialogErrorSource = new Subject<string>();
     dialogError = this.dialogErrorSource.asObservable();
@@ -81,6 +88,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         private programmingSubmissionService: ProgrammingSubmissionService,
         private accountService: AccountService,
         private profileService: ProfileService,
+        private gradingSystemService: GradingSystemService,
     ) {
         this.participationCriteria = {
             filterProp: FilterProp.ALL,
@@ -106,6 +114,9 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         if (this.paramSub) {
             this.paramSub.unsubscribe();
         }
+        if (this.gradeStepsDTOSub) {
+            this.gradeStepsDTOSub.unsubscribe();
+        }
     }
 
     private loadExercise(exerciseId: number) {
@@ -114,12 +125,24 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         this.exerciseService.find(exerciseId).subscribe((exerciseResponse) => {
             this.exercise = exerciseResponse.body!;
             this.afterDueDate = !!this.exercise.dueDate && dayjs().isAfter(this.exercise.dueDate);
+            this.loadGradingScale(this.exercise.course?.id);
             this.loadParticipations(exerciseId);
             if (this.exercise.type === ExerciseType.PROGRAMMING) {
                 this.loadSubmissions(exerciseId);
             }
-            this.presentationScoreEnabled = this.checkPresentationScoreConfig();
+            this.basicPresentationEnabled = this.checkBasicPresentationConfig();
         });
+    }
+
+    private loadGradingScale(courseId?: number) {
+        if (courseId) {
+            this.gradeStepsDTOSub = this.gradingSystemService.findGradeStepsForCourse(courseId).subscribe((gradeStepsDTO) => {
+                if (gradeStepsDTO.body) {
+                    this.gradeStepsDTO = gradeStepsDTO.body;
+                }
+                this.gradedPresentationEnabled = this.checkGradedPresentationConfig();
+            });
+        }
     }
 
     private loadParticipations(exerciseId: number) {
@@ -187,15 +210,19 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         this.eventSubscriber = this.eventManager.subscribe('participationListModification', () => this.loadExercise(this.exercise.id!));
     }
 
-    checkPresentationScoreConfig(): boolean {
+    checkBasicPresentationConfig(): boolean {
         if (!this.exercise.course) {
             return false;
         }
         return this.exercise.isAtLeastTutor === true && this.exercise.course.presentationScore !== 0 && this.exercise.presentationScoreEnabled === true;
     }
 
-    addPresentation(participation: StudentParticipation) {
-        if (!this.presentationScoreEnabled) {
+    checkGradedPresentationConfig(): boolean {
+        return !!(this.exercise.course && this.exercise.isAtLeastTutor && (this.gradeStepsDTO?.presentationsNumber ?? 0) > 0 && this.exercise.presentationScoreEnabled === true);
+    }
+
+    addBasicPresentation(participation: StudentParticipation) {
+        if (!this.basicPresentationEnabled) {
             return;
         }
         participation.presentationScore = 1;
@@ -204,11 +231,31 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         });
     }
 
-    removePresentation(participation: StudentParticipation) {
-        if (!this.presentationScoreEnabled) {
+    addGradedPresentation(participation: StudentParticipation) {
+        if (!this.gradedPresentationEnabled || (participation.presentationScore ?? 0) > 100 || (participation.presentationScore ?? 0) < 0) {
             return;
         }
-        participation.presentationScore = 0;
+        this.participationService.update(this.exercise, participation).subscribe({
+            error: () => this.alertService.error('artemisApp.participation.savePresentation.error'),
+            complete: () => {
+                this.participationsChangedPresentation.delete(participation.id!);
+            },
+        });
+    }
+
+    hasGradedPresentationChanged(participation: StudentParticipation) {
+        return this.participationsChangedPresentation.has(participation.id!);
+    }
+
+    changeGradedPresentation(participation: StudentParticipation) {
+        this.participationsChangedPresentation.set(participation.id!, participation);
+    }
+
+    removePresentation(participation: StudentParticipation) {
+        if (!this.basicPresentationEnabled && !this.gradedPresentationEnabled) {
+            return;
+        }
+        participation.presentationScore = undefined;
         this.participationService.update(this.exercise, participation).subscribe({
             error: () => this.alertService.error('artemisApp.participation.removePresentation.error'),
         });
@@ -283,6 +330,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
                 });
                 this.dialogErrorSource.next('');
                 this.participationsChangedDueDate.delete(participationId);
+                this.participationsChangedPresentation.delete(participationId);
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         });
