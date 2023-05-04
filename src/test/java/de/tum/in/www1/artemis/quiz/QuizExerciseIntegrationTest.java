@@ -104,7 +104,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     @BeforeEach
     void init() {
-        database.addUsers(TEST_PREFIX, 15, 5, 1, 1);
+        database.addUsers(TEST_PREFIX, 1, 1, 1, 1);
         quizScheduleService.startSchedule(5 * 1000);
     }
 

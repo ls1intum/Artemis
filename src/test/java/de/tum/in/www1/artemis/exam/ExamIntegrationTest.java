@@ -182,7 +182,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
     private Exam testExam1;
 
-    private static final int numberOfStudents = 10;
+    private static final int numberOfStudents = 10; // TODO
 
     private final List<LocalRepository> studentRepos = new ArrayList<>();
 
