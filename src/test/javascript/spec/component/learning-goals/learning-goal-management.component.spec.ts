@@ -3,7 +3,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { LearningGoalService } from 'app/course/learning-goals/learningGoal.service';
 import { of } from 'rxjs';
-import { CourseLearningGoalProgress, LearningGoal } from 'app/entities/learningGoal.model';
+import { CourseLearningGoalProgress, LearningGoal, LearningGoalRelationError } from 'app/entities/learningGoal.model';
 import { LearningGoalManagementComponent } from 'app/course/learning-goals/learning-goal-management/learning-goal-management.component';
 import { ActivatedRoute } from '@angular/router';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
@@ -211,21 +211,51 @@ describe('LearningGoalManagementComponent', () => {
     it('should detect circles on relations', () => {
         const node1 = { id: '16', label: 'learningGoal1' } as Node;
         const node2 = { id: '17', label: 'learningGoal2' } as Node;
-        const nodes = [node1, node2];
-        const edge = { id: 'edge1', source: '16', target: '17', label: 'EXTENDS' } as Edge;
-        const edges = [edge];
-        component.tailLearningGoal = 17;
+        const node3 = { id: '18', label: 'learningGoal3' } as Node;
+        component.nodes = [node1, node2, node3];
+
+        const edge1 = { id: 'edge1', source: '16', target: '17', label: 'EXTENDS' } as Edge;
+        const edge2 = { id: 'edge2', source: '17', target: '18', label: 'MATCHES' } as Edge;
+        component.edges = [edge1, edge2];
+
+        component.tailLearningGoal = 18;
+        component.headLearningGoal = 16;
+        component.relationType = 'ASSUMES';
+
+        component.validate();
+
+        expect(component.relationError).toBe(LearningGoalRelationError.CIRCULAR);
+    });
+
+    it('should prevent creating already existing relations', () => {
+        const node1 = { id: '16', label: 'learningGoal1' } as Node;
+        const node2 = { id: '17', label: 'learningGoal2' } as Node;
+        component.nodes = [node1, node2];
+
+        const edge1 = { id: 'edge1', source: '16', target: '17', label: 'EXTENDS' } as Edge;
+        component.edges = [edge1];
+
+        component.tailLearningGoal = 16;
+        component.headLearningGoal = 17;
+        component.relationType = 'EXTENDS';
+
+        component.validate();
+
+        expect(component.relationError).toBe(LearningGoalRelationError.EXISTING);
+    });
+
+    it('should prevent creating self relations', () => {
+        const node1 = { id: '16', label: 'learningGoal1' } as Node;
+        const node2 = { id: '17', label: 'learningGoal2' } as Node;
+        component.nodes = [node1, node2];
+
+        component.tailLearningGoal = 16;
         component.headLearningGoal = 16;
         component.relationType = 'EXTENDS';
 
-        expect(
-            // @ts-ignore
-            component.doesCreateCircularRelation(nodes, edges, {
-                source: '17',
-                target: '16',
-                label: 'EXTENDS',
-            } as Edge),
-        ).toBeTrue();
+        component.validate();
+
+        expect(component.relationError).toBe(LearningGoalRelationError.SELF);
     });
 
     it('should remove learning goal relation', () => {
