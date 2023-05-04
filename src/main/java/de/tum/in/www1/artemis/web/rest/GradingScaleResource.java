@@ -148,11 +148,6 @@ public class GradingScaleResource {
         else if (gradingScale.getId() != null) {
             throw new BadRequestAlertException("A grading scale can't contain a predefined id", ENTITY_NAME, "gradingScaleHasId");
         }
-        else if ((gradingScale.getPresentationsNumber() != null || gradingScale.getCourse().getPresentationScore() != null)
-                && gradingScale.getCourse().getPresentationScore() > 0) {
-            throw new BadRequestAlertException("You cannot set up graded presentations if the course is already set up for basic presentations", ENTITY_NAME,
-                    "basicPresentationAlreadySet");
-        }
     }
 
     /**
