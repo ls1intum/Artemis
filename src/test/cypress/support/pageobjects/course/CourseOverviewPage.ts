@@ -7,10 +7,12 @@ export class CourseOverviewPage {
     readonly participationRequestId = 'participateInExerciseQuery';
 
     startExercise(exerciseId: number) {
+        cy.reloadUntilFound('#start-exercise-' + exerciseId);
         cy.get('#start-exercise-' + exerciseId).click();
     }
 
     openRunningExercise(exerciseId: number) {
+        cy.reloadUntilFound('#open-exercise-' + exerciseId);
         cy.get('#open-exercise-' + exerciseId).click();
     }
 
