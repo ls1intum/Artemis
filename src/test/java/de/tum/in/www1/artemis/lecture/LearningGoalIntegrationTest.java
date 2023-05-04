@@ -525,17 +525,25 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     void createLearningGoalRelation_shouldReturnBadRequest_ForCircularRelations() throws Exception {
         LearningGoal learningGoal = learningGoalRepository.findByIdElseThrow(idOfLearningGoal);
         Course course = courseRepository.findByIdElseThrow(idOfCourse);
-        Long idOfOtherLearningGoal = database.createLearningGoal(course).getId();
-        LearningGoal otherLearningGoal = learningGoalRepository.findByIdElseThrow(idOfOtherLearningGoal);
+        Long idOfOtherLearningGoal1 = database.createLearningGoal(course).getId();
+        LearningGoal otherLearningGoal1 = learningGoalRepository.findByIdElseThrow(idOfOtherLearningGoal1);
+        Long idOfOtherLearningGoal2 = database.createLearningGoal(course).getId();
+        LearningGoal otherLearningGoal2 = learningGoalRepository.findByIdElseThrow(idOfOtherLearningGoal1);
 
-        var relation = new LearningGoalRelation();
-        relation.setTailLearningGoal(learningGoal);
-        relation.setHeadLearningGoal(otherLearningGoal);
-        relation.setType(LearningGoalRelation.RelationType.EXTENDS);
-        learningGoalRelationRepository.save(relation);
+        var relation1 = new LearningGoalRelation();
+        relation1.setTailLearningGoal(learningGoal);
+        relation1.setHeadLearningGoal(otherLearningGoal1);
+        relation1.setType(LearningGoalRelation.RelationType.EXTENDS);
+        learningGoalRelationRepository.save(relation1);
 
-        request.post("/api/courses/" + idOfCourse + "/competencies/" + idOfOtherLearningGoal + "/relations/" + idOfLearningGoal + "?type="
-                + LearningGoalRelation.RelationType.EXTENDS.name(), null, HttpStatus.BAD_REQUEST);
+        var relation2 = new LearningGoalRelation();
+        relation2.setTailLearningGoal(otherLearningGoal1);
+        relation2.setHeadLearningGoal(otherLearningGoal2);
+        relation2.setType(LearningGoalRelation.RelationType.MATCHES);
+        learningGoalRelationRepository.save(relation2);
+
+        request.post("/api/courses/" + idOfCourse + "/competencies/" + idOfOtherLearningGoal2 + "/relations/" + idOfLearningGoal + "?type="
+                + LearningGoalRelation.RelationType.ASSUMES.name(), null, HttpStatus.BAD_REQUEST);
     }
 
     @Test
