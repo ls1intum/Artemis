@@ -10,23 +10,6 @@ env:
   RAW_URL: https://raw.githubusercontent.com/${{ github.repository }}/${{ github.sha }}
 
 jobs:
-  # Check that the user has the correct permissions to deploy to test servers
-  # Currently only checks that the user is a member of the artemis-developers group in the ls1intum organization
-  check-permission:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Get membership info
-        id: check_membership
-        uses: octokit/request-action@v2.x
-        with:
-          route: GET /orgs/ls1intum/teams/artemis-developers/memberships/${{ github.actor }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - run: "echo You need to be a part of the artemis-developers group in the ls1intum organization to deploy to test servers."
-        if: ${{ failure() }}
-
-
   # Check that the build job has run successfully before deploying
   check-build-status:
     runs-on: ubuntu-latest
