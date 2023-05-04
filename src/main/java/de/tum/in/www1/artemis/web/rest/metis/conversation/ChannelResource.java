@@ -6,6 +6,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -87,17 +88,21 @@ public class ChannelResource extends ConversationManagementResource {
         log.debug("REST request to all channels of course: {}", courseId);
         checkMessagingEnabledElseThrow(courseId);
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, courseRepository.findByIdElseThrow(courseId), requestingUser);
-        var isAtLeastInstructor = authorizationCheckService.isAtLeastInstructorInCourse(courseRepository.findByIdElseThrow(courseId), requestingUser);
-        var result = channelRepository.findChannelsByCourseId(courseId).stream().map(channel -> conversationDTOService.convertChannelToDto(requestingUser, channel));
-        var filteredStream = result;
+        var course = courseRepository.findByIdElseThrow(courseId);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, requestingUser);
+        var isAtLeastInstructor = authorizationCheckService.isAtLeastInstructorInCourse(course, requestingUser);
+        var isOnlyStudent = authorizationCheckService.isOnlyStudentInCourse(course, requestingUser);
+        var channels = channelRepository.findChannelsByCourseId(courseId).stream();
+
+        var filteredChannels = isOnlyStudent ? conversationService.filterVisibleChannelsForStudents(channels) : channels;
+        var channelDTOs = filteredChannels.map(channel -> conversationDTOService.convertChannelToDto(requestingUser, channel));
+
         // only instructors / system admins can see all channels
         if (!isAtLeastInstructor) {
-            filteredStream = result
-                    // we only want to show public channels and in addition private channels that the requestingUser is a member of
-                    .filter(channelDTO -> channelDTO.getIsPublic() || channelDTO.getIsMember());
+            channelDTOs = filterVisibleChannelsForNonInstructors(channelDTOs);
         }
-        return ResponseEntity.ok(filteredStream.sorted(Comparator.comparing(ChannelDTO::getName)).toList());
+
+        return ResponseEntity.ok(channelDTOs.sorted(Comparator.comparing(ChannelDTO::getName)).toList());
     }
 
     /**
@@ -371,4 +376,7 @@ public class ChannelResource extends ConversationManagementResource {
         });
     }
 
+    private Stream<ChannelDTO> filterVisibleChannelsForNonInstructors(Stream<ChannelDTO> channelDTOs) {
+        return channelDTOs.filter(channelDTO -> channelDTO.getIsPublic() || channelDTO.getIsMember());
+    }
 }

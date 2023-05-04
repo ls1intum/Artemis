@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service.metis.conversation;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.validation.constraints.NotNull;
 
@@ -115,23 +116,9 @@ public class ConversationService {
         conversations.addAll(groupChatsOfUser);
         Course course = courseRepository.findByIdElseThrow(courseId);
         // if the user is only a student in the course, we filter out all channels that are not yet open
-        if (authorizationCheckService.isOnlyStudentInCourse(course, requestingUser)) {
-            var filteredChannelsOfUser = channelsOfUser.stream().filter(channel -> {
-                if (channel.getExercise() != null) {
-                    return channel.getExercise().getReleaseDate() == null || channel.getExercise().getReleaseDate().isBefore(ZonedDateTime.now());
-                }
-                else if (channel.getLecture() != null) {
-                    return channel.getLecture().getStartDate() == null || channel.getLecture().getStartDate().isBefore(ZonedDateTime.now());
-                }
-                else {
-                    return true;
-                }
-            }).toList();
-            conversations.addAll(filteredChannelsOfUser);
-        }
-        else {
-            conversations.addAll(channelsOfUser);
-        }
+        var isOnlyStudent = authorizationCheckService.isOnlyStudentInCourse(course, requestingUser);
+        var filteredChannels = isOnlyStudent ? filterVisibleChannelsForStudents(channelsOfUser.stream()).toList() : channelsOfUser;
+        conversations.addAll(filteredChannels);
 
         return conversations.stream().map(conversation -> conversationDTOService.convertToDTO(conversation, requestingUser)).toList();
     }
@@ -418,5 +405,24 @@ public class ConversationService {
             return conversationRepository.findAllUnreadConversationsWhereUserIsParticipant(user.getId());
         }
         return conversationRepository.findAllWhereUserIsParticipant(user.getId());
+    }
+
+    /**
+     * Filter all channels where the attached lecture/exercise has been released
+     *
+     * @param channels A stream of channels
+     * @return A stream of channels for lectures/exercises that have been released
+     */
+    public Stream<Channel> filterVisibleChannelsForStudents(Stream<Channel> channels) {
+        ZonedDateTime now = ZonedDateTime.now();
+        return channels.filter(channel -> {
+            if (channel.getExercise() != null) {
+                return channel.getExercise().getReleaseDate() == null || channel.getExercise().getReleaseDate().isBefore(now);
+            } else if (channel.getLecture() != null) {
+                return channel.getLecture().getStartDate() == null || channel.getLecture().getStartDate().isBefore(now);
+            } else {
+                return true;
+            }
+        });
     }
 }
