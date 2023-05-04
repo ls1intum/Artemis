@@ -52,6 +52,7 @@ import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.programmingexercise.MockDelegate;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.metis.conversation.ConversationRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
@@ -140,6 +141,9 @@ public class CourseTestService {
 
     @Autowired
     private ExamUserRepository examUserRepository;
+
+    @Autowired
+    private ConversationRepository conversationRepository;
 
     private static final int numberOfStudents = 8;
 
@@ -409,6 +413,7 @@ public class CourseTestService {
             assertThat(examRepo.findByCourseId(course.getId())).as("All exams are deleted").isEmpty();
             assertThat(exerciseRepo.findAllExercisesByCourseId(course.getId())).as("All Exercises are deleted").isEmpty();
             assertThat(lectureRepo.findAllByCourseIdWithAttachments(course.getId())).as("All Lectures are deleted").isEmpty();
+            assertThat(conversationRepository.findAllByCourseId(course.getId())).as("All Conversations are deleted").isEmpty();
         }
     }
 
