@@ -465,7 +465,7 @@
                 "registrationNumberNotChecked": "Matrikelnummer wurde nicht überprüft",
                 "registeredStudents": "Angemeldete Studierende",
                 "notCheckedStudents": "Anzahl der nicht überprüften Studenten",
-                "allStudentsCheckedPassed": "Alle Studenten wurden erfolgreich geprüft",
+                "allStudentsCheckedPassed": "Alle Studenten wurden erfolgreich überprüft",
                 "searchResults": "Suchergebnisse",
                 "usersPerPage": "{{number}} Studierende pro Seite",
                 "showAllUsers": "Alle Studierenden anzeigen",
