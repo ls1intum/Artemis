@@ -244,7 +244,7 @@ public class FileUploadExerciseResource {
         // Check that the user is authorized to update the exercise
         User user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
-        final var fileUploadExerciseBeforeUpdate = fileUploadExerciseRepository.findByIdElseThrow(fileUploadExercise.getId());
+        final var fileUploadExerciseBeforeUpdate = fileUploadExerciseRepository.findByIdWithChannelElseThrow(fileUploadExercise.getId());
 
         // Forbid conversion between normal course exercise and exam exercise
         exerciseService.checkForConversionBetweenExamAndCourseExercise(fileUploadExercise, fileUploadExerciseBeforeUpdate, ENTITY_NAME);

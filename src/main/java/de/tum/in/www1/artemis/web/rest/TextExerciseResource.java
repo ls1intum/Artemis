@@ -204,7 +204,7 @@ public class TextExerciseResource {
         // Check that the user is authorized to update the exercise
         var user = userRepository.getUserWithGroupsAndAuthorities();
         // Important: use the original exercise for permission check
-        final TextExercise textExerciseBeforeUpdate = textExerciseRepository.findByIdElseThrow(textExercise.getId());
+        final TextExercise textExerciseBeforeUpdate = textExerciseRepository.findByIdWithChannelElseThrow(textExercise.getId());
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, textExerciseBeforeUpdate, user);
 
         // Forbid changing the course the exercise belongs to.
@@ -215,9 +215,9 @@ public class TextExerciseResource {
         // Forbid conversion between normal course exercise and exam exercise
         exerciseService.checkForConversionBetweenExamAndCourseExercise(textExercise, textExerciseBeforeUpdate, ENTITY_NAME);
 
-        if (textExercise.getChannel() != null) {
+        if (textExerciseBeforeUpdate.getChannel() != null) {
             // Make sure that the original references are preserved.
-            Channel originalChannel = channelRepository.findByIdElseThrow(textExercise.getChannel().getId());
+            Channel originalChannel = channelRepository.findByIdElseThrow(textExerciseBeforeUpdate.getChannel().getId());
             textExercise.setChannel(originalChannel);
         }
 

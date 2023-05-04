@@ -45,6 +45,19 @@ public interface TextExerciseRepository extends JpaRepository<TextExercise, Long
     @EntityGraph(type = LOAD, attributePaths = { "studentParticipations", "studentParticipations.submissions", "studentParticipations.submissions.results" })
     Optional<TextExercise> findWithStudentParticipationsAndSubmissionsById(Long exerciseId);
 
+    @Query("""
+            SELECT DISTINCT textExercise
+            FROM TextExercise textExercise
+            LEFT JOIN FETCH textExercise.channel
+            WHERE textExercise.id = :exerciseId
+            """)
+    Optional<TextExercise> findByIdWithChannel(long exerciseId);
+
+    @NotNull
+    default TextExercise findByIdWithChannelElseThrow(long exerciseId) {
+        return findByIdWithChannel(exerciseId).orElseThrow(() -> new EntityNotFoundException("Text Exercise", exerciseId));
+    }
+
     @NotNull
     default TextExercise findByIdElseThrow(long exerciseId) {
         return findById(exerciseId).orElseThrow(() -> new EntityNotFoundException("Text Exercise", exerciseId));
