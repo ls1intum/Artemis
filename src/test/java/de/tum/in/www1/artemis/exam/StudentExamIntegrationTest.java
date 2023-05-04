@@ -306,8 +306,8 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         request.delete("/api/courses/" + exam2.getCourse().getId() + "/exams/" + exam2.getId(), HttpStatus.OK);
 
-        assertThat(studentExamRepository.findAllTestRunsByExamId(exam2.getId())).hasSize(0);
-        assertThat(studentExamRepository.findByExamId(exam2.getId())).hasSize(0);
+        assertThat(studentExamRepository.findAllTestRunsByExamId(exam2.getId())).isEmpty();
+        assertThat(studentExamRepository.findByExamId(exam2.getId())).isEmpty();
     }
 
     private List<StudentExam> prepareStudentExamsForConduction(boolean early, boolean setFields) throws Exception {

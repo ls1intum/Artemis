@@ -38,9 +38,6 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationBambooB
     private CourseScoreCalculationService courseScoreCalculationService;
 
     @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
     private ResultRepository resultRepository;
 
     private Course course;
@@ -180,9 +177,7 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationBambooB
     void getScoresAndParticipationResultsForPastCourse() {
         // Create course with assessment due date passed.
         Course pastCourse = database.createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(TEST_PREFIX, true);
-
         User student = database.getUserByLogin(TEST_PREFIX + "student1");
-        ;
 
         CourseForDashboardDTO courseForDashboard = courseScoreCalculationService.getScoresAndParticipationResults(pastCourse, student.getId());
         assertThat(courseForDashboard.course()).isEqualTo(pastCourse);
@@ -211,7 +206,6 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationBambooB
     @Test
     void calculateCourseScoreWithNoParticipations() {
         User student = database.getUserByLogin(TEST_PREFIX + "student1");
-        ;
 
         StudentScoresDTO studentScore = courseScoreCalculationService.calculateCourseScoreForStudent(course, student.getId(), Collections.emptyList(),
                 new CourseScoreCalculationService.MaxAndReachablePoints(100.00, 100.00), Collections.emptyList());
@@ -224,7 +218,6 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationBambooB
         assertThat(mostSeverePlagiarismVerdict).isNull();
         boolean presentationScorePassed = courseScoreCalculationService.isPresentationScoreSufficientForBonus(studentScore.presentationScore(), course.getPresentationScore());
         assertThat(presentationScorePassed).isFalse();
-
     }
 
     @Test
