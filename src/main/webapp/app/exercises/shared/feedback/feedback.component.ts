@@ -1,7 +1,7 @@
 import { Component, Injector, Input, OnInit } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { catchError, switchMap, tap } from 'rxjs/operators';
+import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { of, throwError } from 'rxjs';
 import { BuildLogEntry, BuildLogEntryArray, BuildLogType } from 'app/entities/build-log.model';
 import { Feedback, checkSubsequentFeedbackInAssessment } from 'app/entities/feedback.model';
@@ -25,7 +25,7 @@ import { Course } from 'app/entities/course.model';
 import dayjs from 'dayjs/esm';
 import { FeedbackItemService, FeedbackItemServiceImpl } from 'app/exercises/shared/feedback/item/feedback-item-service';
 import { ProgrammingFeedbackItemService } from 'app/exercises/shared/feedback/item/programming-feedback-item.service';
-import { FeedbackService } from 'app/exercises/shared/feedback/feedback-service';
+import { FeedbackService } from 'app/exercises/shared/feedback/feedback.service';
 import { evaluateTemplateStatus, isOnlyCompilationTested, resultIsPreliminary } from '../result/result.utils';
 import { FeedbackNode } from 'app/exercises/shared/feedback/node/feedback-node';
 import { ChartData } from 'app/exercises/shared/feedback/chart/feedback-chart-data';
@@ -172,14 +172,17 @@ export class FeedbackComponent implements OnInit {
                 switchMap((feedbacks: Feedback[] | undefined | null) => {
                     // don't query the server if feedback already exists
                     if (feedbacks?.length) {
+                        // ensure connection to result, required for FeedbackItems in the next step
+                        feedbacks.forEach((feedback) => (feedback.result = this.result));
                         return of(feedbacks);
                     } else {
-                        return this.feedbackService.getFeedbacksForResult(this.result.participation!.id!, this.result);
+                        return this.resultService.getFeedbackDetailsForResult(this.result.participation!.id!, this.result).pipe(map((response) => response.body));
                     }
                 }),
                 switchMap((feedbacks: Feedback[] | undefined | null) => {
                     if (feedbacks && feedbacks.length) {
                         this.result.feedbacks = feedbacks!;
+
                         const filteredFeedback = this.feedbackService.filterFeedback(feedbacks, this.feedbackFilter);
                         checkSubsequentFeedbackInAssessment(filteredFeedback);
 

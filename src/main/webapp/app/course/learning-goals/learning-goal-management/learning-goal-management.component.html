@@ -11,7 +11,12 @@
             <jhi-documentation-button [type]="documentationType"></jhi-documentation-button>
         </div>
         <div class="ms-auto text-truncate justify-content-end" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
-            <a class="btn btn-primary" [routerLink]="['/course-management', courseId, 'goal-management', 'create']">
+            <button class="btn btn-primary" id="learningGoalImportButton" (click)="openImportModal()">
+                <fa-icon [icon]="faPlus"></fa-icon>
+                <span>{{ 'artemisApp.learningGoal.manageLearningGoals.import' | artemisTranslate }}</span>
+            </button>
+
+            <a class="btn btn-primary" [routerLink]="['/course-management', courseId, 'competency-management', 'create']">
                 <fa-icon [icon]="faPlus"></fa-icon>
                 <span>{{ 'artemisApp.learningGoal.manageLearningGoals.create' | artemisTranslate }}</span>
             </a>
@@ -125,10 +130,10 @@
             <tbody>
                 <tr *ngFor="let learningGoal of learningGoals; trackBy: identify; let i = index" id="learning-goal-row-{{ i }}">
                     <td>
-                        <a [routerLink]="['/courses', courseId, 'learning-goals', learningGoal.id]">{{ learningGoal.id }}</a>
+                        <a [routerLink]="['/courses', courseId, 'competencies', learningGoal.id]">{{ learningGoal.id }}</a>
                     </td>
                     <td>
-                        <a [routerLink]="['/courses', courseId, 'learning-goals', learningGoal.id]">{{ learningGoal.title }}</a>
+                        <a [routerLink]="['/courses', courseId, 'competencies', learningGoal.id]">{{ learningGoal.title }}</a>
                     </td>
                     <td [innerHTML]="learningGoal.description"></td>
                     <td>
@@ -149,7 +154,7 @@
                         <a
                             *jhiHasAnyAuthority="['ROLE_INSTRUCTOR', 'ROLE_ADMIN']"
                             class="btn btn-sm btn-primary"
-                            [routerLink]="['/course-management', courseId, 'goal-management', learningGoal.id, 'edit']"
+                            [routerLink]="['/course-management', courseId, 'competency-management', learningGoal.id, 'edit']"
                         >
                             <fa-icon [icon]="faPencilAlt"></fa-icon>
                             <span class="d-none d-md-inline">{{ 'entity.action.edit' | artemisTranslate }}</span>
@@ -174,7 +179,7 @@
     <div class="d-flex flex-wrap">
         <h2 jhiTranslate="artemisApp.learningGoal.prerequisite.managePrerequisites.title">Prerequisite Management</h2>
         <div class="ms-auto text-truncate justify-content-end" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
-            <a class="btn btn-primary" (click)="openImportModal()">
+            <a class="btn btn-primary" (click)="openPrerequisiteSelectionModal()">
                 <fa-icon [icon]="faPlus"></fa-icon>
                 <span>{{ 'artemisApp.learningGoal.prerequisite.managePrerequisites.select' | artemisTranslate }}</span>
             </a>
@@ -210,7 +215,7 @@
                     </td>
                     <td>
                         <div *ngIf="prerequisite.course">
-                            <a [routerLink]="['/course-management', prerequisite.course!.id, 'goal-management']">{{ prerequisite.course!.title }}</a>
+                            <a [routerLink]="['/course-management', prerequisite.course!.id, 'competency-management']">{{ prerequisite.course!.title }}</a>
                         </div>
                     </td>
                     <td class="text-end">

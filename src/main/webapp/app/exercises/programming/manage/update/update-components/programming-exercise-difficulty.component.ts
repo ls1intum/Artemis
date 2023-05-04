@@ -7,6 +7,6 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
     styleUrls: ['../../programming-exercise-form.scss'],
 })
 export class ProgrammingExerciseDifficultyComponent {
-    @Input() isImport: boolean;
+    @Input() isImportFromExistingExercise: boolean;
     @Input() programmingExercise: ProgrammingExercise;
 }

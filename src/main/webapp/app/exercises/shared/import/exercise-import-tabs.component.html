@@ -1,0 +1,16 @@
+<ul ngbNav #nav="ngbNav" [(activeId)]="activeTab" class="nav-tabs">
+    <li [ngbNavItem]="1">
+        <a id="tab1" ngbNavLink jhiTranslate="artemisApp.exercise.import.tabTitle">From instance</a>
+        <ng-template ngbNavContent>
+            <jhi-exercise-import [exerciseType]="exerciseType" />
+        </ng-template>
+    </li>
+    <li id="tab2" [ngbNavItem]="2">
+        <a ngbNavLink jhiTranslate="artemisApp.exercise.importFromFile.tabTitle"> </a>
+        <ng-template ngbNavContent>
+            <jhi-exercise-import-from-file [exerciseType]="exerciseType" />
+        </ng-template>
+    </li>
+</ul>
+
+<div [ngbNavOutlet]="nav" class="mt-2"></div>
