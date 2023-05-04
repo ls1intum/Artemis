@@ -49,7 +49,6 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     gradedParticipation?: StudentParticipation;
     practiceParticipation?: StudentParticipation;
     programmingExercise?: ProgrammingExercise;
-
     isTeamAvailable: boolean;
 
     // Icons
@@ -80,6 +79,9 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
         }
     }
 
+    /**
+     * Viewing the team is only possible if it's a team exercise and the student is already assigned to a team.
+     */
     ngOnChanges() {
         this.updateParticipations();
         this.isTeamAvailable = !!(this.exercise.teamMode && this.exercise.studentAssignedTeamIdComputed && this.exercise.studentAssignedTeamId);
@@ -109,9 +111,6 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
         return !this.examMode && individualExerciseOrTeamAssigned && isStartExerciseAvailable(this.exercise, this.gradedParticipation);
     }
 
-    /**
-     * Viewing the team is only possible if it's a team exercise and the student is already assigned to a team.
-     */
     /**
      * Resuming an exercise is not possible in the exam, otherwise see exercise.utils -> isResumeExerciseAvailable
      */
