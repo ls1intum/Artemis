@@ -36,9 +36,9 @@ public class IrisGPT3_5Service implements IrisModel {
     private final RestTemplate restTemplate;
 
     /**
-     * The URL to send the API requests to. Defaults to <a href="https://api.openai.com/v1/chat/completions">...</a>.
+     * The URL to send the API requests to.
      */
-    @Value("${artemis.iris.models.gpt3_5.url:https://api.openai.com/v1/chat/completions}")
+    @Value("${artemis.iris.models.gpt3_5.url}")
     private URL apiURL;
 
     /**
@@ -48,9 +48,9 @@ public class IrisGPT3_5Service implements IrisModel {
     private String apiKey;
 
     /**
-     * The ID of the model to request from the API. Defaults to "gpt-3.5-turbo".
+     * The ID of the model to request from the API.
      */
-    @Value("${artemis.iris.models.gpt3_5.model:gpt-3.5-turbo}")
+    @Value("${artemis.iris.models.gpt3_5.model}")
     private String model;
 
     /**
@@ -109,7 +109,15 @@ public class IrisGPT3_5Service implements IrisModel {
      * @return The API request parameters
      */
     private Map<String, Object> createRequestParams(List<IrisMessage> conversationHistory) {
-        return Map.of("model", model, "messages", convertMessages(conversationHistory), "temperature", temperature, "max_tokens", maxGeneratedTokens, "stop", stopSequences);
+        // @formatter:off
+        return Map.of(
+                "model", model,
+                "messages", convertMessages(conversationHistory),
+                "temperature", temperature,
+                "max_tokens", maxGeneratedTokens,
+                "stop", stopSequences
+        );
+        // @formatter:on
     }
 
     /**
@@ -131,7 +139,12 @@ public class IrisGPT3_5Service implements IrisModel {
      * @return The converted message.
      */
     private static Map<String, String> toRoleMessage(IrisMessage message) {
-        return Map.of("role", toRole(message.getSender()), "message", joinContents(message.getContent()));
+        // @formatter:off
+        return Map.of(
+                "role", toRole(message.getSender()),
+                "message", joinContents(message.getContent())
+        );
+        // @formatter:on
     }
 
     /**
