@@ -21,7 +21,15 @@ describe('Logout tests', () => {
 
     it('Logs out by pressing OK when unsaved changes on exercise mode', () => {
         cy.login(studentOne);
-        startExerciseAndMakeChanges(course, modelingExercise);
+
+        const exerciseID = modelingExercise.id!;
+        cy.visit(`/courses/${course.id}/exercises`);
+        courseOverview.startExercise(exerciseID);
+        courseOverview.openRunningExercise(exerciseID);
+        modelingExerciseEditor.addComponentToModel(exerciseID, 1);
+        modelingExerciseEditor.addComponentToModel(exerciseID, 2);
+        navigationBar.logout();
+
         cy.on('window:confirm', (text) => {
             expect(text).to.contains('You have unsaved changes');
             return true;
@@ -31,7 +39,15 @@ describe('Logout tests', () => {
 
     it('Stays logged in by pressing cancel when trying to logout during unsaved changes on exercise mode', () => {
         cy.login(studentTwo);
-        startExerciseAndMakeChanges(course, modelingExercise);
+
+        const exerciseID = modelingExercise.id!;
+        cy.visit(`/courses/${course.id}/exercises`);
+        courseOverview.startExercise(exerciseID);
+        courseOverview.openRunningExercise(exerciseID);
+        modelingExerciseEditor.addComponentToModel(exerciseID, 1);
+        modelingExerciseEditor.addComponentToModel(exerciseID, 2);
+        navigationBar.logout();
+
         cy.on('window:confirm', (text) => {
             expect(text).to.contains('You have unsaved changes');
             return false;
@@ -40,19 +56,6 @@ describe('Logout tests', () => {
     });
 
     after(() => {
-        if (course) {
-            cy.login(admin);
-            courseManagementRequest.deleteCourse(course.id!);
-        }
+        courseManagementRequest.deleteCourse(course, admin);
     });
 });
-
-const startExerciseAndMakeChanges = (course: Course, modelingExercise: ModelingExercise) => {
-    const exerciseID = modelingExercise.id!;
-    cy.visit(`/courses/${course.id}/exercises`);
-    courseOverview.startExercise(exerciseID);
-    courseOverview.openRunningExercise(exerciseID);
-    modelingExerciseEditor.addComponentToModel(exerciseID, 1);
-    modelingExerciseEditor.addComponentToModel(exerciseID, 2);
-    navigationBar.logout();
-};

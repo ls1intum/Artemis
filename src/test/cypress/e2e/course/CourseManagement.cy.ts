@@ -2,7 +2,7 @@ import { Interception } from 'cypress/types/net-stubbing';
 import { convertModelAfterMultiPart } from '../../support/requests/CourseManagementRequests';
 import { BASE_API, PUT } from '../../support/constants';
 import { courseCreation, courseManagement, courseManagementRequest, navigationBar } from '../../support/artemis';
-import { dayjsToString, generateUUID, trimDate } from '../../support/utils';
+import { convertBooleanToYesNo, dayjsToString, generateUUID, trimDate } from '../../support/utils';
 import { Course } from 'app/entities/course.model';
 import day from 'dayjs/esm';
 import { admin, studentOne } from '../../support/users';
@@ -86,16 +86,13 @@ describe('Course management', () => {
         });
 
         after(() => {
-            if (course) {
-                cy.login(admin);
-                courseManagementRequest.deleteCourse(course.id!);
-            }
+            courseManagementRequest.deleteCourse(course, admin);
         });
     });
 
     describe('Course creation', () => {
-        let courseId: number;
-        let courseId2: number;
+        let course: Course;
+        let course2: Course;
 
         beforeEach(() => {
             cy.login(admin, '/');
@@ -126,7 +123,7 @@ describe('Course management', () => {
             courseCreation.setCustomizeGroupNames(courseData.customizeGroupNames);
             courseCreation.submit().then((request: Interception) => {
                 const courseBody = request.response!.body;
-                courseId = courseBody.id!;
+                course = courseBody;
                 expect(courseBody.title).to.eq(courseData.title);
                 expect(courseBody.shortName).to.eq(courseData.shortName);
                 expect(courseBody.description).to.eq(courseData.description);
@@ -181,7 +178,7 @@ describe('Course management', () => {
                 courseCreation.setInstructorGroup(courseData.instructorGroupName);
                 courseCreation.submit().then((request: Interception) => {
                     const courseBody = request.response!.body;
-                    courseId2 = courseBody.id!;
+                    course2 = courseBody;
                     expect(courseBody.title).to.eq(courseData.title);
                     expect(courseBody.shortName).to.eq(courseData.shortName);
                     expect(courseBody.testCourse).to.eq(courseData.testCourse);
@@ -202,14 +199,8 @@ describe('Course management', () => {
         }
 
         after('Delete courses', () => {
-            if (courseId) {
-                cy.login(admin, '/');
-                courseManagementRequest.deleteCourse(courseId).its('status').should('eq', 200);
-            }
-            if (courseId2) {
-                cy.login(admin, '/');
-                courseManagementRequest.deleteCourse(courseId2).its('status').should('eq', 200);
-            }
+            courseManagementRequest.deleteCourse(course, admin);
+            courseManagementRequest.deleteCourse(course2, admin);
         });
     });
 
@@ -247,10 +238,7 @@ describe('Course management', () => {
         });
 
         after('Delete course', () => {
-            if (course) {
-                cy.login(admin);
-                courseManagementRequest.deleteCourse(course.id!);
-            }
+            courseManagementRequest.deleteCourse(course, admin);
         });
     });
 
@@ -310,14 +298,7 @@ describe('Course management', () => {
         });
 
         after('Delete course', () => {
-            if (course) {
-                cy.login(admin);
-                courseManagementRequest.deleteCourse(course.id!);
-            }
+            courseManagementRequest.deleteCourse(course, admin);
         });
     });
 });
-
-function convertBooleanToYesNo(boolean: boolean) {
-    return boolean ? 'Yes' : 'No';
-}

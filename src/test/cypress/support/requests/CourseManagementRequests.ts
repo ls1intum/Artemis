@@ -41,13 +41,17 @@ export const MODELING_EXERCISE_BASE = BASE_API + 'modeling-exercises';
 export class CourseManagementRequests {
     /**
      * Deletes the course with the specified id.
-     * @param courseId the course id
+     * @param course the course
+     * @param admin the admin user
      * @returns <Chainable> request response
      */
-    deleteCourse(courseId: number) {
+    deleteCourse(course: Course, admin: CypressCredentials) {
         // Sometimes the server fails with a ConstraintViolationError if we delete the course immediately after a login
         cy.wait(20000);
-        return cy.request({ method: DELETE, url: `${COURSE_ADMIN_BASE}/${courseId}` });
+        if (course) {
+            cy.login(admin);
+            return cy.request({ method: DELETE, url: `${COURSE_ADMIN_BASE}/${course.id}` });
+        }
     }
 
     /**

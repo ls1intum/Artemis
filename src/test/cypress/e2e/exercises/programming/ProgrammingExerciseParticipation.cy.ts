@@ -27,24 +27,30 @@ describe('Programming exercise participation', () => {
 
     it('Makes a failing submission', () => {
         programmingExerciseEditor.startParticipation(course.id!, exercise.id!, studentOne);
-        makeSubmission(exercise, buildError);
+        const submission = buildError;
+        programmingExerciseEditor.makeSubmissionAndVerifyResults(exercise.id!, exercise.packageName!, submission, () => {
+            programmingExerciseEditor.getResultScore().contains(submission.expectedResult).and('be.visible');
+        });
     });
 
     it('Makes a partially successful submission', () => {
         programmingExerciseEditor.startParticipation(course.id!, exercise.id!, studentTwo);
-        makeSubmission(exercise, partiallySuccessful);
+        const submission = partiallySuccessful;
+        programmingExerciseEditor.makeSubmissionAndVerifyResults(exercise.id!, exercise.packageName!, submission, () => {
+            programmingExerciseEditor.getResultScore().contains(submission.expectedResult).and('be.visible');
+        });
     });
 
     it('Makes a successful submission', () => {
         programmingExerciseEditor.startParticipation(course.id!, exercise.id!, studentThree);
-        makeSubmission(exercise, allSuccessful);
+        const submission = allSuccessful;
+        programmingExerciseEditor.makeSubmissionAndVerifyResults(exercise.id!, exercise.packageName!, submission, () => {
+            programmingExerciseEditor.getResultScore().contains(submission.expectedResult).and('be.visible');
+        });
     });
 
     after('Delete course', () => {
-        if (course) {
-            cy.login(admin);
-            courseManagementRequest.deleteCourse(course.id!);
-        }
+        courseManagementRequest.deleteCourse(course, admin);
     });
 
     /**
@@ -72,12 +78,3 @@ describe('Programming exercise participation', () => {
         });
     }
 });
-
-/**
- * Makes a submission, which fails the CI build and asserts that this is highlighted in the UI.
- */
-function makeSubmission(exercise: ProgrammingExercise, submission: ProgrammingExerciseSubmission) {
-    programmingExerciseEditor.makeSubmissionAndVerifyResults(exercise.id!, exercise.packageName!, submission, () => {
-        programmingExerciseEditor.getResultScore().contains(submission.expectedResult).and('be.visible');
-    });
-}
