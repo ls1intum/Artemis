@@ -435,6 +435,7 @@ public class UserService {
      */
     protected void anonymizeUser(User user, String adminLanguageKey) {
         final String originalLogin = user.getLogin();
+        final Set<String> originalGroups = user.getGroups();
         final String randomPassword = RandomUtil.generatePassword();
 
         user.setFirstName(getFirstNameForSoftDeletion(adminLanguageKey));
@@ -445,12 +446,13 @@ public class UserService {
         user.setRegistrationNumber(null);
         user.setImageUrl(null);
         user.setActivated(false);
+        user.setGroups(Collections.emptySet());
 
         userRepository.save(user);
         clearUserCaches(user);
         userRepository.flush();
 
-        updateUserInConnectorsAndAuthProvider(user, originalLogin, Collections.emptySet(), randomPassword);
+        updateUserInConnectorsAndAuthProvider(user, originalLogin, originalGroups, randomPassword);
     }
 
     private String getFirstNameForSoftDeletion(String languageKey) {
