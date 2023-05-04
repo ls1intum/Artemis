@@ -10,7 +10,46 @@ env:
   RAW_URL: https://raw.githubusercontent.com/${{ github.repository }}/${{ github.sha }}
 
 jobs:
+  # Check that the user has the correct permissions to deploy to test servers
+  # Currently only checks that the user is a member of the artemis-developers group in the ls1intum organization
+  check-permission:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get membership info
+        id: check_membership
+        uses: octokit/request-action@v2.x
+        with:
+          route: GET /orgs/ls1intum/teams/artemis-developers/memberships/${{ github.actor }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - run: "echo You need to be a part of the artemis-developers group in the ls1intum organization to deploy to test servers."
+        if: ${{ failure() }}
+
+
+  # Check that the build job has run successfully before deploying
+  check-build-status:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get latest successful build for branch
+        id: check_build
+        uses: octokit/request-action@v2.x
+        with:
+          route: GET /repos/${{ github.repository }}/actions/workflows/build.yml/runs?event=pull_request&status=success&head_sha=${{ github.event.pull_request.head.sha }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check if latest push had successful build
+        if: fromJSON(steps.check_build.outputs.data).total_count == 0
+        uses: actions/github-script@v3
+        with:
+          script: |
+            core.setFailed('The build needs to run through first. Please wait for the build to finish and then try again.')
+
+
+  # Check which test server to deploy to based on the label
   filter-matrix:
+    needs: [ check-permission, check-build-status ]
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -150,6 +189,7 @@ jobs:
           echo "${{ matrix.label-identifier }}=$MATRIX_JSON" >> $GITHUB_OUTPUT
 
 
+  # Process the output of the filter step to create a valid matrix for the deploy step
   process-matrix:
     needs: [ filter-matrix ]
     runs-on: ubuntu-latest
@@ -168,6 +208,7 @@ jobs:
           echo "matrix=$MATRIX_JSON" >> $GITHUB_OUTPUT
 
 
+  # Deploy to the test servers
   deploy:
     needs: [ process-matrix ]
     runs-on: ubuntu-latest
