@@ -71,6 +71,9 @@ public class ProfileToggleService {
         });
     }
 
+    /**
+     * Update the combined available list of profiles when the instance started successfully.
+     */
     @EventListener(ApplicationReadyEvent.class)
     public void publishAvailableProfiles() {
         // Update available profiles for this instance
