@@ -232,7 +232,7 @@
         </a>
         <a
             *ngIf="course.isAtLeastInstructor"
-            [routerLink]="['/course-management', course.id, 'goal-management']"
+            [routerLink]="['/course-management', course.id, 'competency-management']"
             class="btn btn-primary me-1 mb-1 hidden-if-mobile"
             [ngbTooltip]="'artemisApp.learningGoal.learningGoalButton' | artemisTranslate"
             id="course-card-open-learning-goals"

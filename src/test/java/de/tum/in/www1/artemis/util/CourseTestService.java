@@ -3,9 +3,8 @@ package de.tum.in.www1.artemis.util;
 import static de.tum.in.www1.artemis.config.Constants.ARTEMIS_GROUP_DEFAULT_PREFIX;
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -187,11 +186,10 @@ public class CourseTestService {
 
     // Test
     public void testCreateCourseWithPermission() throws Exception {
-        assertThrows(EntityNotFoundException.class, () -> courseRepo.findByIdWithLecturesAndExamsElseThrow(Long.MAX_VALUE));
-        assertThrows(EntityNotFoundException.class, () -> courseRepo.findByIdElseThrow(Long.MAX_VALUE));
-        assertThrows(EntityNotFoundException.class, () -> courseRepo.findByIdWithExercisesAndLecturesElseThrow(Long.MAX_VALUE));
-        assertThrows(EntityNotFoundException.class, () -> courseRepo.findWithEagerOrganizationsElseThrow(Long.MAX_VALUE));
-        assertThrows(EntityNotFoundException.class, () -> courseRepo.findByIdWithEagerExercisesElseThrow(Long.MAX_VALUE));
+        assertThatThrownBy(() -> courseRepo.findByIdElseThrow(Long.MAX_VALUE)).isInstanceOf(EntityNotFoundException.class);
+        assertThatThrownBy(() -> courseRepo.findByIdWithExercisesAndLecturesElseThrow(Long.MAX_VALUE)).isInstanceOf(EntityNotFoundException.class);
+        assertThatThrownBy(() -> courseRepo.findWithEagerOrganizationsElseThrow(Long.MAX_VALUE)).isInstanceOf(EntityNotFoundException.class);
+        assertThatThrownBy(() -> courseRepo.findByIdWithEagerExercisesElseThrow(Long.MAX_VALUE)).isInstanceOf(EntityNotFoundException.class);
 
         Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>());
         mockDelegate.mockCreateGroupInUserManagement(course.getDefaultStudentGroupName());
@@ -641,7 +639,9 @@ public class CourseTestService {
     // Test
     public void testGetCourseForDashboard(boolean userRefresh) throws Exception {
         List<Course> courses = database.createCoursesWithExercisesAndLecturesAndLectureUnitsAndLearningGoals(userPrefix, true, false, numberOfTutors);
-        Course receivedCourse = request.get("/api/courses/" + courses.get(0).getId() + "/for-dashboard?refresh=" + userRefresh, HttpStatus.OK, Course.class);
+        CourseForDashboardDTO receivedCourseForDashboard = request.get("/api/courses/" + courses.get(0).getId() + "/for-dashboard?refresh=" + userRefresh, HttpStatus.OK,
+                CourseForDashboardDTO.class);
+        Course receivedCourse = receivedCourseForDashboard.course();
 
         // Test that the received course has five exercises
         assertThat(receivedCourse.getExercises()).as("Five exercises are returned").hasSize(5);
@@ -674,6 +674,53 @@ public class CourseTestService {
                 }
             }
         }
+    }
+
+    private Course createCourseWithRegistrationEnabled(boolean registrationEnabled) throws Exception {
+        List<Course> courses = database.createCoursesWithExercisesAndLecturesAndLectureUnitsAndLearningGoals(userPrefix, true, false, numberOfTutors);
+        Course course = courses.get(0);
+        course.setRegistrationEnabled(registrationEnabled);
+        courseRepo.save(course);
+        return course;
+    }
+
+    private User removeAllGroupsFromStudent1() {
+        User student = database.getUserByLogin(userPrefix + "student1");
+        // remove student from all courses so that they are not already registered
+        student.setGroups(new HashSet<>());
+        userRepo.save(student);
+        return student;
+    }
+
+    // Test
+    public void testGetCourseForDashboardAccessDenied(boolean userRefresh) throws Exception {
+        Course course = createCourseWithRegistrationEnabled(true);
+        removeAllGroupsFromStudent1();
+        request.get("/api/courses/" + course.getId() + "/for-dashboard?refresh=" + userRefresh, HttpStatus.FORBIDDEN, Course.class);
+    }
+
+    // Test
+    public void testGetCourseForDashboardForbiddenWithRegistrationPossible() throws Exception {
+        Course course = createCourseWithRegistrationEnabled(true);
+        removeAllGroupsFromStudent1();
+        // still expect forbidden (403) from endpoint (only now the skipAlert flag will be set)
+        request.get("/api/courses/" + course.getId() + "/for-dashboard", HttpStatus.FORBIDDEN, Course.class);
+    }
+
+    // Test
+    public void testGetCourseForRegistration() throws Exception {
+        Course course = createCourseWithRegistrationEnabled(true);
+        // remove student from course so that they are not already registered
+        course.setStudentGroupName("someNonExistingStudentGroupName");
+        courseRepo.save(course);
+        request.get("/api/courses/" + course.getId() + "/for-registration", HttpStatus.OK, Course.class);
+    }
+
+    // Test
+    public void testGetCourseForRegistrationAccessDenied() throws Exception {
+        Course course = createCourseWithRegistrationEnabled(false);
+        removeAllGroupsFromStudent1();
+        request.get("/api/courses/" + course.getId() + "/for-registration", HttpStatus.FORBIDDEN, Course.class);
     }
 
     // Test
@@ -719,7 +766,9 @@ public class CourseTestService {
             registeredStudent.setExam(examRegistered);
             examRegistered.addExamUser(examUserRepository.save(registeredStudent));
 
-            Course receivedCourse = request.get("/api/courses/" + courses[i].getId() + "/for-dashboard?refresh=" + userRefresh, HttpStatus.OK, Course.class);
+            CourseForDashboardDTO receivedCourseForDashboard = request.get("/api/courses/" + courses[i].getId() + "/for-dashboard?refresh=" + userRefresh, HttpStatus.OK,
+                    CourseForDashboardDTO.class);
+            Course receivedCourse = receivedCourseForDashboard.course();
             assertThat(receivedCourse).isNotNull();
             if (i == 0) {
                 assertThat(receivedCourse.getExams()).isEmpty();
@@ -731,7 +780,8 @@ public class CourseTestService {
                 assertThat(receivedCourse.getExams()).containsExactlyInAnyOrder(examUnregistered, examRegistered, testExam);
             }
         }
-        List<Course> receivedCourses = request.getList("/api/courses/for-dashboard", HttpStatus.OK, Course.class);
+        List<CourseForDashboardDTO> receivedCoursesForDashboard = request.getList("/api/courses/for-dashboard", HttpStatus.OK, CourseForDashboardDTO.class);
+        List<Course> receivedCourses = receivedCoursesForDashboard.stream().map(CourseForDashboardDTO::course).toList();
         for (int i = 0; i < courses.length; i++) {
             Course receivedCourse = null;
             for (Course course : receivedCourses) {
@@ -763,7 +813,8 @@ public class CourseTestService {
         }
 
         // Perform the request that is being tested here
-        List<Course> courses = request.getList("/api/courses/for-dashboard", HttpStatus.OK, Course.class);
+        List<CourseForDashboardDTO> coursesForDashboard = request.getList("/api/courses/for-dashboard", HttpStatus.OK, CourseForDashboardDTO.class);
+        List<Course> courses = coursesForDashboard.stream().map(CourseForDashboardDTO::course).collect(Collectors.toList());
 
         Course activeCourse = coursesCreated.get(0);
         Course inactiveCourse = coursesCreated.get(1);
@@ -811,7 +862,8 @@ public class CourseTestService {
         Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), userPrefix + "student" + suffix, userPrefix + "tutor" + suffix,
                 userPrefix + "editor" + suffix, userPrefix + "instructor" + suffix);
         course = courseRepo.save(course);
-        List<Course> courses = request.getList("/api/courses/for-dashboard", HttpStatus.OK, Course.class);
+        List<CourseForDashboardDTO> coursesForDashboard = request.getList("/api/courses/for-dashboard", HttpStatus.OK, CourseForDashboardDTO.class);
+        List<Course> courses = coursesForDashboard.stream().map(CourseForDashboardDTO::course).toList();
         final var finalCourse = course;
         Course courseInList = courses.stream().filter(c -> c.getId().equals(finalCourse.getId())).findFirst().orElse(null);
         assertThat(courseInList).isNotNull();
@@ -831,7 +883,8 @@ public class CourseTestService {
         courseActive = courseRepo.save(courseActive);
         courseNotActivePast = courseRepo.save(courseNotActivePast);
         courseNotActiveFuture = courseRepo.save(courseNotActiveFuture);
-        List<Course> courses = request.getList("/api/courses/for-dashboard", HttpStatus.OK, Course.class);
+        List<CourseForDashboardDTO> coursesForDashboard = request.getList("/api/courses/for-dashboard", HttpStatus.OK, CourseForDashboardDTO.class);
+        List<Course> courses = coursesForDashboard.stream().map(CourseForDashboardDTO::course).toList();
 
         long courseNotActivePastId = courseNotActivePast.getId();
         long courseNotActiveFutureId = courseNotActiveFuture.getId();
@@ -882,7 +935,7 @@ public class CourseTestService {
     }
 
     // Test
-    public void testGetCoursesToRegisterAndAccurateTimeZoneEvaluation() throws Exception {
+    public void testGetCoursesForRegistrationAndAccurateTimeZoneEvaluation() throws Exception {
         Course courseActiveRegistrationEnabled = ModelFactory.generateCourse(1L, ZonedDateTime.now().minusMinutes(25), ZonedDateTime.now().plusMinutes(25), new HashSet<>(),
                 "testuser", "tutor", "editor", "instructor");
         courseActiveRegistrationEnabled.setRegistrationEnabled(true);
@@ -1275,7 +1328,7 @@ public class CourseTestService {
         AuditEvent auditEvent = auditEvents.get(0);
         assertThat(auditEvent.getData()).as("Correct Event Data").containsEntry("course", course1.getTitle());
 
-        request.postWithResponseBody("/api/courses/" + course2.getId() + "/register", null, User.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/courses/" + course2.getId() + "/register", null, User.class, HttpStatus.FORBIDDEN);
     }
 
     // Test
@@ -1294,8 +1347,8 @@ public class CourseTestService {
         mockDelegate.mockAddUserToGroupInUserManagement(student, notYetStartedCourse.getStudentGroupName(), false);
         mockDelegate.mockAddUserToGroupInUserManagement(student, finishedCourse.getStudentGroupName(), false);
 
-        request.post("/api/courses/" + notYetStartedCourse.getId() + "/register", User.class, HttpStatus.BAD_REQUEST);
-        request.post("/api/courses/" + finishedCourse.getId() + "/register", User.class, HttpStatus.BAD_REQUEST);
+        request.post("/api/courses/" + notYetStartedCourse.getId() + "/register", User.class, HttpStatus.FORBIDDEN);
+        request.post("/api/courses/" + finishedCourse.getId() + "/register", User.class, HttpStatus.FORBIDDEN);
     }
 
     // Test
@@ -2538,7 +2591,7 @@ public class CourseTestService {
         assertThat(courseWithOnlineConfiguration.getOnlineCourseConfiguration().getLtiKey()).isNotNull();
         assertThat(courseWithOnlineConfiguration.getOnlineCourseConfiguration().getLtiSecret()).isNotNull();
         assertThat(courseWithOnlineConfiguration.getOnlineCourseConfiguration().getRegistrationId()).isNotNull();
-        assertEquals(courseWithOnlineConfiguration.getOnlineCourseConfiguration().getUserPrefix(), courseWithOnlineConfiguration.getShortName());
+        assertThat(courseWithOnlineConfiguration.getOnlineCourseConfiguration().getUserPrefix()).isEqualTo(courseWithOnlineConfiguration.getShortName());
     }
 
     public void testUpdateToOnlineCourse() throws Exception {
@@ -2554,7 +2607,7 @@ public class CourseTestService {
         assertThat(updatedCourse.getOnlineCourseConfiguration().getLtiKey()).isNotNull();
         assertThat(updatedCourse.getOnlineCourseConfiguration().getLtiSecret()).isNotNull();
         assertThat(updatedCourse.getOnlineCourseConfiguration().getRegistrationId()).isNotNull();
-        assertEquals(updatedCourse.getOnlineCourseConfiguration().getUserPrefix(), updatedCourse.getShortName());
+        assertThat(updatedCourse.getOnlineCourseConfiguration().getUserPrefix()).isEqualTo(updatedCourse.getShortName());
     }
 
     public void testOnlineCourseConfigurationIsLazyLoaded() throws Exception {
@@ -2589,7 +2642,7 @@ public class CourseTestService {
         assertThat(ocConfiguration.getLtiKey()).isNotNull();
         assertThat(ocConfiguration.getLtiSecret()).isNotNull();
         assertThat(ocConfiguration.getRegistrationId()).isNotNull();
-        assertEquals(ocConfiguration.getUserPrefix(), actualCourse.getShortName());
+        assertThat(ocConfiguration.getUserPrefix()).isEqualTo(actualCourse.getShortName());
     }
 
     // Test
@@ -2723,13 +2776,7 @@ public class CourseTestService {
 
         OnlineCourseConfiguration response = request.putWithResponseBody(getUpdateOnlineCourseConfigurationPath(courseId), ocConfiguration, OnlineCourseConfiguration.class,
                 HttpStatus.OK);
-        assertEquals("key", response.getLtiKey());
-        assertEquals("secret", response.getLtiSecret());
-        assertEquals("prefix", response.getUserPrefix());
-        assertEquals("random", response.getRegistrationId());
-        assertEquals("authUri", response.getAuthorizationUri());
-        assertEquals("tokenUri", response.getTokenUri());
-        assertEquals("jwksUri", response.getJwkSetUri());
+        assertThat(response).usingRecursiveComparison().ignoringFields("id").isEqualTo(ocConfiguration);
     }
 
     public MockHttpServletRequestBuilder buildCreateCourse(@NotNull Course course) throws JsonProcessingException {

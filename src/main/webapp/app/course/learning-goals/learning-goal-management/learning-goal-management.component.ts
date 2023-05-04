@@ -13,6 +13,7 @@ import { PrerequisiteImportComponent } from 'app/course/learning-goals/learning-
 import { ClusterNode, Edge, Node } from '@swimlane/ngx-graph';
 import { AccountService } from 'app/core/auth/account.service';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
+import { CompetencyImportComponent } from 'app/course/learning-goals/learning-goal-management/competency-import.component';
 
 @Component({
     selector: 'jhi-learning-goal-management',
@@ -36,7 +37,7 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
-    documentationType = DocumentationType.LearningGoals;
+    documentationType = DocumentationType.Competencies;
 
     getIcon = getIcon;
     getIconTooltip = getIconTooltip;
@@ -177,26 +178,48 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
             });
     }
 
-    openImportModal() {
+    /**
+     * Opens a modal for adding a prerequisite to the current course.
+     */
+    openPrerequisiteSelectionModal() {
         const modalRef = this.modalService.open(PrerequisiteImportComponent, { size: 'lg', backdrop: 'static' });
         modalRef.componentInstance.disabledIds = this.learningGoals.concat(this.prerequisites).map((learningGoal) => learningGoal.id);
-        modalRef.result.then(
-            (result: LearningGoal) => {
-                this.learningGoalService
-                    .addPrerequisite(result.id!, this.courseId)
-                    .pipe(
-                        filter((res: HttpResponse<LearningGoal>) => res.ok),
-                        map((res: HttpResponse<LearningGoal>) => res.body),
-                    )
-                    .subscribe({
-                        next: (res: LearningGoal) => {
-                            this.prerequisites.push(res);
-                        },
-                        error: (res: HttpErrorResponse) => onError(this.alertService, res),
-                    });
-            },
-            () => {},
-        );
+        modalRef.result.then((result: LearningGoal) => {
+            this.learningGoalService
+                .addPrerequisite(result.id!, this.courseId)
+                .pipe(
+                    filter((res: HttpResponse<LearningGoal>) => res.ok),
+                    map((res: HttpResponse<LearningGoal>) => res.body),
+                )
+                .subscribe({
+                    next: (res: LearningGoal) => {
+                        this.prerequisites.push(res);
+                    },
+                    error: (res: HttpErrorResponse) => onError(this.alertService, res),
+                });
+        });
+    }
+
+    /**
+     * Opens a modal for selecting a learning goal to import to the current course.
+     */
+    openImportModal() {
+        const modalRef = this.modalService.open(CompetencyImportComponent, { size: 'lg', backdrop: 'static' });
+        modalRef.componentInstance.disabledIds = this.learningGoals.concat(this.prerequisites).map((learningGoal) => learningGoal.id);
+        modalRef.result.then((selectedLearningGoal: LearningGoal) => {
+            this.learningGoalService
+                .import(selectedLearningGoal, this.courseId)
+                .pipe(
+                    filter((res: HttpResponse<LearningGoal>) => res.ok),
+                    map((res: HttpResponse<LearningGoal>) => res.body),
+                )
+                .subscribe({
+                    next: (res: LearningGoal) => {
+                        this.learningGoals.push(res);
+                    },
+                    error: (res: HttpErrorResponse) => onError(this.alertService, res),
+                });
+        });
     }
 
     createRelation() {

@@ -6,12 +6,14 @@ import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 import { Course } from 'app/entities/course.model';
 import { Exercise, getIcon, getIconTooltip } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { CachingStrategy } from 'app/shared/image/secured-image.component';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import dayjs from 'dayjs/esm';
 import { getExerciseDueDate } from 'app/exercises/shared/exercise/exercise.utils';
 import { GraphColors } from 'app/entities/statistics.model';
+import { ScoresStorageService } from 'app/course/course-scores/scores-storage.service';
+import { ScoreType } from 'app/shared/constants/score-type.constants';
+import { CourseScores } from 'app/course/course-scores/course-scores';
 import { ProfileToggle } from 'app/shared/profile-toggle/profile-toggle.service';
 
 @Component({
@@ -50,14 +52,7 @@ export class CourseCardComponent implements OnChanges {
         domain: [GraphColors.GREEN, GraphColors.RED],
     } as Color;
 
-    ProfileToggle = ProfileToggle;
-
-    constructor(
-        private router: Router,
-        private route: ActivatedRoute,
-        private courseScoreCalculationService: CourseScoreCalculationService,
-        private exerciseService: ExerciseService,
-    ) {}
+    constructor(private router: Router, private route: ActivatedRoute, private scoresStorageService: ScoresStorageService, private exerciseService: ExerciseService) {}
 
     ngOnChanges() {
         if (this.course.exercises && this.course.exercises.length > 0) {
@@ -74,10 +69,12 @@ export class CourseCardComponent implements OnChanges {
                 this.nextExerciseTooltip = getIconTooltip(this.nextRelevantExercise!.type);
             }
 
-            const scores = this.courseScoreCalculationService.calculateTotalScores(this.course.exercises, this.course);
-            this.totalRelativeScore = scores.get('currentRelativeScore')!;
-            this.totalAbsoluteScore = scores.get('absoluteScore')!;
-            this.totalReachableScore = scores.get('reachableScore')!;
+            const totalScoresForCourse: CourseScores | undefined = this.scoresStorageService.getStoredTotalScores(this.course.id!);
+            if (totalScoresForCourse) {
+                this.totalRelativeScore = totalScoresForCourse.studentScores[ScoreType.CURRENT_RELATIVE_SCORE];
+                this.totalAbsoluteScore = totalScoresForCourse.studentScores[ScoreType.ABSOLUTE_SCORE];
+                this.totalReachableScore = totalScoresForCourse[ScoreType.REACHABLE_POINTS];
+            }
 
             // Adjust for bonus points, i.e. when the student has achieved more than is reachable
             const scoreNotReached = roundValueSpecifiedByCourseSettings(Math.max(0, this.totalReachableScore - this.totalAbsoluteScore), this.course);

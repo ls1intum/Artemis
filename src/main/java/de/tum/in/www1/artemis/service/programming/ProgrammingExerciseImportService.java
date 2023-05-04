@@ -4,7 +4,10 @@ import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_REPO_NAME;
 import static de.tum.in.www1.artemis.config.Constants.TEST_REPO_NAME;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
@@ -18,7 +21,8 @@ import de.tum.in.www1.artemis.domain.participation.AbstractBaseProgrammingExerci
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.AuxiliaryRepositoryRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
@@ -54,9 +58,9 @@ public class ProgrammingExerciseImportService {
     private final ProgrammingExerciseImportBasicService programmingExerciseImportBasicService;
 
     public ProgrammingExerciseImportService(Optional<VersionControlService> versionControlService, Optional<ContinuousIntegrationService> continuousIntegrationService,
-            Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService, ProgrammingExerciseService programmingExerciseService, GitService gitService,
-            FileService fileService, UserRepository userRepository, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, UrlService urlService,
-            TemplateUpgradePolicy templateUpgradePolicy, ProgrammingExerciseImportBasicService programmingExerciseImportBasicService) {
+            ProgrammingExerciseService programmingExerciseService, GitService gitService, FileService fileService, UserRepository userRepository,
+            AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, UrlService urlService, TemplateUpgradePolicy templateUpgradePolicy,
+            ProgrammingExerciseImportBasicService programmingExerciseImportBasicService, Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService) {
         this.versionControlService = versionControlService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.continuousIntegrationTriggerService = continuousIntegrationTriggerService;
@@ -296,4 +300,5 @@ public class ProgrammingExerciseImportService {
         programmingExerciseService.scheduleOperations(importedProgrammingExercise.getId());
         return importedProgrammingExercise;
     }
+
 }

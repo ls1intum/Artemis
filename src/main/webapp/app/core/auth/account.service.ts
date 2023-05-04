@@ -129,7 +129,7 @@ export class AccountService implements IAccountService {
     }
 
     identity(force?: boolean): Promise<User | undefined> {
-        if (force === true) {
+        if (force) {
             this.userIdentity = undefined;
         }
 

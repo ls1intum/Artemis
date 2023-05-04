@@ -1,14 +1,27 @@
 import { Component, OnInit } from '@angular/core';
-import { IsActiveMatchOptions, Router, UrlTree } from '@angular/router';
+import { ActivatedRoute, IsActiveMatchOptions, Params, Router, UrlTree } from '@angular/router';
+import { HttpResponse } from '@angular/common/http';
 import { NotificationService } from 'app/shared/notification/notification.service';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE, Notification } from 'app/entities/notification.model';
+import { LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE, NEW_MESSAGE_TITLE, NEW_REPLY_MESSAGE_TITLE, Notification } from 'app/entities/notification.model';
+import { QUIZ_EXERCISE_STARTED_TITLE } from 'app/entities/notification.model';
 import { GroupNotification } from 'app/entities/group-notification.model';
 import { ExamExerciseUpdateService } from 'app/exam/manage/exam-exercise-update.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
-import { faCheckDouble, faExclamationTriangle, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faCheckDouble, faExclamationTriangle, faMessage, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
+import { RouteComponents } from 'app/shared/metis/metis.util';
+import { Subscription } from 'rxjs';
+import { UserSettingsCategory } from 'app/shared/constants/user-settings.constants';
+import { Setting } from 'app/shared/user-settings/user-settings.model';
+import { NotificationSetting } from 'app/shared/user-settings/notification-settings/notification-settings-structure';
+import { reloadNotificationSideBarMessage } from 'app/shared/notification/notification-sidebar/notification-sidebar.component';
+import { UserSettingsService } from 'app/shared/user-settings/user-settings.service';
+import { NotificationSettingsService } from 'app/shared/user-settings/notification-settings/notification-settings.service';
+import { translationNotFoundMessage } from 'app/core/config/translation.config';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-notification-popup',
@@ -19,11 +32,17 @@ export class NotificationPopupComponent implements OnInit {
     notifications: Notification[] = [];
 
     LiveExamExerciseUpdateNotificationTitleHtmlConst = LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE;
+    QuizNotificationTitleHtmlConst = 'Quiz started';
 
     private studentExamExerciseIds: number[];
 
+    notificationSettings: NotificationSetting[] = [];
+    notificationTitleActivationMap: Map<string, boolean> = new Map<string, boolean>();
+    subscriptionToNotificationSettingsChanges: Subscription;
+
     // Icons
     faTimes = faTimes;
+    faMessage = faMessage;
     faCheckDouble = faCheckDouble;
     faExclamationTriangle = faExclamationTriangle;
 
@@ -31,9 +50,13 @@ export class NotificationPopupComponent implements OnInit {
         private accountService: AccountService,
         private notificationService: NotificationService,
         private router: Router,
+        private activatedRoute: ActivatedRoute,
+        private userSettingsService: UserSettingsService,
+        private notificationSettingsService: NotificationSettingsService,
         private examExerciseUpdateService: ExamExerciseUpdateService,
         private alertService: AlertService,
         private examParticipationService: ExamParticipationService,
+        private artemisTranslatePipe: ArtemisTranslatePipe,
     ) {}
 
     /**
@@ -42,6 +65,8 @@ export class NotificationPopupComponent implements OnInit {
     ngOnInit(): void {
         this.accountService.getAuthenticationState().subscribe((user: User | undefined) => {
             if (user) {
+                this.loadNotificationSettings();
+                this.listenForNotificationSettingsChanges();
                 this.subscribeToNotificationUpdates();
             }
         });
@@ -60,12 +85,64 @@ export class NotificationPopupComponent implements OnInit {
      * @param notification {Notification}
      */
     navigateToTarget(notification: Notification): void {
+        const currentCourseId = this.activatedRoute.snapshot.queryParams['courseId'];
+        const target = JSON.parse(notification.target!);
+        const targetCourseId = target.course;
+        const targetConversationId = target.conversation;
+
         if (notification.title === LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE) {
-            const target = JSON.parse(notification.target!);
             this.examExerciseUpdateService.navigateToExamExercise(target.exercise);
+        } else if (notification.title === NEW_REPLY_MESSAGE_TITLE || notification.title === NEW_MESSAGE_TITLE) {
+            const queryParams: Params = MetisConversationService.getQueryParamsForConversation(targetConversationId);
+            const routeComponents: RouteComponents = MetisConversationService.getLinkForConversation(targetCourseId);
+            // check if component reload is needed
+            if (currentCourseId === undefined || currentCourseId !== targetCourseId || this.isUnderMessagesTabOfSpecificCourse(targetCourseId)) {
+                this.notificationService.forceComponentReload(routeComponents, queryParams);
+            } else {
+                this.router.navigate(routeComponents, { queryParams });
+            }
         } else {
             this.router.navigateByUrl(this.notificationTargetRoute(notification));
         }
+    }
+
+    /**
+     * Returns the translated text for the placeholder of the title of the provided notification.
+     * If the notification is a legacy notification and therefor the title is not a placeholder
+     * it just returns the provided text for the title
+     * @param notification {Notification}
+     */
+    getNotificationTitleTranslation(notification: Notification): string {
+        const translation = this.artemisTranslatePipe.transform(notification.title);
+        if (translation?.includes(translationNotFoundMessage)) {
+            return notification.title ?? 'No title found';
+        }
+        return translation;
+    }
+
+    /**
+     * Returns the translated text for the placeholder of the notification text of the provided notification.
+     * If the notification is a legacy notification and therefor the text is not a placeholder
+     * it just returns the provided text for the notification text
+     * @param notification {Notification}
+     */
+    getNotificationTextTranslation(notification: Notification): string {
+        if (notification.textIsPlaceholder) {
+            const translation = this.artemisTranslatePipe.transform(notification.text, { placeholderValues: this.getParsedPlaceholderValues(notification) });
+            if (translation?.includes(translationNotFoundMessage)) {
+                return notification.text ?? 'No text found';
+            }
+            return translation;
+        } else {
+            return notification.text ?? 'No text found';
+        }
+    }
+
+    private getParsedPlaceholderValues(notification: Notification): string[] {
+        if (notification.placeholderValues) {
+            return JSON.parse(notification.placeholderValues);
+        }
+        return [];
     }
 
     private notificationTargetRoute(notification: Notification): UrlTree | string {
@@ -73,7 +150,7 @@ export class NotificationPopupComponent implements OnInit {
             const target = JSON.parse(notification.target);
             if (notification.title === LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE) {
                 return this.router.createUrlTree([target.mainPage, target.course, target.entity, target.exam]);
-            } else if (notification.title === 'Quiz started' && target.status) {
+            } else if (notification.title === QUIZ_EXERCISE_STARTED_TITLE && target.status) {
                 return this.router.createUrlTree([target.mainPage, target.course, target.entity, target.id, target.status]);
             } else {
                 return this.router.createUrlTree([target.mainPage, target.course, target.entity, target.id]);
@@ -91,14 +168,41 @@ export class NotificationPopupComponent implements OnInit {
     private addNotification(notification: Notification): void {
         // Only add a notification if it does not already exist.
         if (notification && !this.notifications.some(({ id }) => id === notification.id)) {
-            if (notification.title === 'Quiz started') {
+            if (notification.title === QUIZ_EXERCISE_STARTED_TITLE) {
                 this.addQuizNotification(notification);
                 this.setRemovalTimeout(notification);
             }
             if (notification.title === LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE) {
                 this.checkIfNotificationAffectsCurrentStudentExamExercises(notification);
             }
+            if (notification.title === NEW_MESSAGE_TITLE || notification.title === NEW_REPLY_MESSAGE_TITLE) {
+                if (this.notificationSettingsService.isNotificationAllowedBySettings(notification, this.notificationTitleActivationMap)) {
+                    this.addMessageNotification(notification);
+                    this.setRemovalTimeout(notification);
+                }
+            }
         }
+    }
+
+    /**
+     * Will add a notification about a new message or reply to the component's state.
+     * @param notification {Notification}
+     */
+    private addMessageNotification(notification: Notification): void {
+        if (notification.target) {
+            const target = JSON.parse(notification.target);
+            if (!this.isUnderMessagesTabOfSpecificCourse(target.course)) {
+                this.notifications.unshift(notification);
+            }
+        }
+    }
+
+    /**
+     * Check if user is under messages tab.
+     * @returns {boolean} true if user is under messages tab, false otherwise
+     */
+    private isUnderMessagesTabOfSpecificCourse(targetCourseId: string): boolean {
+        return this.router.url.includes(`courses/${targetCourseId}/messages`);
     }
 
     /**
@@ -176,5 +280,38 @@ export class NotificationPopupComponent implements OnInit {
         setTimeout(() => {
             this.notifications = this.notifications.filter(({ id }) => id !== notification.id);
         }, 30000);
+    }
+
+    /**
+     * Loads the notifications settings
+     */
+    private loadNotificationSettings(): void {
+        this.userSettingsService.loadSettings(UserSettingsCategory.NOTIFICATION_SETTINGS).subscribe({
+            next: (res: HttpResponse<Setting[]>) => {
+                this.notificationSettings = this.userSettingsService.loadSettingsSuccessAsIndividualSettings(
+                    res.body!,
+                    UserSettingsCategory.NOTIFICATION_SETTINGS,
+                ) as NotificationSetting[];
+                this.notificationTitleActivationMap = this.notificationSettingsService.createUpdatedNotificationTitleActivationMap(this.notificationSettings);
+                // update the notification settings in the service to make them reusable for others (to avoid unnecessary server calls)
+                this.notificationSettingsService.setNotificationSettings(this.notificationSettings);
+            },
+        });
+    }
+
+    /**
+     * Subscribes and listens for changes related to notifications
+     * When a fitting event arrives resets close all popups and reloads the notification settings
+     */
+    private listenForNotificationSettingsChanges(): void {
+        this.subscriptionToNotificationSettingsChanges = this.userSettingsService.userSettingsChangeEvent.subscribe((changeMessage) => {
+            if (changeMessage === reloadNotificationSideBarMessage) {
+                // reset notification settings
+                this.notificationSettings = [];
+                this.notifications = [];
+                this.notificationTitleActivationMap = new Map<string, boolean>();
+                this.loadNotificationSettings();
+            }
+        });
     }
 }

@@ -7,11 +7,16 @@
 <div *ngIf="!isLoading">
     <div class="d-flex flex-wrap">
         <div class="my-auto d-flex align-items-center">
-            <h2 jhiTranslate="artemisApp.learningGoal.manageLearningGoals.title">Learning Goal Management</h2>
+            <h2 jhiTranslate="artemisApp.learningGoal.manageLearningGoals.title">Competency Management</h2>
             <jhi-documentation-button [type]="documentationType"></jhi-documentation-button>
         </div>
         <div class="ms-auto text-truncate justify-content-end" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
-            <a class="btn btn-primary" [routerLink]="['/course-management', courseId, 'goal-management', 'create']">
+            <button class="btn btn-primary" id="learningGoalImportButton" (click)="openImportModal()">
+                <fa-icon [icon]="faPlus"></fa-icon>
+                <span>{{ 'artemisApp.learningGoal.manageLearningGoals.import' | artemisTranslate }}</span>
+            </button>
+
+            <a class="btn btn-primary" [routerLink]="['/course-management', courseId, 'competency-management', 'create']">
                 <fa-icon [icon]="faPlus"></fa-icon>
                 <span>{{ 'artemisApp.learningGoal.manageLearningGoals.create' | artemisTranslate }}</span>
             </a>
@@ -21,12 +26,14 @@
     <div *ngIf="showRelations" class="container mt-3 mb-3">
         <ngb-accordion [closeOthers]="true">
             <ngb-panel id="panel-1">
-                <ng-template ngbPanelTitle>Competency Relations <span class="badge rounded-pill text-bg-warning ms-1">BETA</span> </ng-template>
+                <ng-template ngbPanelTitle
+                    >{{ 'artemisApp.learningGoal.relation.competencyRelations' | artemisTranslate }}<span class="badge rounded-pill text-bg-warning ms-1">BETA</span>
+                </ng-template>
                 <ng-template ngbPanelContent>
                     <form class="row p-3 g-3 align-items-center">
                         <div class="col">
                             <div class="form-group">
-                                <label for="tail">Tail Learning Goal</label>
+                                <label for="tail">{{ 'artemisApp.learningGoal.relation.tailLearningGoal' | artemisTranslate }}</label>
                                 <select class="form-select" id="tail" name="tail" [(ngModel)]="tailLearningGoal">
                                     <option *ngFor="let learningGoal of learningGoals" [value]="learningGoal.id">{{ learningGoal.title }}</option>
                                 </select>
@@ -34,18 +41,18 @@
                         </div>
                         <div class="col">
                             <div class="form-group">
-                                <label for="type">Relation Type</label>
+                                <label for="type">{{ 'artemisApp.learningGoal.relation.relationType' | artemisTranslate }}</label>
                                 <select class="form-select" id="type" name="type" [(ngModel)]="relationType">
-                                    <option value="RELATES" selected>Relates</option>
-                                    <option value="ASSUMES">Assumes</option>
-                                    <option value="EXTENDS">Extends</option>
-                                    <option value="MATCHES">Matches</option>
+                                    <option value="RELATES" selected>{{ 'artemisApp.learningGoal.relation.relates' | artemisTranslate }}</option>
+                                    <option value="ASSUMES">{{ 'artemisApp.learningGoal.relation.assumes' | artemisTranslate }}</option>
+                                    <option value="EXTENDS">{{ 'artemisApp.learningGoal.relation.extends' | artemisTranslate }}</option>
+                                    <option value="MATCHES">{{ 'artemisApp.learningGoal.relation.matches' | artemisTranslate }}</option>
                                 </select>
                             </div>
                         </div>
                         <div class="col">
                             <div class="form-group">
-                                <label for="head">Head Learning Goal</label>
+                                <label for="head">{{ 'artemisApp.learningGoal.relation.headLearningGoal' | artemisTranslate }}</label>
                                 <select class="form-select" id="head" name="head" [(ngModel)]="headLearningGoal">
                                     <option *ngFor="let learningGoal of learningGoals" [value]="learningGoal.id">{{ learningGoal.title }}</option>
                                 </select>
@@ -55,7 +62,7 @@
                             <input
                                 type="button"
                                 class="btn btn-primary"
-                                value="Create Relation"
+                                value="{{ 'artemisApp.learningGoal.relation.createRelation' | artemisTranslate }}"
                                 (click)="createRelation()"
                                 [disabled]="!headLearningGoal || !tailLearningGoal || !relationType || headLearningGoal == tailLearningGoal"
                             />
@@ -97,7 +104,7 @@
                                 <svg:path class="line" stroke-width="2" marker-end="url(#arrow)"></svg:path>
                                 <svg:text class="edge-label" text-anchor="middle">
                                     <textPath class="text-path" [attr.href]="'#' + link.id" [style.dominant-baseline]="link.dominantBaseline" startOffset="50%">
-                                        {{ link.label }}
+                                        {{ ('artemisApp.learningGoal.relation.' + link.label.toLowerCase() | artemisTranslate).toUpperCase() }}
                                     </textPath>
                                 </svg:text>
                             </svg:g>
@@ -123,10 +130,10 @@
             <tbody>
                 <tr *ngFor="let learningGoal of learningGoals; trackBy: identify; let i = index" id="learning-goal-row-{{ i }}">
                     <td>
-                        <a [routerLink]="['/courses', courseId, 'learning-goals', learningGoal.id]">{{ learningGoal.id }}</a>
+                        <a [routerLink]="['/courses', courseId, 'competencies', learningGoal.id]">{{ learningGoal.id }}</a>
                     </td>
                     <td>
-                        <a [routerLink]="['/courses', courseId, 'learning-goals', learningGoal.id]">{{ learningGoal.title }}</a>
+                        <a [routerLink]="['/courses', courseId, 'competencies', learningGoal.id]">{{ learningGoal.title }}</a>
                     </td>
                     <td [innerHTML]="learningGoal.description"></td>
                     <td>
@@ -147,7 +154,7 @@
                         <a
                             *jhiHasAnyAuthority="['ROLE_INSTRUCTOR', 'ROLE_ADMIN']"
                             class="btn btn-sm btn-primary"
-                            [routerLink]="['/course-management', courseId, 'goal-management', learningGoal.id, 'edit']"
+                            [routerLink]="['/course-management', courseId, 'competency-management', learningGoal.id, 'edit']"
                         >
                             <fa-icon [icon]="faPencilAlt"></fa-icon>
                             <span class="d-none d-md-inline">{{ 'entity.action.edit' | artemisTranslate }}</span>
@@ -172,7 +179,7 @@
     <div class="d-flex flex-wrap">
         <h2 jhiTranslate="artemisApp.learningGoal.prerequisite.managePrerequisites.title">Prerequisite Management</h2>
         <div class="ms-auto text-truncate justify-content-end" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
-            <a class="btn btn-primary" (click)="openImportModal()">
+            <a class="btn btn-primary" (click)="openPrerequisiteSelectionModal()">
                 <fa-icon [icon]="faPlus"></fa-icon>
                 <span>{{ 'artemisApp.learningGoal.prerequisite.managePrerequisites.select' | artemisTranslate }}</span>
             </a>
@@ -208,7 +215,7 @@
                     </td>
                     <td>
                         <div *ngIf="prerequisite.course">
-                            <a [routerLink]="['/course-management', prerequisite.course!.id, 'goal-management']">{{ prerequisite.course!.title }}</a>
+                            <a [routerLink]="['/course-management', prerequisite.course!.id, 'competency-management']">{{ prerequisite.course!.title }}</a>
                         </div>
                     </td>
                     <td class="text-end">
