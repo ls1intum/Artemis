@@ -32,7 +32,7 @@ jobs:
 
   # Check which test server to deploy to based on the label
   filter-matrix:
-    needs: [ check-permission, check-build-status ]
+    needs: [ check-build-status ]
     runs-on: ubuntu-latest
     strategy:
       matrix:
