@@ -124,7 +124,7 @@
                 "noUnitDetected": "No unit was detected and could not split automatically. Please add information for each unit!",
                 "pageTitle": "Process units",
                 "addUnit": "Add unit",
-                "lectureFileToolTip": "Please click to proceed with automatic separation of lecture units.",
+                "lectureFileToolTip": "Please select to enable the automatic separation of lecture units.",
                 "processUnits": "Process units",
                 "processAutomatically": "Automatic unit processing",
                 "removeBreakSlide": "Remove Break slide",
