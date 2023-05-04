@@ -295,29 +295,10 @@ public class QuizExercise extends Exercise {
      * @return the resulting score
      */
     public Double getScoreForSubmission(QuizSubmission quizSubmission) {
-        double score = getScoreInPointsForSubmission(quizSubmission);
+        double score = quizSubmission.getScoreInPoints(getQuizQuestions());
         double maxPoints = getOverallQuizPoints();
         // map the resulting score to the 0 to 100 scale
         return 100.0 * score / maxPoints;
-    }
-
-    /**
-     * Get the score for this submission as the number of points
-     *
-     * @param quizSubmission the submission that should be evaluated
-     * @return the resulting score
-     */
-    public Double getScoreInPointsForSubmission(QuizSubmission quizSubmission) {
-        double score = 0.0;
-        // iterate through all quizQuestions of this quiz
-        for (QuizQuestion quizQuestion : getQuizQuestions()) {
-            // search for submitted answer for this quizQuestion
-            SubmittedAnswer submittedAnswer = quizSubmission.getSubmittedAnswerForQuestion(quizQuestion);
-            if (submittedAnswer != null) {
-                score += quizQuestion.scoreForAnswer(submittedAnswer);
-            }
-        }
-        return score;
     }
 
     /**
