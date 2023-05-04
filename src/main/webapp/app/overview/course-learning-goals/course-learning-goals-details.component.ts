@@ -38,7 +38,7 @@ export class CourseLearningGoalsDetailsComponent implements OnInit {
 
     ngOnInit(): void {
         this.activatedRoute.params.subscribe((params) => {
-            this.learningGoalId = +params['learningGoalId'];
+            this.learningGoalId = +params['competencyId'];
             this.courseId = +params['courseId'];
             if (this.learningGoalId && this.courseId) {
                 this.loadData();
