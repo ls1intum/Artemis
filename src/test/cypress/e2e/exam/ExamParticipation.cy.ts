@@ -5,10 +5,10 @@ import submission from '../../fixtures/exercise/programming/all_successful/submi
 import { Course } from 'app/entities/course.model';
 import { generateUUID } from '../../support/utils';
 import { EXERCISE_TYPE } from '../../support/constants';
-import { courseManagementRequest, examExerciseGroupCreation, examNavigation, examParticipation, examStartEnd, textExerciseEditor } from '../../support/artemis';
+import { courseManagementRequest, examExerciseGroupCreation, examManagement, examNavigation, examParticipation, examStartEnd, textExerciseEditor } from '../../support/artemis';
 import { Exercise } from 'src/test/cypress/support/pageobjects/exam/ExamParticipation';
 import { Interception } from 'cypress/types/net-stubbing';
-import { admin, studentOne, studentThree, studentTwo } from '../../support/users';
+import { admin, instructor, studentOne, studentThree, studentTwo, tutor, users } from '../../support/users';
 
 // Common primitives
 const textFixture = 'loremIpsum.txt';
@@ -17,11 +17,28 @@ let exerciseArray: Array<Exercise> = [];
 
 describe('Exam participation', () => {
     let course: Course;
+    let studentOneName: string;
+    let studentTwoName: string;
+    let studentThreeName: string;
 
     before('Create course', () => {
         cy.login(admin);
         courseManagementRequest.createCourse(true).then((response) => {
             course = convertCourseAfterMultiPart(response);
+            courseManagementRequest.addStudentToCourse(course, studentOne);
+            courseManagementRequest.addStudentToCourse(course, studentTwo);
+            courseManagementRequest.addStudentToCourse(course, studentThree);
+            courseManagementRequest.addTutorToCourse(course, tutor);
+            courseManagementRequest.addInstructorToCourse(course, instructor);
+        });
+        users.getUserInfo(studentOne.username, (userInfo) => {
+            studentOneName = userInfo.name;
+        });
+        users.getUserInfo(studentTwo.username, (userInfo) => {
+            studentTwoName = userInfo.name;
+        });
+        users.getUserInfo(studentThree.username, (userInfo) => {
+            studentThreeName = userInfo.name;
         });
     });
 
@@ -74,6 +91,9 @@ describe('Exam participation', () => {
                 }
             }
             examParticipation.checkExamTitle(examTitle);
+
+            cy.login(instructor);
+            examManagement.verifySubmitted(course.id!, exam.id!, studentOneName);
         });
 
         it('Using save and continue to navigate within exam', () => {
@@ -91,6 +111,9 @@ describe('Exam participation', () => {
                 }
             }
             examParticipation.handInEarly();
+
+            cy.login(instructor);
+            examManagement.verifySubmitted(course.id!, exam.id!, studentTwoName);
         });
 
         it('Using exercise overview to navigate within exam', () => {
@@ -108,6 +131,9 @@ describe('Exam participation', () => {
                 }
             }
             examParticipation.handInEarly();
+
+            cy.login(instructor);
+            examManagement.verifySubmitted(course.id!, exam.id!, studentThreeName);
         });
     });
 
@@ -159,6 +185,9 @@ describe('Exam participation', () => {
             examParticipation.handInEarly();
             examParticipation.verifyTextExerciseOnFinalPage(textFixtureAlternative);
             examParticipation.checkExamTitle(examTitle);
+
+            cy.login(instructor);
+            examManagement.verifySubmitted(course.id!, exam.id!, studentOneName);
         });
 
         it('Reloads exam page during participation and ensures that everything is as expected', () => {
@@ -178,6 +207,9 @@ describe('Exam participation', () => {
 
             examParticipation.verifyTextExerciseOnFinalPage(textExercise.additionalData!.textFixture!);
             examParticipation.checkExamTitle(examTitle);
+
+            cy.login(instructor);
+            examManagement.verifySubmitted(course.id!, exam.id!, studentTwoName);
         });
 
         it('Reloads exam result page and ensures that everything is as expected', () => {
@@ -196,6 +228,9 @@ describe('Exam participation', () => {
 
             examParticipation.verifyTextExerciseOnFinalPage(textExercise.additionalData!.textFixture!);
             examParticipation.checkExamTitle(examTitle);
+
+            cy.login(instructor);
+            examManagement.verifySubmitted(course.id!, exam.id!, studentThreeName);
         });
     });
 
@@ -240,6 +275,9 @@ describe('Exam participation', () => {
             });
             examParticipation.verifyTextExerciseOnFinalPage(textExercise.additionalData!.textFixture!);
             examParticipation.checkExamTitle(examTitle);
+
+            cy.login(instructor);
+            examManagement.verifySubmitted(course.id!, exam.id!, studentOneName);
         });
     });
 
