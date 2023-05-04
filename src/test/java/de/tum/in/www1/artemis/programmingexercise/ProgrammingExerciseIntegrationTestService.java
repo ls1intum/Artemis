@@ -75,6 +75,8 @@ import de.tum.in.www1.artemis.web.websocket.dto.ProgrammingExerciseTestCaseState
 @Service
 class ProgrammingExerciseIntegrationTestService {
 
+    private static final String NON_EXISTING_ID = Integer.toString(Integer.MAX_VALUE);
+
     private String userPrefix;
 
     @Value("${artemis.version-control.default-branch:main}")
@@ -1251,7 +1253,7 @@ class ProgrammingExerciseIntegrationTestService {
     void importProgrammingExercise_templateIdDoesNotExist_notFound() throws Exception {
         programmingExercise.setShortName("newShortName");
         programmingExercise.setTitle("newTitle");
-        request.post(ROOT + IMPORT.replace("{sourceExerciseId}", "1337"), programmingExercise, HttpStatus.NOT_FOUND);
+        request.post(ROOT + IMPORT.replace("{sourceExerciseId}", NON_EXISTING_ID), programmingExercise, HttpStatus.NOT_FOUND);
     }
 
     void importProgrammingExercise_sameShortNameInCourse_badRequest() throws Exception {
@@ -1260,8 +1262,8 @@ class ProgrammingExerciseIntegrationTestService {
         programmingExerciseInExam.setId(null);
         programmingExerciseInExam.setTitle(programmingExerciseInExam.getTitle() + "change");
         // short name will still be the same
-        request.post(ROOT + IMPORT.replace("{sourceExerciseId}", "1337"), programmingExercise, HttpStatus.BAD_REQUEST);
-        request.post(ROOT + IMPORT.replace("{sourceExerciseId}", "1337"), programmingExerciseInExam, HttpStatus.BAD_REQUEST);
+        request.post(ROOT + IMPORT.replace("{sourceExerciseId}", NON_EXISTING_ID), programmingExercise, HttpStatus.BAD_REQUEST);
+        request.post(ROOT + IMPORT.replace("{sourceExerciseId}", NON_EXISTING_ID), programmingExerciseInExam, HttpStatus.BAD_REQUEST);
     }
 
     void importProgrammingExercise_sameTitleInCourse_badRequest() throws Exception {
@@ -1270,8 +1272,8 @@ class ProgrammingExerciseIntegrationTestService {
         programmingExerciseInExam.setId(null);
         programmingExerciseInExam.setShortName(programmingExerciseInExam.getShortName() + "change");
         // title will still be the same
-        request.post(ROOT + IMPORT.replace("{sourceExerciseId}", "1337"), programmingExercise, HttpStatus.BAD_REQUEST);
-        request.post(ROOT + IMPORT.replace("{sourceExerciseId}", "1337"), programmingExerciseInExam, HttpStatus.BAD_REQUEST);
+        request.post(ROOT + IMPORT.replace("{sourceExerciseId}", NON_EXISTING_ID), programmingExercise, HttpStatus.BAD_REQUEST);
+        request.post(ROOT + IMPORT.replace("{sourceExerciseId}", NON_EXISTING_ID), programmingExerciseInExam, HttpStatus.BAD_REQUEST);
     }
 
     void importProgrammingExercise_staticCodeAnalysisMustBeSet_badRequest() throws Exception {
@@ -1309,16 +1311,16 @@ class ProgrammingExerciseIntegrationTestService {
 
     void importProgrammingExercise_eitherCourseOrExerciseGroupSet_badRequest() throws Exception {
         programmingExercise.setCourse(null);
-        request.post(ROOT + IMPORT.replace("{sourceExerciseId}", "1337"), programmingExercise, HttpStatus.BAD_REQUEST);
+        request.post(ROOT + IMPORT.replace("{sourceExerciseId}", NON_EXISTING_ID), programmingExercise, HttpStatus.BAD_REQUEST);
         programmingExerciseInExam.setCourse(programmingExercise.getCourseViaExerciseGroupOrCourseMember());
-        request.post(ROOT + IMPORT.replace("{sourceExerciseId}", "1337"), programmingExerciseInExam, HttpStatus.BAD_REQUEST);
+        request.post(ROOT + IMPORT.replace("{sourceExerciseId}", NON_EXISTING_ID), programmingExerciseInExam, HttpStatus.BAD_REQUEST);
     }
 
     void importProgrammingExercise_vcsProjectWithSameKeyAlreadyExists_badRequest() throws Exception {
         programmingExercise.setId(null);
         programmingExercise.setShortName("testShortName");
         mockDelegate.mockCheckIfProjectExistsInVcs(programmingExercise, true);
-        request.post(ROOT + IMPORT.replace("{sourceExerciseId}", "1337"), programmingExercise, HttpStatus.BAD_REQUEST);
+        request.post(ROOT + IMPORT.replace("{sourceExerciseId}", NON_EXISTING_ID), programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
     void importProgrammingExercise_bambooProjectWithSameKeyAlreadyExists_badRequest() throws Exception {
@@ -1326,14 +1328,14 @@ class ProgrammingExerciseIntegrationTestService {
         programmingExercise.setShortName("testShortName");
         mockDelegate.mockCheckIfProjectExistsInVcs(programmingExercise, false);
         mockDelegate.mockCheckIfProjectExistsInCi(programmingExercise, true, false);
-        request.post(ROOT + IMPORT.replace("{sourceExerciseId}", "1337"), programmingExercise, HttpStatus.BAD_REQUEST);
+        request.post(ROOT + IMPORT.replace("{sourceExerciseId}", NON_EXISTING_ID), programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
     void importProgrammingExercise_vcsProjectWithSameTitleAlreadyExists_badRequest() throws Exception {
         programmingExercise.setId(null);
         programmingExercise.setShortName("testShortName");
         mockDelegate.mockCheckIfProjectExistsInVcs(programmingExercise, true);
-        request.post(ROOT + IMPORT.replace("{sourceExerciseId}", "1337"), programmingExercise, HttpStatus.BAD_REQUEST);
+        request.post(ROOT + IMPORT.replace("{sourceExerciseId}", NON_EXISTING_ID), programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
     void importProgrammingExercise_bambooProjectWithSameTitleAlreadyExists_badRequest() throws Exception {
@@ -1341,7 +1343,7 @@ class ProgrammingExerciseIntegrationTestService {
         programmingExercise.setShortName("testShortName");
         mockDelegate.mockCheckIfProjectExistsInVcs(programmingExercise, false);
         mockDelegate.mockCheckIfProjectExistsInCi(programmingExercise, true, false);
-        request.post(ROOT + IMPORT.replace("{sourceExerciseId}", "1337"), programmingExercise, HttpStatus.BAD_REQUEST);
+        request.post(ROOT + IMPORT.replace("{sourceExerciseId}", NON_EXISTING_ID), programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
     void exportSubmissionsByStudentLogins_notInstructorForExercise_forbidden() throws Exception {

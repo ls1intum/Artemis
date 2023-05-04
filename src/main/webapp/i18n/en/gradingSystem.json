@@ -16,6 +16,22 @@
                 "lower": "Lower Bound Inclusive",
                 "upper": "Upper Bound Inclusive"
             },
+            "presentationType": {
+                "title": "Presentation Mode",
+                "description": "Select \"Basic\" to set the number of presentations a student must give to receive the course grade bonus. Select \"Graded\" to set the number of tutor graded presentations a student can give and the weighting of the presentations for the course grade.",
+                "none": "None",
+                "basic": "Basic",
+                "graded": "Graded"
+            },
+            "basicPresentation": {
+                "label": "Basic Presentations",
+                "numberOfPresentations": "Presentations"
+            },
+            "gradedPresentation": {
+                "label": "Graded Presentations",
+                "number": "Number",
+                "weight": "Combined Weight"
+            },
             "csv": {
                 "importButton": "Import (.csv)",
                 "exportButton": "Export (.csv)"
@@ -73,7 +89,10 @@
                 "invalidBonusPoints": "The bonus points must be at least 0!",
                 "nonStrictlyIncreasingBonusPoints": "Consecutive grade steps must have increasing bonus point values!",
                 "invalidAdjacency": "The Max % of all grade steps (excluding the last one), must be equal to the Min % of their subsequent grade step!",
-                "invalidFirstAndLastStep": "The Min % of the first grade step must be 0 and the Max % of the last grade step must be at least 100!"
+                "invalidFirstAndLastStep": "The Min % of the first grade step must be 0 and the Max % of the last grade step must be at least 100!",
+                "invalidBasicPresentationIsEnabled": "Presentations are already enabled for this course!",
+                "invalidPresentationsNumber": "The number of presentations must be a whole number above 0!",
+                "invalidPresentationsWeight": "The combined weight of all presentations must be between 0 and 100!"
             },
             "overview": {
                 "info": "The grading key is based on the attainable points. It could change until the end of the course when more exercises have been assessed.",
