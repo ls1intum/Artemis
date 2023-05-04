@@ -225,11 +225,11 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
     }
 
     /**
-     * Save the quiz submission to the database
+     * Set the participation of the quiz submission and then save the quiz submission to the database
      *
-     * @param quizExercise   the QuizExercise for which the given quizSubmission to be submitted
+     * @param quizExercise   the QuizExercise of the participation of which the given quizSubmission belongs to
      * @param quizSubmission the QuizSubmission to be saved
-     * @param user           the User by which the given quizSubmission was made
+     * @param user           the User of the participation of which the given quizSubmission belongs to
      * @return saved QuizSubmission
      */
     @Override
