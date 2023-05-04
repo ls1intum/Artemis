@@ -13,13 +13,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.Lecture;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
 import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
+import de.tum.in.www1.artemis.repository.AttachmentRepository;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
@@ -32,6 +30,7 @@ import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 /**
  * REST controller for managing Lecture.
@@ -39,6 +38,7 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 @RestController
 @RequestMapping("/api")
 @Profile("!decoupling || lecture") // TODO: Remove !decoupling
+@Tag(name = "lecture")
 public class LectureResource {
 
     private final Logger log = LoggerFactory.getLogger(LectureResource.class);
@@ -62,8 +62,10 @@ public class LectureResource {
 
     private final ExerciseService exerciseService;
 
+    private final AttachmentRepository attachmentRepository;
+
     public LectureResource(LectureRepository lectureRepository, LectureService lectureService, LectureImportService lectureImportService, CourseRepository courseRepository,
-            UserRepository userRepository, AuthorizationCheckService authCheckService, ExerciseService exerciseService) {
+            UserRepository userRepository, AuthorizationCheckService authCheckService, ExerciseService exerciseService, AttachmentRepository attachmentRepository) {
         this.lectureRepository = lectureRepository;
         this.lectureService = lectureService;
         this.lectureImportService = lectureImportService;
@@ -71,6 +73,7 @@ public class LectureResource {
         this.userRepository = userRepository;
         this.authCheckService = authCheckService;
         this.exerciseService = exerciseService;
+        this.attachmentRepository = attachmentRepository;
     }
 
     /**
@@ -237,6 +240,19 @@ public class LectureResource {
     public ResponseEntity<String> getLectureTitle(@PathVariable Long lectureId) {
         final var title = lectureRepository.getLectureTitle(lectureId);
         return title == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(title);
+    }
+
+    /**
+     * GET /lectures/:lectureId/attachments : get all the attachments of a lecture.
+     *
+     * @param lectureId the id of the lecture
+     * @return the ResponseEntity with status 200 (OK) and the list of attachments in body
+     */
+    @GetMapping(value = "/lectures/{lectureId}/attachments")
+    @PreAuthorize("hasRole('TA')")
+    public List<Attachment> getAttachmentsForLecture(@PathVariable Long lectureId) {
+        log.debug("REST request to get all attachments for the lecture with id : {}", lectureId);
+        return attachmentRepository.findAllByLectureId(lectureId);
     }
 
     private Lecture filterLectureContentForUser(Lecture lecture, User user) {

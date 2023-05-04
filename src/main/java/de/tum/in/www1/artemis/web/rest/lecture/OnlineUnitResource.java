@@ -30,10 +30,12 @@ import de.tum.in.www1.artemis.service.LearningGoalProgressService;
 import de.tum.in.www1.artemis.web.rest.dto.OnlineResourceDTO;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 @RestController
 @RequestMapping("/api")
 @Profile("!decoupling || lecture") // TODO: Remove !decoupling
+@Tag(name = "lecture")
 public class OnlineUnitResource {
 
     private final Logger log = LoggerFactory.getLogger(OnlineUnitResource.class);

@@ -22,10 +22,12 @@ import de.tum.in.www1.artemis.service.LearningGoalProgressService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 @RestController
 @RequestMapping("/api")
 @Profile("!decoupling || lecture") // TODO: Remove !decoupling
+@Tag(name = "lecture")
 public class TextUnitResource {
 
     @Value("${jhipster.clientApp.name}")

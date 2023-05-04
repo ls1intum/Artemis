@@ -27,10 +27,12 @@ import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.web.rest.dto.LectureUnitInformationDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 @RestController
 @RequestMapping("api/")
 @Profile("!decoupling || lecture") // TODO: Remove !decoupling
+@Tag(name = "lecture")
 public class AttachmentUnitResource {
 
     private final Logger log = LoggerFactory.getLogger(AttachmentUnitResource.class);

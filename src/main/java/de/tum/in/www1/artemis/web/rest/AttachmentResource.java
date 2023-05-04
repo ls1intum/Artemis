@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.web.rest;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.List;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -121,19 +120,6 @@ public class AttachmentResource {
         log.debug("REST request to get Attachment : {}", id);
         Optional<Attachment> attachment = attachmentRepository.findById(id);
         return ResponseUtil.wrapOrNotFound(attachment);
-    }
-
-    /**
-     * GET /lectures/:lectureId/attachments : get all the attachments of a lecture.
-     *
-     * @param lectureId the id of the lecture
-     * @return the ResponseEntity with status 200 (OK) and the list of attachments in body
-     */
-    @GetMapping(value = "/lectures/{lectureId}/attachments")
-    @PreAuthorize("hasRole('TA')")
-    public List<Attachment> getAttachmentsForLecture(@PathVariable Long lectureId) {
-        log.debug("REST request to get all attachments for the lecture with id : {}", lectureId);
-        return attachmentRepository.findAllByLectureId(lectureId);
     }
 
     /**

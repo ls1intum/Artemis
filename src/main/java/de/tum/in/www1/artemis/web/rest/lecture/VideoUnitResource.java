@@ -23,10 +23,12 @@ import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.LearningGoalProgressService;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 @RestController
 @RequestMapping("/api")
 @Profile("!decoupling || lecture") // TODO: Remove !decoupling
+@Tag(name = "lecture")
 public class VideoUnitResource {
 
     @Value("${jhipster.clientApp.name}")
