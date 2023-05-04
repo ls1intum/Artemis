@@ -102,7 +102,7 @@ public abstract class AbstractQuizSubmission extends Submission {
     /**
      * calculates the scores for this submission and all its submitted answers and saves them in scoreInPoints
      *
-     * @param quizQuestions the quiz questions of the {@link QuizExercise} this submission belongs to. These questions are needed to have values for isCorrect in the answer options.
+     * @param quizQuestions the quiz questions of the {@link QuizExercise} this submission belongs to. These questions are needed to calculate the score for each submitted answer.
      */
     public void calculateAndUpdateScores(List<QuizQuestion> quizQuestions) {
         // set scores for all questions
