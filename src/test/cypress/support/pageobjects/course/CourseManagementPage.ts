@@ -114,6 +114,10 @@ export class CourseManagementPage {
         cy.url().should('include', '/assessment-dashboard');
     }
 
+    openAssessmentDashboard() {
+        cy.get('#assessment-dashboard').click();
+    }
+
     /**
      * helper methods to get information about the course
      * */

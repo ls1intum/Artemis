@@ -104,13 +104,16 @@ public class CourseResource {
 
     private final TutorialGroupsConfigurationService tutorialGroupsConfigurationService;
 
+    private final GradingScaleService gradingScaleService;
+
     private final CourseScoreCalculationService courseScoreCalculationService;
 
     public CourseResource(UserRepository userRepository, CourseService courseService, CourseRepository courseRepository, ExerciseService exerciseService,
             OAuth2JWKSService oAuth2JWKSService, OnlineCourseConfigurationService onlineCourseConfigurationService, AuthorizationCheckService authCheckService,
             TutorParticipationRepository tutorParticipationRepository, SubmissionService submissionService, Optional<VcsUserManagementService> optionalVcsUserManagementService,
             AssessmentDashboardService assessmentDashboardService, ExerciseRepository exerciseRepository, Optional<CIUserManagementService> optionalCiUserManagementService,
-            FileService fileService, TutorialGroupsConfigurationService tutorialGroupsConfigurationService, CourseScoreCalculationService courseScoreCalculationService) {
+            FileService fileService, TutorialGroupsConfigurationService tutorialGroupsConfigurationService, GradingScaleService gradingScaleService,
+            CourseScoreCalculationService courseScoreCalculationService) {
         this.courseService = courseService;
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
@@ -126,6 +129,7 @@ public class CourseResource {
         this.exerciseRepository = exerciseRepository;
         this.fileService = fileService;
         this.tutorialGroupsConfigurationService = tutorialGroupsConfigurationService;
+        this.gradingScaleService = gradingScaleService;
         this.courseScoreCalculationService = courseScoreCalculationService;
     }
 
@@ -181,6 +185,14 @@ public class CourseResource {
             // instructors are not allowed to change group names, because this would lead to security problems
             if (!changedGroupNames.isEmpty()) {
                 throw new BadRequestAlertException("You are not allowed to change the group names of a course", Course.ENTITY_NAME, "groupNamesCannotChange", true);
+            }
+        }
+
+        if (courseUpdate.getPresentationScore() != null && courseUpdate.getPresentationScore() > 0) {
+            Optional<GradingScale> gradingScale = gradingScaleService.findGradingScaleByCourseId(courseUpdate.getId());
+            if (gradingScale.isPresent() && gradingScale.get().getPresentationsNumber() != null) {
+                throw new BadRequestAlertException("You cannot set a presentation score if the grading scale is already set up for graded presentations", Course.ENTITY_NAME,
+                        "gradedPresentationAlreadySet", true);
             }
         }
 
