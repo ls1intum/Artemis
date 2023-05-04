@@ -168,8 +168,8 @@ class UserBambooBitbucketJiraIntegrationTest extends AbstractSpringIntegrationBa
     void deleteUser_isSuccessful() throws Exception {
         bitbucketRequestMockProvider.mockUpdateAnyUserDetails(false, 1);
         bitbucketRequestMockProvider.mockUpdateAnyUserPassword(false, 1);
-        bitbucketRequestMockProvider.mockAddUserToGroups();
-        jiraRequestMockProvider.mockAddUserToGroupForMultipleGroups(userTestService.student.getGroups());
+        bitbucketRequestMockProvider.mockRemoveAnyUserFromAnyGroups();
+        jiraRequestMockProvider.mockRemoveAnyUserFromAnyGroups();
         userTestService.deleteUser_isSuccessful();
     }
 
@@ -181,8 +181,8 @@ class UserBambooBitbucketJiraIntegrationTest extends AbstractSpringIntegrationBa
     void deleteUserWithGermanLocale_isSuccessful() throws Exception {
         bitbucketRequestMockProvider.mockUpdateAnyUserDetails(false, 1);
         bitbucketRequestMockProvider.mockUpdateAnyUserPassword(false, 1);
-        bitbucketRequestMockProvider.mockAddUserToGroups();
-        jiraRequestMockProvider.mockAddUserToGroupForMultipleGroups(userTestService.student.getGroups());
+        bitbucketRequestMockProvider.mockRemoveAnyUserFromAnyGroups();
+        jiraRequestMockProvider.mockRemoveAnyUserFromAnyGroups();
         userTestService.deleteUserWithGermanLocale_isSuccessful();
     }
 
@@ -204,8 +204,8 @@ class UserBambooBitbucketJiraIntegrationTest extends AbstractSpringIntegrationBa
     void deleteUsers_isSuccessfulForAllUsersExceptSelf() throws Exception {
         bitbucketRequestMockProvider.mockUpdateAnyUserDetails(false, 4);
         bitbucketRequestMockProvider.mockUpdateAnyUserPassword(false, 4);
-        bitbucketRequestMockProvider.mockAddUserToGroupsManyTimes();
-        jiraRequestMockProvider.mockAddAnyUserToAnyGroups();
+        bitbucketRequestMockProvider.mockRemoveAnyUserFromAnyGroups();
+        jiraRequestMockProvider.mockRemoveAnyUserFromAnyGroups();
         userTestService.deleteUsers(TEST_PREFIX + "tutor1");
     }
 

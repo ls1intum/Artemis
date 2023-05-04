@@ -343,15 +343,15 @@ public class BitbucketRequestMockProvider {
         mockServer.expect(requestTo(path)).andExpect(method(HttpMethod.POST)).andRespond(withStatus(HttpStatus.OK));
     }
 
-    public void mockAddUserToGroupsManyTimes() throws URISyntaxException {
-        final var path = UriComponentsBuilder.fromUri(bitbucketServerUrl.toURI()).path("/rest/api/latest/admin/users/add-groups").build().toUri();
-        mockServer.expect(ExpectedCount.manyTimes(), requestTo(path)).andExpect(method(HttpMethod.POST)).andRespond(withStatus(HttpStatus.OK));
-    }
-
     public void mockRemoveUserFromGroup(String username, String groupName) throws URISyntaxException {
         final var path = UriComponentsBuilder.fromUri(bitbucketServerUrl.toURI()).path("/rest/api/latest/admin/users/remove-group").queryParam("context", username)
                 .queryParam("itemName", groupName).build().toUri();
         mockServer.expect(requestTo(path)).andExpect(method(HttpMethod.POST)).andRespond(withStatus(HttpStatus.OK));
+    }
+
+    public void mockRemoveAnyUserFromAnyGroups() {
+        mockServer.expect(ExpectedCount.manyTimes(), requestTo(Matchers.startsWith(bitbucketServerUrl + "/rest/api/latest/admin/users/remove-group")))
+                .andExpect(method(HttpMethod.POST)).andRespond(withStatus(HttpStatus.OK));
     }
 
     public void mockGiveWritePermission(ProgrammingExercise exercise, String repositoryName, String username, HttpStatus status) throws URISyntaxException {
