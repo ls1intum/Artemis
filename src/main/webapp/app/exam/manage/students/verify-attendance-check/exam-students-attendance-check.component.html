@@ -39,7 +39,7 @@
                         <fa-icon [icon]="faSort"></fa-icon>
                     </th>
                     <th class="d-md-table-cell">
-                        <span>{{ 'artemisApp.examManagement.examStudents.signingImagePath' | artemisTranslate }}</span>
+                        <span>{{ 'artemisApp.examManagement.examStudents.attendanceChecks' | artemisTranslate }}</span>
                     </th>
                     <th class="d-md-table-cell">
                         <span>{{ 'artemisApp.studentExams.started' | artemisTranslate }}</span>
@@ -70,7 +70,12 @@
                         </span>
                     </td>
                     <td class="d-md-table-cell">
-                        <img *ngIf="examUser?.signingImagePath; else notSigned" class="img-fluid" width="60" [src]="SERVER_API_URL + examUser.signingImagePath" />
+                        <img
+                            *ngIf="allExamUsersAttendanceCheck.length === 0 && examUser?.signingImagePath; else notSigned"
+                            class="img-fluid"
+                            width="60"
+                            [src]="SERVER_API_URL + examUser.signingImagePath"
+                        />
                         <ng-template #notSigned>
                             <h3>
                                 <span class="m-2">

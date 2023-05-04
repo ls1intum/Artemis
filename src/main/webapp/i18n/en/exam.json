@@ -472,7 +472,7 @@
                 "showAllUsers": "Show all students",
                 "searchForUsers": "Register a student for this exam by searching for login or name",
                 "checks": "Checks",
-                "signingImagePath": "Signature",
+                "attendanceChecks": "Attendance Checks",
                 "searchStudents": "Search students by name or login",
                 "searchNoResults": "No students found",
                 "login": "Login",

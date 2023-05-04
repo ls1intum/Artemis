@@ -198,7 +198,7 @@
                     </ng-template>
                 </ngx-datatable-column>
 
-                <ngx-datatable-column *ngIf="hasExamEnded" prop="" [minWidth]="50" [width]="120" [maxWidth]="150">
+                <ngx-datatable-column *ngIf="hasExamEnded" prop="" [minWidth]="70" [width]="70" [maxWidth]="150">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" title="{{ 'artemisApp.exam.examUsers.attendanceStatusTitle' | artemisTranslate }}">
                             <span class="datatable-header-cell-label bold" jhiTranslate="artemisApp.exam.examUsers.attendanceStatus"> Status </span>
@@ -235,7 +235,7 @@
                     </ng-template>
                 </ngx-datatable-column>
 
-                <ngx-datatable-column *ngIf="!isTestExam" prop="" [minWidth]="150" [width]="200">
+                <ngx-datatable-column *ngIf="!isTestExam" prop="" [minWidth]="120" [width]="150">
                     <ng-template ngx-datatable-header-template></ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
                         <div class="w-100 text-end">

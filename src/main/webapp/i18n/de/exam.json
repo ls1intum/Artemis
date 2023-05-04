@@ -472,7 +472,7 @@
                 "searchForUsers": "Studierende für diese Klausur anmelden durch Suchen nach Login oder Namen",
                 "searchStudents": "Studierende nach Namen oder Login suchen",
                 "searchNoResults": "Keine Studierenden gefunden",
-                "signingImagePath": "Unterschrift",
+                "attendanceChecks": "Anwesenheitskontrollen",
                 "checks": "Überprüfungen",
                 "login": "Login",
                 "name": "Name",
