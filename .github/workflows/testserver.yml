@@ -8,7 +8,6 @@ concurrency: test-servers
 
 env:
   RAW_URL: https://raw.githubusercontent.com/${{ github.repository }}/${{ github.sha }}
-  PR_LABELS: ""
 
 jobs:
   # Get an up to date version of the label list. github.event.pull_request.labels seems to sometimes be outdated
@@ -24,16 +23,13 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const labelsData = await github.issues.listLabelsOnIssue({
+            const response = await github.rest.issues.listLabelsOnIssue({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.issue.number
             })
-            console.log(labelsData)
-            const labels = labelsData.data
-            console.log(labels)
-            env.PR_LABELS = labels.map(label => label.name).join(',')
-            return labels.map(label => label.name).join(',')
+            const labels = response.data
+            return labels.map(label => label.name)
 
 
   # Check that the build job has run successfully before deploying
@@ -41,7 +37,7 @@ jobs:
     needs: [ get-labels ]
     runs-on: ubuntu-latest
     # Only run workflow if the added label is a deploy label
-    if: contains(needs.get_labels.outputs.labels, 'deploy:artemis-test')
+    if: contains(join(needs.get_labels.outputs.labels, ','), 'deploy:artemis-test')
     steps:
       - name: Get latest successful build for branch
         id: check_build
@@ -80,6 +76,7 @@ jobs:
         if: fromJSON(steps.check_build.outputs.data).total_count == 0
         uses: actions/github-script@v6
         with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             github.rest.issues.createComment({
               issue_number: context.issue.number,
@@ -92,7 +89,7 @@ jobs:
 
   # Check which test server to deploy to based on the label
   filter-matrix:
-    needs: [ check-build-status ]
+    needs: [ get-labels, check-build-status ]
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -222,11 +219,11 @@ jobs:
     steps:
       - run: |
           echo "$DEPLOY_LABEL"
-          echo '${{ contains(env.PR_LABELS, format('deploy:{0}', matrix.label-identifier)) }}'
+          echo '${{ contains(needs.get_labels.outputs.labels, format('deploy:{0}', matrix.label-identifier)) }}'
       - id: filter
         env:
           MATRIX_JSON: ${{ toJSON(matrix) }}
-        if: ${{ contains(env.PR_LABELS, format('deploy:{0}', matrix.label-identifier)) }}
+        if: ${{ contains(needs.get_labels.outputs.labels, format('deploy:{0}', matrix.label-identifier)) }}
         run: |
           MATRIX_JSON=${MATRIX_JSON//$'\n'/}
           echo "${{ matrix.label-identifier }}=$MATRIX_JSON" >> $GITHUB_OUTPUT
