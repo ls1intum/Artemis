@@ -27,6 +27,7 @@ export class CourseCardComponent implements OnChanges {
     @Input() hasGuidedTour: boolean;
 
     CachingStrategy = CachingStrategy;
+    ProfileToggle = ProfileToggle;
 
     nextRelevantExercise?: Exercise;
     nextExerciseDueDate?: dayjs.Dayjs;
