@@ -323,9 +323,7 @@ public class SubmissionPolicyService {
         // repository in rapid succession.
         // When the user submits while the result for the previous submission is not yet available, the previous submission will not be counted.
         // This means that the user is able to submit more often than the allowed number of submissions, if a lock repository policy is configured.
-        // As these submissions have to happen in quick succession, this does not constitute an advantage for the student and the behaviour is acceptable for now.
-        // Nonetheless, this method should be reassessed to determine whether it is also feasible to count the submissions without taking results into account.
-        // TODO: Reassess method to determine whether it is also feasible to count the submissions without taking results into account.
+        // As these submissions have to happen in quick succession, this does not constitute an advantage for the student and the behaviour is acceptable.
         return (int) programmingSubmissionRepository.findAllByParticipationIdWithResults(participationId).stream()
                 .filter(submission -> submission.getType() == SubmissionType.MANUAL && !submission.getResults().isEmpty()).map(ProgrammingSubmission::getCommitHash).distinct()
                 .count() + submissionCompensation;
