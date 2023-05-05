@@ -14,6 +14,8 @@ import java.util.stream.Stream;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.io.FileUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -37,6 +39,8 @@ public class DataExportService {
     private static final String ZIP_FILE_EXTENSION = ".zip";
 
     private static final String CSV_FILE_EXTENSION = ".csv";
+
+    private final Logger log = LoggerFactory.getLogger(DataExportService.class);
 
     @Value("${artemis.data-export-path}")
     private Path dataExportPath;
@@ -339,8 +343,13 @@ public class DataExportService {
     }
 
     private void storeModelingSubmissionContent(ModelingSubmission modelingSubmission, Path outputDir) throws IOException {
-        Files.writeString(outputDir.resolve("modeling_exercise_" + modelingSubmission.getParticipation().getExercise().getSanitizedExerciseTitle() + "_submission.json"),
-                modelingSubmission.getModel());
+        if (modelingSubmission.getModel() != null) {
+            Files.writeString(outputDir.resolve("modeling_exercise_submission_" + modelingSubmission.getId() + "_model.json"), modelingSubmission.getModel());
+        }
+        else {
+            log.warn("Cannot include modeling submission content in data export because content is null for submission with id: {}", modelingSubmission.getId());
+
+        }
     }
 
     private void createParticipationCsvFile(StudentParticipation participation, Path outputDir) throws IOException {
@@ -356,7 +365,13 @@ public class DataExportService {
     }
 
     private void storeTextSubmissionContent(TextSubmission textSubmission, Path outputDir) throws IOException {
-        Files.writeString(outputDir.resolve("text_exercise_submission_" + textSubmission.getId() + "_text.txt"), textSubmission.getText());
+        // text can be null which leads to an exception
+        if (textSubmission.getText() != null) {
+            Files.writeString(outputDir.resolve("text_exercise_submission_" + textSubmission.getId() + "_text.txt"), textSubmission.getText());
+        }
+        else {
+            log.warn("Cannot include text submission content in data export because content is null for submission with id: {}", textSubmission.getId());
+        }
     }
 
     private void createResultsCsvFile(Submission submission, Path outputDir) throws IOException {

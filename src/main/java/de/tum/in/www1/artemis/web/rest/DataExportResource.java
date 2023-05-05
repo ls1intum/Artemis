@@ -24,7 +24,7 @@ public class DataExportResource {
 
     private final DataExportService dataExportService;
 
-    private final Logger log = LoggerFactory.getLogger(DataExportService.class);
+    private final Logger log = LoggerFactory.getLogger(DataExportResource.class);
 
     private final UserRepository userRepository;
 
