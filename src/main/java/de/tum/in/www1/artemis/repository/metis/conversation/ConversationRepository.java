@@ -1,10 +1,8 @@
 package de.tum.in.www1.artemis.repository.metis.conversation;
 
 import java.util.List;
-import java.util.Set;
 
 import javax.transaction.Transactional;
-import javax.validation.constraints.NotNull;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -19,13 +17,17 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @Repository
 public interface ConversationRepository extends JpaRepository<Conversation, Long> {
 
-    @Transactional
+    @Transactional // ok because of delete
     @Modifying
-    void deleteById(@NotNull Long conversationId);
+    void deleteById(long conversationId);
 
     @Transactional // ok because of delete
     @Modifying
     void deleteAllByCreator(User creator);
+
+    @Transactional // ok because of delete
+    @Modifying
+    void deleteAllByCourseId(long courseId);
 
     default Conversation findByIdElseThrow(long conversationId) {
         return this.findById(conversationId).orElseThrow(() -> new EntityNotFoundException("Conversation", conversationId));
@@ -51,5 +53,4 @@ public interface ConversationRepository extends JpaRepository<Conversation, Long
             """)
     List<Conversation> findAllUnreadConversationsWhereUserIsParticipant(@Param("userId") Long userId);
 
-    Set<Conversation> findAllByCreator(User creator);
 }
