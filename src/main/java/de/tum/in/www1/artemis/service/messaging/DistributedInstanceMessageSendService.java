@@ -81,27 +81,45 @@ public class DistributedInstanceMessageSendService implements InstanceMessageSen
     }
 
     @Override
-    public void sendUnlockAllRepositories(Long exerciseId) {
+    public void sendUnlockAllStudentRepositoriesAndParticipations(Long exerciseId) {
         log.info("Sending unlock all repositories for programming exercise {} to broker.", exerciseId);
         sendMessageDelayed(MessageTopic.PROGRAMMING_EXERCISE_UNLOCK_REPOSITORIES, exerciseId);
     }
 
     @Override
-    public void sendLockAllRepositories(Long exerciseId) {
-        log.info("Sending lock all repositories for programming exercise {} to broker.", exerciseId);
+    public void sendUnlockAllSealedStudentRepositoriesAndParticipations(Long exerciseId) {
+        log.info("Sending unlock all sealed repositories and participations for programming exercise {} to broker.", exerciseId);
+        sendMessageDelayed(MessageTopic.PROGRAMMING_EXERCISE_UNLOCK_SEALED_REPOSITORIES_AND_PARTICIPATIONS, exerciseId);
+    }
+
+    @Override
+    public void sendUnlockAllSealedStudentParticipations(Long exerciseId) {
+        log.info("Sending unlock all sealed participations for programming exercise {} to broker.", exerciseId);
+        sendMessageDelayed(MessageTopic.PROGRAMMING_EXERCISE_UNLOCK_SEALED_PARTICIPATIONS, exerciseId);
+    }
+
+    @Override
+    public void sendLockAllStudentRepositoriesAndParticipations(Long exerciseId) {
+        log.info("Sending lock all student repositories and participations for programming exercise {} to broker.", exerciseId);
+        sendMessageDelayed(MessageTopic.PROGRAMMING_EXERCISE_LOCK_REPOSITORIES_AND_PARTICIPATIONS, exerciseId);
+    }
+
+    @Override
+    public void sendLockAllStudentRepositories(Long exerciseId) {
+        log.info("Sending lock all student repositories for programming exercise {} to broker.", exerciseId);
         sendMessageDelayed(MessageTopic.PROGRAMMING_EXERCISE_LOCK_REPOSITORIES, exerciseId);
     }
 
     @Override
-    public void sendUnlockAllRepositoriesWithoutEarlierIndividualDueDate(Long exerciseId) {
-        log.info("Sending unlock all repositories without an individual due date before now for programming exercise {} to broker.", exerciseId);
-        sendMessageDelayed(MessageTopic.PROGRAMMING_EXERCISE_UNLOCK_WITHOUT_EARLIER_DUE_DATE, exerciseId);
+    public void sendLockAllSealedStudentRepositoriesAndParticipations(Long exerciseId) {
+        log.info("Sending lock all student repositories and participations with past due date or too many submissions for programming exercise {} to broker.", exerciseId);
+        sendMessageDelayed(MessageTopic.PROGRAMMING_EXERCISE_LOCK_SEALED_REPOSITORIES_AND_PARTICIPATIONS, exerciseId);
     }
 
     @Override
-    public void sendLockAllRepositoriesWithoutLaterIndividualDueDate(Long exerciseId) {
-        log.info("Sending lock all repositories without an individual due date after now for programming exercise {} to broker.", exerciseId);
-        sendMessageDelayed(MessageTopic.PROGRAMMING_EXERCISE_LOCK_WITHOUT_LATER_DUE_DATE, exerciseId);
+    public void sendLockAllSealedStudentParticipations(Long exerciseId) {
+        log.info("Sending lock all student participations with past due date or too many submissions for programming exercise {} to broker.", exerciseId);
+        sendMessageDelayed(MessageTopic.PROGRAMMING_EXERCISE_LOCK_SEALED_PARTICIPATIONS, exerciseId);
     }
 
     @Override

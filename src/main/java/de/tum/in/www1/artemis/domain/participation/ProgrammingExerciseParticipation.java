@@ -96,6 +96,8 @@ public interface ProgrammingExerciseParticipation extends ParticipationInterface
             return false;
         }
 
+        // TODO: Merge this with the new getIsLocked method in ProgrammingExerciseStudentParticipation
+
         final ProgrammingExercise programmingExercise = getProgrammingExercise();
         final ZonedDateTime now = ZonedDateTime.now();
         boolean isAfterDueDate = ExerciseDateService.getDueDate(studentParticipation).map(now::isAfter).orElse(false);

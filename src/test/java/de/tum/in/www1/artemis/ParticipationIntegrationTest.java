@@ -490,7 +490,7 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         result.setCompletionDate(ZonedDateTime.now());
         resultRepository.save(result);
 
-        doNothing().when(programmingExerciseParticipationService).lockStudentRepository(programmingExercise, participation);
+        doNothing().when(programmingExerciseParticipationService).lockStudentRepositoryAndParticipation(programmingExercise, participation);
 
         var response = request.putWithResponseBody("/api/exercises/" + programmingExercise.getId() + "/request-feedback", null, ProgrammingExerciseStudentParticipation.class,
                 HttpStatus.OK);
@@ -498,7 +498,7 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         assertThat(response.getResults()).allMatch(result1 -> result.getAssessmentType() == AssessmentType.SEMI_AUTOMATIC);
         assertThat(response.getIndividualDueDate()).isNotNull().isBefore(ZonedDateTime.now());
 
-        verify(programmingExerciseParticipationService, times(1)).lockStudentRepository(programmingExercise, participation);
+        verify(programmingExerciseParticipationService, times(1)).lockStudentRepositoryAndParticipation(programmingExercise, participation);
     }
 
     @Test
@@ -792,7 +792,7 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         final var participation2 = database.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student2");
         participation2.setIndividualDueDate(ZonedDateTime.now().plusHours(1));
 
-        doNothing().when(programmingExerciseParticipationService).unlockStudentRepository(exercise, participation);
+        doNothing().when(programmingExerciseParticipationService).unlockStudentRepositoryAndParticipation(exercise, participation);
 
         final var participationsToUpdate = new StudentParticipationList(participation, participation2);
         final var response = request.putWithResponseBodyList(String.format("/api/exercises/%d/participations/update-individual-due-date", exercise.getId()), participationsToUpdate,
@@ -802,8 +802,8 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         assertThat(response.get(0).getIndividualDueDate()).isEqualToIgnoringNanos(participation.getIndividualDueDate());
 
         verify(programmingExerciseScheduleService, times(1)).updateScheduling(exercise);
-        verify(programmingExerciseParticipationService, times(1)).unlockStudentRepository(exercise, participation);
-        verify(programmingExerciseParticipationService, never()).unlockStudentRepository(exercise, participation2);
+        verify(programmingExerciseParticipationService, times(1)).unlockStudentRepositoryAndParticipation(exercise, participation);
+        verify(programmingExerciseParticipationService, never()).unlockStudentRepositoryAndParticipation(exercise, participation2);
     }
 
     @Test
@@ -821,7 +821,7 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
         assertThat(response).isEmpty();
         verify(programmingExerciseScheduleService, never()).updateScheduling(exercise);
-        verify(programmingExerciseParticipationService, never()).unlockStudentRepository(exercise, participation);
+        verify(programmingExerciseParticipationService, never()).unlockStudentRepositoryAndParticipation(exercise, participation);
     }
 
     @Test
@@ -841,7 +841,7 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
         assertThat(response).isEmpty(); // individual due date should remain null
         verify(programmingExerciseScheduleService, never()).updateScheduling(exercise);
-        verify(programmingExerciseParticipationService, never()).unlockStudentRepository(exercise, participation);
+        verify(programmingExerciseParticipationService, never()).unlockStudentRepositoryAndParticipation(exercise, participation);
     }
 
     @Test
@@ -858,7 +858,7 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
         participation.setIndividualDueDate(ZonedDateTime.now().plusHours(2));
 
-        doNothing().when(programmingExerciseParticipationService).unlockStudentRepository(exercise, participation);
+        doNothing().when(programmingExerciseParticipationService).unlockStudentRepositoryAndParticipation(exercise, participation);
 
         final var participationsToUpdate = new StudentParticipationList(participation);
         final var response = request.putWithResponseBodyList(String.format("/api/exercises/%d/participations/update-individual-due-date", exercise.getId()), participationsToUpdate,
@@ -867,7 +867,7 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         assertThat(response).hasSize(1);
         verify(programmingExerciseScheduleService, times(1)).updateScheduling(exercise);
         // make sure the student repo is unlocked as the due date is in the future
-        verify(programmingExerciseParticipationService, times(1)).unlockStudentRepository(exercise, participation);
+        verify(programmingExerciseParticipationService, times(1)).unlockStudentRepositoryAndParticipation(exercise, participation);
     }
 
     @Test
@@ -884,7 +884,7 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
         participation.setIndividualDueDate(ZonedDateTime.now().minusHours(2));
 
-        doNothing().when(programmingExerciseParticipationService).lockStudentRepository(exercise, participation);
+        doNothing().when(programmingExerciseParticipationService).lockStudentRepositoryAndParticipation(exercise, participation);
 
         final var participationsToUpdate = new StudentParticipationList(participation);
         final var response = request.putWithResponseBodyList(String.format("/api/exercises/%d/participations/update-individual-due-date", exercise.getId()), participationsToUpdate,
@@ -893,7 +893,7 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         assertThat(response).hasSize(1);
         verify(programmingExerciseScheduleService, times(1)).updateScheduling(exercise);
         // student repo should be locked as due date is in the past
-        verify(programmingExerciseParticipationService, times(1)).lockStudentRepository(exercise, participation);
+        verify(programmingExerciseParticipationService, times(1)).lockStudentRepositoryAndParticipation(exercise, participation);
     }
 
     /**

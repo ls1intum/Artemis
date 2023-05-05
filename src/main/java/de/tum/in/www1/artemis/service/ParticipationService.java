@@ -234,7 +234,9 @@ public class ParticipationService {
     }
 
     private StudentParticipation startProgrammingParticipation(ProgrammingExercise exercise, ProgrammingExerciseStudentParticipation participation, boolean setInitializationDate) {
-        // Step 1b) configure the student repository (e.g. access right, etc.)
+        // Step 1b) unlock the student participation. It is locked by default.
+        participation.setLocked(false);
+        // Step 1c) configure the student repository (e.g. access right, etc.)
         participation = configureRepository(exercise, participation);
         // Step 2a) create the build plan (based on the BASE build plan)
         participation = copyBuildPlan(participation);

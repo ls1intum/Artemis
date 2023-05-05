@@ -33,6 +33,7 @@ import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
+import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.programming.*;
 import de.tum.in.www1.artemis.web.rest.dto.BuildLogStatisticsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
@@ -85,8 +86,6 @@ public class ProgrammingExerciseResource {
 
     private final GradingCriterionRepository gradingCriterionRepository;
 
-    private final Optional<ProgrammingLanguageFeatureService> programmingLanguageFeatureService;
-
     private final CourseRepository courseRepository;
 
     private final GitService gitService;
@@ -99,17 +98,17 @@ public class ProgrammingExerciseResource {
 
     private final BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository;
 
+    private final InstanceMessageSendService instanceMessageSendService;
+
     public ProgrammingExerciseResource(ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository,
             UserRepository userRepository, AuthorizationCheckService authCheckService, CourseService courseService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService, ExerciseService exerciseService,
             ExerciseDeletionService exerciseDeletionService, ProgrammingExerciseService programmingExerciseService,
             ProgrammingExerciseRepositoryService programmingExerciseRepositoryService, StudentParticipationRepository studentParticipationRepository,
-            StaticCodeAnalysisService staticCodeAnalysisService, GradingCriterionRepository gradingCriterionRepository,
-            Optional<ProgrammingLanguageFeatureService> programmingLanguageFeatureService, CourseRepository courseRepository, GitService gitService,
-            AuxiliaryRepositoryService auxiliaryRepositoryService, SubmissionPolicyService submissionPolicyService,
-            SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
+            StaticCodeAnalysisService staticCodeAnalysisService, GradingCriterionRepository gradingCriterionRepository, CourseRepository courseRepository, GitService gitService,
+            AuxiliaryRepositoryService auxiliaryRepositoryService, SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
-            BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository) {
+            BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, InstanceMessageSendService instanceMessageSendService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
         this.userRepository = userRepository;
@@ -124,13 +123,13 @@ public class ProgrammingExerciseResource {
         this.studentParticipationRepository = studentParticipationRepository;
         this.staticCodeAnalysisService = staticCodeAnalysisService;
         this.gradingCriterionRepository = gradingCriterionRepository;
-        this.programmingLanguageFeatureService = programmingLanguageFeatureService;
         this.courseRepository = courseRepository;
         this.gitService = gitService;
         this.auxiliaryRepositoryService = auxiliaryRepositoryService;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.buildLogStatisticsEntryRepository = buildLogStatisticsEntryRepository;
+        this.instanceMessageSendService = instanceMessageSendService;
     }
 
     /**
@@ -572,7 +571,7 @@ public class ProgrammingExerciseResource {
     public ResponseEntity<Void> unlockAllRepositories(@PathVariable Long exerciseId) {
         var programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, null);
-        programmingExerciseRepositoryService.unlockAllRepositories(exerciseId);
+        instanceMessageSendService.sendUnlockAllStudentRepositoriesAndParticipations(exerciseId);
         log.info("Unlocked all repositories of programming exercise {} upon manual request", exerciseId);
         return ResponseEntity.ok().build();
     }
@@ -588,7 +587,7 @@ public class ProgrammingExerciseResource {
     public ResponseEntity<Void> lockAllRepositories(@PathVariable Long exerciseId) {
         var programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, null);
-        programmingExerciseRepositoryService.lockAllRepositories(exerciseId);
+        instanceMessageSendService.sendLockAllStudentRepositoriesAndParticipations(exerciseId);
         log.info("Locked all repositories of programming exercise {} upon manual request", exerciseId);
         return ResponseEntity.ok().build();
     }

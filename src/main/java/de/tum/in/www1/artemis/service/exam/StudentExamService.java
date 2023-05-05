@@ -388,7 +388,7 @@ public class StudentExamService {
                     try {
                         log.debug("lock student repositories for {}", currentUser);
                         var participation = programmingExerciseParticipationService.findStudentParticipationByExerciseAndStudentId(programmingExercise, currentUser.getLogin());
-                        programmingExerciseParticipationService.lockStudentRepository(programmingExercise, participation);
+                        programmingExerciseParticipationService.lockStudentRepositoryAndParticipation(programmingExercise, participation);
                     }
                     catch (Exception e) {
                         log.error("Locking programming exercise {} submitted manually by {} failed", exercise.getId(), currentUser.getLogin(), e);
@@ -499,7 +499,8 @@ public class StudentExamService {
                     if (exercise instanceof ProgrammingExercise programmingExercise && (studentExam.isTestRun() || studentExam.isTestExam()
                             || ProgrammingExerciseScheduleService.getExamProgrammingExerciseUnlockDate(programmingExercise).isBefore(ZonedDateTime.now()))) {
                         // Note: only unlock the programming exercise student repository for the affected user (Important: Do NOT invoke unlockAll)
-                        programmingExerciseParticipationService.unlockStudentRepository(programmingExercise, (ProgrammingExerciseStudentParticipation) participation);
+                        programmingExerciseParticipationService.unlockStudentRepositoryAndParticipation(programmingExercise,
+                                (ProgrammingExerciseStudentParticipation) participation);
                     }
                     log.info("SUCCESS: Start exercise for student exam {} and exercise {} and student {}", studentExam.getId(), exercise.getId(),
                             student.getParticipantIdentifier());

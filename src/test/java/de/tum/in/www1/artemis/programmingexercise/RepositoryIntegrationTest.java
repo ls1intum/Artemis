@@ -1028,7 +1028,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
             return null;
         }).when(versionControlService).configureRepository(programmingExercise, participation, true);
 
-        programmingExerciseParticipationService.unlockStudentRepository(programmingExercise, participation);
+        programmingExerciseParticipationService.unlockStudentRepositoryAndParticipation(programmingExercise, participation);
 
         assertThat(((ProgrammingExercise) participation.getExercise()).getBuildAndTestStudentSubmissionsAfterDueDate()).isNull();
         assertThat(participation.isLocked()).isFalse();
@@ -1038,7 +1038,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testUnlockStudentRepository_beforeStateRepoConfigured() {
         participation.setInitializationState(InitializationState.REPO_COPIED);
-        programmingExerciseParticipationService.unlockStudentRepository(programmingExercise, participation);
+        programmingExerciseParticipationService.unlockStudentRepositoryAndParticipation(programmingExercise, participation);
 
         // Check the logs
         List<ILoggingEvent> logsList = listAppender.list;
@@ -1054,7 +1054,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
             return null;
         }).when(versionControlService).setRepositoryPermissionsToReadOnly(participation.getVcsRepositoryUrl(), programmingExercise.getProjectKey(), participation.getStudents());
 
-        programmingExerciseParticipationService.lockStudentRepository(programmingExercise, participation);
+        programmingExerciseParticipationService.lockStudentRepositoryAndParticipation(programmingExercise, participation);
         assertThat(participation.isLocked()).isTrue();
     }
 
@@ -1062,7 +1062,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testLockStudentRepository_beforeStateRepoConfigured() {
         participation.setInitializationState(InitializationState.REPO_COPIED);
-        programmingExerciseParticipationService.lockStudentRepository(programmingExercise, participation);
+        programmingExerciseParticipationService.lockStudentRepositoryAndParticipation(programmingExercise, participation);
 
         // Check the logs
         List<ILoggingEvent> logsList = listAppender.list;

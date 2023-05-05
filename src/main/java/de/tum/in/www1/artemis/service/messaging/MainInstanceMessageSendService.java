@@ -62,23 +62,38 @@ public class MainInstanceMessageSendService implements InstanceMessageSendServic
     }
 
     @Override
-    public void sendUnlockAllRepositories(Long exerciseId) {
+    public void sendUnlockAllStudentRepositoriesAndParticipations(Long exerciseId) {
         instanceMessageReceiveService.processUnlockAllRepositories(exerciseId);
     }
 
     @Override
-    public void sendLockAllRepositories(Long exerciseId) {
+    public void sendUnlockAllSealedStudentRepositoriesAndParticipations(Long exerciseId) {
+        instanceMessageReceiveService.processUnlockAllSealedRepositoriesAndParticipations(exerciseId);
+    }
+
+    @Override
+    public void sendUnlockAllSealedStudentParticipations(Long exerciseId) {
+        instanceMessageReceiveService.processUnlockAllSealedParticipations(exerciseId);
+    }
+
+    @Override
+    public void sendLockAllStudentRepositoriesAndParticipations(Long exerciseId) {
+        instanceMessageReceiveService.processLockAllRepositoriesAndParticipations(exerciseId);
+    }
+
+    @Override
+    public void sendLockAllStudentRepositories(Long exerciseId) {
         instanceMessageReceiveService.processLockAllRepositories(exerciseId);
     }
 
     @Override
-    public void sendUnlockAllRepositoriesWithoutEarlierIndividualDueDate(Long exerciseId) {
-        instanceMessageReceiveService.processUnlockAllRepositoriesWithoutEarlierIndividualDueDate(exerciseId);
+    public void sendLockAllSealedStudentRepositoriesAndParticipations(Long exerciseId) {
+        instanceMessageReceiveService.processLockAllSealedRepositoriesAndParticipations(exerciseId);
     }
 
     @Override
-    public void sendLockAllRepositoriesWithoutLaterIndividualDueDate(Long exerciseId) {
-        instanceMessageReceiveService.processLockAllRepositoriesWithoutLaterIndividualDueDate(exerciseId);
+    public void sendLockAllSealedStudentParticipations(Long exerciseId) {
+        instanceMessageReceiveService.processLockAllSealedParticipations(exerciseId);
     }
 
     @Override

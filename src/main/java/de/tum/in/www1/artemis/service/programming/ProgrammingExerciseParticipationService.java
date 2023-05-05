@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service.programming;
 
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.time.ZonedDateTime;
 import java.util.Optional;
 
 import javax.validation.constraints.NotNull;
@@ -17,7 +18,9 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
+import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.*;
+import de.tum.in.www1.artemis.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.connectors.GitService;
@@ -43,9 +46,12 @@ public class ProgrammingExerciseParticipationService {
 
     private final GitService gitService;
 
+    private final ProgrammingSubmissionRepository programmingSubmissionRepository;
+
     public ProgrammingExerciseParticipationService(SolutionProgrammingExerciseParticipationRepository solutionParticipationRepository,
             TemplateProgrammingExerciseParticipationRepository templateParticipationRepository, ProgrammingExerciseStudentParticipationRepository studentParticipationRepository,
-            ParticipationRepository participationRepository, TeamRepository teamRepository, GitService gitService, Optional<VersionControlService> versionControlService) {
+            ParticipationRepository participationRepository, TeamRepository teamRepository, GitService gitService, Optional<VersionControlService> versionControlService,
+            ProgrammingSubmissionRepository programmingSubmissionRepository) {
         this.studentParticipationRepository = studentParticipationRepository;
         this.solutionParticipationRepository = solutionParticipationRepository;
         this.templateParticipationRepository = templateParticipationRepository;
@@ -53,6 +59,7 @@ public class ProgrammingExerciseParticipationService {
         this.teamRepository = teamRepository;
         this.versionControlService = versionControlService;
         this.gitService = gitService;
+        this.programmingSubmissionRepository = programmingSubmissionRepository;
     }
 
     /**
@@ -162,7 +169,72 @@ public class ProgrammingExerciseParticipationService {
     }
 
     /**
-     * Lock the repository associated with a programming participation
+     * Determines whether the owner of a student participation can still submit to it.
+     * If they can't (e.g. because the due date is in the past or because the submission limit is reached), the participation is considered sealed.
+     * This method considers the exercise due date, the individual due date, and the number of submissions.
+     *
+     * @param participation the participation to determine the sealed state for
+     * @return whether the participation is sealed
+     */
+    public boolean isStudentParticipationSealed(ProgrammingExerciseStudentParticipation participation) {
+        final ZonedDateTime now = ZonedDateTime.now();
+
+        ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
+        ZonedDateTime dueDate = programmingExercise.getDueDate();
+        ZonedDateTime individualDueDate = participation.getIndividualDueDate();
+
+        // Case 1: The due date of the participation's exercise is in the past and there is no individual due date that is in the future.
+        if (dueDate != null && dueDate.isBefore(now) && (individualDueDate == null || individualDueDate.isBefore(now))) {
+            return true;
+        }
+
+        // Case 2: The due date of the participation's exercise is unset and the individual due date is in the past.
+        if (dueDate == null && individualDueDate != null && individualDueDate.isBefore(now)) {
+            return true;
+        }
+
+        // Case 3: The submission limit of the exercise is reached.
+        return isLockRepositoryPolicyEnforced(programmingExercise, participation);
+    }
+
+    /**
+     * Determines whether a lock repository policy is enforced for a participation.
+     * of a programming exercise. This method does NOT take any other factors into account.
+     *
+     * @param programmingExercise      the programmingExercise to check the submission policy for
+     * @param programmingParticipation that is either locked or unlocked
+     * @return true when the repository should be locked, false if not
+     */
+    public boolean isLockRepositoryPolicyEnforced(ProgrammingExercise programmingExercise, Participation programmingParticipation) {
+        if (programmingExercise.getSubmissionPolicy() instanceof LockRepositoryPolicy policy) {
+            return policy.isActive() && policy.getSubmissionLimit() <= getParticipationSubmissionCount(programmingParticipation);
+        }
+        return false;
+    }
+
+    /**
+     * Calculates and returns the number of submissions for one participation. This amount represents
+     * the amount of unique manual submissions with at least one result.
+     *
+     * @param participation for which the number of submissions should be determined
+     * @return the number of submissions of this participation
+     */
+    public int getParticipationSubmissionCount(Participation participation) {
+        final Long participationId = participation.getId();
+        int submissionCompensation = 0;
+        participation = participationRepository.findByIdWithLatestSubmissionAndResult(participationId)
+                .orElseThrow(() -> new EntityNotFoundException("Participation", participationId));
+        var submissions = participation.getSubmissions();
+        if (submissions != null && !submissions.isEmpty()) {
+            submissionCompensation = submissions.iterator().next().getResults().isEmpty() ? 1 : 0;
+        }
+        return (int) programmingSubmissionRepository.findAllByParticipationIdWithResults(participationId).stream()
+                .filter(submission -> submission.getType() == SubmissionType.MANUAL && !submission.getResults().isEmpty()).map(ProgrammingSubmission::getCommitHash).distinct()
+                .count() + submissionCompensation;
+    }
+
+    /**
+     * Lock the repository associated with a programming participation.
      *
      * @param programmingExercise the programming exercise
      * @param participation       the programming exercise student participation whose repository should be locked
@@ -178,13 +250,51 @@ public class ProgrammingExerciseParticipationService {
     }
 
     /**
-     * Unlock the repository associated with a programming participation
+     * Lock a student participation. This is necessary if the student is not allowed to submit either from the online editor or from their local Git client.
+     * This is the case, if the start date of the exercise is in the future, if the due date is in the past, or if the student has reached the submission limit.
+     *
+     * @param programmingExercise the programming exercise this participation belongs to
+     *                                Note: This parameter is not required to lock the student participation but needs to be present here to be able to use this method with
+     *                                ProgrammingExerciseScheduleService#invokeOperationOnAllParticipationsThatSatisfy(), which requires a BiConsumer.
+     * @param participation       the participation to be locked
+     */
+    public void lockStudentParticipation(ProgrammingExercise programmingExercise, ProgrammingExerciseStudentParticipation participation) {
+        studentParticipationRepository.updateLockedById(participation.getId(), true);
+    }
+
+    /**
+     * Lock the repository associated with a programming participation and the participation itself.
+     *
+     * @param programmingExercise the programming exercise
+     * @param participation       the programming exercise student participation whose repository should be locked
+     * @throws VersionControlException if locking was not successful, e.g. if the repository was already locked
+     */
+    public void lockStudentRepositoryAndParticipation(ProgrammingExercise programmingExercise, ProgrammingExerciseStudentParticipation participation) {
+        lockStudentRepository(programmingExercise, participation);
+        lockStudentParticipation(programmingExercise, participation);
+    }
+
+    /**
+     * Unlock a student participation. This is necessary if the student is now allowed to submit either from the online editor or from their local Git client.
+     * This is the case, if the start date of the exercise is in the past, if the due date is in the future, and if the student has not reached the submission limit yet.
+     *
+     * @param programmingExercise the programming exercise this participation belongs to
+     *                                Note: This parameter is not required to unlock the student participation but needs to be present here to be able to use this method with
+     *                                ProgrammingExerciseScheduleService#runUnlockOperation(), which requires a BiConsumer.
+     * @param participation       the participation to be unlocked
+     */
+    public void unlockStudentParticipation(ProgrammingExercise programmingExercise, ProgrammingExerciseStudentParticipation participation) {
+        studentParticipationRepository.updateLockedById(participation.getId(), false);
+    }
+
+    /**
+     * Unlock the repository associated with a programming participation and the participation itself.
      *
      * @param programmingExercise the programming exercise
      * @param participation       the programming exercise student participation whose repository should be unlocked
      * @throws VersionControlException if unlocking was not successful, e.g. if the repository was already unlocked
      */
-    public void unlockStudentRepository(ProgrammingExercise programmingExercise, ProgrammingExerciseStudentParticipation participation) {
+    public void unlockStudentRepositoryAndParticipation(ProgrammingExercise programmingExercise, ProgrammingExerciseStudentParticipation participation) {
         if (participation.getInitializationState().hasCompletedState(InitializationState.REPO_CONFIGURED)) {
             // TODO: this calls protect branches which might not be necessary if the branches have already been protected during "start exercise" which is typically the case
             versionControlService.get().configureRepository(programmingExercise, participation, true);
@@ -192,6 +302,7 @@ public class ProgrammingExerciseParticipationService {
         else {
             log.warn("Cannot unlock student repository for participation {} because the repository was not copied yet!", participation.getId());
         }
+        unlockStudentParticipation(programmingExercise, participation);
     }
 
     /**

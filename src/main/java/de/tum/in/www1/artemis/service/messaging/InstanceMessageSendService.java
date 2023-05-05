@@ -63,32 +63,60 @@ public interface InstanceMessageSendService {
     void sendTextExerciseInstantClustering(Long exerciseId);
 
     /**
-     * Send a message to the main server that all repositories of an exercise should be instantly unlocked
+     * Send a message to the main server that all student repositories and student participations of an exercise should be instantly locked
+     *
+     * @param exerciseId the id of the exercise that should be locked
+     */
+    void sendLockAllStudentRepositoriesAndParticipations(Long exerciseId);
+
+    /**
+     * Send a message to the main server that all student repositories of an exercise should be instantly locked.
+     * This does not lock the participations associated with the repositories! See {@link #sendLockAllStudentRepositoriesAndParticipations(Long)} for that.
+     *
+     * @param exerciseId the id of the exercise that should be locked
+     */
+    void sendLockAllStudentRepositories(Long exerciseId);
+
+    /**
+     * Send a message to the main server that all student repositories and student participations, that do not allow for any more submissions, should be instantly locked.
+     * A participation is sealed and submissions are forbidden if the due date is in the past or the submission limit is reached.
+     *
+     * @param exerciseId the id of the exercise that should be locked
+     */
+    void sendLockAllSealedStudentRepositoriesAndParticipations(Long exerciseId);
+
+    /**
+     * Send a message to the main server that all student participations, that do not allow for any more submissions, should be instantly locked.
+     * A participation is sealed and submissions are forbidden if the due date is in the past or the submission limit is reached.
+     * This does not lock the repositories associated with the participations! See {@link #sendLockAllSealedStudentRepositoriesAndParticipations(Long)} for that.
+     *
+     * @param exerciseId the id of the exercise that should be locked
+     */
+    void sendLockAllSealedStudentParticipations(Long exerciseId);
+
+    /**
+     * Send a message to the main server that all student repositories and student participations of an exercise should be instantly unlocked.
      *
      * @param exerciseId the id of the exercise that should be unlocked
      */
-    void sendUnlockAllRepositories(Long exerciseId);
+    void sendUnlockAllStudentRepositoriesAndParticipations(Long exerciseId);
 
     /**
-     * Send a message to the main server that all repositories of an exercise should be instantly locked
+     * Send a message to the main server that all student repositories and student participations, that allow for submissions, should be instantly unlocked.
+     * Submissions are allowed if the due date is in the future and the submission limit is not reached yet.
      *
-     * @param exerciseId the id of the exercise that should be locked
+     * @param exerciseId the id of the exercise that should be unlocked
      */
-    void sendLockAllRepositories(Long exerciseId);
+    void sendUnlockAllSealedStudentRepositoriesAndParticipations(Long exerciseId);
 
     /**
-     * Send a message to the main server that all repositories without an individual due date before now of an exercise should be instantly unlocked
+     * Send a message to the main server that all student participations, that allow for submissions, should be instantly unlocked.
+     * Submissions are allowed if the due date is in the future and the submission limit is not reached yet.
+     * This does not unlock the repositories associated with the participations! See {@link #sendUnlockAllSealedStudentRepositoriesAndParticipations(Long)} for that.
      *
-     * @param exerciseId the id of the exercise that should be locked
+     * @param exerciseId the id of the exercise that should be unlocked
      */
-    void sendUnlockAllRepositoriesWithoutEarlierIndividualDueDate(Long exerciseId);
-
-    /**
-     * Send a message to the main server that all repositories without an individual due date after now of an exercise should be instantly locked
-     *
-     * @param exerciseId the id of the exercise that should be locked
-     */
-    void sendLockAllRepositoriesWithoutLaterIndividualDueDate(Long exerciseId);
+    void sendUnlockAllSealedStudentParticipations(Long exerciseId);
 
     /**
      * Send a message to the main server that the non-activated should be deleted.

@@ -29,6 +29,10 @@ public class ProgrammingExerciseStudentParticipation extends StudentParticipatio
     @JsonView(QuizView.Before.class)
     private String branch;
 
+    @Column(name = "locked")
+    @JsonView(QuizView.Before.class)
+    private Boolean locked = true;
+
     public ProgrammingExerciseStudentParticipation() {
         // Default constructor
     }
@@ -59,6 +63,14 @@ public class ProgrammingExerciseStudentParticipation extends StudentParticipatio
 
     public void setBranch(String branch) {
         this.branch = branch;
+    }
+
+    public Boolean getIsLocked() {
+        return locked;
+    }
+
+    public void setLocked(Boolean locked) {
+        this.locked = locked;
     }
 
     @Override
