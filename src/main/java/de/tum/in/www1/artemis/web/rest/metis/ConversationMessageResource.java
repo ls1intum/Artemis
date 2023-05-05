@@ -66,6 +66,7 @@ public class ConversationMessageResource {
      *
      * @param pageable          pagination settings to fetch posts in smaller batches
      * @param postContextFilter request param for filtering posts
+     * @param principal         contains the login of the user for the purpose of logging
      * @return ResponseEntity with status 200 (OK) and with body all posts for course, that match the specified context
      *         or 400 (Bad Request) if the checks on user, course or post validity fail
      */
