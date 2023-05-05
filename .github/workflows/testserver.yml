@@ -15,10 +15,10 @@ jobs:
   get-labels:
     runs-on: ubuntu-latest
     outputs:
-      labels: ${{ steps.get_labels.outputs.result }}
+      labels: ${{ steps.get-labels.outputs.result }}
     steps:
       - name: Get PR labels
-        id: get_labels
+        id: get-labels
         uses: actions/github-script@v6
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -37,7 +37,7 @@ jobs:
     needs: [ get-labels ]
     runs-on: ubuntu-latest
     # Only run workflow if the added label is a deploy label
-    if: contains(join(needs.get_labels.outputs.labels, ','), 'deploy:artemis-test')
+    if: contains(needs.get-labels.outputs.labels, 'deploy:artemis-test')
     steps:
       - name: Get latest successful build for branch
         id: check_build
@@ -219,11 +219,11 @@ jobs:
     steps:
       - run: |
           echo "$DEPLOY_LABEL"
-          echo '${{ contains(needs.get_labels.outputs.labels, format('deploy:{0}', matrix.label-identifier)) }}'
+          echo '${{ contains(fromJSON(needs.get-labels.outputs.labels), format('deploy:{0}', matrix.label-identifier)) }}'
       - id: filter
         env:
           MATRIX_JSON: ${{ toJSON(matrix) }}
-        if: ${{ contains(needs.get_labels.outputs.labels, format('deploy:{0}', matrix.label-identifier)) }}
+        if: ${{ contains(fromJSON(needs.get-labels.outputs.labels), format('deploy:{0}', matrix.label-identifier)) }}
         run: |
           MATRIX_JSON=${MATRIX_JSON//$'\n'/}
           echo "${{ matrix.label-identifier }}=$MATRIX_JSON" >> $GITHUB_OUTPUT
