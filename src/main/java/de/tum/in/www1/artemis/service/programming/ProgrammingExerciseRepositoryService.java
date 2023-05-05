@@ -686,6 +686,7 @@ public class ProgrammingExerciseRepositoryService {
             // Unlock all participations that are allowed to submit under the updated configuration.
             // Only unlock the repositories if offline IDE usage is allowed.
             if (updatedExerciseAllowsIdeUsage) {
+                // TODO: Change to Unsealed and fix check
                 instanceMessageSendService.sendUnlockAllSealedStudentRepositoriesAndParticipations(programmingExerciseBeforeUpdate.getId());
             }
             else {
