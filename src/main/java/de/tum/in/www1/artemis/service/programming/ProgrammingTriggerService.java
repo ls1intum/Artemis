@@ -89,8 +89,8 @@ public class ProgrammingTriggerService {
         var programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(programmingExerciseId).get();
 
         try {
-            continuousIntegrationTriggerService.get().triggerBuild(programmingExercise.getSolutionParticipation());
-            continuousIntegrationTriggerService.get().triggerBuild(programmingExercise.getTemplateParticipation());
+            continuousIntegrationTriggerService.get().triggerBuild(programmingExercise.getSolutionParticipation(), null);
+            continuousIntegrationTriggerService.get().triggerBuild(programmingExercise.getTemplateParticipation(), null);
         }
         catch (ContinuousIntegrationException ex) {
             log.error("Could not trigger build for solution repository after test case update for programming exercise with id {}", programmingExerciseId);
@@ -219,7 +219,7 @@ public class ProgrammingTriggerService {
                     participationService.resumeProgrammingExercise(participation);
                     // Note: in this case we do not need an empty commit: when we trigger the build manually (below), subsequent commits will work correctly
                 }
-                continuousIntegrationTriggerService.get().triggerBuild(participation);
+                continuousIntegrationTriggerService.get().triggerBuild(participation, submission.get().getCommitHash());
                 // TODO: this is a workaround, in the future we should use the participation to notify the client and avoid using the submission
                 programmingMessagingService.notifyUserAboutSubmission(submission.get());
             }
@@ -249,7 +249,7 @@ public class ProgrammingTriggerService {
                 participationService.resumeProgrammingExercise((ProgrammingExerciseStudentParticipation) programmingExerciseParticipation);
                 // Note: in this case we do not need an empty commit: when we trigger the build manually (below), subsequent commits will work correctly
             }
-            continuousIntegrationTriggerService.get().triggerBuild(programmingExerciseParticipation);
+            continuousIntegrationTriggerService.get().triggerBuild(programmingExerciseParticipation, submission.getCommitHash());
             programmingMessagingService.notifyUserAboutSubmission(submission);
         }
         catch (Exception e) {
@@ -285,7 +285,7 @@ public class ProgrammingTriggerService {
     private void createSubmissionTriggerBuildAndNotifyUser(ProgrammingExerciseParticipation participation, String commitHash, SubmissionType submissionType) {
         ProgrammingSubmission submission = createSubmissionWithCommitHashAndSubmissionType(participation, commitHash, submissionType);
         try {
-            continuousIntegrationTriggerService.get().triggerBuild((ProgrammingExerciseParticipation) submission.getParticipation());
+            continuousIntegrationTriggerService.get().triggerBuild((ProgrammingExerciseParticipation) submission.getParticipation(), commitHash);
             programmingMessagingService.notifyUserAboutSubmission(submission);
         }
         catch (Exception e) {

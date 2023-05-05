@@ -74,11 +74,12 @@ public class LocalCIContainerService {
      * @param containerName the name of the container to be created
      * @param volumeConfig  the host configuration for the container containing the binds to the assignment repository, the test repository, and the build script
      * @param branch        the branch to checkout
+     * @param commitHash    the commit hash to checkout. If it is null, the latest commit of the branch will be checked out.
      * @return {@link CreateContainerResponse} that can be used to start the container
      */
-    public CreateContainerResponse configureContainer(String containerName, HostConfig volumeConfig, String branch) {
+    public CreateContainerResponse configureContainer(String containerName, HostConfig volumeConfig, String branch, String commitHash) {
         return dockerClient.createContainerCmd(dockerImage).withName(containerName).withHostConfig(volumeConfig)
-                .withEnv("ARTEMIS_BUILD_TOOL=gradle", "ARTEMIS_DEFAULT_BRANCH=" + branch)
+                .withEnv("ARTEMIS_BUILD_TOOL=gradle", "ARTEMIS_DEFAULT_BRANCH=" + branch, "ARTEMIS_ASSIGNMENT_REPOSITORY_COMMIT_HASH=" + (commitHash != null ? commitHash : ""))
                 // Command to run when the container starts. This is the command that will be executed in the container's main process, which runs in the foreground and blocks the
                 // container from exiting until it finishes.
                 // It waits until the script that is running the tests (see below execCreateCmdResponse) is completed, and until the result files are extracted which is indicated

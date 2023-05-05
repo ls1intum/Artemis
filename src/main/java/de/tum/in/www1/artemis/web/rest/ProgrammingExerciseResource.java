@@ -201,8 +201,8 @@ public class ProgrammingExerciseResource {
                 // which leads to errors when it happens inside the same @Transactional block that the participations are created in.
                 // This is why we need to trigger the builds here, after the participations where correctly created inside the programmingExerciseService.createProgrammingExercise
                 // method above.
-                continuousIntegrationTriggerService.orElseThrow().triggerBuild(newProgrammingExercise.getTemplateParticipation());
-                continuousIntegrationTriggerService.orElseThrow().triggerBuild(newProgrammingExercise.getSolutionParticipation());
+                continuousIntegrationTriggerService.orElseThrow().triggerBuild(newProgrammingExercise.getTemplateParticipation(), null);
+                continuousIntegrationTriggerService.orElseThrow().triggerBuild(newProgrammingExercise.getSolutionParticipation(), null);
             }
 
             return ResponseEntity.created(new URI("/api/programming-exercises" + newProgrammingExercise.getId())).body(newProgrammingExercise);

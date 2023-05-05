@@ -66,16 +66,13 @@ public class LocalCIBuildJobManagementService {
 
     /**
      * Submit a build job for a given participation to the executor service.
-     * Note: As this method is independent of the commit hash of the submission, that led to this build, the build script will always check out the latest commit for the branch.
-     * This means, that if you submit multiple times in quick succession, the results might all be created for the latest submission.
-     * This is not an issue, as we assume that in this case, you would only need the result for the latest submission. It should be optimized though.
-     * TODO: Do not add a new build job to the queue, if there is already a build job for the latest submission.
      *
      * @param participation The participation of the repository for which the build job should be executed.
+     * @param commitHash    The commit hash of the submission that led to this build. If it is "null", the latest commit of the repository will be used.
      * @return A future that will be completed with the build result.
      * @throws LocalCIException If the build job could not be submitted to the executor service.
      */
-    public CompletableFuture<LocalCIBuildResult> addBuildJobToQueue(ProgrammingExerciseParticipation participation) {
+    public CompletableFuture<LocalCIBuildResult> addBuildJobToQueue(ProgrammingExerciseParticipation participation, String commitHash) {
 
         // It should not be possible to create a programming exercise with a different project type than Gradle. This is just a sanity check.
         ProjectType projectType = participation.getProgrammingExercise().getProjectType();
@@ -87,7 +84,7 @@ public class LocalCIBuildJobManagementService {
         String containerName = "artemis-local-ci-" + participation.getId() + "-" + ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS"));
 
         // Prepare a Callable that will later be called. It contains the actual steps needed to execute the build job.
-        Callable<LocalCIBuildResult> buildJob = () -> localCIBuildJobExecutionService.runBuildJob(participation, containerName);
+        Callable<LocalCIBuildResult> buildJob = () -> localCIBuildJobExecutionService.runBuildJob(participation, commitHash, containerName);
 
         // Wrap the buildJob Callable in a BuildJobTimeoutCallable, so that the build job is cancelled if it takes too long.
         BuildJobTimeoutCallable<LocalCIBuildResult> timedBuildJob = new BuildJobTimeoutCallable<>(buildJob, timeoutSeconds);
@@ -104,7 +101,7 @@ public class LocalCIBuildJobManagementService {
             }
             catch (RejectedExecutionException | CancellationException | ExecutionException | InterruptedException e) {
                 // RejectedExecutionException is thrown if the queue size limit (defined in "artemis.continuous-integration.queue-size-limit") is reached.
-                finishBuildJobExceptionally(participation, containerName, e);
+                finishBuildJobExceptionally(participation, commitHash, containerName, e);
                 // Wrap the exception in a CompletionException so that the future is completed exceptionally and the thenAccept block is not run.
                 // This CompletionException will not resurface anywhere else as it is thrown in this completable future's separate thread.
                 throw new CompletionException(e);
@@ -150,8 +147,8 @@ public class LocalCIBuildJobManagementService {
      * @param containerName The name of the Docker container that was used to execute the build job.
      * @param exception     The exception that occurred while building and testing the repository.
      */
-    private void finishBuildJobExceptionally(ProgrammingExerciseParticipation participation, String containerName, Exception exception) {
-        log.error("Error while building and testing repository " + participation.getRepositoryUrl(), exception);
+    private void finishBuildJobExceptionally(ProgrammingExerciseParticipation participation, String commitHash, String containerName, Exception exception) {
+        log.error("Error while building and testing commit {} in repository {}", commitHash, participation.getRepositoryUrl(), exception);
 
         // Set the build status to "INACTIVE" to indicate that the build is not running anymore.
         localCIBuildPlanService.updateBuildPlanStatus(participation, ContinuousIntegrationService.BuildStatus.INACTIVE);

@@ -26,8 +26,15 @@ public class GitLabCITriggerService implements ContinuousIntegrationTriggerServi
         this.urlService = urlService;
     }
 
+    /**
+     * Trigger a build on the GitLabCI continuous integration server for the given participation.
+     *
+     * @param participation the participation with the id of the build plan that should be triggered
+     * @param commitHash    the commit hash of the commit that triggers the build. It is not used here as this method is only used when the latest commit should be built, which is
+     *                          what GitLabCI does by default.
+     */
     @Override
-    public void triggerBuild(ProgrammingExerciseParticipation participation) throws ContinuousIntegrationException {
+    public void triggerBuild(ProgrammingExerciseParticipation participation, String commitHash) throws ContinuousIntegrationException {
         triggerBuild(participation.getVcsRepositoryUrl(), participation.getProgrammingExercise().getBranch());
     }
 

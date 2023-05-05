@@ -40,7 +40,7 @@ import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 
 /**
  * This service contains the logic to execute a build job for a programming exercise participation in the local CI system.
- * The {@link #runBuildJob(ProgrammingExerciseParticipation, String)} method is wrapped into a Callable by the {@link LocalCIBuildJobManagementService} and submitted to the
+ * The {@link #runBuildJob(ProgrammingExerciseParticipation, String, String)} method is wrapped into a Callable by the {@link LocalCIBuildJobManagementService} and submitted to the
  * executor service.
  */
 @Service
@@ -95,15 +95,16 @@ public class LocalCIBuildJobExecutionService {
 
     /**
      * Prepare the paths to the assignment and test repositories, the branch to checkout, the volume configuration for the Docker container, and the container configuration,
-     * and then call {@link #runScriptAndParseResults(ProgrammingExerciseParticipation, String, String, String)} to execute the job.
+     * and then call {@link #runScriptAndParseResults(ProgrammingExerciseParticipation, String, String, String, String)} to execute the job.
      *
      * @param participation The participation of the repository for which the build job should be executed.
+     * @param commitHash    The commit hash of the commit that should be built. If it is null, the latest commit of the default branch will be built.
      * @param containerName The name of the Docker container that will be used to run the build job.
      *                          It needs to be prepared beforehand to stop and remove the container if something goes wrong here.
      * @return The build result.
      * @throws LocalCIException If some error occurs while preparing or running the build job.
      */
-    public LocalCIBuildResult runBuildJob(ProgrammingExerciseParticipation participation, String containerName) {
+    public LocalCIBuildResult runBuildJob(ProgrammingExerciseParticipation participation, String commitHash, String containerName) {
         // Update the build plan status to "BUILDING".
         localCIBuildPlanService.updateBuildPlanStatus(participation, ContinuousIntegrationService.BuildStatus.BUILDING);
 
@@ -141,13 +142,14 @@ public class LocalCIBuildJobExecutionService {
         // the build job.
         HostConfig volumeConfig = localCIContainerService.createVolumeConfig(assignmentRepositoryPath, testsRepositoryPath);
 
-        // Create the container from the "ls1tum/artemis-maven-template" image with the local paths to the Git repositories and the shell script bound to it. This does not
-        // start the container yet.
-        CreateContainerResponse container = localCIContainerService.configureContainer(containerName, volumeConfig, branch);
+        // Create the container from the "ls1tum/artemis-maven-template" image with the local paths to the Git repositories and the shell script bound to it. Also give the
+        // container information about the branch and commit hash to be used.
+        // This does not start the container yet.
+        CreateContainerResponse container = localCIContainerService.configureContainer(containerName, volumeConfig, branch, commitHash);
 
         log.info("Created container for build job " + containerName);
 
-        return runScriptAndParseResults(participation, containerName, container.getId(), branch);
+        return runScriptAndParseResults(participation, containerName, container.getId(), branch, commitHash);
     }
 
     /**
@@ -158,10 +160,12 @@ public class LocalCIBuildJobExecutionService {
      *                          running in its own thread.
      * @param containerId   The id of the container that should be used for the build job.
      * @param branch        The branch that should be built.
+     * @param commitHash    The commit hash of the commit that should be built. If it is null, this method uses the latest commit of the repository.
      * @return The build result.
      * @throws LocalCIException if something went wrong while running the build job.
      */
-    private LocalCIBuildResult runScriptAndParseResults(ProgrammingExerciseParticipation participation, String containerName, String containerId, String branch) {
+    private LocalCIBuildResult runScriptAndParseResults(ProgrammingExerciseParticipation participation, String containerName, String containerId, String branch,
+            String commitHash) {
 
         long timeNanoStart = System.nanoTime();
 
@@ -175,11 +179,15 @@ public class LocalCIBuildJobExecutionService {
 
         ZonedDateTime buildCompletedDate = ZonedDateTime.now();
 
-        String assignmentRepoCommitHash = "";
+        String assignmentRepoCommitHash = commitHash;
         String testRepoCommitHash = "";
 
         try {
-            assignmentRepoCommitHash = localCIContainerService.getCommitHashOfBranch(containerId, LocalCIBuildJobRepositoryType.ASSIGNMENT, branch);
+            if (commitHash == null) {
+                // Retrieve the latest commit hash from the assignment repository.
+                assignmentRepoCommitHash = localCIContainerService.getCommitHashOfBranch(containerId, LocalCIBuildJobRepositoryType.ASSIGNMENT, branch);
+            }
+            // Always use the latest commit from the test repository.
             testRepoCommitHash = localCIContainerService.getCommitHashOfBranch(containerId, LocalCIBuildJobRepositoryType.TEST, branch);
         }
         catch (NotFoundException | IOException e) {

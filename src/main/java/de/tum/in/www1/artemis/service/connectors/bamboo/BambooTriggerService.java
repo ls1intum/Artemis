@@ -32,12 +32,14 @@ public class BambooTriggerService implements ContinuousIntegrationTriggerService
     }
 
     /**
-     * Triggers a build for the build plan in the given participation.
+     * Trigger a build on the Bamboo continuous integration server for the build plan in the given participation.
      *
-     * @param participation the participation with the id of the build plan that should be triggered.
+     * @param participation the participation with the id of the build plan that should be triggered
+     * @param commitHash    the commit hash of the commit that triggers the build. It is not used here as this method is only used when the latest commit should be built, which is
+     *                          what Bamboo does by default.
      */
     @Override
-    public void triggerBuild(ProgrammingExerciseParticipation participation) throws BambooException {
+    public void triggerBuild(ProgrammingExerciseParticipation participation, String commitHash) throws BambooException {
         var buildPlan = participation.getBuildPlanId();
         try {
             restTemplate.exchange(serverUrl + "/rest/api/latest/queue/" + buildPlan, HttpMethod.POST, null, Void.class);

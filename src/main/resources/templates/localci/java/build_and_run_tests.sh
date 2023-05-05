@@ -4,11 +4,17 @@
 mkdir /repositories
 cd /repositories
 
-# Check out the test repository.
+# Clone and checkout the test repository.
 git clone --depth 1 --branch $ARTEMIS_DEFAULT_BRANCH file:///test-repository
 
-# Check out the assignment repository.
+# Clone the assignment repository.
 git clone --depth 1 --branch $ARTEMIS_DEFAULT_BRANCH file:///assignment-repository
+# Fetch and checkout the commit defined in an environment variable, if it is available.
+cd assignment-repository
+if [ -n "$ARTEMIS_ASSIGNMENT_REPOSITORY_COMMIT_HASH" ]; then
+    git fetch --depth 1 origin "$ARTEMIS_ASSIGNMENT_REPOSITORY_COMMIT_HASH"
+    git checkout "$ARTEMIS_ASSIGNMENT_REPOSITORY_COMMIT_HASH"
+fi
 
 # Create the folder "assignment" in the test-repository.
 mkdir /repositories/test-repository/assignment

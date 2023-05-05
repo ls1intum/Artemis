@@ -145,8 +145,8 @@ public class ProgrammingExerciseImportService {
                 templateExercise.getSolutionRepositoryUrl(), templateExercise.getTestRepositoryUrl(), templateExercise.getAuxiliaryRepositoriesForBuildPlan());
 
         try {
-            continuousIntegrationTriggerService.get().triggerBuild(templateParticipation);
-            continuousIntegrationTriggerService.get().triggerBuild(solutionParticipation);
+            continuousIntegrationTriggerService.get().triggerBuild(templateParticipation, null);
+            continuousIntegrationTriggerService.get().triggerBuild(solutionParticipation, null);
         }
         catch (ContinuousIntegrationException e) {
             log.error("Unable to trigger imported build plans", e);

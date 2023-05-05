@@ -213,7 +213,7 @@ public class LocalCIConnectorService {
         }
 
         // Trigger a build of the solution repository.
-        CompletableFuture<LocalCIBuildResult> futureSolutionBuildResult = localCIBuildJobManagementService.addBuildJobToQueue(solutionParticipation);
+        CompletableFuture<LocalCIBuildResult> futureSolutionBuildResult = localCIBuildJobManagementService.addBuildJobToQueue(solutionParticipation, commitHash);
         futureSolutionBuildResult.thenAccept(buildResult -> {
 
             // The 'user' is not properly logged into Artemis, this leads to an issue when accessing custom repository methods.
@@ -260,7 +260,7 @@ public class LocalCIConnectorService {
         programmingMessagingService.notifyUserAboutSubmission(submission);
 
         // Trigger the build for the new submission on the local CI system.
-        localCITriggerService.triggerBuild(participation);
+        localCITriggerService.triggerBuild(participation, commit.getCommitHash());
     }
 
     private Commit extractCommitInfo(String commitHash, Repository repository) throws IOException, GitAPIException {
