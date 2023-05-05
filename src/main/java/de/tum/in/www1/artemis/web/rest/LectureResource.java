@@ -168,9 +168,9 @@ public class LectureResource {
         log.debug("REST request to get all Lectures with slides of the units for the course with id : {}", courseId);
 
         Course course = courseRepository.findByIdElseThrow(courseId);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
 
+        User user = userRepository.getUserWithGroupsAndAuthorities();
         Set<Lecture> lectures = lectureRepository.findAllByCourseIdWithAttachmentsAndLectureUnitsAndSlides(courseId);
         lectures.forEach(lectureService::filterActiveAttachmentUnits);
         lectures.forEach(lecture -> lectureService.filterActiveAttachments(lecture, user));
@@ -260,8 +260,9 @@ public class LectureResource {
         if (course == null) {
             return ResponseEntity.badRequest().build();
         }
-        User user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
+        
+        User user = userRepository.getUserWithGroupsAndAuthorities();
         lectureService.filterActiveAttachmentUnits(lecture);
         lectureService.filterActiveAttachments(lecture, user);
         return ResponseEntity.ok(lecture);

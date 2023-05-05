@@ -54,7 +54,7 @@ public class SlideSplitterService {
         }
         catch (IOException e) {
             log.error("Error while splitting Attachment Unit {} into single slides", attachmentUnit.getId(), e);
-            throw new InternalServerErrorException("Could not split Attachment Unit into single slides");
+            throw new InternalServerErrorException("Could not split Attachment Unit into single slides", e);
         }
     }
 
@@ -86,7 +86,7 @@ public class SlideSplitterService {
         }
         catch (IOException e) {
             log.error("Error while splitting Attachment Unit {} into single slides", attachmentUnit.getId(), e);
-            throw new InternalServerErrorException("Could not split Attachment Unit into single slides");
+            throw new InternalServerErrorException("Could not split Attachment Unit into single slides", e);
         }
     }
 
