@@ -12,8 +12,44 @@ export class CourseManagementExercisesPage {
         this.getExerciseRowRootElement(exerciseId).find('#delete-exercise').click();
     }
 
-    clickCreateProgrammingExerciseButton() {
-        cy.get('#jh-create-entity').click();
+    createProgrammingExercise() {
+        cy.get('#create-programming-exercise').click();
+    }
+
+    createModelingExercise() {
+        cy.get('#create-modeling-exercise').click();
+    }
+
+    createTextExercise() {
+        cy.get('#create-text-exercise').click();
+    }
+
+    createQuizExercise() {
+        cy.get('#create-quiz-button').click();
+    }
+
+    importProgrammingExercise() {
+        cy.get('#import-programming-exercise').click();
+    }
+
+    importModelingExercise() {
+        cy.get('#import-modeling-exercise').click();
+    }
+
+    importTextExercise() {
+        cy.get('#import-text-exercise').click();
+    }
+
+    importQuizExercise() {
+        cy.get('#import-quiz-exercise').click();
+    }
+
+    clickImportExercise(exerciseID: number) {
+        return cy.get(`.exercise-${exerciseID}`).find('.import').click();
+    }
+
+    startQuiz(quizID: number) {
+        cy.get(`#instructor-quiz-start-${quizID}`).click();
     }
 
     shouldContainExerciseWithName(exerciseId: string) {

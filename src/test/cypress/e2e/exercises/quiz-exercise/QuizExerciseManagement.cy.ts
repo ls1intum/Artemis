@@ -4,7 +4,7 @@ import { Course } from 'app/entities/course.model';
 import { generateUUID } from '../../../support/utils';
 import multipleChoiceTemplate from '../../../fixtures/exercise/quiz/multiple_choice/template.json';
 import { DELETE } from '../../../support/constants';
-import { courseManagement, courseManagementRequest, quizExerciseCreation } from '../../../support/artemis';
+import { courseManagement, courseManagementExercises, courseManagementRequest, quizExerciseCreation } from '../../../support/artemis';
 import { convertCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
 import { admin } from '../../../support/users';
 
@@ -28,7 +28,7 @@ describe('Quiz Exercise Management', () => {
         beforeEach(() => {
             cy.login(admin, '/course-management/');
             courseManagement.openExercisesOfCourse(course.shortName!);
-            cy.get('#create-quiz-button').click();
+            courseManagementExercises.createQuizExercise();
             quizExerciseCreation.setTitle('Cypress Quiz Exercise ' + generateUUID());
         });
 
