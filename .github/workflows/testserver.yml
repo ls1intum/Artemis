@@ -22,6 +22,14 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      # Remove deployment-error label if new run is started
+      - uses: actions-ecosystem/action-remove-labels@v1
+        if: fromJSON(steps.check_build.outputs.data).total_count > 0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          labels: |
+            deployment-error
+
       # In case of invalid build status, remove deploy labels
       - uses: actions-ecosystem/action-remove-labels@v1
         if: fromJSON(steps.check_build.outputs.data).total_count == 0
@@ -38,12 +46,6 @@ jobs:
             deploy:artemis-test8
             deploy:artemis-test9
             deploy:artemis-test10
-
-      - name: Add error label
-        uses: actions-ecosystem/action-add-labels@v1
-        if: fromJSON(steps.check_build.outputs.data).total_count == 0
-        with:
-          labels: deployment-error
 
       - name: Check if latest push had successful build
         if: fromJSON(steps.check_build.outputs.data).total_count == 0
@@ -336,8 +338,14 @@ jobs:
             sleep 20
           done
 
+
+  # Check that the build job has run successfully before deploying
+  add-error-label:
+    needs: [ check-build-status, filter-matrix, process-matrix, deploy ]
+    runs-on: ubuntu-latest
+    if: ${{ failure() }}
+    steps:
       - name: Add error label
         uses: actions-ecosystem/action-add-labels@v1
-        if: ${{ failure() }}
         with:
-            labels: deployment-error
+          labels: deployment-error
