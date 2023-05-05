@@ -347,6 +347,7 @@ public abstract class RepositoryResource {
             throw new EntityNotFoundException("File not found");
         }
         catch (GitAPIException | IOException | ContinuousIntegrationException ex) {
+            log.error("Exception during repository operation", ex);
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
         return responseEntitySuccess;

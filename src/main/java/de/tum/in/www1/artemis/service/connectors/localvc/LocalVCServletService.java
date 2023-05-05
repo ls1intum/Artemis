@@ -242,7 +242,8 @@ public class LocalVCServletService {
             participation = localCIConnectorService.orElseThrow().getParticipationForRepository(exercise, repositoryTypeOrUserName, isPracticeRepository, false);
         }
         catch (EntityNotFoundException e) {
-            throw new LocalVCInternalException("No participation found for repository " + repositoryTypeOrUserName + " in exercise " + exercise.getId(), e);
+            throw new LocalVCInternalException(
+                    "No participation found for repository with repository type or username " + repositoryTypeOrUserName + " in exercise " + exercise.getId(), e);
         }
 
         try {

@@ -48,14 +48,20 @@
             </ng-container>
         </div>
     </div>
-    <div *ngIf="displayTemplateUrls && !localVCEnabled">
-        <span *ngIf="programmingExercise.templateParticipation?.buildPlanId"
-            ><a target="_blank" rel="noreferrer" href="{{ programmingExercise.templateParticipation!.buildPlanUrl }}">Template</a></span
-        >
+    <div *ngIf="displayTemplateUrls">
+        <span *ngIf="programmingExercise.templateParticipation?.buildPlanId">
+            <a *ngIf="!localVCEnabled; else plainBuildPlanId" target="_blank" rel="noreferrer" href="{{ programmingExercise.templateParticipation!.buildPlanUrl }}">Template</a>
+            <ng-template #plainBuildPlanId>
+                {{ programmingExercise.templateParticipation!.buildPlanId }}
+            </ng-template>
+        </span>
         <br />
-        <span *ngIf="programmingExercise.solutionParticipation?.buildPlanId"
-            ><a target="_blank" rel="noreferrer" href="{{ programmingExercise.solutionParticipation!.buildPlanUrl }}">Solution</a></span
-        >
+        <span *ngIf="programmingExercise.solutionParticipation?.buildPlanId">
+            <a *ngIf="!localVCEnabled; else plainBuildPlanId" target="_blank" rel="noreferrer" href="{{ programmingExercise.solutionParticipation!.buildPlanUrl }}">Solution</a>
+            <ng-template #plainBuildPlanId>
+                {{ programmingExercise.solutionParticipation!.buildPlanId }}
+            </ng-template>
+        </span>
         <br />
     </div>
     <div *ngIf="displayEditorModus">

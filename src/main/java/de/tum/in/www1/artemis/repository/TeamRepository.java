@@ -27,6 +27,14 @@ public interface TeamRepository extends JpaRepository<Team, Long> {
 
     List<Team> findAllByExerciseCourseIdAndShortName(@Param("courseId") Long courseId, @Param("shortName") String shortName);
 
+    @Query(value = """
+            SELECT DISTINCT team from Team team
+                LEFT JOIN FETCH team.students
+            WHERE team.exercise.course.id = :#{#courseId}
+                AND team.shortName = :#{#shortName}
+            """)
+    List<Team> findAllByExerciseCourseIdAndShortNameWithEagerStudents(@Param("courseId") Long courseId, @Param("shortName") String shortName);
+
     /**
      * Fetches the number of teams created for an exercise
      *
@@ -132,7 +140,7 @@ public interface TeamRepository extends JpaRepository<Team, Long> {
      * @throws EntityNotFoundException if no team with the given short name exists in the given course.
      */
     default Team findOneByExerciseCourseIdAndShortNameOrThrow(Long courseId, String shortName) throws EntityNotFoundException {
-        List<Team> teams = findAllByExerciseCourseIdAndShortName(courseId, shortName);
+        List<Team> teams = findAllByExerciseCourseIdAndShortNameWithEagerStudents(courseId, shortName);
 
         if (teams.size() != 1) {
             throw new EntityNotFoundException("Team with short name " + shortName + " not found in course " + courseId);
