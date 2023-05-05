@@ -938,30 +938,60 @@ class ProgrammingExerciseIntegrationBambooBitbucketJiraTest extends AbstractSpri
         programmingExerciseIntegrationTestService.testGetAuxiliaryRepositoriesEmptyOk();
     }
 
-    // Tests for recreate build plan endpoint
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
-    void testRecreateBuildPlansForbiddenStudent() throws Exception {
-        programmingExerciseIntegrationTestService.testRecreateBuildPlansForbidden();
-    }
+    // Tests for reset endpoint
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void testRecreateBuildPlansForbiddenTutor() throws Exception {
-        programmingExerciseIntegrationTestService.testRecreateBuildPlansForbidden();
+    void testResetForbiddenTutor() throws Exception {
+        programmingExerciseIntegrationTestService.testResetForbidden();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
-    void testRecreateBuildPlansExerciseNotFound() throws Exception {
-        programmingExerciseIntegrationTestService.testRecreateBuildPlansExerciseNotFound();
+    void testResetOnlyDeleteBuildPlansForbiddenEditor() throws Exception {
+        programmingExerciseIntegrationTestService.testResetOnlyDeleteBuildPlansForbidden();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
-    void testRecreateBuildPlansSuccess() throws Exception {
-        programmingExerciseIntegrationTestService.testRecreateBuildPlansExerciseSuccess();
+    void testResetDeleteBuildPlansAndDeleteStudentRepositoriesForbiddenEditor() throws Exception {
+        programmingExerciseIntegrationTestService.testResetDeleteBuildPlansAndDeleteStudentRepositoriesForbidden();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testResetOnlyDeleteStudentParticipationsSubmissionsAndResultsForbiddenEditor() throws Exception {
+        programmingExerciseIntegrationTestService.testResetOnlyDeleteStudentParticipationsSubmissionsAndResultsForbidden();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testResetExerciseNotFound() throws Exception {
+        programmingExerciseIntegrationTestService.testResetExerciseNotFound();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testResetOnlyDeleteBuildPlansSuccess() throws Exception {
+        programmingExerciseIntegrationTestService.testResetOnlyDeleteBuildPlansSuccess();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testResetDeleteBuildPlansAndDeleteStudentRepositoriesSuccess() throws Exception {
+        programmingExerciseIntegrationTestService.testResetDeleteBuildPlansAndDeleteStudentRepositoriesSuccess();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testResetOnlyDeleteStudentParticipationsSubmissionsAndResultsSuccess() throws Exception {
+        programmingExerciseIntegrationTestService.testResetOnlyDeleteStudentParticipationsSubmissionsAndResultsSuccess();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testResetOnlyRecreateBuildPlansSuccess() throws Exception {
+        programmingExerciseIntegrationTestService.testResetOnlyRecreateBuildPlansSuccess();
     }
 
     // Tests for export auxiliary repository for exercise endpoint
