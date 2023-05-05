@@ -22,11 +22,40 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      # In case of invalid build status, remove deploy labels
+      - uses: actions-ecosystem/action-remove-labels@v1
+        if: fromJSON(steps.check_build.outputs.data).total_count == 0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          labels: |
+            deploy:artemis-test1
+            deploy:artemis-test2
+            deploy:artemis-test3
+            deploy:artemis-test4
+            deploy:artemis-test5
+            deploy:artemis-test6
+            deploy:artemis-test7
+            deploy:artemis-test8
+            deploy:artemis-test9
+            deploy:artemis-test10
+
+      - name: Add error label
+        uses: actions-ecosystem/action-add-labels@v1
+        if: fromJSON(steps.check_build.outputs.data).total_count == 0
+        with:
+          labels: deployment-error
+
       - name: Check if latest push had successful build
         if: fromJSON(steps.check_build.outputs.data).total_count == 0
-        uses: actions/github-script@v3
+        uses: actions/github-script@v6
         with:
           script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '### ❌ Unable to deploy to test servers ❌\nThe docker build needs to run through before deploying.'
+            })
             core.setFailed('The build needs to run through first. Please wait for the build to finish and then try again.')
 
 
@@ -215,7 +244,7 @@ jobs:
     steps:
       - uses: actions-ecosystem/action-remove-labels@v1
         with:
-          github_token: ${{ secrets.github_token }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
           labels: |
             deploy:${{ matrix.label-identifier }}
 
@@ -231,8 +260,20 @@ jobs:
             })
             const issues = await github.paginate(opts)
             if (issues.length == 1 && (!context.issue || issues[0].number != context.issue.number)) {
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: `### ❌ Unable to deploy to test servers ❌\nTestserver "${{ matrix.environment }}" is already in use by PR #${issues[0].number}.`
+              })
               core.setFailed(`Testserver "${{ matrix.environment }}" is already in use by PR #${issues[0].number}.`);
             } else if (issues.length > 1) {
+              github.rest.issues.createComment({
+                  issue_number: context.issue.number,
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  body: '### ❌ Unable to deploy to test servers ❌\nTestserver "${{ matrix.environment }}" is already in use by multiple PRs. Check PRs with label "lock:${{ matrix.label-identifier }}"!'
+                })
               core.setFailed('Testserver "${{ matrix.environment }}" is already in use by multiple PRs. Check PRs with label "lock:${{ matrix.label-identifier }}"!');
             } else if (context.issue && context.issue.number) {
               await github.rest.issues.addLabels({
@@ -294,3 +335,9 @@ jobs:
             ./artemis-server-cli docker-deploy "$DEPLOYMENT_USER@$host" -g "$GATEWAY_USER@$GATEWAY_HOST" -t $TAG -b $GITHUB_HEAD_REF -d $DEPLOYMENT_FOLDER -y
             sleep 20
           done
+
+      - name: Add error label
+        uses: actions-ecosystem/action-add-labels@v1
+        if: ${{ failure() }}
+        with:
+            labels: deployment-error
