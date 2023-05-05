@@ -18,19 +18,20 @@ jobs:
     outputs:
       labels: ${{ steps.get_labels.outputs.labels }}
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
       - name: Get PR labels
         id: get_labels
         uses: actions/github-script@v6
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const { data: labels } = await github.issues.listLabelsOnIssue({
+            const labelsData = await github.issues.listLabelsOnIssue({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.issue.number
             })
+            console.log(labelsData)
+            const labels = labelsData.data
+            console.log(labels)
             env.PR_LABELS = labels.map(label => label.name).join(',')
             return labels.map(label => label.name).join(',')
 
