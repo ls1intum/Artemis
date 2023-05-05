@@ -197,7 +197,6 @@
       "environment": "all"
     },
     "schematicCollections": [
-      "@angular-eslint/schematics",
       "@angular-eslint/schematics"
     ]
   }
