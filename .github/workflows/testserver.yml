@@ -32,6 +32,7 @@ jobs:
               issue_number: github.event.pull_request.number
             })
             env.PR_LABELS = labels.map(label => label.name).join(',')
+            return labels.map(label => label.name).join(',')
 
 
   # Check that the build job has run successfully before deploying
@@ -39,7 +40,7 @@ jobs:
     needs: [ get-labels ]
     runs-on: ubuntu-latest
     # Only run workflow if the added label is a deploy label
-    if: contains(env.PR_LABELS, 'deploy:artemis-test')
+    if: contains(needs.get_labels.outputs.labels, 'deploy:artemis-test')
     steps:
       - name: Get latest successful build for branch
         id: check_build
