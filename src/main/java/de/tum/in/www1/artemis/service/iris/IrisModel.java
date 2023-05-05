@@ -13,9 +13,10 @@ import de.tum.in.www1.artemis.domain.iris.IrisSession;
 public interface IrisModel {
 
     /**
-     * Prompts the AI model to generate a response to the conversation in the provided {@link IrisSession}.
+     * Sends a request to the AI model and returns the response.
      *
-     * @return The response from the LLM API
+     * @param session The session to send the request for.
+     * @return A CompletableFuture that will be completed with the response.
      */
     @Async
     CompletableFuture<String> getResponse(IrisSession session);

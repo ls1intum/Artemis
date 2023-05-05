@@ -81,6 +81,12 @@ public class IrisGPT3_5Service implements IrisModel {
         this.restTemplate = restTemplate;
     }
 
+    /**
+     * Prompts GPT-3.5 to generate a response to the conversation in the provided {@link IrisSession}.
+     *
+     * @param session The session to generate a response for.
+     * @return A {@link CompletableFuture} that will be completed with the response.
+     */
     @Override
     @Async
     public CompletableFuture<String> getResponse(IrisSession session) {
