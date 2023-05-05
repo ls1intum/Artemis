@@ -58,7 +58,6 @@ examples.forEach((activeConversation) => {
         beforeEach(() => {
             fixture = TestBed.createComponent(ConversationSidebarSectionComponent);
             component = fixture.componentInstance;
-            component.getConversationName = () => 'dummy';
             component.course = course;
             component.activeConversation = activeConversation;
             component.label = 'label';
