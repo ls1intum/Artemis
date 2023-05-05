@@ -70,13 +70,13 @@
     <!-- MODELING EXERCISE ACTIONS START -->
     <ng-container *ngSwitchCase="ExerciseType.MODELING">
         <!-- ACTIONS START -->
-        <div class="btn-group">
+        <div class="btn-group gap-1">
             <button
                 class="view-team"
                 jhi-exercise-action-button
                 [buttonIcon]="faUsers"
                 [buttonLabel]="'artemisApp.exerciseActions.viewTeam' | artemisTranslate"
-                *ngIf="exercise.teamMode && exercise.studentAssignedTeamIdComputed && exercise.studentAssignedTeamId"
+                *ngIf="isTeamAvailable"
                 [smallButton]="smallButtons"
                 [hideLabelMobile]="true"
                 [routerLink]="['/courses', courseId, 'exercises', exercise.id, 'teams', assignedTeamId]"
@@ -93,7 +93,7 @@
                     [smallButton]="smallButtons"
                     [hideLabelMobile]="false"
                     [overwriteDisabled]="isBeforeStartDateAndStudent"
-                    *ngIf="!gradedParticipation && (!exercise.teamMode || exercise.studentAssignedTeamId) && isStartExerciseAvailable()"
+                    *ngIf="!gradedParticipation && isStartExerciseAvailable()"
                     (click)="startExercise()"
                 ></button>
             </span>
@@ -151,7 +151,7 @@
                 jhi-exercise-action-button
                 [buttonIcon]="faUsers"
                 [buttonLabel]="'artemisApp.exerciseActions.viewTeam' | artemisTranslate"
-                *ngIf="exercise.teamMode && exercise.studentAssignedTeamIdComputed && exercise.studentAssignedTeamId"
+                *ngIf="isTeamAvailable"
                 [smallButton]="smallButtons"
                 [hideLabelMobile]="true"
                 [routerLink]="['/courses', courseId, 'exercises', exercise.id, 'teams', assignedTeamId]"
@@ -168,7 +168,7 @@
                     [smallButton]="smallButtons"
                     [hideLabelMobile]="false"
                     [overwriteDisabled]="isBeforeStartDateAndStudent"
-                    *ngIf="(!exercise.teamMode || exercise.studentAssignedTeamId) && isStartExerciseAvailable()"
+                    *ngIf="isStartExerciseAvailable()"
                     (click)="startExercise()"
                 ></button>
             </span>
@@ -178,7 +178,7 @@
                 [smallButtons]="smallButtons"
                 [exercise]="exercise"
                 (practiceModeStarted)="receiveNewParticipation($event)"
-                *ngIf="(!exercise.teamMode || exercise.studentAssignedTeamId) && isStartPracticeAvailable()"
+                *ngIf="isStartPracticeAvailable()"
             ></jhi-start-practice-mode-button>
 
             <!-- TODO: Exam mode reuses the whole component at the moment. We need the clone repo button but not the open
@@ -272,13 +272,13 @@
     <!-- TEXT EXERCISE ACTIONS START -->
     <ng-container *ngSwitchCase="ExerciseType.TEXT">
         <!-- ACTIONS START -->
-        <div class="btn-group">
+        <div class="btn-group gap-1">
             <button
                 class="view-team"
                 jhi-exercise-action-button
                 [buttonIcon]="faUsers"
                 [buttonLabel]="'artemisApp.exerciseActions.viewTeam' | artemisTranslate"
-                *ngIf="exercise.teamMode && exercise.studentAssignedTeamIdComputed && exercise.studentAssignedTeamId"
+                *ngIf="isTeamAvailable"
                 [smallButton]="smallButtons"
                 [hideLabelMobile]="true"
                 [routerLink]="['/courses', courseId, 'exercises', exercise.id, 'teams', assignedTeamId]"
@@ -294,7 +294,7 @@
                     [smallButton]="smallButtons"
                     [hideLabelMobile]="false"
                     [overwriteDisabled]="isBeforeStartDateAndStudent"
-                    *ngIf="!gradedParticipation && (!exercise.teamMode || exercise.studentAssignedTeamId) && isStartExerciseAvailable()"
+                    *ngIf="!gradedParticipation && isStartExerciseAvailable()"
                     (click)="startExercise()"
                 ></button>
             </span>
@@ -345,15 +345,16 @@
     <!-- FILE UPLOAD EXERCISE ACTIONS START -->
     <ng-container *ngSwitchCase="ExerciseType.FILE_UPLOAD">
         <!-- ACTIONS START -->
-        <div class="btn-group">
+        <div class="btn-group gap-1">
             <button
                 class="view-team"
                 jhi-exercise-action-button
                 [buttonIcon]="faUsers"
                 [buttonLabel]="'artemisApp.exerciseActions.viewTeam' | artemisTranslate"
-                *ngIf="exercise.teamMode && exercise.studentAssignedTeamIdComputed && exercise.studentAssignedTeamId"
+                *ngIf="isTeamAvailable"
                 [smallButton]="smallButtons"
                 [hideLabelMobile]="true"
+                [routerLink]="['/courses', courseId, 'exercises', exercise.id, 'teams', assignedTeamId]"
             ></button>
             <span tabindex="0" [ngbTooltip]="isBeforeStartDateAndStudent ? ('artemisApp.exerciseActions.startExerciseBeforeDueDate' | artemisTranslate) : ''">
                 <button
@@ -363,7 +364,7 @@
                     [buttonIcon]="faPlayCircle"
                     [buttonLabel]="'artemisApp.exerciseActions.startExercise' | artemisTranslate"
                     [buttonLoading]="!!exercise.loading"
-                    *ngIf="!gradedParticipation && (!exercise.teamMode || exercise.studentAssignedTeamId) && isStartExerciseAvailable()"
+                    *ngIf="!gradedParticipation && isStartExerciseAvailable()"
                     [smallButton]="smallButtons"
                     [hideLabelMobile]="false"
                     [overwriteDisabled]="isBeforeStartDateAndStudent"

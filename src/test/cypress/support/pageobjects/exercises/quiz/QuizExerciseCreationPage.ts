@@ -1,8 +1,14 @@
+import { Dayjs } from 'dayjs/esm';
 import { BASE_API, POST } from '../../../constants';
+import { enterDate } from '../../../utils';
 
 export class QuizExerciseCreationPage {
     setTitle(title: string) {
         cy.get('#quiz-title').type(title);
+    }
+
+    setVisibleFrom(date: Dayjs) {
+        enterDate('#pick-releaseDate', date);
     }
 
     addMultipleChoiceQuestion(title: string, points = 1) {
@@ -56,5 +62,11 @@ export class QuizExerciseCreationPage {
         cy.intercept(POST, BASE_API + 'quiz-exercises').as('createQuizExercise');
         cy.get('#quiz-save').click();
         return cy.wait('@createQuizExercise');
+    }
+
+    import() {
+        cy.intercept(POST, BASE_API + 'quiz-exercises/import/*').as('quizExerciseImport');
+        cy.get('#quiz-save').click();
+        return cy.wait('@quizExerciseImport');
     }
 }
