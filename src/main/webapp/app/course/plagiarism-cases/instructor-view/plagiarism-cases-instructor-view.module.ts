@@ -8,6 +8,15 @@ import { ArtemisPlagiarismCasesSharedModule } from 'app/course/plagiarism-cases/
 
 const routes: Routes = [
     {
+        path: '',
+        component: PlagiarismCasesInstructorViewComponent,
+        data: {
+            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+            pageTitle: 'artemisApp.plagiarism.cases.pageTitle',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
         path: ':plagiarismCaseId',
         component: PlagiarismCaseInstructorDetailViewComponent,
         data: {

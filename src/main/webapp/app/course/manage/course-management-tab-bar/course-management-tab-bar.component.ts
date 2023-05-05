@@ -36,8 +36,9 @@ export class CourseManagementTabBarComponent implements OnInit, OnDestroy {
 
     course?: Course;
 
-    private paramSub: Subscription;
-    private courseSub: Subscription;
+    private paramSub?: Subscription;
+    private courseSub?: Subscription;
+    private eventSubscriber: Subscription;
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -69,13 +70,27 @@ export class CourseManagementTabBarComponent implements OnInit, OnDestroy {
     ) {}
 
     /**
-     * On init load the course information and subscribe to listen for changes in courses.
+     * On init load the course information and subscribe to listen for changes in course.
      */
     ngOnInit() {
-        this.paramSub = this.route.params.subscribe((params) => {
-            this.courseSub = this.courseManagementService.find(params['courseId']).subscribe((courseResponse) => {
-                this.course = courseResponse.body!;
-            });
+        let courseId = 0;
+        this.paramSub = this.route.firstChild?.params.subscribe((params) => {
+            courseId = params['courseId'];
+            this.subscribeToCourseUpdates(courseId);
+        });
+
+        // Subscribe to course modifications and reload the course after a change.
+        this.eventSubscriber = this.eventManager.subscribe('courseModification', () => {
+            this.subscribeToCourseUpdates(courseId);
+        });
+    }
+
+    /**
+     * Subscribe to changes in course.
+     */
+    private subscribeToCourseUpdates(courseId: number) {
+        this.courseSub = this.courseManagementService.find(courseId).subscribe((courseResponse) => {
+            this.course = courseResponse.body!;
         });
     }
 
@@ -86,7 +101,10 @@ export class CourseManagementTabBarComponent implements OnInit, OnDestroy {
         if (this.paramSub) {
             this.paramSub.unsubscribe();
         }
-        this.eventManager.destroy(this.courseSub);
+        if (this.courseSub) {
+            this.courseSub.unsubscribe();
+        }
+        this.eventManager.destroy(this.eventSubscriber);
     }
 
     /**

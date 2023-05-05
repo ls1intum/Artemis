@@ -47,13 +47,9 @@ describe('Course Management Tab Bar Component', () => {
                 {
                     provide: ActivatedRoute,
                     useValue: {
-                        data: {
-                            subscribe: (fn: (value: Data) => void) =>
-                                fn({
-                                    course,
-                                }),
+                        firstChild: {
+                            params: of({ courseId: course.id }),
                         },
-                        params: of({ courseId: course.id }),
                     },
                 },
                 MockProvider(CourseManagementService),

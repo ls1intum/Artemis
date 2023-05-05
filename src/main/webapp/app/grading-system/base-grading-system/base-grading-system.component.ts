@@ -76,11 +76,9 @@ export abstract class BaseGradingSystemComponent implements OnInit {
     ) {}
 
     ngOnInit(): void {
-        this.route.parent?.parent?.params.subscribe((params) => {
-            this.courseId = Number(params['courseId']);
-        });
         this.route.parent?.params.subscribe((params) => {
             this.isLoading = true;
+            this.courseId = Number(params['courseId']);
             if (params['examId']) {
                 this.examId = Number(params['examId']);
                 this.isExam = true;

@@ -22,8 +22,6 @@ import { CreateTutorialGroupsConfigurationComponent } from 'app/course/tutorial-
 import { CourseLtiConfigurationComponent } from 'app/course/manage/course-lti-configuration/course-lti-configuration.component';
 import { EditCourseLtiConfigurationComponent } from 'app/course/manage/course-lti-configuration/edit-course-lti-configuration.component';
 import { CourseManagementTabBarComponent } from 'app/course/manage/course-management-tab-bar/course-management-tab-bar.component';
-import { ExamManagementComponent } from 'app/exam/manage/exam-management.component';
-import { PlagiarismCasesInstructorViewComponent } from 'app/course/plagiarism-cases/instructor-view/plagiarism-cases-instructor-view.component';
 
 export const courseManagementState: Routes = [
     {
@@ -45,15 +43,11 @@ export const courseManagementState: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: ':courseId/exams/:examId/plagiarism-cases',
-        loadChildren: () => import('../plagiarism-cases/instructor-view/plagiarism-cases-instructor-view.module').then((m) => m.ArtemisPlagiarismCasesInstructorViewModule),
-    },
-    {
-        path: ':courseId',
+        path: '',
         component: CourseManagementTabBarComponent,
         children: [
             {
-                path: '',
+                path: ':courseId',
                 component: CourseDetailComponent,
                 resolve: {
                     course: CourseManagementResolve,
@@ -65,7 +59,7 @@ export const courseManagementState: Routes = [
                 canActivate: [UserRouteAccessService],
             },
             {
-                path: 'grading-system',
+                path: ':courseId/grading-system',
                 component: GradingSystemComponent,
                 data: {
                     authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
@@ -75,7 +69,7 @@ export const courseManagementState: Routes = [
                 loadChildren: () => import('app/grading-system/grading-system.module').then((m) => m.GradingSystemModule),
             },
             {
-                path: 'tutorial-groups',
+                path: ':courseId/tutorial-groups',
                 resolve: {
                     course: TutorialGroupManagementResolve,
                 },
@@ -83,26 +77,19 @@ export const courseManagementState: Routes = [
                     import('app/course/tutorial-groups/tutorial-groups-management/tutorial-groups-management.module').then((m) => m.ArtemisTutorialGroupsManagementModule),
             },
             {
-                path: 'plagiarism-cases',
-                component: PlagiarismCasesInstructorViewComponent,
-                data: {
-                    authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
-                    pageTitle: 'artemisApp.plagiarism.cases.pageTitle',
-                },
-                canActivate: [UserRouteAccessService],
+                path: ':courseId/plagiarism-cases',
                 loadChildren: () => import('../plagiarism-cases/instructor-view/plagiarism-cases-instructor-view.module').then((m) => m.ArtemisPlagiarismCasesInstructorViewModule),
             },
             {
-                path: 'exams',
-                component: ExamManagementComponent,
-                data: {
-                    authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
-                    pageTitle: 'artemisApp.examManagement.title',
-                },
-                canActivate: [UserRouteAccessService],
+                path: ':courseId/exams/:examId/plagiarism-cases',
+                loadChildren: () => import('../plagiarism-cases/instructor-view/plagiarism-cases-instructor-view.module').then((m) => m.ArtemisPlagiarismCasesInstructorViewModule),
             },
             {
-                path: 'tutorial-groups-checklist',
+                path: ':courseId/exams',
+                loadChildren: () => import('../../exam/manage/exam-management.module').then((m) => m.ArtemisExamManagementModule),
+            },
+            {
+                path: ':courseId/tutorial-groups-checklist',
                 component: TutorialGroupsChecklistComponent,
                 data: {
                     authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
@@ -111,7 +98,7 @@ export const courseManagementState: Routes = [
                 canActivate: [UserRouteAccessService],
             },
             {
-                path: 'create-tutorial-groups-configuration',
+                path: ':courseId/create-tutorial-groups-configuration',
                 component: CreateTutorialGroupsConfigurationComponent,
                 data: {
                     authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
@@ -120,7 +107,7 @@ export const courseManagementState: Routes = [
                 canActivate: [UserRouteAccessService],
             },
             {
-                path: 'lti-configuration',
+                path: ':courseId/lti-configuration',
                 component: CourseLtiConfigurationComponent,
                 resolve: {
                     course: CourseManagementResolve,
@@ -132,7 +119,7 @@ export const courseManagementState: Routes = [
                 canActivate: [UserRouteAccessService],
             },
             {
-                path: 'lti-configuration/edit',
+                path: ':courseId/lti-configuration/edit',
                 component: EditCourseLtiConfigurationComponent,
                 resolve: {
                     course: CourseManagementResolve,
@@ -145,7 +132,7 @@ export const courseManagementState: Routes = [
             },
             {
                 // Create a new path without a component defined to prevent resolver caching and the CourseDetailComponent from being always rendered
-                path: '',
+                path: ':courseId',
                 resolve: {
                     course: CourseManagementResolve,
                 },

@@ -54,7 +54,7 @@ export class LectureComponent implements OnInit {
     ) {}
 
     ngOnInit() {
-        this.courseId = Number(this.route.parent?.snapshot.paramMap.get('courseId'));
+        this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
         this.loadAll();
     }
 
