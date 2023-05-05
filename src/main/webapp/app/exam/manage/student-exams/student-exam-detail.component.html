@@ -130,7 +130,7 @@
                     <strong>{{ getGradeExplanation() | artemisTranslate }}:</strong>
                     {{ grade }}
                 </li>
-                <li *ngIf="gradeAfterBonus != undefined">
+                <li *ngIf="gradeAfterBonus !== undefined">
                     <strong>{{ 'artemisApp.studentExams.gradeAfterBonus' | artemisTranslate }}:</strong>
                     {{ gradeAfterBonus }}
                 </li>
@@ -173,7 +173,7 @@
 
     <div class="mb-3">
         <h5><span jhiTranslate="artemisApp.studentExams.summary">Student Summary</span></h5>
-        <a *ngIf="course?.isAtLeastInstructor" class="btn btn-primary" [routerLink]="'./summary'">
+        <a *ngIf="course?.isAtLeastInstructor" class="btn btn-primary summery" [routerLink]="'./summary'">
             <span jhiTranslate="artemisApp.exam.summary">Summary</span>
         </a>
     </div>

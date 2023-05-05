@@ -1,10 +1,9 @@
 import dayjs from 'dayjs/esm';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { Course } from 'app/entities/course.model';
-import { dayjsToString } from '../../../support/utils';
 import { MODELING_EDITOR_CANVAS } from '../../../support/pageobjects/exercises/modeling/ModelingEditor';
 import { convertCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
-import { courseManagementRequest, modelingExerciseAssessment, modelingExerciseCreation, modelingExerciseEditor } from '../../../support/artemis';
+import { courseManagementExercises, courseManagementRequest, modelingExerciseAssessment, modelingExerciseCreation, modelingExerciseEditor } from '../../../support/artemis';
 import { admin, instructor, studentOne } from '../../../support/users';
 
 // Common primitives
@@ -39,7 +38,7 @@ describe('Modeling Exercise Management Spec', () => {
 
         it('Create a new modeling exercise', () => {
             cy.visit(`/course-management/${course.id}/exercises`);
-            cy.get('#modeling-exercise-create-button').click();
+            courseManagementExercises.createModelingExercise();
             modelingExerciseCreation.setTitle(modelingExerciseTitle);
             modelingExerciseCreation.addCategories(['e2e-testing', 'test2']);
             modelingExerciseCreation.setPoints(10);
@@ -90,9 +89,9 @@ describe('Modeling Exercise Management Spec', () => {
             const points = 100;
             modelingExerciseCreation.setTitle(newTitle);
             modelingExerciseCreation.pickDifficulty({ hard: true });
-            modelingExerciseCreation.setReleaseDate(dayjsToString(dayjs().add(1, 'day')));
-            modelingExerciseCreation.setDueDate(dayjsToString(dayjs().add(2, 'day')));
-            modelingExerciseCreation.setAssessmentDueDate(dayjsToString(dayjs().add(3, 'day')));
+            modelingExerciseCreation.setReleaseDate(dayjs().add(1, 'day'));
+            modelingExerciseCreation.setDueDate(dayjs().add(2, 'day'));
+            modelingExerciseCreation.setAssessmentDueDate(dayjs().add(3, 'day'));
             modelingExerciseCreation.includeInOverallScore();
             modelingExerciseCreation.setPoints(points);
             modelingExerciseCreation.save();

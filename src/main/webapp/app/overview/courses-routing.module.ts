@@ -62,7 +62,7 @@ const routes: Routes = [
                 loadChildren: () => import('./course-statistics/course-statistics.module').then((m) => m.CourseStatisticsModule),
             },
             {
-                path: 'learning-goals',
+                path: 'competencies',
                 loadChildren: () => import('../overview/course-learning-goals/course-learning-goals.module').then((m) => m.CourseLearningGoalsModule),
             },
             {
