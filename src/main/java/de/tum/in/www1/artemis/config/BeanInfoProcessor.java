@@ -19,6 +19,7 @@ import javax.tools.JavaFileObject;
 
 import com.google.auto.service.AutoService;
 
+// TODO this is not working yet
 @AutoService(Processor.class)
 @SupportedAnnotationTypes({ "javax.persistence.MappedSuperclass", "javax.persistence.Entity" })
 @SupportedSourceVersion(SourceVersion.RELEASE_17)

@@ -89,7 +89,9 @@ public class ConversationMessagingService extends PostingService {
         // update last message date of conversation
         conversation.setLastMessageDate(ZonedDateTime.now());
         conversation = conversationService.updateConversation(conversation);
+
         // update last read date and unread message count of author
+        // invoke async due to db write access to avoid that the client has to wait
         conversationParticipantRepository.updateLastReadAsync(author.getId(), conversation.getId(), ZonedDateTime.now());
 
         var createdMessage = conversationMessageRepository.save(newMessage);
@@ -119,8 +121,6 @@ public class ConversationMessagingService extends PostingService {
      */
     public Page<Post> getMessages(Pageable pageable, @Valid PostContextFilter postContextFilter) {
 
-        log.info("getMessages invoked");
-
         if (postContextFilter.getConversationId() == null) {
             throw new BadRequestAlertException("Messages must be associated with a conversion", METIS_POST_ENTITY_NAME, "conversationMissing");
         }
@@ -130,28 +130,15 @@ public class ConversationMessagingService extends PostingService {
             throw new AccessForbiddenException("User not allowed to access this conversation!");
         }
 
-        log.info("security checks done");
-
-        // TODO: this method involves 5 DB queries due to FetchType.EAGER:
-        // 1) Load posts
-        // 2) Load tags of posts
-        // 3) Load reactions of posts
-        // 4) Load answer posts of posts
-        // 5) Load reactions of answer posts
-        // Can we combine this in one query to be more efficient, i.e. using a similar approach as LEFT JOIN FETCH?
+        // The following query loads posts, answerPosts and reactions to avoid too many database calls (due to eager references)
         Page<Post> conversationPosts = conversationMessageRepository.findMessages(postContextFilter, pageable);
-
-        log.info("messages loaded");
 
         // protect sample solution, grading instructions, etc.
         conversationPosts.stream().map(Post::getExercise).filter(Objects::nonNull).forEach(Exercise::filterSensitiveInformation);
         setAuthorRoleOfPostings(conversationPosts.getContent());
 
-        log.info("author role done");
-
+        // invoke async due to db write access to avoid that the client has to wait
         conversationParticipantRepository.updateLastReadAsync(requestingUser.getId(), postContextFilter.getConversationId(), ZonedDateTime.now());
-
-        log.info("getMessages done");
 
         return conversationPosts;
     }
