@@ -93,26 +93,28 @@ export class AttachmentUnitsComponent implements OnInit {
     }
 
     createAttachmentUnits(): void {
-        this.isLoading = true;
-        const lectureUnitInformationDTOObj: LectureUnitInformationDTO = { units: this.units, numberOfPages: this.numberOfPages, removeBreakSlides: this.removeBreakSlides };
-        const formData: FormData = new FormData();
-        formData.append('file', this.file);
-        formData.append('lectureUnitInformationDTO', objectToJsonBlob(lectureUnitInformationDTOObj));
+        if (this.validUnitInformation()) {
+            this.isLoading = true;
+            const lectureUnitInformationDTOObj: LectureUnitInformationDTO = { units: this.units, numberOfPages: this.numberOfPages, removeBreakSlides: this.removeBreakSlides };
+            const formData: FormData = new FormData();
+            formData.append('file', this.file);
+            formData.append('lectureUnitInformationDTO', objectToJsonBlob(lectureUnitInformationDTOObj));
 
-        this.attachmentUnitService.createUnits(this.lectureId, formData).subscribe({
-            next: () => {
-                this.router.navigate(['../../'], { relativeTo: this.activatedRoute });
-                this.isLoading = false;
-            },
-            error: (res: HttpErrorResponse) => {
-                if (res.error.params === 'file' && res?.error?.title) {
-                    this.alertService.error(res.error.title);
-                } else {
-                    onError(this.alertService, res);
-                }
-                this.isLoading = false;
-            },
-        });
+            this.attachmentUnitService.createUnits(this.lectureId, formData).subscribe({
+                next: () => {
+                    this.router.navigate(['../../'], { relativeTo: this.activatedRoute });
+                    this.isLoading = false;
+                },
+                error: (res: HttpErrorResponse) => {
+                    if (res.error.params === 'file' && res?.error?.title) {
+                        this.alertService.error(res.error.title);
+                    } else {
+                        onError(this.alertService, res);
+                    }
+                    this.isLoading = false;
+                },
+            });
+        }
     }
 
     /**
@@ -142,7 +144,6 @@ export class AttachmentUnitsComponent implements OnInit {
     }
 
     validUnitInformation(): boolean {
-        console.log('test');
         for (const unit of this.units) {
             if (!unit.unitName) {
                 this.invalidUnitTableMessage = this.translateService.instant(`artemisApp.attachmentUnit.createAttachmentUnits.validation.empty.unitName`);
