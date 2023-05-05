@@ -5,69 +5,37 @@
     <changeSet author="baboci" id="20230504123000">
         <comment>Delete conversations, posts, answer posts, and reactions for deleted courses</comment>
         <sql>
-            DELETE FROM reaction
-            WHERE post_id IN (
-                SELECT id FROM post
-                WHERE conversation_id IN (
-                    SELECT id FROM conversation
-                    WHERE course_id NOT IN (
-                        SELECT id FROM course
-                    )
-                )
-            );
+            DELETE r2, r1
+            FROM conversation c
+            LEFT JOIN post p ON c.id = p.conversation_id
+            LEFT JOIN reaction r2 ON p.id = r2.post_id
+            LEFT JOIN answer_post ap ON p.id = ap.post_id
+            LEFT JOIN reaction r1 ON ap.id = r1.answer_post_id
+            WHERE c.course_id NOT IN (SELECT id FROM course);
         </sql>
         <sql>
-            DELETE FROM reaction
-            WHERE answer_post_id IN (
-                SELECT id FROM answer_post
-                WHERE post_id IN (
-                    SELECT id FROM post
-                    WHERE conversation_id IN (
-                        SELECT id FROM conversation
-                        WHERE course_id NOT IN (
-                            SELECT id FROM course
-                        )
-                    )
-                )
-            );
+            DELETE ap
+            FROM conversation c
+            LEFT JOIN post p ON p.conversation_id = c.id
+            LEFT JOIN answer_post ap ON ap.post_id = p.id
+            WHERE c.course_id NOT IN (SELECT id FROM course);
         </sql>
         <sql>
-            DELETE FROM answer_post
-            WHERE post_id IN (
-                SELECT id FROM post
-                WHERE conversation_id IN (
-                    SELECT id FROM conversation
-                    WHERE course_id NOT IN (
-                        SELECT id FROM course
-                    )
-                )
-            );
+            DELETE p
+            FROM conversation c
+            LEFT JOIN post p ON p.conversation_id = c.id
+            WHERE c.course_id NOT IN (SELECT id FROM course);
         </sql>
         <sql>
-            DELETE FROM post
-            WHERE conversation_id IN (
-                SELECT id FROM conversation
-                WHERE course_id NOT IN (
-                    SELECT id FROM course
-                )
-            );
-        </sql>
-        <sql>
-            DELETE from conversation_participant
-            WHERE conversation_id IN (
-                SELECT id FROM conversation
-                WHERE course_id NOT IN (
-                    SELECT id FROM course
-                )
-            );
+            DELETE cp
+            FROM conversation c
+            LEFT JOIN conversation_participant cp ON c.id = cp.conversation_id
+            WHERE c.course_id NOT IN (SELECT id FROM course);
         </sql>
         <sql>
             DELETE FROM conversation
-            WHERE course_id NOT IN (
-                SELECT id FROM course
-            );
+            WHERE course_id NOT IN (SELECT id FROM course);
         </sql>
-
         <addForeignKeyConstraint baseTableName="conversation" baseColumnNames="course_id" constraintName="FK_course_id" referencedTableName="course"
                                  referencedColumnNames="id" validate="true" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" />
     </changeSet>
