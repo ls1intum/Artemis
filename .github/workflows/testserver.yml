@@ -9,13 +9,12 @@ concurrency: test-servers
 env:
   RAW_URL: https://raw.githubusercontent.com/${{ github.repository }}/${{ github.sha }}
 
-# Only run workflow if the added label is a deploy label
-if: contains(join(github.event.pull_request.labels.*.name), 'deploy:artemis-test')
-
 jobs:
   # Check that the build job has run successfully before deploying
   check-build-status:
     runs-on: ubuntu-latest
+    # Only run workflow if the added label is a deploy label
+    if: contains(join(github.event.pull_request.labels.*.name), 'deploy:artemis-test')
     steps:
       - name: Get latest successful build for branch
         id: check_build
