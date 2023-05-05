@@ -12,7 +12,7 @@
         <ng-container *jhiExtensionPoint="overrideGenerateAndImportButton">
             <button
                 *ngIf="course?.isAtLeastEditor"
-                id="jh-create-entity"
+                id="create-programming-exercise"
                 class="btn btn-primary jh-create-entity create-programming-exercise text-truncate mb-1 me-1"
                 [jhiFeatureToggleLink]="FeatureToggle.ProgrammingExercises"
                 [routerLink]="['/course-management', courseId, 'programming-exercises', 'new']"
@@ -23,8 +23,8 @@
             </button>
             <button
                 *ngIf="course?.isAtLeastEditor"
-                id="jh-import-entity"
-                class="btn btn-primary jh-create-entity create-programming-exercise text-truncate mb-1 me-1"
+                id="import-programming-exercise"
+                class="btn btn-primary jh-create-entity import-programming-exercise text-truncate mb-1 me-1"
                 [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
                 (click)="openImportModal()"
             >
