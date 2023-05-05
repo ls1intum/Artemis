@@ -340,20 +340,22 @@ public class FileService implements DisposableBean {
             String lectureId = publicPath.replace(filename, "").replace("/api/files/attachments/lecture/", "");
             return Path.of(FilePathService.getLectureAttachmentFilePath(), lectureId, filename).toString();
         }
-        if (publicPath.contains("files/attachments/attachment-unit") && !publicPath.contains("/slide")) {
-            String attachmentUnitId = publicPath.replace(filename, "").replace("/api/files/attachments/attachment-unit/", "");
-            return Path.of(FilePathService.getAttachmentUnitFilePath(), attachmentUnitId, filename).toString();
-        }
-        if (publicPath.contains("files/attachments/attachment-unit") && publicPath.contains("/slide")) {
-            final var slideSubPath = publicPath.replace(filename, "").replace("/api/files/attachments/attachment-unit/", "").split("/");
-            final var shouldBeAttachmentUnitId = slideSubPath[0];
-            final var shouldBeSlideId = slideSubPath.length >= 3 ? slideSubPath[2] : null;
-            if (!NumberUtils.isCreatable(shouldBeAttachmentUnitId) || !NumberUtils.isCreatable(shouldBeSlideId)) {
-                throw new FilePathParsingException("Public path does not contain correct shouldBeAttachmentUnitId or shouldBeSlideId: " + publicPath);
+        if (publicPath.contains("files/attachments/attachment-unit")) {
+            if (!publicPath.contains("/slide")) {
+                String attachmentUnitId = publicPath.replace(filename, "").replace("/api/files/attachments/attachment-unit/", "");
+                return Path.of(FilePathService.getAttachmentUnitFilePath(), attachmentUnitId, filename).toString();
             }
-            final var attachmentUnitId = Long.parseLong(shouldBeAttachmentUnitId);
-            final var slideId = Long.parseLong(shouldBeSlideId);
-            return Path.of(FilePathService.getAttachmentUnitFilePath(), String.valueOf(attachmentUnitId), "slide", String.valueOf(slideId), filename).toString();
+            else {
+                final var slideSubPath = publicPath.replace(filename, "").replace("/api/files/attachments/attachment-unit/", "").split("/");
+                final var shouldBeAttachmentUnitId = slideSubPath[0];
+                final var shouldBeSlideId = slideSubPath.length >= 3 ? slideSubPath[2] : null;
+                if (!NumberUtils.isCreatable(shouldBeAttachmentUnitId) || !NumberUtils.isCreatable(shouldBeSlideId)) {
+                    throw new FilePathParsingException("Public path does not contain correct shouldBeAttachmentUnitId or shouldBeSlideId: " + publicPath);
+                }
+                final var attachmentUnitId = Long.parseLong(shouldBeAttachmentUnitId);
+                final var slideId = Long.parseLong(shouldBeSlideId);
+                return Path.of(FilePathService.getAttachmentUnitFilePath(), String.valueOf(attachmentUnitId), "slide", String.valueOf(slideId), filename).toString();
+            }
         }
         if (publicPath.contains("files/file-upload-exercises")) {
             final var uploadSubPath = publicPath.replace(filename, "").replace("/api/files/file-upload-exercises/", "").split("/");
@@ -407,19 +409,21 @@ public class FileService implements DisposableBean {
         if (actualPathString.contains(FilePathService.getLectureAttachmentFilePath())) {
             return "/api/files/attachments/lecture/" + id + "/" + filename;
         }
-        if (actualPathString.contains(FilePathService.getAttachmentUnitFilePath()) && !actualPathString.contains("/slide")) {
-            return "/api/files/attachments/attachment-unit/" + id + "/" + filename;
-        }
-        if (actualPathString.contains(FilePathService.getAttachmentUnitFilePath()) && actualPathString.contains("/slide")) {
-            try {
-                // The last name is the file name, the one before that is the slide number and the one before that is the attachmentUnitId, in which we are interested
-                // (e.g. uploads/attachments/attachment-unit/941/slide/1/State_pattern_941_Slide_1.png)
-                final var shouldBeAttachmentUnitId = actualPath.getName(actualPath.getNameCount() - 4).toString();
-                final long attachmentUnitId = Long.parseLong(shouldBeAttachmentUnitId);
-                return "/api/files/attachments/attachment-unit/" + attachmentUnitId + "/slide/" + id + "/" + filename;
+        if (actualPathString.contains(FilePathService.getAttachmentUnitFilePath())) {
+            if (!actualPathString.contains("/slide")) {
+                return "/api/files/attachments/attachment-unit/" + id + "/" + filename;
             }
-            catch (IllegalArgumentException e) {
-                throw new FilePathParsingException("Unexpected String in upload file path. AttachmentUnit ID should be present here: " + actualPathString);
+            else {
+                try {
+                    // The last name is the file name, the one before that is the slide number and the one before that is the attachmentUnitId, in which we are interested
+                    // (e.g. uploads/attachments/attachment-unit/941/slide/1/State_pattern_941_Slide_1.png)
+                    final var shouldBeAttachmentUnitId = actualPath.getName(actualPath.getNameCount() - 4).toString();
+                    final long attachmentUnitId = Long.parseLong(shouldBeAttachmentUnitId);
+                    return "/api/files/attachments/attachment-unit/" + attachmentUnitId + "/slide/" + id + "/" + filename;
+                }
+                catch (IllegalArgumentException e) {
+                    throw new FilePathParsingException("Unexpected String in upload file path. AttachmentUnit ID should be present here: " + actualPathString);
+                }
             }
         }
         if (actualPathString.contains(FilePathService.getFileUploadExercisesFilePath())) {

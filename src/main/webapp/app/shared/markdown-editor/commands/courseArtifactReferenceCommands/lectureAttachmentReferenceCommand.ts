@@ -7,6 +7,9 @@ import { map } from 'rxjs/operators';
 import { HttpResponse } from '@angular/common/http';
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { Slide } from 'app/entities/lecture-unit/slide.model';
+import { Attachment } from 'app/entities/attachment.model';
+import { SlideItem, ValueItem } from 'app/shared/markdown-editor/command-constants';
+import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
 
 export class LectureAttachmentReferenceCommand extends MultiOptionCommand {
     metisService: MetisService;
@@ -33,28 +36,8 @@ export class LectureAttachmentReferenceCommand extends MultiOptionCommand {
                                 id: lecture.id!.toString(),
                                 value: lecture.title!,
                                 type: ReferenceType.LECTURE,
-                                elements: lecture.attachments?.map((attachment: any) => ({
-                                    id: attachment.id!.toString(),
-                                    value: attachment.name!,
-                                    courseArtifactType: ReferenceType.ATTACHMENT,
-                                })),
-                                attachmentUnits: lecture.lectureUnits?.map((unit: any) => {
-                                    return {
-                                        id: unit.id!.toString(),
-                                        value: unit.name!,
-                                        slides: unit.slides
-                                            ?.map((slide: Slide) => {
-                                                return {
-                                                    id: slide.id!.toString(),
-                                                    slideNumber: slide.slideNumber!,
-                                                    slideImagePath: slide.slideImagePath!,
-                                                    courseArtifactType: ReferenceType.SLIDE,
-                                                };
-                                            })
-                                            .sort((a: Slide, b: Slide) => a.slideNumber! - b.slideNumber!),
-                                        courseArtifactType: ReferenceType.ATTACHMENT_UNITS,
-                                    };
-                                }),
+                                elements: this.lectureAttachments(lecture.attachments!),
+                                attachmentUnits: this.attachmentUnitsWithSlides(lecture.lectureUnits!),
                             },
                         ],
                     );
@@ -113,5 +96,37 @@ export class LectureAttachmentReferenceCommand extends MultiOptionCommand {
                     }
                 },
             });
+    }
+
+    private lectureAttachments(attachments: Attachment[]): ValueItem[] {
+        return attachments?.map((attachment: any) => ({
+            id: attachment.id!.toString(),
+            value: attachment.name!,
+            courseArtifactType: ReferenceType.ATTACHMENT,
+        }));
+    }
+
+    private attachmentUnitsWithSlides(lectureUnits: LectureUnit[]): ValueItem[] {
+        return lectureUnits?.map((unit: any) => {
+            return {
+                id: unit.id!.toString(),
+                value: unit.name!,
+                slides: this.attachmentUnitSlides(unit.slides!),
+                courseArtifactType: ReferenceType.ATTACHMENT_UNITS,
+            };
+        });
+    }
+
+    private attachmentUnitSlides(slides: Slide[]): SlideItem[] {
+        return slides
+            ?.map((slide: Slide) => {
+                return {
+                    id: slide.id!.toString(),
+                    slideNumber: slide.slideNumber!,
+                    slideImagePath: slide.slideImagePath!,
+                    courseArtifactType: ReferenceType.SLIDE,
+                };
+            })
+            .sort((a: SlideItem, b: SlideItem) => a.slideNumber - b.slideNumber);
     }
 }

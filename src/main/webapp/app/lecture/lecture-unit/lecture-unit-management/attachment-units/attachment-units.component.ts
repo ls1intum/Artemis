@@ -142,6 +142,7 @@ export class AttachmentUnitsComponent implements OnInit {
     }
 
     validUnitInformation(): boolean {
+        console.log('test');
         for (const unit of this.units) {
             if (!unit.unitName) {
                 this.invalidUnitTableMessage = this.translateService.instant(`artemisApp.attachmentUnit.createAttachmentUnits.validation.empty.unitName`);
