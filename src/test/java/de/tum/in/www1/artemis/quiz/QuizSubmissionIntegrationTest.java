@@ -776,7 +776,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
                 assertThat(submittedAnswer.getScoreInPoints()).isZero();
             } // SA submitted answers 1 points as one correct and one false -> PROPORTIONAL_WITHOUT_PENALTY
             else if (submittedAnswer instanceof ShortAnswerSubmittedAnswer) {
-                assertThat(submittedAnswer.getScoreInPoints()).isZero();
+                assertThat(submittedAnswer.getScoreInPoints()).isEqualTo(1D);
             }
         }
     }
