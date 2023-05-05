@@ -45,7 +45,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
     private User tutor;
 
-    private static final int numberOfStudentsInCourse = 3;
+    private static final int NUMBER_OF_STUDENTS = 3;
 
     private static final long nonExistingId = 123456789L;
 
@@ -73,7 +73,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
     @BeforeEach
     void initTestCase() {
-        database.addUsers(TEST_PREFIX, numberOfStudentsInCourse, 5, 0, 1);
+        database.addUsers(TEST_PREFIX, NUMBER_OF_STUDENTS, 2, 0, 1);
         course = database.addCourseWithOneProgrammingExercise();
 
         // Make exercise team-based and already released to students
@@ -377,7 +377,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     void testSearchUsersInCourse() throws Exception {
         // Check that all students from course are found (since their logins are all prefixed by "student")
         List<TeamSearchUserDTO> users1 = request.getList(resourceUrlSearchUsersInCourse(TEST_PREFIX + "student"), HttpStatus.OK, TeamSearchUserDTO.class);
-        assertThat(users1).as("All users of course with 'student' in login were found").hasSize(numberOfStudentsInCourse);
+        assertThat(users1).as("All users of course with 'student' in login were found").hasSize(NUMBER_OF_STUDENTS);
 
         // Check that a student is found by his login and that he is NOT marked as "assignedToTeam" yet
         List<TeamSearchUserDTO> users2 = request.getList(resourceUrlSearchUsersInCourse(TEST_PREFIX + "student1"), HttpStatus.OK, TeamSearchUserDTO.class);

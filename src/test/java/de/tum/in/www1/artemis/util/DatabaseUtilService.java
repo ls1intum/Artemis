@@ -397,22 +397,10 @@ public class DatabaseUtilService {
     }
 
     public List<User> generateActivatedUsers(String loginPrefix, String commonPasswordHash, String[] groups, Set<Authority> authorities, int amount) {
-        List<User> generatedUsers = new ArrayList<>();
-        for (int i = 1; i <= amount; i++) {
-            var login = loginPrefix + i;
-            // the following line either creates the user or resets and existing user to its original state
-            User user = createOrReuseExistingUser(login, commonPasswordHash);
-            if (groups != null) {
-                user.setGroups(Set.of(groups));
-                user.setAuthorities(authorities);
-            }
-            generatedUsers.add(user);
-        }
-        return generatedUsers;
+        return generateActivatedUsers(loginPrefix, commonPasswordHash, groups, authorities, 1, amount);
     }
 
-    // in and to both inclusive TODO combine these two methods INTO model factory
-    public List<User> generateActivatedUsersFromTo(String loginPrefix, String commonPasswordHash, String[] groups, Set<Authority> authorities, int from, int to) {
+    public List<User> generateActivatedUsers(String loginPrefix, String commonPasswordHash, String[] groups, Set<Authority> authorities, int from, int to) {
         List<User> generatedUsers = new ArrayList<>();
         for (int i = from; i <= to; i++) {
             var login = loginPrefix + i;
@@ -617,8 +605,15 @@ public class DatabaseUtilService {
         return usersToAdd;
     }
 
+    /**
+     * generates and adds students to the repo, starting with student with the index to
+     *
+     * @param prefix the test prefix
+     * @param from   first student to be added (inclusive)
+     * @param to     last student to be added (inclusive)
+     */
     public void addStudents(String prefix, int from, int to) {
-        var students = generateActivatedUsersFromTo(prefix + "student", passwordService.hashPassword(USER_PASSWORD), new String[] { "tumuser", "testgroup", prefix + "tumuser" },
+        var students = generateActivatedUsers(prefix + "student", passwordService.hashPassword(USER_PASSWORD), new String[] { "tumuser", "testgroup", prefix + "tumuser" },
                 studentAuthorities, from, to);
         userRepo.saveAll(students);
     }

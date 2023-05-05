@@ -874,6 +874,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         // generate submissions for each student
         int numberOfParticipants = 10;
+        database.addStudents(TEST_PREFIX, 2, 14);
 
         for (int i = 1; i <= numberOfParticipants; i++) {
             QuizSubmission quizSubmission = database.generateSubmissionForThreeQuestions(quizExercise, i, true, now.minusHours(3));
@@ -951,6 +952,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         // generate rated submissions for each student
         int numberOfParticipants = 10;
+        database.addStudents(TEST_PREFIX, 2, 10);
 
         for (int i = 1; i <= numberOfParticipants; i++) {
             if (i != 1 && i != 5) {
@@ -1062,6 +1064,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         // generate unrated submissions for each student
         int numberOfParticipants = 10;
+        database.addStudents(TEST_PREFIX, 2, 10);
 
         for (int i = 1; i <= numberOfParticipants; i++) {
             if (i != 1 && i != 5) {
