@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.iris;
 
 import java.net.URL;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -12,7 +13,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -40,6 +41,7 @@ public class IrisGPT3_5Service implements IrisModel {
      */
     @Value("${artemis.iris.models.gpt3_5.url}")
     private URL apiURL;
+    // https://ase-eu01.openai.azure.com/openai/deployments/gpt-35/chat/completions?api-version=2023-03-15-preview
 
     /**
      * The API key to use when sending requests to the API.
@@ -80,44 +82,63 @@ public class IrisGPT3_5Service implements IrisModel {
     }
 
     @Override
+    @Async
     public CompletableFuture<String> getResponse(IrisSession session) {
-        String jsonBody;
         try {
             Map<String, Object> requestParams = createRequestParams(session.getMessages());
-            jsonBody = new ObjectMapper().writeValueAsString(requestParams);
+            ObjectMapper jsonMapper = new ObjectMapper();
+            String requestBody = jsonMapper.writeValueAsString(requestParams);
+            log.debug("Request body: {}", requestBody);
+
+            HttpEntity<String> request = new HttpEntity<>(requestBody, createHeaders());
+            String responseBody = restTemplate.postForObject(apiURL.toString(), request, String.class);
+            log.debug("Response body: {}", responseBody);
+
+            Map<?, ?> response = jsonMapper.readValue(responseBody, Map.class);
+
+            // TODO: Handle errors if response is in error format
+            List<?> choices = (List<?>) response.get("choices");
+            Map<?, ?> choice = (Map<?, ?>) choices.get(0);
+            Map<?, ?> message = (Map<?, ?>) choice.get("message");
+            String content = (String) message.get("content");
+
+            return CompletableFuture.completedFuture(content);
         }
         catch (JsonProcessingException e) {
-            log.warn("Error while converting request parameters to JSON.", e);
+            log.error(e.getMessage(), e);
             return CompletableFuture.failedFuture(e);
         }
-        HttpEntity<String> request = new HttpEntity<>(jsonBody, createHeaders());
-        ResponseEntity<String> response = restTemplate.postForEntity(apiURL.toString(), request, String.class);
-        return CompletableFuture.completedFuture(response.getBody());
     }
 
     /**
-     * Gets a {@link Map} of request parameters to be sent to this LLM API. These parameters will be converted into a
+     * Gets a {@link Map} of request parameters to be sent to GPT-3.5. These parameters will be converted into a
      * JSON object and sent in the request body.
-     * <p>
-     * Different models require different request parameters, so this method must be overridden by subclasses to create
-     * the parameters for the specific model.
-     * <p>
-     * Subclasses must use the provided conversation history so that the model can respond to the user's previous
-     * messages. The system instructions should be included in the parameters as instructions to the model.
      *
      * @param conversationHistory The messages that have been sent in the conversation so far
      * @return The API request parameters
      */
     private Map<String, Object> createRequestParams(List<IrisMessage> conversationHistory) {
-        // @formatter:off
-        return Map.of(
-                "model", model,
-                "messages", convertMessages(conversationHistory),
-                "temperature", temperature,
-                "max_tokens", maxGeneratedTokens,
-                "stop", stopSequences
-        );
-        // @formatter:on
+        Map<String, Object> parameters = new HashMap<>();
+        parameters.put("model", model);
+        parameters.put("messages", convertMessages(conversationHistory));
+        parameters.put("temperature", temperature);
+        parameters.put("max_tokens", maxGeneratedTokens);
+        if (stopSequences.length > 0)
+            parameters.put("stop", stopSequences);
+        return parameters;
+    }
+
+    /**
+     * Creates a HttpHeaders object with the Content-Type set to application/json and the Authorization header set to
+     * the API key, which varies depending on the model used.
+     *
+     * @return A HttpHeaders object to be used in a request to a LLM API
+     */
+    private HttpHeaders createHeaders() {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.set("api-key", apiKey);
+        return headers;
     }
 
     /**
@@ -132,7 +153,7 @@ public class IrisGPT3_5Service implements IrisModel {
     }
 
     /**
-     * Converts an IrisMessage into GPT3_5's message format, a map with the keys "role" and "message". The value of
+     * Converts an IrisMessage into GPT3_5's message format, a map with the keys "role" and "content". The value of
      * "role" is either "user", "assistant" or "system", depending on the sender of the message.
      *
      * @param message The message to convert.
@@ -142,7 +163,7 @@ public class IrisGPT3_5Service implements IrisModel {
         // @formatter:off
         return Map.of(
                 "role", toRole(message.getSender()),
-                "message", joinContents(message.getContent())
+                "content", joinContents(message.getContent())
         );
         // @formatter:on
     }
@@ -170,19 +191,6 @@ public class IrisGPT3_5Service implements IrisModel {
      */
     private static String joinContents(List<IrisMessageContent> messageContents) {
         return messageContents.stream().map(IrisMessageContent::getTextContent).collect(Collectors.joining("\n"));
-    }
-
-    /**
-     * Creates a HttpHeaders object with the Content-Type set to application/json and the Authorization header set to
-     * the API key, which varies depending on the model used.
-     *
-     * @return A HttpHeaders object to be used in a request to a LLM API
-     */
-    private HttpHeaders createHeaders() {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setBearerAuth(apiKey);
-        return headers;
     }
 
 }

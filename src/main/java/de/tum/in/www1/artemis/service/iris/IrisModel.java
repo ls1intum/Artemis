@@ -7,15 +7,13 @@ import org.springframework.scheduling.annotation.Async;
 import de.tum.in.www1.artemis.domain.iris.IrisSession;
 
 /**
- * Represents a service that sends requests to a LLM API.
+ * Represents a service that can be used to communicate with an AI model.
  */
 @FunctionalInterface
 public interface IrisModel {
 
     /**
-     * Sends a request to the LLM API.
-     * This method attempts to convert the provided body to a JSON string using Jackson.
-     * If this fails, an internal server error is returned.
+     * Prompts the AI model to generate a response to the conversation in the provided {@link IrisSession}.
      *
      * @return The response from the LLM API
      */
