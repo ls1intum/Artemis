@@ -15,7 +15,7 @@ jobs:
   get-labels:
     runs-on: ubuntu-latest
     outputs:
-      labels: ${{ steps.get_labels.outputs.labels }}
+      labels: ${{ steps.get_labels.outputs.result }}
     steps:
       - name: Get PR labels
         id: get_labels
