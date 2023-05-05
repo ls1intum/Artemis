@@ -2086,6 +2086,8 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         gradingScale.setExam(exam);
         gradingScaleRepository.save(gradingScale);
 
+        await().until(() -> participantScoreScheduleService.isIdle());
+
         if (withCourseBonus) {
             configureCourseAsBonusWithIndividualAndTeamResults(course, gradingScale);
         }
