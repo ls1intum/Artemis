@@ -42,8 +42,6 @@ spring:
         database-platform: org.hibernate.dialect.MySQL8Dialect
         database: MYSQL
         show-sql: false
-    liquibase:
-        contexts: prod
     mail:
         host: localhost
         port: 25

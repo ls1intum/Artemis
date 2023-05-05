@@ -25,7 +25,21 @@
                 "successMessageWithRepositories": "Die Bereinigung verlief erfolgreich. Alle Build-Pläne und Repositories wurden gelöscht. Alle Beteiligungen wurden als abgeschlossen gekennzeichnet."
             },
             "reset": {
-                "question": "Soll die Übung <strong>{{ title }}</strong> wirklich zurückgesetzt werden? Diese Aktion kann NICHT rückgängig gemacht werden! <br> Das bedeutet, dass alle Teilnahmen, vorhandenen Ergebnisse, Studierenden-Repositories und Studierenden-Build-Pläne gelöscht werden."
+                "pleaseSelectOperations": "Bitte wählen Sie die durchzuführenden Operationen für <strong>{{ title }}</strong> aus:",
+                "deleteBuildPlans": {
+                    "title": "Lösche Build-Pläne der Studierenden (auf {{ ciPlatform }}).",
+                    "info": "Die Build-Pläne werden automatisch neu erstellt, sobald Studierende erneut abgeben."
+                },
+                "deleteRepositories": {
+                    "title": "Lösche Repositories der Studierenden (auf {{ vcPlatform }}).",
+                    "warning": "Archivierung der Übung vor Aktivierung dieser Option wird empfohlen."
+                },
+                "deleteParticipationsSubmissionsAndResults": "Lösche Teilnahmen, Abgaben und Ergebnisse der Studierenden (in Artemis).",
+                "artefactsWarning": "Das Löschen von Teilnahmen, Abgaben und Ergebnissen von Studierenden, ohne dabei die zugehörigen Repositories und Build-Pläne zu entfernen, kann zu nicht gelöschten Artefakten auf {{ vcPlatform }} und {{ ciPlatform }} führen. Bitte überprüfen Sie sorgfältig, ob dies die gewünschte Aktion ist, bevor Sie den Vorgang fortsetzen.",
+                "recreateBuildPlans": "Erstelle Build-Pläne der Aufgabe (BASE und SOLUTION) erneut und überschreibe frühere Änderungen.",
+                "question": "<strong>Warnung:</strong> Diese Aktion kann <strong>NICHT</strong> rückgängig gemacht werden!<br>Um Ihre Auswahl zu bestätigen, geben Sie bitte den Namen der Übung ein: <strong>{{ title }}</strong>",
+                "successMessage": "Das Zurücksetzen war erfolgreich.",
+                "errorMessage": "Das Zurücksetzen war nicht erfolgreich."
             },
             "detail": {
                 "title": "Programmieraufgabe",

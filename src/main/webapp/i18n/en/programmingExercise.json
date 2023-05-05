@@ -20,12 +20,22 @@
                 "studentRepos": "Additionally delete all student repositories (Be careful: this can NOT be undone!). Before you activate this option, we recommend that you archive the exercise first!",
                 "baseReposBuildPlans": "Additionally delete template, solution, test, and auxiliary repos and build plans (Be careful: this can NOT be undone!). Before you activate this option, we recommend that you back up these build plans and repos first!"
             },
-            "cleanup": {
-                "successMessage": "Cleanup was successful. All build plans have been deleted. Students may resume participating.",
-                "successMessageWithRepositories": "Cleanup was successful. All build plans and repositories have been deleted. All participation has been marked as Finished."
-            },
             "reset": {
-                "question": "Are you sure you want to reset the exercise <strong>{{ title }}</strong>? This action can NOT be undone! <br> This means that all participation, existing results, student repositories and student build plans will be deleted."
+                "pleaseSelectOperations": "Please select the operations you want to perform on <strong>{{ title }}</strong>:",
+                "deleteBuildPlans": {
+                    "title": "Delete student build plans (on {{ ciPlatform }}).",
+                    "info": "The build plans will be automatically recreated when students submit again."
+                },
+                "deleteRepositories": {
+                    "title": "Delete student repositories (on {{ vcPlatform }}).",
+                    "warning": "Before you activate this option, we recommend that you archive the exercise first."
+                },
+                "deleteParticipationsSubmissionsAndResults": "Delete all student participations, submissions and results (on Artemis).",
+                "artefactsWarning": "Deleting student participations, submissions, and results without removing the associated repositories and build plans may lead to undeleted artifacts on {{ vcPlatform }} and {{ ciPlatform }}. Please carefully review if this is the desired action before proceeding.",
+                "recreateBuildPlans": "Recreate the exercise build plans (BASE and SOLUTION) again from the latest exercise template, overwriting any previous changes.",
+                "question": "<strong>Warning:</strong> This action can <strong>NOT</strong> be undone!<br>To confirm your selection, please type in the name of the exercise: <strong>{{ title }}</strong>",
+                "successMessage": "Reset operation was successful.",
+                "errorMessage": "Reset operation failed."
             },
             "detail": {
                 "title": "Programming Exercise",

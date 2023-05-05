@@ -98,13 +98,13 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     faWrench = faWrench;
     faCheckDouble = faCheckDouble;
     faTable = faTable;
+    faEraser = faEraser;
     faExclamationTriangle = faExclamationTriangle;
     faFileSignature = faFileSignature;
     faListAlt = faListAlt;
     faChartBar = faChartBar;
     faLightbulb = faLightbulb;
     faPencilAlt = faPencilAlt;
-    faEraser = faEraser;
     faUsers = faUsers;
     faEye = faEye;
 
@@ -246,41 +246,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     disableTranslation: true,
                 });
             },
-        });
-    }
-
-    /**
-     * Deletes the template and solution build plans and recreates them from scratch.
-     */
-    recreateBuildPlans() {
-        this.programmingExerciseService.recreateBuildPlans(this.programmingExercise.id!).subscribe({
-            next: (res) => {
-                this.alertService.addAlert({
-                    type: AlertType.SUCCESS,
-                    message: res,
-                    disableTranslation: true,
-                });
-                this.dialogErrorSource.next('');
-            },
-            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
-        });
-    }
-
-    /**
-     * Cleans up programming exercise
-     * @param event contains additional checks from the dialog
-     */
-    cleanupProgrammingExercise(event: { [key: string]: boolean }) {
-        return this.exerciseService.cleanup(this.programmingExercise.id!, event.deleteRepositories).subscribe({
-            next: () => {
-                if (event.deleteRepositories) {
-                    this.alertService.success('artemisApp.programmingExercise.cleanup.successMessageWithRepositories');
-                } else {
-                    this.alertService.success('artemisApp.programmingExercise.cleanup.successMessage');
-                }
-                this.dialogErrorSource.next('');
-            },
-            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         });
     }
 

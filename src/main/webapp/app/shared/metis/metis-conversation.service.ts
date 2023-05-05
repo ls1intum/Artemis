@@ -273,7 +273,7 @@ export class MetisConversationService implements OnDestroy {
 
     private onConversationMembershipMessageReceived(websocketDTO: ConversationWebsocketDTO) {
         const conversationDTO = this.conversationService.convertServerDates(websocketDTO.conversation);
-        const action = websocketDTO.crudAction;
+        const action = websocketDTO.metisCrudAction;
 
         switch (action) {
             case MetisPostAction.CREATE:
