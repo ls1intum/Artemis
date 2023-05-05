@@ -30,6 +30,13 @@ on:
     types:
     - created
 
+# Limit the number of concurrent runs to one per PR
+# If a run is already in progress, cancel it
+# If the run is not for a PR, then this limit does not apply
+concurrency:
+  group: test-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
 # Keep in sync with codeql-analysis.yml and build-deploy.yml
 env:
   CI: true
@@ -79,8 +86,12 @@ jobs:
         reporter: java-junit
 
   server-tests-mysql:
+      needs: [ server-tests ]
       runs-on: ubuntu-latest
       timeout-minutes: 120
+      # Limit the number of concurrent mysql tests to one in total
+      concurrency:
+          group: server-tests-mysql
       steps:
           - uses: actions/checkout@v3
           - name: Setup Java
@@ -116,8 +127,12 @@ jobs:
                 reporter: java-junit
 
   server-tests-postgres:
+      needs: [ server-tests ]
       runs-on: ubuntu-latest
       timeout-minutes: 150
+      # Limit the number of concurrent postgres tests to one in total
+      concurrency:
+          group: server-tests-postgres
       steps:
           - uses: actions/checkout@v3
           - name: Setup Java
