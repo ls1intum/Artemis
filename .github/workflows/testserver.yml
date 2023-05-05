@@ -8,13 +8,38 @@ concurrency: test-servers
 
 env:
   RAW_URL: https://raw.githubusercontent.com/${{ github.repository }}/${{ github.sha }}
+  PR_LABELS: ""
 
 jobs:
+  # Get an up to date version of the label list. github.event.pull_request.labels seems to sometimes be outdated
+  # if the run was waiting for a while, which can cause duplicate deployments
+  get-labels:
+    runs-on: ubuntu-latest
+    outputs:
+      labels: ${{ steps.get_labels.outputs.labels }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Get PR labels
+        id: get_labels
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const { data: labels } = await github.issues.listLabelsOnIssue({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: github.event.pull_request.number
+            })
+            env.PR_LABELS = labels.map(label => label.name).join(',')
+
+
   # Check that the build job has run successfully before deploying
   check-build-status:
+    needs: [ get-labels ]
     runs-on: ubuntu-latest
     # Only run workflow if the added label is a deploy label
-    if: contains(join(github.event.pull_request.labels.*.name), 'deploy:artemis-test')
+    if: contains(env.PR_LABELS, 'deploy:artemis-test')
     steps:
       - name: Get latest successful build for branch
         id: check_build
@@ -195,11 +220,11 @@ jobs:
     steps:
       - run: |
           echo "$DEPLOY_LABEL"
-          echo '${{ contains(github.event.pull_request.labels.*.name, format('deploy:{0}', matrix.label-identifier)) }}'
+          echo '${{ contains(env.PR_LABELS, format('deploy:{0}', matrix.label-identifier)) }}'
       - id: filter
         env:
           MATRIX_JSON: ${{ toJSON(matrix) }}
-        if: ${{ contains(github.event.pull_request.labels.*.name, format('deploy:{0}', matrix.label-identifier)) }}
+        if: ${{ contains(env.PR_LABELS, format('deploy:{0}', matrix.label-identifier)) }}
         run: |
           MATRIX_JSON=${MATRIX_JSON//$'\n'/}
           echo "${{ matrix.label-identifier }}=$MATRIX_JSON" >> $GITHUB_OUTPUT
