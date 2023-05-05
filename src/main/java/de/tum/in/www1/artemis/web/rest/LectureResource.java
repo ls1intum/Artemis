@@ -261,7 +261,7 @@ public class LectureResource {
             return ResponseEntity.badRequest().build();
         }
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
-        
+
         User user = userRepository.getUserWithGroupsAndAuthorities();
         lectureService.filterActiveAttachmentUnits(lecture);
         lectureService.filterActiveAttachments(lecture, user);
