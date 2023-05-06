@@ -64,7 +64,9 @@ export class ProfileService {
                         profileInfo.allowedCourseRegistrationUsernamePattern = data.allowedCourseRegistrationUsernamePattern;
                         profileInfo.accountName = data.accountName;
                         profileInfo.versionControlUrl = data.versionControlUrl;
+                        profileInfo.versionControlName = data.versionControlName;
                         profileInfo.versionControlAccessToken = data.versionControlAccessToken;
+                        profileInfo.continuousIntegrationName = data.continuousIntegrationName;
                         profileInfo.programmingLanguageFeatures = data.programmingLanguageFeatures;
                         profileInfo.textAssessmentAnalyticsEnabled = data['text-assessment-analytics-enabled'];
                         profileInfo.studentExamStoreSessionData = data['student-exam-store-session-data'];

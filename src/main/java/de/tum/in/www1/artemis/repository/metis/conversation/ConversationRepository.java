@@ -29,6 +29,9 @@ public interface ConversationRepository extends JpaRepository<Conversation, Long
     @Modifying
     void deleteAllByCourseId(long courseId);
 
+    // This is used only for testing purposes
+    List<Conversation> findAllByCourseId(long courseId);
+
     default Conversation findByIdElseThrow(long conversationId) {
         return this.findById(conversationId).orElseThrow(() -> new EntityNotFoundException("Conversation", conversationId));
     }

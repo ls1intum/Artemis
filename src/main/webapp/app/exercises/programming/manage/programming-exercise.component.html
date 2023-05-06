@@ -244,18 +244,14 @@
                             </div>
                             <div class="btn-group-vertical me-1">
                                 <button
-                                    *ngIf="programmingExercise.isAtLeastInstructor"
+                                    *ngIf="programmingExercise.isAtLeastEditor"
                                     [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
-                                    jhiDeleteButton
-                                    [actionType]="ActionType.Reset"
-                                    [entityTitle]="programmingExercise.title!"
-                                    deleteQuestion="artemisApp.programmingExercise.reset.question"
-                                    (delete)="resetProgrammingExercise(programmingExercise.id!)"
-                                    [dialogError]="dialogError$"
-                                    deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
+                                    jhiProgrammingExerciseResetButton
+                                    [programmingExercise]="programmingExercise"
                                     class="mb-1"
                                 >
                                     <fa-icon [icon]="faTimes"></fa-icon>
+                                    <span jhiTranslate="entity.action.reset">Reset</span>
                                 </button>
                                 <button
                                     *ngIf="programmingExercise.isAtLeastInstructor"
