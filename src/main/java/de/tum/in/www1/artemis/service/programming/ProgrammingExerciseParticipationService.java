@@ -100,7 +100,7 @@ public class ProgrammingExerciseParticipationService {
      */
     public ProgrammingExerciseStudentParticipation findTeamParticipationByExerciseAndTeamShortNameOrThrow(ProgrammingExercise exercise, String teamShortName,
             boolean withSubmissions) {
-        Team team = teamRepository.findOneByExerciseCourseIdAndShortNameOrThrow(exercise.getCourseViaExerciseGroupOrCourseMember().getId(), teamShortName);
+        Team team = teamRepository.findOneByExerciseIdAndShortNameWithEagerStudentsOrThrow(exercise.getId(), teamShortName);
 
         Optional<ProgrammingExerciseStudentParticipation> participationOptional;
 

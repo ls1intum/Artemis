@@ -30,10 +30,10 @@ public interface TeamRepository extends JpaRepository<Team, Long> {
     @Query(value = """
             SELECT DISTINCT team from Team team
                 LEFT JOIN FETCH team.students
-            WHERE team.exercise.course.id = :#{#courseId}
+            WHERE team.exercise.id = :#{#exerciseId}
                 AND team.shortName = :#{#shortName}
             """)
-    List<Team> findAllByExerciseCourseIdAndShortNameWithEagerStudents(@Param("courseId") Long courseId, @Param("shortName") String shortName);
+    List<Team> findAllByExerciseIdAndShortNameWithEagerStudents(@Param("exerciseId") Long exerciseId, @Param("shortName") String shortName);
 
     /**
      * Fetches the number of teams created for an exercise
@@ -134,16 +134,19 @@ public interface TeamRepository extends JpaRepository<Team, Long> {
     /**
      * Find a team by its short name in a specific course.
      *
-     * @param courseId  the id of the course.
-     * @param shortName the short name of the team.
+     * @param exerciseId the id of the exercise.
+     * @param shortName  the short name of the team.
      * @return the team with the given short name in the given course.
      * @throws EntityNotFoundException if no team with the given short name exists in the given course.
      */
-    default Team findOneByExerciseCourseIdAndShortNameOrThrow(Long courseId, String shortName) throws EntityNotFoundException {
-        List<Team> teams = findAllByExerciseCourseIdAndShortNameWithEagerStudents(courseId, shortName);
+    default Team findOneByExerciseIdAndShortNameWithEagerStudentsOrThrow(Long exerciseId, String shortName) throws EntityNotFoundException {
+        List<Team> teams = findAllByExerciseIdAndShortNameWithEagerStudents(exerciseId, shortName);
 
-        if (teams.size() != 1) {
-            throw new EntityNotFoundException("Team with short name " + shortName + " not found in course " + courseId);
+        if (teams.size() == 0) {
+            throw new EntityNotFoundException("Team with short name " + shortName + " not found in exercise " + exerciseId);
+        }
+        else if (teams.size() > 1) {
+            throw new EntityNotFoundException("Team short name " + shortName + " is not unique in exercise " + exerciseId);
         }
 
         return teams.get(0);

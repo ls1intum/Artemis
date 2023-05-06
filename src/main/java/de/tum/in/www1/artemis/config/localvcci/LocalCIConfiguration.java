@@ -95,9 +95,9 @@ public class LocalCIConfiguration {
         ScheduledExecutorService buildQueueLogger = Executors.newSingleThreadScheduledExecutor();
         buildQueueLogger.scheduleAtFixedRate(() -> {
             ThreadPoolExecutor threadPoolExecutor = (ThreadPoolExecutor) localCIBuildExecutorService;
-            // Report on the current state of the local CI ExecutorService queue every 3 seconds.
+            // Report on the current state of the local CI ExecutorService queue every 30 seconds.
             log.info("Current queue size of local CI ExecutorService: {}", threadPoolExecutor.getQueue().size());
-        }, 0, 3, TimeUnit.SECONDS);
+        }, 0, 30, TimeUnit.SECONDS);
         return buildQueueLogger;
     }
 

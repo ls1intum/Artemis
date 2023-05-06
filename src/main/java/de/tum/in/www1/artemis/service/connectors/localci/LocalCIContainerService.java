@@ -118,12 +118,11 @@ public class LocalCIContainerService {
             @Override
             public void onComplete() {
                 latch.countDown();
-                log.info("Completed waiting for CMD build job " + containerId);
             }
         });
 
         try {
-            log.info("Started CMD for build job " + containerId);
+            log.info("Started running the build script for build job " + containerId);
             // Block until the latch reaches 0 or until the thread is interrupted.
             latch.await();
         }

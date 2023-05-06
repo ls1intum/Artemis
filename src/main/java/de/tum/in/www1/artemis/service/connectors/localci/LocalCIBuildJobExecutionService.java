@@ -108,8 +108,6 @@ public class LocalCIBuildJobExecutionService {
         // Update the build plan status to "BUILDING".
         localCIBuildPlanService.updateBuildPlanStatus(participation, ContinuousIntegrationService.BuildStatus.BUILDING);
 
-        log.info("Updated build plan status for build job " + containerName);
-
         // Retrieve the paths to the repositories that the build job needs.
         // This includes the assignment repository (the one to be tested, e.g. the student's repository, or the template repository), and the tests repository which includes
         // the tests to be executed.
@@ -123,8 +121,6 @@ public class LocalCIBuildJobExecutionService {
             throw new LocalCIException("Error while creating LocalVCRepositoryUrl", e);
         }
 
-        log.info("Retrieved repository URLs for build job " + containerName);
-
         Path assignmentRepositoryPath = assignmentRepositoryUrl.getLocalRepositoryPath(localVCBasePath).toAbsolutePath();
         Path testsRepositoryPath = testsRepositoryUrl.getLocalRepositoryPath(localVCBasePath).toAbsolutePath();
 
@@ -136,8 +132,6 @@ public class LocalCIBuildJobExecutionService {
             throw new LocalCIException("Error while getting branch of participation", e);
         }
 
-        log.info("Retrieved repository paths and branch for build job " + containerName);
-
         // Create the volume configuration for the container. The assignment repository, the tests repository, and the build script are bound into the container to be used by
         // the build job.
         HostConfig volumeConfig = localCIContainerService.createVolumeConfig(assignmentRepositoryPath, testsRepositoryPath);
@@ -146,8 +140,6 @@ public class LocalCIBuildJobExecutionService {
         // container information about the branch and commit hash to be used.
         // This does not start the container yet.
         CreateContainerResponse container = localCIContainerService.configureContainer(containerName, volumeConfig, branch, commitHash);
-
-        log.info("Created container for build job " + containerName);
 
         return runScriptAndParseResults(participation, containerName, container.getId(), branch, commitHash);
     }
@@ -175,7 +167,7 @@ public class LocalCIBuildJobExecutionService {
 
         localCIContainerService.runScriptInContainer(containerId);
 
-        log.info("Ran script in container for build job " + containerName);
+        log.info("Finished running the build script in container for build job " + containerName);
 
         ZonedDateTime buildCompletedDate = ZonedDateTime.now();
 
@@ -197,8 +189,6 @@ public class LocalCIBuildJobExecutionService {
             return constructFailedBuildResult(branch, assignmentRepoCommitHash, testRepoCommitHash, buildCompletedDate);
         }
 
-        log.info("Retrieved commit hashes for build job " + containerName);
-
         // When Gradle is used as the build tool, the test results are located in /repositories/test-repository/build/test-results/test/TEST-*.xml.
         // When Maven is used as the build tool, the test results are located in /repositories/test-repository/target/surefire-reports/TEST-*.xml.
         String testResultsPath = "/repositories/test-repository/build/test-results/test";
@@ -215,11 +205,7 @@ public class LocalCIBuildJobExecutionService {
             return constructFailedBuildResult(branch, assignmentRepoCommitHash, testRepoCommitHash, buildCompletedDate);
         }
 
-        log.info("Retrieved test results for build job " + containerName);
-
         localCIContainerService.stopContainer(containerName);
-
-        log.info("Stopped container for build job " + containerName);
 
         LocalCIBuildResult buildResult;
         try {
@@ -229,12 +215,11 @@ public class LocalCIBuildJobExecutionService {
             throw new LocalCIException("Error while parsing test results", e);
         }
 
-        log.info("Parsed test results for build job " + containerName);
-
         // Set the build status to "INACTIVE" to indicate that the build is not running anymore.
         localCIBuildPlanService.updateBuildPlanStatus(participation, ContinuousIntegrationService.BuildStatus.INACTIVE);
 
-        log.info("Building and testing submission for repository {} took {}", participation.getRepositoryUrl(), TimeLogUtil.formatDurationFrom(timeNanoStart));
+        log.info("Building and testing submission for repository {} and commit hash {} took {}", participation.getRepositoryUrl(), commitHash,
+                TimeLogUtil.formatDurationFrom(timeNanoStart));
 
         return buildResult;
     }
