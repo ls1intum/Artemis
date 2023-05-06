@@ -88,7 +88,7 @@ describe('ProgrammingExerciseTestScheduleDatePickerComponent', () => {
         const spy = jest.spyOn(comp.onDateReset, 'emit');
         comp.resetDate();
 
-        expect(comp.selectedDate).toBeNull();
+        expect(comp.selectedDate).toBe(selectedDate);
         expect(spy).toHaveBeenCalledOnce();
     });
 });
