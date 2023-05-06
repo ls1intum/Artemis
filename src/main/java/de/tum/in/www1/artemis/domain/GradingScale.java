@@ -5,6 +5,7 @@ import java.util.Objects;
 import java.util.Set;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.persistence.*;
 import javax.validation.constraints.Size;
 
@@ -59,6 +60,14 @@ public class GradingScale extends DomainObject {
     @JoinColumn(name = "exam_id")
     private Exam exam;
 
+    @Nullable
+    @Column(name = "presentations_number")
+    private Integer presentationsNumber;
+
+    @Nullable
+    @Column(name = "presentations_weight")
+    private Double presentationsWeight;
+
     /**
      * Current implementation works with one Bonus instance as GradingScale.bonusFrom per Bonus.bonusTo instance (OneToOne) but
      * the relation is defined as OneToMany in order to allow applying multiple bonuses.
@@ -103,6 +112,22 @@ public class GradingScale extends DomainObject {
 
     public void setExam(Exam exam) {
         this.exam = exam;
+    }
+
+    public Integer getPresentationsNumber() {
+        return presentationsNumber;
+    }
+
+    public void setPresentationsNumber(Integer presentationsNumber) {
+        this.presentationsNumber = presentationsNumber;
+    }
+
+    public Double getPresentationsWeight() {
+        return presentationsWeight;
+    }
+
+    public void setPresentationsWeight(Double presentationsWeight) {
+        this.presentationsWeight = presentationsWeight;
     }
 
     public Set<GradeStep> getGradeSteps() {
