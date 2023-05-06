@@ -63,6 +63,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseTaskRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.CourseExamExportService;
+import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
@@ -448,6 +449,23 @@ public class ProgrammingExerciseTestService {
         var file = new MockMultipartFile("file", "test.zip", "application/zip", resource.getInputStream());
         request.postWithMultipartFile(ROOT + "/courses/" + course.getId() + "/programming-exercises/import-from-file", exercise, "programmingExercise", file,
                 ProgrammingExercise.class, HttpStatus.OK);
+    }
+
+    void importFromFile_embeddedFiles_embeddedFilesCopied() throws Exception {
+        mockDelegate.mockConnectorRequestForImportFromFile(exercise);
+        String embeddedFileName1 = "Markdown_2023-05-06T16-17-46-410_ad323711.jpg";
+        String embeddedFileName2 = "Markdown_2023-05-06T16-17-46-822_b921f475.jpg";
+        Resource resource = new ClassPathResource("test-data/import-from-file/valid-import-embedded-files.zip");
+        var file = new MockMultipartFile("file", "test.zip", "application/zip", resource.getInputStream());
+        request.postWithMultipartFile(ROOT + "/courses/" + course.getId() + "/programming-exercises/import-from-file", exercise, "programmingExercise", file,
+                ProgrammingExercise.class, HttpStatus.OK);
+        assertThat(Path.of(FilePathService.getMarkdownFilePath())).isDirectoryContaining(path -> embeddedFileName1.equals(path.getFileName().toString()))
+                .isDirectoryContaining(path -> embeddedFileName2.equals(path.getFileName().toString()));
+
+        // clean up to make sure the test doesn't pass because it has passed previously
+        Files.delete(Path.of(FilePathService.getMarkdownFilePath(), embeddedFileName1));
+        Files.delete(Path.of(FilePathService.getMarkdownFilePath(), embeddedFileName2));
+
     }
 
     void importFromFile_missingExerciseDetailsJson_badRequest() throws Exception {
@@ -1204,7 +1222,11 @@ public class ProgrammingExerciseTestService {
         // Assure, that the zip folder is already created and not 'in creation' which would lead to a failure when extracting it in the next step
         await().until(zipFile::exists);
         assertThat(zipFile).isNotNull();
-
+        String embeddedFileName1 = "Markdown_2023-05-06T16-17-46-410_ad323711.jpg";
+        String embeddedFileName2 = "Markdown_2023-05-06T16-17-46-822_b921f475.jpg";
+        // delete the files to not only make a test pass because a previous test run succeeded
+        Files.delete(Path.of(FilePathService.getMarkdownFilePath(), embeddedFileName1));
+        Files.delete(Path.of(FilePathService.getMarkdownFilePath(), embeddedFileName2));
         // Recursively unzip the exported file, to make sure there is no erroneous content
         zipFileTestUtilService.extractZipFileRecursively(zipFile.getAbsolutePath());
         String extractedZipDir = zipFile.getPath().substring(0, zipFile.getPath().length() - 4);
@@ -1215,7 +1237,8 @@ public class ProgrammingExerciseTestService {
             assertThat(listOfIncludedFiles).anyMatch((filename) -> filename.toString().matches(".*-exercise.zip"))
                     .anyMatch((filename) -> filename.toString().matches(".*-solution.zip")).anyMatch((filename) -> filename.toString().matches(".*-tests.zip"))
                     .anyMatch((filename) -> filename.toString().matches(EXPORTED_EXERCISE_PROBLEM_STATEMENT_FILE_PREFIX + ".*.md"))
-                    .anyMatch((filename) -> filename.toString().matches(EXPORTED_EXERCISE_DETAILS_FILE_PREFIX + ".*.json"));
+                    .anyMatch((filename) -> filename.toString().matches(EXPORTED_EXERCISE_DETAILS_FILE_PREFIX + ".*.json"))
+                    .anyMatch((filename) -> filename.toString().equals(embeddedFileName1)).anyMatch((filename) -> filename.toString().equals(embeddedFileName2));
         }
     }
 
@@ -1229,7 +1252,6 @@ public class ProgrammingExerciseTestService {
 
     java.io.File exportProgrammingExerciseInstructorMaterial(HttpStatus expectedStatus) throws Exception {
         generateProgrammingExerciseForExport();
-
         // Mock template repo
         Repository templateRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(exerciseRepo.localRepoFile.toPath(), null);
         createAndCommitDummyFileInLocalRepository(exerciseRepo, "Template.java");
@@ -1249,7 +1271,18 @@ public class ProgrammingExerciseTestService {
         return request.getFile(url, expectedStatus, new LinkedMultiValueMap<>());
     }
 
-    private void generateProgrammingExerciseForExport() {
+    private void generateProgrammingExerciseForExport() throws IOException {
+        String embeddedFileName1 = "Markdown_2023-05-06T16-17-46-410_ad323711.jpg";
+        String embeddedFileName2 = "Markdown_2023-05-06T16-17-46-822_b921f475.jpg";
+        exercise.setProblemStatement(String.format("""
+                Problem statement
+                ![mountain.jpg](/api/files/markdown/%s)
+                ![matterhorn.jpg](/api/files/markdown/%s)
+                """, embeddedFileName1, embeddedFileName2));
+        Files.write(Path.of(FilePathService.getMarkdownFilePath(), embeddedFileName1),
+                new ClassPathResource("test-data/repository-export/" + embeddedFileName1).getInputStream().readAllBytes());
+        Files.write(Path.of(FilePathService.getMarkdownFilePath(), embeddedFileName2),
+                new ClassPathResource("test-data/repository-export/" + embeddedFileName2).getInputStream().readAllBytes());
         exercise = programmingExerciseRepository.save(exercise);
         exercise = database.addTemplateParticipationForProgrammingExercise(exercise);
         exercise = database.addSolutionParticipationForProgrammingExercise(exercise);
