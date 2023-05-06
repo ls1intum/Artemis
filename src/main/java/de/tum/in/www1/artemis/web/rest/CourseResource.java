@@ -112,7 +112,7 @@ public class CourseResource {
 
     private final ConversationService conversationService;
 
-    private ChannelRepository channelRepository;
+    private final ChannelRepository channelRepository;
 
     public CourseResource(UserRepository userRepository, CourseService courseService, CourseRepository courseRepository, ExerciseService exerciseService,
             OAuth2JWKSService oAuth2JWKSService, OnlineCourseConfigurationService onlineCourseConfigurationService, AuthorizationCheckService authCheckService,

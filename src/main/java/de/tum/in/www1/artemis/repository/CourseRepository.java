@@ -52,13 +52,25 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     @Query("select distinct course from Course course where course.studentGroupName like :name")
     Course findCourseByStudentGroupName(@Param("name") String name);
 
-    @Query("select distinct course from Course course where course.instructorGroupName = :name")
+    @Query("""
+            SELECT DISTINCT course
+            FROM Course course
+            WHERE course.instructorGroupName = :name
+            """)
     List<Course> findCoursesByInstructorGroupName(@Param("name") String name);
 
-    @Query("select distinct course from Course course where course.teachingAssistantGroupName = :name")
+    @Query("""
+            SELECT DISTINCT course
+            FROM Course course
+            WHERE course.teachingAssistantGroupName = :name
+            """)
     List<Course> findCoursesByTeachingAssistantGroupName(@Param("name") String name);
 
-    @Query("select distinct course from Course course where course.studentGroupName = :name")
+    @Query("""
+            SELECT DISTINCT course
+            FROM Course course
+            WHERE course.studentGroupName = :name
+            """)
     List<Course> findCoursesByStudentGroupName(@Param("name") String name);
 
     @Query("""

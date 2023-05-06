@@ -141,7 +141,7 @@ public class ChannelService {
         return savedChannel;
     }
 
-    public Set<User> registerUsersToChannel(Boolean addAllStudents, Boolean addAllTutors, Boolean addAllInstructors, List<String> usersLoginsToRegister, Course course,
+    public Set<User> registerUsersToChannel(boolean addAllStudents, boolean addAllTutors, boolean addAllInstructors, List<String> usersLoginsToRegister, Course course,
             Channel channel) {
         Set<User> usersToRegister = new HashSet<>();
         usersToRegister.addAll(conversationService.findUsersInDatabase(course, addAllStudents, addAllTutors, addAllInstructors));
