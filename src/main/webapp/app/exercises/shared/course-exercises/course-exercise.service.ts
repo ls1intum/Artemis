@@ -14,6 +14,7 @@ import { convertDateFromServer } from 'app/utils/date.utils';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { setBuildPlanUrlForProgrammingParticipations } from 'app/exercises/shared/participation/participation.utils';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { SERVER_API_URL } from 'app/environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class CourseExerciseService {

@@ -5,6 +5,7 @@ import { PagingService } from 'app/exercises/shared/manage/paging.service';
 import { PageableSearch, SearchResult } from 'app/shared/table/pageable-table';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
+import { SERVER_API_URL } from 'app/environments/environment';
 
 type EntityResponseType = SearchResult<Exam>;
 

@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import dayjs from 'dayjs/esm';
+import { SERVER_API_URL } from 'app/environments/environment';
 
 export type RepositoryExportOptions = {
     exportAllParticipants: boolean;
@@ -17,7 +18,9 @@ export type RepositoryExportOptions = {
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingAssessmentRepoExportService {
-    // TODO: We should move this endpoint to api/programming-exercises.
+    /**
+     * TODO: We should move this endpoint to api/programming-exercises.
+     */
     public resourceUrl = SERVER_API_URL + 'api/programming-exercises';
 
     constructor(private http: HttpClient) {}

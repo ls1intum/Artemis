@@ -13,6 +13,7 @@ import { Observable, Subscription } from 'rxjs';
 import { filter, map, shareReplay } from 'rxjs/operators';
 import { EntityResponseType } from 'app/exercises/shared/exercise/exercise.service';
 import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
+import { SERVER_API_URL } from 'app/environments/environment';
 
 export type TeamResponse = HttpResponse<Team>;
 export type TeamArrayResponse = HttpResponse<Team[]>;

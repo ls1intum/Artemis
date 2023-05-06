@@ -6,6 +6,7 @@ import { ExamAction, ExamActionType, SavedExerciseAction, SwitchedExerciseAction
 import dayjs from 'dayjs/esm';
 import { ceilDayjsSeconds, getEmptyCategories } from 'app/exam/monitoring/charts/monitoring-chart';
 import { HttpClient } from '@angular/common/http';
+import { SERVER_API_URL } from 'app/environments/environment';
 
 export const EXAM_MONITORING_ACTION_TOPIC = (examId: number) => `/topic/exam-monitoring/${examId}/action`;
 export const EXAM_MONITORING_ACTIONS_TOPIC = (examId: number) => `/topic/exam-monitoring/${examId}/actions`;

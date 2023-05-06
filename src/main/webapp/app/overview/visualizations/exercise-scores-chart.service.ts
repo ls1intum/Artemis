@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { map } from 'rxjs/operators';
 import { ExerciseType } from 'app/entities/exercise.model';
+import { SERVER_API_URL } from 'app/environments/environment';
 
 /**
  * Corresponds to ExerciseScoresDTO.java on the server

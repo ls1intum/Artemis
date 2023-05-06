@@ -16,6 +16,7 @@ import { Participation } from 'app/entities/participation/participation.model';
 import { TextAssessmentEvent } from 'app/entities/text-assesment-event.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { convertDateFromServer } from 'app/utils/date.utils';
+import { SERVER_API_URL } from 'app/environments/environment';
 
 type EntityResponseType = HttpResponse<Result>;
 type EntityResponseEventType = HttpResponse<TextAssessmentEvent>;

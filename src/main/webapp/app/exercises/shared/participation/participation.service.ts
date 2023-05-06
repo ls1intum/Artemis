@@ -12,6 +12,7 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { AccountService } from 'app/core/auth/account.service';
 import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
 import dayjs from 'dayjs/esm';
+import { SERVER_API_URL } from 'app/environments/environment';
 
 export type EntityResponseType = HttpResponse<StudentParticipation>;
 export type EntityArrayResponseType = HttpResponse<StudentParticipation[]>;

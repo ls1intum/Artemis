@@ -6,6 +6,7 @@ import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
 import { LectureUnitCompletionEvent } from 'app/overview/course-lectures/course-lecture-details.component';
 import { faSquare, faSquareCheck } from '@fortawesome/free-regular-svg-icons';
+import { SERVER_API_URL } from 'app/environments/environment';
 
 @Component({
     selector: 'jhi-text-unit',

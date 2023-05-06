@@ -8,6 +8,7 @@ import { ExerciseServicable, ExerciseService } from 'app/exercises/shared/exerci
 import { ModelingPlagiarismResult } from 'app/exercises/shared/plagiarism/types/modeling/ModelingPlagiarismResult';
 import { PlagiarismOptions } from 'app/exercises/shared/plagiarism/types/PlagiarismOptions';
 import { downloadStream } from 'app/shared/util/download.util';
+import { SERVER_API_URL } from 'app/environments/environment';
 
 export type EntityResponseType = HttpResponse<ModelingExercise>;
 export type EntityArrayResponseType = HttpResponse<ModelingExercise[]>;

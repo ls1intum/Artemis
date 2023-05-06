@@ -5,6 +5,7 @@ import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { map } from 'rxjs/operators';
 import { AccountService } from 'app/core/auth/account.service';
+import { SERVER_API_URL } from 'app/environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class ChannelService {

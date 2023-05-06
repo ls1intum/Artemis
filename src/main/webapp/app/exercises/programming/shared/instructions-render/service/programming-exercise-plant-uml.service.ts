@@ -4,6 +4,7 @@ import { Cacheable } from 'ts-cacheable';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { Theme, ThemeService } from 'app/core/theme/theme.service';
+import { SERVER_API_URL } from 'app/environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExercisePlantUmlService {

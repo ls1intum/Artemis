@@ -4,6 +4,7 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
+import { SERVER_API_URL } from 'app/environments/environment';
 
 type EntityResponseType = HttpResponse<AttachmentUnit>;
 

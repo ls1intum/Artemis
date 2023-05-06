@@ -19,6 +19,7 @@ import { ProgrammingSubmission } from 'app/entities/programming-submission.model
 import { captureException } from '@sentry/angular-ivy';
 import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
+import { SERVER_API_URL } from 'app/environments/environment';
 
 export type EntityResponseType = HttpResponse<Result>;
 export type EntityArrayResponseType = HttpResponse<Result[]>;

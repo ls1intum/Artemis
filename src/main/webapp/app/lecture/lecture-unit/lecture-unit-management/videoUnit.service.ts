@@ -4,6 +4,7 @@ import { VideoUnit } from 'app/entities/lecture-unit/videoUnit.model';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
+import { SERVER_API_URL } from 'app/environments/environment';
 
 type EntityResponseType = HttpResponse<VideoUnit>;
 

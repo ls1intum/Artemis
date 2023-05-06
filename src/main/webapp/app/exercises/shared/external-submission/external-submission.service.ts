@@ -7,6 +7,7 @@ import { User } from 'app/core/user/user.model';
 import { EntityResponseType, ResultService } from 'app/exercises/shared/result/result.service';
 import { Result } from 'app/entities/result.model';
 import { map } from 'rxjs/operators';
+import { SERVER_API_URL } from 'app/environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class ExternalSubmissionService {

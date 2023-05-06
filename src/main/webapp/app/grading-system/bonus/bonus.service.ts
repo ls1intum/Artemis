@@ -6,6 +6,7 @@ import { Bonus, BonusExample, BonusStrategy } from 'app/entities/bonus.model';
 import { GradingScale } from 'app/entities/grading-scale.model';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
+import { SERVER_API_URL } from 'app/environments/environment';
 
 export type EntityResponseType = HttpResponse<Bonus>;
 

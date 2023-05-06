@@ -2,6 +2,7 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { Observable, map, shareReplay } from 'rxjs';
+import { SERVER_API_URL } from 'app/environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class TutorialGroupsNotificationService {

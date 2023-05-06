@@ -25,6 +25,7 @@ import { CourseForDashboardDTO } from 'app/course/manage/course-for-dashboard-dt
 import { ScoresStorageService } from 'app/course/course-scores/scores-storage.service';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { ExerciseType, ScoresPerExerciseType } from 'app/entities/exercise.model';
+import { SERVER_API_URL } from 'app/environments/environment';
 
 export type EntityResponseType = HttpResponse<Course>;
 export type EntityArrayResponseType = HttpResponse<Course[]>;
@@ -33,7 +34,7 @@ export type RoleGroup = 'tutors' | 'students' | 'instructors' | 'editors';
 
 @Injectable({ providedIn: 'root' })
 export class CourseManagementService {
-    private resourceUrl = SERVER_API_URL + 'api/courses';
+    private resourceUrl = `${SERVER_API_URL}api/courses`;
 
     private coursesForNotifications: BehaviorSubject<Course[] | undefined> = new BehaviorSubject<Course[] | undefined>(undefined);
 

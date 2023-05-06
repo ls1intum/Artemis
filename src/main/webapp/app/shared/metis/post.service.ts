@@ -7,6 +7,7 @@ import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { PostingService } from 'app/shared/metis/posting.service';
 import { DisplayPriority, PostContextFilter } from 'app/shared/metis/metis.util';
 import { convertDateFromServer } from 'app/utils/date.utils';
+import { SERVER_API_URL } from 'app/environments/environment';
 
 type EntityResponseType = HttpResponse<Post>;
 type EntityArrayResponseType = HttpResponse<Post[]>;

@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { ConsistencyCheckError } from 'app/entities/consistency-check-result.model';
+import { SERVER_API_URL } from 'app/environments/environment';
 
 @Injectable({
     providedIn: 'root',

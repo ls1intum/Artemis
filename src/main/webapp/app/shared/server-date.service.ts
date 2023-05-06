@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { HttpClient } from '@angular/common/http';
+import { SERVER_API_URL } from 'app/environments/environment';
 
 export interface ServerDateService {
     readonly http: HttpClient;

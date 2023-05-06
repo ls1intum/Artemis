@@ -5,6 +5,7 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { NotificationSetting, notificationSettingsStructure } from 'app/shared/user-settings/notification-settings/notification-settings-structure';
 import { UserSettingsCategory } from 'app/shared/constants/user-settings.constants';
 import { Setting, SettingGroup, UserSettingsStructure } from 'app/shared/user-settings/user-settings.model';
+import { SERVER_API_URL } from 'app/environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class UserSettingsService {

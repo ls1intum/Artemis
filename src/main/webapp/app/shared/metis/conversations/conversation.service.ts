@@ -12,6 +12,7 @@ import { isGroupChatDto } from 'app/entities/metis/conversation/group-chat.model
 import { ConversationUserDTO } from 'app/entities/metis/conversation/conversation-user-dto.model';
 import { isOneToOneChatDto } from 'app/entities/metis/conversation/one-to-one-chat.model';
 import { getUserLabel } from 'app/overview/course-conversations/other/conversation.util';
+import { SERVER_API_URL } from 'app/environments/environment';
 
 type EntityArrayResponseType = HttpResponse<ConversationDto[]>;
 

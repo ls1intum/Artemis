@@ -4,6 +4,7 @@ import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
+import { SERVER_API_URL } from 'app/environments/environment';
 
 type EntityResponseType = HttpResponse<TextUnit>;
 

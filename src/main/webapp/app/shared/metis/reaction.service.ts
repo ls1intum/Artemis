@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { Reaction } from 'app/entities/metis/reaction.model';
 import { convertDateFromServer } from 'app/utils/date.utils';
+import { SERVER_API_URL } from 'app/environments/environment';
 
 type EntityResponseType = HttpResponse<Reaction>;
 

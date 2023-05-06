@@ -5,6 +5,7 @@ import { Observable, map, tap } from 'rxjs';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
+import { SERVER_API_URL } from 'app/environments/environment';
 
 type EntityResponseType = HttpResponse<StudentExam>;
 type EntityArrayResponseType = HttpResponse<StudentExam[]>;

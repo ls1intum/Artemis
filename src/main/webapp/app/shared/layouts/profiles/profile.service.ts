@@ -9,6 +9,7 @@ import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.s
 import { Saml2Config } from 'app/home/saml2-login/saml2.config';
 import { extend, reduce } from 'lodash-es';
 import { BrowserFingerprintService } from 'app/shared/fingerprint/browser-fingerprint.service';
+import { SERVER_API_URL } from 'app/environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class ProfileService {

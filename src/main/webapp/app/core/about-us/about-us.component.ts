@@ -7,6 +7,7 @@ import { VERSION } from 'app/app.constants';
 import { StaticContentService } from 'app/shared/service/static-content.service';
 import { AboutUsModel } from 'app/core/about-us/models/about-us-model';
 import { ContributorModel } from 'app/core/about-us/models/contributor-model';
+import { SERVER_API_URL } from 'app/environments/environment';
 
 @Component({
     selector: 'jhi-about-us',

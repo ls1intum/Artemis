@@ -17,6 +17,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { faCheck, faInfoCircle, faPlus, faUpload, faUserSlash } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
+import { SERVER_API_URL } from 'app/environments/environment';
 
 const cssClasses = {
     alreadyRegistered: 'already-registered',

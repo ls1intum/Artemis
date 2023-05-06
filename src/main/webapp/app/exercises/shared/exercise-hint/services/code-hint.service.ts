@@ -3,6 +3,7 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { CodeHint } from 'app/entities/hestia/code-hint-model';
 import { createRequestOption } from 'app/shared/util/request.util';
+import { SERVER_API_URL } from 'app/environments/environment';
 
 export interface ICodeHintService {
     /**

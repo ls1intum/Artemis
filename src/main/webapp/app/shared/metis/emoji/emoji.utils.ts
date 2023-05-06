@@ -1,4 +1,5 @@
 import { EmojiData } from '@ctrl/ngx-emoji-mart/ngx-emoji';
+import { SERVER_API_URL } from 'app/environments/environment';
 
 const EMOJI_URL = SERVER_API_URL + 'public/emoji/';
 

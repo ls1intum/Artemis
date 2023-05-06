@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpClient, HttpParams } from '@angular/common/http';
+import { SERVER_API_URL } from 'app/environments/environment';
 
 @Component({
     selector: 'jhi-dynamic-registration',

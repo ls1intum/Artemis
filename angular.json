@@ -138,6 +138,12 @@
                   "maximumWarning": "1mb",
                   "maximumError": "1.6mb"
                 }
+              ],
+              "fileReplacements": [
+                {
+                  "replace": "src/main/webapp/app/environments/environment.ts",
+                  "with": "src/main/webapp/app/environments/environment.override.ts"
+                }
               ]
             },
             "development": {
@@ -146,7 +152,13 @@
               "vendorChunk": true,
               "extractLicenses": false,
               "sourceMap": true,
-              "namedChunks": true
+              "namedChunks": true,
+              "fileReplacements": [
+                {
+                  "replace": "src/main/webapp/app/environments/environment.ts",
+                  "with": "src/main/webapp/app/environments/environment.override.ts"
+                }
+              ]
             }
           },
           "defaultConfiguration": "production"

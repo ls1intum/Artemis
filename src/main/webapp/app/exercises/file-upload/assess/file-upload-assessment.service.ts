@@ -6,6 +6,7 @@ import { Feedback } from 'app/entities/feedback.model';
 import { Result } from 'app/entities/result.model';
 import { map } from 'rxjs/operators';
 import { convertDateFromServer } from 'app/utils/date.utils';
+import { SERVER_API_URL } from 'app/environments/environment';
 
 export type EntityResponseType = HttpResponse<Result>;
 

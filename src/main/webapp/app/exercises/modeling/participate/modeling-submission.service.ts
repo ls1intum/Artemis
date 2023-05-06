@@ -7,6 +7,7 @@ import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { createRequestOption } from 'app/shared/util/request.util';
 import { stringifyCircular } from 'app/shared/util/utils';
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
+import { SERVER_API_URL } from 'app/environments/environment';
 
 export type EntityResponseType = HttpResponse<ModelingSubmission>;
 

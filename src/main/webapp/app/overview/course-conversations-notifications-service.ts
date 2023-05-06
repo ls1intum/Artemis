@@ -2,6 +2,7 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Conversation } from 'app/entities/metis/conversation/conversation.model';
 import { Observable, map, shareReplay } from 'rxjs';
+import { SERVER_API_URL } from 'app/environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class CourseConversationsNotificationsService {

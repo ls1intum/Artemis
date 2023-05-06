@@ -6,6 +6,7 @@ import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { Exercise } from 'app/entities/exercise.model';
 import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
+import { SERVER_API_URL } from 'app/environments/environment';
 
 type EntityResponseType = HttpResponse<ComplaintResponse>;
 

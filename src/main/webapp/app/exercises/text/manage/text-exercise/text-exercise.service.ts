@@ -10,6 +10,7 @@ import { TextPlagiarismResult } from 'app/exercises/shared/plagiarism/types/text
 import { PlagiarismOptions } from 'app/exercises/shared/plagiarism/types/PlagiarismOptions';
 import { TutorEffort } from 'app/entities/tutor-effort.model';
 import { TextExerciseClusterStatistics } from 'app/entities/text-exercise-cluster-statistics.model';
+import { SERVER_API_URL } from 'app/environments/environment';
 
 export type EntityResponseType = HttpResponse<TextExercise>;
 export type EntityArrayResponseType = HttpResponse<TextExercise[]>;

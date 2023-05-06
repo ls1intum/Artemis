@@ -22,12 +22,13 @@ import { ParticipationService } from 'app/exercises/shared/participation/partici
 import { AssessmentObject } from './guided-tour-task.model';
 import { TutorParticipationService } from 'app/exercises/shared/dashboards/tutor/tutor-participation.service';
 import { CourseManagementService } from '../course/manage/course-management.service';
+import { SERVER_API_URL } from 'app/environments/environment';
 
 export type EntityResponseType = HttpResponse<GuidedTourSetting[]>;
 
 @Injectable({ providedIn: 'root' })
 export class GuidedTourService {
-    public resourceUrl = SERVER_API_URL + 'api/guided-tour-settings';
+    public resourceUrl = `${SERVER_API_URL}api/guided-tour-settings`;
     public guidedTourSettings: GuidedTourSetting[];
     public currentTour?: GuidedTour;
 

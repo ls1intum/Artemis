@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import { SERVER_API_URL } from 'app/environments/environment';
 
 type EntityResponseType = HttpResponse<ExerciseGroup>;
 type EntityArrayResponseType = HttpResponse<ExerciseGroup[]>;

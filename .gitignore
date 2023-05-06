@@ -190,6 +190,11 @@ repos-download/
 /src/test/cypress/videos/
 /src/test/cypress/build
 
+#################################
+# Angular Build Environment Files
+#################################
+/src/main/webapp/app/environments/environment*.ts
+
 ######################
 # Artemis configs
 ######################

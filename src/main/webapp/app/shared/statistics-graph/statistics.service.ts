@@ -8,6 +8,7 @@ import { map } from 'rxjs/operators';
 import { round } from 'app/shared/util/utils';
 import { convertDateFromServer } from 'app/utils/date.utils';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
+import { SERVER_API_URL } from 'app/environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class StatisticsService {

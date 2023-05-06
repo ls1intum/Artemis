@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { FileType } from '../../programming/shared/code-editor/model/code-editor.model';
 import { map } from 'rxjs/operators';
+import { SERVER_API_URL } from 'app/environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class RepositoryService {

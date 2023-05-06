@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { map } from 'rxjs/operators';
 import { OneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
+import { SERVER_API_URL } from 'app/environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class OneToOneChatService {

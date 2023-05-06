@@ -54,6 +54,7 @@ import { ThemeService } from 'app/core/theme/theme.service';
 import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
 import { onError } from 'app/shared/util/global.utils';
 import { StudentExam } from 'app/entities/student-exam.model';
+import { SERVER_API_URL } from 'app/environments/environment';
 
 @Component({
     selector: 'jhi-navbar',

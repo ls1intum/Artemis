@@ -12,6 +12,7 @@ import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-t
 import { ProgrammingExerciseGradingService, ProgrammingExerciseTestCaseUpdate } from '../../services/programming-exercise-grading.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { map, mergeMap } from 'rxjs/operators';
+import { SERVER_API_URL } from 'app/environments/environment';
 
 @Injectable()
 export class ProgrammingExerciseTaskService {

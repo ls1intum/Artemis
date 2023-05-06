@@ -7,6 +7,7 @@ import { map } from 'rxjs/operators';
 import { PageableSearch, SearchResult } from 'app/shared/table/pageable-table';
 import { captureException } from '@sentry/angular-ivy';
 import { Course } from 'app/entities/course.model';
+import { SERVER_API_URL } from 'app/environments/environment';
 
 export type EntityResponseType = HttpResponse<GradingScale>;
 export type EntityArrayResponseType = HttpResponse<GradingScale[]>;

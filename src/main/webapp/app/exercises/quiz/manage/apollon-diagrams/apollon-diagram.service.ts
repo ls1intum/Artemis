@@ -5,6 +5,7 @@ import { Observable, tap } from 'rxjs';
 import { ApollonDiagram } from 'app/entities/apollon-diagram.model';
 import { createRequestOption } from 'app/shared/util/request.util';
 import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
+import { SERVER_API_URL } from 'app/environments/environment';
 
 export type EntityResponseType = HttpResponse<ApollonDiagram>;
 

@@ -1,4 +1,5 @@
 import { HttpRequest } from '@angular/common/http';
+import { SERVER_API_URL } from 'app/environments/environment';
 
 /**
  * Tests if given Request is sent to Artemis Server

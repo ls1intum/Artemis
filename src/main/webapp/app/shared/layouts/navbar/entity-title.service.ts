@@ -2,6 +2,7 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { captureException } from '@sentry/angular-ivy';
 import { EMPTY, Observable, ReplaySubject, Subject } from 'rxjs';
+import { SERVER_API_URL } from 'app/environments/environment';
 
 export enum EntityType {
     COURSE = 'COURSE',

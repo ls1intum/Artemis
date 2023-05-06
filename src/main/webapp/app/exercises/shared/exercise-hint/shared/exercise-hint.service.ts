@@ -5,6 +5,7 @@ import { Observable, tap } from 'rxjs';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ExerciseHint, HintType } from 'app/entities/hestia/exercise-hint.model';
 import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
+import { SERVER_API_URL } from 'app/environments/environment';
 
 export type ExerciseHintResponse = HttpResponse<ExerciseHint>;
 

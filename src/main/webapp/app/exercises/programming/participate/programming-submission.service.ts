@@ -13,6 +13,7 @@ import { ProgrammingExerciseStudentParticipation } from 'app/entities/participat
 import { findLatestResult } from 'app/shared/util/utils';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
+import { SERVER_API_URL } from 'app/environments/environment';
 
 export enum ProgrammingSubmissionState {
     // The last submission of participation has a result.

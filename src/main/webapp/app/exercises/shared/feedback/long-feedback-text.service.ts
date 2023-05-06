@@ -4,6 +4,7 @@ import { LongFeedbackText } from 'app/entities/long-feedback-text.model';
 import { Observable, Subject, Subscription, distinctUntilChanged, tap } from 'rxjs';
 import { Cacheable } from 'ts-cacheable';
 import { AccountService } from 'app/core/auth/account.service';
+import { SERVER_API_URL } from 'app/environments/environment';
 
 export type LongFeedbackResponse = HttpResponse<LongFeedbackText>;
 

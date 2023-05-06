@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { SERVER_API_URL } from 'app/environments/environment';
 
 export class Credentials {
     constructor(public username: string, public password: string, public rememberMe: boolean) {}

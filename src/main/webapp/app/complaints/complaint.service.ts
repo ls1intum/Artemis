@@ -10,6 +10,7 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
 import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
 import { Result } from 'app/entities/result.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { SERVER_API_URL } from 'app/environments/environment';
 
 export type EntityResponseType = HttpResponse<Complaint>;
 export type EntityResponseTypeArray = HttpResponse<Complaint[]>;

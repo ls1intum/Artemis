@@ -12,6 +12,7 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { Exercise } from 'app/entities/exercise.model';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { TranslateService } from '@ngx-translate/core';
+import { SERVER_API_URL } from 'app/environments/environment';
 
 export interface IAccountService {
     save: (account: any) => Observable<HttpResponse<any>>;

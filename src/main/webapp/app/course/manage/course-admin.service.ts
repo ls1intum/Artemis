@@ -5,6 +5,7 @@ import { map } from 'rxjs/operators';
 import { Course } from 'app/entities/course.model';
 import { objectToJsonBlob } from 'app/utils/blob-util';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { SERVER_API_URL } from 'app/environments/environment';
 
 export type EntityResponseType = HttpResponse<Course>;
 export type EntityArrayResponseType = HttpResponse<Course[]>;

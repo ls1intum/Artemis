@@ -6,6 +6,7 @@ import { createRequestOption } from 'app/shared/util/request.util';
 import { Router } from '@angular/router';
 import { SystemNotification } from 'app/entities/system-notification.model';
 import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
+import { SERVER_API_URL } from 'app/environments/environment';
 
 type EntityResponseType = HttpResponse<SystemNotification>;
 type EntityArrayResponseType = HttpResponse<SystemNotification[]>;
