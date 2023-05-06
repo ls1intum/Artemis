@@ -24,6 +24,7 @@ import de.tum.in.www1.artemis.domain.iris.IrisMessage;
 import de.tum.in.www1.artemis.domain.iris.IrisMessageContent;
 import de.tum.in.www1.artemis.domain.iris.IrisMessageSender;
 import de.tum.in.www1.artemis.domain.iris.IrisSession;
+import de.tum.in.www1.artemis.service.dto.OpenAIChatResponseDTO;
 
 /**
  * A service which sends REST requests to the GPT-3.5 API to generate responses to Iris conversations.
@@ -102,13 +103,8 @@ public class IrisGPT3_5Service implements IrisModel {
             String responseBody = restTemplate.postForObject(apiURL.toString(), request, String.class);
             log.debug("Response body: {}", responseBody);
 
-            Map<?, ?> response = jsonMapper.readValue(responseBody, Map.class);
-
-            // TODO: Handle errors if response is in error format
-            List<?> choices = (List<?>) response.get("choices");
-            Map<?, ?> choice = (Map<?, ?>) choices.get(0);
-            Map<?, ?> message = (Map<?, ?>) choice.get("message");
-            String content = (String) message.get("content");
+            OpenAIChatResponseDTO response = jsonMapper.readValue(responseBody, OpenAIChatResponseDTO.class);
+            String content = response.getChoices().get(0).getMessage().getContent();
 
             return CompletableFuture.completedFuture(content);
         }
