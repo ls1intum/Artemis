@@ -33,6 +33,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.DefaultChannelType;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
@@ -1016,7 +1017,7 @@ public class CourseResource {
             }
             courseService.addUserToGroup(userToAddToGroup.get(), group, role);
 
-            List<String> channelNames = Arrays.asList("tech-support", "announcement", "organization", "random");
+            final List<String> channelNames = Arrays.stream(DefaultChannelType.values()).toList().stream().map(DefaultChannelType::getName).toList();
 
             List<Course> courses = switch (role) {
                 case STUDENT -> courseRepository.findCoursesByStudentGroupName(group);
