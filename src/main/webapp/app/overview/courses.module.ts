@@ -23,6 +23,7 @@ import { HeaderCourseComponent } from 'app/overview/header-course.component';
 import { ArtemisExamSharedModule } from 'app/exam/shared/exam-shared.module';
 import { CourseExamAttemptReviewDetailComponent } from 'app/overview/course-exams/course-exam-attempt-review-detail/course-exam-attempt-review-detail.component';
 import { CourseChatbotComponent } from 'app/overview/course-chatbot/course-chatbot.component';
+import { CourseChatbotModule } from './course-chatbot/course-chatbot.module';
 
 @NgModule({
     imports: [
@@ -40,6 +41,7 @@ import { CourseChatbotComponent } from 'app/overview/course-chatbot/course-chatb
         NgxChartsModule,
         ArtemisExamSharedModule,
         PieChartModule,
+        CourseChatbotModule,
     ],
     declarations: [
         CoursesComponent,

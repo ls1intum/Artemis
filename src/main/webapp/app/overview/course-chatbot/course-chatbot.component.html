@@ -1,5 +1,8 @@
 <div class="chatbot-button">
-    <button class="btn btn-primary btn-md rounded-circle">
+    <button class="btn btn-primary btn-md rounded-circle" *ngIf="chatAccepted !== 'true'" (click)="openDialog()">
+        <fa-icon size="lg" [icon]="faCommentDots"></fa-icon>
+    </button>
+    <button class="btn btn-primary btn-md rounded-circle" *ngIf="chatAccepted === 'true'" (click)="openChat()">
         <fa-icon size="lg" [icon]="faCommentDots"></fa-icon>
     </button>
 </div>
