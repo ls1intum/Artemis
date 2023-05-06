@@ -29,7 +29,7 @@ public class LearningGoal extends DomainObject {
     private Integer masteryThreshold;
 
     /**
-     * The type of learning goal according to Bloom's revised taxonomy.
+     * The type of competency according to Bloom's revised taxonomy.
      *
      * @see <a href="https://en.wikipedia.org/wiki/Bloom%27s_taxonomy">Wikipedia</a>
      */
@@ -44,7 +44,7 @@ public class LearningGoal extends DomainObject {
     private Course course;
 
     @ManyToMany(mappedBy = "competencies")
-    @JsonIgnoreProperties({ "learningGoals", "course" })
+    @JsonIgnoreProperties({ "competencies", "course" })
     private Set<Exercise> exercises = new HashSet<>();
 
     @ManyToMany(mappedBy = "learningGoals")
@@ -131,14 +131,14 @@ public class LearningGoal extends DomainObject {
     }
 
     /**
-     * Adds the lecture unit to the learning goal (bidirectional)
+     * Adds the lecture unit to the competency (bidirectional)
      * Note: ExerciseUnits are not accepted, should be set via the connected exercise (see {@link #addExercise(Exercise)})
      *
      * @param lectureUnit The lecture unit to add
      */
     public void addLectureUnit(LectureUnit lectureUnit) {
         if (lectureUnit instanceof ExerciseUnit) {
-            // The learning goals of ExerciseUnits are taken from the corresponding exercise
+            // The competencies of ExerciseUnits are taken from the corresponding exercise
             throw new IllegalArgumentException("ExerciseUnits can not be connected to competencies");
         }
         this.lectureUnits.add(lectureUnit);
@@ -146,14 +146,14 @@ public class LearningGoal extends DomainObject {
     }
 
     /**
-     * Removes the lecture unit from the learning goal (bidirectional)
+     * Removes the lecture unit from the competency (bidirectional)
      * Note: ExerciseUnits are not accepted, should be set via the connected exercise (see {@link #removeExercise(Exercise)})
      *
      * @param lectureUnit The lecture unit to remove
      */
     public void removeLectureUnit(LectureUnit lectureUnit) {
         if (lectureUnit instanceof ExerciseUnit) {
-            // The learning goals of ExerciseUnits are taken from the corresponding exercise
+            // The competencies of ExerciseUnits are taken from the corresponding exercise
             throw new IllegalArgumentException("ExerciseUnits can not be disconnected from competencies");
         }
         this.lectureUnits.remove(lectureUnit);
@@ -177,7 +177,7 @@ public class LearningGoal extends DomainObject {
     }
 
     /**
-     * Ensure that exercise units are connected to learning goals through the corresponding exercise
+     * Ensure that exercise units are connected to competencies through the corresponding exercise
      */
     @PrePersist
     @PreUpdate
