@@ -50,7 +50,8 @@
               "dagre",
               "webcola",
               "rfdc",
-              "js-zip"
+              "jszip",
+              "react-dom/client"
             ],
             "outputPath": "build/resources/main/static/",
             "index": "src/main/webapp/index.html",
@@ -128,12 +129,12 @@
               "vendorChunk": false,
               "buildOptimizer": true,
               "serviceWorker": true,
-              "ngswConfigPath": "ngsw-config.json",
+              "ngswConfigPath": "src/main/webapp/ngsw-config.json",
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "2.4mb",
-                  "maximumError": "2.5mb"
+                  "maximumWarning": "2.5mb",
+                  "maximumError": "2.6mb"
                 },
                 {
                   "type": "anyComponentStyle",
@@ -196,7 +197,6 @@
       "environment": "all"
     },
     "schematicCollections": [
-      "@angular-eslint/schematics",
       "@angular-eslint/schematics"
     ]
   }
