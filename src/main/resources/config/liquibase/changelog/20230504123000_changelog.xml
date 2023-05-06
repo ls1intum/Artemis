@@ -1,0 +1,57 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.18.xsd">
+    <changeSet author="baboci" id="20230504123000-01" context="prod">
+        <comment>Delete conversations and related data for deleted courses which were not removed previously in several steps</comment>
+        <comment>Step 1: Delete reactions for posts of conversations in deleted courses</comment>
+        <sql>
+            DELETE r
+            FROM conversation c
+            LEFT JOIN post p ON c.id = p.conversation_id
+            LEFT JOIN reaction r ON p.id = r.post_id
+            WHERE c.course_id NOT IN (SELECT id FROM course);
+        </sql>
+        <comment>Step 2: Delete reactions for answer posts of conversations in deleted courses</comment>
+        <sql>
+            DELETE r
+            FROM conversation c
+            LEFT JOIN post p ON c.id = p.conversation_id
+            LEFT JOIN answer_post a ON p.id = a.post_id
+            LEFT JOIN reaction r ON a.id = r.answer_post_id
+            WHERE c.course_id NOT IN (SELECT id FROM course);
+        </sql>
+        <comment>Step 3: Delete answer posts of conversations in deleted courses</comment>
+        <sql>
+            DELETE a
+            FROM conversation c
+            LEFT JOIN post p ON p.conversation_id = c.id
+            LEFT JOIN answer_post a ON a.post_id = p.id
+            WHERE c.course_id NOT IN (SELECT id FROM course);
+        </sql>
+        <comment>Step 4: Delete posts of conversations in deleted courses</comment>
+        <sql>
+            DELETE p
+            FROM conversation c
+            LEFT JOIN post p ON p.conversation_id = c.id
+            WHERE c.course_id NOT IN (SELECT id FROM course);
+        </sql>
+        <comment>Step 5: Delete participants of conversations in deleted courses</comment>
+        <sql>
+            DELETE cp
+            FROM conversation c
+            LEFT JOIN conversation_participant cp ON c.id = cp.conversation_id
+            WHERE c.course_id NOT IN (SELECT id FROM course);
+        </sql>
+        <comment>Step 6: Delete conversations in deleted courses</comment>
+        <sql>
+            DELETE FROM conversation
+            WHERE course_id NOT IN (SELECT id FROM course);
+        </sql>
+    </changeSet>
+    <changeSet author="baboci" id="20230504123000-02">
+        <comment>Add a foreign key constraint so that the same issue does not happen again</comment>
+        <addForeignKeyConstraint baseTableName="conversation" baseColumnNames="course_id" constraintName="FK_course_id" referencedTableName="course"
+                                 referencedColumnNames="id" validate="true" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" />
+    </changeSet>
+</databaseChangeLog>
