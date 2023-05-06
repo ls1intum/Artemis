@@ -32,9 +32,9 @@ public class BambooTriggerService implements ContinuousIntegrationTriggerService
     }
 
     /**
-     * Trigger a build on the Bamboo continuous integration server for the build plan in the given participation.
+     * Triggers a build for the build plan in the given participation.
      *
-     * @param participation the participation with the id of the build plan that should be triggered
+     * @param participation the participation with the id of the build plan that should be triggered.
      */
     @Override
     public void triggerBuild(ProgrammingExerciseParticipation participation) throws BambooException {

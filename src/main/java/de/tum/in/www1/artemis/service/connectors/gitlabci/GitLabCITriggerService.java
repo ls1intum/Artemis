@@ -26,11 +26,6 @@ public class GitLabCITriggerService implements ContinuousIntegrationTriggerServi
         this.urlService = urlService;
     }
 
-    /**
-     * Trigger a build on the GitLabCI continuous integration server for the given participation.
-     *
-     * @param participation the participation with the id of the build plan that should be triggered
-     */
     @Override
     public void triggerBuild(ProgrammingExerciseParticipation participation) throws ContinuousIntegrationException {
         triggerBuild(participation.getVcsRepositoryUrl(), participation.getProgrammingExercise().getBranch());
