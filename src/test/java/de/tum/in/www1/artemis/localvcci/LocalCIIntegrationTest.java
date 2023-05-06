@@ -51,7 +51,6 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
         commitHash = localVCLocalCITestService.commitFile(studentAssignmentRepository.localRepoFile.toPath(), programmingExercise.getPackageFolderName(),
                 studentAssignmentRepository.localGit);
         studentAssignmentRepository.localGit.push().call();
-        localVCLocalCITestService.mockCommitHash(dockerClient, commitHash);
         // Mock dockerClient.copyArchiveFromContainerCmd() such that it returns the XMLs containing the test results.
         localVCLocalCITestService.mockTestResults(dockerClient, PARTLY_SUCCESSFUL_TEST_RESULTS_PATH);
         // Mock dockerClient.copyArchiveFromContainerCmd() such that it returns a dummy commit hash for the tests repository.
@@ -194,9 +193,11 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
 
     @Test
     void testCannotRetrieveCommitHash() {
+        // An IO Exception happens when trying to retrieve the commit hash for the test repository. This should lead to a build result that indicates a failed build.
+
         // Return an InputStream from dockerClient.copyArchiveFromContainerCmd().exec() such that repositoryTarInputStream.getNextTarEntry() throws an IOException.
         CopyArchiveFromContainerCmd copyArchiveFromContainerCmd = mock(CopyArchiveFromContainerCmd.class);
-        ArgumentMatcher<String> expectedPathMatcher = path -> path.matches("/repositories/assignment-repository/.git/refs/heads/[^/]+");
+        ArgumentMatcher<String> expectedPathMatcher = path -> path.matches("/repositories/test-repository/.git/refs/heads/[^/]+");
         doReturn(copyArchiveFromContainerCmd).when(dockerClient).copyArchiveFromContainerCmd(anyString(), argThat(expectedPathMatcher));
         when(copyArchiveFromContainerCmd.exec()).thenReturn(new InputStream() {
 

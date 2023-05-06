@@ -12,14 +12,21 @@ import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCPrePushHook;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCPushFilter;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCServletService;
 
+/**
+ * This class configures the JGit Servlet, which is used to receive Git push and fetch requests for local VC.
+ */
 public class ArtemisGitServlet extends GitServlet {
 
+    /**
+     * Constructor for ArtemisGitServlet.
+     *
+     * @param localVCServletService   the service for authenticating and authorizing users and retrieving the repository from disk
+     * @param localCIConnectorService the service for triggering a new build after a successful push
+     */
     public ArtemisGitServlet(LocalVCServletService localVCServletService, Optional<LocalCIConnectorService> localCIConnectorService) {
-        super();
-
         this.setRepositoryResolver((req, name) -> {
             // req – the current request, may be used to inspect session state including cookies or user authentication.
-            // name – name of the repository, as parsed out of the URL (everything after /git).
+            // name – name of the repository, as parsed out of the URL (everything after /git/).
 
             // Return the opened repository instance.
             return localVCServletService.resolveRepository(name);

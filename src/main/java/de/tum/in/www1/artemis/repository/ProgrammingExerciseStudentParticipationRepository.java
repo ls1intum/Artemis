@@ -99,13 +99,27 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
     Optional<ProgrammingExerciseStudentParticipation> findByExerciseIdAndTeamId(Long exerciseId, Long teamId);
 
     @Query("""
-            SELECT participation
+            SELECT DISTINCT participation
+            FROM ProgrammingExerciseStudentParticipation participation
+                LEFT JOIN FETCH participation.team team
+                LEFT JOIN FETCH team.students
+            WHERE participation.exercise.id = :#{#exerciseId}
+                AND participation.team.shortName = :#{#teamShortName}
+            """)
+    Optional<ProgrammingExerciseStudentParticipation> findWithEagerStudentsByExerciseIdAndTeamShortName(@Param("exerciseId") Long exerciseId,
+            @Param("teamShortName") String teamShortName);
+
+    @Query("""
+            SELECT DISTINCT participation
             FROM ProgrammingExerciseStudentParticipation participation
                 LEFT JOIN FETCH participation.submissions
+                LEFT JOIN FETCH participation.team team
+                LEFT JOIN FETCH team.students
             WHERE participation.exercise.id = :#{#exerciseId}
-                AND participation.team.id = :#{#teamId}
+                AND participation.team.shortName = :#{#teamShortName}
             """)
-    Optional<ProgrammingExerciseStudentParticipation> findWithSubmissionsByExerciseIdAndTeamId(@Param("exerciseId") Long exerciseId, @Param("teamId") Long teamId);
+    Optional<ProgrammingExerciseStudentParticipation> findWithSubmissionsAndEagerStudentsByExerciseIdAndTeamShortName(@Param("exerciseId") Long exerciseId,
+            @Param("teamShortName") String teamShortName);
 
     List<ProgrammingExerciseStudentParticipation> findByExerciseId(Long exerciseId);
 

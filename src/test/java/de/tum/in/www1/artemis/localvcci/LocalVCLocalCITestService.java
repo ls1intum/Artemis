@@ -55,6 +55,9 @@ import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUrl;
 import de.tum.in.www1.artemis.util.GitUtilService;
 import de.tum.in.www1.artemis.util.LocalRepository;
 
+/**
+ * This class contains helper methods for all tests of the local VC and local CI system..
+ */
 @Service
 public class LocalVCLocalCITestService {
 
@@ -78,16 +81,6 @@ public class LocalVCLocalCITestService {
 
     public void setPort(int port) {
         this.port = port;
-    }
-
-    /**
-     * Mock dockerClient.copyArchiveFromContainerCmd() such that it returns the commitHash for the assignment repository.
-     *
-     * @param dockerClient the DockerClient to mock.
-     * @param commitHash   the commit hash to return.
-     */
-    public void mockCommitHash(DockerClient dockerClient, String commitHash) throws IOException {
-        mockInputStreamReturnedFromContainer(dockerClient, "/repositories/assignment-repository/.git/refs/heads/[^/]+", Map.of("assignmentCommitHash", commitHash));
     }
 
     /**

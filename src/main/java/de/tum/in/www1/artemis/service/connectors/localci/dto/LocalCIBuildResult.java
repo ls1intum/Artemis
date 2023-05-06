@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.localci.dto;
 
 import java.time.ZonedDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -96,7 +97,7 @@ public class LocalCIBuildResult extends AbstractBuildResultNotificationDTO {
     @Override
     public List<BuildLogEntry> extractBuildLogs(ProgrammingLanguage programmingLanguage) {
         // Not implemented for local CI yet.
-        return null;
+        return Collections.emptyList();
     }
 
     @Override
@@ -107,13 +108,13 @@ public class LocalCIBuildResult extends AbstractBuildResultNotificationDTO {
     @Override
     public List<StaticCodeAnalysisReportDTO> getStaticCodeAnalysisReports() {
         // Static code analysis is not implemented for local CI yet.
-        return null;
+        return Collections.emptyList();
     }
 
     @Override
     public List<TestwiseCoverageReportDTO> getTestwiseCoverageReports() {
         // Testwise coverage is not implemented for local CI yet.
-        return null;
+        return Collections.emptyList();
     }
 
     /**
@@ -139,8 +140,8 @@ public class LocalCIBuildResult extends AbstractBuildResultNotificationDTO {
     /**
      * Represents the information about one test case, including the test case's name and potential error messages that indicate what went wrong.
      *
-     * @param name
-     * @param errors
+     * @param name   name of the test case.
+     * @param errors list of error messages.
      */
     public record LocalCITestJobDTO(String name, List<String> errors) implements TestCaseDTOInterface {
 

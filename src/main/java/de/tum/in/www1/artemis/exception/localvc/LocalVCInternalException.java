@@ -12,7 +12,7 @@ public class LocalVCInternalException extends VersionControlException {
         super(message);
     }
 
-    public LocalVCInternalException(String message, Throwable e) {
+    public LocalVCInternalException(String message, Exception e) {
         super(message, e);
     }
 }

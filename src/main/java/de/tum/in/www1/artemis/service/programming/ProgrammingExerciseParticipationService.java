@@ -100,15 +100,16 @@ public class ProgrammingExerciseParticipationService {
      */
     public ProgrammingExerciseStudentParticipation findTeamParticipationByExerciseAndTeamShortNameOrThrow(ProgrammingExercise exercise, String teamShortName,
             boolean withSubmissions) {
-        Team team = teamRepository.findOneByExerciseIdAndShortNameWithEagerStudentsOrThrow(exercise.getId(), teamShortName);
 
         Optional<ProgrammingExerciseStudentParticipation> participationOptional;
 
+        // It is important to fetch all students of the team here, because the local VC and local CI system use this participation to check if the authenticated user is part of the
+        // team.
         if (withSubmissions) {
-            participationOptional = studentParticipationRepository.findWithSubmissionsByExerciseIdAndTeamId(exercise.getId(), team.getId());
+            participationOptional = studentParticipationRepository.findWithSubmissionsAndEagerStudentsByExerciseIdAndTeamShortName(exercise.getId(), teamShortName);
         }
         else {
-            participationOptional = studentParticipationRepository.findByExerciseIdAndTeamId(exercise.getId(), team.getId());
+            participationOptional = studentParticipationRepository.findWithEagerStudentsByExerciseIdAndTeamShortName(exercise.getId(), teamShortName);
         }
 
         if (participationOptional.isEmpty()) {

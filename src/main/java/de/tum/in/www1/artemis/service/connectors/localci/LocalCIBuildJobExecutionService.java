@@ -229,75 +229,100 @@ public class LocalCIBuildJobExecutionService {
     private LocalCIBuildResult parseTestResults(TarArchiveInputStream testResultsTarInputStream, String assignmentRepoBranchName, String assignmentRepoCommitHash,
             String testsRepoCommitHash, ZonedDateTime buildCompletedDate) throws IOException, XMLStreamException {
 
-        boolean isBuildSuccessful = true;
-
         List<LocalCIBuildResult.LocalCITestJobDTO> failedTests = new ArrayList<>();
         List<LocalCIBuildResult.LocalCITestJobDTO> successfulTests = new ArrayList<>();
 
         TarArchiveEntry tarEntry;
         while ((tarEntry = testResultsTarInputStream.getNextTarEntry()) != null) {
 
-            if (tarEntry.isDirectory() || !tarEntry.getName().endsWith(".xml") || !tarEntry.getName().startsWith("test/TEST-")) {
+            // Go through all tar entries that are test result files.
+            if (!isValidTestResultFile(tarEntry)) {
                 continue;
             }
 
             // Read the contents of the tar entry as a string.
-            String xmlString = IOUtils.toString(testResultsTarInputStream, StandardCharsets.UTF_8);
+            String xmlString = readTarEntryContent(testResultsTarInputStream);
 
-            // Create an XML stream reader for the string.
-            XMLStreamReader xmlStreamReader = localCIXMLInputFactory.createXMLStreamReader(new StringReader(xmlString));
-
-            // Move to the first start element.
-            while (xmlStreamReader.hasNext() && !xmlStreamReader.isStartElement()) {
-                xmlStreamReader.next();
-            }
-
-            // Check if the start element is the "testsuite" node.
-            if (!("testsuite".equals(xmlStreamReader.getLocalName()))) {
-                throw new IllegalStateException("Expected testsuite element, but got " + xmlStreamReader.getLocalName());
-            }
-
-            // Go through all testcase nodes.
-            while (xmlStreamReader.hasNext()) {
-                xmlStreamReader.next();
-
-                if (!xmlStreamReader.isStartElement() || !("testcase".equals(xmlStreamReader.getLocalName()))) {
-                    continue;
-                }
-
-                // Now we are at the start of a "testcase" node.
-
-                // Extract the name attribute from the "testcase" node.
-                String name = xmlStreamReader.getAttributeValue(null, "name");
-
-                // Check if there is a failure node inside the testcase node.
-                // Call next() until there is an end element (no failure node exists inside the testcase node) or a start element (failure node exists inside the
-                // testcase node).
-                xmlStreamReader.next();
-                while (!(xmlStreamReader.isEndElement() || xmlStreamReader.isStartElement())) {
-                    xmlStreamReader.next();
-                }
-                if (xmlStreamReader.isStartElement() && "failure".equals(xmlStreamReader.getLocalName())) {
-                    // Extract the message attribute from the "failure" node.
-                    String error = xmlStreamReader.getAttributeValue(null, "message");
-
-                    // Add the failed test to the list of failed tests.
-                    List<String> errors = error != null ? List.of(error) : List.of();
-                    failedTests.add(new LocalCIBuildResult.LocalCITestJobDTO(name, errors));
-
-                    // If there is at least one test case with a failure node, the build is not successful.
-                    isBuildSuccessful = false;
-                }
-                else {
-                    // Add the successful test to the list of successful tests.
-                    successfulTests.add(new LocalCIBuildResult.LocalCITestJobDTO(name, List.of()));
-                }
-            }
-            // Close the XML stream reader.
-            xmlStreamReader.close();
+            processTestResultFile(xmlString, failedTests, successfulTests);
         }
 
-        return constructBuildResult(failedTests, successfulTests, assignmentRepoBranchName, assignmentRepoCommitHash, testsRepoCommitHash, isBuildSuccessful, buildCompletedDate);
+        return constructBuildResult(failedTests, successfulTests, assignmentRepoBranchName, assignmentRepoCommitHash, testsRepoCommitHash, !failedTests.isEmpty(),
+                buildCompletedDate);
+    }
+
+    private boolean isValidTestResultFile(TarArchiveEntry tarArchiveEntry) {
+        return !tarArchiveEntry.isDirectory() && tarArchiveEntry.getName().endsWith(".xml") && tarArchiveEntry.getName().startsWith("test/TEST-")
+                && tarArchiveEntry.getName().endsWith(".xml");
+    }
+
+    private String readTarEntryContent(TarArchiveInputStream tarArchiveInputStream) throws IOException {
+        return IOUtils.toString(tarArchiveInputStream, StandardCharsets.UTF_8);
+    }
+
+    /**
+     * Processes a test result file and adds the failed and successful tests to the corresponding lists.
+     *
+     * @param testResultFileString The string that represents the test results XML file.
+     * @param failedTests          The list of failed tests.
+     * @param successfulTests      The list of successful tests.
+     * @throws XMLStreamException    if the XML stream reader cannot be created or there is an error while parsing the XML file
+     * @throws IllegalStateException if the first start element of the XML file is not a "testsuite" node
+     */
+    private void processTestResultFile(String testResultFileString, List<LocalCIBuildResult.LocalCITestJobDTO> failedTests,
+            List<LocalCIBuildResult.LocalCITestJobDTO> successfulTests) throws XMLStreamException {
+        // Create an XML stream reader for the string that represents the test results XML file.
+        XMLStreamReader xmlStreamReader = localCIXMLInputFactory.createXMLStreamReader(new StringReader(testResultFileString));
+
+        // Move to the first start element.
+        while (xmlStreamReader.hasNext() && !xmlStreamReader.isStartElement()) {
+            xmlStreamReader.next();
+        }
+
+        // Check if the start element is the "testsuite" node.
+        if (!("testsuite".equals(xmlStreamReader.getLocalName()))) {
+            throw new IllegalStateException("Expected testsuite element, but got " + xmlStreamReader.getLocalName());
+        }
+
+        // Go through all testcase nodes.
+        while (xmlStreamReader.hasNext()) {
+            xmlStreamReader.next();
+
+            if (!xmlStreamReader.isStartElement() || !("testcase".equals(xmlStreamReader.getLocalName()))) {
+                continue;
+            }
+
+            // Now we are at the start of a "testcase" node.
+            processTestCaseNode(xmlStreamReader, failedTests, successfulTests);
+        }
+
+        // Close the XML stream reader.
+        xmlStreamReader.close();
+    }
+
+    private void processTestCaseNode(XMLStreamReader xmlStreamReader, List<LocalCIBuildResult.LocalCITestJobDTO> failedTests,
+            List<LocalCIBuildResult.LocalCITestJobDTO> successfulTests) throws XMLStreamException {
+        // Extract the name attribute from the "testcase" node. This is the name of the test case.
+        String name = xmlStreamReader.getAttributeValue(null, "name");
+
+        // Check if there is a failure node inside the testcase node.
+        // Call next() until there is an end element (no failure node exists inside the testcase node) or a start element (failure node exists inside the
+        // testcase node).
+        xmlStreamReader.next();
+        while (!(xmlStreamReader.isEndElement() || xmlStreamReader.isStartElement())) {
+            xmlStreamReader.next();
+        }
+        if (xmlStreamReader.isStartElement() && "failure".equals(xmlStreamReader.getLocalName())) {
+            // Extract the message attribute from the "failure" node.
+            String error = xmlStreamReader.getAttributeValue(null, "message");
+
+            // Add the failed test to the list of failed tests.
+            List<String> errors = error != null ? List.of(error) : List.of();
+            failedTests.add(new LocalCIBuildResult.LocalCITestJobDTO(name, errors));
+        }
+        else {
+            // Add the successful test to the list of successful tests.
+            successfulTests.add(new LocalCIBuildResult.LocalCITestJobDTO(name, List.of()));
+        }
     }
 
     /**

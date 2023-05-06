@@ -27,14 +27,6 @@ public interface TeamRepository extends JpaRepository<Team, Long> {
 
     List<Team> findAllByExerciseCourseIdAndShortName(@Param("courseId") Long courseId, @Param("shortName") String shortName);
 
-    @Query(value = """
-            SELECT DISTINCT team from Team team
-                LEFT JOIN FETCH team.students
-            WHERE team.exercise.id = :#{#exerciseId}
-                AND team.shortName = :#{#shortName}
-            """)
-    List<Team> findAllByExerciseIdAndShortNameWithEagerStudents(@Param("exerciseId") Long exerciseId, @Param("shortName") String shortName);
-
     /**
      * Fetches the number of teams created for an exercise
      *
@@ -129,26 +121,5 @@ public interface TeamRepository extends JpaRepository<Team, Long> {
 
     default Team findByIdElseThrow(long teamId) throws EntityNotFoundException {
         return findById(teamId).orElseThrow(() -> new EntityNotFoundException("Team", teamId));
-    }
-
-    /**
-     * Find a team by its short name in a specific course.
-     *
-     * @param exerciseId the id of the exercise.
-     * @param shortName  the short name of the team.
-     * @return the team with the given short name in the given course.
-     * @throws EntityNotFoundException if no team with the given short name exists in the given course.
-     */
-    default Team findOneByExerciseIdAndShortNameWithEagerStudentsOrThrow(Long exerciseId, String shortName) throws EntityNotFoundException {
-        List<Team> teams = findAllByExerciseIdAndShortNameWithEagerStudents(exerciseId, shortName);
-
-        if (teams.size() == 0) {
-            throw new EntityNotFoundException("Team with short name " + shortName + " not found in exercise " + exerciseId);
-        }
-        else if (teams.size() > 1) {
-            throw new EntityNotFoundException("Team short name " + shortName + " is not unique in exercise " + exerciseId);
-        }
-
-        return teams.get(0);
     }
 }

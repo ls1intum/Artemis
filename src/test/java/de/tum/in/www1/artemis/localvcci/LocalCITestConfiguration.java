@@ -60,7 +60,7 @@ public class LocalCITestConfiguration {
         doReturn(createContainerCmd).when(dockerClient).createContainerCmd(anyString());
         doReturn(createContainerCmd).when(createContainerCmd).withName(anyString());
         doReturn(createContainerCmd).when(createContainerCmd).withHostConfig(any());
-        doReturn(createContainerCmd).when(createContainerCmd).withEnv(anyString(), anyString());
+        doReturn(createContainerCmd).when(createContainerCmd).withEnv(anyString(), anyString(), anyString());
         doReturn(createContainerCmd).when(createContainerCmd).withCmd(anyString(), anyString(), anyString());
         doReturn(createContainerResponse).when(createContainerCmd).exec();
 
