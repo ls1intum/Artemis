@@ -15,6 +15,10 @@ import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
 
+/**
+ * An IrisSession represents a conversation between a user and an Artemis bot.
+ * Currently, IrisSessions are only used to help students with programming exercises.
+ */
 @Entity
 @Table(name = "iris_session")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)

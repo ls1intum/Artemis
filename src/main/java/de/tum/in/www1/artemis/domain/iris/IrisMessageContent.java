@@ -14,6 +14,11 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.DomainObject;
 
+/**
+ * An IrisMessageContent represents a part of the content of an IrisMessage.
+ * For now, IrisMessageContent only supports text content.
+ * In the future, we might want to support images and other content types.
+ */
 @Entity
 @Table(name = "iris_message_content")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)

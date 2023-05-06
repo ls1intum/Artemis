@@ -15,6 +15,11 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.DomainObject;
 
+/**
+ * An IrisMessage represents a single message in an IrisSession.
+ * A message can be created by either the user, an LLM, or Artemis.
+ * Artemis messages are used to give commands to the bot and are not displayed to the user.
+ */
 @Entity
 @Table(name = "iris_message")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)

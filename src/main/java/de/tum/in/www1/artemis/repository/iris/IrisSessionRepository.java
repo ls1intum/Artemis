@@ -10,6 +10,9 @@ import org.springframework.data.jpa.repository.Query;
 import de.tum.in.www1.artemis.domain.iris.IrisSession;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
+/**
+ * Spring Data repository for the IrisSession entity.
+ */
 public interface IrisSessionRepository extends JpaRepository<IrisSession, Long> {
 
     Optional<IrisSession> findByExerciseIdAndUserId(Long exerciseId, Long userId);

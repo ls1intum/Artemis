@@ -10,6 +10,9 @@ import org.springframework.data.jpa.repository.Query;
 import de.tum.in.www1.artemis.domain.iris.IrisMessage;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
+/**
+ * Spring Data repository for the IrisMessage entity.
+ */
 public interface IrisMessageRepository extends JpaRepository<IrisMessage, Long> {
 
     List<IrisMessage> findAllBySessionId(Long sessionId);

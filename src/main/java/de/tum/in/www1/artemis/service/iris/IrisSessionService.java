@@ -15,6 +15,9 @@ import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 
+/**
+ * Service for managing Iris sessions.
+ */
 @Service
 public class IrisSessionService {
 
@@ -30,6 +33,14 @@ public class IrisSessionService {
         this.irisSessionRepository = irisSessionRepository;
     }
 
+    /**
+     * Checks if the user has access to the Iris session.
+     * A user has access if they have access to the exercise and the session belongs to them.
+     * If the user is null, the user is fetched from the database.
+     *
+     * @param session The session to check
+     * @param user    The user to check
+     */
     public void checkHasAccessToIrisSession(IrisSession session, User user) {
         if (user == null) {
             user = userRepository.getUserWithGroupsAndAuthorities();
@@ -40,6 +51,14 @@ public class IrisSessionService {
         }
     }
 
+    /**
+     * Creates a new Iris session for the given exercise and user.
+     * If a session already exists, a BadRequestException is thrown.
+     *
+     * @param exercise The exercise the session belongs to
+     * @param user     The user the session belongs to
+     * @return The created session
+     */
     public IrisSession createSessionForProgrammingExercise(ProgrammingExercise exercise, User user) {
         if (irisSessionRepository.findByExerciseIdAndUserId(exercise.getId(), user.getId()).isPresent()) {
             throw new BadRequestException("Iris Session already exists for exercise " + exercise.getId() + " and user " + user.getId());
