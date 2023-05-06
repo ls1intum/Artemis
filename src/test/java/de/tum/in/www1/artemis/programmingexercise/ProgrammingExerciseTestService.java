@@ -452,19 +452,25 @@ public class ProgrammingExerciseTestService {
     }
 
     void importFromFile_embeddedFiles_embeddedFilesCopied() throws Exception {
-        mockDelegate.mockConnectorRequestForImportFromFile(exercise);
         String embeddedFileName1 = "Markdown_2023-05-06T16-17-46-410_ad323711.jpg";
         String embeddedFileName2 = "Markdown_2023-05-06T16-17-46-822_b921f475.jpg";
+        Path fileSystemPathEmbeddedFile1 = Path.of(FilePathService.getMarkdownFilePath(), embeddedFileName1);
+        Path fileSystemPathEmbeddedFile2 = Path.of(FilePathService.getMarkdownFilePath(), embeddedFileName2);
+        // clean up to make sure the test doesn't pass because it has passed previously
+        if (Files.exists(fileSystemPathEmbeddedFile1)) {
+            Files.delete(fileSystemPathEmbeddedFile1);
+        }
+        if (Files.exists(fileSystemPathEmbeddedFile2)) {
+            Files.delete(fileSystemPathEmbeddedFile2);
+        }
+        mockDelegate.mockConnectorRequestForImportFromFile(exercise);
+
         Resource resource = new ClassPathResource("test-data/import-from-file/valid-import-embedded-files.zip");
         var file = new MockMultipartFile("file", "test.zip", "application/zip", resource.getInputStream());
         request.postWithMultipartFile(ROOT + "/courses/" + course.getId() + "/programming-exercises/import-from-file", exercise, "programmingExercise", file,
                 ProgrammingExercise.class, HttpStatus.OK);
         assertThat(Path.of(FilePathService.getMarkdownFilePath())).isDirectoryContaining(path -> embeddedFileName1.equals(path.getFileName().toString()))
                 .isDirectoryContaining(path -> embeddedFileName2.equals(path.getFileName().toString()));
-
-        // clean up to make sure the test doesn't pass because it has passed previously
-        Files.delete(Path.of(FilePathService.getMarkdownFilePath(), embeddedFileName1));
-        Files.delete(Path.of(FilePathService.getMarkdownFilePath(), embeddedFileName2));
 
     }
 
