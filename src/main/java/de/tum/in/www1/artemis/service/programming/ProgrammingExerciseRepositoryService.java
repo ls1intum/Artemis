@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.programming;
 
 import static de.tum.in.www1.artemis.config.Constants.SETUP_COMMIT_MESSAGE;
+import static de.tum.in.www1.artemis.domain.enumeration.ProjectType.isMavenProject;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -295,11 +296,22 @@ public class ProgrammingExerciseRepositoryService {
 
         // Java both supports Gradle and Maven as a test template
         Path projectTemplatePath = templatePath;
-        if (projectType != null && projectType.isGradle()) {
+        /*
+         * if (projectType != null && projectType.isGradle()) {
+         * projectTemplatePath = projectTemplatePath.resolve("gradle");
+         * }
+         * else {
+         * projectTemplatePath = projectTemplatePath.resolve("maven");
+         * }
+         */
+        if (isMavenProject(projectType)) {
+            projectTemplatePath = projectTemplatePath.resolve("maven");
+        }
+        else if (projectType.isGradle()) {
             projectTemplatePath = projectTemplatePath.resolve("gradle");
         }
         else {
-            projectTemplatePath = projectTemplatePath.resolve("maven");
+            projectTemplatePath = projectTemplatePath.resolve("blackbox");
         }
         projectTemplatePath = projectTemplatePath.resolve("projectTemplate");
 
@@ -452,7 +464,7 @@ public class ProgrammingExerciseRepositoryService {
         sectionsMap.put("sequential", true);
 
         // maven configuration should be set for kotlin and older exercises where no project type has been introduced where no project type is defined
-        final boolean isMaven = ProjectType.isMavenProject(projectType);
+        final boolean isMaven = isMavenProject(projectType);
 
         final String projectFileName;
         if (isMaven) {
@@ -524,7 +536,7 @@ public class ProgrammingExerciseRepositoryService {
         final Path packagePath = buildStagePath.toAbsolutePath().resolve(TEST_DIR).resolve(PACKAGE_NAME_FOLDER_PLACEHOLDER).toAbsolutePath();
 
         // staging project files are only required for maven
-        final boolean isMaven = ProjectType.isMavenProject(projectType);
+        final boolean isMaven = isMavenProject(projectType);
         if (isMaven && stagePomXml.isPresent()) {
             Files.copy(stagePomXml.get().getInputStream(), buildStagePath.resolve(POM_XML));
         }

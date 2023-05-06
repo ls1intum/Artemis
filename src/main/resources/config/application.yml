@@ -59,6 +59,7 @@ artemis:
                 java:
                     # possible overrides: maven, gradle
                     default: "ls1tum/artemis-maven-template:java17-16"
+                    maven_blackbox: ""
                 kotlin:
                     # possible overrides: maven, gradle
                     default: "ls1tum/artemis-maven-template:java17-16"
