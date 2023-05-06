@@ -3,6 +3,8 @@ import { Course } from 'app/entities/course.model';
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 import { CachingStrategy } from 'app/shared/image/secured-image.component';
 import { faCommentDots } from '@fortawesome/free-solid-svg-icons';
+import { MatDialog } from '@angular/material/dialog';
+import { ChatbotPopupComponent } from './chatbot-popup/chatbot-popup.component';
 
 @Component({
     selector: 'jhi-course-chatbot',
@@ -18,9 +20,27 @@ export class CourseChatbotComponent implements OnChanges {
     public courseDescription?: string;
     public enableShowMore = false;
     public longDescriptionShown = false;
+    public chatAccepted = 'false';
 
     // Icons
     faCommentDots = faCommentDots;
+
+    constructor(private dialog: MatDialog) {}
+
+    openDialog() {
+        const dialogRef = this.dialog.open(ChatbotPopupComponent, {
+            data: {
+                name: 'Samuel',
+            },
+        });
+
+        dialogRef.afterClosed().subscribe((result) => {
+            console.log(`${result}`);
+            this.chatAccepted = result;
+        });
+    }
+
+    openChat() {}
 
     ngOnChanges() {
         this.adjustCourseDescription();
