@@ -199,9 +199,3 @@ local-vcs-repos
 !/src/main/resources/config/application-localci.yml
 /src/main/resources/id_*
 /src/main/resources/known_hosts
-
-######################
-# Coverage Files
-######################
-/src/test/cypress/coverage
-/src/test/cypress/jacoco
