@@ -4,7 +4,7 @@ import { BehaviorSubject, Observable } from 'rxjs';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { ExamAction, ExamActivity } from 'app/entities/exam-user-activity.model';
 import { ExamActionService } from 'app/exam/monitoring/exam-action.service';
-import { captureException } from '@sentry/browser';
+import { captureException } from '@sentry/angular-ivy';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import dayjs from 'dayjs/esm';
