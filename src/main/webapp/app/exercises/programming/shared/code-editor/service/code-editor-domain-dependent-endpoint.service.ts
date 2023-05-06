@@ -9,9 +9,9 @@ import { DomainService } from 'app/exercises/programming/shared/code-editor/serv
  */
 export abstract class DomainDependentEndpointService extends DomainDependentService {
     private restResourceUrlBase = `${SERVER_API_URL}api`;
-    protected restResourceUrl: string | null;
+    protected restResourceUrl?: string;
 
-    constructor(protected http: HttpClient, protected jhiWebsocketService: JhiWebsocketService, domainService: DomainService) {
+    protected constructor(protected http: HttpClient, protected jhiWebsocketService: JhiWebsocketService, domainService: DomainService) {
         super(domainService);
         this.initDomainSubscription();
     }
@@ -25,15 +25,13 @@ export abstract class DomainDependentEndpointService extends DomainDependentServ
         this.restResourceUrl = this.calculateRestResourceURL(domain);
     }
 
-    calculateRestResourceURL(domain: DomainChange): string | null {
+    calculateRestResourceURL(domain: DomainChange): string | undefined {
         const [domainType, domainValue] = domain;
         switch (domainType) {
             case DomainType.PARTICIPATION:
                 return `${this.restResourceUrlBase}/repository/${domainValue.id}`;
             case DomainType.TEST_REPOSITORY:
                 return `${this.restResourceUrlBase}/test-repository/${domainValue.id}`;
-            default:
-                return null;
         }
     }
 }

@@ -153,8 +153,9 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
         checkCreatedReaction(reactionToSaveOnPost, createdReaction);
         assertThat(postReactedOn.getReactions()).hasSize(reactionRepository.findReactionsByPostId(postReactedOn.getId()).size() - 1);
 
-        // try again
-        request.postWithResponseBody("/api/courses/" + courseId + "/postings/reactions", reactionToSaveOnPost, Reaction.class, HttpStatus.INTERNAL_SERVER_ERROR);
+        // try again: the post "silently" fails with a 200
+        var response = request.postWithResponseBody("/api/courses/" + courseId + "/postings/reactions", reactionToSaveOnPost, Reaction.class, HttpStatus.OK);
+        assertThat(response).isNull();
     }
 
     @Test
@@ -180,8 +181,9 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
         checkCreatedReaction(reactionToSaveOnAnswerPost, createdReaction);
         assertThat(answerPostReactedOn.getReactions()).hasSize(reactionRepository.findReactionsByAnswerPostId(answerPostReactedOn.getId()).size() - 1);
 
-        // try again
-        request.postWithResponseBody("/api/courses/" + courseId + "/postings/reactions", reactionToSaveOnAnswerPost, Reaction.class, HttpStatus.INTERNAL_SERVER_ERROR);
+        // try again: the post "silently" fails with a 200
+        var response = request.postWithResponseBody("/api/courses/" + courseId + "/postings/reactions", reactionToSaveOnAnswerPost, Reaction.class, HttpStatus.OK);
+        assertThat(response).isNull();
     }
 
     @Test
@@ -401,7 +403,7 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
         Reaction reactionToSaveOnPost = createReactionOnPost(postToReactOn);
 
         request.delete("/api/courses/" + dummyCourse.getCourseIcon() + "/postings/reactions/" + reactionToSaveOnPost.getId(), HttpStatus.BAD_REQUEST);
-        assertThat(postToReactOn.getReactions()).hasSameSizeAs(postRepository.findById(postToReactOn.getId()).get().getReactions());
+        assertThat(postToReactOn.getReactions()).hasSameSizeAs(postRepository.findById(postToReactOn.getId()).orElseThrow().getReactions());
     }
 
     @Test
