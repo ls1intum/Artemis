@@ -54,6 +54,7 @@
         "jszip": "3.10.1",
         "lodash-es": "4.17.21",
         "mobile-drag-drop": "3.0.0-rc.0",
+        "ngx-infinite-scroll": "^15.0.0",
         "ngx-webstorage": "11.1.1",
         "papaparse": "5.3.2",
         "process": "0.11.10",
@@ -89,6 +90,16 @@
             "@angular/cdk": "^16.0.0",
             "@angular/forms": "^16.0.0",
             "@angular/localize": "^16.0.0"
+        },
+        "ngx-infinite-scroll": {
+            "@angular/animations": "^16.0.0",
+            "@angular/common": "^16.0.0",
+            "@angular/compiler": "^16.0.0",
+            "@angular/core": "^16.0.0",
+            "@angular/forms": "^16.0.0",
+            "@angular/platform-browser": "^16.0.0",
+            "@angular/platform-browser-dynamic": "^16.0.0",
+            "@angular/router": "^16.0.0"
         },
         "@swimlane/ngx-graph": {
             "@angular/animations": "^16.0.0",
