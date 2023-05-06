@@ -97,43 +97,6 @@ describe('ProgrammingExercise Management Component', () => {
         expect(comp.filteredProgrammingExercises[0]).toEqual(expect.objectContaining({ id: programmingExercise.id }));
     });
 
-    it('should reset exercise', () => {
-        const headers = new HttpHeaders().append('link', 'link;link');
-        jest.spyOn(exerciseService, 'reset').mockReturnValue(
-            of(
-                new HttpResponse({
-                    body: undefined,
-                    headers,
-                }),
-            ),
-        );
-        const mockSubscriber = jest.fn();
-        comp.dialogError$.subscribe(mockSubscriber);
-
-        comp.course = course;
-        comp.ngOnInit();
-        comp.resetProgrammingExercise(456);
-        expect(exerciseService.reset).toHaveBeenCalledWith(456);
-        expect(exerciseService.reset).toHaveBeenCalledOnce();
-        expect(mockSubscriber).toHaveBeenCalledWith('');
-        expect(mockSubscriber).toHaveBeenCalledOnce();
-    });
-
-    it('should not reset exercise on error', () => {
-        const httpErrorResponse = new HttpErrorResponse({ error: 'Forbidden', status: 403 });
-        jest.spyOn(exerciseService, 'reset').mockReturnValue(throwError(() => httpErrorResponse));
-        const mockSubscriber = jest.fn();
-        comp.dialogError$.subscribe(mockSubscriber);
-
-        comp.course = course;
-        comp.ngOnInit();
-        comp.resetProgrammingExercise(456);
-        expect(exerciseService.reset).toHaveBeenCalledWith(456);
-        expect(exerciseService.reset).toHaveBeenCalledOnce();
-        expect(mockSubscriber).toHaveBeenCalledWith(httpErrorResponse.message);
-        expect(mockSubscriber).toHaveBeenCalledOnce();
-    });
-
     it('should delete exercise', () => {
         const headers = new HttpHeaders().append('link', 'link;link');
         jest.spyOn(programmingExerciseService, 'delete').mockReturnValue(

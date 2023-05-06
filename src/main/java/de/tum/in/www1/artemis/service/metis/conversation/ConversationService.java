@@ -86,7 +86,7 @@ public class ConversationService {
      * @return true if the user is a member of the conversation, false otherwise
      */
     public boolean isMember(Long conversationId, Long userId) {
-        return conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(conversationId, userId).isPresent();
+        return conversationParticipantRepository.existsByConversationIdAndUserId(conversationId, userId);
     }
 
     /**
