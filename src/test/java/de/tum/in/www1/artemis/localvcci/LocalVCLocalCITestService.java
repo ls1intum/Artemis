@@ -52,7 +52,6 @@ import de.tum.in.www1.artemis.domain.enumeration.Visibility;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUrl;
-import de.tum.in.www1.artemis.util.GitUtilService;
 import de.tum.in.www1.artemis.util.LocalRepository;
 
 /**
@@ -66,9 +65,6 @@ public class LocalVCLocalCITestService {
 
     @Autowired
     private ProgrammingSubmissionRepository programmingSubmissionRepository;
-
-    @Autowired
-    private GitUtilService gitUtilService;
 
     @Value("${artemis.version-control.url}")
     private URL localVCBaseUrl;
@@ -315,28 +311,27 @@ public class LocalVCLocalCITestService {
      * Create a file in the local repository and commit it.
      *
      * @param localRepositoryFolder the path to the local repository.
-     * @param packageFolderName     the name of the package folder.
      * @param localGit              the Git object for the local repository.
      * @return the commit hash.
      * @throws Exception if the file could not be created or committed.
      */
-    public String commitFile(Path localRepositoryFolder, String packageFolderName, Git localGit) throws Exception {
-        return commitFile(localRepositoryFolder, packageFolderName, localGit, "test.txt");
+    public String commitFile(Path localRepositoryFolder, Git localGit) throws Exception {
+        return commitFile(localRepositoryFolder, localGit, "new-file.txt");
     }
 
     /**
      * Create a file in the local repository and commit it.
      *
      * @param localRepositoryFolder the path to the local repository.
-     * @param packageFolderName     the name of the package folder.
      * @param localGit              the Git object for the local repository.
      * @param fileName              the name of the file to be created.
      * @return the commit hash.
-     * @throws Exception if the file could not be created or committed.
+     * @throws IOException     if the file could not be created
+     * @throws GitAPIException if the file could not be committed.
      */
-    public String commitFile(Path localRepositoryFolder, String packageFolderName, Git localGit, String fileName) throws Exception {
-        Path testJsonFilePath = Path.of(localRepositoryFolder.toString(), "src", packageFolderName, fileName);
-        gitUtilService.writeEmptyJsonFileToPath(testJsonFilePath);
+    public String commitFile(Path localRepositoryFolder, Git localGit, String fileName) throws GitAPIException, IOException {
+        Path testFilePath = localRepositoryFolder.resolve(fileName);
+        Files.createFile(testFilePath);
         localGit.add().addFilepattern(".").call();
         RevCommit commit = localGit.commit().setMessage("Add " + fileName).call();
         return commit.getId().getName();

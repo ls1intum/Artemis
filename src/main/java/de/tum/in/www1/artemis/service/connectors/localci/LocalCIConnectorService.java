@@ -148,23 +148,23 @@ public class LocalCIConnectorService {
             }
 
             if (repositoryTypeOrUserName.equals(RepositoryType.TESTS.getName())) {
-                processNewPushToTestsRepository(exercise, commitHash, (SolutionProgrammingExerciseParticipation) participation);
+                processNewPushToTestRepository(exercise, commitHash, (SolutionProgrammingExerciseParticipation) participation);
                 return;
             }
 
             Commit commit = extractCommitInfo(commitHash, repository);
 
-            // Process push to any repository other than the tests repository.
+            // Process push to any repository other than the test repository.
             processNewPushToRepository(participation, commit);
-
         }
         catch (GitAPIException | IOException e) {
             // This catch clause does not catch exceptions that happen during runBuildJob() as that method is called asynchronously.
             // For exceptions happening inside runBuildJob(), the user is notified. See the addBuildJobToQueue() method in the LocalCIBuildJobManagementService for that.
-            throw new LocalCIException("Could not process new push to repository " + localVCRepositoryUrl.getURI() + ". No build job was queued.", e);
+            throw new LocalCIException("Could not process new push to repository " + localVCRepositoryUrl.getURI() + " and commit " + commitHash + ". No build job was queued.", e);
         }
 
-        log.info("New push processed to repository {} in {}. A build job was queued.", localVCRepositoryUrl.getURI(), TimeLogUtil.formatDurationFrom(timeNanoStart));
+        log.info("New push processed to repository {} for commit {} in {}. A build job was queued.", localVCRepositoryUrl.getURI(), commitHash,
+                TimeLogUtil.formatDurationFrom(timeNanoStart));
     }
 
     private LocalVCRepositoryUrl getLocalVCRepositoryUrl(Path repositoryFolderPath) {
@@ -185,14 +185,14 @@ public class LocalCIConnectorService {
     }
 
     /**
-     * Process a new push to the tests repository.
+     * Process a new push to the test repository.
      * Build and test the solution repository to make sure all tests are still passing.
      *
      * @param exercise   the exercise for which the push was made.
-     * @param commitHash the hash of the last commit to the tests repository.
-     * @throws LocalCIException if something unexpected goes wrong creating the submission or triggering the build.
+     * @param commitHash the hash of the last commit to the test repository.
+     * @throws LocalCIException if something unexpected goes wrong when creating the submission or triggering the build.
      */
-    private void processNewPushToTestsRepository(ProgrammingExercise exercise, String commitHash, SolutionProgrammingExerciseParticipation solutionParticipation) {
+    private void processNewPushToTestRepository(ProgrammingExercise exercise, String commitHash, SolutionProgrammingExerciseParticipation solutionParticipation) {
         // Create a new submission for the solution repository.
         ProgrammingSubmission submission;
         try {
@@ -226,8 +226,8 @@ public class LocalCIConnectorService {
             try {
                 programmingTriggerService.triggerTemplateBuildAndNotifyUser(exercise.getId(), submission.getCommitHash(), SubmissionType.TEST);
             }
-            catch (EntityNotFoundException | LocalCIException e) {
-                // Something went wrong while retrieving the template participation or triggering the template build.
+            catch (EntityNotFoundException e) {
+                // Something went wrong while retrieving the template participation.
                 // At this point, programmingMessagingService.notifyUserAboutSubmissionError() does not work, because the template participation is not available.
                 // The instructor will see in the UI that no build of the template repository was conducted and will receive an error message when triggering the build manually.
                 log.error("Something went wrong while triggering the template build for exercise " + exercise.getId() + " after the solution build was finished.", e);

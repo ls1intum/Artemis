@@ -171,11 +171,10 @@ class LocalVCIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
         // Create a second local repository, push a file from there, and then try to force push from the original local repository.
         Path tempDirectory = Files.createTempDirectory("tempDirectory");
         Git secondLocalGit = Git.cloneRepository().setURI(repositoryUrl).setDirectory(tempDirectory.toFile()).call();
-        localVCLocalCITestService.commitFile(tempDirectory, programmingExercise.getPackageFolderName(), secondLocalGit);
+        localVCLocalCITestService.commitFile(tempDirectory, secondLocalGit);
         localVCLocalCITestService.testPushSuccessful(secondLocalGit, student1Login, projectKey1, assignmentRepositorySlug);
 
-        localVCLocalCITestService.commitFile(assignmentRepository.localRepoFile.toPath(), programmingExercise.getPackageFolderName(), assignmentRepository.localGit,
-                "second-test.txt");
+        localVCLocalCITestService.commitFile(assignmentRepository.localRepoFile.toPath(), assignmentRepository.localGit, "second-test.txt");
 
         // Try to push normally, should fail because the remote already contains work that does not exist locally.
         PushResult pushResultNormal = assignmentRepository.localGit.push().setRemote(repositoryUrl).call().iterator().next();
@@ -194,13 +193,27 @@ class LocalVCIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
     }
 
     @Test
-    void testUserCreatesNewBranch() throws GitAPIException {
-        // Users can create new branches, but pushing them should not result in a new submission.
+    void testUserCreatesNewBranch() throws Exception {
+        // Users can create new branches, but pushing to them should not result in a new submission. A warning message should be returned.
         assignmentRepository.localGit.branchCreate().setName("new-branch").setStartPoint("refs/heads/" + defaultBranch).call();
         String repositoryUrl = localVCLocalCITestService.constructLocalVCUrl(student1Login, projectKey1, assignmentRepositorySlug);
 
-        assignmentRepository.localGit.push().setRemote(repositoryUrl).setRefSpecs(new RefSpec("refs/heads/new-branch:refs/heads/new-branch")).call().iterator().next();
+        // Push the new branch.
+        PushResult pushResult = assignmentRepository.localGit.push().setRemote(repositoryUrl).setRefSpecs(new RefSpec("refs/heads/new-branch:refs/heads/new-branch")).call()
+                .iterator().next();
+        assertThat(pushResult.getMessages()).contains("Only pushes to the default branch will be graded.");
         Optional<ProgrammingSubmission> submission = programmingSubmissionRepository.findFirstByParticipationIdOrderBySubmissionDateDesc(studentParticipation.getId());
+        assertThat(submission).isNotPresent();
+
+        // Commit a new file to the new branch and push again.
+        assignmentRepository.localGit.checkout().setName("new-branch").call();
+        Path testFilePath = assignmentRepository.localRepoFile.toPath().resolve("new-file.txt");
+        Files.createFile(testFilePath);
+        assignmentRepository.localGit.add().addFilepattern(".").call();
+        assignmentRepository.localGit.commit().setMessage("Add new file").call();
+        pushResult = assignmentRepository.localGit.push().setRemote(repositoryUrl).call().iterator().next();
+        assertThat(pushResult.getMessages()).contains("Only pushes to the default branch will be graded.");
+        submission = programmingSubmissionRepository.findFirstByParticipationIdOrderBySubmissionDateDesc(studentParticipation.getId());
         assertThat(submission).isNotPresent();
     }
 }

@@ -269,7 +269,6 @@ public class GitService {
      * @throws URISyntaxException if SSH is used and the SSH URI could not be retrieved.
      */
     private URI getGitUri(VcsRepositoryUrl vcsRepositoryUrl) throws URISyntaxException {
-        //
         if (Set.of(this.environment.getActiveProfiles()).contains(de.tum.in.www1.artemis.config.Constants.PROFILE_LOCALVC)) {
             // Create less generic LocalVCRepositoryUrl out of VcsRepositoryUrl.
             LocalVCRepositoryUrl localVCRepositoryUrl = new LocalVCRepositoryUrl(vcsRepositoryUrl.toString(), gitUrl);

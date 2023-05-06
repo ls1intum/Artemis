@@ -48,8 +48,7 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
     @BeforeEach
     void initRepositories() throws Exception {
         studentAssignmentRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, assignmentRepositorySlug);
-        commitHash = localVCLocalCITestService.commitFile(studentAssignmentRepository.localRepoFile.toPath(), programmingExercise.getPackageFolderName(),
-                studentAssignmentRepository.localGit);
+        commitHash = localVCLocalCITestService.commitFile(studentAssignmentRepository.localRepoFile.toPath(), studentAssignmentRepository.localGit);
         studentAssignmentRepository.localGit.push().call();
         // Mock dockerClient.copyArchiveFromContainerCmd() such that it returns the XMLs containing the test results.
         localVCLocalCITestService.mockTestResults(dockerClient, PARTLY_SUCCESSFUL_TEST_RESULTS_PATH);
@@ -103,8 +102,7 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
 
         // solution participation
         LocalRepository solutionRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, solutionRepositorySlug);
-        String solutionCommitHash = localVCLocalCITestService.commitFile(solutionRepository.localRepoFile.toPath(), programmingExercise.getPackageFolderName(),
-                solutionRepository.localGit);
+        String solutionCommitHash = localVCLocalCITestService.commitFile(solutionRepository.localRepoFile.toPath(), solutionRepository.localGit);
         solutionRepository.localGit.push().call();
         programmingExercise.setSolutionParticipation(null);
         programmingExerciseRepository.save(programmingExercise);
@@ -114,8 +112,7 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
 
         // template participation
         LocalRepository templateRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, templateRepositorySlug);
-        String templateCommitHash = localVCLocalCITestService.commitFile(templateRepository.localRepoFile.toPath(), programmingExercise.getPackageFolderName(),
-                templateRepository.localGit);
+        String templateCommitHash = localVCLocalCITestService.commitFile(templateRepository.localRepoFile.toPath(), templateRepository.localGit);
         templateRepository.localGit.push().call();
         programmingExercise.setTemplateParticipation(null);
         programmingExerciseRepository.save(programmingExercise);
@@ -136,8 +133,7 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
         team.setStudents(Set.of(student1));
         team.setOwner(student1);
         teamRepository.save(team);
-        String teamCommitHash = localVCLocalCITestService.commitFile(teamLocalRepository.localRepoFile.toPath(), programmingExercise.getPackageFolderName(),
-                teamLocalRepository.localGit);
+        String teamCommitHash = localVCLocalCITestService.commitFile(teamLocalRepository.localRepoFile.toPath(), teamLocalRepository.localGit);
         teamLocalRepository.localGit.push().call();
         exception = assertThrows(LocalCIException.class, () -> localCIConnectorService.processNewPush(teamCommitHash, teamLocalRepository.originGit.getRepository()));
         assertThat(exception.getMessage()).contains(expectedErrorMessage);
@@ -181,7 +177,7 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
 
         String testsRepositorySlug = projectKey1.toLowerCase() + "-" + "tests";
         LocalRepository testsRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, testsRepositorySlug);
-        String testsCommitHash = localVCLocalCITestService.commitFile(testsRepository.localRepoFile.toPath(), programmingExercise.getPackageFolderName(), testsRepository.localGit);
+        String testsCommitHash = localVCLocalCITestService.commitFile(testsRepository.localRepoFile.toPath(), testsRepository.localGit);
         testsRepository.localGit.push().call();
 
         // Should throw an exception.
