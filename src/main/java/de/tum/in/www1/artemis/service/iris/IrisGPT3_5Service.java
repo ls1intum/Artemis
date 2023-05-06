@@ -25,6 +25,9 @@ import de.tum.in.www1.artemis.domain.iris.IrisMessageContent;
 import de.tum.in.www1.artemis.domain.iris.IrisMessageSender;
 import de.tum.in.www1.artemis.domain.iris.IrisSession;
 
+/**
+ * A service which sends REST requests to the GPT-3.5 API to generate responses to Iris conversations.
+ */
 @Service
 public class IrisGPT3_5Service implements IrisModel {
 
@@ -41,7 +44,6 @@ public class IrisGPT3_5Service implements IrisModel {
      */
     @Value("${artemis.iris.models.gpt3_5.url}")
     private URL apiURL;
-    // https://ase-eu01.openai.azure.com/openai/deployments/gpt-35/chat/completions?api-version=2023-03-15-preview
 
     /**
      * The API key to use when sending requests to the API.
