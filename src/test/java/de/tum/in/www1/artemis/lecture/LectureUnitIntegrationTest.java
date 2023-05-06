@@ -107,7 +107,7 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         lectureRepository.save(lecture1);
 
         var lecture = lectureRepository.findByIdWithLectureUnitsAndLearningGoalsElseThrow(lecture1.getId());
-        assertThat(lecture.getLectureUnits().get(0).getLearningGoals()).isNotEmpty();
+        assertThat(lecture.getLectureUnits().get(0).getCompetencies()).isNotEmpty();
 
         request.delete("/api/lectures/" + lecture1.getId() + "/lecture-units/" + lectureUnit.getId(), HttpStatus.OK);
         this.lecture1 = lectureRepository.findByIdWithLectureUnitsElseThrow(lecture1.getId());

@@ -22,7 +22,7 @@ public interface LectureUnitRepository extends JpaRepository<LectureUnit, Long> 
             FROM LectureUnit lu
                 LEFT JOIN FETCH lu.learningGoals
                 LEFT JOIN FETCH lu.exercise exercise
-                LEFT JOIN FETCH exercise.learningGoals
+                LEFT JOIN FETCH exercise.competencies
             WHERE lu.id = :lectureUnitId
             """)
     Optional<LectureUnit> findByIdWithLearningGoals(@Param("lectureUnitId") Long lectureUnitId);
@@ -33,7 +33,7 @@ public interface LectureUnitRepository extends JpaRepository<LectureUnit, Long> 
                 LEFT JOIN FETCH lu.learningGoals lg
                 LEFT JOIN FETCH lg.lectureUnits
                 LEFT JOIN FETCH lu.exercise ex
-                LEFT JOIN FETCH ex.learningGoals
+                LEFT JOIN FETCH ex.competencies
             WHERE lu.id = :lectureUnitId
             """)
     Optional<LectureUnit> findByIdWithLearningGoalsBidirectional(@Param("lectureUnitId") long lectureUnitId);
@@ -44,7 +44,7 @@ public interface LectureUnitRepository extends JpaRepository<LectureUnit, Long> 
                 LEFT JOIN FETCH lu.learningGoals lg
                 LEFT JOIN FETCH lg.lectureUnits
                 LEFT JOIN FETCH lu.exercise ex
-                LEFT JOIN FETCH ex.learningGoals
+                LEFT JOIN FETCH ex.competencies
             WHERE lu.id IN :lectureUnitIds
             """)
     Set<LectureUnit> findAllByIdWithLearningGoalsBidirectional(@Param("lectureUnitIds") Iterable<Long> longs);

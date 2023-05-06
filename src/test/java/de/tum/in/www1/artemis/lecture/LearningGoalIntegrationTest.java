@@ -282,7 +282,7 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         textExercise.setMaxPoints(10.0);
         textExercise.setBonusPoints(0.0);
         textExercise.setKnowledge(textAssessmentKnowledgeService.createNewKnowledge());
-        textExercise.setLearningGoals(learningGoals);
+        textExercise.setCompetencies(learningGoals);
         textExercise = exerciseRepository.save(textExercise);
         idOfTextExercise = textExercise.getId();
 
@@ -298,7 +298,7 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         modelingExercise.setMaxPoints(10.0);
         modelingExercise.setBonusPoints(0.0);
         modelingExercise.setKnowledge(modelAssessmentKnowledgeService.createNewKnowledge());
-        modelingExercise.setLearningGoals(learningGoals);
+        modelingExercise.setCompetencies(learningGoals);
         modelingExercise = exerciseRepository.save(modelingExercise);
         idOfModelingExercise = modelingExercise.getId();
 
@@ -314,7 +314,7 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         textExercise.setMaxPoints(10.0);
         textExercise.setBonusPoints(0.0);
         textExercise.setKnowledge(textAssessmentKnowledgeService.createNewKnowledge());
-        textExercise.setLearningGoals(learningGoals);
+        textExercise.setCompetencies(learningGoals);
         textExercise = exerciseRepository.save(textExercise);
         idOfTeamTextExercise = textExercise.getId();
 

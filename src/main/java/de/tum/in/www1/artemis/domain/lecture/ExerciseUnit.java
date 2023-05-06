@@ -61,8 +61,8 @@ public class ExerciseUnit extends LectureUnit {
     }
 
     @Override
-    public Set<LearningGoal> getLearningGoals() {
-        return exercise == null || !Hibernate.isPropertyInitialized(exercise, "learningGoals") ? new HashSet<>() : exercise.getLearningGoals();
+    public Set<LearningGoal> getCompetencies() {
+        return exercise == null || !Hibernate.isPropertyInitialized(exercise, "learningGoals") ? new HashSet<>() : exercise.getCompetencies();
     }
 
     @Override
