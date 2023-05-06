@@ -11,7 +11,7 @@ import { ShortAnswerSpot } from 'app/entities/quiz/short-answer-spot.model';
 import { CanBecomeInvalid, DropLocation } from 'app/entities/quiz/drop-location.model';
 import { DragItem } from 'app/entities/quiz/drag-item.model';
 import { DragAndDropMapping } from 'app/entities/quiz/drag-and-drop-mapping.model';
-import { captureException } from '@sentry/browser';
+import { captureException } from '@sentry/angular-ivy';
 import { ValidationReason } from 'app/entities/exercise.model';
 import { ButtonType } from 'app/shared/components/button.component';
 import { MAX_QUIZ_QUESTION_POINTS } from 'app/shared/constants/input.constants';
