@@ -103,7 +103,7 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     void deleteLectureUnit_shouldUnlinkLearningGoal() throws Exception {
         var lectureUnit = lecture1.getLectureUnits().get(0);
         var learningGoal = database.createLearningGoal(lecture1.getCourse());
-        lectureUnit.setLearningGoals(Set.of(learningGoal));
+        lectureUnit.setCompetencies(Set.of(learningGoal));
         lectureRepository.save(lecture1);
 
         var lecture = lectureRepository.findByIdWithLectureUnitsAndLearningGoalsElseThrow(lecture1.getId());

@@ -21,7 +21,7 @@ import de.tum.in.www1.artemis.domain.LearningGoal;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ExerciseUnit extends LectureUnit {
 
-    // Note: Name, release date and learning goals will always be taken from associated exercise
+    // Note: Name, release date and competencies will always be taken from associated exercise
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "exercise_id")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
@@ -62,11 +62,11 @@ public class ExerciseUnit extends LectureUnit {
 
     @Override
     public Set<LearningGoal> getCompetencies() {
-        return exercise == null || !Hibernate.isPropertyInitialized(exercise, "learningGoals") ? new HashSet<>() : exercise.getCompetencies();
+        return exercise == null || !Hibernate.isPropertyInitialized(exercise, "competencies") ? new HashSet<>() : exercise.getCompetencies();
     }
 
     @Override
-    public void setLearningGoals(Set<LearningGoal> learningGoals) {
+    public void setCompetencies(Set<LearningGoal> competencies) {
         // Should be set in associated exercise
     }
 
@@ -78,6 +78,6 @@ public class ExerciseUnit extends LectureUnit {
     public void prePersistOrUpdate() {
         this.name = null;
         this.releaseDate = null;
-        this.learningGoals = new HashSet<>();
+        this.competencies = new HashSet<>();
     }
 }

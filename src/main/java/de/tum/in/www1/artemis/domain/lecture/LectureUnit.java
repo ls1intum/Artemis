@@ -55,7 +55,7 @@ public abstract class LectureUnit extends DomainObject implements LearningObject
     @OrderBy("title")
     @JsonIgnoreProperties({ "lectureUnits", "course" })
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    protected Set<LearningGoal> learningGoals = new HashSet<>();
+    protected Set<LearningGoal> competencies = new HashSet<>();
 
     @OneToMany(mappedBy = "lectureUnit", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE, orphanRemoval = true)
     @JsonIgnore // important, so that the completion status of other users do not leak to anyone
@@ -90,11 +90,11 @@ public abstract class LectureUnit extends DomainObject implements LearningObject
     }
 
     public Set<LearningGoal> getCompetencies() {
-        return learningGoals;
+        return competencies;
     }
 
-    public void setLearningGoals(Set<LearningGoal> learningGoals) {
-        this.learningGoals = learningGoals;
+    public void setCompetencies(Set<LearningGoal> learningGoals) {
+        this.competencies = learningGoals;
     }
 
     @JsonIgnore(false)

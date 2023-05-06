@@ -47,7 +47,7 @@ public class LearningGoal extends DomainObject {
     @JsonIgnoreProperties({ "competencies", "course" })
     private Set<Exercise> exercises = new HashSet<>();
 
-    @ManyToMany(mappedBy = "learningGoals")
+    @ManyToMany(mappedBy = "competencies")
     @JsonIgnoreProperties("learningGoals")
     private Set<LectureUnit> lectureUnits = new HashSet<>();
 
