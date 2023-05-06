@@ -25,7 +25,7 @@ import de.tum.in.www1.artemis.repository.iris.IrisSessionRepository;
 import de.tum.in.www1.artemis.service.iris.IrisMessageService;
 import de.tum.in.www1.artemis.service.iris.IrisSessionService;
 
-public class IrisMessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class IrisMessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     private static final String TEST_PREFIX = "irismessageintegration";
 
