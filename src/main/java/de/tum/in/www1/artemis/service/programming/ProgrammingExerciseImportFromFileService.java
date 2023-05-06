@@ -6,6 +6,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import org.apache.commons.compress.utils.FileNameUtils;
@@ -24,10 +25,7 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.Repository;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
-import de.tum.in.www1.artemis.service.FileService;
-import de.tum.in.www1.artemis.service.RepositoryService;
-import de.tum.in.www1.artemis.service.StaticCodeAnalysisService;
-import de.tum.in.www1.artemis.service.ZipFileService;
+import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
@@ -85,9 +83,27 @@ public class ProgrammingExerciseImportFromFileService {
         if (Boolean.TRUE.equals(programmingExerciseForImport.isStaticCodeAnalysisEnabled())) {
             staticCodeAnalysisService.createDefaultCategories(importedProgrammingExercise);
         }
+        copyEmbeddedFiles(exerciseFilePath.toAbsolutePath().getParent().resolve(FileNameUtils.getBaseName(exerciseFilePath.toString())));
         importRepositoriesFromFile(importedProgrammingExercise, importExerciseDir, oldShortName);
         importedProgrammingExercise.setCourse(course);
+        fileService.scheduleForDirectoryDeletion(importExerciseDir, 5);
         return importedProgrammingExercise;
+    }
+
+    /**
+     * copy embedded files from the extracted zip file to the markdown folder, so they can be used in the problem statement
+     **/
+    private void copyEmbeddedFiles(Path importExerciseDir) throws IOException {
+        // the conversion to a string is needed because otherwise the file extension is not included
+        Predicate<Path> embeddedFile = file -> file.getFileName().toString().endsWith(".jpg") || file.getFileName().toString().endsWith(".jpeg")
+                || file.getFileName().toString().endsWith(".png") || file.getFileName().toString().endsWith(".gif") || file.getFileName().toString().endsWith(".svg")
+                || file.getFileName().toString().endsWith(".pdf");
+        try (var embeddedFiles = Files.list(importExerciseDir).filter(embeddedFile)) {
+            for (var file : embeddedFiles.toList()) {
+                var targetPath = Path.of(FilePathService.getMarkdownFilePath(), file.getFileName().toString());
+                Files.copy(file, targetPath);
+            }
+        }
     }
 
     private void importRepositoriesFromFile(ProgrammingExercise newExercise, Path basePath, String oldExerciseShortName) throws IOException, GitAPIException, URISyntaxException {
