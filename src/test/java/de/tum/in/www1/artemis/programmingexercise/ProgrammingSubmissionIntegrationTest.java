@@ -385,7 +385,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         bitbucketRequestMockProvider.enableMockingOfRequests(true);
         mockConnectorRequestsForResumeParticipation(exercise, participation.getParticipantIdentifier(), participation.getParticipant().getParticipants(), true);
 
-        doThrow(ContinuousIntegrationException.class).when(continuousIntegrationTriggerService).triggerBuild(participation, null);
+        doThrow(ContinuousIntegrationException.class).when(continuousIntegrationTriggerService).triggerBuild(participation);
         String url = "/api" + Constants.PROGRAMMING_SUBMISSION_RESOURCE_PATH + participation.getId() + "/trigger-failed-build";
         request.postWithoutLocation(url, null, HttpStatus.OK, null);
     }

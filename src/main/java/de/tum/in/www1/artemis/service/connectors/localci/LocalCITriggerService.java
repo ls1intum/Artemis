@@ -38,10 +38,20 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
      * Add a new build job to the queue managed by the ExecutorService and process the returned result.
      *
      * @param participation the participation of the repository which should be built and tested.
-     * @param commitHash    the commit hash of the commit that triggers the build. Use "null" to retrieve the latest commit of the default branch.
      * @throws LocalCIException if the build job could not be added to the queue.
      */
     @Override
+    public void triggerBuild(ProgrammingExerciseParticipation participation) {
+        triggerBuild(participation, null);
+    }
+
+    /**
+     * Add a new build job for a specific commit to the queue managed by the ExecutorService and process the returned result.
+     *
+     * @param participation the participation of the repository which should be built and tested
+     * @param commitHash    the commit hash of the commit that triggers the build. If it is null, the latest commit of the default branch will be built.
+     * @throws LocalCIException if the build job could not be added to the queue.
+     */
     public void triggerBuild(ProgrammingExerciseParticipation participation, String commitHash) {
         CompletableFuture<LocalCIBuildResult> futureResult = localCIBuildJobManagementService.addBuildJobToQueue(participation, commitHash);
         futureResult.thenAccept(buildResult -> {
