@@ -1933,6 +1933,11 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         bambooRequestMockProvider.reset();
 
         User student = finalStudentExam.getUser();
+        for (StudentExam studentExam : studentExamRepository.findByExamId(exam1.getId())) {
+            if (student.getLogin().equals(studentExam.getUser().getLogin())) {
+                studentExamRepository.delete(studentExam);
+            }
+        }
 
         final String noParticipationGrade = "NoParticipation";
 
@@ -1952,7 +1957,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         // users tries to access exam summary after results are published
         database.changeUser(student.getLogin());
 
-        var studentExams = studentExamRepository.findAllWithExercisesByUserIdAndExamId(student.getId(), finalExam.getId());
+        var studentExams = studentExamRepository.findAllWithExercisesByUserIdAndExamId(student.getId(), bonusGradingScale.getExam().getId());
         log.debug("Found {} student exams for student {} {} and exam {}", studentExams.size(), student.getId(), student.getLogin(), finalExam.getId());
         assertThat(studentExams).as("Found too many student exams" + studentExams).hasSize(1);
 

@@ -39,6 +39,7 @@ import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.service.programming.*;
 import de.tum.in.www1.artemis.web.rest.dto.BuildLogStatisticsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
+import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseResetOptionsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
@@ -635,19 +636,43 @@ public class ProgrammingExerciseResource {
     }
 
     /**
-     * Deletes BASE and SOLUTION build plan of a programming exercise and creates those again. This reuses the build plan creation logic of the programming exercise creation
-     * service.
+     * Reset a programming exercise by performing a set of operations as specified in the
+     * ProgrammingExerciseResetOptionsDTO for an exercise given an exerciseId.
      *
-     * @param exerciseId of the programming exercise
-     * @return the ResponseEntity with status 200 (OK) if the recreation was successful.
+     * The available operations include:
+     * 1. deleteBuildPlans: Deleting all student build plans (except BASE/SOLUTION).
+     * 2. deleteRepositories: Deleting all student repositories (requires: 1. deleteBuildPlans == true).
+     * 3. deleteParticipationsSubmissionsAndResults: Deleting all participations, submissions, and results.
+     * 4. recreateBuildPlans: Deleting and recreating the BASE and SOLUTION build plans.
+     *
+     * @param exerciseId                         - Id of the programming exercise to reset.
+     * @param programmingExerciseResetOptionsDTO - Data Transfer Object specifying which operations to perform during the exercise reset.
+     * @return ResponseEntity<Void> - The ResponseEntity with status 200 (OK) if the reset was successful.
      */
-    @PutMapping(RECREATE_BUILD_PLANS)
+    @PutMapping(RESET)
     @PreAuthorize("hasRole('EDITOR')")
-    public ResponseEntity<Void> recreateBuildPlans(@PathVariable Long exerciseId) {
+    @FeatureToggle(Feature.ProgrammingExercises)
+    public ResponseEntity<Void> reset(@PathVariable Long exerciseId, @RequestBody ProgrammingExerciseResetOptionsDTO programmingExerciseResetOptionsDTO) {
+        log.debug("REST request to reset ProgrammingExercise : {}", exerciseId);
         var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesElseThrow(exerciseId);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, user);
-        continuousIntegrationService.get().recreateBuildPlansForExercise(programmingExercise);
+        final var user = userRepository.getUserWithGroupsAndAuthorities();
+
+        if (programmingExerciseResetOptionsDTO.recreateBuildPlans()) {
+            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, user);
+            continuousIntegrationService.get().recreateBuildPlansForExercise(programmingExercise);
+        }
+
+        if (programmingExerciseResetOptionsDTO.deleteParticipationsSubmissionsAndResults()) {
+            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, user);
+            exerciseDeletionService.reset(programmingExercise);
+        }
+
+        if (programmingExerciseResetOptionsDTO.deleteBuildPlans()) {
+            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, user);
+            boolean deleteRepositories = programmingExerciseResetOptionsDTO.deleteRepositories();
+            exerciseDeletionService.cleanup(exerciseId, deleteRepositories);
+        }
+
         return ResponseEntity.ok().build();
     }
 

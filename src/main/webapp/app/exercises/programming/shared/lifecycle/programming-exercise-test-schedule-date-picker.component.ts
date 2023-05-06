@@ -44,7 +44,7 @@ export class ProgrammingExerciseTestScheduleDatePickerComponent implements Contr
 
     writeValue(obj: any): void {
         if (obj !== undefined && this.selectedDate !== obj) {
-            this.selectedDate = !obj ? null : isDate(obj) ? obj : obj.toDate();
+            this.selectedDate = !obj ? undefined : isDate(obj) ? obj : obj.toDate();
             this.selectedDate?.setSeconds(0, 0);
             this._onChange(obj);
         }
@@ -55,7 +55,7 @@ export class ProgrammingExerciseTestScheduleDatePickerComponent implements Contr
      * This makes it easier to also reset date, that can only be selected if the current date is not null
      */
     resetDate() {
-        this.writeValue(null);
+        this.writeValue(undefined);
         this.onDateReset.emit();
     }
 }
