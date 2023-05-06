@@ -21,7 +21,7 @@
         "@angular/router": "16.0.0",
         "@angular/service-worker": "16.0.0",
         "@ctrl/ngx-emoji-mart": "7.1.0",
-
+        "@danielmoncada/angular-datetime-picker": "15.0.2",
         "@fingerprintjs/fingerprintjs": "3.4.1",
         "@flaviosantoro92/ngx-datatable": "1.0.2",
         "@fortawesome/angular-fontawesome": "0.13.0",
@@ -108,6 +108,13 @@
         "@ng-bootstrap/ng-bootstrap": {
             "@angular/common": "^16.0.0",
             "@angular/core": "^16.0.0",
+            "@angular/forms": "^16.0.0",
+            "@angular/localize": "^16.0.0"
+        },
+        "@danielmoncada/angular-datetime-picker": {
+            "@angular/common": "^16.0.0",
+            "@angular/core": "^16.0.0",
+            "@angular/cdk": "^16.0.0",
             "@angular/forms": "^16.0.0",
             "@angular/localize": "^16.0.0"
         }
