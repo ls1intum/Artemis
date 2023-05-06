@@ -14,6 +14,7 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { ExportToCsv } from 'export-to-csv';
 import { faExclamationTriangle, faInfo, faPlus, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { PresentationType, PresentationsConfig } from 'app/grading-system/grading-system-presentations/grading-system-presentations.component';
 
 const csvColumnsGrade = Object.freeze({
     gradeName: 'gradeName',
@@ -57,6 +58,7 @@ export abstract class BaseGradingSystemComponent implements OnInit {
     course?: Course;
     exam?: Exam;
     maxPoints?: number;
+    presentationsConfig: PresentationsConfig = { presentationType: PresentationType.NONE };
 
     // Icons
     faSave = faSave;
@@ -109,6 +111,7 @@ export abstract class BaseGradingSystemComponent implements OnInit {
                 } else {
                     this.courseService.find(this.courseId!).subscribe((courseResponse) => {
                         this.course = courseResponse.body!;
+                        this.gradingScale.course = this.course;
                         this.maxPoints = this.course?.maxPoints;
                         this.onChangeMaxPoints(this.course?.maxPoints);
                     });
@@ -277,6 +280,68 @@ export abstract class BaseGradingSystemComponent implements OnInit {
         return true;
     }
 
+    /**
+     * Checks if the currently entered presentation settings correspond to a valid presentation type based on multiple criteria:
+     * - if the presentationType is NONE:
+     * -- the presentationsNumber and presentationsWeight must be undefined
+     * -- the presentationScore must be 0 or undefined
+     * - if the presentationType is BASIC:
+     * -- the presentationsNumber and presentationsWeight must be undefined
+     * -- the presentationScore must be above 0
+     * - if the presentationType is GRADED:
+     * -- the presentationsNumber must be a whole number above 0
+     * -- the presentationsWeight must be between 0 and 100
+     * -- the presentationScore must be 0 or undefined
+     */
+    validPresentationsConfig(): boolean {
+        if (this.presentationsConfig.presentationType === PresentationType.NONE) {
+            // The presentationsNumber and presentationsWeight must be undefined
+            if (this.presentationsConfig.presentationsNumber !== undefined || this.presentationsConfig.presentationsWeight !== undefined) {
+                return false;
+            }
+            // The presentationScore must be 0 or undefined // edit in followup, when presentationScore is moved to
+            // grading key page
+        }
+        if (this.presentationsConfig.presentationType === PresentationType.BASIC) {
+            // The presentationsNumber and presentationsWeight must be undefined
+            if (this.presentationsConfig.presentationsNumber !== undefined || this.presentationsConfig.presentationsWeight !== undefined) {
+                return false;
+            }
+            // The presentationScore must be above 0
+            if ((this.course?.presentationScore ?? 0) <= 0) {
+                this.invalidGradeStepsMessage = this.translateService.instant('artemisApp.gradingSystem.error.invalidPresentationsNumber');
+                return false;
+            }
+        }
+        if (this.presentationsConfig.presentationType === PresentationType.GRADED) {
+            // The presentationsNumber must be a whole number above 0
+            if (
+                this.presentationsConfig.presentationsNumber === undefined ||
+                !Number.isInteger(this.presentationsConfig.presentationsNumber) ||
+                this.presentationsConfig.presentationsNumber < 1
+            ) {
+                this.invalidGradeStepsMessage = this.translateService.instant('artemisApp.gradingSystem.error.invalidPresentationsNumber');
+                return false;
+            }
+            // The presentationsWeight must be between 0 and 100
+            if (
+                this.presentationsConfig.presentationsWeight === undefined ||
+                this.presentationsConfig.presentationsWeight < 0 ||
+                this.presentationsConfig.presentationsWeight > 100
+            ) {
+                this.invalidGradeStepsMessage = this.translateService.instant('artemisApp.gradingSystem.error.invalidPresentationsWeight');
+                return false;
+            }
+            // The presentationScore must be 0 or undefined
+            if ((this.course?.presentationScore ?? 0) > 0) {
+                this.invalidGradeStepsMessage = this.translateService.instant('artemisApp.gradingSystem.error.invalidBasicPresentationIsEnabled');
+                return false;
+            }
+        }
+        this.invalidGradeStepsMessage = undefined;
+        return true;
+    }
+
     private handleSaveObservable(saveObservable: Observable<EntityResponseType>) {
         saveObservable
             .pipe(
@@ -378,6 +443,7 @@ export abstract class BaseGradingSystemComponent implements OnInit {
             this.handleDeleteObservable(this.gradingSystemService.deleteGradingScaleForCourse(this.courseId!));
         }
         this.gradingScale = new GradingScale();
+        this.gradingScale.course = this.course;
     }
 
     handleDeleteObservable(deleteObservable: Observable<EntityResponseType>) {
@@ -628,6 +694,7 @@ export abstract class BaseGradingSystemComponent implements OnInit {
         return {
             gradeSteps,
             gradeType: GradeType.GRADE,
+            course: this.course,
         };
     }
 
