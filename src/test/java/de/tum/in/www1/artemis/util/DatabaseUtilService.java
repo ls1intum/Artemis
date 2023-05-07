@@ -1045,7 +1045,7 @@ public class DatabaseUtilService {
                 exampleSubmissionRepo.save(exampleSubmission);
             }
 
-            User user = (userRepo.findOneByLogin(prefix + "student1")).get();
+            User user = getUserByLogin(prefix + "student1");
             StudentParticipation participation1 = ModelFactory.generateStudentParticipation(InitializationState.INITIALIZED, modelingExercise, user);
             StudentParticipation participation2 = ModelFactory.generateStudentParticipation(InitializationState.FINISHED, textExercise, user);
             StudentParticipation participation3 = ModelFactory.generateStudentParticipation(InitializationState.UNINITIALIZED, modelingExercise, user);
@@ -1109,7 +1109,7 @@ public class DatabaseUtilService {
 
         PlagiarismCase plagiarismCase = new PlagiarismCase();
         plagiarismCase.setExercise(textExercise);
-        plagiarismCase.setStudent(userRepo.findOneByLogin(userPrefix + "student1").get());
+        plagiarismCase.setStudent(getUserByLogin(userPrefix + "student1"));
         plagiarismCase = plagiarismCaseRepository.save(plagiarismCase);
 
         List<Post> posts = new ArrayList<>();
@@ -1493,7 +1493,11 @@ public class DatabaseUtilService {
     }
 
     public Exam setupExamWithExerciseGroupsExercisesRegisteredStudents(String userPrefix, Course course) {
-        var exam = ModelFactory.generateExam(course);
+        return setupExamWithExerciseGroupsExercisesRegisteredStudents(userPrefix, course, 4);
+    }
+
+    public Exam setupExamWithExerciseGroupsExercisesRegisteredStudents(String userPrefix, Course course, int numberOfStudents) {
+        Exam exam = ModelFactory.generateExam(course);
         exam.setNumberOfExercisesInExam(4);
         exam.setRandomizeExerciseOrder(true);
         exam.setStartDate(ZonedDateTime.now().plusHours(2));
@@ -1554,23 +1558,31 @@ public class DatabaseUtilService {
         exerciseRepo.saveAll(List.of(exercise5a, exercise5b, exercise5c));
 
         // register user
-        var student1 = getUserByLogin(userPrefix + "student1");
-        var student2 = getUserByLogin(userPrefix + "student2");
-        var student3 = getUserByLogin(userPrefix + "student3");
-        var student4 = getUserByLogin(userPrefix + "student4");
-        var registeredUsers = Set.of(student1, student2, student3, student4);
+        return registerUsersForExamAndSaveExam(exam, userPrefix, numberOfStudents);
+    }
+
+    /**
+     * registers student for exam and saves the exam in the repository
+     *
+     * @param exam             exam to which students should be registered to
+     * @param userPrefix       prefix of the users
+     * @param numberOfStudents number of students to be registered
+     * @return exam that was saved in the repository
+     */
+    public Exam registerUsersForExamAndSaveExam(Exam exam, String userPrefix, int numberOfStudents) {
         Set<ExamUser> registeredExamUsers = new HashSet<>();
-        for (var user : registeredUsers) {
-            var registeredExamUser = new ExamUser();
-            registeredExamUser.setUser(user);
+
+        for (int i = 1; i <= numberOfStudents; i++) {
+            ExamUser registeredExamUser = new ExamUser();
+            registeredExamUser.setUser(getUserByLogin(userPrefix + "student" + i));
             registeredExamUser.setExam(exam);
-            registeredExamUser = examUserRepository.save(registeredExamUser);
             exam.addExamUser(registeredExamUser);
             registeredExamUsers.add(registeredExamUser);
         }
+        examUserRepository.saveAll(registeredExamUsers);
         exam.setExamUsers(registeredExamUsers);
-        exam = examRepository.save(exam);
-        return exam;
+
+        return examRepository.save(exam);
     }
 
     public Exam addExam(Course course) {
@@ -4155,7 +4167,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Generate submissions for a student for an exercise. Results are mixed.
+     * Generate submissions for a student for an exercise. Results depend on the studentID.
      *
      * @param quizExercise   QuizExercise the submissions are for (we assume 3 questions here)
      * @param studentID      ID of the student

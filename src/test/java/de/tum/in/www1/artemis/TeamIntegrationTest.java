@@ -51,6 +51,20 @@ class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
     private static final String TEST_PREFIX = "tit";
 
+    @BeforeEach
+    void initTestCase() {
+        database.addUsers(TEST_PREFIX, NUMBER_OF_STUDENTS, 2, 0, 1);
+        course = database.addCourseWithOneProgrammingExercise();
+
+        // Make exercise team-based and already released to students
+        exercise = course.getExercises().iterator().next();
+        exercise.setMode(ExerciseMode.TEAM);
+        exercise.setReleaseDate(ZonedDateTime.now().minusDays(1));
+        exercise = exerciseRepo.save(exercise);
+        students = new HashSet<>(userRepo.searchByLoginOrNameInGroup("tumuser", TEST_PREFIX + "student"));
+        tutor = userRepo.findOneByLogin(TEST_PREFIX + "tutor1").orElseThrow();
+    }
+
     private String resourceUrl() {
         return "/api/exercises/" + exercise.getId() + "/teams";
     }
@@ -69,20 +83,6 @@ class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
     private String resourceUrlCourseWithExercisesAndParticipationsForTeam(Course course, Team team) {
         return "/api/courses/" + course.getId() + "/teams/" + team.getShortName() + "/with-exercises-and-participations";
-    }
-
-    @BeforeEach
-    void initTestCase() {
-        database.addUsers(TEST_PREFIX, NUMBER_OF_STUDENTS, 2, 0, 1);
-        course = database.addCourseWithOneProgrammingExercise();
-
-        // Make exercise team-based and already released to students
-        exercise = course.getExercises().iterator().next();
-        exercise.setMode(ExerciseMode.TEAM);
-        exercise.setReleaseDate(ZonedDateTime.now().minusDays(1));
-        exercise = exerciseRepo.save(exercise);
-        students = new HashSet<>(userRepo.searchByLoginOrNameInGroup("tumuser", TEST_PREFIX + "student"));
-        tutor = userRepo.findOneByLogin(TEST_PREFIX + "tutor1").orElseThrow();
     }
 
     @Test

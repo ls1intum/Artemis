@@ -15,22 +15,22 @@ class DatabaseQueryCountTest extends AbstractSpringIntegrationBambooBitbucketJir
 
     private static final String TEST_PREFIX = "databasequerycount";
 
-    private final int numberOfTutors = 5;
+    private final int NUMBER_OF_TUTORS = 1;
 
     @BeforeEach
     void setup() {
         participantScoreScheduleService.shutdown();
-        database.addUsers(TEST_PREFIX, 1, numberOfTutors, 0, 0);
+        database.addUsers(TEST_PREFIX, 1, NUMBER_OF_TUTORS, 0, 0);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetAllCoursesForDashboardRealisticQueryCount() throws Exception {
         String suffix = "cfdr";
-        database.adjustUserGroupsToCustomGroups(TEST_PREFIX, suffix, 1, numberOfTutors, 0, 0);
+        database.adjustUserGroupsToCustomGroups(TEST_PREFIX, suffix, 1, NUMBER_OF_TUTORS, 0, 0);
         // Tests the amount of DB calls for a 'realistic' call to courses/for-dashboard. We should aim to maintain or lower the amount of DB calls, and be aware if they increase
         // TODO: add team exercises, do not make all quizzes active
-        var courses = database.createMultipleCoursesWithAllExercisesAndLectures(TEST_PREFIX, 10, 10, numberOfTutors);
+        var courses = database.createMultipleCoursesWithAllExercisesAndLectures(TEST_PREFIX, 10, 10, NUMBER_OF_TUTORS);
         database.updateCourseGroups(TEST_PREFIX, courses, suffix);
 
         assertThatDb(() -> {
