@@ -63,7 +63,7 @@ class AssessmentKnowledgeIntegrationTest extends AbstractSpringIntegrationBamboo
     private static final int NUMBER_OF_STUDENTS = 2;
 
     @BeforeEach
-    void initTestCase() {
+    void init() {
         database.addUsers(TEST_PREFIX, NUMBER_OF_STUDENTS, 1, 0, 1);
         database.addInstructor("other-instructors", "instructorother");
     }

@@ -344,7 +344,7 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getPointCounters()).hasSize(questionScore + 1);
         // check general statistics
         for (var pointCounter : quizExerciseWithStatistic.getQuizPointStatistic().getPointCounters()) {
-            // MC, DnD and shortAnswer are all incorrect
+            // MC, DnD and short Answer are all incorrect
             if (pointCounter.getPoints() == 0.0) {
                 assertThat(pointCounter.getRatedCounter()).isEqualTo(NUMBER_OF_STUDENTS - NUMBER_OF_STUDENTS / 2 - NUMBER_OF_STUDENTS / 3 + NUMBER_OF_STUDENTS / 6);
                 assertThat(pointCounter.getUnRatedCounter()).isZero();
@@ -369,7 +369,7 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
                 assertThat(pointCounter.getRatedCounter()).isEqualTo(NUMBER_OF_STUDENTS / 6);
                 assertThat(pointCounter.getUnRatedCounter()).isZero();
             }
-            // MC, DnD and shortAnswer are all correct
+            // MC, DnD and short Answer are all correct
             else if (pointCounter.getPoints() == 9.0) {
                 assertThat(pointCounter.getRatedCounter()).isEqualTo(NUMBER_OF_STUDENTS / 12);
                 assertThat(pointCounter.getUnRatedCounter()).isZero();
