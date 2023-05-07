@@ -168,6 +168,7 @@
           "builder": "@angular-devkit/build-angular:dev-server",
           "options": {
             "browserTarget": "artemis:build:development",
+            "proxyConfig": "src/main/webapp/proxy.conf.mjs",
             "port": 9000
           },
           "configurations": {
