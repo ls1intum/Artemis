@@ -6,7 +6,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import org.apache.commons.compress.utils.FileNameUtils;
@@ -91,14 +90,17 @@ public class ProgrammingExerciseImportFromFileService {
     }
 
     /**
-     * copy embedded files from the extracted zip file to the markdown folder, so they can be used in the problem statement
+     * Copy embedded files from the extracted zip file to the markdown folder, so they can be used in the problem statement
+     *
+     * @param importExerciseDir the directory where the extracted zip file is located
      **/
     private void copyEmbeddedFiles(Path importExerciseDir) throws IOException {
-        // the conversion to a string is needed because otherwise the file extension is not included
-        Predicate<Path> embeddedFile = file -> file.getFileName().toString().endsWith(".jpg") || file.getFileName().toString().endsWith(".jpeg")
-                || file.getFileName().toString().endsWith(".png") || file.getFileName().toString().endsWith(".gif") || file.getFileName().toString().endsWith(".svg")
-                || file.getFileName().toString().endsWith(".pdf");
-        try (var embeddedFiles = Files.list(importExerciseDir).filter(embeddedFile)) {
+        Path embeddedFilesDir = importExerciseDir.resolve("files");
+
+        if (!Files.exists(embeddedFilesDir)) {
+            return;
+        }
+        try (var embeddedFiles = Files.list(embeddedFilesDir)) {
             for (var file : embeddedFiles.toList()) {
                 var targetPath = Path.of(FilePathService.getMarkdownFilePath(), file.getFileName().toString());
                 Files.copy(file, targetPath);
