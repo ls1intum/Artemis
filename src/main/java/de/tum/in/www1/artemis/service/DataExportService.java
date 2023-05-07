@@ -63,11 +63,14 @@ public class DataExportService {
 
     private final ExerciseRepository exerciseRepository;
 
+    private final DragAndDropQuizAnswerConversionService dragAndDropQuizAnswerConversionService;
+
     private Path workingDirectory;
 
     public DataExportService(CourseRepository courseRepository, UserRepository userRepository, AuthorizationCheckService authorizationCheckService, ZipFileService zipFileService,
             ProgrammingExerciseExportService programmingExerciseExportService, DataExportRepository dataExportRepository, QuizQuestionRepository quizQuestionRepository,
-            QuizSubmissionRepository quizSubmissionRepository, ExerciseRepository exerciseRepository) {
+            QuizSubmissionRepository quizSubmissionRepository, ExerciseRepository exerciseRepository,
+            DragAndDropQuizAnswerConversionService dragAndDropQuizAnswerConversionService) {
         this.courseRepository = courseRepository;
         this.userRepository = userRepository;
         this.authorizationCheckService = authorizationCheckService;
@@ -77,6 +80,7 @@ public class DataExportService {
         this.quizQuestionRepository = quizQuestionRepository;
         this.quizSubmissionRepository = quizSubmissionRepository;
         this.exerciseRepository = exerciseRepository;
+        this.dragAndDropQuizAnswerConversionService = dragAndDropQuizAnswerConversionService;
     }
 
     /**
@@ -287,7 +291,12 @@ public class DataExportService {
                 var submittedAnswer = quizSubmission.getSubmittedAnswerForQuestion(question);
                 // if this question wasn't answered, the submitted answer is null
                 if (submittedAnswer != null) {
-                    populateHeaders(submittedAnswer, headers);
+                    if (submittedAnswer instanceof DragAndDropSubmittedAnswer dragAndDropSubmittedAnswer) {
+                        dragAndDropQuizAnswerConversionService.convertDragAndDropQuizAnswerToImage(dragAndDropSubmittedAnswer);
+                    }
+                    else {
+                        populateHeaders(submittedAnswer, headers);
+                    }
                 }
 
             }
