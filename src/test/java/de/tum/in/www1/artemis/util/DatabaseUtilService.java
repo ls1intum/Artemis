@@ -1561,26 +1561,28 @@ public class DatabaseUtilService {
         return registerUsersForExamAndSaveExam(exam, userPrefix, numberOfStudents);
     }
 
+    public Exam registerUsersForExamAndSaveExam(Exam exam, String userPrefix, int numberOfStudents) {
+        return registerUsersForExamAndSaveExam(exam, userPrefix, 1, numberOfStudents);
+    }
+
     /**
-     * registers student for exam and saves the exam in the repository
+     * registers students for exam and saves the exam in the repository
      *
-     * @param exam             exam to which students should be registered to
-     * @param userPrefix       prefix of the users
-     * @param numberOfStudents number of students to be registered
+     * @param exam       exam to which students should be registered to
+     * @param userPrefix prefix of the users
+     * @param from       index of the first student to be registered
+     * @param to         index of the last student to be registered
      * @return exam that was saved in the repository
      */
-    public Exam registerUsersForExamAndSaveExam(Exam exam, String userPrefix, int numberOfStudents) {
-        Set<ExamUser> registeredExamUsers = new HashSet<>();
+    public Exam registerUsersForExamAndSaveExam(Exam exam, String userPrefix, int from, int to) {
 
-        for (int i = 1; i <= numberOfStudents; i++) {
+        for (int i = from; i <= to; i++) {
             ExamUser registeredExamUser = new ExamUser();
             registeredExamUser.setUser(getUserByLogin(userPrefix + "student" + i));
             registeredExamUser.setExam(exam);
             exam.addExamUser(registeredExamUser);
-            registeredExamUsers.add(registeredExamUser);
+            examUserRepository.save(registeredExamUser);
         }
-        examUserRepository.saveAll(registeredExamUsers);
-        exam.setExamUsers(registeredExamUsers);
 
         return examRepository.save(exam);
     }

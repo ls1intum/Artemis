@@ -61,7 +61,7 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
     private ExerciseGroup exerciseGroup;
 
-    private final int NUMBER_OF_STUDENTS = 6;
+    private static final int NUMBER_OF_STUDENTS = 6;
 
     @BeforeEach
     void init() {

@@ -707,21 +707,10 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         List<StudentExam> studentExams = request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/generate-student-exams",
                 Optional.empty(), StudentExam.class, HttpStatus.OK);
         assertThat(studentExams).hasSize(exam.getExamUsers().size());
+        exam = examRepository.save(exam);
 
         // Register two new students
-        User student5 = database.getUserByLogin(TEST_PREFIX + "student3");
-        User student6 = database.getUserByLogin(TEST_PREFIX + "student4");
-        var registeredUsers = Set.of(student5, student6);
-        // todo: extract into helper method
-        exam = examRepository.save(exam);
-        for (var user : registeredUsers) {
-            var registeredExamUser = new ExamUser();
-            registeredExamUser.setUser(user);
-            registeredExamUser.setExam(exam);
-            registeredExamUser = examUserRepository.save(registeredExamUser);
-            exam.addExamUser(registeredExamUser);
-        }
-        examRepository.save(exam);
+        database.registerUsersForExamAndSaveExam(exam, TEST_PREFIX, 3, 4);
 
         // Generate individual exams for the two missing students
         List<StudentExam> missingStudentExams = request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/generate-missing-student-exams",

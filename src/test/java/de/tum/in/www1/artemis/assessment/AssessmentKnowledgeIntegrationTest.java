@@ -60,9 +60,11 @@ class AssessmentKnowledgeIntegrationTest extends AbstractSpringIntegrationBamboo
     @Autowired
     private ModelAssessmentKnowledgeService modelAssessmentKnowledgeService;
 
+    private static final int NUMBER_OF_STUDENTS = 2;
+
     @BeforeEach
     void initTestCase() {
-        database.addUsers(TEST_PREFIX, 1, 1, 0, 1);
+        database.addUsers(TEST_PREFIX, NUMBER_OF_STUDENTS, 1, 0, 1);
         database.addInstructor("other-instructors", "instructorother");
     }
 
@@ -229,10 +231,10 @@ class AssessmentKnowledgeIntegrationTest extends AbstractSpringIntegrationBamboo
         final Course course2 = database.addCourseWithOneReleasedTextExercise();
         TextExercise exercise1 = (TextExercise) course1.getExercises().iterator().next();
         TextExercise exercise2 = (TextExercise) course2.getExercises().iterator().next();
-        int size = 4;
-        var textSubmissions1 = ModelFactory.generateTextSubmissions(size);
-        var textSubmissions2 = ModelFactory.generateTextSubmissions(size);
-        for (var i = 0; i < size; i++) {
+
+        var textSubmissions1 = ModelFactory.generateTextSubmissions(NUMBER_OF_STUDENTS);
+        var textSubmissions2 = ModelFactory.generateTextSubmissions(NUMBER_OF_STUDENTS);
+        for (var i = 0; i < NUMBER_OF_STUDENTS; i++) {
             var textSubmission1 = textSubmissions1.get(i);
             var textSubmission2 = textSubmissions2.get(i);
             textSubmission1.setId(database.generateTempId());
