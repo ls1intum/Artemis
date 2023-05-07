@@ -94,7 +94,13 @@ export class UserManagementUpdateComponent implements OnInit {
         }
         // Set password to undefined. ==> If it still is undefined on save, it won't be changed for existing users. It will be random for new users
         this.user.password = undefined;
+        this.initializeForm();
+    }
 
+    private initializeForm() {
+        if (this.editForm) {
+            return;
+        }
         this.editForm = this.fb.group({
             idInput: ['', []],
             loginInput: ['', [Validators.required, Validators.minLength(USERNAME_MIN_LENGTH), Validators.maxLength(USERNAME_MAX_LENGTH)]],
