@@ -56,6 +56,9 @@
             "polyfills": "src/main/webapp/app/polyfills.ts",
             "tsConfig": "tsconfig.json",
             "inlineStyleLanguage": "scss",
+            "stylePreprocessorOptions": {
+              "includePaths": ["."]
+            },
             "assets": [
               "src/main/webapp/content",
               "src/main/webapp/logo/favicon.svg",
