@@ -74,6 +74,7 @@
               "src/main/webapp/logo/mstile-310x150.png",
               "src/main/webapp/logo/mstile-310x310.png",
               "src/main/webapp/logo/safari-pinned-tab.svg",
+              "src/main/webapp/i18n",
               {
                 "glob": "*.{js,css,html,png}",
                 "input": "./node_modules/swagger-ui-dist",
@@ -167,7 +168,7 @@
           "builder": "@angular-devkit/build-angular:dev-server",
           "options": {
             "browserTarget": "artemis:build:development",
-            "port": 4200
+            "port": 9000
           },
           "configurations": {
             "production": {

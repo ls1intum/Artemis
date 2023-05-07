@@ -195,6 +195,11 @@ repos-download/
 #################################
 /src/main/webapp/app/environments/environment*.ts
 
+##########################
+# Angular Build i18n Files
+##########################
+/src/main/webapp/i18n/*.json
+
 ######################
 # Artemis configs
 ######################

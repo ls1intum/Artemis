@@ -18,6 +18,10 @@ const languagesHash = await hashElement(path.resolve(__dirname, 'src', 'main', '
     files: { include: ['*.json'] },
 });
 
+// =====================
+// Environment variables
+// =====================
+
 /*
  * Needed for client compilations with docker compose, where the 'APP_VERSION' property isn't injected by gradle.
  *
@@ -27,10 +31,7 @@ function inferVersion() {
     let version = 'DEV';
 
     try {
-        const fs = require('fs');
-        const buildGradleFile = 'build.gradle';
-
-        let data = fs.readFileSync(buildGradleFile, 'UTF-8');
+        let data = fs.readFileSync('build.gradle', 'UTF-8');
 
         version = data.match(/\nversion\s=\s"(.*)"/);
 
@@ -53,3 +54,55 @@ export const SERVER_API_URL = '';
 export const I18N_HASH = ${JSON.stringify(languagesHash.hash)};
 `;
 fs.writeFileSync(path.resolve(__dirname, 'src', 'main', 'webapp', 'app', 'environments', 'environment.override.ts'), environmentConfig);
+
+
+// =====================
+// i18n merging
+// =====================
+
+
+const groups = [
+    { folder: './src/main/webapp/i18n/en', output: './src/main/webapp/i18n/en.json' },
+    { folder: './src/main/webapp/i18n/de', output: './src/main/webapp/i18n/de.json' },
+];
+
+const isObject = (obj) => obj && typeof obj === 'object';
+
+function deepMerge(target, source) {
+    if (!isObject(target) || !isObject(source)) {
+        return source;
+    }
+
+    for (const key in source) {
+        const targetValue = target[key];
+        const sourceValue = source[key];
+
+        if (isObject(sourceValue)) {
+            target[key] = deepMerge(targetValue || {}, sourceValue);
+        } else {
+            target[key] = sourceValue;
+        }
+    }
+
+    return target;
+}
+
+
+for (const group of groups) {
+    try {
+        // create output folder if it doesn't exist
+        fs.mkdirSync(path.dirname(group.output), { recursive: true });
+
+        const files = fs.readdirSync(group.folder).filter(file => file.endsWith('.json'));
+
+        const mergedContent = files.reduce((acc, file) => {
+            const content = JSON.parse(fs.readFileSync(path.resolve(group.folder, file)).toString());
+            return deepMerge(acc, content);
+        });
+
+        await fs.promises.writeFile(group.output, JSON.stringify(mergedContent));
+        console.log(`Merged JSON files for ${group.output}`);
+    } catch (error) {
+        console.error(`Error merging JSON files for ${group.output}:`, error);
+    }
+}
