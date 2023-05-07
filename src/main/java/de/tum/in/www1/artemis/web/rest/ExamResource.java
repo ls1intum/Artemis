@@ -36,8 +36,10 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
+import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AssessmentDashboardService;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
@@ -47,6 +49,7 @@ import de.tum.in.www1.artemis.service.exam.*;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
+import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
 import de.tum.in.www1.artemis.service.scheduled.cache.monitoring.ExamMonitoringScheduleService;
 import de.tum.in.www1.artemis.web.rest.dto.*;
 import de.tum.in.www1.artemis.web.rest.errors.*;
@@ -64,6 +67,8 @@ public class ExamResource {
     private final Logger log = LoggerFactory.getLogger(ExamResource.class);
 
     private static final String ENTITY_NAME = "exam";
+
+    private final ChannelRepository channelRepository;
 
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
@@ -105,11 +110,14 @@ public class ExamResource {
 
     private final CustomAuditEventRepository auditEventRepository;
 
+    private final ChannelService channelService;
+
     public ExamResource(UserRepository userRepository, CourseRepository courseRepository, ExamService examService, ExamDeletionService examDeletionService,
             ExamAccessService examAccessService, InstanceMessageSendService instanceMessageSendService, ExamRepository examRepository, SubmissionService submissionService,
             AuthorizationCheckService authCheckService, ExamDateService examDateService, TutorParticipationRepository tutorParticipationRepository,
             AssessmentDashboardService assessmentDashboardService, ExamRegistrationService examRegistrationService, StudentExamRepository studentExamRepository,
-            ExamImportService examImportService, ExamMonitoringScheduleService examMonitoringScheduleService, CustomAuditEventRepository auditEventRepository) {
+            ExamImportService examImportService, ExamMonitoringScheduleService examMonitoringScheduleService, CustomAuditEventRepository auditEventRepository,
+            ChannelService channelService, ChannelRepository channelRepository) {
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
         this.examService = examService;
@@ -127,6 +135,8 @@ public class ExamResource {
         this.examImportService = examImportService;
         this.examMonitoringScheduleService = examMonitoringScheduleService;
         this.auditEventRepository = auditEventRepository;
+        this.channelService = channelService;
+        this.channelRepository = channelRepository;
     }
 
     /**
@@ -154,6 +164,10 @@ public class ExamResource {
 
         examAccessService.checkCourseAccessForInstructorElseThrow(courseId);
 
+        if (!exam.isTestExam()) {
+            Channel createdChannel = channelService.createExamChannel(exam);
+            exam.setChannel(createdChannel);
+        }
         Exam result = examRepository.save(exam);
 
         if (result.isMonitoring()) {
@@ -196,6 +210,12 @@ public class ExamResource {
         updatedExam.setExerciseGroups(originalExam.getExerciseGroups());
         updatedExam.setStudentExams(originalExam.getStudentExams());
         updatedExam.setExamUsers(originalExam.getExamUsers());
+
+        if (originalExam.getChannel() != null) {
+            // Make sure that the original references are preserved.
+            Channel originalChannel = channelRepository.findByIdElseThrow(originalExam.getChannel().getId());
+            updatedExam.setChannel(originalChannel);
+        }
 
         Exam result = examRepository.save(updatedExam);
 
@@ -250,7 +270,7 @@ public class ExamResource {
         // Step 3: Validate the Exam dates
         checkForExamConflictsElseThrow(courseId, examToBeImported);
 
-        // Step 4: Import Exam with Exercises
+        // Step 4: Import Exam with Exercises and create a channel for the exam
         Exam examCopied = examImportService.importExamWithExercises(examToBeImported, courseId);
 
         // Step 5: Set Exam Monitoring

@@ -11,6 +11,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Lecture;
+import de.tum.in.www1.artemis.domain.exam.Exam;
 
 @Entity
 @DiscriminatorValue("C")
@@ -73,6 +74,10 @@ public class Channel extends Conversation {
     @JsonIgnoreProperties(value = "channel", allowSetters = true)
     private Exercise exercise;
 
+    @OneToOne(mappedBy = "channel")
+    @JsonIgnoreProperties(value = "channel", allowSetters = true)
+    private Exam exam;
+
     @Nullable
     public String getName() {
         return name;
@@ -131,5 +136,13 @@ public class Channel extends Conversation {
 
     public Exercise getExercise() {
         return exercise;
+    }
+
+    public Exam getExam() {
+        return exam;
+    }
+
+    public void setLecture(Lecture lecture) {
+        this.lecture = lecture;
     }
 }

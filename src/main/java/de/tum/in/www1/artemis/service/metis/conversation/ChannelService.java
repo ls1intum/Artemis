@@ -13,6 +13,7 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.repository.LectureRepository;
@@ -230,4 +231,13 @@ public class ChannelService {
         return createChannel(exercise.getCourseViaExerciseGroupOrCourseMember(), channelToCreate, Optional.of(userRepository.getUserWithGroupsAndAuthorities()));
     }
 
+    public Channel createExamChannel(Exam exam) {
+        Channel channelToCreate = new Channel();
+        channelToCreate.setName(exam.getTitle().toLowerCase().replace(' ', '-'));
+        channelToCreate.setIsPublic(false); // TODO: discuss if it should be public or private
+        channelToCreate.setIsAnnouncementChannel(false);
+        channelToCreate.setIsArchived(false);
+        channelToCreate.setDescription("Channel for exam - " + exam.getTitle());
+        return createChannel(exam.getCourse(), channelToCreate, Optional.of(userRepository.getUserWithGroupsAndAuthorities()));
+    }
 }
