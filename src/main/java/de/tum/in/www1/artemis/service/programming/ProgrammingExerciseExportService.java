@@ -176,7 +176,7 @@ public class ProgrammingExerciseExportService {
         while (matcher.find()) {
             embeddedFiles.add(matcher.group());
         }
-        log.info("Found embedded files:{} ", embeddedFiles);
+        log.debug("Found embedded files:{} ", embeddedFiles);
         for (String embeddedFile : embeddedFiles) {
             String filePath = embeddedFile.substring(embeddedFile.indexOf("(") + 1, embeddedFile.indexOf(")"));
             String fileName = filePath.replace(API_MARKDOWN_FILE_PATH, "");
