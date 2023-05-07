@@ -196,9 +196,3 @@ repos-download/
 /src/main/resources/config/application-local*.yml
 /src/main/resources/id_*
 /src/main/resources/known_hosts
-
-######################
-# Coverage Files
-######################
-/src/test/cypress/coverage
-/src/test/cypress/jacoco
