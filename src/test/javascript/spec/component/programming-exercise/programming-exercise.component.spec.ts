@@ -17,11 +17,7 @@ import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { ProgrammingExerciseEditSelectedComponent } from 'app/exercises/programming/manage/programming-exercise-edit-selected.component';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
-import { ExerciseImportTabsComponent } from 'app/exercises/shared/import/exercise-import-tabs.component';
-import { MockDirective } from 'ng-mocks';
-import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { ExerciseImportWrapperComponent } from 'app/exercises/shared/import/exercise-import-wrapper/exercise-import-wrapper.component';
 
 describe('ProgrammingExercise Management Component', () => {
@@ -40,7 +36,6 @@ describe('ProgrammingExercise Management Component', () => {
     let fixture: ComponentFixture<ProgrammingExerciseComponent>;
     let service: CourseExerciseService;
     let programmingExerciseService: ProgrammingExerciseService;
-    let exerciseService: ExerciseService;
     let modalService: NgbModal;
     const route = { snapshot: { paramMap: convertToParamMap({ courseId: course.id }) } } as any as ActivatedRoute;
 
@@ -64,7 +59,6 @@ describe('ProgrammingExercise Management Component', () => {
         comp = fixture.componentInstance;
         service = fixture.debugElement.injector.get(CourseExerciseService);
         programmingExerciseService = fixture.debugElement.injector.get(ProgrammingExerciseService);
-        exerciseService = fixture.debugElement.injector.get(ExerciseService);
         modalService = fixture.debugElement.injector.get(NgbModal);
 
         comp.programmingExercises = [programmingExercise, programmingExercise2, programmingExercise3];
@@ -134,7 +128,7 @@ describe('ProgrammingExercise Management Component', () => {
         expect(mockSubscriber).toHaveBeenCalledOnce();
     });
 
-    it.each([undefined, 456])('should open import modal', (id) => {
+    it.each([undefined, 456])('should open import modal', (id: number | undefined) => {
         const mockReturnValue = {
             result: Promise.resolve({ id } as ProgrammingExercise),
             componentInstance: {},

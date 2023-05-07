@@ -69,12 +69,13 @@ describe('ExamStudentsAttendanceCheckComponent', () => {
         expect(component).not.toBeNull();
         expect(component.courseId).toEqual(course.id);
         expect(component.exam).toEqual(examWithCourse);
-        expect(component.isLoading).toBeFalse();
+        expect(component.hasExamStarted).toBeTrue();
     });
 
     it('should test on error', () => {
         component.onError('ErrorString');
         expect(component.isTransitioning).toBeFalse();
+        expect(component.isLoading).toBeFalse();
     });
 
     it('should test on sort', () => {
@@ -86,17 +87,15 @@ describe('ExamStudentsAttendanceCheckComponent', () => {
     });
 
     it('should call exam management service', () => {
-        const response: ExamUserAttendanceCheckDTO[] = [
-            {
-                id: 1,
-                studentImagePath: 'studentImagePath',
-                login: 'student1',
-                registrationNumber: '12345678',
-                signingImagePath: 'signingImagePath',
-                started: true,
-                submitted: false,
-            },
-        ];
+        const examUserAttendanceCheckDTO = new ExamUserAttendanceCheckDTO();
+        examUserAttendanceCheckDTO.id = 1;
+        examUserAttendanceCheckDTO.studentImagePath = 'studentImagePath';
+        examUserAttendanceCheckDTO.login = 'student1';
+        examUserAttendanceCheckDTO.registrationNumber = '12345678';
+        examUserAttendanceCheckDTO.signingImagePath = 'signingImagePath';
+        examUserAttendanceCheckDTO.started = true;
+        examUserAttendanceCheckDTO.submitted = false;
+        const response: ExamUserAttendanceCheckDTO[] = [examUserAttendanceCheckDTO];
         const examServiceStub = jest.spyOn(examManagementService, 'verifyExamUserAttendance').mockReturnValue(of(new HttpResponse({ body: response })));
 
         fixture.detectChanges();
@@ -105,5 +104,6 @@ describe('ExamStudentsAttendanceCheckComponent', () => {
         expect(examServiceStub).toHaveBeenCalledWith(course.id, examWithCourse.id);
         expect(component.allExamUsersAttendanceCheck).toEqual(response);
         expect(component.allExamUsersAttendanceCheck).toHaveLength(1);
+        expect(component.isLoading).toBeFalse();
     });
 });
