@@ -100,8 +100,9 @@ for (const group of groups) {
         });
 
         await fs.promises.writeFile(group.output, JSON.stringify(mergedContent));
-        console.log(`Merged JSON files for ${group.output}`);
     } catch (error) {
         console.error(`Error merging JSON files for ${group.output}:`, error);
     }
 }
+
+console.log("Pre-Build complete!");
