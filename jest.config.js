@@ -8,12 +8,10 @@ const esModules = ['lodash-es', 'franc-min', 'trigram-utils', 'n-gram', 'collaps
 const {
     compilerOptions: { baseUrl = './' },
 } = require('./tsconfig.json');
-const environment = require('./webpack/environment');
 
 module.exports = {
     globalSetup: 'jest-preset-angular/global-setup',
     globals: {
-        ...environment,
         'ts-jest': {
             tsconfig: '<rootDir>/tsconfig.spec.json',
             stringifyContentPathRegex: '\\.html$',

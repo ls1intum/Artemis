@@ -18,11 +18,8 @@
       "prefix": "jhi",
       "architect": {
         "build": {
-          "builder": "@angular-builders/custom-webpack:browser",
+          "builder": "@angular-devkit/build-angular:browser",
           "options": {
-            "customWebpackConfig": {
-              "path": "./webpack/webpack.custom.js"
-            },
             "allowedCommonJsDependencies": [
               "sockjs-client",
               "hoist-non-react-statics",
@@ -59,6 +56,11 @@
             "polyfills": "src/main/webapp/app/polyfills.ts",
             "tsConfig": "tsconfig.json",
             "inlineStyleLanguage": "scss",
+            "stylePreprocessorOptions": {
+              "includePaths": [
+                "."
+              ]
+            },
             "assets": [
               "src/main/webapp/content",
               "src/main/webapp/logo/favicon.svg",
@@ -77,6 +79,7 @@
               "src/main/webapp/logo/mstile-310x150.png",
               "src/main/webapp/logo/mstile-310x310.png",
               "src/main/webapp/logo/safari-pinned-tab.svg",
+              "src/main/webapp/i18n",
               {
                 "glob": "*.{js,css,html,png}",
                 "input": "./node_modules/swagger-ui-dist",
@@ -141,6 +144,12 @@
                   "maximumWarning": "1mb",
                   "maximumError": "1.6mb"
                 }
+              ],
+              "fileReplacements": [
+                {
+                  "replace": "src/main/webapp/app/environments/environment.ts",
+                  "with": "src/main/webapp/app/environments/environment.override.ts"
+                }
               ]
             },
             "development": {
@@ -149,16 +158,23 @@
               "vendorChunk": true,
               "extractLicenses": false,
               "sourceMap": true,
-              "namedChunks": true
+              "namedChunks": true,
+              "fileReplacements": [
+                {
+                  "replace": "src/main/webapp/app/environments/environment.ts",
+                  "with": "src/main/webapp/app/environments/environment.override.ts"
+                }
+              ]
             }
           },
           "defaultConfiguration": "production"
         },
         "serve": {
-          "builder": "@angular-builders/custom-webpack:dev-server",
+          "builder": "@angular-devkit/build-angular:dev-server",
           "options": {
             "browserTarget": "artemis:build:development",
-            "port": 4200
+            "proxyConfig": "src/main/webapp/proxy.conf.mjs",
+            "port": 9000
           },
           "configurations": {
             "production": {
