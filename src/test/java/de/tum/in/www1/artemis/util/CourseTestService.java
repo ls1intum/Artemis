@@ -2238,10 +2238,10 @@ public class CourseTestService {
         assertThat(statisticsDTO.getAverageScoreInPercent()).isEqualTo(60.0);
         assertThat(statisticsDTO.getExerciseMaxPoints()).isEqualTo(5.0);
         assertThat(statisticsDTO.getNoOfParticipatingStudentsOrTeams()).isZero();
-        assertThat(statisticsDTO.getParticipationRateInPercent()).isEqualTo(0.0);
+        assertThat(statisticsDTO.getParticipationRateInPercent()).isZero();
         assertThat(statisticsDTO.getNoOfStudentsInCourse()).isEqualTo(8);
         assertThat(statisticsDTO.getNoOfRatedAssessments()).isZero();
-        assertThat(statisticsDTO.getNoOfAssessmentsDoneInPercent()).isEqualTo(0.0);
+        assertThat(statisticsDTO.getNoOfAssessmentsDoneInPercent()).isZero();
         assertThat(statisticsDTO.getNoOfSubmissionsInTime()).isZero();
 
         // Get the statistics of the team exercise
@@ -2250,14 +2250,14 @@ public class CourseTestService {
 
         // Since that exercise is still "currently in progress", the participations are the only statistics we set
         var teamStatisticsDTO = teamStatisticsOptional.get();
-        assertThat(teamStatisticsDTO.getAverageScoreInPercent()).isEqualTo(0.0);
+        assertThat(teamStatisticsDTO.getAverageScoreInPercent()).isZero();
         assertThat(teamStatisticsDTO.getExerciseMaxPoints()).isEqualTo(10.0);
         assertThat(teamStatisticsDTO.getNoOfParticipatingStudentsOrTeams()).isEqualTo(1);
         assertThat(teamStatisticsDTO.getParticipationRateInPercent()).isEqualTo(100D);
         assertThat(teamStatisticsDTO.getNoOfStudentsInCourse()).isEqualTo(8);
         assertThat(teamStatisticsDTO.getNoOfTeamsInCourse()).isEqualTo(1);
         assertThat(teamStatisticsDTO.getNoOfRatedAssessments()).isZero();
-        assertThat(teamStatisticsDTO.getNoOfAssessmentsDoneInPercent()).isEqualTo(0.0);
+        assertThat(teamStatisticsDTO.getNoOfAssessmentsDoneInPercent()).isZero();
         assertThat(teamStatisticsDTO.getNoOfSubmissionsInTime()).isEqualTo(1L);
 
         // Get the statistics of the exercise in assessment
@@ -2266,10 +2266,10 @@ public class CourseTestService {
 
         // Since that exercise is "currently in assessment", we need the numberOfRatedAssessment, assessmentsDoneInPercent and the numberOfSubmissionsInTime
         var exerciseInAssessmentStatisticsDTO = exerciseInAssessmentStatisticsOptional.get();
-        assertThat(exerciseInAssessmentStatisticsDTO.getAverageScoreInPercent()).isEqualTo(0.0);
+        assertThat(exerciseInAssessmentStatisticsDTO.getAverageScoreInPercent()).isZero();
         assertThat(exerciseInAssessmentStatisticsDTO.getExerciseMaxPoints()).isEqualTo(15.0);
         assertThat(exerciseInAssessmentStatisticsDTO.getNoOfParticipatingStudentsOrTeams()).isZero();
-        assertThat(exerciseInAssessmentStatisticsDTO.getParticipationRateInPercent()).isEqualTo(0D);
+        assertThat(exerciseInAssessmentStatisticsDTO.getParticipationRateInPercent()).isZero();
         assertThat(exerciseInAssessmentStatisticsDTO.getNoOfStudentsInCourse()).isEqualTo(8);
         assertThat(exerciseInAssessmentStatisticsDTO.getNoOfRatedAssessments()).isEqualTo(1);
         assertThat(exerciseInAssessmentStatisticsDTO.getNoOfAssessmentsDoneInPercent()).isEqualTo(100.0);

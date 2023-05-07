@@ -89,10 +89,6 @@ public class ProgrammingExercise extends Exercise {
     @Column(name = "project_key", table = "programming_exercise_details", nullable = false)
     private String projectKey;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "build_plan_id", table = "exercise")
-    private BuildPlan buildPlan;
-
     @Size(max = 36)
     @Nullable
     @Column(name = "build_plan_access_secret", table = "programming_exercise_details", length = 36)
@@ -818,20 +814,6 @@ public class ProgrammingExercise extends Exercise {
 
     public void generateAndSetBuildPlanAccessSecret() {
         buildPlanAccessSecret = UUID.randomUUID().toString();
-    }
-
-    @JsonIgnore
-    public BuildPlan getBuildPlan() {
-        return buildPlan;
-    }
-
-    /**
-     * Only for JPA, never use directly. Use {@link de.tum.in.www1.artemis.repository.BuildPlanRepository#setBuildPlanForExercise(String, ProgrammingExercise)} instead.
-     *
-     * @param buildPlan The build plan for this exercise.
-     */
-    public void setBuildPlan(BuildPlan buildPlan) {
-        this.buildPlan = buildPlan;
     }
 
     /**

@@ -205,6 +205,17 @@ describe('User Management Update Component', () => {
                 expect(setTitleOnTitleServiceSpy).not.toHaveBeenCalled();
             }),
         ));
+
+        it('foo', fakeAsync(() => {
+            // GIVEN
+            jest.spyOn(TestBed.inject(ProfileService), 'getProfileInfo').mockReturnValue(of({ activeProfiles: ['bamboo'] } as ProfileInfo));
+
+            // WHEN
+            comp.ngOnInit();
+
+            // THEN
+            expect(comp.editForm.controls['idInput']).toBeDefined();
+        }));
     });
 
     describe('save', () => {
