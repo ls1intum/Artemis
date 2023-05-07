@@ -102,6 +102,32 @@ describe('ProgrammingExerciseGradingTasksTableComponent', () => {
         expect(taskServiceUpdateTasksStub).toHaveBeenCalledOnce();
     });
 
+    it('should sort by name by default', () => {
+        comp.ngOnInit();
+        expect(comp.currentSort?.by).toBe('name');
+    });
+
+    it('should change sort direction', () => {
+        const tasks = [{ taskName: 'task1', weight: 2 }];
+
+        taskServiceUpdateTasksStub.mockReturnValue(tasks);
+        comp.updateTasks();
+
+        comp.changeSort('weight');
+
+        expect(comp.currentSort).toEqual({
+            by: 'weight',
+            descending: true,
+        });
+
+        comp.changeSort('weight');
+
+        expect(comp.currentSort).toEqual({
+            by: 'weight',
+            descending: false,
+        });
+    });
+
     it('should change sort correctly', () => {
         const tasks = [
             { taskName: 'task1', weight: 2 },
@@ -122,6 +148,71 @@ describe('ProgrammingExerciseGradingTasksTableComponent', () => {
         comp.updateTasks();
 
         comp.changeSort('weight');
+
+        expect(comp.tasks).toEqual(expected);
+    });
+
+    it('should sort test cases correctly', () => {
+        const tasks = [
+            { taskName: 'task1' },
+            {
+                taskName: 'task2',
+                testCases: [
+                    { testName: 'test1', weight: 2 },
+                    { testName: 'test2', weight: 1 },
+                    { testName: 'test3', weight: 0 },
+                    { testName: 'test4', weight: 1 },
+                    { testName: 'test5', weight: 2 },
+                ],
+            },
+        ] as ProgrammingExerciseTask[];
+
+        const expected = [
+            { taskName: 'task1' },
+            {
+                taskName: 'task2',
+                testCases: [
+                    { testName: 'test3', weight: 0 },
+                    { testName: 'test2', weight: 1 },
+                    { testName: 'test4', weight: 1 },
+                    { testName: 'test1', weight: 2 },
+                    { testName: 'test5', weight: 2 },
+                ],
+            },
+        ];
+
+        taskServiceUpdateTasksStub.mockReturnValue(tasks);
+        comp.updateTasks();
+
+        comp.changeSort('weight');
+
+        expect(comp.tasks).toEqual(expected);
+    });
+
+    it('should sort task and test names correctly', () => {
+        const tasks = [
+            {
+                taskName: 'task4',
+                testCases: [{ testName: 'test3' }, { testName: 'test5' }, { testName: 'test4' }, { testName: 'test1' }, { testName: 'test2' }],
+            },
+            { taskName: 'task1' },
+            { taskName: 'task3' },
+            { taskName: 'task2' },
+        ] as ProgrammingExerciseTask[];
+
+        const expected = [
+            { taskName: 'task1' },
+            { taskName: 'task2' },
+            { taskName: 'task3' },
+            {
+                taskName: 'task4',
+                testCases: [{ testName: 'test1' }, { testName: 'test2' }, { testName: 'test3' }, { testName: 'test4' }, { testName: 'test5' }],
+            },
+        ];
+        taskServiceUpdateTasksStub.mockReturnValue(tasks);
+        comp.updateTasks();
+
+        comp.changeSort('name');
 
         expect(comp.tasks).toEqual(expected);
     });
