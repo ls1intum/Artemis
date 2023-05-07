@@ -212,9 +212,15 @@ public class ExamResource {
         updatedExam.setExamUsers(originalExam.getExamUsers());
 
         if (originalExam.getChannel() != null) {
-            // Make sure that the original references are preserved.
             Channel originalChannel = channelRepository.findByIdElseThrow(originalExam.getChannel().getId());
-            updatedExam.setChannel(originalChannel);
+            if (!Objects.equals(originalExam.getTitle(), updatedExam.getTitle())) {
+                originalChannel.setName(updatedExam.getTitle().toLowerCase().replace(' ', '-'));
+                Channel updatedChannel = channelRepository.save(originalChannel);
+                updatedExam.setChannel(updatedChannel);
+            }
+            else {
+                updatedExam.setChannel(originalChannel);
+            }
         }
 
         Exam result = examRepository.save(updatedExam);
