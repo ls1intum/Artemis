@@ -1,11 +1,11 @@
-package ${packageName};
+package ${packageName}.model;
 
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
 public class Context {
-    private SortStrategy sortAlgorithm;
+    private SortStrategy sortAlgorithm = new MergeSort();
 
     private final List<Date> dates = new ArrayList<>();
 

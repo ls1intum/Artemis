@@ -1,19 +1,16 @@
-import input.Command;
-import input.CommandParser;
-import input.HelpMessageSupplier;
-import input.InvalidCommandException;
+import ${packageName}.input.Command;
+import ${packageName}.input.CommandParser;
+import ${packageName}.input.InvalidCommandException;
+import ${packageName}.sorting.model.Context;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.function.Supplier;
 
 public class Client {
     private static final String PROMPT = "sort> ";
     private static final Context context = new Context();
-    private static final Policy policy = new Policy(context);
-    private static final Supplier<String> helpMessageSupplier =
-            new HelpMessageSupplier();
+    // private static final Policy policy = new Policy(context);
 
     private Client() {
         throw new IllegalCallerException("utility class");
@@ -38,12 +35,12 @@ public class Client {
         if (command instanceof Command.AddCommand addCommand) {
             context.addValues(addCommand.values());
         } else if (command instanceof Command.SortCommand) {
-            policy.configure();
+            // policy.configure();
             context.sort();
         } else if (command instanceof Command.ClearCommand) {
             context.clearValues();
-        } else if (command instanceof Command.HelpCommand) {
-            System.out.println(helpMessageSupplier.get());
+        } else if (command instanceof Command.HelpCommand helpCommand()) {
+            System.out.println(helpCommand.helpMessage());
         } else if (command instanceof Command.PrintCommand) {
             System.out.println(context.getDates());
         }

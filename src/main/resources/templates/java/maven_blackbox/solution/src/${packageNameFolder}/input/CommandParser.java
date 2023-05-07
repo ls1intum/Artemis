@@ -8,6 +8,16 @@ import java.util.Date;
 import java.util.List;
 
 public class CommandParser {
+
+    private static final String HELP_MESSAGE =
+                """
+                add:   adds the given Dates to the list (format: YYYY-MM-DD)
+                clear: empties the list
+                help:  prints this text
+                print: prints the list
+                sort:  sorts the list
+                quit:  quits the program""";
+
     private CommandParser() {
         throw new IllegalCallerException("utility class");
     }
@@ -26,7 +36,7 @@ public class CommandParser {
         return switch (commandVerb) {
             case "add" -> parseAddCommand(args);
             case "clear" -> new Command.ClearCommand();
-            case "help" -> new Command.HelpCommand();
+            case "help" -> new Command.HelpCommand(HELP_MESSAGE);
             case "print" -> new Command.PrintCommand();
             case "quit" -> new Command.QuitCommand();
             case "sort" -> new Command.SortCommand();
