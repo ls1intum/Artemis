@@ -333,7 +333,8 @@ public class ProgrammingExerciseExportService {
      * solution, or tests repository
      *
      * @param exerciseId     The id of the programming exercise that has the repository
-     * @param repositoryType the type of repository to export
+     * @param repositoryType The type of repository to export
+     * @param workingDir     The directory used to clone the repositories
      * @param outputDir      The directory used for store the zip file
      * @param exportErrors   List of failures that occurred during the export
      * @return a zipped file
