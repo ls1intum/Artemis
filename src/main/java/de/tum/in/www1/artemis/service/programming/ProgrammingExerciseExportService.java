@@ -181,7 +181,7 @@ public class ProgrammingExerciseExportService {
             String filePath = embeddedFile.substring(embeddedFile.indexOf("(") + 1, embeddedFile.indexOf(")"));
             String fileName = filePath.replace(API_MARKDOWN_FILE_PATH, "");
             Path imageFilePath = Path.of(FilePathService.getMarkdownFilePath(), fileName);
-            Path imageExportPath = Path.of(exportDir.toString(), fileName);
+            Path imageExportPath = exportDir.resolve(fileName);
             Files.copy(imageFilePath, imageExportPath);
             pathsToBeZipped.add(imageExportPath);
 
