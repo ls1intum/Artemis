@@ -176,7 +176,7 @@ public class ProgrammingExerciseExportService {
      */
 
     private void copyEmbeddedFiles(ProgrammingExercise exercise, Path outputDir, List<Path> pathsToBeZipped) throws IOException {
-        List<String> embeddedFiles = new ArrayList<>();
+        Set<String> embeddedFiles = new HashSet<>();
 
         Matcher matcher = Pattern.compile(EMBEDDED_FILE_REGEX).matcher(exercise.getProblemStatement());
         while (matcher.find()) {
