@@ -253,6 +253,7 @@ jobs:
     needs: [ process-matrix ]
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         include: ${{ fromJSON(needs.process-matrix.outputs.matrix) }}
 
