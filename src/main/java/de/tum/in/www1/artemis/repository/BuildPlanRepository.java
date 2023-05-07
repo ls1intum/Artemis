@@ -41,7 +41,6 @@ public interface BuildPlanRepository extends JpaRepository<BuildPlan, Long> {
         BuildPlan buildPlanWrapper = findByBuildPlan(buildPlan).orElse(new BuildPlan());
         buildPlanWrapper.setBuildPlan(buildPlan);
         buildPlanWrapper.addProgrammingExercise(exercise);
-        buildPlanWrapper = save(buildPlanWrapper);
-        exercise.setBuildPlan(buildPlanWrapper);
+        save(buildPlanWrapper);
     }
 }
