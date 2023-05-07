@@ -55,7 +55,7 @@ export class TextUnitComponent implements OnInit {
 
         const win = window.open('about:blank', '_blank')!;
         win.document.write(`<html><head><title>${this.textUnit.name}</title>`);
-        win.document.write(`<link rel="stylesheet" href="public/content/github-markdown.css">`);
+        win.document.write('<link rel="stylesheet" href="public/content/github-markdown.css">');
         win.document.write('</head><body class="markdown-body">');
         win.document.write('</body></html>');
         win.document.close();
