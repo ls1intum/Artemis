@@ -34,7 +34,14 @@
                         <div class="col">
                             <div class="form-group">
                                 <label for="tail">{{ 'artemisApp.learningGoal.relation.tailLearningGoal' | artemisTranslate }}</label>
-                                <select class="form-select" id="tail" name="tail" [(ngModel)]="tailLearningGoal">
+                                <select
+                                    [ngClass]="{ 'border-danger': relationError !== learningGoalRelationError.NONE }"
+                                    class="form-select"
+                                    id="tail"
+                                    name="tail"
+                                    [(ngModel)]="tailLearningGoal"
+                                    (change)="validate()"
+                                >
                                     <option *ngFor="let learningGoal of learningGoals" [value]="learningGoal.id">{{ learningGoal.title }}</option>
                                 </select>
                             </div>
@@ -42,7 +49,15 @@
                         <div class="col">
                             <div class="form-group">
                                 <label for="type">{{ 'artemisApp.learningGoal.relation.relationType' | artemisTranslate }}</label>
-                                <select class="form-select" id="type" name="type" [(ngModel)]="relationType">
+                                <select
+                                    [ngClass]="{ 'border-danger': relationError !== learningGoalRelationError.NONE }"
+                                    class="form-select"
+                                    id="type"
+                                    name="type"
+                                    [(ngModel)]="relationType"
+                                    (change)="validate()"
+                                >
+                                    >
                                     <option value="RELATES" selected>{{ 'artemisApp.learningGoal.relation.relates' | artemisTranslate }}</option>
                                     <option value="ASSUMES">{{ 'artemisApp.learningGoal.relation.assumes' | artemisTranslate }}</option>
                                     <option value="EXTENDS">{{ 'artemisApp.learningGoal.relation.extends' | artemisTranslate }}</option>
@@ -53,7 +68,14 @@
                         <div class="col">
                             <div class="form-group">
                                 <label for="head">{{ 'artemisApp.learningGoal.relation.headLearningGoal' | artemisTranslate }}</label>
-                                <select class="form-select" id="head" name="head" [(ngModel)]="headLearningGoal">
+                                <select
+                                    [ngClass]="{ 'border-danger': relationError !== learningGoalRelationError.NONE }"
+                                    class="form-select"
+                                    id="head"
+                                    name="head"
+                                    [(ngModel)]="headLearningGoal"
+                                    (ngModelChange)="validate()"
+                                >
                                     <option *ngFor="let learningGoal of learningGoals" [value]="learningGoal.id">{{ learningGoal.title }}</option>
                                 </select>
                             </div>
@@ -64,8 +86,16 @@
                                 class="btn btn-primary"
                                 value="{{ 'artemisApp.learningGoal.relation.createRelation' | artemisTranslate }}"
                                 (click)="createRelation()"
-                                [disabled]="!headLearningGoal || !tailLearningGoal || !relationType || headLearningGoal == tailLearningGoal"
+                                [disabled]="!headLearningGoal || !tailLearningGoal || !relationType || relationError !== learningGoalRelationError.NONE"
                             />
+                            <span
+                                *ngIf="relationError !== learningGoalRelationError.NONE"
+                                jhiTranslate="{{ getErrorMessage(relationError) }}"
+                                id="relation-not-valid-text"
+                                class="invalid-feedback"
+                            >
+                                You can not create this relation.
+                            </span>
                         </div>
                     </form>
                     <ngx-graph
