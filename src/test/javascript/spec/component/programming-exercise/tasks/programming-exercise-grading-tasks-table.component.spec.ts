@@ -13,7 +13,7 @@ import { MockComponent, MockPipe } from 'ng-mocks';
 import { ProgrammingExerciseTask } from 'app/exercises/programming/manage/grading/tasks/programming-exercise-task';
 import { ButtonComponent } from 'app/shared/components/button.component';
 
-describe('ProgrammingExerciseGradingTaskComponent', () => {
+describe('ProgrammingExerciseGradingTasksTableComponent', () => {
     let fixture;
     let comp: ProgrammingExerciseGradingTasksTableComponent;
     let taskService: ProgrammingExerciseTaskService;
