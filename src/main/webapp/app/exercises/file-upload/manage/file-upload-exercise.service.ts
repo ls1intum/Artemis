@@ -12,7 +12,7 @@ export type EntityArrayResponseType = HttpResponse<FileUploadExercise[]>;
 
 @Injectable({ providedIn: 'root' })
 export class FileUploadExerciseService implements ExerciseServicable<FileUploadExercise> {
-    private resourceUrl = SERVER_API_URL + 'api/file-upload-exercises';
+    private resourceUrl = 'api/file-upload-exercises';
 
     constructor(private http: HttpClient, private exerciseService: ExerciseService) {}
 
