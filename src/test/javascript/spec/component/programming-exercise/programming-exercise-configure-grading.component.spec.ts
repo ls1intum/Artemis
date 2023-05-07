@@ -65,9 +65,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
     let programmingExerciseService: ProgrammingExerciseService;
     let modalService: NgbModal;
 
-    let updateTestCasesStub: jest.SpyInstance;
     let updateCategoriesStub: jest.SpyInstance;
-    let resetTestCasesStub: jest.SpyInstance;
     let resetCategoriesStub: jest.SpyInstance;
     let testCasesChangedStub: jest.SpyInstance;
     let getExerciseTestCaseStateStub: jest.SpyInstance;
@@ -241,9 +239,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
                 programmingExerciseService = debugElement.injector.get(ProgrammingExerciseService);
                 modalService = debugElement.injector.get(NgbModal);
 
-                updateTestCasesStub = jest.spyOn(gradingService, 'updateTestCase');
                 updateCategoriesStub = jest.spyOn(gradingService, 'updateCodeAnalysisCategories');
-                resetTestCasesStub = jest.spyOn(gradingService, 'resetTestCases');
                 resetCategoriesStub = jest.spyOn(gradingService, 'resetCategories');
                 loadStatisticsStub = jest.spyOn(gradingService, 'getGradingStatistics');
                 importCategoriesFromExerciseStub = jest.spyOn(gradingService, 'importCategoriesFromExercise');
