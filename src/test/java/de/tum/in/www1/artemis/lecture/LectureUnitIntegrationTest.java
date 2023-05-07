@@ -47,7 +47,7 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     private TextUnit textUnit3;
 
     @BeforeEach
-    void initTestCase() throws Exception {   // todo: create course with lectures
+    void initTestCase() throws Exception {
         this.database.addUsers(TEST_PREFIX, 1, 1, 0, 1);
         List<Course> courses = this.database.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, 1);
         Course course1 = this.courseRepository.findByIdWithExercisesAndLecturesElseThrow(courses.get(0).getId());

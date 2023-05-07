@@ -15,7 +15,7 @@ class DatabaseQueryCountTest extends AbstractSpringIntegrationBambooBitbucketJir
 
     private static final String TEST_PREFIX = "databasequerycount";
 
-    private final int NUMBER_OF_TUTORS = 1;
+    private static final int NUMBER_OF_TUTORS = 1;
 
     @BeforeEach
     void setup() {
