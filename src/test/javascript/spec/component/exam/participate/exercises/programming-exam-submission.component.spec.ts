@@ -83,7 +83,7 @@ describe('ProgrammingExamSubmissionComponent', () => {
         expect(domainServiceSetDomainSpy).toHaveBeenCalledOnce();
         expect(domainServiceSetDomainSpy).toHaveBeenCalledWith([DomainType.PARTICIPATION, { exercise }]);
 
-        expect(component.repositoryIsLocked).toBeFalse();
+        expect(component.participationIsLocked).toBeFalse();
         expect(component.getExercise()).toEqual(newExercise());
     });
 
@@ -95,7 +95,7 @@ describe('ProgrammingExamSubmissionComponent', () => {
         component.exercise = programmingExercise;
         fixture.detectChanges();
 
-        expect(component.repositoryIsLocked).toBeTrue();
+        expect(component.participationIsLocked).toBeTrue();
     });
 
     it('should change state on commit', () => {

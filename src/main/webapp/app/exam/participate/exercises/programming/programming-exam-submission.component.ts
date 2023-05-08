@@ -7,7 +7,6 @@ import { CommitState, DomainType, EditorState } from 'app/exercises/programming/
 import { Exercise, IncludedInOverallScore, getCourseFromExercise } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
-import dayjs from 'dayjs/esm';
 import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/code-editor/container/code-editor-container.component';
 import { ProgrammingExerciseInstructionComponent } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { CodeEditorConflictStateService } from 'app/exercises/programming/shared/code-editor/service/code-editor-conflict-state.service';
@@ -43,7 +42,7 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
     @Input()
     courseId: number;
 
-    repositoryIsLocked = false;
+    participationIsLocked = false;
     showEditorInstructions = true;
     hasSubmittedOnce = false;
 
@@ -73,9 +72,9 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
      * Will load the participation according to participation Id with the latest result and result details.
      */
     ngOnInit(): void {
-        // We lock the repository when the buildAndTestAfterDueDate is set and the due date has passed.
-        const dueDateHasPassed = !this.exercise.dueDate || dayjs(this.exercise.dueDate).isBefore(dayjs());
-        this.repositoryIsLocked = !!this.exercise.buildAndTestStudentSubmissionsAfterDueDate && !!this.exercise.dueDate && dueDateHasPassed;
+        // We lock the online editor when the participation is locked.
+        // This is the case before the exam start date and after the individual exam end date, or when the submission limit is reached for the participation's exercise.
+        this.participationIsLocked = this.studentParticipation.locked ?? false;
         this.updateDomain();
     }
 
