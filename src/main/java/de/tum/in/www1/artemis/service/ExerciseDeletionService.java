@@ -120,7 +120,7 @@ public class ExerciseDeletionService {
      *                                         all other exercise types)
      */
     public void delete(long exerciseId, boolean deleteStudentReposBuildPlans, boolean deleteBaseReposBuildPlans) {
-        var exercise = exerciseRepository.findByIdWithLearningGoalsElseThrow(exerciseId);
+        var exercise = exerciseRepository.findByIdWithCompetenciesElseThrow(exerciseId);
         log.info("Request to delete {} with id {}", exercise.getClass().getSimpleName(), exerciseId);
 
         if (exercise instanceof ModelingExercise modelingExercise) {
@@ -131,7 +131,7 @@ public class ExerciseDeletionService {
         }
 
         // delete all exercise units linking to the exercise
-        List<ExerciseUnit> exerciseUnits = this.exerciseUnitRepository.findByIdWithLearningGoalsBidirectional(exerciseId);
+        List<ExerciseUnit> exerciseUnits = this.exerciseUnitRepository.findByIdWithCompetenciesBidirectional(exerciseId);
         for (ExerciseUnit exerciseUnit : exerciseUnits) {
             lectureUnitService.removeLectureUnit(exerciseUnit);
         }

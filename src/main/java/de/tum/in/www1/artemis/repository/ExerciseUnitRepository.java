@@ -31,5 +31,5 @@ public interface ExerciseUnitRepository extends JpaRepository<ExerciseUnit, Long
             LEFT JOIN FETCH lg.lectureUnits
             WHERE exerciseUnit.exercise.id = :#{#exerciseId}
             """)
-    List<ExerciseUnit> findByIdWithLearningGoalsBidirectional(@Param("exerciseId") Long exerciseId);
+    List<ExerciseUnit> findByIdWithCompetenciesBidirectional(@Param("exerciseId") Long exerciseId);
 }

@@ -131,7 +131,7 @@ public class LearningGoalProgressService {
         try {
             Set<LearningGoal> learningGoals;
             if (learningObject instanceof Exercise exercise) {
-                learningGoals = exerciseRepository.findByIdWithLearningGoals(exercise.getId()).map(Exercise::getCompetencies).orElse(null);
+                learningGoals = exerciseRepository.findByIdWithCompetencies(exercise.getId()).map(Exercise::getCompetencies).orElse(null);
             }
             else if (learningObject instanceof LectureUnit lectureUnit) {
                 learningGoals = lectureUnitRepository.findByIdWithLearningGoals(lectureUnit.getId()).map(LectureUnit::getCompetencies).orElse(null);

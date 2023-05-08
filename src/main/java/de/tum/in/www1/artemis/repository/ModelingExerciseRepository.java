@@ -33,8 +33,8 @@ public interface ModelingExerciseRepository extends JpaRepository<ModelingExerci
             """)
     List<ModelingExercise> findByCourseIdWithCategories(@Param("courseId") Long courseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "exampleSubmissions", "teamAssignmentConfig", "categories", "learningGoals", "exampleSubmissions.submission.results" })
-    Optional<ModelingExercise> findWithEagerExampleSubmissionsAndLearningGoalsById(@Param("exerciseId") Long exerciseId);
+    @EntityGraph(type = LOAD, attributePaths = { "exampleSubmissions", "teamAssignmentConfig", "categories", "competencies", "exampleSubmissions.submission.results" })
+    Optional<ModelingExercise> findWithEagerExampleSubmissionsAndCompetenciesById(@Param("exerciseId") Long exerciseId);
 
     @Query("select modelingExercise from ModelingExercise modelingExercise left join fetch modelingExercise.exampleSubmissions exampleSubmissions left join fetch exampleSubmissions.submission submission left join fetch submission.results results left join fetch results.feedbacks left join fetch results.assessor left join fetch modelingExercise.teamAssignmentConfig where modelingExercise.id = :#{#exerciseId}")
     Optional<ModelingExercise> findByIdWithExampleSubmissionsAndResults(@Param("exerciseId") Long exerciseId);
@@ -73,8 +73,8 @@ public interface ModelingExerciseRepository extends JpaRepository<ModelingExerci
     }
 
     @NotNull
-    default ModelingExercise findWithEagerExampleSubmissionsAndLearningGoalsByIdElseThrow(long exerciseId) {
-        return findWithEagerExampleSubmissionsAndLearningGoalsById(exerciseId).orElseThrow(() -> new EntityNotFoundException("Modeling Exercise", exerciseId));
+    default ModelingExercise findWithEagerExampleSubmissionsAndCompetenciesByIdElseThrow(long exerciseId) {
+        return findWithEagerExampleSubmissionsAndCompetenciesById(exerciseId).orElseThrow(() -> new EntityNotFoundException("Modeling Exercise", exerciseId));
     }
 
     @NotNull
