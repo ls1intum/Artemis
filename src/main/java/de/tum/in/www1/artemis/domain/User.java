@@ -159,7 +159,7 @@ public class User extends AbstractAuditingEntity implements Participant {
 
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE, orphanRemoval = true)
     @JsonIgnore
-    private Set<LearningGoalProgress> learningGoalProgress = new HashSet<>();
+    private Set<LearningGoalProgress> competencyProgress = new HashSet<>();
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
@@ -339,12 +339,12 @@ public class User extends AbstractAuditingEntity implements Participant {
         this.completedLectureUnits = completedLectureUnits;
     }
 
-    public Set<LearningGoalProgress> getLearningGoalProgress() {
-        return learningGoalProgress;
+    public Set<LearningGoalProgress> getCompetencyProgress() {
+        return competencyProgress;
     }
 
-    public void setLearningGoalProgress(Set<LearningGoalProgress> learningGoalProgress) {
-        this.learningGoalProgress = learningGoalProgress;
+    public void setCompetencyProgress(Set<LearningGoalProgress> competencyProgress) {
+        this.competencyProgress = competencyProgress;
     }
 
     public Set<ExamUser> getExamUsers() {
