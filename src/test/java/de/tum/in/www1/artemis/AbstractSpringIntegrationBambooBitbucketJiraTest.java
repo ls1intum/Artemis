@@ -121,7 +121,7 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
             throws IOException, URISyntaxException {
         // Step 1a)
         bitbucketRequestMockProvider.mockCopyRepositoryForParticipation(exercise, username);
-        // Step 1b)
+        // Step 1c)
         bitbucketRequestMockProvider.mockConfigureRepository(exercise, username, users, ltiUserExists);
         // Step 2a)
         bambooRequestMockProvider.mockCopyBuildPlanForParticipation(exercise, username);
@@ -139,7 +139,7 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
             throws IOException, URISyntaxException {
         // Step 1a)
         bitbucketRequestMockProvider.mockCopyRepositoryForParticipation(exercise, username, true);
-        // Step 1b)
+        // Step 1c)
         bitbucketRequestMockProvider.mockConfigureRepository(exercise, username, users, ltiUserExists, true);
         // Step 2a)
         bambooRequestMockProvider.mockCopyBuildPlanForParticipation(exercise, username, true);

@@ -495,7 +495,7 @@ public class StudentExamService {
                         participation = participationService.startExercise(exercise, student, true);
                     }
                     generatedParticipations.add(participation);
-                    // Unlock repository only if the real exam starts within 5 minutes or if we have a test exam or test run
+                    // Unlock repository and participation only if the real exam starts within 5 minutes or if we have a test exam or test run
                     if (exercise instanceof ProgrammingExercise programmingExercise && (studentExam.isTestRun() || studentExam.isTestExam()
                             || ProgrammingExerciseScheduleService.getExamProgrammingExerciseUnlockDate(programmingExercise).isBefore(ZonedDateTime.now()))) {
                         // Note: only unlock the programming exercise student repository for the affected user (Important: Do NOT invoke unlockAll)

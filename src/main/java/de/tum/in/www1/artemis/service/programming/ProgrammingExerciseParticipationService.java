@@ -229,7 +229,10 @@ public class ProgrammingExerciseParticipationService {
      * @param participation       the participation to be locked
      */
     public void lockStudentParticipation(ProgrammingExercise programmingExercise, ProgrammingExerciseStudentParticipation participation) {
+        // Update the locked field for the given participation in the database.
         studentParticipationRepository.updateLockedById(participation.getId(), true);
+        // Also set the correct value on the participation object in case the caller uses this participation for further processing.
+        participation.setLocked(true);
     }
 
     /**
@@ -254,7 +257,10 @@ public class ProgrammingExerciseParticipationService {
      * @param participation       the participation to be unlocked
      */
     public void unlockStudentParticipation(ProgrammingExercise programmingExercise, ProgrammingExerciseStudentParticipation participation) {
+        // Update the locked field for the given participation in the database.
         studentParticipationRepository.updateLockedById(participation.getId(), false);
+        // Also set the correct value on the participation object in case the caller uses this participation for further processing.
+        participation.setLocked(false);
     }
 
     /**

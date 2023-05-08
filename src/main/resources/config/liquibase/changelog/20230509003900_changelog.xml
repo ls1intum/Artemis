@@ -2,7 +2,7 @@
 <databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.18.xsd">
-    <changeSet id="20230507003900" author="frederik_kutsch" >
+    <changeSet id="20230509003900" author="frederik_kutsch" >
         <comment>Lock all programming exercise student participations with a start date in the future, a due date in the past, or too many submissions</comment>
         <!-- Lock all participations with start date in the future:
             Update the "locked" column in the "participation" table by setting its value to 1 for all rows that meet the following conditions:
