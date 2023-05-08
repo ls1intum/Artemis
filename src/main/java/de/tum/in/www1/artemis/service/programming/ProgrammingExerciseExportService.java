@@ -88,7 +88,7 @@ public class ProgrammingExerciseExportService {
 
     public static final String EXPORTED_EXERCISE_PROBLEM_STATEMENT_FILE_PREFIX = "Problem-Statement";
 
-    private static final String EMBEDDED_FILE_REGEX = "!\\[.*] *\\(/api/files/markdown/.*\\)";
+    private static final String EMBEDDED_FILE_REGEX = "\\[.*] *\\(/api/files/markdown/.*\\)";
 
     private static final String API_MARKDOWN_FILE_PATH = "/api/files/markdown/";
 
