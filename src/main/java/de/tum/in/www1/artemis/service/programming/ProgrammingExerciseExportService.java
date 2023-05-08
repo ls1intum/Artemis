@@ -114,11 +114,6 @@ public class ProgrammingExerciseExportService {
     public Path exportProgrammingExerciseInstructorMaterial(ProgrammingExercise exercise, List<String> exportErrors) throws IOException {
         // Create export directory for programming exercises
         var exportDir = Files.createTempDirectory(Path.of(repoDownloadClonePath), "programming-exercise-material");
-        // this directory contains all the content that will be zipped
-        // var outputDir = exportDir.resolve("output");
-        // if (!Files.exists(outputDir)) {
-        // Files.createDirectory(outputDir);
-        // }
 
         // List to add paths of files that should be contained in the zip folder of exported programming exercise:
         // i.e., problem statement, exercise details, instructor repositories

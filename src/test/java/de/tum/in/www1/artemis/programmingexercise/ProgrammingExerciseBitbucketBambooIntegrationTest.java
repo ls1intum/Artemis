@@ -381,7 +381,7 @@ class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractSpringIn
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testExportProgrammingExerciseInstructorMaterial_failToCreateZip() throws Exception {
-        doThrow(IOException.class).when(zipFileService).createZipFileWithFolderContent(any(Path.class), any(Path.class), any());
+        doThrow(IOException.class).when(zipFileService).createZipFile(any(Path.class), any());
         programmingExerciseTestService.exportProgrammingExerciseInstructorMaterial(HttpStatus.BAD_REQUEST);
     }
 
