@@ -51,6 +51,7 @@ import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismStatus;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismSubmission;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextSubmissionElement;
+import de.tum.in.www1.artemis.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
@@ -608,6 +609,16 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
     void testUpdateParticipationFiles_cannotAccessParticipation() throws Exception {
         // student2 should not have access to student1's participation.
+        request.put(studentRepoBaseUrl + participation.getId() + "/files", List.of(), HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testSaveFiles_submissionLimitReached() throws Exception {
+        LockRepositoryPolicy lockRepositoryPolicy = new LockRepositoryPolicy();
+        lockRepositoryPolicy.setSubmissionLimit(0);
+        lockRepositoryPolicy.setActive(true);
+        database.addSubmissionPolicyToExercise(lockRepositoryPolicy, programmingExercise);
         request.put(studentRepoBaseUrl + participation.getId() + "/files", List.of(), HttpStatus.FORBIDDEN);
     }
 
