@@ -126,7 +126,7 @@
                 "hidden": false,
                 "vendor": false
               },
-              "namedChunks": false,
+              "namedChunks": true,
               "aot": true,
               "extractLicenses": true,
               "vendorChunk": false,
