@@ -64,9 +64,9 @@
     </changeSet>
     <changeSet author="krusche" id="20230508114600-02">
         <preConditions onFail="MARK_RAN">
-            <and>
-                <foreignKeyConstraintExists foreignKeyName="FK_course_id" foreignKeyTableName="conversation"/>
-            </and>
+            <not>
+                <foreignKeyConstraintExists foreignKeyName="FK_course_id"/>
+            </not>
         </preConditions>
         <comment>Add a foreign key constraint so that the same issue does not happen again</comment>
         <addForeignKeyConstraint baseTableName="conversation" baseColumnNames="course_id" constraintName="FK_course_id" referencedTableName="course"
