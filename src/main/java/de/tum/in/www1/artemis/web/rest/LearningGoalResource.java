@@ -259,7 +259,7 @@ public class LearningGoalResource {
         var competency = competencyRepository.findByIdWithExercisesAndLectureUnitsBidirectionalElseThrow(competencyId);
         checkAuthorizationForCompetency(Role.INSTRUCTOR, course, competency);
 
-        var relations = competencyRelationRepository.findAllByLearningGoalId(competency.getId());
+        var relations = competencyRelationRepository.findAllByCompetencyId(competency.getId());
         if (!relations.isEmpty()) {
             throw new BadRequestException("Can not delete a competency that has active relations");
         }
@@ -348,7 +348,7 @@ public class LearningGoalResource {
         var competency = competencyRepository.findByIdElseThrow(competencyId);
         checkAuthorizationForCompetency(Role.STUDENT, course, competency);
 
-        var relations = competencyRelationRepository.findAllByLearningGoalId(competency.getId());
+        var relations = competencyRelationRepository.findAllByCompetencyId(competency.getId());
         return ResponseEntity.ok().body(relations);
     }
 
@@ -376,8 +376,8 @@ public class LearningGoalResource {
             var relationType = LearningGoalRelation.RelationType.valueOf(type);
 
             var relation = new LearningGoalRelation();
-            relation.setTailLearningGoal(tailCompetency);
-            relation.setHeadLearningGoal(headCompetency);
+            relation.setTailCompetency(tailCompetency);
+            relation.setHeadCompetency(headCompetency);
             relation.setType(relationType);
             competencyRelationRepository.save(relation);
 
@@ -405,7 +405,7 @@ public class LearningGoalResource {
         checkAuthorizationForCompetency(Role.INSTRUCTOR, course, competency);
 
         var relation = competencyRelationRepository.findById(competencyRelationId).orElseThrow();
-        if (!relation.getTailLearningGoal().getId().equals(competency.getId())) {
+        if (!relation.getTailCompetency().getId().equals(competency.getId())) {
             throw new BadRequestException("The relation does not belong to the specified competency");
         }
 

@@ -474,8 +474,8 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         LearningGoal learningGoal1 = database.createLearningGoal(course);
 
         var relation = new LearningGoalRelation();
-        relation.setTailLearningGoal(learningGoal);
-        relation.setHeadLearningGoal(learningGoal1);
+        relation.setTailCompetency(learningGoal);
+        relation.setHeadCompetency(learningGoal1);
         relation.setType(LearningGoalRelation.RelationType.EXTENDS);
         learningGoalRelationRepository.save(relation);
 
@@ -505,7 +505,7 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         request.postWithoutResponseBody("/api/courses/" + idOfCourse + "/competencies/" + idOfLearningGoal + "/relations/" + idOfOtherLearningGoal + "?type="
                 + LearningGoalRelation.RelationType.EXTENDS.name(), HttpStatus.OK, new LinkedMultiValueMap<>());
 
-        var relations = learningGoalRelationRepository.findAllByLearningGoalId(idOfLearningGoal);
+        var relations = learningGoalRelationRepository.findAllByCompetencyId(idOfLearningGoal);
         assertThat(relations).hasSize(1);
         assertThat(relations.stream().findFirst().get().getType()).isEqualTo(LearningGoalRelation.RelationType.EXTENDS);
     }
@@ -538,8 +538,8 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         LearningGoal otherLearningGoal = database.createLearningGoal(course);
 
         var relation = new LearningGoalRelation();
-        relation.setTailLearningGoal(learningGoal);
-        relation.setHeadLearningGoal(otherLearningGoal);
+        relation.setTailCompetency(learningGoal);
+        relation.setHeadCompetency(otherLearningGoal);
         relation.setType(LearningGoalRelation.RelationType.EXTENDS);
         relation = learningGoalRelationRepository.save(relation);
 
@@ -557,14 +557,14 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         LearningGoal otherLearningGoal = database.createLearningGoal(course);
 
         var relation = new LearningGoalRelation();
-        relation.setTailLearningGoal(learningGoal);
-        relation.setHeadLearningGoal(otherLearningGoal);
+        relation.setTailCompetency(learningGoal);
+        relation.setHeadCompetency(otherLearningGoal);
         relation.setType(LearningGoalRelation.RelationType.EXTENDS);
         relation = learningGoalRelationRepository.save(relation);
 
         request.delete("/api/courses/" + idOfCourse + "/competencies/" + idOfLearningGoal + "/relations/" + relation.getId(), HttpStatus.OK);
 
-        var relations = learningGoalRelationRepository.findAllByLearningGoalId(idOfLearningGoal);
+        var relations = learningGoalRelationRepository.findAllByCompetencyId(idOfLearningGoal);
         assertThat(relations).isEmpty();
     }
 
@@ -576,8 +576,8 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         LearningGoal otherLearningGoal = database.createLearningGoal(course);
 
         var relation = new LearningGoalRelation();
-        relation.setTailLearningGoal(otherLearningGoal); // invalid
-        relation.setHeadLearningGoal(learningGoal);
+        relation.setTailCompetency(otherLearningGoal); // invalid
+        relation.setHeadCompetency(learningGoal);
         relation.setType(LearningGoalRelation.RelationType.EXTENDS);
         relation = learningGoalRelationRepository.save(relation);
 

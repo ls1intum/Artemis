@@ -3,7 +3,7 @@ package de.tum.in.www1.artemis.domain;
 import javax.persistence.*;
 
 /**
- * This class models the relation between two learning goal. Imagine a graph: (tail) --- type --> (head)
+ * This class models the relation between two competency. Imagine a graph: (tail) --- type --> (head)
  * Because we want to keep this very generic (using the type attribute), this can not be modeled as a simple JPA relationship.
  */
 @Entity
@@ -12,30 +12,30 @@ public class LearningGoalRelation extends DomainObject {
 
     @ManyToOne
     @JoinColumn(name = "tail_learning_goal_id")
-    private LearningGoal tailLearningGoal;
+    private LearningGoal tailCompetency;
 
     @ManyToOne
     @JoinColumn(name = "head_learning_goal_id")
-    private LearningGoal headLearningGoal;
+    private LearningGoal headCompetency;
 
     @Column(name = "type")
     @Convert(converter = RelationTypeConverter.class)
     private RelationType type;
 
-    public LearningGoal getTailLearningGoal() {
-        return tailLearningGoal;
+    public LearningGoal getTailCompetency() {
+        return tailCompetency;
     }
 
-    public void setTailLearningGoal(LearningGoal tailLearningGoal) {
-        this.tailLearningGoal = tailLearningGoal;
+    public void setTailCompetency(LearningGoal tailCompetency) {
+        this.tailCompetency = tailCompetency;
     }
 
-    public LearningGoal getHeadLearningGoal() {
-        return headLearningGoal;
+    public LearningGoal getHeadCompetency() {
+        return headCompetency;
     }
 
-    public void setHeadLearningGoal(LearningGoal headLearningGoal) {
-        this.headLearningGoal = headLearningGoal;
+    public void setHeadCompetency(LearningGoal headCompetency) {
+        this.headCompetency = headCompetency;
     }
 
     public RelationType getType() {
@@ -48,19 +48,19 @@ public class LearningGoalRelation extends DomainObject {
 
     public enum RelationType {
         /**
-         * A generic relation between two learning goals.
+         * A generic relation between two competencies.
          */
         RELATES,
         /**
-         * The tail learning goal assumes that the student already achieved the head learning goal.
+         * The tail competency assumes that the student already achieved the head competency.
          */
         ASSUMES,
         /**
-         * The tail learning goal extends the head learning goal on the same topic in more detail.
+         * The tail competency extends the head competency on the same topic in more detail.
          */
         EXTENDS,
         /**
-         * The tail learning goal matches the head learning goal (e.g., a duplicate).
+         * The tail competency matches the head competency (e.g., a duplicate).
          */
         MATCHES
     }
