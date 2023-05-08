@@ -20,12 +20,18 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.metis.AnswerPost;
+import de.tum.in.www1.artemis.domain.metis.Post;
+import de.tum.in.www1.artemis.domain.metis.Reaction;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.metis.AnswerPostRepository;
+import de.tum.in.www1.artemis.repository.metis.PostRepository;
+import de.tum.in.www1.artemis.repository.metis.ReactionRepository;
 import de.tum.in.www1.artemis.service.connectors.apollon.ApollonConversionService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseExportService;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryExportOptionsDTO;
@@ -75,12 +81,19 @@ public class DataExportService {
 
     private Path workingDirectory;
 
-    private FileService fileService;
+    private final FileService fileService;
+
+    private final PostRepository postRepository;
+
+    private final AnswerPostRepository answerPostRepository;
+
+    private final ReactionRepository reactionRepository;
 
     public DataExportService(CourseRepository courseRepository, UserRepository userRepository, AuthorizationCheckService authorizationCheckService, ZipFileService zipFileService,
             ProgrammingExerciseExportService programmingExerciseExportService, DataExportRepository dataExportRepository, QuizQuestionRepository quizQuestionRepository,
             QuizSubmissionRepository quizSubmissionRepository, ExerciseRepository exerciseRepository, DragAndDropQuizAnswerConversionService dragAndDropQuizAnswerConversionService,
-            ApollonConversionService apollonConversionService, FileService fileService) {
+            ApollonConversionService apollonConversionService, FileService fileService, PostRepository postRepository, AnswerPostRepository answerPostRepository,
+            ReactionRepository reactionRepository) {
         this.courseRepository = courseRepository;
         this.userRepository = userRepository;
         this.authorizationCheckService = authorizationCheckService;
@@ -93,6 +106,9 @@ public class DataExportService {
         this.dragAndDropQuizAnswerConversionService = dragAndDropQuizAnswerConversionService;
         this.apollonConversionService = apollonConversionService;
         this.fileService = fileService;
+        this.postRepository = postRepository;
+        this.answerPostRepository = answerPostRepository;
+        this.reactionRepository = reactionRepository;
     }
 
     /**
@@ -160,6 +176,10 @@ public class DataExportService {
      **/
 
     private Path createDataExport(User user) throws IOException {
+        // retrieve all posts, answer posts, reactions of the user and filter them by course later to avoid additional database calls
+        var posts = postRepository.findPostsByAuthorId(user.getId());
+        var answerPosts = answerPostRepository.findAnswerPostsByAuthorId(user.getId());
+        var reactions = reactionRepository.findReactionsByUserId(user.getId());
         var courses = courseRepository.getAllCoursesUserIsMemberOf(authorizationCheckService.isAdmin(user), user.getGroups());
 
         for (var course : courses) {
@@ -181,6 +201,7 @@ public class DataExportService {
             createExportForTextExercises(textExercises, courseDir);
             createExportForFileUploadExercises(fileUploadExercises, courseDir);
             createExportForQuizExercises(quizExercises, courseDir);
+            createCommunicationExport(posts, answerPosts, reactions, course.getId(), courseDir);
         }
         addGeneralUserInformation(user);
         return createDataExportZipFile(user.getLogin());
@@ -317,6 +338,28 @@ public class DataExportService {
                 }
                 printer.flush();
             }
+        }
+
+    }
+
+    private void createCommunicationExport(List<Post> posts, List<AnswerPost> answerPosts, List<Reaction> reactions, long courseId, Path courseDir) throws IOException {
+        var postsInCourse = posts.stream().filter(post -> courseId == post.getCoursePostingBelongsTo().getId()).toList();
+        var answerPostsInCourse = answerPosts.stream().filter(answerPost -> courseId == answerPost.getCoursePostingBelongsTo().getId()).toList();
+        var reactionsInCourse = reactions.stream().filter(reaction -> courseId == reaction.getPost().getCoursePostingBelongsTo().getId()).toList();
+        String[] headers = { "content/emoji", "creation date" };
+        CSVFormat csvFormat = CSVFormat.DEFAULT.builder().setHeader(headers).build();
+        try (final CSVPrinter printer = new CSVPrinter(Files.newBufferedWriter(courseDir.resolve("messages_posts_reactions" + CSV_FILE_EXTENSION)), csvFormat)) {
+            for (var post : postsInCourse) {
+                printer.printRecord(post.getContent(), post.getCreationDate());
+            }
+            for (var answerPost : answerPostsInCourse) {
+                printer.printRecord(answerPost.getContent(), answerPost.getCreationDate());
+            }
+            for (var reaction : reactionsInCourse) {
+                printer.printRecord(reaction.getEmojiId(), reaction.getCreationDate());
+            }
+            printer.flush();
+
         }
 
     }

@@ -33,6 +33,8 @@ public interface PostRepository extends JpaRepository<Post, Long>, JpaSpecificat
 
     List<Post> findPostsByAuthorLogin(String login);
 
+    List<Post> findPostsByAuthorId(long authorId);
+
     /**
      * Generates SQL Query via specifications to filter and sort Posts
      *

@@ -17,6 +17,8 @@ public interface ReactionRepository extends JpaRepository<Reaction, Long> {
 
     List<Reaction> findReactionsByPostId(Long postId);
 
+    List<Reaction> findReactionsByUserId(long userId);
+
     List<Reaction> findReactionsByAnswerPostId(Long answerPostId);
 
     default Reaction findByIdElseThrow(Long reactionId) throws EntityNotFoundException {
