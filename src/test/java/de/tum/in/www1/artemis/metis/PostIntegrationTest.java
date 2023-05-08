@@ -138,6 +138,9 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         doNothing().when(groupNotificationService).notifyAllGroupsAboutNewPostForLecture(any(), any());
         doNothing().when(groupNotificationService).notifyAllGroupsAboutNewCoursePost(any(), any());
         doNothing().when(groupNotificationService).notifyAllGroupsAboutNewAnnouncement(any(), any());
+
+        // We do not need the stub and it leads to flakyness
+        reset(javaMailSender);
     }
 
     @AfterEach
