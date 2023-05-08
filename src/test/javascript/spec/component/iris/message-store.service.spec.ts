@@ -36,11 +36,7 @@ describe('IrisMessageStore', () => {
 
         const obs = messageStore.getState();
 
-        const promise = obs
-            .pipe(
-                take(1), // Take the next emitted value
-            )
-            .toPromise();
+        const promise = obs.pipe(skip(1), take(1)).toPromise();
 
         messageStore.dispatch(action);
 
@@ -57,11 +53,7 @@ describe('IrisMessageStore', () => {
 
         const obs = messageStore.getState();
 
-        const promise = obs
-            .pipe(
-                take(1), // Take the next emitted value
-            )
-            .toPromise();
+        const promise = obs.pipe(skip(1), take(1)).toPromise();
 
         messageStore.dispatch(action);
 
@@ -78,11 +70,7 @@ describe('IrisMessageStore', () => {
 
         const obs = messageStore.getState();
 
-        const promise = obs
-            .pipe(
-                take(1), // Take the next emitted value
-            )
-            .toPromise();
+        const promise = obs.pipe(skip(1), take(1)).toPromise();
 
         messageStore.dispatch(action);
 
@@ -109,7 +97,7 @@ describe('IrisMessageStore', () => {
 
         const obs = messageStore.getState();
 
-        const promise1 = obs.pipe(take(1)).toPromise();
+        const promise1 = obs.pipe(skip(1), take(1)).toPromise();
 
         messageStore.dispatch(action1);
 

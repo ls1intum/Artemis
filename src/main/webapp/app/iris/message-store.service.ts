@@ -1,6 +1,5 @@
 import { Injectable, OnDestroy } from '@angular/core';
-import { Observable, Subject } from 'rxjs';
-import { scan, shareReplay, takeUntil } from 'rxjs/operators';
+import { BehaviorSubject, Observable } from 'rxjs';
 import { ActionType, MessageStoreAction, MessageStoreState } from 'app/iris/message-store.model';
 
 @Injectable({
@@ -11,25 +10,18 @@ export class IrisMessageStore implements OnDestroy {
         messages: [],
     };
 
-    private readonly keepAliveState = new Subject<number>();
-    private readonly action = new Subject<MessageStoreAction>();
-    private readonly state: Observable<MessageStoreState> = this.action.pipe(
-        scan<MessageStoreAction, MessageStoreState>((state, action) => IrisMessageStore.storeReducer(state, action), this.initialState),
-        takeUntil(this.keepAliveState),
-        shareReplay(1),
-    );
+    private readonly state = new BehaviorSubject<MessageStoreState>(this.initialState);
 
-    ngOnDestroy(): void {
-        // we need to complete the stream after component destruction to prevent memory leaks
-        this.keepAliveState.next(1);
+    ngOnDestroy() {
+        this.state.complete();
     }
 
     dispatch(action: MessageStoreAction) {
-        this.action.next(action);
+        this.state.next(IrisMessageStore.storeReducer(this.state.getValue(), action));
     }
 
     getState(): Observable<MessageStoreState> {
-        return this.state;
+        return this.state.asObservable();
     }
 
     private static exhaustiveCheck(action: never): void {
