@@ -76,13 +76,16 @@ function deepMerge(target, source) {
     }
 
     for (const key in source) {
-        const targetValue = target[key];
-        const sourceValue = source[key];
+        // prevent prototype pollution
+        if (Object.prototype.hasOwnProperty.call(source, key)) {
+            const targetValue = target[key];
+            const sourceValue = source[key];
 
-        if (isObject(sourceValue)) {
-            target[key] = deepMerge(targetValue || {}, sourceValue);
-        } else {
-            target[key] = sourceValue;
+            if (isObject(sourceValue)) {
+                target[key] = deepMerge(targetValue || {}, sourceValue);
+            } else {
+                target[key] = sourceValue;
+            }
         }
     }
 
