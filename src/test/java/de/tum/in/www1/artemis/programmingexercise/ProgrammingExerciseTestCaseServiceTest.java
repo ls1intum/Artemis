@@ -165,7 +165,7 @@ class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegrationBa
         for (ProgrammingExerciseTestCase testCase : testCases) {
             assertThat(testCase.getWeight()).isEqualTo(1.0);
             assertThat(testCase.getBonusMultiplier()).isEqualTo(1.0);
-            assertThat(testCase.getBonusPoints()).isEqualTo(0.0);
+            assertThat(testCase.getBonusPoints()).isZero();
             assertThat(testCase.getVisibility()).isEqualTo(Visibility.ALWAYS);
         }
         assertThat(updatedProgrammingExercise.getTestCasesChanged()).isTrue();
