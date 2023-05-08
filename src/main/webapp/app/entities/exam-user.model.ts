@@ -16,4 +16,11 @@ export class ExamUser implements BaseEntity {
     public didCheckRegistrationNumber = false; // default value
     public user?: User;
     public exam?: Exam;
+
+    // helper attributes
+    public didExamUserAttendExam?: boolean;
+
+    constructor() {
+        this.didExamUserAttendExam = false;
+    }
 }

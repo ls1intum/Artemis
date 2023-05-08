@@ -36,7 +36,7 @@ export class ConversationService {
 
     constructor(protected http: HttpClient, protected translationService: TranslateService, protected accountService: AccountService) {}
 
-    getConversationName = (conversation: ConversationDto | undefined, showLogin = false): string => {
+    getConversationName(conversation: ConversationDto | undefined, showLogin = false): string {
         if (!conversation) {
             return '';
         }
@@ -72,7 +72,7 @@ export class ConversationService {
         } else {
             return '';
         }
-    };
+    }
 
     searchMembersOfConversation(
         courseId: number,

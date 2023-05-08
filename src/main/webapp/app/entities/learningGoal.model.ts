@@ -17,6 +17,13 @@ export enum LearningGoalTaxonomy {
     CREATE = 'CREATE',
 }
 
+export enum LearningGoalRelationError {
+    CIRCULAR = 'CIRCULAR',
+    SELF = 'SELF',
+    EXISTING = 'EXISTING',
+    NONE = 'NONE',
+}
+
 export class LearningGoal implements BaseEntity {
     public id?: number;
     public title?: string;

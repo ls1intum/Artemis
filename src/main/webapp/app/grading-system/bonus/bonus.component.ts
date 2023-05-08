@@ -206,7 +206,7 @@ export class BonusComponent implements OnInit {
         }
     }
 
-    private setBonus(bonus: Bonus) {
+    setBonus(bonus: Bonus) {
         this.bonus = bonus;
         switch (bonus.bonusStrategy) {
             case BonusStrategy.POINTS:
