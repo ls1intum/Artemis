@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.service.programming;
 
 import java.io.FilenameFilter;
 import java.io.IOException;
-import java.time.ZonedDateTime;
 import java.util.Optional;
 
 import javax.validation.constraints.NotNull;
@@ -166,35 +165,6 @@ public class ProgrammingExerciseParticipationService {
         templateParticipation.setProgrammingExercise(newExercise);
         newExercise.setTemplateParticipation(templateParticipation);
         templateParticipationRepository.save(templateParticipation);
-    }
-
-    /**
-     * Determines whether the owner of a student participation can still submit to it.
-     * If they can't (e.g. because the due date is in the past or because the submission limit is reached), the participation is considered sealed.
-     * This method considers the exercise due date, the individual due date, and the number of submissions.
-     *
-     * @param participation the participation to determine the sealed state for
-     * @return whether the participation is sealed
-     */
-    public boolean isStudentParticipationSealed(ProgrammingExerciseStudentParticipation participation) {
-        final ZonedDateTime now = ZonedDateTime.now();
-
-        ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
-        ZonedDateTime dueDate = programmingExercise.getDueDate();
-        ZonedDateTime individualDueDate = participation.getIndividualDueDate();
-
-        // Case 1: The due date of the participation's exercise is in the past and there is no individual due date that is in the future.
-        if (dueDate != null && dueDate.isBefore(now) && (individualDueDate == null || individualDueDate.isBefore(now))) {
-            return true;
-        }
-
-        // Case 2: The due date of the participation's exercise is unset and the individual due date is in the past.
-        if (dueDate == null && individualDueDate != null && individualDueDate.isBefore(now)) {
-            return true;
-        }
-
-        // Case 3: The submission limit of the exercise is reached.
-        return isLockRepositoryPolicyEnforced(programmingExercise, participation);
     }
 
     /**

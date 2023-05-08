@@ -20,12 +20,13 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
-import de.tum.in.www1.artemis.domain.submissionpolicy.LockRepositoryPolicy;
+import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPolicy;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.ResourceLoaderService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
+import de.tum.in.www1.artemis.web.rest.SubmissionPolicyResource;
 
 @Service
 public class ProgrammingExerciseRepositoryService {
@@ -609,6 +610,8 @@ public class ProgrammingExerciseRepositoryService {
 
     /**
      * Locks or unlocks the participations and repositories if necessary due to the changes in the programming exercise.
+     * This might be because of changes in the release date or due date.
+     * As of now the submission policy cannot be changed here. See {@link SubmissionPolicyResource#updateSubmissionPolicy(Long, SubmissionPolicy)} for that.
      *
      * @param programmingExerciseBeforeUpdate the original exercise with unchanged values
      * @param updatedProgrammingExercise      the updated exercise with new values
@@ -617,8 +620,8 @@ public class ProgrammingExerciseRepositoryService {
 
         final ZonedDateTime now = ZonedDateTime.now();
 
-        // ---- Figure out if we have to lock repositories and participations. This is the case if the updated configuration further restricts when and/or how often students can
-        // submit. ----
+        // Figure out if we have to lock repositories and participations.
+        // This is the case if the updated configuration further restricts when students can submit.
 
         // Case 1: The exercise start date was unset or in the past and the update moves it into the future.
         boolean stricterStartDate = programmingExerciseBeforeUpdate.isReleased() && !updatedProgrammingExercise.isReleased();
@@ -633,17 +636,7 @@ public class ProgrammingExerciseRepositoryService {
         boolean stricterDueDate = (programmingExerciseBeforeUpdate.getDueDate() == null || programmingExerciseBeforeUpdate.getDueDate().isAfter(now))
                 && (updatedProgrammingExercise.getDueDate() != null && updatedProgrammingExercise.getDueDate().isBefore(now));
 
-        // TODO: Check whether submission policy is initialized on both exercises.
-        // Case 3: A lock repository policy was added or the submission limit was reduced.
-        boolean oldExerciseHasLockRepositoryPolicy = programmingExerciseBeforeUpdate.getSubmissionPolicy() instanceof LockRepositoryPolicy
-                && programmingExerciseBeforeUpdate.getSubmissionPolicy().isActive();
-        boolean updatedExerciseHasLockRepositoryPolicy = updatedProgrammingExercise.getSubmissionPolicy() instanceof LockRepositoryPolicy
-                && updatedProgrammingExercise.getSubmissionPolicy().isActive();
-        boolean stricterSubmissionLimit = (!oldExerciseHasLockRepositoryPolicy && updatedExerciseHasLockRepositoryPolicy)
-                || (oldExerciseHasLockRepositoryPolicy && updatedExerciseHasLockRepositoryPolicy
-                        && programmingExerciseBeforeUpdate.getSubmissionPolicy().getSubmissionLimit() > updatedProgrammingExercise.getSubmissionPolicy().getSubmissionLimit());
-
-        // Case 4: Offline IDE usage was allowed and is now disallowed.
+        // Case 3: Offline IDE usage was allowed and is now disallowed.
         // Note: isAllowOfflineIde() == null means that the offline IDE is allowed.
         boolean oldExerciseAllowsIdeUsage = !Boolean.FALSE.equals(programmingExerciseBeforeUpdate.isAllowOfflineIde());
         boolean updatedExerciseAllowsIdeUsage = !Boolean.FALSE.equals(updatedProgrammingExercise.isAllowOfflineIde());
@@ -654,7 +647,7 @@ public class ProgrammingExerciseRepositoryService {
             instanceMessageSendService.sendLockAllStudentRepositories(programmingExerciseBeforeUpdate.getId());
         }
 
-        if (stricterDueDate || stricterSubmissionLimit) {
+        if (stricterDueDate) {
             if (stricterIdeUsage) {
                 // Repositories were already locked in the step before. Only lock the participations that are not allowed to submit under the updated configuration.
                 instanceMessageSendService.sendLockAllSealedStudentParticipations(programmingExerciseBeforeUpdate.getId());
@@ -665,8 +658,8 @@ public class ProgrammingExerciseRepositoryService {
             }
         }
 
-        // ---- Figure out if we have to unlock repositories and participations. This is the case if the updated configuration relaxes when and/or how often students can submit.
-        // ----
+        // Figure out if we have to unlock repositories and participations.
+        // This is the case if the updated configuration relaxes when students can submit.
 
         // Case 1: The exercise start date was in the future and is moved to the past or is unset.
         boolean moreLenientStartDate = !programmingExerciseBeforeUpdate.isReleased() && updatedProgrammingExercise.isReleased();
@@ -675,19 +668,14 @@ public class ProgrammingExerciseRepositoryService {
         boolean moreLenientDueDate = (programmingExerciseBeforeUpdate.getDueDate() != null && programmingExerciseBeforeUpdate.getDueDate().isBefore(now))
                 && (updatedProgrammingExercise.getDueDate() == null || updatedProgrammingExercise.getDueDate().isAfter(now));
 
-        // Case 3: The submission limit was increased, or the lock repository policy was removed.
-        boolean moreLenientSubmissionLimit = oldExerciseHasLockRepositoryPolicy && (!updatedExerciseHasLockRepositoryPolicy
-                || programmingExerciseBeforeUpdate.getSubmissionPolicy().getSubmissionLimit() < updatedProgrammingExercise.getSubmissionPolicy().getSubmissionLimit());
-
-        // Case 4: Offline IDE usage was disallowed and is now allowed.
+        // Case 3: Offline IDE usage was disallowed and is now allowed.
         boolean moreLenientIdeUsage = !oldExerciseAllowsIdeUsage && updatedExerciseAllowsIdeUsage;
 
-        if (moreLenientStartDate || moreLenientDueDate || moreLenientSubmissionLimit || moreLenientIdeUsage) {
+        if (moreLenientStartDate || moreLenientDueDate || moreLenientIdeUsage) {
             // Unlock all participations that are allowed to submit under the updated configuration.
             // Only unlock the repositories if offline IDE usage is allowed.
             if (updatedExerciseAllowsIdeUsage) {
-                // TODO: Change to Unsealed and fix check
-                instanceMessageSendService.sendUnlockAllSealedStudentRepositoriesAndParticipations(programmingExerciseBeforeUpdate.getId());
+                instanceMessageSendService.sendUnlockAllUnsealedStudentRepositoriesAndParticipations(programmingExerciseBeforeUpdate.getId());
             }
             else {
                 instanceMessageSendService.sendUnlockAllSealedStudentParticipations(programmingExerciseBeforeUpdate.getId());

@@ -105,13 +105,13 @@ public class InstanceMessageReceiveService {
             SecurityUtils.setAuthorizationObject();
             processUnlockAllRepositories((message.getMessageObject()));
         });
-        hazelcastInstance.<Long>getTopic(MessageTopic.PROGRAMMING_EXERCISE_UNLOCK_SEALED_REPOSITORIES_AND_PARTICIPATIONS.toString()).addMessageListener(message -> {
+        hazelcastInstance.<Long>getTopic(MessageTopic.PROGRAMMING_EXERCISE_UNLOCK_UNSEALED_REPOSITORIES_AND_PARTICIPATIONS.toString()).addMessageListener(message -> {
             SecurityUtils.setAuthorizationObject();
-            processUnlockAllSealedRepositoriesAndParticipations((message.getMessageObject()));
+            processUnlockAllUnsealedRepositoriesAndParticipations((message.getMessageObject()));
         });
-        hazelcastInstance.<Long>getTopic(MessageTopic.PROGRAMMING_EXERCISE_UNLOCK_SEALED_PARTICIPATIONS.toString()).addMessageListener(message -> {
+        hazelcastInstance.<Long>getTopic(MessageTopic.PROGRAMMING_EXERCISE_UNLOCK_UNSEALED_PARTICIPATIONS.toString()).addMessageListener(message -> {
             SecurityUtils.setAuthorizationObject();
-            processUnlockAllSealedParticipations((message.getMessageObject()));
+            processUnlockAllUnsealedParticipations((message.getMessageObject()));
         });
         hazelcastInstance.<Long>getTopic(MessageTopic.PROGRAMMING_EXERCISE_LOCK_REPOSITORIES_AND_PARTICIPATIONS.toString()).addMessageListener(message -> {
             SecurityUtils.setAuthorizationObject();
@@ -215,18 +215,18 @@ public class InstanceMessageReceiveService {
         programmingExerciseScheduleService.unlockAllStudentRepositoriesAndParticipations(programmingExercise).run();
     }
 
-    public void processUnlockAllSealedRepositoriesAndParticipations(Long exerciseId) {
-        log.info("Received unlock all sealed repositories and participations for programming exercise {}", exerciseId);
+    public void processUnlockAllUnsealedRepositoriesAndParticipations(Long exerciseId) {
+        log.info("Received unlock all unsealed repositories and participations for programming exercise {}", exerciseId);
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
         // Run the runnable immediately so that the repositories are unlocked as fast as possible
-        programmingExerciseScheduleService.unlockAllSealedStudentRepositoriesAndParticipations(programmingExercise).run();
+        programmingExerciseScheduleService.unlockAllUnsealedStudentRepositoriesAndParticipations(programmingExercise).run();
     }
 
-    public void processUnlockAllSealedParticipations(Long exerciseId) {
-        log.info("Received unlock all sealed participations for programming exercise {}", exerciseId);
+    public void processUnlockAllUnsealedParticipations(Long exerciseId) {
+        log.info("Received unlock all unsealed participations for programming exercise {}", exerciseId);
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
         // Run the runnable immediately so that the repositories are unlocked as fast as possible
-        programmingExerciseScheduleService.unlockAllSealedStudentParticipations(programmingExercise).run();
+        programmingExerciseScheduleService.unlockAllUnsealedStudentParticipations(programmingExercise).run();
     }
 
     public void processLockAllRepositoriesAndParticipations(Long exerciseId) {

@@ -87,15 +87,15 @@ public class DistributedInstanceMessageSendService implements InstanceMessageSen
     }
 
     @Override
-    public void sendUnlockAllSealedStudentRepositoriesAndParticipations(Long exerciseId) {
-        log.info("Sending unlock all sealed repositories and participations for programming exercise {} to broker.", exerciseId);
-        sendMessageDelayed(MessageTopic.PROGRAMMING_EXERCISE_UNLOCK_SEALED_REPOSITORIES_AND_PARTICIPATIONS, exerciseId);
+    public void sendUnlockAllUnsealedStudentRepositoriesAndParticipations(Long exerciseId) {
+        log.info("Sending unlock all unsealed repositories and participations for programming exercise {} to broker.", exerciseId);
+        sendMessageDelayed(MessageTopic.PROGRAMMING_EXERCISE_UNLOCK_UNSEALED_REPOSITORIES_AND_PARTICIPATIONS, exerciseId);
     }
 
     @Override
     public void sendUnlockAllSealedStudentParticipations(Long exerciseId) {
         log.info("Sending unlock all sealed participations for programming exercise {} to broker.", exerciseId);
-        sendMessageDelayed(MessageTopic.PROGRAMMING_EXERCISE_UNLOCK_SEALED_PARTICIPATIONS, exerciseId);
+        sendMessageDelayed(MessageTopic.PROGRAMMING_EXERCISE_UNLOCK_UNSEALED_PARTICIPATIONS, exerciseId);
     }
 
     @Override

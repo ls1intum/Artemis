@@ -67,13 +67,13 @@ public class MainInstanceMessageSendService implements InstanceMessageSendServic
     }
 
     @Override
-    public void sendUnlockAllSealedStudentRepositoriesAndParticipations(Long exerciseId) {
-        instanceMessageReceiveService.processUnlockAllSealedRepositoriesAndParticipations(exerciseId);
+    public void sendUnlockAllUnsealedStudentRepositoriesAndParticipations(Long exerciseId) {
+        instanceMessageReceiveService.processUnlockAllUnsealedRepositoriesAndParticipations(exerciseId);
     }
 
     @Override
     public void sendUnlockAllSealedStudentParticipations(Long exerciseId) {
-        instanceMessageReceiveService.processUnlockAllSealedParticipations(exerciseId);
+        instanceMessageReceiveService.processUnlockAllUnsealedParticipations(exerciseId);
     }
 
     @Override

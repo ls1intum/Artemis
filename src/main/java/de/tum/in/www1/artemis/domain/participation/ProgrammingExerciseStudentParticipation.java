@@ -31,7 +31,7 @@ public class ProgrammingExerciseStudentParticipation extends StudentParticipatio
 
     @Column(name = "locked")
     @JsonView(QuizView.Before.class)
-    private Boolean locked = true;
+    private boolean locked;
 
     public ProgrammingExerciseStudentParticipation() {
         // Default constructor
@@ -65,11 +65,11 @@ public class ProgrammingExerciseStudentParticipation extends StudentParticipatio
         this.branch = branch;
     }
 
-    public Boolean getIsLocked() {
+    public boolean getIsLocked() {
         return locked;
     }
 
-    public void setLocked(Boolean locked) {
+    public void setLocked(boolean locked) {
         this.locked = locked;
     }
 

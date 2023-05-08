@@ -8,7 +8,6 @@ import { ButtonSize } from 'app/shared/components/button.component';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
 import { ExerciseType, IncludedInOverallScore, getCourseFromExercise } from 'app/entities/exercise.model';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Result } from 'app/entities/result.model';
 import { Feedback, FeedbackType, checkSubsequentFeedbackInAssessment } from 'app/entities/feedback.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
@@ -28,7 +27,6 @@ import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/shared/exercise-hint.service';
 import { HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
-import dayjs from 'dayjs/esm';
 
 @Component({
     selector: 'jhi-code-editor-student',
@@ -43,7 +41,7 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
     PROGRAMMING = ExerciseType.PROGRAMMING;
 
     paramSub: Subscription;
-    participation: StudentParticipation;
+    participation: ProgrammingExerciseStudentParticipation;
     exercise: ProgrammingExercise;
     course?: Course;
 
@@ -90,7 +88,7 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
                         this.participation = participationWithResults;
                         this.exercise = this.participation.exercise as ProgrammingExercise;
                         const dueDateHasPassed = hasExerciseDueDatePassed(this.exercise, this.participation);
-                        this.determineRepoLockedState(dueDateHasPassed);
+                        this.repositoryIsLocked = this.participation.locked ?? false;
                         this.latestResult = this.participation.results ? this.participation.results[0] : undefined;
                         this.isIllegalSubmission = this.latestResult?.submission?.type === SubmissionType.ILLEGAL;
                         this.checkForTutorAssessment(dueDateHasPassed);
@@ -130,7 +128,7 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
      * Load the participation from server with the latest result.
      * @param participationId
      */
-    loadParticipationWithLatestResult(participationId: number): Observable<StudentParticipation> {
+    loadParticipationWithLatestResult(participationId: number): Observable<ProgrammingExerciseStudentParticipation> {
         return this.programmingExerciseParticipationService.getStudentParticipationWithLatestResult(participationId).pipe(
             mergeMap((participation: ProgrammingExerciseStudentParticipation) =>
                 participation.results?.length
@@ -205,15 +203,5 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
     onHintActivated(exerciseHint: ExerciseHint) {
         this.availableExerciseHints = this.availableExerciseHints?.filter((hint) => hint.id !== exerciseHint.id);
         this.activatedExerciseHints?.push(exerciseHint);
-    }
-
-    /**
-     * The repository is locked if the due date is over or the student may not start yet (before start/release date)
-     * @param dueDateHasPassed flag indicating that the (individual) due date is passed
-     */
-    determineRepoLockedState(dueDateHasPassed: boolean) {
-        const participationStartDate = this.exercise.startDate ?? this.exercise.releaseDate;
-        const beforeParticipationStart = participationStartDate && dayjs().isBefore(participationStartDate);
-        this.repositoryIsLocked = ((!this.exercise.isAtLeastTutor && beforeParticipationStart) || dueDateHasPassed) && !this.participation.testRun;
     }
 }

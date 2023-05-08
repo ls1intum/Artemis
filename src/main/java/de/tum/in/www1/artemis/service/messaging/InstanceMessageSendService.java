@@ -107,12 +107,12 @@ public interface InstanceMessageSendService {
      *
      * @param exerciseId the id of the exercise that should be unlocked
      */
-    void sendUnlockAllSealedStudentRepositoriesAndParticipations(Long exerciseId);
+    void sendUnlockAllUnsealedStudentRepositoriesAndParticipations(Long exerciseId);
 
     /**
      * Send a message to the main server that all student participations, that allow for submissions, should be instantly unlocked.
      * Submissions are allowed if the due date is in the future and the submission limit is not reached yet.
-     * This does not unlock the repositories associated with the participations! See {@link #sendUnlockAllSealedStudentRepositoriesAndParticipations(Long)} for that.
+     * This does not unlock the repositories associated with the participations! See {@link #sendUnlockAllUnsealedStudentRepositoriesAndParticipations(Long)} for that.
      *
      * @param exerciseId the id of the exercise that should be unlocked
      */

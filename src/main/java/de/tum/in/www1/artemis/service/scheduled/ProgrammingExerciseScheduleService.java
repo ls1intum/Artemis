@@ -30,6 +30,7 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentPar
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
+import de.tum.in.www1.artemis.service.ExerciseDateService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
@@ -64,6 +65,8 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
 
     private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
+    private final ExerciseDateService exerciseDateService;
+
     private final ProgrammingExerciseGradingService programmingExerciseGradingService;
 
     private final GroupNotificationService groupNotificationService;
@@ -78,7 +81,8 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
             ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository, ResultRepository resultRepository, ParticipationRepository participationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseParticipationRepository, Environment env, ProgrammingTriggerService programmingTriggerService,
             ProgrammingExerciseGradingService programmingExerciseGradingService, GroupNotificationService groupNotificationService, ExamDateService examDateService,
-            ProgrammingExerciseParticipationService programmingExerciseParticipationService, StudentExamRepository studentExamRepository, GitService gitService) {
+            ProgrammingExerciseParticipationService programmingExerciseParticipationService, ExerciseDateService exerciseDateService, StudentExamRepository studentExamRepository,
+            GitService gitService) {
         this.scheduleService = scheduleService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
@@ -87,6 +91,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
         this.programmingExerciseParticipationRepository = programmingExerciseParticipationRepository;
         this.programmingTriggerService = programmingTriggerService;
         this.groupNotificationService = groupNotificationService;
+        this.exerciseDateService = exerciseDateService;
         this.studentExamRepository = studentExamRepository;
         this.examDateService = examDateService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
@@ -463,7 +468,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
 
     /**
      * Returns a runnable that, once executed, will
-     * (1) lock all student repositories and participations that have a due date in the past or have reached the submission limit.
+     * (1) lock all student repositories and participations that have a due date in the past.
      * (2) stash all student changes in the online editor for manual assessments.
      * NOTE: this will not immediately lock the repositories as only a Runnable is returned!
      *
@@ -472,12 +477,12 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
      */
     @NotNull
     public Runnable lockAllSealedStudentRepositoriesAndParticipations(ProgrammingExercise exercise) {
-        return lockStudentRepositoriesAndParticipations(exercise, programmingExerciseParticipationService::isStudentParticipationSealed);
+        return lockStudentRepositoriesAndParticipations(exercise, exerciseDateService::isAfterDueDate);
     }
 
     /**
      * Returns a runnable that, once executed, will
-     * (1) lock all student participations that have a due date in the past or have reached the submission limit.
+     * (1) lock all student participations that have a due date in the past.
      * (2) stash all student changes in the online editor for manual assessments.
      * NOTE: this will not lock the student repositories. See {@link #lockAllSealedStudentRepositoriesAndParticipations(ProgrammingExercise)} for that.
      * NOTE: this will not immediately lock the repositories as only a Runnable is returned!
@@ -487,7 +492,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
      */
     @NotNull
     public Runnable lockAllSealedStudentParticipations(ProgrammingExercise exercise) {
-        return lockStudentParticipations(exercise, programmingExerciseParticipationService::isStudentParticipationSealed);
+        return lockStudentParticipations(exercise, exerciseDateService::isAfterDueDate);
     }
 
     /**
@@ -729,7 +734,8 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
     }
 
     /**
-     * Returns a runnable that, once executed, will unlock all sealed student repositories and participations and will schedule all repository lock tasks.
+     * Returns a runnable that, once executed, will unlock all student repositories and participations for participations that are inside the working time frame and will schedule
+     * all repository lock tasks.
      * Tasks to unlock will be grouped so that for every existing due date (which is the exam start date + the different working times), one task will be scheduled.
      * NOTE: this will not immediately unlock the repositories as only a Runnable is returned!
      *
@@ -737,13 +743,13 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
      * @return a Runnable that will unlock the repositories once it is executed
      */
     @NotNull
-    public Runnable unlockAllSealedStudentRepositoriesAndParticipations(ProgrammingExercise exercise) {
+    public Runnable unlockAllUnsealedStudentRepositoriesAndParticipations(ProgrammingExercise exercise) {
         return runUnlockOperation(exercise, programmingExerciseParticipationService::unlockStudentRepositoryAndParticipation,
-                programmingExerciseParticipationService::isStudentParticipationSealed);
+                participation -> participation.getProgrammingExercise().isReleased() && exerciseDateService.isBeforeDueDate(participation));
     }
 
     /**
-     * Returns a runnable that, once executed, will unlock all sealed student participations and will schedule all repository lock tasks.
+     * Returns a runnable that, once executed, will unlock all student participations that are inside the working time frame and will schedule all repository lock tasks.
      * Tasks to unlock will be grouped so that for every existing due date (which is the exam start date + the different working times), one task will be scheduled.
      * NOTE: this will not immediately unlock the repositories as only a Runnable is returned!
      *
@@ -751,9 +757,9 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
      * @return a Runnable that will unlock the repositories once it is executed
      */
     @NotNull
-    public Runnable unlockAllSealedStudentParticipations(ProgrammingExercise exercise) {
+    public Runnable unlockAllUnsealedStudentParticipations(ProgrammingExercise exercise) {
         return runUnlockOperation(exercise, programmingExerciseParticipationService::unlockStudentParticipation,
-                programmingExerciseParticipationService::isStudentParticipationSealed);
+                participation -> participation.getProgrammingExercise().isReleased() && exerciseDateService.isBeforeDueDate(participation));
     }
 
     /**
