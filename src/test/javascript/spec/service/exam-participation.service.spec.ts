@@ -196,13 +196,10 @@ describe('Exam Participation Service', () => {
         /*configure the exam of a student exam*/
         const examToSend = new Exam();
 
-        const returnedFromService = Object.assign(
-            {
-                exercises: [exercise],
-                exam: examToSend,
-            },
-            studentExam,
-        );
+        const returnedFromService = Object.assign({}, studentExam, {
+            exercises: [exercise],
+            exam: examToSend,
+        });
         const expected = Object.assign({}, returnedFromService);
         service
             .submitStudentExam(2, 2, returnedFromService)
