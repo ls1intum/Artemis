@@ -338,7 +338,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
                 .stream().filter(conversationParticipant -> !Objects.equals(conversationParticipant.getUser().getId(), postToSave1.getAuthor().getId())).findAny().orElseThrow()
                 .getUnreadMessagesCount();
 
-        assertThat(unreadMessages).isEqualTo(0);
+        assertThat(unreadMessages).isZero();
     }
 
     @Test
