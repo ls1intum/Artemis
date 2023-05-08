@@ -183,9 +183,8 @@ public class ProgrammingExerciseExportService {
             embeddedFiles.add(matcher.group());
         }
         log.debug("Found embedded files:{} ", embeddedFiles);
-        Path embeddedFilesDir = null;
+        Path embeddedFilesDir = outputDir.resolve("files");
         if (!embeddedFiles.isEmpty()) {
-            embeddedFilesDir = outputDir.resolve("files");
             if (!Files.exists(embeddedFilesDir)) {
                 Files.createDirectory(embeddedFilesDir);
             }
