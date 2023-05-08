@@ -193,7 +193,7 @@ repos-download/
 #################################
 # Angular Build Environment Files
 #################################
-/src/main/webapp/app/environments/environment*.ts
+/src/main/webapp/app/environments/environment.*.ts
 
 ##########################
 # Angular Build i18n Files
