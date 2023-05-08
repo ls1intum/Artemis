@@ -1530,7 +1530,7 @@ class ProgrammingExerciseIntegrationTestService {
         final var testCasesResponse = request.patchWithResponseBody(ROOT + endpoint, updates, new TypeReference<List<ProgrammingExerciseTestCase>>() {
         }, HttpStatus.OK);
         final var updatedTestCase = testCasesResponse.stream().filter(testCase -> testCase.getId().equals(updates.get(0).getId())).findFirst().orElseThrow();
-        assertThat(updatedTestCase.getBonusPoints()).isEqualTo(0d);
+        assertThat(updatedTestCase.getBonusPoints()).isZero();
         assertThat(testCasesResponse.stream().filter(testCase -> !testCase.getId().equals(updatedTestCase.getId()))).allMatch(testCase -> testCase.getBonusPoints() == 1d);
     }
 
@@ -1565,7 +1565,7 @@ class ProgrammingExerciseIntegrationTestService {
         assertThat(testCasesResponse).containsExactlyInAnyOrderElementsOf(testsInDB);
         assertThat(testsInDB).allSatisfy(test -> assertThat(test.getWeight()).isEqualTo(1));
         assertThat(testsInDB).allSatisfy(test -> assertThat(test.getBonusMultiplier()).isEqualTo(1.0));
-        assertThat(testsInDB).allSatisfy(test -> assertThat(test.getBonusPoints()).isEqualTo(0.0));
+        assertThat(testsInDB).allSatisfy(test -> assertThat(test.getBonusPoints()).isZero());
     }
 
     void resetTestCaseWeights_instructorInWrongCourse_forbidden() throws Exception {
