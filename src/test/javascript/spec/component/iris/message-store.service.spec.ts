@@ -1,14 +1,7 @@
 import { IrisMessageStore } from 'app/iris/message-store.service';
-import { ActionType, ActiveConversationMessageLoadedAction, HistoryMessageLoadedAction, StudentMessageSentAction } from 'app/iris/message-store.model';
-import {
-    IrisClientMessageDescriptor,
-    IrisMessageContent,
-    IrisMessageContentType,
-    IrisMessageDescriptor,
-    IrisSender,
-    IrisServerMessageDescriptor,
-} from 'app/entities/iris/iris.model';
-import { firstValueFrom, lastValueFrom, skip, take } from 'rxjs';
+import { ActionType, ActiveConversationMessageLoadedAction, HistoryMessageLoadedAction, MessageStoreState, StudentMessageSentAction } from 'app/iris/message-store.model';
+import { IrisClientMessageDescriptor, IrisMessageContent, IrisMessageContentType, IrisSender, IrisServerMessageDescriptor } from 'app/entities/iris/iris.model';
+import { skip, take } from 'rxjs';
 
 describe('IrisMessageStore', () => {
     const mockMessageContent: IrisMessageContent = {
@@ -51,9 +44,8 @@ describe('IrisMessageStore', () => {
 
         messageStore.dispatch(action);
 
-        const state = await promise;
+        const state = (await promise) as MessageStoreState;
 
-        expect(state).toBeDefined();
         expect(state.messages).toEqual([action.message]);
     });
 
@@ -73,9 +65,8 @@ describe('IrisMessageStore', () => {
 
         messageStore.dispatch(action);
 
-        const state = await promise;
+        const state = (await promise) as MessageStoreState;
 
-        expect(state).toBeDefined();
         expect(state.messages).toEqual([action.message]);
     });
 
@@ -95,9 +86,8 @@ describe('IrisMessageStore', () => {
 
         messageStore.dispatch(action);
 
-        const state = await promise;
+        const state = (await promise) as MessageStoreState;
 
-        expect(state).toBeDefined();
         expect(state.messages).toEqual([action.message]);
     });
 
@@ -123,18 +113,16 @@ describe('IrisMessageStore', () => {
 
         messageStore.dispatch(action1);
 
-        const state1 = await promise1;
+        const state1 = (await promise1) as MessageStoreState;
 
-        expect(state1).toBeDefined();
         expect(state1.messages).toEqual([action1.message]);
 
         const promise2 = obs.pipe(skip(1), take(1)).toPromise();
 
         messageStore.dispatch(action2);
 
-        const state2 = await promise2;
+        const state2 = (await promise2) as MessageStoreState;
 
-        expect(state2).toBeDefined();
         expect(state2.messages).toEqual([action2.message, action1.message]);
 
         // the observable should only be aware of the previously emitted value
@@ -142,9 +130,8 @@ describe('IrisMessageStore', () => {
 
         messageStore.dispatch(action3);
 
-        const state3 = await promise3;
+        const state3 = (await promise3) as MessageStoreState;
 
-        expect(state3).toBeDefined();
         expect(state3.messages).toEqual([action3.message, action2.message, action1.message]);
     });
 });
