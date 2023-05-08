@@ -11,5 +11,5 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param studentScores   the scores of the currently logged in student (including total absolute and relative scores).
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record CourseScoresDTO(double maxPoints, double reachablePoints, StudentScoresDTO studentScores) {
+public record CourseScoresDTO(double maxPoints, double reachablePoints, double reachablePresentationPoints, StudentScoresDTO studentScores) {
 }

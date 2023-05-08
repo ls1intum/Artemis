@@ -291,7 +291,7 @@ export abstract class BaseGradingSystemComponent implements OnInit {
      * -- the presentationScore must be above 0
      * - if the presentationType is GRADED:
      * -- the presentationsNumber must be a whole number above 0
-     * -- the presentationsWeight must be between 0 and 100
+     * -- the presentationsWeight must be between 0 and 99
      * -- the presentationScore must be 0 or undefined
      */
     validPresentationsConfig(): boolean {
@@ -328,7 +328,7 @@ export abstract class BaseGradingSystemComponent implements OnInit {
             if (
                 this.presentationsConfig.gradedPresentationsWeight === undefined ||
                 this.presentationsConfig.gradedPresentationsWeight < 0 ||
-                this.presentationsConfig.gradedPresentationsWeight > 100
+                this.presentationsConfig.gradedPresentationsWeight > 99
             ) {
                 this.invalidGradeStepsMessage = this.translateService.instant('artemisApp.gradingSystem.error.invalidPresentationsWeight');
                 return false;

@@ -292,7 +292,7 @@ public class ExamService {
             Double achievedPointsOfSource = 0.0;
             PlagiarismVerdict verdict = null;
             Integer presentationScoreThreshold = null;
-            Integer achievedPresentationScore = null;
+            Double achievedPresentationScore = null;
             if (result != null) {
                 achievedPointsOfSource = result.achievedPoints();
                 verdict = result.mostSeverePlagiarismVerdict();

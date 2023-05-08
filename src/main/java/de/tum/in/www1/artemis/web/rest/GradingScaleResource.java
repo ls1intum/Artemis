@@ -302,8 +302,8 @@ public class GradingScaleResource {
             if (gradingScale.getPresentationsNumber() == null || gradingScale.getPresentationsNumber() < 1) {
                 throw new BadRequestAlertException("artemisApp.gradingSystem.error.invalidPresentationsNumber", ENTITY_NAME, "alert");
             }
-            // The presentationsWeight must be between 0 and 100
-            if (gradingScale.getPresentationsWeight() == null || gradingScale.getPresentationsWeight() < 0 || gradingScale.getPresentationsWeight() > 100) {
+            // The presentationsWeight must be between 0 and 99
+            if (gradingScale.getPresentationsWeight() == null || gradingScale.getPresentationsWeight() < 0 || gradingScale.getPresentationsWeight() > 99) {
                 throw new BadRequestAlertException("artemisApp.gradingSystem.error.invalidPresentationsWeight", ENTITY_NAME, "alert");
             }
             // The presentationScore must be 0 or null

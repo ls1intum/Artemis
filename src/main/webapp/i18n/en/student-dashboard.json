@@ -130,6 +130,7 @@
                 "modelingPointLabel": "Modeling Points",
                 "textPointLabel": "Text Points",
                 "fileUploadPointLabel": "File upload Points",
+                "presentationPointsLabel": "Presentation Points",
                 "missingPointsLabel": "Missing Points",
                 "achievedPointsLabel": "Achieved Points",
                 "includeStandardCategories": "Hide Artemis standard categories:",

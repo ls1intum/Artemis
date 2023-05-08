@@ -39,14 +39,17 @@ public class CourseScoreCalculationService {
 
     private final PlagiarismCaseRepository plagiarismCaseRepository;
 
+    private final GradingScaleService gradingScaleService;
+
     public CourseScoreCalculationService(StudentParticipationRepository studentParticipationRepository, ExerciseRepository exerciseRepository,
-            PlagiarismCaseRepository plagiarismCaseRepository) {
+            PlagiarismCaseRepository plagiarismCaseRepository, GradingScaleService gradingScaleService) {
         this.studentParticipationRepository = studentParticipationRepository;
         this.exerciseRepository = exerciseRepository;
         this.plagiarismCaseRepository = plagiarismCaseRepository;
+        this.gradingScaleService = gradingScaleService;
     }
 
-    record MaxAndReachablePoints(double maxPoints, double reachablePoints) {
+    record MaxAndReachablePoints(double maxPoints, double reachablePoints, double reachablePresentationPoints) {
     }
 
     /**
@@ -64,7 +67,7 @@ public class CourseScoreCalculationService {
     private MaxAndReachablePoints calculateMaxAndReachablePoints(Set<Exercise> exercises) {
 
         if (exercises.isEmpty()) {
-            return new MaxAndReachablePoints(0, 0);
+            return new MaxAndReachablePoints(0, 0, 0);
         }
 
         double maxPoints = 0.0;
@@ -83,7 +86,29 @@ public class CourseScoreCalculationService {
             }
         }
 
-        return new MaxAndReachablePoints(maxPoints, reachableMaxPoints);
+        return new MaxAndReachablePoints(maxPoints, reachableMaxPoints, 0);
+    }
+
+    /**
+     * Calculates max and reachable max points for the given exercises. Also calculates the reachable presentation points for the course.
+     * Max points are the sum of the points for all included (see {@link #includeIntoScoreCalculation(Exercise)}) exercises, whose due date is over or unset or who are
+     * automatically assessed and the buildAndTestStudentSubmissionsAfterDueDate is in the past.
+     * Reachable max points contain only those points where the exercise's assessmentDueDate is in the past. (see {@link #isAssessmentDone(Exercise)}).
+     * Example: An exercise that is not automatically assessed (e.g. text exercise), that has the dueDate in the past but the assessmentDueDate set in the future is included in
+     * the max points calculation, but not in the reachable max points calculation.
+     *
+     * @param course    the course to which the exercises belong to
+     * @param exercises the exercises which are included into max points calculation
+     * @return the max and reachable max points for the given exercises and the reachable presentation points given the exercises
+     */
+    private MaxAndReachablePoints calculateMaxAndReachablePointsWithPresentationPoints(Course course, Set<Exercise> exercises) {
+        MaxAndReachablePoints maxAndReachablePoints = calculateMaxAndReachablePoints(exercises);
+
+        double reachablePresentationPoints = calculateReachablePresentationPoints(course, maxAndReachablePoints.reachablePoints);
+        double maxPoints = maxAndReachablePoints.maxPoints + reachablePresentationPoints;
+        double reachablePoints = maxAndReachablePoints.reachablePoints + reachablePresentationPoints;
+
+        return new MaxAndReachablePoints(maxPoints, reachablePoints, reachablePresentationPoints);
     }
 
     /**
@@ -104,7 +129,7 @@ public class CourseScoreCalculationService {
         // Retrieve the course from the first exercise. All exercises belong to the same course.
         Course course = courseExercises.iterator().next().getCourseViaExerciseGroupOrCourseMember();
 
-        MaxAndReachablePoints maxAndReachablePoints = calculateMaxAndReachablePoints(courseExercises);
+        MaxAndReachablePoints maxAndReachablePoints = calculateMaxAndReachablePointsWithPresentationPoints(course, courseExercises);
 
         List<PlagiarismCase> plagiarismCases;
 
@@ -194,7 +219,7 @@ public class CourseScoreCalculationService {
 
         Set<Exercise> courseExercises = course.getExercises();
 
-        MaxAndReachablePoints maxAndReachablePoints = calculateMaxAndReachablePoints(courseExercises);
+        MaxAndReachablePoints maxAndReachablePoints = calculateMaxAndReachablePointsWithPresentationPoints(course, courseExercises);
 
         List<PlagiarismCase> plagiarismCases = new ArrayList<>();
         for (Exercise exercise : courseExercises) {
@@ -207,7 +232,8 @@ public class CourseScoreCalculationService {
 
         // Get the total scores for the course.
         StudentScoresDTO totalStudentScores = calculateCourseScoreForStudent(course, userId, studentParticipations, maxAndReachablePoints, plagiarismCases);
-        CourseScoresDTO totalScores = new CourseScoresDTO(maxAndReachablePoints.maxPoints, maxAndReachablePoints.reachablePoints, totalStudentScores);
+        CourseScoresDTO totalScores = new CourseScoresDTO(maxAndReachablePoints.maxPoints, maxAndReachablePoints.reachablePoints, maxAndReachablePoints.reachablePresentationPoints,
+                totalStudentScores);
 
         // Get scores per exercise type for the course (used in course-statistics.component i.a.).
         Map<ExerciseType, CourseScoresDTO> scoresPerExerciseType = calculateCourseScoresPerExerciseType(course, studentParticipations, userId, plagiarismCases);
@@ -256,7 +282,7 @@ public class CourseScoreCalculationService {
             // PLAGIARISM verdict.
             StudentScoresDTO studentScoresOfExerciseType = calculateCourseScoreForStudent(course, userId, studentParticipationsOfExerciseType, maxAndReachablePointsOfExerciseType,
                     plagiarismCases);
-            CourseScoresDTO scoresOfExerciseType = new CourseScoresDTO(maxAndReachablePointsOfExerciseType.maxPoints, maxAndReachablePointsOfExerciseType.reachablePoints,
+            CourseScoresDTO scoresOfExerciseType = new CourseScoresDTO(maxAndReachablePointsOfExerciseType.maxPoints, maxAndReachablePointsOfExerciseType.reachablePoints, 0.0,
                     studentScoresOfExerciseType);
             scoresPerExerciseType.put(exerciseType, scoresOfExerciseType);
         }
@@ -285,7 +311,7 @@ public class CourseScoreCalculationService {
         }
 
         double pointsAchievedByStudentInCourse = 0.0;
-        int presentationScore = 0;
+        double presentationScore = 0;
         var plagiarismCasesForStudent = plagiarismMapping.getPlagiarismCasesForStudent(studentId);
 
         for (StudentParticipation participation : participationsOfStudent) {
@@ -300,7 +326,16 @@ public class CourseScoreCalculationService {
                 double pointsAchievedFromExercise = calculatePointsAchievedFromExercise(exercise, result, plagiarismCasesForStudent.get(exercise.getId()));
                 pointsAchievedByStudentInCourse += pointsAchievedFromExercise;
             }
-            presentationScore += participation.getPresentationScore() != null ? participation.getPresentationScore() : 0;
+        }
+
+        // calculate presentation points for graded presentations
+        if (maxAndReachablePoints.reachablePresentationPoints > 0.0) {
+            presentationScore = calculatePresentationPointsForStudent(course, participationsOfStudent, maxAndReachablePoints.reachablePresentationPoints);
+            pointsAchievedByStudentInCourse += presentationScore;
+        }
+        // calculate presentation score for basic presentations
+        else if (course.getPresentationScore() != null && course.getPresentationScore() > 0.0) {
+            presentationScore = calculateBasicPresentationScoreForStudent(course, participationsOfStudent);
         }
 
         double absolutePoints = roundScoreSpecifiedByCourseSettings(pointsAchievedByStudentInCourse, course);
@@ -436,7 +471,7 @@ public class CourseScoreCalculationService {
      * @param coursePresentationScore   presentation score limit of the course that needs to be passed to get the bonus for the final exam
      * @return True if presentation score limit is not set or surpassed, otherwise false.
      */
-    public boolean isPresentationScoreSufficientForBonus(int achievedPresentationScore, Integer coursePresentationScore) {
+    public boolean isPresentationScoreSufficientForBonus(double achievedPresentationScore, Integer coursePresentationScore) {
         return coursePresentationScore == null || achievedPresentationScore >= coursePresentationScore;
     }
 
@@ -452,5 +487,89 @@ public class CourseScoreCalculationService {
         }
         var studentVerdictsFromExercises = plagiarismCasesForSingleStudent.stream().map(PlagiarismCase::getVerdict).toList();
         return PlagiarismVerdict.findMostSevereVerdict(studentVerdictsFromExercises);
+    }
+
+    /**
+     * Calculates the number of presentations for a single student, referred to as the presentationScore for basic
+     * presentations.
+     *
+     * @param course                the course for which the presentation score should be calculated
+     * @param studentParticipations the participations relevant for presentations of the student.
+     * @return the basic presentation score for a single student.
+     */
+    private double calculateBasicPresentationScoreForStudent(Course course, List<StudentParticipation> studentParticipations) {
+        if (studentParticipations == null || studentParticipations.isEmpty()) {
+            return 0;
+        }
+
+        double presentationScoreSum = studentParticipations.stream()
+                .mapToDouble(participation -> roundScoreSpecifiedByCourseSettings(participation.getPresentationScore() == null ? 0 : participation.getPresentationScore(), course))
+                .sum();
+
+        return roundScoreSpecifiedByCourseSettings(presentationScoreSum, course);
+    }
+
+    /**
+     * Calculates the points for presentations for a single student given the participations of the student, the
+     * reachable points of the course and the presentationsWeight of the courses GradingScale.
+     *
+     * @param course                      the course for which the presentation score should be calculated
+     * @param studentParticipations       the participations relevant for presentations of the student.
+     * @param reachablePresentationPoints the reachable presentation points in the given course.
+     * @return the presentation points for a single student.
+     */
+    private double calculatePresentationPointsForStudent(Course course, List<StudentParticipation> studentParticipations, double reachablePresentationPoints) {
+        // return 0 if no participations are given
+        if (studentParticipations == null || studentParticipations.isEmpty()) {
+            return 0;
+        }
+
+        // return 0 if no grading scale is set for the course
+        GradingScale gradingScale = gradingScaleService.findGradingScaleByCourseId(course.getId()).orElse(null);
+        if (gradingScale == null) {
+            return 0;
+        }
+
+        // return 0 if the grading scale is not configured for graded presentations
+        int presentationsNumber = gradingScale.getPresentationsNumber() == null ? 0 : gradingScale.getPresentationsNumber();
+        if (presentationsNumber <= 0) {
+            return 0;
+        }
+
+        double presentationPointSum = calculateBasicPresentationScoreForStudent(course, studentParticipations);
+        double presentationPointAvg = presentationPointSum / presentationsNumber;
+        double presentationPoints = reachablePresentationPoints * presentationPointAvg / 100.0;
+
+        return roundScoreSpecifiedByCourseSettings(presentationPoints, course);
+    }
+
+    /**
+     * Calculates the reachable presentation points for a course.
+     *
+     * @param course          the course for which the reachable presentation points should be calculated
+     * @param reachablePoints the maximum points that can be currently received in the course
+     */
+    private double calculateReachablePresentationPoints(Course course, double reachablePoints) {
+        // return 0 if reachable points are 0
+        if (reachablePoints <= 0) {
+            return 0;
+        }
+
+        // return 0 if no grading scale is set for the course
+        GradingScale gradingScale = gradingScaleService.findGradingScaleByCourseId(course.getId()).orElse(null);
+        if (gradingScale == null) {
+            return 0;
+        }
+
+        // return 0 if the grading scale is not configured for graded presentations
+        double presentationsWeight = gradingScale.getPresentationsWeight() == null ? 0 : gradingScale.getPresentationsWeight();
+        if (presentationsWeight <= 0) {
+            return 0;
+        }
+
+        double reachablePointsWithPresentation = -reachablePoints / (presentationsWeight - 100) * 100;
+        double reachablePresentationPoints = reachablePointsWithPresentation * presentationsWeight / 100;
+
+        return roundScoreSpecifiedByCourseSettings(reachablePresentationPoints, course);
     }
 }

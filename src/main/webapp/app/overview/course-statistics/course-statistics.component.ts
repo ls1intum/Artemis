@@ -99,7 +99,18 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
     overallPresentationScore = 0;
     presentationScoresPerExercise: ExerciseTypeMap;
 
-    doughnutChartColors: string[] = [PROGRAMMING_EXERCISE_COLOR, QUIZ_EXERCISE_COLOR, MODELING_EXERCISE_COLOR, TEXT_EXERCISE_COLOR, FILE_UPLOAD_EXERCISE_COLOR, GraphColors.RED];
+    // reachable presentation points
+    reachablePresentationPoints = 0;
+
+    doughnutChartColors: string[] = [
+        PROGRAMMING_EXERCISE_COLOR,
+        QUIZ_EXERCISE_COLOR,
+        MODELING_EXERCISE_COLOR,
+        TEXT_EXERCISE_COLOR,
+        FILE_UPLOAD_EXERCISE_COLOR,
+        GraphColors.LIGHT_BLUE,
+        GraphColors.RED,
+    ];
 
     public exerciseTitles: object = {
         quiz: {
@@ -133,14 +144,23 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
     modelingPointLabel = 'modelingPointLabel';
     textPointLabel = 'textPointLabel';
     fileUploadPointLabel = 'fileUploadPointLabel';
+    presentationPointsLabel = 'presentationPointsLabel';
     missingPointsLabel = 'missingPointsLabel';
-    labels = [this.programmingPointLabel, this.quizPointLabel, this.modelingPointLabel, this.textPointLabel, this.fileUploadPointLabel, this.missingPointsLabel];
+    labels = [
+        this.programmingPointLabel,
+        this.quizPointLabel,
+        this.modelingPointLabel,
+        this.textPointLabel,
+        this.fileUploadPointLabel,
+        this.presentationPointsLabel,
+        this.missingPointsLabel,
+    ];
 
     ngxDoughnutColor = {
         name: 'Your overall points color',
         selectable: true,
         group: ScaleType.Ordinal,
-        domain: [], // colors: orange, turquoise, violet, bordeaux, green, red
+        domain: [], // colors: orange, turquoise, violet, bordeaux, green, light_blue, red
     } as Color;
 
     // arrays representing each exercise group
@@ -272,6 +292,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
             this.calculateAndFilterNotIncludedInScore();
             this.retrieveMaxPoints();
             this.retrieveReachablePoints();
+            this.retrieveReachablePresentationPoints();
             this.retrieveAbsoluteScores();
             this.retrieveRelativeScores();
             this.retrievePresentationScores();
@@ -410,11 +431,20 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         const textExerciseTotalScore = this.retrieveScoreByExerciseTypeAndScoreType(ExerciseType.TEXT, ScoreType.ABSOLUTE_SCORE);
         const fileUploadExerciseTotalScore = this.retrieveScoreByExerciseTypeAndScoreType(ExerciseType.FILE_UPLOAD, ScoreType.ABSOLUTE_SCORE);
         this.overallPoints = this.retrieveTotalScoreByScoreType(ScoreType.ABSOLUTE_SCORE);
+        const totalPresentationPoints = this.course?.presentationScore ?? 0 > 0 ? 0 : this.retrieveTotalScoreByScoreType(ScoreType.PRESENTATION_SCORE);
         let totalMissedPoints = this.reachablePoints - this.overallPoints;
         if (totalMissedPoints < 0) {
             totalMissedPoints = 0;
         }
-        const scores = [programmingExerciseTotalScore, quizzesTotalScore, modelingExerciseTotalScore, textExerciseTotalScore, fileUploadExerciseTotalScore, totalMissedPoints];
+        const scores = [
+            programmingExerciseTotalScore,
+            quizzesTotalScore,
+            modelingExerciseTotalScore,
+            textExerciseTotalScore,
+            fileUploadExerciseTotalScore,
+            totalPresentationPoints,
+            totalMissedPoints,
+        ];
         const absoluteScores = {} as ExerciseTypeMap;
         absoluteScores[ExerciseType.QUIZ] = quizzesTotalScore;
         absoluteScores[ExerciseType.PROGRAMMING] = programmingExerciseTotalScore;
@@ -538,6 +568,14 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
     }
 
     /**
+     * Retrieve the reachable presentation score for the course from the scores storage service
+     * @private
+     */
+    private retrieveReachablePresentationPoints(): void {
+        this.reachablePresentationPoints = this.retrieveTotalScoreByScoreType(ScoreType.REACHABLE_PRESENTATION_POINTS);
+    }
+
+    /**
      * Retrieves the score for a given score type and exercise type from the scores storage service. Scores are calculated in the server when fetching all courses.
      * @param exerciseType the exercise type for which the score should be retrieved. Must be an element of {Programming, Modeling, Quiz, Text, File upload}.
      * @param scoreType which type of score should be retrieved from the store. Element of {'absoluteScore', 'maxPoints', 'currentRelativeScore', 'presentationScore', 'reachablePoints', 'relativeScore'}
@@ -582,6 +620,8 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
                 return scores.studentScores.currentRelativeScore;
             case ScoreType.PRESENTATION_SCORE:
                 return scores.studentScores.presentationScore;
+            case ScoreType.REACHABLE_PRESENTATION_POINTS:
+                return scores.reachablePresentationPoints;
         }
     }
 

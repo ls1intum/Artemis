@@ -130,7 +130,7 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationBambooB
         result.score(null);
 
         StudentScoresDTO studentScoresDTO = courseScoreCalculationService.calculateCourseScoreForStudent(course, student.getId(), studentParticipations,
-                new CourseScoreCalculationService.MaxAndReachablePoints(25.0, 5.0), List.of());
+                new CourseScoreCalculationService.MaxAndReachablePoints(25.0, 5.0, 0.0), List.of());
         if (withDueDate) {
             assertThat(studentScoresDTO.absoluteScore()).isEqualTo(2.1);
             assertThat(studentScoresDTO.relativeScore()).isEqualTo(8.4);
@@ -213,7 +213,7 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationBambooB
         User student = userRepository.findOneByLogin(TEST_PREFIX + "student1").get();
 
         StudentScoresDTO studentScore = courseScoreCalculationService.calculateCourseScoreForStudent(course, student.getId(), Collections.emptyList(),
-                new CourseScoreCalculationService.MaxAndReachablePoints(100.00, 100.00), Collections.emptyList());
+                new CourseScoreCalculationService.MaxAndReachablePoints(100.00, 100.00, 0.0), Collections.emptyList());
         assertThat(studentScore.absoluteScore()).isEqualTo(0.0);
         assertThat(studentScore.relativeScore()).isEqualTo(0.0);
         assertThat(studentScore.currentRelativeScore()).isEqualTo(0.0);
