@@ -1,6 +1,4 @@
 import { defineConfig } from 'cypress';
-import { registerMultilanguageCoveragePlugin } from '@heddendorp/cypress-plugin-multilanguage-coverage';
-import path from 'path';
 
 export default defineConfig({
     clientCertificates: [
@@ -50,7 +48,7 @@ export default defineConfig({
         toConsole: true,
     },
     e2e: {
-        setupNodeEvents(on, config) {
+        setupNodeEvents(on) {
             on('task', {
                 error(message: string) {
                     console.error('\x1b[31m', 'ERROR: ', message, '\x1b[0m');
@@ -69,7 +67,6 @@ export default defineConfig({
                 launchOptions.args.push('--lang=en');
                 return launchOptions;
             });
-            process.env.CYPRESS_COLLECT_COVERAGE === 'true' && registerMultilanguageCoveragePlugin({ workingDirectory: path.join(__dirname) })(on, config);
         },
         specPattern: ['init/ImportUsers.cy.ts', 'e2e/**/*.cy.{js,jsx,ts,tsx}'],
         supportFile: 'support/index.ts',

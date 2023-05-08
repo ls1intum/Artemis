@@ -83,7 +83,7 @@ artemis:
                     default: "tizianleonhardt/era-artemis-assembler:latest"
                 swift:
                     # possible overrides: xcode
-                    default: "norionomura/swiftlint:latest"
+                    default: "ls1tum/artemis-swift-swiftlint-docker:latest"
                 ocaml:
                     default: "ls1tum/artemis-ocaml-docker:v1"
 
@@ -179,6 +179,8 @@ spring:
             hibernate.jdbc.batch_size: 25
             hibernate.jdbc.time_zone: UTC
             hibernate.jdbc.lob.non_contextual_creation: true
+    liquibase:
+        contexts: prod
     messages:
         basename: i18n/messages
     main:
@@ -231,6 +233,8 @@ spring:
           - org.springframework.boot.actuate.autoconfigure.metrics.startup.StartupTimeMetricsListenerAutoConfiguration
           - org.springframework.boot.actuate.autoconfigure.metrics.task.TaskExecutorMetricsAutoConfiguration
           - org.springframework.boot.actuate.autoconfigure.metrics.web.tomcat.TomcatMetricsAutoConfiguration
+    beaninfo:
+        ignore: true
 
 hazelcast:
     phone:
