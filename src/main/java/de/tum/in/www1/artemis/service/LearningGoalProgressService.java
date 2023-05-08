@@ -23,16 +23,16 @@ import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.util.RoundingUtil;
 
 /**
- * Service for calculating the progress of a student in a learning goal.
+ * Service for calculating the progress of a student in a competency.
  */
 @Service
 public class LearningGoalProgressService {
 
     private final Logger logger = LoggerFactory.getLogger(LearningGoalProgressService.class);
 
-    private final LearningGoalRepository learningGoalRepository;
+    private final LearningGoalRepository competencyRepository;
 
-    private final LearningGoalProgressRepository learningGoalProgressRepository;
+    private final LearningGoalProgressRepository competencyProgressRepository;
 
     private final StudentScoreRepository studentScoreRepository;
 
@@ -44,11 +44,11 @@ public class LearningGoalProgressService {
 
     private final UserRepository userRepository;
 
-    public LearningGoalProgressService(LearningGoalRepository learningGoalRepository, LearningGoalProgressRepository learningGoalProgressRepository,
+    public LearningGoalProgressService(LearningGoalRepository competencyRepository, LearningGoalProgressRepository competencyProgressRepository,
             StudentScoreRepository studentScoreRepository, TeamScoreRepository teamScoreRepository, ExerciseRepository exerciseRepository,
             LectureUnitRepository lectureUnitRepository, UserRepository userRepository) {
-        this.learningGoalRepository = learningGoalRepository;
-        this.learningGoalProgressRepository = learningGoalProgressRepository;
+        this.competencyRepository = competencyRepository;
+        this.competencyProgressRepository = competencyProgressRepository;
         this.studentScoreRepository = studentScoreRepository;
         this.teamScoreRepository = teamScoreRepository;
         this.exerciseRepository = exerciseRepository;
@@ -57,9 +57,9 @@ public class LearningGoalProgressService {
     }
 
     /**
-     * Asynchronously update the progress for learning goals linked to the given learning object (for the specified participant)
+     * Asynchronously update the progress for competencies linked to the given learning object (for the specified participant)
      *
-     * @param learningObject The learning object for which to fetch the learning goals
+     * @param learningObject The learning object for which to fetch the competencies
      * @param participant    The participant (user or team) for which to update the progress
      */
     @Async
@@ -69,9 +69,9 @@ public class LearningGoalProgressService {
     }
 
     /**
-     * Asynchronously update the progress for the learning goals linked to the given learning object (for all students in the course)
+     * Asynchronously update the progress for the competencies linked to the given learning object (for all students in the course)
      *
-     * @param learningObject The learning object for which to fetch the learning goals
+     * @param learningObject The learning object for which to fetch the competencies
      */
     @Async
     public void updateProgressByLearningObjectAsync(LearningObject learningObject) {
@@ -90,65 +90,65 @@ public class LearningGoalProgressService {
     }
 
     /**
-     * Asynchronously update the existing progress for a specific learning goal
+     * Asynchronously update the existing progress for a specific competency
      *
-     * @param learningGoal The learning goal for which to update all existing student progress
+     * @param competency The competency for which to update all existing student progress
      */
     @Async
-    public void updateProgressByLearningGoalAsync(LearningGoal learningGoal) {
+    public void updateProgressByCompetencyAsync(LearningGoal competency) {
         SecurityUtils.setAuthorizationObject(); // required for async
-        learningGoalProgressRepository.findAllByCompetencyId(learningGoal.getId()).stream().map(LearningGoalProgress::getUser).forEach(user -> {
-            updateLearningGoalProgress(learningGoal.getId(), user);
+        competencyProgressRepository.findAllByCompetencyId(competency.getId()).stream().map(LearningGoalProgress::getUser).forEach(user -> {
+            updateCompetencyProgress(competency.getId(), user);
         });
     }
 
     /**
      * Update the existing progress for a specific user in a course
      *
-     * @param user   The user for whom to update the existing learning goal progress
-     * @param course The course for which to fetch the learning goals from
-     * @return All learning goals of the course with the updated progress for the user
+     * @param user   The user for whom to update the existing competency progress
+     * @param course The course for which to fetch the competencies from
+     * @return All competencies of the course with the updated progress for the user
      */
-    public Set<LearningGoal> getLearningGoalsAndUpdateProgressByUserInCourse(User user, Course course) {
-        var learningGoals = learningGoalRepository.findAllForCourse(course.getId());
-        learningGoals.forEach(learningGoal -> {
-            var updatedProgress = updateLearningGoalProgress(learningGoal.getId(), user);
+    public Set<LearningGoal> getCompetenciesAndUpdateProgressByUserInCourse(User user, Course course) {
+        var competencies = competencyRepository.findAllForCourse(course.getId());
+        competencies.forEach(competency -> {
+            var updatedProgress = updateCompetencyProgress(competency.getId(), user);
             if (updatedProgress != null) {
-                learningGoal.setUserProgress(Set.of(updatedProgress));
+                competency.setUserProgress(Set.of(updatedProgress));
             }
         });
-        return learningGoals;
+        return competencies;
     }
 
     /**
-     * Update the progress for all learning goals linked to the given learning object
+     * Update the progress for all competencies linked to the given learning object
      *
-     * @param learningObject The learning object for which to fetch the learning goals
+     * @param learningObject The learning object for which to fetch the competencies
      * @param users          A list of users for which to update the progress
      */
     public void updateProgressByLearningObject(LearningObject learningObject, @NotNull Set<User> users) {
         logger.debug("Updating competency progress for {} users.", users.size());
         try {
-            Set<LearningGoal> learningGoals;
+            Set<LearningGoal> competencies;
             if (learningObject instanceof Exercise exercise) {
-                learningGoals = exerciseRepository.findByIdWithCompetencies(exercise.getId()).map(Exercise::getCompetencies).orElse(null);
+                competencies = exerciseRepository.findByIdWithCompetencies(exercise.getId()).map(Exercise::getCompetencies).orElse(null);
             }
             else if (learningObject instanceof LectureUnit lectureUnit) {
-                learningGoals = lectureUnitRepository.findByIdWithLearningGoals(lectureUnit.getId()).map(LectureUnit::getCompetencies).orElse(null);
+                competencies = lectureUnitRepository.findByIdWithLearningGoals(lectureUnit.getId()).map(LectureUnit::getCompetencies).orElse(null);
             }
             else {
                 throw new IllegalArgumentException("Learning object must be either LectureUnit or Exercise");
             }
 
-            if (learningGoals == null) {
-                // Learning goals couldn't be loaded, the exercise/lecture unit might have already been deleted
+            if (competencies == null) {
+                // competencies couldn't be loaded, the exercise/lecture unit might have already been deleted
                 logger.debug("Competencies could not be fetched, skipping.");
                 return;
             }
 
             users.forEach(user -> {
-                learningGoals.forEach(learningGoal -> {
-                    updateLearningGoalProgress(learningGoal.getId(), user);
+                competencies.forEach(competency -> {
+                    updateCompetencyProgress(competency.getId(), user);
                 });
             });
         }
@@ -158,71 +158,71 @@ public class LearningGoalProgressService {
     }
 
     /**
-     * Updates the progress value (and confidence score) of the given learning goal and user, then returns it
+     * Updates the progress value (and confidence score) of the given competency and user, then returns it
      *
-     * @param learningGoalId The id of the learning goal to update the progress for
-     * @param user           The user for which the progress should be updated
-     * @return The updated learning goal progress, which is also persisted to the database
+     * @param competencyId The id of the competency to update the progress for
+     * @param user         The user for which the progress should be updated
+     * @return The updated competency progress, which is also persisted to the database
      */
-    public LearningGoalProgress updateLearningGoalProgress(Long learningGoalId, User user) {
-        var learningGoal = learningGoalRepository.findByIdWithExercisesAndLectureUnitsAndCompletions(learningGoalId).orElse(null);
+    public LearningGoalProgress updateCompetencyProgress(Long competencyId, User user) {
+        var competency = competencyRepository.findByIdWithExercisesAndLectureUnitsAndCompletions(competencyId).orElse(null);
 
-        if (user == null || learningGoal == null) {
+        if (user == null || competency == null) {
             logger.debug("User or competency no longer exist, skipping.");
             return null;
         }
 
-        var learningGoalProgress = learningGoalProgressRepository.findEagerByCompetencyIdAndUserId(learningGoalId, user.getId());
+        var competencyProgress = competencyProgressRepository.findEagerByCompetencyIdAndUserId(competencyId, user.getId());
 
-        if (learningGoalProgress.isPresent()) {
-            var lastModified = learningGoalProgress.get().getLastModifiedDate();
+        if (competencyProgress.isPresent()) {
+            var lastModified = competencyProgress.get().getLastModifiedDate();
             if (lastModified != null && lastModified.isAfter(Instant.now().minusSeconds(1))) {
                 logger.debug("Competency progress has been updated very recently, skipping.");
-                return learningGoalProgress.get();
+                return competencyProgress.get();
             }
         }
 
-        var studentProgress = learningGoalProgress.orElse(new LearningGoalProgress());
+        var studentProgress = competencyProgress.orElse(new LearningGoalProgress());
         List<LearningObject> learningObjects = new ArrayList<>();
 
-        List<LectureUnit> allLectureUnits = learningGoal.getLectureUnits().stream().filter(LectureUnit::isVisibleToStudents).toList();
+        List<LectureUnit> allLectureUnits = competency.getLectureUnits().stream().filter(LectureUnit::isVisibleToStudents).toList();
 
         List<LectureUnit> lectureUnits = allLectureUnits.stream().filter(lectureUnit -> !(lectureUnit instanceof ExerciseUnit)).toList();
-        List<Exercise> exercises = learningGoal.getExercises().stream().filter(Exercise::isVisibleToStudents).toList();
+        List<Exercise> exercises = competency.getExercises().stream().filter(Exercise::isVisibleToStudents).toList();
 
         learningObjects.addAll(lectureUnits);
         learningObjects.addAll(exercises);
 
-        var progress = RoundingUtil.roundScoreSpecifiedByCourseSettings(calculateProgress(learningObjects, user), learningGoal.getCourse());
-        var confidence = RoundingUtil.roundScoreSpecifiedByCourseSettings(calculateConfidence(exercises, user), learningGoal.getCourse());
+        var progress = RoundingUtil.roundScoreSpecifiedByCourseSettings(calculateProgress(learningObjects, user), competency.getCourse());
+        var confidence = RoundingUtil.roundScoreSpecifiedByCourseSettings(calculateConfidence(exercises, user), competency.getCourse());
 
         if (exercises.isEmpty()) {
-            // If the learning goal has no exercises, the confidence score equals the progress
+            // If the competency has no exercises, the confidence score equals the progress
             confidence = progress;
         }
 
-        studentProgress.setLearningGoal(learningGoal);
+        studentProgress.setLearningGoal(competency);
         studentProgress.setUser(user);
         studentProgress.setProgress(progress);
         studentProgress.setConfidence(confidence);
 
         try {
-            learningGoalProgressRepository.save(studentProgress);
+            competencyProgressRepository.save(studentProgress);
         }
         catch (DataIntegrityViolationException e) {
             // In rare instances of initially creating a progress entity, async updates might run in parallel.
             // This fails the SQL unique constraint and throws an exception. We can safely ignore it.
         }
 
-        logger.debug("Updated progress for user {} in competency {} to {} / {}.", user.getLogin(), learningGoal.getId(), studentProgress.getProgress(),
+        logger.debug("Updated progress for user {} in competency {} to {} / {}.", user.getLogin(), competency.getId(), studentProgress.getProgress(),
                 studentProgress.getConfidence());
         return studentProgress;
     }
 
     /**
-     * Calculate the progress value for the given user in a learning goal.
+     * Calculate the progress value for the given user in a competency.
      *
-     * @param learningObjects A list of all learning objects linked to a specific learning goal
+     * @param learningObjects A list of all learning objects linked to a specific competency
      * @param user            The user for which the progress should be calculated
      * @return The percentage of completed learning objects by the user
      */
@@ -232,11 +232,11 @@ public class LearningGoalProgressService {
     }
 
     /**
-     * Calculate the confidence score for the given user in a learning goal.
+     * Calculate the confidence score for the given user in a competency.
      *
-     * @param exercises A list of all exercises linked to a specific learning goal
+     * @param exercises A list of all exercises linked to a specific competency
      * @param user      The user for which the confidence score should be calculated
-     * @return The average score of the user in all exercises linked to the learning goal
+     * @return The average score of the user in all exercises linked to the competency
      */
     private double calculateConfidence(@NotNull List<Exercise> exercises, @NotNull User user) {
         var studentScores = studentScoreRepository.findAllByExercisesAndUser(exercises, user);

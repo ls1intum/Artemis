@@ -38,7 +38,7 @@ public class LearningGoalService {
     public Set<LearningGoal> findAllForCourse(@NotNull Course course, @NotNull User user, boolean updateProgress) {
         if (updateProgress) {
             // Get the learning goals with the updated progress for the specified user.
-            return learningGoalProgressService.getLearningGoalsAndUpdateProgressByUserInCourse(user, course);
+            return learningGoalProgressService.getCompetenciesAndUpdateProgressByUserInCourse(user, course);
         }
         else {
             // Fetch the learning goals with the user progress from the database.
