@@ -49,13 +49,13 @@
                 </ng-template>
                 <div class="dropdown-divider"></div>
                 <li *ngIf="isRegistrationEnabled">
-                    <a class="dropdown-item" routerLink="account/settings" routerLinkActive="active" (click)="collapseNavbar()">
+                    <a class="dropdown-item" routerLink="/account/settings" routerLinkActive="active" (click)="collapseNavbar()">
                         <fa-icon [icon]="faWrench" [fixedWidth]="true"></fa-icon>
                         <span jhiTranslate="global.menu.account.settings">Settings</span>
                     </a>
                 </li>
                 <li *ngIf="passwordResetEnabled">
-                    <a class="dropdown-item" routerLink="account/password" routerLinkActive="active" (click)="collapseNavbar()">
+                    <a class="dropdown-item" routerLink="/account/password" routerLinkActive="active" (click)="collapseNavbar()">
                         <fa-icon [icon]="faLock" [fixedWidth]="true"></fa-icon>
                         <span jhiTranslate="global.menu.account.password">Password</span>
                     </a>
@@ -112,7 +112,7 @@
     <div class="navbar-collapse collapse" id="navbarResponsive" [ngbCollapse]="isNavbarCollapsed">
         <ul class="navbar-nav ms-auto" [class.vertical]="isNavbarNavVertical">
             <li *ngIf="currAccount && !isExamActive" class="nav-item" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
-                <a class="guided-tour-overview nav-link" routerLink="courses" (click)="collapseNavbar()" id="overview-menu">
+                <a class="guided-tour-overview nav-link" routerLink="/courses" (click)="collapseNavbar()" id="overview-menu">
                     <span>
                         <fa-icon [icon]="faThLarge"></fa-icon>
                         <span jhiTranslate="global.menu.overview">Course Overview</span>
@@ -127,7 +127,7 @@
                 routerLinkActive="active"
                 [routerLinkActiveOptions]="{ exact: true }"
             >
-                <a *ngIf="!isExamActive" class="guided-tour-course-admin nav-link" routerLink="course-management" (click)="collapseNavbar()" id="course-admin-menu">
+                <a *ngIf="!isExamActive" class="guided-tour-course-admin nav-link" routerLink="/course-management" (click)="collapseNavbar()" id="course-admin-menu">
                     <span>
                         <fa-icon [icon]="faThList"></fa-icon>
                         <span jhiTranslate="global.menu.course">Course Management</span>
@@ -151,67 +151,67 @@
                 </a>
                 <ul class="dropdown-menu dropdown-menu-index" ngbDropdownMenu>
                     <li>
-                        <a class="dropdown-item" routerLink="admin/upcoming-exams-and-exercises" routerLinkActive="active" (click)="collapseNavbar()">
+                        <a class="dropdown-item" routerLink="/admin/upcoming-exams-and-exercises" routerLinkActive="active" (click)="collapseNavbar()">
                             <fa-icon [icon]="faBookOpen" [fixedWidth]="true"></fa-icon>
                             <span jhiTranslate="global.menu.admin.upcomingExamsAndExercises">Upcoming Exams & Exercises</span>
                         </a>
                     </li>
                     <li>
-                        <a class="dropdown-item" routerLink="admin/user-management" routerLinkActive="active" (click)="collapseNavbar()">
+                        <a class="dropdown-item" routerLink="/admin/user-management" routerLinkActive="active" (click)="collapseNavbar()">
                             <fa-icon [icon]="faUser" [fixedWidth]="true"></fa-icon>
                             <span jhiTranslate="global.menu.admin.userManagement">User management</span>
                         </a>
                     </li>
                     <li>
-                        <a class="dropdown-item" routerLink="admin/organization-management" routerLinkActive="active" (click)="collapseNavbar()">
+                        <a class="dropdown-item" routerLink="/admin/organization-management" routerLinkActive="active" (click)="collapseNavbar()">
                             <fa-icon [icon]="faUniversity" [fixedWidth]="true"></fa-icon>
                             <span jhiTranslate="global.menu.admin.organizationManagement">Organization management</span>
                         </a>
                     </li>
                     <li>
-                        <a class="dropdown-item" routerLink="admin/system-notification-management" routerLinkActive="active" (click)="collapseNavbar()">
+                        <a class="dropdown-item" routerLink="/admin/system-notification-management" routerLinkActive="active" (click)="collapseNavbar()">
                             <fa-icon [icon]="faBell" [fixedWidth]="true"></fa-icon>
                             <span jhiTranslate="global.menu.admin.systemNotifications">System notifications</span>
                         </a>
                     </li>
                     <li>
-                        <a class="dropdown-item" routerLink="admin/feature-toggles" routerLinkActive="active" (click)="collapseNavbar()">
+                        <a class="dropdown-item" routerLink="/admin/feature-toggles" routerLinkActive="active" (click)="collapseNavbar()">
                             <fa-icon [icon]="faToggleOn" [fixedWidth]="true"></fa-icon>
                             <span jhiTranslate="global.menu.admin.featureToggles">Feature Toggles</span>
                         </a>
                     </li>
                     <li>
-                        <a class="dropdown-item" routerLink="admin/user-statistics" routerLinkActive="active" (click)="collapseNavbar()">
+                        <a class="dropdown-item" routerLink="/admin/user-statistics" routerLinkActive="active" (click)="collapseNavbar()">
                             <fa-icon [icon]="faEye" [fixedWidth]="true"></fa-icon>
                             <span jhiTranslate="global.menu.admin.statistics">User statistics</span>
                         </a>
                     </li>
                     <li>
-                        <a class="dropdown-item" routerLink="admin/metrics" routerLinkActive="active" (click)="collapseNavbar()">
+                        <a class="dropdown-item" routerLink="/admin/metrics" routerLinkActive="active" (click)="collapseNavbar()">
                             <fa-icon [icon]="faTachometerAlt" [fixedWidth]="true"></fa-icon>
                             <span jhiTranslate="global.menu.admin.metrics">Metrics</span>
                         </a>
                     </li>
                     <li>
-                        <a class="dropdown-item" routerLink="admin/health" routerLinkActive="active" (click)="collapseNavbar()">
+                        <a class="dropdown-item" routerLink="/admin/health" routerLinkActive="active" (click)="collapseNavbar()">
                             <fa-icon [icon]="faHeart" [fixedWidth]="true"></fa-icon>
                             <span jhiTranslate="global.menu.admin.health">Health</span>
                         </a>
                     </li>
                     <li>
-                        <a class="dropdown-item" routerLink="admin/configuration" routerLinkActive="active" (click)="collapseNavbar()">
+                        <a class="dropdown-item" routerLink="/admin/configuration" routerLinkActive="active" (click)="collapseNavbar()">
                             <fa-icon [icon]="faList" [fixedWidth]="true"></fa-icon>
                             <span jhiTranslate="global.menu.admin.configuration">Configuration</span>
                         </a>
                     </li>
                     <li>
-                        <a class="dropdown-item" routerLink="admin/audits" routerLinkActive="active" (click)="collapseNavbar()">
+                        <a class="dropdown-item" routerLink="/admin/audits" routerLinkActive="active" (click)="collapseNavbar()">
                             <fa-icon [icon]="faBell" [fixedWidth]="true"></fa-icon>
                             <span jhiTranslate="global.menu.admin.audits">Audits</span>
                         </a>
                     </li>
                     <li>
-                        <a class="dropdown-item" routerLink="admin/logs" routerLinkActive="active" (click)="collapseNavbar()">
+                        <a class="dropdown-item" routerLink="/admin/logs" routerLinkActive="active" (click)="collapseNavbar()">
                             <fa-icon [icon]="faTasks" [fixedWidth]="true"></fa-icon>
                             <span jhiTranslate="global.menu.admin.logs">Logs</span>
                         </a>
