@@ -8,21 +8,23 @@ export enum ActionType {
 
 export class HistoryMessageLoadedAction {
     type: ActionType.HISTORY_MESSAGE_LOADED;
-    readonly message: IrisServerMessageDescriptor;
+    public constructor(public readonly message: IrisServerMessageDescriptor) {}
 }
 
 export class ActiveConversationMessageLoadedAction {
     type: ActionType.ACTIVE_CONVERSATION_MESSAGE_LOADED;
-    readonly message: IrisServerMessageDescriptor;
+
+    public constructor(public readonly message: IrisServerMessageDescriptor) {}
 }
 
 export class StudentMessageSentAction {
     type: ActionType.STUDENT_MESSAGE_SENT;
-    readonly message: IrisClientMessageDescriptor;
+
+    public constructor(public readonly message: IrisClientMessageDescriptor) {}
 }
 
 export type MessageStoreAction = HistoryMessageLoadedAction | ActiveConversationMessageLoadedAction | StudentMessageSentAction;
 
 export class MessageStoreState {
-    messages: ReadonlyArray<IrisMessageDescriptor>;
+    public constructor(public messages: ReadonlyArray<IrisMessageDescriptor>) {}
 }

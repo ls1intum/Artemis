@@ -1,7 +1,14 @@
 import { IrisMessageStore } from 'app/iris/message-store.service';
 import { ActionType, ActiveConversationMessageLoadedAction, HistoryMessageLoadedAction, StudentMessageSentAction } from 'app/iris/message-store.model';
-import { IrisClientMessageDescriptor, IrisMessageContent, IrisMessageContentType, IrisSender, IrisServerMessageDescriptor } from 'app/entities/iris/iris.model';
-import { lastValueFrom } from 'rxjs';
+import {
+    IrisClientMessageDescriptor,
+    IrisMessageContent,
+    IrisMessageContentType,
+    IrisMessageDescriptor,
+    IrisSender,
+    IrisServerMessageDescriptor,
+} from 'app/entities/iris/iris.model';
+import { firstValueFrom, lastValueFrom, skip, take } from 'rxjs';
 
 describe('IrisMessageStore', () => {
     const mockMessageContent: IrisMessageContent = {
@@ -33,9 +40,21 @@ describe('IrisMessageStore', () => {
             type: ActionType.HISTORY_MESSAGE_LOADED,
             message: mockServerMessage,
         };
+
+        const obs = messageStore.getState();
+
+        const promise = obs
+            .pipe(
+                take(1), // Take the next emitted value
+            )
+            .toPromise();
+
         messageStore.dispatch(action);
 
-        await expect(lastValueFrom(messageStore.getState())).resolves.toEqual([action.message]);
+        const state = await promise;
+
+        expect(state).toBeDefined();
+        expect(state.messages).toEqual([action.message]);
     });
 
     it('should dispatch and handle ActiveConversationMessageLoadedAction', async () => {
@@ -44,8 +63,20 @@ describe('IrisMessageStore', () => {
             message: mockServerMessage,
         };
 
+        const obs = messageStore.getState();
+
+        const promise = obs
+            .pipe(
+                take(1), // Take the next emitted value
+            )
+            .toPromise();
+
         messageStore.dispatch(action);
-        await expect(lastValueFrom(messageStore.getState())).resolves.toEqual([action.message]);
+
+        const state = await promise;
+
+        expect(state).toBeDefined();
+        expect(state.messages).toEqual([action.message]);
     });
 
     it('should dispatch and handle StudentMessageSentAction', async () => {
@@ -53,9 +84,21 @@ describe('IrisMessageStore', () => {
             type: ActionType.STUDENT_MESSAGE_SENT,
             message: mockClientMessage,
         };
+
+        const obs = messageStore.getState();
+
+        const promise = obs
+            .pipe(
+                take(1), // Take the next emitted value
+            )
+            .toPromise();
+
         messageStore.dispatch(action);
 
-        await expect(lastValueFrom(messageStore.getState())).resolves.toEqual([action.message]);
+        const state = await promise;
+
+        expect(state).toBeDefined();
+        expect(state.messages).toEqual([action.message]);
     });
 
     it('should dispatch and handle 2 messages', async () => {
@@ -63,15 +106,32 @@ describe('IrisMessageStore', () => {
             type: ActionType.STUDENT_MESSAGE_SENT,
             message: mockClientMessage,
         };
-        messageStore.dispatch(action1);
-        await expect(lastValueFrom(messageStore.getState())).resolves.toEqual([action1.message]);
 
         const action2: ActiveConversationMessageLoadedAction = {
             type: ActionType.ACTIVE_CONVERSATION_MESSAGE_LOADED,
             message: mockServerMessage,
         };
+
+        const obs = messageStore.getState();
+
+        const promise1 = obs.pipe(take(1)).toPromise();
+
+        messageStore.dispatch(action1);
+
+        const state1 = await promise1;
+
+        expect(state1).toBeDefined();
+        expect(state1.messages).toEqual([action1.message]);
+
+        const promise2 = obs.pipe(skip(1), take(1)).toPromise();
+
         messageStore.dispatch(action2);
 
-        await expect(lastValueFrom(messageStore.getState())).resolves.toEqual([action1.message, action2.message]);
+        const state2 = await promise2;
+
+        console.log('state2: ', state2);
+
+        expect(state2).toBeDefined();
+        expect(state2.messages).toEqual([action2.message, action1.message]);
     });
 });

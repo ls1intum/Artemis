@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Observable, Subject } from 'rxjs';
-import { scan } from 'rxjs/operators';
+import { scan, shareReplay } from 'rxjs/operators';
 import { ActionType, MessageStoreAction, MessageStoreState } from 'app/iris/message-store.model';
 
 @Injectable({
@@ -13,6 +13,7 @@ export class IrisMessageStore {
     private action = new Subject<MessageStoreAction>();
     private state: Observable<MessageStoreState> = this.action.pipe(
         scan<MessageStoreAction, MessageStoreState>((state, action) => IrisMessageStore.storeReducer(state, action), this.initialState),
+        shareReplay(1),
     );
 
     dispatch(action: MessageStoreAction) {
