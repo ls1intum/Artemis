@@ -40,10 +40,10 @@ describe('ProgrammingExerciseLanguageComponent', () => {
 
                 comp.languageStepInputs = {
                     modePickerOptions: [],
-                    onProgrammingLanguageChange(language: ProgrammingLanguage): ProgrammingLanguage {
+                    onProgrammingLanguageChange(): ProgrammingLanguage {
                         return ProgrammingLanguage.EMPTY;
                     },
-                    onProjectTypeChange(projectType: ProjectType): ProjectType {
+                    onProjectTypeChange(): ProjectType {
                         return ProjectType.PLAIN;
                     },
                     packageNamePattern: '',
@@ -53,7 +53,7 @@ describe('ProgrammingExerciseLanguageComponent', () => {
                     selectedProjectType: ProjectType.FACT,
                     supportedLanguages: [],
                     withDependencies: false,
-                    onWithDependenciesChanged(withDependencies: boolean): boolean {
+                    onWithDependenciesChanged(): boolean {
                         return false;
                     },
                     appNamePatternForSwift: '',
