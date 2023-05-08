@@ -106,9 +106,9 @@ public class CourseService {
 
     private final AuditEventRepository auditEventRepository;
 
-    private final LearningGoalService learningGoalService;
+    private final LearningGoalService competencyService;
 
-    private final LearningGoalRepository learningGoalRepository;
+    private final LearningGoalRepository competencyRepository;
 
     private final GradingScaleRepository gradingScaleRepository;
 
@@ -149,8 +149,8 @@ public class CourseService {
     public CourseService(Environment env, ArtemisAuthenticationProvider artemisAuthenticationProvider, CourseRepository courseRepository, ExerciseService exerciseService,
             ExerciseDeletionService exerciseDeletionService, AuthorizationCheckService authCheckService, UserRepository userRepository, LectureService lectureService,
             GroupNotificationRepository groupNotificationRepository, ExerciseGroupRepository exerciseGroupRepository, AuditEventRepository auditEventRepository,
-            UserService userService, ExamDeletionService examDeletionService, LearningGoalRepository learningGoalRepository, GroupNotificationService groupNotificationService,
-            ExamRepository examRepository, CourseExamExportService courseExamExportService, LearningGoalService learningGoalService, GradingScaleRepository gradingScaleRepository,
+            UserService userService, ExamDeletionService examDeletionService, LearningGoalRepository competencyRepository, GroupNotificationService groupNotificationService,
+            ExamRepository examRepository, CourseExamExportService courseExamExportService, LearningGoalService competencyService, GradingScaleRepository gradingScaleRepository,
             StatisticsRepository statisticsRepository, StudentParticipationRepository studentParticipationRepository, TutorLeaderboardService tutorLeaderboardService,
             RatingRepository ratingRepository, ComplaintService complaintService, ComplaintRepository complaintRepository, ResultRepository resultRepository,
             ComplaintResponseRepository complaintResponseRepository, SubmissionRepository submissionRepository, ProgrammingExerciseRepository programmingExerciseRepository,
@@ -170,11 +170,11 @@ public class CourseService {
         this.auditEventRepository = auditEventRepository;
         this.userService = userService;
         this.examDeletionService = examDeletionService;
-        this.learningGoalRepository = learningGoalRepository;
+        this.competencyRepository = competencyRepository;
         this.groupNotificationService = groupNotificationService;
         this.examRepository = examRepository;
         this.courseExamExportService = courseExamExportService;
-        this.learningGoalService = learningGoalService;
+        this.competencyService = competencyService;
         this.gradingScaleRepository = gradingScaleRepository;
         this.statisticsRepository = statisticsRepository;
         this.studentParticipationRepository = studentParticipationRepository;
@@ -238,14 +238,14 @@ public class CourseService {
     }
 
     /**
-     * Get one course with exercises, lectures, exams, learning goals and tutorial groups (filtered for given user)
+     * Get one course with exercises, lectures, exams, competencies and tutorial groups (filtered for given user)
      *
      * @param courseId the course to fetch
      * @param user     the user entity
      * @param refresh  if the user requested an explicit refresh
-     * @return the course including exercises, lectures, exams, learning goals and tutorial groups (filtered for given user)
+     * @return the course including exercises, lectures, exams, competencies and tutorial groups (filtered for given user)
      */
-    public Course findOneWithExercisesAndLecturesAndExamsAndLearningGoalsAndTutorialGroupsForUser(Long courseId, User user, boolean refresh) {
+    public Course findOneWithExercisesAndLecturesAndExamsAndCompetenciesAndTutorialGroupsForUser(Long courseId, User user, boolean refresh) {
         Course course = courseRepository.findByIdWithLecturesElseThrow(courseId);
         // Load exercises with categories separately because this is faster than loading them with lectures and exam above (the query would become too complex)
         course.setExercises(exerciseRepository.findByCourseIdWithCategories(course.getId()));
@@ -253,8 +253,8 @@ public class CourseService {
         exerciseService.loadExerciseDetailsIfNecessary(course, user);
         course.setExams(examRepository.findByCourseIdsForUser(Set.of(course.getId()), user.getId(), user.getGroups(), ZonedDateTime.now()));
         course.setLectures(lectureService.filterActiveAttachments(course.getLectures(), user));
-        course.setCompetencies(learningGoalService.findAllForCourse(course, user, refresh));
-        course.setPrerequisites(learningGoalService.findAllPrerequisitesForCourse(course, user));
+        course.setCompetencies(competencyService.findAllForCourse(course, user, refresh));
+        course.setPrerequisites(competencyService.findAllPrerequisitesForCourse(course, user));
         course.setTutorialGroups(tutorialGroupService.findAllForCourse(course, user));
         course.setTutorialGroupsConfiguration(tutorialGroupsConfigurationRepository.findByCourseIdWithEagerTutorialGroupFreePeriods(courseId).orElse(null));
         if (authCheckService.isOnlyStudentInCourse(course, user)) {
@@ -345,7 +345,7 @@ public class CourseService {
 
         deleteExercisesOfCourse(course);
         deleteLecturesOfCourse(course);
-        deleteLearningGoalsOfCourse(course);
+        deleteCompetenciesOfCourse(course);
         deleteConversationsOfCourse(course);
         deleteNotificationsOfCourse(course);
         deleteDefaultGroups(course);
@@ -418,9 +418,9 @@ public class CourseService {
         }
     }
 
-    private void deleteLearningGoalsOfCourse(Course course) {
-        for (LearningGoal learningGoal : course.getCompetencies()) {
-            learningGoalRepository.deleteById(learningGoal.getId());
+    private void deleteCompetenciesOfCourse(Course course) {
+        for (LearningGoal competency : course.getCompetencies()) {
+            competencyRepository.deleteById(competency.getId());
         }
     }
 
