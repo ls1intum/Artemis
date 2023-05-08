@@ -7,4 +7,4 @@ build:
     python: "3.10"
 python:
   install:
-    - requirements: requirements.txt
+    - requirements: docs/requirements.txt
