@@ -52,11 +52,11 @@ public class LearningGoal extends DomainObject {
     private Set<LectureUnit> lectureUnits = new HashSet<>();
 
     /**
-     * A set of courses for which this learning goal is a prerequisite for.
+     * A set of courses for which this competency is a prerequisite for.
      */
     @ManyToMany
     @JoinTable(name = "learning_goal_course", joinColumns = @JoinColumn(name = "learning_goal_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "course_id", referencedColumnName = "id"))
-    @JsonIgnoreProperties({ "learningGoals", "prerequisites" })
+    @JsonIgnoreProperties({ "competencies", "prerequisites" })
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<Course> consecutiveCourses = new HashSet<>();
 

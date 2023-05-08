@@ -16,7 +16,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
- * This class models the 'progress' association between a user and a learning goal.
+ * This class models the 'progress' association between a user and a competency.
  */
 @Entity
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
@@ -69,8 +69,8 @@ public class LearningGoalProgress implements Serializable {
         return learningGoal;
     }
 
-    public void setLearningGoal(LearningGoal learningGoal) {
-        this.learningGoal = learningGoal;
+    public void setLearningGoal(LearningGoal competency) {
+        this.learningGoal = competency;
     }
 
     public Double getProgress() {
@@ -112,7 +112,7 @@ public class LearningGoalProgress implements Serializable {
 
     @Override
     public String toString() {
-        return "LearningGoalProgress{" + "id=" + id + ", user=" + user + ", learningGoal=" + learningGoal + ", progress=" + progress + ", confidence=" + confidence + '}';
+        return "LearningGoalProgress{" + "id=" + id + ", user=" + user + ", competency=" + learningGoal + ", progress=" + progress + ", confidence=" + confidence + '}';
     }
 
     /**

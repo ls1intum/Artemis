@@ -97,7 +97,7 @@ public class LearningGoalProgressService {
     @Async
     public void updateProgressByLearningGoalAsync(LearningGoal learningGoal) {
         SecurityUtils.setAuthorizationObject(); // required for async
-        learningGoalProgressRepository.findAllByLearningGoalId(learningGoal.getId()).stream().map(LearningGoalProgress::getUser).forEach(user -> {
+        learningGoalProgressRepository.findAllByCompetencyId(learningGoal.getId()).stream().map(LearningGoalProgress::getUser).forEach(user -> {
             updateLearningGoalProgress(learningGoal.getId(), user);
         });
     }
@@ -172,7 +172,7 @@ public class LearningGoalProgressService {
             return null;
         }
 
-        var learningGoalProgress = learningGoalProgressRepository.findEagerByLearningGoalIdAndUserId(learningGoalId, user.getId());
+        var learningGoalProgress = learningGoalProgressRepository.findEagerByCompetencyIdAndUserId(learningGoalId, user.getId());
 
         if (learningGoalProgress.isPresent()) {
             var lastModified = learningGoalProgress.get().getLastModifiedDate();
