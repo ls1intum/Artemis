@@ -27,12 +27,24 @@ describe('ExamStudentsComponent', () => {
     const course = { id: 1 } as Course;
     const user1 = { id: 1, name: 'name', login: 'login' } as User;
     const user2 = { id: 2, login: 'user2' } as User;
+    const examUser1 = new ExamUser();
+    examUser1.didCheckRegistrationNumber = false;
+    examUser1.didCheckLogin = false;
+    examUser1.didCheckName = false;
+    examUser1.didCheckImage = false;
+    examUser1.user = user1;
+    const examUser2 = new ExamUser();
+    examUser2.didCheckRegistrationNumber = false;
+    examUser2.didCheckLogin = false;
+    examUser2.didCheckName = false;
+    examUser2.didCheckImage = false;
+    examUser2.user = user2;
     const examWithCourse: Exam = {
         course,
         id: 2,
         examUsers: [
-            { didCheckImage: false, didCheckLogin: false, didCheckName: false, didCheckRegistrationNumber: false, ...user1, user: user1 },
-            { didCheckImage: false, didCheckLogin: false, didCheckName: false, didCheckRegistrationNumber: false, ...user2, user: user2 },
+            { ...examUser1, ...user1 },
+            { ...examUser2, ...user2 },
         ],
     } as Exam;
 

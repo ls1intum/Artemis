@@ -6,8 +6,6 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ProgrammingExerciseInformationComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-information.component';
 import { DefaultValueAccessor, NgModel } from '@angular/forms';
 import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
-import { AuxiliaryRepository } from 'app/entities/programming-exercise-auxiliary-repository-model';
-import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { ProgrammingExercisePlansAndRepositoriesPreviewComponent } from 'app/exercises/programming/manage/update/programming-exercise-plans-and-repositories-preview.component';
@@ -54,14 +52,14 @@ describe('ProgrammingExerciseInformationComponent', () => {
                     invalidRepositoryNamePattern: new RegExp(''),
                     refreshAuxiliaryRepositoryChecks(): void {},
                     shortNamePattern: new RegExp(''),
-                    updateCategories(categories: ExerciseCategory[]): void {},
-                    updateCheckoutDirectory(editedAuxiliaryRepository: AuxiliaryRepository): (newValue: any) => string | undefined {
-                        return function (p1: any) {
+                    updateCategories(): void {},
+                    updateCheckoutDirectory(): (newValue: any) => string | undefined {
+                        return function () {
                             return undefined;
                         };
                     },
-                    updateRepositoryName(auxiliaryRepository: AuxiliaryRepository): (newValue: any) => string | undefined {
-                        return function (p1: any) {
+                    updateRepositoryName(): (newValue: any) => string | undefined {
+                        return function () {
                             return undefined;
                         };
                     },

@@ -24,6 +24,7 @@ export class DragAndDropQuiz {
      * @param y drop location on Y-axis
      */
     dragUsingCoordinates(x: number, y: number) {
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore https://github.com/4teamwork/cypress-drag-drop/issues/103
         cy.get('#modeling-editor-sidebar').children().eq(2).drag(MODELING_EDITOR_CANVAS, { target: { x, y } });
         cy.wait(200);
