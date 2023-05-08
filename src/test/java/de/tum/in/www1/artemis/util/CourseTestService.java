@@ -44,6 +44,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExamUser;
+import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.Participation;
@@ -53,6 +54,8 @@ import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.programmingexercise.MockDelegate;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
+import de.tum.in.www1.artemis.repository.metis.conversation.ConversationRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
@@ -60,6 +63,7 @@ import de.tum.in.www1.artemis.service.dto.UserPublicInfoDTO;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.web.rest.dto.*;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.ChannelDTO;
 
 @Service
 public class CourseTestService {
@@ -141,6 +145,12 @@ public class CourseTestService {
 
     @Autowired
     private ExamUserRepository examUserRepository;
+
+    @Autowired
+    private ConversationRepository conversationRepository;
+
+    @Autowired
+    private ConversationParticipantRepository conversationParticipantRepository;
 
     @Autowired
     private ParticipationRepository participationRepository;
@@ -366,6 +376,7 @@ public class CourseTestService {
         course3.setInstructorGroupName(course3.getDefaultInstructorGroupName());
         course3 = courseRepo.save(course3);
         courses.add(course3);
+        addConversationsToCourse(course3);
         database.addExamWithExerciseGroup(courses.get(0), true);
         // mock certain requests to JIRA Bitbucket and Bamboo
         for (Course course : courses) {
@@ -413,7 +424,25 @@ public class CourseTestService {
             assertThat(examRepo.findByCourseId(course.getId())).as("All exams are deleted").isEmpty();
             assertThat(exerciseRepo.findAllExercisesByCourseId(course.getId())).as("All Exercises are deleted").isEmpty();
             assertThat(lectureRepo.findAllByCourseIdWithAttachments(course.getId())).as("All Lectures are deleted").isEmpty();
+            assertThat(conversationRepository.findAllByCourseId(course.getId())).as("All Conversations are deleted").isEmpty();
         }
+    }
+
+    private void addConversationsToCourse(Course course3) throws Exception {
+        var channelDTO = new ChannelDTO();
+        channelDTO.setName("name test");
+        channelDTO.setIsPublic(true);
+        channelDTO.setIsAnnouncementChannel(false);
+        channelDTO.setDescription("general channel");
+
+        var chat = request.postWithResponseBody("/api/courses/" + course3.getId() + "/channels", channelDTO, ChannelDTO.class, HttpStatus.CREATED);
+        var user = database.getUserByLogin(userPrefix + "student1");
+
+        var participant = new ConversationParticipant();
+        participant.setConversation(conversationRepository.findByIdElseThrow(chat.getId()));
+        participant.setIsModerator(false);
+        participant.setUser(user);
+        conversationParticipantRepository.save(participant);
     }
 
     // Test
@@ -2256,10 +2285,10 @@ public class CourseTestService {
         assertThat(statisticsDTO.getAverageScoreInPercent()).isEqualTo(60.0);
         assertThat(statisticsDTO.getExerciseMaxPoints()).isEqualTo(5.0);
         assertThat(statisticsDTO.getNoOfParticipatingStudentsOrTeams()).isZero();
-        assertThat(statisticsDTO.getParticipationRateInPercent()).isEqualTo(0.0);
+        assertThat(statisticsDTO.getParticipationRateInPercent()).isZero();
         assertThat(statisticsDTO.getNoOfStudentsInCourse()).isEqualTo(8);
         assertThat(statisticsDTO.getNoOfRatedAssessments()).isZero();
-        assertThat(statisticsDTO.getNoOfAssessmentsDoneInPercent()).isEqualTo(0.0);
+        assertThat(statisticsDTO.getNoOfAssessmentsDoneInPercent()).isZero();
         assertThat(statisticsDTO.getNoOfSubmissionsInTime()).isZero();
 
         // Get the statistics of the team exercise
@@ -2268,14 +2297,14 @@ public class CourseTestService {
 
         // Since that exercise is still "currently in progress", the participations are the only statistics we set
         var teamStatisticsDTO = teamStatisticsOptional.get();
-        assertThat(teamStatisticsDTO.getAverageScoreInPercent()).isEqualTo(0.0);
+        assertThat(teamStatisticsDTO.getAverageScoreInPercent()).isZero();
         assertThat(teamStatisticsDTO.getExerciseMaxPoints()).isEqualTo(10.0);
         assertThat(teamStatisticsDTO.getNoOfParticipatingStudentsOrTeams()).isEqualTo(1);
         assertThat(teamStatisticsDTO.getParticipationRateInPercent()).isEqualTo(100D);
         assertThat(teamStatisticsDTO.getNoOfStudentsInCourse()).isEqualTo(8);
         assertThat(teamStatisticsDTO.getNoOfTeamsInCourse()).isEqualTo(1);
         assertThat(teamStatisticsDTO.getNoOfRatedAssessments()).isZero();
-        assertThat(teamStatisticsDTO.getNoOfAssessmentsDoneInPercent()).isEqualTo(0.0);
+        assertThat(teamStatisticsDTO.getNoOfAssessmentsDoneInPercent()).isZero();
         assertThat(teamStatisticsDTO.getNoOfSubmissionsInTime()).isEqualTo(1L);
 
         // Get the statistics of the exercise in assessment
@@ -2284,10 +2313,10 @@ public class CourseTestService {
 
         // Since that exercise is "currently in assessment", we need the numberOfRatedAssessment, assessmentsDoneInPercent and the numberOfSubmissionsInTime
         var exerciseInAssessmentStatisticsDTO = exerciseInAssessmentStatisticsOptional.get();
-        assertThat(exerciseInAssessmentStatisticsDTO.getAverageScoreInPercent()).isEqualTo(0.0);
+        assertThat(exerciseInAssessmentStatisticsDTO.getAverageScoreInPercent()).isZero();
         assertThat(exerciseInAssessmentStatisticsDTO.getExerciseMaxPoints()).isEqualTo(15.0);
         assertThat(exerciseInAssessmentStatisticsDTO.getNoOfParticipatingStudentsOrTeams()).isZero();
-        assertThat(exerciseInAssessmentStatisticsDTO.getParticipationRateInPercent()).isEqualTo(0D);
+        assertThat(exerciseInAssessmentStatisticsDTO.getParticipationRateInPercent()).isZero();
         assertThat(exerciseInAssessmentStatisticsDTO.getNoOfStudentsInCourse()).isEqualTo(8);
         assertThat(exerciseInAssessmentStatisticsDTO.getNoOfRatedAssessments()).isEqualTo(1);
         assertThat(exerciseInAssessmentStatisticsDTO.getNoOfAssessmentsDoneInPercent()).isEqualTo(100.0);

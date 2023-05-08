@@ -209,7 +209,7 @@ class ExerciseTest {
         when(studentParticipationInitialized.getSubmissions()).thenReturn(new HashSet<>());
 
         exerciseService.filterForCourseDashboard(exercise, studentParticipations, "student", true);
-        assertThat(exercise.getStudentParticipations().iterator().next().getSubmissions()).isEqualTo(new HashSet<>());
+        assertThat(exercise.getStudentParticipations().iterator().next().getSubmissions()).isEmpty();
     }
 
     @Test

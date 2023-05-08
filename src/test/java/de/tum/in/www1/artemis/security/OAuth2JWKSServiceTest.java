@@ -74,6 +74,6 @@ class OAuth2JWKSServiceTest {
 
         oAuth2JWKSService.updateKey("regId");
 
-        assertThat(oAuth2JWKSService.getJwkSet().getKeys().size()).isEqualTo(0);
+        assertThat(oAuth2JWKSService.getJwkSet().getKeys().size()).isZero();
     }
 }

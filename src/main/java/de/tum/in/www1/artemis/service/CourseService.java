@@ -44,6 +44,7 @@ import de.tum.in.www1.artemis.domain.statistics.StatisticsEntry;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.exception.GroupAlreadyExistsException;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.metis.conversation.ConversationRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupsConfigurationRepository;
@@ -143,6 +144,8 @@ public class CourseService {
 
     private final PlagiarismCaseRepository plagiarismCaseRepository;
 
+    private final ConversationRepository conversationRepository;
+
     public CourseService(Environment env, ArtemisAuthenticationProvider artemisAuthenticationProvider, CourseRepository courseRepository, ExerciseService exerciseService,
             ExerciseDeletionService exerciseDeletionService, AuthorizationCheckService authCheckService, UserRepository userRepository, LectureService lectureService,
             GroupNotificationRepository groupNotificationRepository, ExerciseGroupRepository exerciseGroupRepository, AuditEventRepository auditEventRepository,
@@ -153,7 +156,7 @@ public class CourseService {
             ComplaintResponseRepository complaintResponseRepository, SubmissionRepository submissionRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             ExerciseRepository exerciseRepository, ParticipantScoreRepository participantScoreRepository, TutorialGroupRepository tutorialGroupRepository,
             TutorialGroupService tutorialGroupService, TutorialGroupsConfigurationRepository tutorialGroupsConfigurationRepository,
-            PlagiarismCaseRepository plagiarismCaseRepository) {
+            PlagiarismCaseRepository plagiarismCaseRepository, ConversationRepository conversationRepository) {
         this.env = env;
         this.artemisAuthenticationProvider = artemisAuthenticationProvider;
         this.courseRepository = courseRepository;
@@ -189,6 +192,7 @@ public class CourseService {
         this.tutorialGroupService = tutorialGroupService;
         this.tutorialGroupsConfigurationRepository = tutorialGroupsConfigurationRepository;
         this.plagiarismCaseRepository = plagiarismCaseRepository;
+        this.conversationRepository = conversationRepository;
     }
 
     /**
@@ -343,6 +347,7 @@ public class CourseService {
         deleteExercisesOfCourse(course);
         deleteLecturesOfCourse(course);
         deleteLearningGoalsOfCourse(course);
+        deleteConversationsOfCourse(course);
         deleteNotificationsOfCourse(course);
         deleteDefaultGroups(course);
         deleteExamsOfCourse(course);
@@ -359,7 +364,12 @@ public class CourseService {
             }
         });
         tutorialGroupRepository.saveAll(tutorialGroups);
-        this.tutorialGroupRepository.deleteAllByCourse(course);
+        tutorialGroupRepository.deleteAllByCourse(course);
+    }
+
+    private void deleteConversationsOfCourse(Course course) {
+        // Posts and Conversation Participants should be automatically deleted due to cascade
+        conversationRepository.deleteAllByCourseId(course.getId());
     }
 
     private void deleteGradingScaleOfCourse(Course course) {
