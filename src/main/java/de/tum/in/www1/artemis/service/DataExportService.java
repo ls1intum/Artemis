@@ -345,19 +345,34 @@ public class DataExportService {
     private void createCommunicationExport(List<Post> posts, List<AnswerPost> answerPosts, List<Reaction> reactions, long courseId, Path courseDir) throws IOException {
         var postsInCourse = posts.stream().filter(post -> courseId == post.getCoursePostingBelongsTo().getId()).toList();
         var answerPostsInCourse = answerPosts.stream().filter(answerPost -> courseId == answerPost.getCoursePostingBelongsTo().getId()).toList();
-        var reactionsInCourse = reactions.stream().filter(reaction -> courseId == reaction.getPost().getCoursePostingBelongsTo().getId()).toList();
+        var postReactionsInCourse = reactions.stream().filter(reaction -> reaction.getPost() != null)
+                .filter(reaction -> courseId == reaction.getPost().getCoursePostingBelongsTo().getId()).toList();
+        var answerPostReactionsInCourse = reactions.stream().filter(reaction -> reaction.getAnswerPost() != null)
+                .filter(reaction -> courseId == reaction.getAnswerPost().getCoursePostingBelongsTo().getId()).toList();
         String[] headers = { "content/emoji", "creation date" };
         CSVFormat csvFormat = CSVFormat.DEFAULT.builder().setHeader(headers).build();
         try (final CSVPrinter printer = new CSVPrinter(Files.newBufferedWriter(courseDir.resolve("messages_posts_reactions" + CSV_FILE_EXTENSION)), csvFormat)) {
             for (var post : postsInCourse) {
                 printer.printRecord(post.getContent(), post.getCreationDate());
             }
+            printer.println();
+            printer.print("Thread replies");
+            printer.println();
+            printer.println();
             for (var answerPost : answerPostsInCourse) {
                 printer.printRecord(answerPost.getContent(), answerPost.getCreationDate());
             }
-            for (var reaction : reactionsInCourse) {
+            printer.println();
+            printer.print("Reactions");
+            printer.println();
+            printer.println();
+            for (var reaction : postReactionsInCourse) {
                 printer.printRecord(reaction.getEmojiId(), reaction.getCreationDate());
             }
+            for (var reaction : answerPostReactionsInCourse) {
+                printer.printRecord(reaction.getEmojiId(), reaction.getCreationDate());
+            }
+
             printer.flush();
 
         }
