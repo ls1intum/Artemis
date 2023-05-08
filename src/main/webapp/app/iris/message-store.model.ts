@@ -6,23 +6,23 @@ export enum ActionType {
     STUDENT_MESSAGE_SENT = 'student-message-sent',
 }
 
-export interface HistoryMessageLoadedAction {
+export class HistoryMessageLoadedAction {
     type: ActionType.HISTORY_MESSAGE_LOADED;
-    message: IrisServerMessageDescriptor;
+    readonly message: IrisServerMessageDescriptor;
 }
 
-export interface ActiveConversationMessageLoadedAction {
+export class ActiveConversationMessageLoadedAction {
     type: ActionType.ACTIVE_CONVERSATION_MESSAGE_LOADED;
-    message: IrisServerMessageDescriptor;
+    readonly message: IrisServerMessageDescriptor;
 }
 
-export interface StudentMessageSentAction {
+export class StudentMessageSentAction {
     type: ActionType.STUDENT_MESSAGE_SENT;
-    message: IrisClientMessageDescriptor;
+    readonly message: IrisClientMessageDescriptor;
 }
 
 export type MessageStoreAction = HistoryMessageLoadedAction | ActiveConversationMessageLoadedAction | StudentMessageSentAction;
 
-export interface MessageStoreState {
-    messages: IrisMessageDescriptor[];
+export class MessageStoreState {
+    messages: ReadonlyArray<IrisMessageDescriptor>;
 }

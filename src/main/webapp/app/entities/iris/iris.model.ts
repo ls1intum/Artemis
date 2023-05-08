@@ -4,6 +4,7 @@ export interface IrisConversation {
     studentId: number;
     latestMessageId?: string;
     messageDescriptors: IrisMessageDescriptor[];
+    irisEnabled: boolean;
 }
 
 export enum IrisSender {

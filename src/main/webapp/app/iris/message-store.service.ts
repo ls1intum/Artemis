@@ -28,20 +28,13 @@ export class IrisMessageStore {
     }
 
     private static storeReducer(state: MessageStoreState, action: MessageStoreAction): MessageStoreState {
-        function buildNewMessageArray() {
-            const messages = state.messages;
-            messages.push(action.message);
-            return {
-                messages: messages,
-            };
-        }
-
         switch (action.type) {
             case ActionType.HISTORY_MESSAGE_LOADED:
             case ActionType.ACTIVE_CONVERSATION_MESSAGE_LOADED:
-                return buildNewMessageArray();
             case ActionType.STUDENT_MESSAGE_SENT:
-                return buildNewMessageArray();
+                return {
+                    messages: [action.message, ...state.messages],
+                };
             default:
                 this.exhaustiveCheck(action);
                 return state;
