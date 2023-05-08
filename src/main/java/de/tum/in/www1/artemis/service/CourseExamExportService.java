@@ -365,8 +365,7 @@ public class CourseExamExportService {
             // Export programming exercise
             if (exercise instanceof ProgrammingExercise programmingExercise) {
                 // Download the repositories' template, solution, tests and students' repositories
-                exportedExercises
-                        .add(programmingExerciseExportService.exportProgrammingExerciseRepositories(programmingExercise, true, outputDir, outputDir, exportErrors, reportData));
+                exportedExercises.add(programmingExerciseExportService.exportProgrammingExerciseRepositories(programmingExercise, true, outputDir, exportErrors, reportData));
                 continue;
             }
 
