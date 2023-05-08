@@ -5,7 +5,7 @@ import { translationNotFoundMessage } from 'app/core/config/translation.config';
 import { EventManager, EventWithContent } from 'app/core/util/event-manager.service';
 import { AlertError } from 'app/shared/alert/alert-error.model';
 import { Subscription } from 'rxjs';
-import { captureException } from '@sentry/browser';
+import { captureException } from '@sentry/angular-ivy';
 import { IconDefinition, faCheckCircle, faExclamationCircle, faExclamationTriangle, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 import { HttpErrorResponse } from '@angular/common/http';
 import dayjs from 'dayjs/esm';
@@ -72,6 +72,9 @@ export class AlertService {
 
         this.httpErrorListener = eventManager.subscribe('artemisApp.httpError', (response: any) => {
             const httpErrorResponse: HttpErrorResponse = response.content;
+            if (httpErrorResponse.error?.skipAlert) {
+                return;
+            }
             switch (httpErrorResponse.status) {
                 // connection refused, server not reachable
                 case 0:
@@ -79,9 +82,6 @@ export class AlertService {
                     break;
 
                 case 400:
-                    if (httpErrorResponse.error !== null && httpErrorResponse.error.skipAlert) {
-                        break;
-                    }
                     const arr = httpErrorResponse.headers.keys();
                     let errorHeader = null;
                     let entityKey = null;

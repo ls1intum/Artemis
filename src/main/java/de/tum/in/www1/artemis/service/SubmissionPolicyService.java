@@ -61,7 +61,7 @@ public class SubmissionPolicyService {
     /**
      * Validates the submission policy of a newly created exercise if it exists.
      * This is only called, when the client posts a new programming exercise either to
-     * the regular programming exercise creation endpoint or the programming exercise simulation creation endpoint.
+     * the regular programming exercise creation endpoint.
      * In this case, the submission policy is activated by default.
      *
      * @param programmingExercise that contains the submission policy that is to be checked
@@ -319,6 +319,11 @@ public class SubmissionPolicyService {
         if (submissions != null && !submissions.isEmpty()) {
             submissionCompensation = submissions.iterator().next().getResults().isEmpty() ? 1 : 0;
         }
+        // Note: The way the participation submissions are counted here (filtering out submissions without results), leads to unexpected behavior when the user submits to their
+        // repository in rapid succession.
+        // When the user submits while the result for the previous submission is not yet available, the previous submission will not be counted.
+        // This means that the user is able to submit more often than the allowed number of submissions, if a lock repository policy is configured.
+        // As these submissions have to happen in quick succession, this does not constitute an advantage for the student and the behaviour is acceptable.
         return (int) programmingSubmissionRepository.findAllByParticipationIdWithResults(participationId).stream()
                 .filter(submission -> submission.getType() == SubmissionType.MANUAL && !submission.getResults().isEmpty()).map(ProgrammingSubmission::getCommitHash).distinct()
                 .count() + submissionCompensation;

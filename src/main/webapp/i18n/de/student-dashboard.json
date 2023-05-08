@@ -10,14 +10,16 @@
             "cardNoExerciseLabel": "Keine Übung geplant",
             "cardExerciseLabel": "Nächste Übung:",
             "register": {
-                "signUp": "Für einen Kurs anmelden",
+                "title": "Kursanmeldung",
                 "registerSuccessful": "Anmeldung erfolgreich",
-                "signUpForCourse": "Anmelden",
+                "registerForCourse": "Anmelden",
+                "notInCourseButCanRegister": "Du bist nicht in diesem Kurs, kannst dich aber anmelden.",
                 "cancel": "Abbrechen",
                 "coursePrerequisites": "Voraussetzungen",
-                "noCourse": "Keine Kurse für eine Registrierung verfügbar",
-                "courseLoading": "Kurse werden geladen...",
-                "courseSignupConfirmationTitle": "Bestätigung der Kursteilnahme"
+                "noCourse": "Keine Kurse für eine Anmeldung verfügbar",
+                "courseLoading": "Kurs wird geladen...",
+                "coursesLoading": "Kurse werden geladen...",
+                "courseSignupConfirmationTitle": "Bestätigung der Kursanmeldung"
             },
             "course": "Kurs"
         },
@@ -100,7 +102,7 @@
                 "yourPoints": "Deine Punktzahl: {{ number }}",
                 "reachablePoints": "Erreichbare Punktzahl: {{ number }} ({{ relative }}%)",
                 "totalPoints": "Maximale Punktzahl: {{ number }} ({{ relative }}%)",
-                "presentationScore": "Präsentationsergebnis: {{ number }} ",
+                "presentationScore": "Präsentationen: {{ number }} ",
                 "noStatistics": "Es sind keine Statistiken für diesen Kurs vorhanden.",
                 "bonusPointTooltip": "Bonus Aufgabe: Punkte zählen als Bonuspunkte zu deinem Kursergebnis!",
                 "notIncludedTooltip": "Nicht gezählte Aufgabe: Punkte zählen NICHT zu deinem Kursergebnis!",

@@ -23,6 +23,7 @@
                 "exerciseNotifications": "Exercise Notifications",
                 "lectureNotifications": "Lecture Notifications",
                 "tutorialGroupNotifications": "Tutorial Group Notifications",
+                "conversationNotifications": "Conversation Notifications",
                 "courseWideDiscussionNotifications": "Course-wide Discussion Notifications",
                 "tutorNotifications": "Tutor Notifications",
                 "editorNotifications": "Editor Notifications",
@@ -45,6 +46,8 @@
                 "fileSubmissionSuccessful": "File Submission Successful",
                 "programmingTestCasesChanged": "Changed Test Cases for Programming Exercises",
                 "registrationTutorialGroup": "Registration and Deregistration for Tutorial Group",
+                "newConversationMessages": "New messages in conversations",
+                "newReplyMessage": "New replies in conversations",
                 "tutorialGroupUpdateDelete": "Update and Delete of Tutorial Groups",
                 "assignUnassignTutorialGroup": "Assign and Unassign of Tutorial Groups"
             },
@@ -66,6 +69,8 @@
                 "programmingTestCasesChangedDescription": "Get notified if test cases for a programming exercises have been changed",
                 "registrationTutorialGroupTutorDescription": "Get notified when a student was registered or deregistered from your tutorial group",
                 "registrationTutorialGroupStudentDescription": "Get notified when you were registered or deregistered from a tutorial group",
+                "newConversationMessageDescription": "Get notified when you receive a new message in a conversation",
+                "conversationNewReplyMessageDescription": "Get notified when you receive a new reply in a conversation",
                 "tutorialGroupUpdateDeleteDescription": "Get notified when a tutorial group for which you are registered or a tutor was updated or deleted",
                 "assignUnassignTutorialGroupDescription": "Get notified when you were assigned or unassigned to lead a tutorial group"
             }

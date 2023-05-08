@@ -85,12 +85,10 @@ public abstract class RepositoryResource {
      *
      * @param domainId that serves as an abstract identifier for retrieving the repository.
      * @return the repository if available.
-     * @throws IOException            if the repository folder can't be accessed.
-     * @throws IllegalAccessException if the user is not allowed to access the repository.
-     * @throws GitAPIException        if the repository can't be checked out.
+     * @throws IOException     if the repository folder can't be accessed.
+     * @throws GitAPIException if the repository can't be checked out.
      */
-    abstract Repository getRepository(Long domainId, RepositoryActionType repositoryAction, boolean pullOnCheckout)
-            throws IOException, IllegalAccessException, IllegalArgumentException, GitAPIException;
+    abstract Repository getRepository(Long domainId, RepositoryActionType repositoryAction, boolean pullOnCheckout) throws IOException, IllegalArgumentException, GitAPIException;
 
     /**
      * Get the url for a repository.
@@ -323,9 +321,6 @@ public abstract class RepositoryResource {
         }
         catch (IllegalArgumentException | FileAlreadyExistsException ex) {
             throw new BadRequestAlertException("Illegal argument during operation or file already exists", "Repository", "illegalArgumentFileAlreadyExists");
-        }
-        catch (IllegalAccessException ex) {
-            throw new AccessForbiddenException();
         }
         catch (CheckoutConflictException | WrongRepositoryStateException ex) {
             return new ResponseEntity<>(HttpStatus.CONFLICT);

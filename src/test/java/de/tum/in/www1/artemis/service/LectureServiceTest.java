@@ -132,7 +132,7 @@ class LectureServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testGetLecturesPageable_notFound() {
         SearchResultPageDTO<Lecture> result = searchQueryWithUser("VeryLongNameThatDoesNotExist", editor);
-        assertThat(result.getNumberOfPages()).isEqualTo(0);
+        assertThat(result.getNumberOfPages()).isZero();
         assertThat(result.getResultsOnPage()).isEmpty();
     }
 
@@ -140,7 +140,7 @@ class LectureServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
     void testGetLecturesPageable_unauthorized() {
         SearchResultPageDTO<Lecture> result = searchQueryWithUser(lecture.getTitle(), student);
-        assertThat(result.getNumberOfPages()).isEqualTo(0);
+        assertThat(result.getNumberOfPages()).isZero();
         assertThat(result.getResultsOnPage()).isEmpty();
     }
 }

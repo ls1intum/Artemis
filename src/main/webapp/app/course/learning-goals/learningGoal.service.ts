@@ -20,7 +20,7 @@ export class LearningGoalService {
 
     getAllForCourse(courseId: number): Observable<EntityArrayResponseType> {
         return this.httpClient
-            .get<LearningGoal[]>(`${this.resourceURL}/courses/${courseId}/learning-goals`, { observe: 'response' })
+            .get<LearningGoal[]>(`${this.resourceURL}/courses/${courseId}/competencies`, { observe: 'response' })
             .pipe(tap((res: EntityArrayResponseType) => res?.body?.forEach(this.sendTitlesToEntityTitleService.bind(this))));
     }
 
@@ -30,23 +30,23 @@ export class LearningGoalService {
             .pipe(tap((res: EntityArrayResponseType) => res?.body?.forEach(this.sendTitlesToEntityTitleService.bind(this))));
     }
 
-    getProgress(learningGoalId: number, courseId: number, refresh = false) {
+    getProgress(competencyId: number, courseId: number, refresh = false) {
         let params = new HttpParams();
         params = params.set('refresh', refresh.toString());
-        return this.httpClient.get<LearningGoalProgress>(`${this.resourceURL}/courses/${courseId}/learning-goals/${learningGoalId}/student-progress`, {
+        return this.httpClient.get<LearningGoalProgress>(`${this.resourceURL}/courses/${courseId}/competencies/${competencyId}/student-progress`, {
             params,
             observe: 'response',
         });
     }
 
-    getCourseProgress(learningGoalId: number, courseId: number) {
-        return this.httpClient.get<CourseLearningGoalProgress>(`${this.resourceURL}/courses/${courseId}/learning-goals/${learningGoalId}/course-progress`, {
+    getCourseProgress(competencyId: number, courseId: number) {
+        return this.httpClient.get<CourseLearningGoalProgress>(`${this.resourceURL}/courses/${courseId}/competencies/${competencyId}/course-progress`, {
             observe: 'response',
         });
     }
 
-    findById(learningGoalId: number, courseId: number) {
-        return this.httpClient.get<LearningGoal>(`${this.resourceURL}/courses/${courseId}/learning-goals/${learningGoalId}`, { observe: 'response' }).pipe(
+    findById(competencyId: number, courseId: number) {
+        return this.httpClient.get<LearningGoal>(`${this.resourceURL}/courses/${courseId}/competencies/${competencyId}`, { observe: 'response' }).pipe(
             map((res: EntityResponseType) => {
                 this.convertLearningGoalResponseFromServer(res);
                 this.sendTitlesToEntityTitleService(res?.body);
@@ -57,43 +57,48 @@ export class LearningGoalService {
 
     create(learningGoal: LearningGoal, courseId: number): Observable<EntityResponseType> {
         const copy = this.convertLearningGoalFromClient(learningGoal);
-        return this.httpClient.post<LearningGoal>(`${this.resourceURL}/courses/${courseId}/learning-goals`, copy, { observe: 'response' });
+        return this.httpClient.post<LearningGoal>(`${this.resourceURL}/courses/${courseId}/competencies`, copy, { observe: 'response' });
     }
 
-    addPrerequisite(learningGoalId: number, courseId: number): Observable<EntityResponseType> {
-        return this.httpClient.post(`${this.resourceURL}/courses/${courseId}/prerequisites/${learningGoalId}`, null, { observe: 'response' });
+    import(learningGoal: LearningGoal, courseId: number): Observable<EntityResponseType> {
+        const learningGoalCopy = this.convertLearningGoalFromClient(learningGoal);
+        return this.httpClient.post<LearningGoal>(`${this.resourceURL}/courses/${courseId}/competencies/import`, learningGoalCopy, { observe: 'response' });
+    }
+
+    addPrerequisite(competencyId: number, courseId: number): Observable<EntityResponseType> {
+        return this.httpClient.post(`${this.resourceURL}/courses/${courseId}/prerequisites/${competencyId}`, null, { observe: 'response' });
     }
 
     update(learningGoal: LearningGoal, courseId: number): Observable<EntityResponseType> {
         const copy = this.convertLearningGoalFromClient(learningGoal);
-        return this.httpClient.put(`${this.resourceURL}/courses/${courseId}/learning-goals`, copy, { observe: 'response' });
+        return this.httpClient.put(`${this.resourceURL}/courses/${courseId}/competencies`, copy, { observe: 'response' });
     }
 
-    delete(learningGoalId: number, courseId: number) {
-        return this.httpClient.delete(`${this.resourceURL}/courses/${courseId}/learning-goals/${learningGoalId}`, { observe: 'response' });
+    delete(competencyId: number, courseId: number) {
+        return this.httpClient.delete(`${this.resourceURL}/courses/${courseId}/competencies/${competencyId}`, { observe: 'response' });
     }
 
-    removePrerequisite(learningGoalId: number, courseId: number) {
-        return this.httpClient.delete(`${this.resourceURL}/courses/${courseId}/prerequisites/${learningGoalId}`, { observe: 'response' });
+    removePrerequisite(competencyId: number, courseId: number) {
+        return this.httpClient.delete(`${this.resourceURL}/courses/${courseId}/prerequisites/${competencyId}`, { observe: 'response' });
     }
 
-    createLearningGoalRelation(tailLearningGoalId: number, headLearningGoalId: number, type: string, courseId: number): Observable<EntityResponseType> {
+    createLearningGoalRelation(tailCompetencyId: number, headCompetencyId: number, type: string, courseId: number): Observable<EntityResponseType> {
         let params = new HttpParams();
         params = params.set('type', type);
-        return this.httpClient.post(`${this.resourceURL}/courses/${courseId}/learning-goals/${tailLearningGoalId}/relations/${headLearningGoalId}`, null, {
+        return this.httpClient.post(`${this.resourceURL}/courses/${courseId}/competencies/${tailCompetencyId}/relations/${headCompetencyId}`, null, {
             observe: 'response',
             params,
         });
     }
 
-    getLearningGoalRelations(learningGoalId: number, courseId: number) {
-        return this.httpClient.get<LearningGoalRelation[]>(`${this.resourceURL}/courses/${courseId}/learning-goals/${learningGoalId}/relations`, {
+    getLearningGoalRelations(competencyId: number, courseId: number) {
+        return this.httpClient.get<LearningGoalRelation[]>(`${this.resourceURL}/courses/${courseId}/competencies/${competencyId}/relations`, {
             observe: 'response',
         });
     }
 
-    removeLearningGoalRelation(learningGoalId: number, learningGoalRelationId: number, courseId: number) {
-        return this.httpClient.delete(`${this.resourceURL}/courses/${courseId}/learning-goals/${learningGoalId}/relations/${learningGoalRelationId}`, {
+    removeLearningGoalRelation(competencyId: number, competencyRelationId: number, courseId: number) {
+        return this.httpClient.delete(`${this.resourceURL}/courses/${courseId}/competencies/${competencyId}/relations/${competencyRelationId}`, {
             observe: 'response',
         });
     }

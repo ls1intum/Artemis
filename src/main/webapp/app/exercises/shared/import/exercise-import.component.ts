@@ -25,8 +25,7 @@ export class ExerciseImportComponent implements OnInit {
     readonly ExerciseType = ExerciseType;
     private readonly DEFAULT_SORT_COLUMN: TableColumn = 'ID';
 
-    @Input()
-    exerciseType?: ExerciseType;
+    @Input() exerciseType?: ExerciseType;
 
     /**
      * The programming language is only set when filtering for exercises with SCA enabled.

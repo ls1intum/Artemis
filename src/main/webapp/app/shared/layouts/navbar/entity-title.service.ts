@@ -1,6 +1,6 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { captureException } from '@sentry/browser';
+import { captureException } from '@sentry/angular-ivy';
 import { EMPTY, Observable, ReplaySubject, Subject } from 'rxjs';
 
 export enum EntityType {
@@ -108,7 +108,7 @@ export class EntityTitleService {
                 resourceUrl += 'lectures';
                 break;
             case EntityType.LEARNING_GOAL:
-                resourceUrl += 'learning-goals';
+                resourceUrl += 'competencies';
                 break;
             case EntityType.HINT:
                 resourceUrl += `programming-exercises/${ids[1]}/exercise-hints`;
