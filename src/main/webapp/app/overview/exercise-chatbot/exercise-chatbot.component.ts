@@ -7,11 +7,11 @@ import { MatDialog } from '@angular/material/dialog';
 import { ChatbotPopupComponent } from './chatbot-popup/chatbot-popup.component';
 
 @Component({
-    selector: 'jhi-course-chatbot',
-    templateUrl: './course-chatbot.component.html',
-    styleUrls: ['./course-chatbot.component.scss'],
+    selector: 'jhi-exercise-chatbot',
+    templateUrl: './exercise-chatbot.component.html',
+    styleUrls: ['./exercise-chatbot.component.scss'],
 })
-export class CourseChatbotComponent implements OnChanges {
+export class ExerciseChatbotComponent implements OnChanges {
     readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
     readonly CachingStrategy = CachingStrategy;
 

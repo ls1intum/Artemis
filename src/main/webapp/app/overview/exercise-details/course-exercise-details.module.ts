@@ -26,6 +26,8 @@ import { LtiInitializerComponent } from 'app/overview/exercise-details/lti-initi
 import { LtiInitializerModalComponent } from 'app/overview/exercise-details/lti-initializer-modal.component';
 import { ArtemisProgrammingExerciseManagementModule } from 'app/exercises/programming/manage/programming-exercise-management.module';
 import { ArtemisExerciseHintParticipationModule } from 'app/exercises/shared/exercise-hint/participate/exercise-hint-participation.module';
+import { ExerciseChatbotModule } from 'app/overview/exercise-chatbot/exercise-chatbot.module';
+import { ExerciseChatbotComponent } from 'app/overview/exercise-chatbot/exercise-chatbot.component';
 
 const routes: Routes = [
     {
@@ -68,8 +70,9 @@ const routes: Routes = [
         SubmissionResultStatusModule,
         ArtemisProgrammingExerciseManagementModule,
         ArtemisExerciseHintParticipationModule,
+        ExerciseChatbotModule,
     ],
-    declarations: [CourseExerciseDetailsComponent, OrionCourseExerciseDetailsComponent, LtiInitializerComponent, LtiInitializerModalComponent],
-    exports: [CourseExerciseDetailsComponent, OrionCourseExerciseDetailsComponent],
+    declarations: [CourseExerciseDetailsComponent, OrionCourseExerciseDetailsComponent, LtiInitializerComponent, LtiInitializerModalComponent, ExerciseChatbotComponent],
+    exports: [CourseExerciseDetailsComponent, OrionCourseExerciseDetailsComponent, ExerciseChatbotComponent],
 })
 export class CourseExerciseDetailsModule {}

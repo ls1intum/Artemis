@@ -7,4 +7,4 @@ import { MatDialogModule } from '@angular/material/dialog';
     imports: [MatDialogModule],
     providers: [],
 })
-export class CourseChatbotModule {}
+export class ExerciseChatbotModule {}
