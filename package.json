@@ -101,6 +101,14 @@
             "@angular/platform-browser-dynamic": "^16.0.0",
             "@angular/router": "^16.0.0"
         },
+        "@angular-builders/jest": {
+            "@angular/common": "^16.0.0",
+            "@angular/core": "^16.0.0",
+            "@angular/compiler": "^16.0.0",
+            "@angular/compiler-cli": "^16.0.0",
+            "@angular-devkit/build-angular": "^16.0.0",
+            "@angular/platform-browser-dynamic": "^16.0.0"
+        },
         "@swimlane/ngx-graph": {
             "@angular/animations": "^16.0.0",
             "@angular/cdk": "^16.0.0",
@@ -131,6 +139,7 @@
         }
     },
     "devDependencies": {
+        "@angular-builders/jest": "^15.0.0",
         "@angular-eslint/builder": "16.0.1",
         "@angular-eslint/eslint-plugin": "16.0.1",
         "@angular-eslint/eslint-plugin-template": "16.0.1",
