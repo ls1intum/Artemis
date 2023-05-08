@@ -106,7 +106,7 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         'should not show the buttons "Team" and "Start exercise" for a team exercise when not assigned to a team yet',
         fakeAsync((exerciseType: ExerciseType) => {
             comp.exercise = { ...teamExerciseWithoutTeamAssigned, type: exerciseType };
-
+            comp.ngOnChanges();
             fixture.detectChanges();
             tick();
 
@@ -122,6 +122,7 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         'should show the buttons "Team" and "Start exercise" for a team exercise for a student to view his team when assigned to a team',
         fakeAsync((exerciseType: ExerciseType) => {
             comp.exercise = { ...teamExerciseWithTeamAssigned, type: exerciseType };
+            comp.ngOnChanges();
             fixture.detectChanges();
             tick();
 
