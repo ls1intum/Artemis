@@ -1,20 +1,28 @@
-import { Injectable } from '@angular/core';
+import { Injectable, OnDestroy } from '@angular/core';
 import { Observable, Subject } from 'rxjs';
-import { scan, shareReplay } from 'rxjs/operators';
+import { scan, shareReplay, takeUntil } from 'rxjs/operators';
 import { ActionType, MessageStoreAction, MessageStoreState } from 'app/iris/message-store.model';
 
 @Injectable({
     providedIn: 'root',
 })
-export class IrisMessageStore {
-    private initialState: MessageStoreState = {
+export class IrisMessageStore implements OnDestroy {
+    private readonly initialState: MessageStoreState = {
         messages: [],
     };
-    private action = new Subject<MessageStoreAction>();
-    private state: Observable<MessageStoreState> = this.action.pipe(
+
+    private readonly keepAliveState = new Subject<number>();
+    private readonly action = new Subject<MessageStoreAction>();
+    private readonly state: Observable<MessageStoreState> = this.action.pipe(
         scan<MessageStoreAction, MessageStoreState>((state, action) => IrisMessageStore.storeReducer(state, action), this.initialState),
+        takeUntil(this.keepAliveState),
         shareReplay(1),
     );
+
+    ngOnDestroy(): void {
+        // we need to complete the stream after component destruction to prevent memory leaks
+        this.keepAliveState.next(1);
+    }
 
     dispatch(action: MessageStoreAction) {
         this.action.next(action);

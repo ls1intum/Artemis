@@ -101,13 +101,18 @@ describe('IrisMessageStore', () => {
         expect(state.messages).toEqual([action.message]);
     });
 
-    it('should dispatch and handle 2 messages', async () => {
+    it('should dispatch and handle 3 messages', async () => {
         const action1: StudentMessageSentAction = {
             type: ActionType.STUDENT_MESSAGE_SENT,
             message: mockClientMessage,
         };
 
         const action2: ActiveConversationMessageLoadedAction = {
+            type: ActionType.ACTIVE_CONVERSATION_MESSAGE_LOADED,
+            message: mockServerMessage,
+        };
+
+        const action3: ActiveConversationMessageLoadedAction = {
             type: ActionType.ACTIVE_CONVERSATION_MESSAGE_LOADED,
             message: mockServerMessage,
         };
@@ -129,9 +134,17 @@ describe('IrisMessageStore', () => {
 
         const state2 = await promise2;
 
-        console.log('state2: ', state2);
-
         expect(state2).toBeDefined();
         expect(state2.messages).toEqual([action2.message, action1.message]);
+
+        // the observable should only be aware of the previously emitted value
+        const promise3 = obs.pipe(skip(1), take(1)).toPromise();
+
+        messageStore.dispatch(action3);
+
+        const state3 = await promise3;
+
+        expect(state3).toBeDefined();
+        expect(state3.messages).toEqual([action3.message, action2.message, action1.message]);
     });
 });
