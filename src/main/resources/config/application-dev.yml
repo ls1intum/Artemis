@@ -71,7 +71,7 @@ server:
 # ===================================================================
 
 jhipster:
-    # CORS is only enabled by default with the "dev" profile, so BrowserSync can access the API
+    # CORS is only enabled by default with the "dev" profile, so the client can access the API
     cors:
         allowed-origin-patterns: "*"
         allowed-methods: "*"
