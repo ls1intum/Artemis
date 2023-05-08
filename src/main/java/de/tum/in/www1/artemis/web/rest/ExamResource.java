@@ -745,6 +745,8 @@ public class ExamResource {
         }
 
         examRegistrationService.registerStudentToExam(course, exam, student);
+        // add the student to the channel as well
+        channelService.registerUsersToChannel(false, false, false, List.of(student.getLogin()), exam.getCourse(), exam.getChannel());
         var studentDto = new StudentDTO();
         studentDto.setRegistrationNumber(student.getRegistrationNumber());
         studentDto.setFirstName(student.getFirstName());
@@ -981,7 +983,7 @@ public class ExamResource {
             throw new EntityNotFoundException("user", studentLogin);
         }
 
-        var exam = examRepository.findWithExamUsersById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
+        var exam = examRepository.findWithExamUsersAndChannelById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
 
         if (exam.isTestExam()) {
             throw new BadRequestAlertException("Deletion of users is only allowed for real exams", ENTITY_NAME, "unregisterStudentsOnlyForRealExams");
@@ -1009,7 +1011,7 @@ public class ExamResource {
 
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
 
-        var exam = examRepository.findWithExamUsersById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
+        var exam = examRepository.findWithExamUsersAndChannelById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
 
         if (exam.isTestExam()) {
             throw new BadRequestAlertException("Deregister students is only allowed for real exams", ENTITY_NAME, "unregisterAllOnlyForRealExams");

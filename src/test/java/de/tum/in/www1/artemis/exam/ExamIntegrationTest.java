@@ -351,13 +351,13 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         request.postWithoutLocation("/api/courses/" + course1.getId() + "/exams/" + savedExam.getId() + "/students/" + TEST_PREFIX + "student1", null, HttpStatus.OK, null);
         request.postWithoutLocation("/api/courses/" + course1.getId() + "/exams/" + savedExam.getId() + "/students/nonExistingStudent", null, HttpStatus.NOT_FOUND, null);
 
-        Exam storedExam = examRepository.findWithExamUsersById(savedExam.getId()).get();
+        Exam storedExam = examRepository.findWithExamUsersAndChannelById(savedExam.getId()).get();
         ExamUser examUserStudent1 = examUserRepository.findByExamIdAndUserId(storedExam.getId(), student1.getId()).get();
         assertThat(storedExam.getExamUsers()).containsExactly(examUserStudent1);
 
         request.delete("/api/courses/" + course1.getId() + "/exams/" + savedExam.getId() + "/students/" + TEST_PREFIX + "student1", HttpStatus.OK);
         request.delete("/api/courses/" + course1.getId() + "/exams/" + savedExam.getId() + "/students/nonExistingStudent", HttpStatus.NOT_FOUND);
-        storedExam = examRepository.findWithExamUsersById(savedExam.getId()).get();
+        storedExam = examRepository.findWithExamUsersAndChannelById(savedExam.getId()).get();
         assertThat(storedExam.getExamUsers()).isEmpty();
 
         var studentDto1 = new StudentDTO().registrationNumber(registrationNumber1);
@@ -396,7 +396,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         List<StudentDTO> registrationFailures = request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + savedExam.getId() + "/students",
                 studentsToRegister, StudentDTO.class, HttpStatus.OK);
         assertThat(registrationFailures).containsExactlyInAnyOrder(studentDto3, studentDto10);
-        storedExam = examRepository.findWithExamUsersById(savedExam.getId()).get();
+        storedExam = examRepository.findWithExamUsersAndChannelById(savedExam.getId()).get();
 
         // now a new user student101 should exist
         var student101 = database.getUserByLogin(STUDENT_111);
@@ -1584,7 +1584,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         request.postWithoutLocation("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/register-course-students", null, HttpStatus.OK, null);
 
-        exam = examRepository.findWithExamUsersById(exam.getId()).get();
+        exam = examRepository.findWithExamUsersAndChannelById(exam.getId()).get();
         examUser99 = examUserRepository.findByExamIdAndUserId(exam.getId(), student99.getId());
 
         // the course students + our custom student99

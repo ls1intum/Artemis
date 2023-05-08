@@ -97,8 +97,8 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
     @EntityGraph(type = LOAD, attributePaths = { "exerciseGroups", "exerciseGroups.exercises" })
     Optional<Exam> findWithExerciseGroupsAndExercisesById(long examId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "examUsers" })
-    Optional<Exam> findWithExamUsersById(long examId);
+    @EntityGraph(type = LOAD, attributePaths = { "examUsers", "channel" })
+    Optional<Exam> findWithExamUsersAndChannelById(long examId);
 
     @EntityGraph(type = LOAD, attributePaths = { "examUsers", "exerciseGroups", "exerciseGroups.exercises" })
     Optional<Exam> findWithExamUsersAndExerciseGroupsAndExercisesById(long examId);
@@ -285,7 +285,7 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
      */
     @NotNull
     default Exam findByIdWithExamUsersElseThrow(long examId) {
-        return findWithExamUsersById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
+        return findWithExamUsersAndChannelById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
     }
 
     /**
