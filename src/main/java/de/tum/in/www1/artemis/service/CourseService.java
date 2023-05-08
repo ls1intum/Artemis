@@ -253,7 +253,7 @@ public class CourseService {
         exerciseService.loadExerciseDetailsIfNecessary(course, user);
         course.setExams(examRepository.findByCourseIdsForUser(Set.of(course.getId()), user.getId(), user.getGroups(), ZonedDateTime.now()));
         course.setLectures(lectureService.filterActiveAttachments(course.getLectures(), user));
-        course.setLearningGoals(learningGoalService.findAllForCourse(course, user, refresh));
+        course.setCompetencies(learningGoalService.findAllForCourse(course, user, refresh));
         course.setPrerequisites(learningGoalService.findAllPrerequisitesForCourse(course, user));
         course.setTutorialGroups(tutorialGroupService.findAllForCourse(course, user));
         course.setTutorialGroupsConfiguration(tutorialGroupsConfigurationRepository.findByCourseIdWithEagerTutorialGroupFreePeriods(courseId).orElse(null));
@@ -419,7 +419,7 @@ public class CourseService {
     }
 
     private void deleteLearningGoalsOfCourse(Course course) {
-        for (LearningGoal learningGoal : course.getLearningGoals()) {
+        for (LearningGoal learningGoal : course.getCompetencies()) {
             learningGoalRepository.deleteById(learningGoal.getId());
         }
     }

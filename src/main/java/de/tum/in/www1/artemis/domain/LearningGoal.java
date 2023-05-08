@@ -40,7 +40,7 @@ public class LearningGoal extends DomainObject {
 
     @ManyToOne
     @JoinColumn(name = "course_id")
-    @JsonIgnoreProperties({ "learningGoals", "prerequisites" })
+    @JsonIgnoreProperties({ "competencies", "prerequisites" })
     private Course course;
 
     @ManyToMany(mappedBy = "competencies")
@@ -48,7 +48,7 @@ public class LearningGoal extends DomainObject {
     private Set<Exercise> exercises = new HashSet<>();
 
     @ManyToMany(mappedBy = "competencies")
-    @JsonIgnoreProperties("learningGoals")
+    @JsonIgnoreProperties("competencies")
     private Set<LectureUnit> lectureUnits = new HashSet<>();
 
     /**

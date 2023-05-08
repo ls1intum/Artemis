@@ -178,7 +178,7 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     }
 
     private void createLearningGoal() {
-        Course course = courseRepository.findWithEagerLearningGoalsById(idOfCourse).get();
+        Course course = courseRepository.findWithEagerCompetenciesById(idOfCourse).get();
         LearningGoal learningGoal = new LearningGoal();
         learningGoal.setTitle("LearningGoal" + new Random().nextInt());
         learningGoal.setDescription("This is an example learning goal");
@@ -197,7 +197,7 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     private void createPrerequisite() {
         // Add the first learning goal as a prerequisite to the other course
         LearningGoal learningGoal = learningGoalRepository.findByIdWithConsecutiveCourses(idOfLearningGoal).get();
-        Course course2 = courseRepository.findWithEagerLearningGoalsById(idOfCourseTwo).get();
+        Course course2 = courseRepository.findWithEagerCompetenciesById(idOfCourseTwo).get();
         course2.addPrerequisite(learningGoal);
         courseRepository.save(course2);
     }
@@ -723,7 +723,7 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createLearningGoal_asInstructor_shouldCreateLearningGoal() throws Exception {
-        Course course = courseRepository.findWithEagerLearningGoalsById(idOfCourse).get();
+        Course course = courseRepository.findWithEagerCompetenciesById(idOfCourse).get();
         LearningGoal learningGoal = new LearningGoal();
         learningGoal.setTitle("FreshlyCreatedLearningGoal");
         learningGoal.setDescription("This is an example of a freshly created learning goal");
@@ -846,7 +846,7 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         LearningGoal learningGoal = learningGoalRepository.findById(idOfLearningGoal).get();
         request.delete("/api/courses/" + idOfCourseTwo + "/prerequisites/" + idOfLearningGoal, HttpStatus.OK);
 
-        Course course = courseRepository.findWithEagerLearningGoalsById(idOfCourseTwo).orElseThrow();
+        Course course = courseRepository.findWithEagerCompetenciesById(idOfCourseTwo).orElseThrow();
         assertThat(course.getPrerequisites()).doesNotContain(learningGoal);
     }
 

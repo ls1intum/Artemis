@@ -198,7 +198,7 @@ public class LearningGoalResource {
         if (competency.getId() != null || competency.getTitle() == null || competency.getTitle().trim().isEmpty()) {
             throw new BadRequestException();
         }
-        var course = courseRepository.findWithEagerLearningGoalsByIdElseThrow(courseId);
+        var course = courseRepository.findWithEagerCompetenciesByIdElseThrow(courseId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
 
         LearningGoal competencyToCreate = new LearningGoal();
@@ -228,7 +228,7 @@ public class LearningGoalResource {
     public ResponseEntity<LearningGoal> importCompetency(@PathVariable long courseId, @RequestBody LearningGoal competencyToImport) throws URISyntaxException {
         log.info("REST request to import a Competency: {}", competencyToImport.getId());
 
-        var course = courseRepository.findWithEagerLearningGoalsByIdElseThrow(courseId);
+        var course = courseRepository.findWithEagerCompetenciesByIdElseThrow(courseId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, competencyToImport.getCourse(), null);
 
@@ -448,7 +448,7 @@ public class LearningGoalResource {
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<LearningGoal> addPrerequisite(@PathVariable Long competencyId, @PathVariable Long courseId) {
         log.info("REST request to add a prerequisite: {}", competencyId);
-        var course = courseRepository.findWithEagerLearningGoalsByIdElseThrow(courseId);
+        var course = courseRepository.findWithEagerCompetenciesByIdElseThrow(courseId);
         var competency = competencyRepository.findByIdWithConsecutiveCoursesElseThrow(competencyId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, competency.getCourse(), null);
@@ -473,7 +473,7 @@ public class LearningGoalResource {
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Void> removePrerequisite(@PathVariable Long competencyId, @PathVariable Long courseId) {
         log.info("REST request to remove a prerequisite: {}", competencyId);
-        var course = courseRepository.findWithEagerLearningGoalsByIdElseThrow(courseId);
+        var course = courseRepository.findWithEagerCompetenciesByIdElseThrow(courseId);
         var competency = competencyRepository.findByIdWithConsecutiveCoursesElseThrow(competencyId);
         if (!competency.getConsecutiveCourses().stream().map(Course::getId).toList().contains(courseId)) {
             throw new ConflictException("The competency is not a prerequisite of the given course", "Competency", "prerequisiteWrongCourse");

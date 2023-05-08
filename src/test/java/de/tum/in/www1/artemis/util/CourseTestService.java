@@ -491,7 +491,7 @@ public class CourseTestService {
 
         Set<LearningGoal> learningGoals = new HashSet<>();
         learningGoals.add(database.createLearningGoal(course));
-        course.setLearningGoals(learningGoals);
+        course.setCompetencies(learningGoals);
         course = courseRepo.save(course);
 
         Set<LearningGoal> prerequisites = new HashSet<>();
@@ -501,9 +501,9 @@ public class CourseTestService {
 
         request.getMvc().perform(buildUpdateCourse(course.getId(), course)).andExpect(status().isOk());
 
-        Course updatedCourse = courseRepo.findByIdWithOrganizationsAndLearningGoalsAndOnlineConfigurationElseThrow(course.getId());
+        Course updatedCourse = courseRepo.findByIdWithOrganizationsAndCompetenciesAndOnlineConfigurationElseThrow(course.getId());
         assertThat(updatedCourse.getOrganizations()).containsExactlyElementsOf(organizations);
-        assertThat(updatedCourse.getLearningGoals()).containsExactlyElementsOf(learningGoals);
+        assertThat(updatedCourse.getCompetencies()).containsExactlyElementsOf(learningGoals);
         assertThat(updatedCourse.getPrerequisites()).containsExactlyElementsOf(prerequisites);
     }
 
@@ -677,7 +677,7 @@ public class CourseTestService {
         // Test that the received course has two lectures
         assertThat(receivedCourse.getLectures()).as("Two lectures are returned").hasSize(2);
         // Test that the received course has two learning goals
-        assertThat(receivedCourse.getLearningGoals()).as("Two learning goals are returned").hasSize(2);
+        assertThat(receivedCourse.getCompetencies()).as("Two learning goals are returned").hasSize(2);
 
         // Iterate over all exercises of the remaining course
         for (Exercise exercise : courses.get(0).getExercises()) {
