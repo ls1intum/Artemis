@@ -97,7 +97,7 @@ describe('ModelingSubmission Service', () => {
         service
             .getSubmissionWithoutAssessment(exerciseId, true, correctionRound)
             .pipe(take(1))
-            .subscribe((resp) => expect(resp).toMatchObject({ ...elemDefault }));
+            .subscribe((resp) => expect(resp).toMatchObject({ ...elemDefault, id: exerciseId }));
         const req = httpMock.expectOne({ method: 'GET', url: `api/exercises/${exerciseId}/modeling-submission-without-assessment?correction-round=${correctionRound}&lock=true` });
         expect(req.request.params.get('lock')).toBe('true');
         expect(req.request.params.get('correction-round')).toBe(`${correctionRound}`);
@@ -106,11 +106,11 @@ describe('ModelingSubmission Service', () => {
     }));
 
     it('should getLatestSubmissionForModelingEditor', fakeAsync(() => {
-        const { returnedFromService, participationId } = getDefaultValues();
+        const { returnedFromService, participationId, exerciseId } = getDefaultValues();
         service
             .getLatestSubmissionForModelingEditor(participationId)
             .pipe(take(1))
-            .subscribe((resp) => expect(resp).toMatchObject({ ...elemDefault }));
+            .subscribe((resp) => expect(resp).toMatchObject({ ...elemDefault, id: exerciseId }));
         const req = httpMock.expectOne({ method: 'GET', url: `api/participations/${participationId}/latest-modeling-submission` });
         req.flush(returnedFromService);
         tick();
