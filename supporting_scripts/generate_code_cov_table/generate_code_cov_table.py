@@ -6,6 +6,7 @@ import getpass
 import os
 import logging
 
+from tqdm.auto import tqdm
 import requests
 import git
 from bs4 import BeautifulSoup
@@ -22,12 +23,14 @@ project_key = "ARTEMIS"
 plan_key = "TESTS"
 repo_path = "../.."  # relative to this file
 
+
 def environ_or_required(key):
     # https://stackoverflow.com/a/45392259/4306257
     return (
         {'default': os.environ.get(key)} if os.environ.get(key)
         else {'required': True}
     )
+
 
 def get_latest_build_id(username, password, branch_name):
     bamboo_branch_name = branch_name.replace("origin/", "").replace("/", "-")
@@ -40,11 +43,13 @@ def get_latest_build_id(username, password, branch_name):
     branch = json.loads(response.content)
     return int(branch["shortKey"].replace("TESTS", ""))
 
+
 def get_latest_build_number(username, password, build_id):
     url = f"{base_url}/rest/api/latest/result/{project_key}-{plan_key}{build_id}.json"
     response = requests.get(url, auth=(username, password))
     data = json.loads(response.content)
     return int(data["results"]["result"][0]["number"])
+
 
 def get_code_cov_report_url(username, password, key):
     url = f"{base_url}/rest/api/latest/result/{key}.json?expand=artifacts"
@@ -56,9 +61,11 @@ def get_code_cov_report_url(username, password, key):
         logging.info(f"Code coverage report not found for {key}, please wait for the tests to finish and try again")
         sys.exit(1)
 
+
 def get_branch_name():
     repo = git.Repo(repo_path)
     return repo.active_branch.name
+
 
 def get_changed_files(branch_name):
     repo = git.Repo(repo_path)
@@ -68,6 +75,7 @@ def get_changed_files(branch_name):
     file_names = [item.a_path for item in diff_index]
 
     return file_names
+
 
 def filter_files(file_names):
     client_file_names = []
@@ -85,6 +93,7 @@ def filter_files(file_names):
         logging.debug(f"Skipping {file_name}")
     return client_file_names, server_file_names
 
+
 def get_client_line_coverage(username, password, key, file_name):
     report_url = get_code_cov_report_url(username, password, key)
     file_report_url = report_url.replace("index", file_name)
@@ -101,6 +110,7 @@ def get_client_line_coverage(username, password, key, file_name):
 
     logging.debug(f"Coverage for {file_name} -> GET report -> {response.status_code} -> line coverage: {line_coverage}")
     return file_name, file_report_url, line_coverage
+
 
 def get_server_line_coverage(username, password, key, file_name):
     report_url = get_code_cov_report_url(username, password, key)
@@ -123,6 +133,7 @@ def get_server_line_coverage(username, password, key, file_name):
     logging.debug(f"Coverage for {file_name} -> GET report -> {response.status_code} -> line coverage: {line_coverage}")
     return file_name, file_report_url, line_coverage
 
+
 def coverage_to_table(covs):
     header = "| Class/File | Line Coverage | Confirmation (assert/expect) |\n|------------|--------------:|---------------------:|"
     table_data = []
@@ -136,6 +147,7 @@ def coverage_to_table(covs):
 
     table = "\n".join([header] + table_data)
     return table
+
 
 def main(argv):
     parser = argparse.ArgumentParser(
@@ -188,11 +200,11 @@ def main(argv):
 
     client_cov = [
         get_client_line_coverage(args.username, args.password, client_key, file_name)
-        for file_name in client_file_names
+        for file_name in tqdm(client_file_names, desc="Fetching client coverage", unit="files")
     ]
     server_cov = [
         get_server_line_coverage(args.username, args.password, server_key, file_name)
-        for file_name in server_file_names
+        for file_name in tqdm(server_file_names, desc="Fetching server coverage", unit="files")
     ]
 
     client_table = coverage_to_table(client_cov)
@@ -205,7 +217,10 @@ def main(argv):
         result += f"#### Server\n\n{server_table}\n\n"
 
     pyperclip.copy(result)
+    logging.info("") # newline
+    logging.info("Info: ✅❌ in Confirmation (assert/expect) have to be adjusted manually, also delete trivial files!")
     logging.info("Code coverage report copied to clipboard.")
+
 
 if __name__ == "__main__":
     main(sys.argv[1:])

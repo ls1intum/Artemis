@@ -57,6 +57,9 @@ Don't store the `BAMBOO_PASSWORD` in the `.env` file, but let the script prompt 
 
 ## Usage
 
+The branch can be specified using the `--branch-name` option. If no branch is specified, the current branch will be used.
+You can also use remote branches, e.g. `origin/feature/xyz`.
+
 ### Generate Code Coverage Report for Current Branch (default)
 
 Run the script:
