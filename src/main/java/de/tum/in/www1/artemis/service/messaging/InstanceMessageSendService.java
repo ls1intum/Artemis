@@ -78,21 +78,19 @@ public interface InstanceMessageSendService {
     void sendLockAllStudentRepositories(Long exerciseId);
 
     /**
-     * Send a message to the main server that all student repositories and student participations, that do not allow for any more submissions, should be instantly locked.
-     * A participation is sealed and submissions are forbidden if the due date is in the past or the submission limit is reached.
+     * Send a message to the main server that all student repositories and student participations, whose due date is in the past, should be instantly locked.
      *
      * @param exerciseId the id of the exercise that should be locked
      */
-    void sendLockAllSealedStudentRepositoriesAndParticipations(Long exerciseId);
+    void sendLockAllStudentRepositoriesAndParticipationsWithEarlierDueDate(Long exerciseId);
 
     /**
-     * Send a message to the main server that all student participations, that do not allow for any more submissions, should be instantly locked.
-     * A participation is sealed and submissions are forbidden if the due date is in the past or the submission limit is reached.
-     * This does not lock the repositories associated with the participations! See {@link #sendLockAllSealedStudentRepositoriesAndParticipations(Long)} for that.
+     * Send a message to the main server that all student participations, whose due date is in the past, should be instantly locked.
+     * This does not lock the repositories associated with the participations! See {@link #sendLockAllStudentRepositoriesAndParticipationsWithEarlierDueDate(Long)} for that.
      *
      * @param exerciseId the id of the exercise that should be locked
      */
-    void sendLockAllSealedStudentParticipations(Long exerciseId);
+    void sendLockAllStudentParticipationsWithEarlierDueDate(Long exerciseId);
 
     /**
      * Send a message to the main server that all student repositories and student participations of an exercise should be instantly unlocked.
@@ -102,21 +100,22 @@ public interface InstanceMessageSendService {
     void sendUnlockAllStudentRepositoriesAndParticipations(Long exerciseId);
 
     /**
-     * Send a message to the main server that all student repositories and student participations, that allow for submissions, should be instantly unlocked.
-     * Submissions are allowed if the due date is in the future and the submission limit is not reached yet.
+     * Send a message to the main server that all student repositories and student participations, whose start date is before now and whose due date is after now, should be
+     * instantly unlocked.
+     * Submissions are allowed if the start date is in the past and the due date is in the future.
      *
      * @param exerciseId the id of the exercise that should be unlocked
      */
-    void sendUnlockAllUnsealedStudentRepositoriesAndParticipations(Long exerciseId);
+    void sendUnlockAllStudentRepositoriesAndParticipationsWithEarlierStartDateAndLaterDueDate(Long exerciseId);
 
     /**
-     * Send a message to the main server that all student participations, that allow for submissions, should be instantly unlocked.
-     * Submissions are allowed if the due date is in the future and the submission limit is not reached yet.
-     * This does not unlock the repositories associated with the participations! See {@link #sendUnlockAllUnsealedStudentRepositoriesAndParticipations(Long)} for that.
+     * Send a message to the main server that all student participations, whose start date is before now and whose due date is after now, should be instantly unlocked.
+     * This does not unlock the repositories associated with the participations! See
+     * {@link #sendUnlockAllStudentRepositoriesAndParticipationsWithEarlierStartDateAndLaterDueDate(Long)} for that.
      *
      * @param exerciseId the id of the exercise that should be unlocked
      */
-    void sendUnlockAllSealedStudentParticipations(Long exerciseId);
+    void sendUnlockAllStudentParticipationsWithEarlierStartDateAndLaterDueDate(Long exerciseId);
 
     /**
      * Send a message to the main server that the non-activated should be deleted.

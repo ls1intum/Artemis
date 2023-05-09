@@ -476,7 +476,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
      * @return a Runnable that will lock the repositories and participations once it is executed.
      */
     @NotNull
-    public Runnable lockAllSealedStudentRepositoriesAndParticipations(ProgrammingExercise exercise) {
+    public Runnable lockAllStudentRepositoriesAndParticipationsWithEarlierDueDate(ProgrammingExercise exercise) {
         return lockStudentRepositoriesAndParticipations(exercise, exerciseDateService::isAfterDueDate);
     }
 
@@ -484,14 +484,14 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
      * Returns a runnable that, once executed, will
      * (1) lock all student participations that have a due date in the past.
      * (2) stash all student changes in the online editor for manual assessments.
-     * NOTE: this will not lock the student repositories. See {@link #lockAllSealedStudentRepositoriesAndParticipations(ProgrammingExercise)} for that.
+     * NOTE: this will not lock the student repositories. See {@link #lockAllStudentRepositoriesAndParticipationsWithEarlierDueDate(ProgrammingExercise)} for that.
      * NOTE: this will not immediately lock the repositories as only a Runnable is returned!
      *
      * @param exercise for which the repositories should be locked.
      * @return a Runnable that will lock the participations once it is executed.
      */
     @NotNull
-    public Runnable lockAllSealedStudentParticipations(ProgrammingExercise exercise) {
+    public Runnable lockAllStudentParticipationsWithEarlierDueDate(ProgrammingExercise exercise) {
         return lockStudentParticipations(exercise, exerciseDateService::isAfterDueDate);
     }
 
@@ -743,7 +743,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
      * @return a Runnable that will unlock the repositories once it is executed
      */
     @NotNull
-    public Runnable unlockAllUnsealedStudentRepositoriesAndParticipations(ProgrammingExercise exercise) {
+    public Runnable unlockAllStudentRepositoriesAndParticipationsWithEarlierStartDateAndLaterDueDate(ProgrammingExercise exercise) {
         return runUnlockOperation(exercise, programmingExerciseParticipationService::unlockStudentRepositoryAndParticipation,
                 participation -> participation.getProgrammingExercise().isReleased() && exerciseDateService.isBeforeDueDate(participation));
     }
@@ -757,7 +757,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
      * @return a Runnable that will unlock the repositories once it is executed
      */
     @NotNull
-    public Runnable unlockAllUnsealedStudentParticipations(ProgrammingExercise exercise) {
+    public Runnable unlockAllStudentParticipationsWithEarlierStartDateAndLaterDueDate(ProgrammingExercise exercise) {
         return runUnlockOperation(exercise, programmingExerciseParticipationService::unlockStudentParticipation,
                 participation -> participation.getProgrammingExercise().isReleased() && exerciseDateService.isBeforeDueDate(participation));
     }

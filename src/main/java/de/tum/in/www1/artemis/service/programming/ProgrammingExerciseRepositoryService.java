@@ -649,12 +649,13 @@ public class ProgrammingExerciseRepositoryService {
 
         if (stricterDueDate) {
             if (stricterIdeUsage) {
-                // Repositories were already locked in the step before. Only lock the participations that are not allowed to submit under the updated configuration.
-                instanceMessageSendService.sendLockAllSealedStudentParticipations(programmingExerciseBeforeUpdate.getId());
+                // Repositories were already locked in the step before. Only lock the participations that are not allowed to submit under the updated configuration, i.e. with a due
+                // date in the past.
+                instanceMessageSendService.sendLockAllStudentParticipationsWithEarlierDueDate(programmingExerciseBeforeUpdate.getId());
             }
             else {
                 // Lock all repositories and participations that are not allowed to submit under the updated configuration.
-                instanceMessageSendService.sendLockAllSealedStudentRepositoriesAndParticipations(programmingExerciseBeforeUpdate.getId());
+                instanceMessageSendService.sendLockAllStudentRepositoriesAndParticipationsWithEarlierDueDate(programmingExerciseBeforeUpdate.getId());
             }
         }
 
@@ -672,13 +673,13 @@ public class ProgrammingExerciseRepositoryService {
         boolean moreLenientIdeUsage = !oldExerciseAllowsIdeUsage && updatedExerciseAllowsIdeUsage;
 
         if (moreLenientStartDate || moreLenientDueDate || moreLenientIdeUsage) {
-            // Unlock all participations that are allowed to submit under the updated configuration.
-            // Only unlock the repositories if offline IDE usage is allowed.
+            // Unlock all participations that are allowed to submit under the updated configuration, i.e. the current date is within the working time frame.
+            // Only unlock the repositories if offline IDE usage is allowed. Otherwise, just unlock the participations.
             if (updatedExerciseAllowsIdeUsage) {
-                instanceMessageSendService.sendUnlockAllUnsealedStudentRepositoriesAndParticipations(programmingExerciseBeforeUpdate.getId());
+                instanceMessageSendService.sendUnlockAllStudentRepositoriesAndParticipationsWithEarlierStartDateAndLaterDueDate(programmingExerciseBeforeUpdate.getId());
             }
             else {
-                instanceMessageSendService.sendUnlockAllSealedStudentParticipations(programmingExerciseBeforeUpdate.getId());
+                instanceMessageSendService.sendUnlockAllStudentParticipationsWithEarlierStartDateAndLaterDueDate(programmingExerciseBeforeUpdate.getId());
             }
         }
     }

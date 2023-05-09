@@ -87,15 +87,16 @@ public class DistributedInstanceMessageSendService implements InstanceMessageSen
     }
 
     @Override
-    public void sendUnlockAllUnsealedStudentRepositoriesAndParticipations(Long exerciseId) {
-        log.info("Sending unlock all unsealed repositories and participations for programming exercise {} to broker.", exerciseId);
-        sendMessageDelayed(MessageTopic.PROGRAMMING_EXERCISE_UNLOCK_UNSEALED_REPOSITORIES_AND_PARTICIPATIONS, exerciseId);
+    public void sendUnlockAllStudentRepositoriesAndParticipationsWithEarlierStartDateAndLaterDueDate(Long exerciseId) {
+        log.info("Sending unlock all repositories and participations with a start date in the past and a due date in the future for programming exercise {} to broker.",
+                exerciseId);
+        sendMessageDelayed(MessageTopic.PROGRAMMING_EXERCISE_UNLOCK_REPOSITORIES_AND_PARTICIPATIONS_WITH_EARLIER_START_DATE_AND_LATER_DUE_DATE, exerciseId);
     }
 
     @Override
-    public void sendUnlockAllSealedStudentParticipations(Long exerciseId) {
-        log.info("Sending unlock all sealed participations for programming exercise {} to broker.", exerciseId);
-        sendMessageDelayed(MessageTopic.PROGRAMMING_EXERCISE_UNLOCK_UNSEALED_PARTICIPATIONS, exerciseId);
+    public void sendUnlockAllStudentParticipationsWithEarlierStartDateAndLaterDueDate(Long exerciseId) {
+        log.info("Sending unlock all student participations with earlier start date and later due date for programming exercise {} to broker.", exerciseId);
+        sendMessageDelayed(MessageTopic.PROGRAMMING_EXERCISE_UNLOCK_PARTICIPATIONS_WITH_EARLIER_START_DATE_AND_LATER_DUE_DATE, exerciseId);
     }
 
     @Override
@@ -111,15 +112,15 @@ public class DistributedInstanceMessageSendService implements InstanceMessageSen
     }
 
     @Override
-    public void sendLockAllSealedStudentRepositoriesAndParticipations(Long exerciseId) {
-        log.info("Sending lock all student repositories and participations with past due date or too many submissions for programming exercise {} to broker.", exerciseId);
-        sendMessageDelayed(MessageTopic.PROGRAMMING_EXERCISE_LOCK_SEALED_REPOSITORIES_AND_PARTICIPATIONS, exerciseId);
+    public void sendLockAllStudentRepositoriesAndParticipationsWithEarlierDueDate(Long exerciseId) {
+        log.info("Sending lock all student repositories and participations with past due date for programming exercise {} to broker.", exerciseId);
+        sendMessageDelayed(MessageTopic.PROGRAMMING_EXERCISE_LOCK_REPOSITORIES_AND_PARTICIPATIONS_WITH_EARLIER_DUE_DATE, exerciseId);
     }
 
     @Override
-    public void sendLockAllSealedStudentParticipations(Long exerciseId) {
-        log.info("Sending lock all student participations with past due date or too many submissions for programming exercise {} to broker.", exerciseId);
-        sendMessageDelayed(MessageTopic.PROGRAMMING_EXERCISE_LOCK_SEALED_PARTICIPATIONS, exerciseId);
+    public void sendLockAllStudentParticipationsWithEarlierDueDate(Long exerciseId) {
+        log.info("Sending lock all student participations with past due date for programming exercise {} to broker.", exerciseId);
+        sendMessageDelayed(MessageTopic.PROGRAMMING_EXERCISE_LOCK_PARTICIPATIONS_WITH_EARLIER_DUE_DATE, exerciseId);
     }
 
     @Override
