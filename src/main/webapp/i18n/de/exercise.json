@@ -39,7 +39,12 @@
                     "exam": "Klausur",
                     "examQuestion": "Klausuraufgabe",
                     "doImport": "Importieren"
-                }
+                },
+                "tabTitle": "Von dieser Instanz"
+            },
+            "importFromFile": {
+                "notSupportedExerciseType": "Der Import von Dateien wird für den Aufgabentyp {{ exerciseType }} nicht unterstützt.",
+                "tabTitle": "Aus einer Datei"
             },
             "exercise": "Aufgabe",
             "results": "Ergebnisse",

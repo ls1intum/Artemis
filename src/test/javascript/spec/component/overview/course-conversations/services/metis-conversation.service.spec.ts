@@ -82,7 +82,7 @@ describe('MetisConversationService', () => {
 
     it('should set up the service correctly', () => {
         return new Promise((done) => {
-            metisConversationService.setUpConversationService(1).subscribe({
+            metisConversationService.setUpConversationService(course).subscribe({
                 complete: () => {
                     expect(metisConversationService.course).toEqual(course);
                     forkJoin([metisConversationService.isLoading$, metisConversationService.activeConversation$, metisConversationService.conversationsOfUser$]).subscribe({
@@ -103,7 +103,7 @@ describe('MetisConversationService', () => {
 
     it('should set active conversation', () => {
         return new Promise((done) => {
-            metisConversationService.setUpConversationService(1).subscribe({
+            metisConversationService.setUpConversationService(course).subscribe({
                 complete: () => {
                     metisConversationService.setActiveConversation(groupChat);
                     metisConversationService.activeConversation$.subscribe((activeConversation) => {
@@ -117,7 +117,7 @@ describe('MetisConversationService', () => {
 
     it('should set active conversation by id', () => {
         return new Promise((done) => {
-            metisConversationService.setUpConversationService(1).subscribe({
+            metisConversationService.setUpConversationService(course).subscribe({
                 complete: () => {
                     metisConversationService.setActiveConversation(groupChat.id);
                     metisConversationService.activeConversation$.subscribe((activeConversation) => {
@@ -132,7 +132,7 @@ describe('MetisConversationService', () => {
     it('should set has unread messages to true', () => {
         groupChat.unreadMessagesCount = 1;
         return new Promise((done) => {
-            metisConversationService.setUpConversationService(1).subscribe({
+            metisConversationService.setUpConversationService(course).subscribe({
                 complete: () => {
                     metisConversationService.setActiveConversation(groupChat);
                     metisConversationService.hasUnreadMessages$.pipe().subscribe((hasUnreadMessages) => {
@@ -146,7 +146,7 @@ describe('MetisConversationService', () => {
 
     it('should get conversations of users again if force refresh is called', () => {
         return new Promise((done) => {
-            metisConversationService.setUpConversationService(1).subscribe({
+            metisConversationService.setUpConversationService(course).subscribe({
                 complete: () => {
                     metisConversationService.setActiveConversation(groupChat);
                     const getConversationsOfUserSpy = jest.spyOn(conversationService, 'getConversationsOfUser');
@@ -165,7 +165,7 @@ describe('MetisConversationService', () => {
 
     it('should set active conversation to newly created channel', () => {
         return new Promise((done) => {
-            metisConversationService.setUpConversationService(1).subscribe({
+            metisConversationService.setUpConversationService(course).subscribe({
                 complete: () => {
                     const newChannel = generateExampleChannelDTO({ id: 99 });
                     const createChannelSpy = jest.spyOn(channelService, 'create').mockReturnValue(of(new HttpResponse({ body: newChannel })));
@@ -191,7 +191,7 @@ describe('MetisConversationService', () => {
 
     it('should set active conversation to newly created groupChat', () => {
         return new Promise((done) => {
-            metisConversationService.setUpConversationService(1).subscribe({
+            metisConversationService.setUpConversationService(course).subscribe({
                 complete: () => {
                     const newGroupChat = generateExampleGroupChatDTO({ id: 99 });
                     const createGroupChatSpy = jest.spyOn(groupChatService, 'create').mockReturnValue(of(new HttpResponse({ body: newGroupChat })));
@@ -217,7 +217,7 @@ describe('MetisConversationService', () => {
 
     it('should set active conversation to newly created one to one chat', () => {
         return new Promise((done) => {
-            metisConversationService.setUpConversationService(1).subscribe({
+            metisConversationService.setUpConversationService(course).subscribe({
                 complete: () => {
                     const newOneToOneChat = generateOneToOneChatDTO({ id: 99 });
                     const createOneToOneChatSpy = jest.spyOn(oneToOneChatService, 'create').mockReturnValue(of(new HttpResponse({ body: newOneToOneChat })));
@@ -243,10 +243,10 @@ describe('MetisConversationService', () => {
 
     it('should add new conversation to conversations of user on conversation create received', () => {
         return new Promise((done) => {
-            metisConversationService.setUpConversationService(1).subscribe({
+            metisConversationService.setUpConversationService(course).subscribe({
                 complete: () => {
                     const websocketDTO = new ConversationWebsocketDTO();
-                    websocketDTO.crudAction = MetisPostAction.CREATE;
+                    websocketDTO.metisCrudAction = MetisPostAction.CREATE;
                     websocketDTO.conversation = generateExampleChannelDTO({ id: 99 });
 
                     receiveMockSubject.next(websocketDTO);
@@ -261,10 +261,10 @@ describe('MetisConversationService', () => {
 
     it('should update conversation in conversations of user on conversation update received', () => {
         return new Promise((done) => {
-            metisConversationService.setUpConversationService(1).subscribe({
+            metisConversationService.setUpConversationService(course).subscribe({
                 complete: () => {
                     const websocketDTO = new ConversationWebsocketDTO();
-                    websocketDTO.crudAction = MetisPostAction.UPDATE;
+                    websocketDTO.metisCrudAction = MetisPostAction.UPDATE;
                     websocketDTO.conversation = { ...channel, name: 'newtitle' } as ChannelDTO;
 
                     receiveMockSubject.next(websocketDTO);
@@ -283,10 +283,10 @@ describe('MetisConversationService', () => {
 
     it('should update conversation last message date in conversations of user on conversation new message received', () => {
         return new Promise((done) => {
-            metisConversationService.setUpConversationService(1).subscribe({
+            metisConversationService.setUpConversationService(course).subscribe({
                 complete: () => {
                     const websocketDTO = new ConversationWebsocketDTO();
-                    websocketDTO.crudAction = MetisPostAction.NEW_MESSAGE;
+                    websocketDTO.metisCrudAction = MetisPostAction.NEW_MESSAGE;
                     // 1 of january 2022
                     const lastMessageDate = dayjs('2022-01-01T00:00:00.000Z');
                     websocketDTO.conversation = { ...channel, lastMessageDate } as ChannelDTO;
@@ -305,10 +305,10 @@ describe('MetisConversationService', () => {
 
     it('should remove conversation in conversations of user on conversation delete received', () => {
         return new Promise((done) => {
-            metisConversationService.setUpConversationService(1).subscribe({
+            metisConversationService.setUpConversationService(course).subscribe({
                 complete: () => {
                     const websocketDTO = new ConversationWebsocketDTO();
-                    websocketDTO.crudAction = MetisPostAction.DELETE;
+                    websocketDTO.metisCrudAction = MetisPostAction.DELETE;
                     websocketDTO.conversation = { ...channel } as ChannelDTO;
 
                     receiveMockSubject.next(websocketDTO);

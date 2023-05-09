@@ -43,7 +43,7 @@ import { ArtemisTextSubmissionAssessmentModule } from 'app/exercises/text/assess
 import { StudentExamDetailTableRowComponent } from 'app/exam/manage/student-exams/student-exam-detail-table-row/student-exam-detail-table-row.component';
 import { ExampleSubmissionsModule } from 'app/exercises/shared/example-submission/example-submissions.module';
 import { BarChartModule } from '@swimlane/ngx-charts';
-import { UserImportModule } from 'app/shared/import/user-import.module';
+import { UserImportModule } from 'app/shared/user-import/user-import.module';
 import { ArtemisExamSharedModule } from 'app/exam/shared/exam-shared.module';
 import { ExamStatusComponent } from 'app/exam/manage/exam-status.component';
 import { ArtemisExamModePickerModule } from 'app/exam/manage/exams/exam-mode-picker/exam-mode-picker.module';

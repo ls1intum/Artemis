@@ -7,7 +7,7 @@ import { Course } from 'app/entities/course.model';
 import { User } from 'app/core/user/user.model';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
-import { setUser } from '@sentry/browser';
+import { setUser } from '@sentry/angular-ivy';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { Authority } from 'app/shared/constants/authority.constants';
@@ -125,7 +125,7 @@ export class AccountService implements IAccountService {
     }
 
     identity(force?: boolean): Promise<User | undefined> {
-        if (force === true) {
+        if (force) {
             this.userIdentity = undefined;
         }
 

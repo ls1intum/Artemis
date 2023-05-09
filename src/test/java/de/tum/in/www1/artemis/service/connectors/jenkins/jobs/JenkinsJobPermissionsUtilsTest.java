@@ -58,7 +58,7 @@ class JenkinsJobPermissionsUtilsTest {
         JenkinsJobPermissionsUtils.removePermissionsFromFolder(folderConfig, allPermissions, Set.of("instructor1"));
 
         final var updatedPermissions = folderConfig.getElementsByTagName("permission");
-        assertThat(updatedPermissions.getLength()).as("Document should contain no permissions:\n" + XmlFileUtils.writeToString(folderConfig)).isEqualTo(0);
+        assertThat(updatedPermissions.getLength()).as("Document should contain no permissions:\n" + XmlFileUtils.writeToString(folderConfig)).isZero();
     }
 
     @Test

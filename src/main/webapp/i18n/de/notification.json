@@ -77,8 +77,8 @@
                 "programmingTestCasesChanged": "Die Testfälle der Programmieraufgabe \"{{ placeholderValues.1 }}\" im Kurs \"{{ placeholderValues.0 }}\" wurden aktualisiert. Die Abgaben der Studenten sollten erneut gebaut und getestet werden, um neue Ergebnisse zu erstellen.",
                 "newManualFeedbackRequest": "Die Programmieraufgabe \"{{ placeholderValues.1 }}\" im Kurs \"{{ placeholderValues.0 }}\" hat eine neue manuelle Feedbackanfrage. Bitte bewerte das Feedback vor der Deadline.",
                 "illegalSubmission": "Die Aufgabe \"{{ placeholderValues.1 }}\" im Kurs \"{{ placeholderValues.0 }}\" hat illegale Abgaben von Studenten.",
-                "newExercisePost": "Die Aufgabe \"{{ placeholderValues.8 }}\" im Kurs \"{{ placeholderValues.0 }}\" hat einen neuen Beitrag: \"{{ placeholderValues.2 }}\"",
-                "newLecturePost": "Die Vorlesung \"{{ placeholderValues.8 }}\" im Kurs \"{{ placeholderValues.0 }}\" hat einen neuen Beitrag: \"{{ placeholderValues.2 }}\".",
+                "newExercisePost": "Die Aufgabe \"{{ placeholderValues.5 }}\" im Kurs \"{{ placeholderValues.0 }}\" hat einen neuen Beitrag: \"{{ placeholderValues.2 }}\"",
+                "newLecturePost": "Die Vorlesung \"{{ placeholderValues.5 }}\" im Kurs \"{{ placeholderValues.0 }}\" hat einen neuen Beitrag: \"{{ placeholderValues.2 }}\".",
                 "newCoursePost": "Der Kurs \"{{ placeholderValues.0 }}\" hat einen neuen kursweiten Beitrag: \"{{ placeholderValues.2 }}\"",
                 "newAnnouncementPost": "Der Kurs \"{{ placeholderValues.0 }}\" hat eine neue Ankündigung: \"{{ placeholderValues.2 }}\"",
                 "newReplyForExercisePost": "Ein Beitrag von {{ placeholderValues.4 }} zur Aufgabe \"{{ placeholderValues.8 }}\" im Kurs \"{{ placeholderValues.0 }}\" hat eine neue Antwort: \"{{ placeholderValues.5 }}\"",
@@ -106,7 +106,14 @@
                 "tutorialGroupDeregistrationTutor": "Ein Student wurde von deiner Übungsgruppe abgemeldet",
                 "tutorialGroupMultipleRegistrationTutor": "Mehrere Studenten wurden zu deiner Übungsgruppe registriert",
                 "tutorialGroupAssigned": "Du wurdest zugeteilt eine Übungsgruppe zu leiten",
-                "tutorialGroupUnassigned": "Dir wurde die Leitung einer Übungsgruppe entzogen"
+                "tutorialGroupUnassigned": "Dir wurde die Leitung einer Übungsgruppe entzogen",
+                "messageReply": "Neue Antwort auf eine Nachricht in einer Unterhaltung",
+                "deleteChannel": "Kanal gelöscht",
+                "removeUserChannel": "Du wurdest aus einem Kanal entfernt",
+                "addUserChannel": "Du wurdest zu einem Kanal hinzugefügt",
+                "removeUserGroupChat": "Du wurdest aus einem Gruppenchat entfernt",
+                "addUserGroupChat": "Du wurdest zu einem Gruppenchat hinzugefügt",
+                "createGroupChat": "Neuer Gruppenchat"
             },
             "text": {
                 "newReplyForExercisePost": "Auf deinen Beitrag zur Aufgabe \"{{ placeholderValues.8 }}\" im Kurs \"{{ placeholderValues.0 }}\" wurde geantwortet: \"{{ placeholderValues.5 }}\"",
@@ -122,7 +129,14 @@
                 "tutorialGroupDeregistrationTutor": "Der Student {{ placeholderValues.1 }} wurde von deiner Übungsgruppe {{ placeholderValues.2 }} von {{ placeholderValues.3 }} abgemeldet.",
                 "tutorialGroupMultipleRegistrationTutor": "{{ placeholderValues.1 }} Studenten wurden für deine Übungsgruppe {{ placeholderValues.2 }} von {{ placeholderValues.3 }} registriert.",
                 "tutorialGroupAssigned": "Du wurdest von {{ placeholderValues.2 }} zugeteilt die Übungsgruppe {{ placeholderValues.1 }} zu leiten.",
-                "tutorialGroupUnassigned": "Dir wurde die Leitung von Übungsgruppe {{ placeholderValues.1 }} von {{ placeholderValues.2 }} entzogen."
+                "tutorialGroupUnassigned": "Dir wurde die Leitung von Übungsgruppe {{ placeholderValues.1 }} von {{ placeholderValues.2 }} entzogen.",
+                "messageReply": "Du hast eine neue Antwort auf eine Nachricht von {{ placeholderValues.6 }} im Kurs {{ placeholderValues.0 }}.",
+                "deleteChannel": "Der Kanal {{ placeholderValues.1 }} wurde von {{ placeholderValues.2 }} im Kurs {{ placeholderValues.0 }} gelöscht.",
+                "removeUserChannel": "Du wurdest von {{ placeholderValues.1 }} von {{ placeholderValues.2 }} im Kurs {{ placeholderValues.0 }} aus dem Kanal entfernt.",
+                "addUserChannel": "Du wurdest dem Kanal {{ placeholderValues.1 }} von {{ placeholderValues.2 }} im Kurs {{ placeholderValues.0 }} hinzugefügt.",
+                "removeUserGroupChat": "Du wurdest von {{ placeholderValues.1 }} im Kurs {{ placeholderValues.0 }} aus dem Gruppenchat entfernt.",
+                "addUserGroupChat": "Du wurdest von {{ placeholderValues.1 }} zu einem neuen Gruppenchat im Kurs {{ placeholderValues.0 }} hinzugefügt.",
+                "createGroupChat": "Du wurdest von {{ placeholderValues.1 }} zu einem neuen Gruppenchat im Kurs {{ placeholderValues.0 }} hinzugefügt."
             }
         },
         "tutorialGroupNotification": {
@@ -133,6 +147,16 @@
             "text": {
                 "tutorialGroupDeleted": "Die Übungsgruppe {{ placeholderValues.1 }} wurde gelöscht.",
                 "tutorialGroupUpdated": "Die Übungsgruppe {{ placeholderValues.1 }} wurde aktualisiert."
+            }
+        },
+        "conversationNotification": {
+            "title": {
+                "newMessage": "Neue Nachricht"
+            },
+            "text": {
+                "newMessageChannel": "Neue Nachricht im Kanal {{ placeholderValues.3 }} von {{ placeholderValues.4 }} im Kurs {{ placeholderValues.0 }}.",
+                "newMessageGroupChat": "Neue Nachricht im Gruppenchat von {{ placeholderValues.3 }} im Kurs {{ placeholderValues.0 }}.",
+                "newMessageDirect": "Neue Direktnachricht von {{ placeholderValues.3 }} im Kurs {{ placeholderValues.0 }}."
             }
         }
     }

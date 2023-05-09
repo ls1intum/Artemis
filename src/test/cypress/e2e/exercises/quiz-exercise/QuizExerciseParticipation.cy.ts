@@ -3,14 +3,7 @@ import { Course } from 'app/entities/course.model';
 import multipleChoiceQuizTemplate from '../../../fixtures/exercise/quiz/multiple_choice/template.json';
 import shortAnswerQuizTemplate from '../../../fixtures/exercise/quiz/short_answer/template.json';
 import { convertCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
-import {
-    courseManagementRequest,
-    courseOverview,
-    quizExerciseCreation,
-    quizExerciseDragAndDropQuiz,
-    quizExerciseMultipleChoice,
-    quizExerciseShortAnswerQuiz,
-} from '../../../support/artemis';
+import { courseManagementRequest, courseOverview, quizExerciseMultipleChoice, quizExerciseShortAnswerQuiz } from '../../../support/artemis';
 import { admin, studentOne } from '../../../support/users';
 
 // Common primitives
@@ -88,24 +81,24 @@ describe('Quiz Exercise Participation', () => {
     });
 
     // TODO: Fix the drag and drop
-    describe.skip('DnD Quiz participation', () => {
-        before('Create DND quiz', () => {
-            cy.login(admin, '/course-management/' + course.id + '/exercises');
-            cy.get('#create-quiz-button').should('be.visible').click();
-            quizExerciseCreation.setTitle('Cypress Quiz');
-            quizExerciseCreation.addDragAndDropQuestion('DnD Quiz');
-            quizExerciseCreation.saveQuiz().then((quizResponse) => {
-                quizExercise = quizResponse.response?.body;
-                courseManagementRequest.setQuizVisible(quizExercise.id!);
-                courseManagementRequest.startQuizNow(quizExercise.id!);
-            });
-        });
+    // describe.skip('DnD Quiz participation', () => {
+    //     before('Create DND quiz', () => {
+    //         cy.login(admin, '/course-management/' + course.id + '/exercises');
+    //         cy.get('#create-quiz-button').should('be.visible').click();
+    //         quizExerciseCreation.setTitle('Cypress Quiz');
+    //         quizExerciseCreation.addDragAndDropQuestion('DnD Quiz');
+    //         quizExerciseCreation.saveQuiz().then((quizResponse) => {
+    //             quizExercise = quizResponse.response?.body;
+    //             courseManagementRequest.setQuizVisible(quizExercise.id!);
+    //             courseManagementRequest.startQuizNow(quizExercise.id!);
+    //         });
+    //     });
 
-        it('Student can participate in DnD Quiz', () => {
-            cy.login(studentOne, '/courses/' + course.id);
-            courseOverview.startExercise(quizExercise.id!);
-            quizExerciseDragAndDropQuiz.dragItemIntoDragArea(0);
-            quizExerciseDragAndDropQuiz.submit();
-        });
-    });
+    //     it('Student can participate in DnD Quiz', () => {
+    //         cy.login(studentOne, '/courses/' + course.id);
+    //         courseOverview.startExercise(quizExercise.id!);
+    //         quizExerciseDragAndDropQuiz.dragItemIntoDragArea(0);
+    //         quizExerciseDragAndDropQuiz.submit();
+    //     });
+    // });
 });

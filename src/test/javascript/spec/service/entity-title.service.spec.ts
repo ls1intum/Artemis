@@ -3,7 +3,7 @@ import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { MockHttpService } from '../helpers/mocks/service/mock-http.service';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
-import * as Sentry from '@sentry/browser';
+import * as Sentry from '@sentry/angular-ivy';
 
 describe('EntityTitleService', () => {
     let service: EntityTitleService;

@@ -39,7 +39,19 @@
             },
             "manageLearningGoals": {
                 "title": "Competency Management",
+                "import": "Import competency",
                 "create": "Create competency"
+            },
+            "importCompetency": {
+                "title": "Import a Competency",
+                "search": "Search for a competency:",
+                "loading": "Loading...",
+                "table": {
+                    "title": "Title",
+                    "course": "Course",
+                    "semester": "Semester",
+                    "doSelect": "Select"
+                }
             },
             "createLearningGoal": {
                 "title": "Create a new competency",
@@ -117,14 +129,17 @@
             },
             "relation": {
                 "competencyRelations": "Competency Relations",
-                "tailLearningGoal": "Tail Learning Goal",
+                "tailLearningGoal": "Tail Competency",
                 "relationType": "Relation Type",
-                "headLearningGoal": "Head Learning Goal",
+                "headLearningGoal": "Head Competency",
                 "relates": "Relates",
                 "assumes": "Assumes",
                 "extends": "Extends",
                 "matches": "Matches",
-                "createRelation": "Create Relation"
+                "createRelation": "Create Relation",
+                "createsCircularRelation": "You can not create circular relations between competencies.",
+                "selfRelation": "You can not create a relation between a competency and itself.",
+                "relationAlreadyExists": "This relation already exists."
             }
         }
     }

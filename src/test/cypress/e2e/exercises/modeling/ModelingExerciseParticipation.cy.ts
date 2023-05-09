@@ -27,12 +27,11 @@ describe('Modeling Exercise Participation Spec', () => {
 
     it('Student can start and submit their model', () => {
         cy.login(studentOne, `/courses/${course.id}`);
-        cy.reloadUntilFound('#start-exercise-' + modelingExercise.id);
         courseOverview.startExercise(modelingExercise.id!);
-        cy.get('#open-exercise-' + modelingExercise.id).click();
-        modelingExerciseEditor.addComponentToModel(modelingExercise.id!, 1);
-        modelingExerciseEditor.addComponentToModel(modelingExercise.id!, 2);
-        modelingExerciseEditor.addComponentToModel(modelingExercise.id!, 3);
+        courseOverview.openRunningExercise(modelingExercise.id!);
+        modelingExerciseEditor.addComponentToModel(modelingExercise.id!, 1, false, 310, 320);
+        modelingExerciseEditor.addComponentToModel(modelingExercise.id!, 2, false, 730, 500);
+        modelingExerciseEditor.addComponentToModel(modelingExercise.id!, 3, false, 1000, 100);
         modelingExerciseEditor.submit();
     });
 });

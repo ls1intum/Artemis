@@ -182,7 +182,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     }
 
     /**
-     * Get all participations for an exercise with each latest result (determined by id).
+     * Get all participations for an exercise with each manual and latest results (determined by id).
      * If there is no latest result (= no result at all), the participation will still be included in the returned ResultSet, but will have an empty Result array.
      *
      * @param exerciseId Exercise id.
@@ -192,11 +192,13 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             SELECT DISTINCT p FROM StudentParticipation p
             LEFT JOIN FETCH p.results r
             LEFT JOIN FETCH r.submission s
+            LEFT JOIN FETCH p.submissions
             WHERE p.exercise.id = :#{#exerciseId}
                 AND (r.id = (SELECT max(id) FROM p.results)
+                    OR r.assessmentType <> 'AUTOMATIC'
                     OR r IS NULL)
             """)
-    Set<StudentParticipation> findByExerciseIdWithLatestResult(@Param("exerciseId") Long exerciseId);
+    Set<StudentParticipation> findByExerciseIdWithLatestAndManualResults(@Param("exerciseId") Long exerciseId);
 
     @Query("""
             SELECT DISTINCT p FROM StudentParticipation p

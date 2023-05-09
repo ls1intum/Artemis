@@ -5,9 +5,7 @@ import static org.assertj.core.api.Assertions.fail;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -358,5 +356,19 @@ class FileServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
         final Path expectedTargetFile = targetDir.resolve("jenkins").resolve("Makefile");
         assertThat(expectedTargetFile).exists().isNotEmptyFile();
+    }
+
+    @Test
+    void testIgnoreDirectoryFalsePositives(@TempDir Path targetDir) throws IOException {
+        final Path sourceDirectory = overridableBasePath.resolve("package.xcworkspace");
+        Files.createDirectories(sourceDirectory);
+
+        final Resource[] resources = resourceLoaderService.getResources(overridableBasePath);
+        assertThat(resources).isNotEmpty();
+
+        fileService.copyResources(resources, Path.of("templates"), targetDir, true);
+
+        final Path expectedTargetFile = targetDir.resolve("jenkins").resolve("package.xcworkspace");
+        assertThat(expectedTargetFile).doesNotExist();
     }
 }
