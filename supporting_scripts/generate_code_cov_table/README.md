@@ -35,7 +35,7 @@ venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 ```
 
-3. Configure environment variables by copying the `env.example` file to `.env`:
+3. Configure environment variables by copying the `env.example` file to `.env` (use with caution, security risk!):
 ```
 cp env.example .env
 ```
@@ -46,6 +46,14 @@ BAMBOO_PASSWORD=123456
 ```
 
 Alternatively, you can use the command line arguments `--username` (and `--password`) to pass the credentials.
+
+**Recommended for security, but not for convenience:**  
+Don't store the `BAMBOO_PASSWORD` in the `.env` file, but let the script prompt you for it.
+
+> **Note:**
+> Ideally, we would use a Bamboo API personal access token instead of the password, but this did not seem to work for
+> requesting the artifact URLs. The artifact also could not be downloaded directly from the Bamboo server, so we had to
+> use user authentication. (PAT would therefore only work partially for this scrip => User authentication is required)
 
 ## Usage
 
@@ -82,4 +90,4 @@ The output will be separated into client and server sections, each containing a 
 - Line Coverage: Percentage of lines covered by tests
 - Confirmation (assert/expect): A checkbox for manual confirmation of test coverage
 
-
+**You will have to manually adjust the confirmation column for each file!**

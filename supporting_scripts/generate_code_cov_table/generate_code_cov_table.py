@@ -30,7 +30,7 @@ def environ_or_required(key):
     )
 
 def get_latest_build_id(username, password, branch_name):
-    bamboo_branch_name = branch_name.replace("/", "-")
+    bamboo_branch_name = branch_name.replace("origin/", "").replace("/", "-")
     url = f"{base_url}/rest/api/latest/plan/{project_key}-{plan_key}/branch/{bamboo_branch_name}.json"
     response = requests.get(url, auth=(username, password))
     if response.status_code != 200:
@@ -50,7 +50,11 @@ def get_code_cov_report_url(username, password, key):
     url = f"{base_url}/rest/api/latest/result/{key}.json?expand=artifacts"
     response = requests.get(url, auth=(username, password))
     data = json.loads(response.content)
-    return data["artifacts"]["artifact"][1]["link"]["href"] # second artifact is the code coverage report
+    try:
+        return data["artifacts"]["artifact"][1]["link"]["href"] # second artifact is the code coverage report
+    except IndexError:
+        logging.info(f"Code coverage report not found for {key}, please wait for the tests to finish and try again")
+        sys.exit(1)
 
 def get_branch_name():
     repo = git.Repo(repo_path)
