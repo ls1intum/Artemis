@@ -157,6 +157,8 @@ describe('TextSubmissionAssessmentComponent', () => {
         textAssessmentService = TestBed.inject(TextAssessmentService);
         router = TestBed.inject(Router);
 
+        component['route'] = route();
+        component['activatedRoute'] = route();
         fixture.detectChanges();
     });
 
@@ -166,8 +168,6 @@ describe('TextSubmissionAssessmentComponent', () => {
 
     it('should create and set parameters correctly', async () => {
         expect(component).not.toBeNull();
-        component['route'] = route();
-        component['activatedRoute'] = route();
         await component.ngOnInit();
         expect(component.isTestRun).toBeFalse();
         expect(component.exerciseId).toBe(1);
@@ -226,21 +226,24 @@ describe('TextSubmissionAssessmentComponent', () => {
         expect(handleFeedbackStub).toHaveBeenCalledOnce();
     });
 
-    it('should display error when saving but assessment invalid', () => {
+    it('should display error when saving but assessment invalid', async () => {
         component.validateFeedback();
         const alertService = TestBed.inject(AlertService);
         const errorStub = jest.spyOn(alertService, 'error');
 
-        fixture.detectChanges();
+        await component.ngOnInit();
+
         component.save();
         expect(errorStub).toHaveBeenCalledWith('artemisApp.textAssessment.error.invalidAssessments');
     });
 
-    it('should display error when submitting but assessment invalid', () => {
+    it('should display error when submitting but assessment invalid', async () => {
         component.validateFeedback();
         const alertService = TestBed.inject(AlertService);
         const errorStub = jest.spyOn(alertService, 'error');
         component.result = getLatestSubmissionResult(submission);
+
+        await component.ngOnInit();
 
         component.submit();
         expect(errorStub).toHaveBeenCalledWith('artemisApp.textAssessment.error.invalidAssessments');
@@ -260,6 +263,7 @@ describe('TextSubmissionAssessmentComponent', () => {
         const errorStub = jest.spyOn(alertService, 'error');
 
         component.updateAssessmentAfterComplaint(assessmentAfterComplaint);
+
         expect(errorStub).toHaveBeenCalledWith('artemisApp.textAssessment.error.invalidAssessments');
         expect(onSuccessCalled).toBeFalse();
         expect(onErrorCalled).toBeTrue();
