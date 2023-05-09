@@ -25,7 +25,7 @@ export class ProgrammingExerciseLifecycleComponent implements OnInit, OnChanges 
     faUserCheck = faUserCheck;
     faUserSlash = faUserSlash;
 
-    constructor(private translator: TranslateService, private exerciseService: ExerciseService) {}
+    constructor(private translateService: TranslateService, private exerciseService: ExerciseService) {}
 
     /**
      * If the programming exercise does not have an id, set the assessment Type to AUTOMATIC
@@ -136,14 +136,14 @@ export class ProgrammingExerciseLifecycleComponent implements OnInit, OnChanges 
      * @param dueDate the new dueDate
      */
     private updateDueDate(dueDate: dayjs.Dayjs) {
-        alert(this.translator.instant('artemisApp.programmingExercise.timeline.alertNewDueDate'));
+        alert(this.translateService.instant('artemisApp.programmingExercise.timeline.alertNewDueDate'));
         this.exercise.dueDate = dueDate;
 
         // If the new due date is after the "After Due Date", then we have to set the "After Due Date" to the new due date
         const afterDue = this.exercise.buildAndTestStudentSubmissionsAfterDueDate;
         if (afterDue && dueDate.isAfter(afterDue)) {
             this.exercise.buildAndTestStudentSubmissionsAfterDueDate = dueDate;
-            alert(this.translator.instant('artemisApp.programmingExercise.timeline.alertNewAfterDueDate'));
+            alert(this.translateService.instant('artemisApp.programmingExercise.timeline.alertNewAfterDueDate'));
         }
     }
 
@@ -160,7 +160,7 @@ export class ProgrammingExerciseLifecycleComponent implements OnInit, OnChanges 
                 newReleaseOrDueDate && dayjs(newReleaseOrDueDate).isSame(this.exercise.dueDate)
                     ? 'artemisApp.programmingExercise.timeline.alertNewExampleSolutionPublicationDateAsDueDate'
                     : 'artemisApp.programmingExercise.timeline.alertNewExampleSolutionPublicationDateAsReleaseDate';
-            alert(this.translator.instant(message));
+            alert(this.translateService.instant(message));
             this.exercise.exampleSolutionPublicationDate = newReleaseOrDueDate;
             if (!newReleaseOrDueDate) {
                 this.exercise.releaseTestsWithExampleSolution = false;
