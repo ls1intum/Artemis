@@ -77,19 +77,18 @@ function deepMerge(target, source) {
 
     for (const key in source) {
         // prevent prototype pollution
-        if (Object.prototype.hasOwnProperty.call(source, key)) {
-            const targetValue = target[key];
-            const sourceValue = source[key];
+        if (!source.hasOwnProperty(key)) continue;
+        if (key === "__proto__" || key === "constructor") continue;
 
-            if (isObject(sourceValue)) {
-                target[key] = deepMerge(targetValue || {}, sourceValue);
-            } else {
-                target[key] = sourceValue;
-            }
+        const targetValue = target[key];
+        const sourceValue = source[key];
+
+        if (isObject(sourceValue)) {
+            target[key] = deepMerge(targetValue || {}, sourceValue);
+        } else {
+            target[key] = sourceValue;
         }
     }
-
-    return target;
 }
 
 
@@ -102,7 +101,8 @@ for (const group of groups) {
 
         const mergedContent = files.reduce((acc, file) => {
             const content = JSON.parse(fs.readFileSync(path.resolve(group.folder, file)).toString());
-            return deepMerge(acc, content);
+            deepMerge(acc, content);
+            return acc;
         });
 
         await fs.promises.writeFile(group.output, JSON.stringify(mergedContent));
