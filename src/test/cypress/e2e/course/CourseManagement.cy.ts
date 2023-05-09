@@ -124,8 +124,6 @@ describe('Course management', () => {
             courseCreation.setEnableMoreFeedback(courseData.enableMoreFeedback);
             courseCreation.setMaxRequestMoreFeedbackTimeDays(courseData.maxRequestMoreFeedbackTimeDays);
             courseCreation.setOnlineCourse(courseData.onlineCourse);
-            courseCreation.setPresentationScoreEnabled(courseData.presentationScoreEnabled);
-            courseCreation.setPresentationScore(courseData.presentationScore);
             courseCreation.setCustomizeGroupNames(courseData.customizeGroupNames);
             courseCreation.submit().then((request: Interception) => {
                 const courseBody = request.response!.body;
@@ -145,7 +143,6 @@ describe('Course management', () => {
                 expect(courseBody.maxComplaintTimeDays).to.eq(courseData.maxComplaintTimeDays);
                 expect(courseBody.requestMoreFeedbackEnabled).to.eq(courseData.enableMoreFeedback);
                 expect(courseBody.onlineCourse).to.eq(courseData.onlineCourse);
-                expect(courseBody.presentationScore).to.eq(courseData.presentationScore);
                 expect(courseBody.studentGroupName).to.eq(`artemis-${courseData.shortName}-students`);
                 expect(courseBody.editorGroupName).to.eq(`artemis-${courseData.shortName}-editors`);
                 expect(courseBody.instructorGroupName).to.eq(`artemis-${courseData.shortName}-instructors`);
@@ -165,8 +162,6 @@ describe('Course management', () => {
             courseManagement.getCourseProgrammingLanguage().contains(courseData.programmingLanguage);
             courseManagement.getCourseTestCourse().contains(convertBooleanToYesNo(courseData.testCourse));
             courseManagement.getCourseOnlineCourse().contains(convertBooleanToYesNo(courseData.onlineCourse));
-            courseManagement.getCoursePresentationScoreEnabled().contains(convertBooleanToYesNo(courseData.presentationScoreEnabled));
-            courseManagement.getCoursePresentationScore().contains(courseData.presentationScore);
             courseManagement.getCourseMaxComplaints().contains(courseData.maxComplaints);
             courseManagement.getCourseMaxTeamComplaints().contains(courseData.maxTeamComplaints);
             courseManagement.getMaxComplaintTimeDays().contains(courseData.maxComplaintTimeDays);
