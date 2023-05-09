@@ -114,10 +114,10 @@ public interface LearningGoalRepository extends JpaRepository<LearningGoal, Long
     Set<LearningGoal> findPrerequisitesByCourseId(@Param("courseId") Long courseId);
 
     /**
-     * Query which fetches all learning gaols for which the user is editor or instructor in the course and
+     * Query which fetches all competencies for which the user is editor or instructor in the course and
      * matching the search criteria.
      *
-     * @param partialTitle       learning gaol title search term
+     * @param partialTitle       competency title search term
      * @param partialCourseTitle course title search term
      * @param groups             user groups
      * @param pageable           Pageable
