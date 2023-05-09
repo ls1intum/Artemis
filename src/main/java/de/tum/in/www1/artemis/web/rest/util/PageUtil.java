@@ -30,7 +30,7 @@ public class PageUtil {
     }
 
     @NotNull
-    public static PageRequest createLearningGoalPageRequest(PageableSearchDTO<String> search) {
+    public static PageRequest createCompetencyPageRequest(PageableSearchDTO<String> search) {
         var sortOptions = Sort.by(LearningGoal.LearningGoalSearchColumn.valueOf(search.getSortedColumn()).getMappedColumnName());
         sortOptions = search.getSortingOrder() == SortingOrder.ASCENDING ? sortOptions.ascending() : sortOptions.descending();
         return PageRequest.of(search.getPage() - 1, search.getPageSize(), sortOptions);

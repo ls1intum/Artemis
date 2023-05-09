@@ -26,15 +26,15 @@ public class LectureUnitService {
 
     private final LectureRepository lectureRepository;
 
-    private final LearningGoalRepository learningGoalRepository;
+    private final LearningGoalRepository competencyRepository;
 
     private final LectureUnitCompletionRepository lectureUnitCompletionRepository;
 
-    public LectureUnitService(LectureUnitRepository lectureUnitRepository, LectureRepository lectureRepository, LearningGoalRepository learningGoalRepository,
+    public LectureUnitService(LectureUnitRepository lectureUnitRepository, LectureRepository lectureRepository, LearningGoalRepository competencyRepository,
             LectureUnitCompletionRepository lectureUnitCompletionRepository) {
         this.lectureUnitRepository = lectureUnitRepository;
         this.lectureRepository = lectureRepository;
-        this.learningGoalRepository = learningGoalRepository;
+        this.competencyRepository = competencyRepository;
         this.lectureUnitCompletionRepository = lectureUnitCompletionRepository;
     }
 
@@ -79,12 +79,12 @@ public class LectureUnitService {
         LectureUnit lectureUnitToDelete = lectureUnitRepository.findByIdWithLearningGoalsElseThrow(lectureUnit.getId());
 
         if (!(lectureUnitToDelete instanceof ExerciseUnit)) {
-            // update associated learning goals
-            Set<LearningGoal> learningGoals = lectureUnitToDelete.getCompetencies();
-            learningGoalRepository.saveAll(learningGoals.stream().map(learningGoal -> {
-                learningGoal = learningGoalRepository.findByIdWithLectureUnitsElseThrow(learningGoal.getId());
-                learningGoal.getLectureUnits().remove(lectureUnitToDelete);
-                return learningGoal;
+            // update associated competencies
+            Set<LearningGoal> competencies = lectureUnitToDelete.getCompetencies();
+            competencyRepository.saveAll(competencies.stream().map(competency -> {
+                competency = competencyRepository.findByIdWithLectureUnitsElseThrow(competency.getId());
+                competency.getLectureUnits().remove(lectureUnitToDelete);
+                return competency;
             }).toList());
         }
 
