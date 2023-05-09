@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
@@ -244,6 +245,22 @@ public class ConversationService {
     public void broadcastOnConversationMembershipChannel(Course course, MetisCrudAction metisCrudAction, Conversation conversation, Set<User> usersToMessage) {
         String conversationParticipantTopicName = getConversationParticipantTopicName(course.getId());
         usersToMessage.forEach(user -> sendToConversationMembershipChannel(metisCrudAction, conversation, user, conversationParticipantTopicName));
+    }
+
+    /**
+     * Deregister all clients from the exercise channel of the given exercise
+     *
+     * @param exercise the exercise that is being deleted
+     */
+    public void deregisterAllClientsFromExerciseChannel(Exercise exercise) {
+        if (exercise.isCourseExercise() && exercise.getChannel() != null) {
+            // deregister all clients from the channel
+            Channel originalChannel = channelRepository.findByIdElseThrow(exercise.getChannel().getId());
+
+            Set<ConversationParticipant> channelParticipants = conversationParticipantRepository.findConversationParticipantByConversationId(originalChannel.getId());
+            Set<User> usersToBeDeregistered = channelParticipants.stream().map(ConversationParticipant::getUser).collect(Collectors.toSet());
+            broadcastOnConversationMembershipChannel(originalChannel.getCourse(), MetisCrudAction.DELETE, originalChannel, usersToBeDeregistered);
+        }
     }
 
     @NotNull
