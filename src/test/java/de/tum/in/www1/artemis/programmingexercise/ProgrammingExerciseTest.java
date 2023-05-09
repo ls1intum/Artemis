@@ -3,6 +3,8 @@ package de.tum.in.www1.artemis.programmingexercise;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -21,8 +23,10 @@ import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
@@ -189,6 +193,39 @@ class ProgrammingExerciseTest extends AbstractSpringIntegrationBambooBitbucketJi
         }
         else {
             assertThat(latestValidSubmission).isEqualTo(submission);
+        }
+    }
+
+    @Test
+    void testFindRelevantParticipations() {
+        ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(programmingExerciseId);
+
+        StudentParticipation gradedParticipationInitialized = new StudentParticipation();
+        gradedParticipationInitialized.setInitializationState(InitializationState.INITIALIZED);
+        gradedParticipationInitialized.setExercise(exercise);
+        StudentParticipation gradedParticipationFinished = new StudentParticipation();
+        gradedParticipationFinished.setInitializationState(InitializationState.FINISHED);
+        gradedParticipationFinished.setExercise(exercise);
+        StudentParticipation practiceParticipation = new StudentParticipation();
+        practiceParticipation.setTestRun(true);
+        practiceParticipation.setExercise(exercise);
+        List<StudentParticipation> allParticipations = List.of(gradedParticipationInitialized, gradedParticipationFinished, practiceParticipation);
+
+        // Create all possible combinations of the entries in allParticipations
+        for (int i = 0; i < 2 << allParticipations.size(); i++) {
+            List<StudentParticipation> participationsToTest = new ArrayList<>();
+            for (int j = 0; j < allParticipations.size(); j++) {
+                if (((i >> j) & 1) == 1) {
+                    participationsToTest.add(allParticipations.get(j));
+                }
+            }
+            List<StudentParticipation> expectedParticipations = new ArrayList<>(participationsToTest);
+            if (expectedParticipations.contains(gradedParticipationInitialized)) {
+                expectedParticipations.remove(gradedParticipationFinished);
+            }
+
+            List<StudentParticipation> relevantParticipations = exercise.findRelevantParticipation(participationsToTest);
+            assertThat(relevantParticipations).containsExactlyElementsOf(expectedParticipations);
         }
     }
 }
