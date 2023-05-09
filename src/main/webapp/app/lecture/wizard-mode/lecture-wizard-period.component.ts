@@ -9,7 +9,7 @@ export class LectureUpdateWizardPeriodComponent {
     @Input() currentStep: number;
     @Input() lecture: Lecture;
     @Input() isEndDateBeforeStartDate: boolean;
-    @Output() valueChange: EventEmitter<boolean> = new EventEmitter();
+    @Output() valueValidity: EventEmitter<boolean> = new EventEmitter();
 
     isInvalidStartDate = false;
     isInvalidEndDate = false;
@@ -21,9 +21,9 @@ export class LectureUpdateWizardPeriodComponent {
      */
     emitDateConfigurationValidity() {
         if (this.isInvalidStartDate || this.isInvalidEndDate) {
-            this.valueChange.emit(true);
+            this.valueValidity.emit(true);
         } else {
-            this.valueChange.emit(false);
+            this.valueValidity.emit(false);
         }
     }
 

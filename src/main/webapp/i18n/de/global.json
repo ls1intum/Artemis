@@ -301,7 +301,7 @@
             "datetimelocal": "Dieses Feld muss eine Datums- und Zeitangabe enthalten.",
             "patternLogin": "Dieses Feld darf nur Buchstaben, Ziffern und E-Mail-Adressen enthalten.",
             "invalidPattern": "Dieses Feld beinhaltet ein ungültiges E-Mail Muster.",
-            "invalidDate": "Dieses Feld beinhaltet ein ungültiges Datum. Das Datum soll MM TT JJ oder ähnliches Format haben."
+            "invalidDate": "Dieses Feld beinhaltet ein ungültiges Datum. Das Datum soll das MM/DD/YYYY HH:mm Format haben."
         },
         "timeZoneWarning": "Du befindest dich aktuell in der {{ timeZone }} Zeitzone."
     },
