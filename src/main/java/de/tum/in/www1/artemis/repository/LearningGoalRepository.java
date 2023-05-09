@@ -133,10 +133,10 @@ public interface LearningGoalRepository extends JpaRepository<LearningGoal, Long
             @Param("groups") Set<String> groups, Pageable pageable);
 
     /**
-     * Returns the title of the learning goal with the given id.
+     * Returns the title of the competency with the given id.
      *
-     * @param learningGoalId the id of the learning goal
-     * @return the name/title of the learning goal or null if the learning goal does not exist
+     * @param learningGoalId the id of the competency
+     * @return the name/title of the competency or null if the competency does not exist
      */
     @Query("""
             SELECT lg.title
