@@ -83,7 +83,7 @@ describe('Course Group Component', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        jest.clearAllMocks();
     });
 
     it('should initialize', () => {

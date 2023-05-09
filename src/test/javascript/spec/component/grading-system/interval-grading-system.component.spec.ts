@@ -19,11 +19,9 @@ import { MockCourseManagementService } from '../../helpers/mocks/service/mock-co
 import { ModePickerComponent } from 'app/exercises/shared/mode-picker/mode-picker.component';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 
-const generateCsv = jest.fn();
-
 jest.mock('export-to-csv', () => ({
     ExportToCsv: jest.fn().mockImplementation(() => ({
-        generateCsv,
+        generateCsv: jest.fn(),
     })),
 }));
 
