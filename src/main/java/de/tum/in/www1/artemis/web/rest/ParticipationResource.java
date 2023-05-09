@@ -417,6 +417,11 @@ public class ParticipationResource {
                 && participation.getExercise().getPresentationScoreEnabled()) {
             Optional<GradingScale> gradingScale = gradingScaleService.findGradingScaleByCourseId(participation.getExercise().getCourseViaExerciseGroupOrCourseMember().getId());
 
+            // Presentation Score is only valid for non practice participations
+            if (participation.isTestRun()) {
+                throw new BadRequestAlertException("Presentation score is not allowed for practice participations", ENTITY_NAME, "presentationScoreInvalid");
+            }
+
             // Validity of presentationScore for basic presentations
             if (course.getPresentationScore() != null && course.getPresentationScore() > 0) {
                 if (participation.getPresentationScore() >= 1.) {
