@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
 import { ProgrammingExerciseTestCase, Visibility } from 'app/entities/programming-exercise-test-case.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { TestCaseStatsMap } from 'app/entities/programming-exercise-test-case-statistics.model';
@@ -104,7 +104,7 @@ enum TestCaseBarTitle {
         </div>
     `,
 })
-export class TestCaseDistributionChartComponent extends ProgrammingGradingChartsDirective implements OnChanges {
+export class TestCaseDistributionChartComponent extends ProgrammingGradingChartsDirective implements OnInit, OnChanges {
     @Input() testCases: ProgrammingExerciseTestCase[];
     @Input() testCaseStatsMap?: TestCaseStatsMap;
     @Input() totalParticipations?: number;
@@ -134,6 +134,10 @@ export class TestCaseDistributionChartComponent extends ProgrammingGradingCharts
         this.translateService.onLangChange.subscribe(() => {
             this.updateTranslation();
         });
+    }
+
+    ngOnInit(): void {
+        this.updateTranslation();
     }
 
     ngOnChanges(): void {

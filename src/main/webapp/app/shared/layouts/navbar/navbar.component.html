@@ -193,6 +193,12 @@
                         </a>
                     </li>
                     <li>
+                        <a class="dropdown-item" routerLink="/admin/privacy-statement" routerLinkActive="active" (click)="collapseNavbar()">
+                            <fa-icon [icon]="faLock" [fixedWidth]="true"></fa-icon>
+                            <span jhiTranslate="global.menu.admin.privacyStatement">Privacy statement</span>
+                        </a>
+                    </li>
+                    <li>
                         <a class="dropdown-item" routerLink="/admin/health" routerLinkActive="active" (click)="collapseNavbar()">
                             <fa-icon [icon]="faHeart" [fixedWidth]="true"></fa-icon>
                             <span jhiTranslate="global.menu.admin.health">Health</span>

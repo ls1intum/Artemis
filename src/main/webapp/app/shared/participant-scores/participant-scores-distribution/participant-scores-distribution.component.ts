@@ -68,6 +68,8 @@ export class ParticipantScoresDistributionComponent implements OnInit, OnChanges
     }
 
     ngOnInit() {
+        this.setupAxisLabels();
+
         this.translateService.onLangChange.subscribe(() => {
             this.setupAxisLabels();
         });
