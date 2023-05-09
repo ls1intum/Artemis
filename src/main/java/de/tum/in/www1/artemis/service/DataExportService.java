@@ -49,6 +49,8 @@ public class DataExportService {
 
     private static final String PDF_FILE_EXTENSION = ".pdf";
 
+    private static final String TXT_FILE_EXTENSION = ".txt";
+
     private final Logger log = LoggerFactory.getLogger(DataExportService.class);
 
     @Value("${artemis.data-export-path}")
@@ -184,7 +186,7 @@ public class DataExportService {
 
         for (var course : courses) {
             Path courseDir = Files.createDirectory(workingDirectory.resolve("course_" + course.getShortName()));
-            Set<Exercise> exercises = exerciseRepository.getAllExercisesUserParticipatedInWithEagerParticipationsSubmissionsResultsByCourseIdAndUserId(course.getId(),
+            Set<Exercise> exercises = exerciseRepository.getAllExercisesUserParticipatedInWithEagerParticipationsSubmissionsResultsFeedbacksByCourseIdAndUserId(course.getId(),
                     user.getId());
             Set<ProgrammingExercise> programmingExercises = exercises.stream().filter(exercise -> exercise instanceof ProgrammingExercise)
                     .map(exercise -> (ProgrammingExercise) exercise).collect(Collectors.toSet());
@@ -295,7 +297,7 @@ public class DataExportService {
                     createCsvForQuizAnswers((QuizExercise) exercise, participation, exerciseDir);
                 }
 
-                createResultsCsvFile(submission, exerciseDir);
+                createResultsTxtFile(submission, exerciseDir);
             }
         }
     }
@@ -443,19 +445,28 @@ public class DataExportService {
         }
     }
 
-    private void createResultsCsvFile(Submission submission, Path outputDir) throws IOException {
-        String[] headers = new String[] { "id", "exercise ", "submission id", "assessment type", "score", "complaint for result" };
-        CSVFormat csvFormat = CSVFormat.DEFAULT.builder().setHeader(headers).build();
-        try (final CSVPrinter printer = new CSVPrinter(Files.newBufferedWriter(outputDir.resolve("results_submission_" + submission.getId() + CSV_FILE_EXTENSION)), csvFormat)) {
-            for (var result : submission.getResults()) {
-                if (result != null) {
-                    printer.printRecord(result.getId(), result.getSubmission().getParticipation().getExercise().getTitle(), result.getSubmission().getId(),
-                            result.getAssessmentType(), result.getScore(), result.hasComplaint());
+    private void createResultsTxtFile(Submission submission, Path outputDir) throws IOException {
+        // String[] headers = new String[] { "id", "exercise ", "submission id", "assessment type", "score", "complaint for result" };
+        // CSVFormat csvFormat = CSVFormat.DEFAULT.builder().setHeader(headers).build();
+        // try (final CSVPrinter printer = new CSVPrinter(Files.newBufferedWriter(outputDir.resolve("results_submission_" + submission.getId() + CSV_FILE_EXTENSION)), csvFormat)) {
+        // for (var result : submission.getResults()) {
+        // if (result != null) {
+        // printer.printRecord(result.getId(), result.getSubmission().getParticipation().getExercise().getTitle(), result.getSubmission().getId(),
+        // result.getAssessmentType(), result.getScore(), result.hasComplaint());
+        // }
+        //
+        // }
+        // printer.flush();
+        StringBuilder resultScoreAndFeddbacks = new StringBuilder();
+        for (var result : submission.getResults()) {
+            if (result != null) {
+                resultScoreAndFeddbacks.append("Score of submission: ").append(result.getScore()).append("\n");
+                for (var feedback : result.getFeedbacks()) {
+                    resultScoreAndFeddbacks.append("Feedback: ").append(feedback.getText()).append("\t").append(feedback.getDetailText()).append("\t").append(feedback.getCredits())
+                            .append("\n");
                 }
-
+                Files.writeString(outputDir.resolve("results_submission_" + submission.getId() + TXT_FILE_EXTENSION), resultScoreAndFeddbacks);
             }
-            printer.flush();
-
         }
 
     }
