@@ -503,24 +503,6 @@ describe('Exercise Service', () => {
         });
     });
 
-    it('should send a cleanup request', () => {
-        const exerciseId = 126;
-
-        service.cleanup(exerciseId, true).subscribe();
-
-        httpMock.expectOne({
-            url: `${SERVER_API_URL}api/exercises/${exerciseId}/cleanup?deleteRepositories=true`,
-            method: 'DELETE',
-        });
-
-        service.cleanup(exerciseId, false).subscribe();
-
-        httpMock.expectOne({
-            url: `${SERVER_API_URL}api/exercises/${exerciseId}/cleanup?deleteRepositories=false`,
-            method: 'DELETE',
-        });
-    });
-
     it('should toggle second correction', () => {
         const exerciseId = 127;
 

@@ -5,7 +5,7 @@ import { Observable } from 'rxjs';
 import { GradeDTO, GradeStep, GradeStepsDTO } from 'app/entities/grade-step.model';
 import { map } from 'rxjs/operators';
 import { PageableSearch, SearchResult } from 'app/shared/table/pageable-table';
-import { captureException } from '@sentry/angular';
+import { captureException } from '@sentry/angular-ivy';
 import { Course } from 'app/entities/course.model';
 
 export type EntityResponseType = HttpResponse<GradingScale>;

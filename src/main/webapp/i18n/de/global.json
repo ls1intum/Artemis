@@ -288,6 +288,9 @@
         "exportRepos": {
             "title": "Herunterladen bestätigen"
         },
+        "resetProgrammingExercise": {
+            "title": "Programmieraufgabe zurücksetzen"
+        },
         "validation": {
             "required": "Dieses Feld wird benötigt.",
             "minlength": "Dieses Feld muss mind. {{min}} Zeichen lang sein.",

@@ -3,7 +3,7 @@ import { TestCaseStats } from 'app/entities/programming-exercise-test-case-stati
 import { ProgrammingExerciseTestCase, ProgrammingExerciseTestCaseType, Visibility } from 'app/entities/programming-exercise-test-case.model';
 
 export class ProgrammingExerciseTask extends ProgrammingExerciseServerSideTask {
-    testCases: ProgrammingExerciseTestCase[];
+    declare testCases: ProgrammingExerciseTestCase[];
     weight?: number;
     bonusMultiplier?: number;
     bonusPoints?: number;

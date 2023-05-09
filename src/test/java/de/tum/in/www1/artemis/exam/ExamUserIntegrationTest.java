@@ -166,7 +166,7 @@ class ExamUserIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
         var imageUploadResponse = request.getMvc().perform(buildUploadExamUserImages(course1.getId(), exam1.getId())).andExpect(status().isOk()).andReturn();
         ExamUsersNotFoundDTO examUsersNotFoundDTO = mapper.readValue(imageUploadResponse.getResponse().getContentAsString(), ExamUsersNotFoundDTO.class);
 
-        assertThat(examUsersNotFoundDTO.numberOfUsersNotFound()).isEqualTo(0);
+        assertThat(examUsersNotFoundDTO.numberOfUsersNotFound()).isZero();
 
         // check if exam users have been updated with the images
         Exam exam = examRepository.findByIdWithExamUsersElseThrow(exam1.getId());
