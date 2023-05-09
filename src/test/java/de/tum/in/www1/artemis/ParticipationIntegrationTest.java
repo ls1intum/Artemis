@@ -6,6 +6,7 @@ import static org.mockito.Mockito.*;
 import java.net.URI;
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.AfterEach;
@@ -97,7 +98,7 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
     @BeforeEach
     void initTestCase() throws Exception {
-        database.addUsers(TEST_PREFIX, 2, 2, 0, 2);
+        database.addUsers(TEST_PREFIX, 4, 2, 0, 2);
 
         // Add users that are not in the course/exercise
         database.createAndSaveUser(TEST_PREFIX + "student3");
@@ -554,22 +555,46 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getAllParticipationsForExercise_withLatestResults() throws Exception {
+        List<User> students = IntStream.range(1, 5).mapToObj(i -> database.getUserByLogin(TEST_PREFIX + "student" + i)).toList();
         database.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student1");
-        var participation = database.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student2");
-        database.addResultToParticipation(null, null, participation);
-        var result = ModelFactory.generateResult(true, 70D).participation(participation);
-        resultRepository.save(result);
-        StudentParticipation testParticipation = database.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student3");
+
+        StudentParticipation participation = database.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student2");
+        Result result1 = database.createSubmissionAndResult(participation, 42, true);
+        Result result2 = database.addResultToParticipation(participation, result1.getSubmission());
+        result2.setAssessmentType(AssessmentType.MANUAL);
+        resultRepository.save(result2);
+        Result result3 = database.addResultToParticipation(participation, result1.getSubmission());
+
+        Submission onlySubmissioin = database.createSubmissionForTextExercise(textExercise, students.get(2), "asdf");
+
+        StudentParticipation testParticipation = database.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student4");
         testParticipation.setTestRun(true);
         participationRepo.save(testParticipation);
+
         final var params = new LinkedMultiValueMap<String, String>();
         params.add("withLatestResults", "true");
         var participations = request.getList("/api/exercises/" + textExercise.getId() + "/participations", HttpStatus.OK, StudentParticipation.class, params);
-        assertThat(participations).as("Exactly 3 participations are returned").hasSize(3).as("Only participation that has student are returned")
-                .allMatch(p -> p.getStudent().isPresent()).as("No submissions should exist for participations")
-                .allMatch(p -> p.getSubmissionCount() == null || p.getSubmissionCount() == 0);
-        var participationWithResult = participations.stream().filter(p -> p.getParticipant().equals(database.getUserByLogin(TEST_PREFIX + "student2"))).findFirst().get();
-        assertThat(participationWithResult.getResults()).hasSize(1).contains(result);
+        assertThat(participations).as("Exactly 3 participations are returned").hasSize(4).as("Only participation that has student are returned")
+                .allMatch(p -> p.getStudent().isPresent());
+        StudentParticipation receivedOnlyParticipation = participations.stream().filter(p -> p.getParticipant().equals(students.get(0))).findFirst().get();
+        StudentParticipation receivedParticipationWithResult = participations.stream().filter(p -> p.getParticipant().equals(students.get(1))).findFirst().get();
+        StudentParticipation receivedParticipationWithOnlySubmission = participations.stream().filter(p -> p.getParticipant().equals(students.get(2))).findFirst().get();
+        StudentParticipation receivedTestParticipation = participations.stream().filter(p -> p.getParticipant().equals(students.get(3))).findFirst().get();
+        assertThat(receivedOnlyParticipation.getResults()).isEmpty();
+        assertThat(receivedOnlyParticipation.getSubmissions()).isEmpty();
+        assertThat(receivedOnlyParticipation.getSubmissionCount()).isEqualTo(0);
+
+        assertThat(receivedParticipationWithResult.getResults()).containsExactly(result2, result3);
+        assertThat(receivedParticipationWithResult.getSubmissions()).isEmpty();
+        assertThat(receivedParticipationWithResult.getSubmissionCount()).isEqualTo(1);
+
+        assertThat(receivedParticipationWithOnlySubmission.getResults()).isEmpty();
+        assertThat(receivedParticipationWithOnlySubmission.getSubmissions()).containsExactly(onlySubmissioin);
+        assertThat(receivedParticipationWithOnlySubmission.getSubmissionCount()).isEqualTo(1);
+
+        assertThat(receivedTestParticipation.getResults()).isEmpty();
+        assertThat(receivedTestParticipation.getSubmissions()).isEmpty();
+        assertThat(receivedTestParticipation.getSubmissionCount()).isEqualTo(0);
     }
 
     @Test
