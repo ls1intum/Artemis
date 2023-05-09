@@ -89,6 +89,8 @@ function deepMerge(target, source) {
             target[key] = sourceValue;
         }
     }
+
+    return target;
 }
 
 
@@ -101,8 +103,7 @@ for (const group of groups) {
 
         const mergedContent = files.reduce((acc, file) => {
             const content = JSON.parse(fs.readFileSync(path.resolve(group.folder, file)).toString());
-            deepMerge(acc, content);
-            return acc;
+            return deepMerge(acc, content);
         });
 
         await fs.promises.writeFile(group.output, JSON.stringify(mergedContent));
