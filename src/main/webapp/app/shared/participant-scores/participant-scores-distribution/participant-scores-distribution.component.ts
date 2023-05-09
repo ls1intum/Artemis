@@ -47,8 +47,8 @@ export class ParticipantScoresDistributionComponent implements OnInit, OnChanges
     height = 500;
 
     showYAxisLabel = true;
-    yAxisLabel = this.translateService.instant('artemisApp.examScores.yAxes');
-    xAxisLabel = this.translateService.instant('artemisApp.examScores.xAxes');
+    yAxisLabel: string;
+    xAxisLabel: string;
 
     helpIconTooltip: string;
 
@@ -62,7 +62,10 @@ export class ParticipantScoresDistributionComponent implements OnInit, OnChanges
     } as Color;
     backupDomain: string[];
 
-    constructor(private gradingSystemService: GradingSystemService, private translateService: TranslateService) {}
+    constructor(private gradingSystemService: GradingSystemService, private translateService: TranslateService) {
+        this.yAxisLabel = this.translateService.instant('artemisApp.examScores.yAxes');
+        this.xAxisLabel = this.translateService.instant('artemisApp.examScores.xAxes');
+    }
 
     ngOnInit() {
         this.translateService.onLangChange.subscribe(() => {
