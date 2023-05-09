@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
 import java.util.HashMap;
+import java.util.List;
 
 import javax.validation.constraints.NotNull;
 
@@ -49,6 +50,7 @@ public class FileUploadExerciseImportService extends ExerciseImportService {
         if (newExercise.isCourseExercise()) {
             Channel createdChannel = channelService.createExerciseChannel(newExercise);
             newExercise.setChannel(createdChannel);
+            channelService.registerUsersToChannelAsynchronously(true, true, true, List.of(), createdChannel.getCourse(), createdChannel);
         }
 
         return fileUploadExerciseRepository.save(newExercise);

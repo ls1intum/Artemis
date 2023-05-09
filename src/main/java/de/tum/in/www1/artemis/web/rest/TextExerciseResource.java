@@ -170,6 +170,7 @@ public class TextExerciseResource {
         if (textExercise.isCourseExercise()) {
             Channel createdChannel = channelService.createExerciseChannel(textExercise);
             textExercise.setChannel(createdChannel);
+            channelService.registerUsersToChannelAsynchronously(true, true, true, List.of(), createdChannel.getCourse(), createdChannel);
         }
         TextExercise result = textExerciseRepository.save(textExercise);
         instanceMessageSendService.sendTextExerciseSchedule(result.getId());

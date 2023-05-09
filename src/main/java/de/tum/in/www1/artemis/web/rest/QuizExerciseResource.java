@@ -158,6 +158,7 @@ public class QuizExerciseResource {
         if (quizExercise.isCourseExercise()) {
             Channel createdChannel = channelService.createExerciseChannel(quizExercise);
             quizExercise.setChannel(createdChannel);
+            channelService.registerUsersToChannelAsynchronously(true, true, true, List.of(), createdChannel.getCourse(), createdChannel);
         }
 
         return ResponseEntity.created(new URI("/api/quiz-exercises/" + quizExercise.getId()))

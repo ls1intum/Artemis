@@ -95,6 +95,7 @@ public class LectureResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, lecture.getCourse(), null);
 
         Channel createdChannel = channelService.createLectureChannel(lecture);
+        channelService.registerUsersToChannelAsynchronously(true, true, true, List.of(), lecture.getCourse(), createdChannel);
 
         lecture.setChannel(createdChannel);
         Lecture savedLecture = lectureRepository.save(lecture);

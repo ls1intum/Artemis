@@ -152,6 +152,7 @@ public class ModelingExerciseResource {
         if (modelingExercise.isCourseExercise()) {
             Channel createdChannel = channelService.createExerciseChannel(modelingExercise);
             modelingExercise.setChannel(createdChannel);
+            channelService.registerUsersToChannelAsynchronously(true, true, true, List.of(), createdChannel.getCourse(), createdChannel);
         }
         ModelingExercise result = modelingExerciseRepository.save(modelingExercise);
         modelingExerciseService.scheduleOperations(result.getId());

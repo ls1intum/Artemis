@@ -126,6 +126,7 @@ public class FileUploadExerciseResource {
         if (fileUploadExercise.isCourseExercise()) {
             Channel createdChannel = channelService.createExerciseChannel(fileUploadExercise);
             fileUploadExercise.setChannel(createdChannel);
+            channelService.registerUsersToChannelAsynchronously(true, true, true, List.of(), createdChannel.getCourse(), createdChannel);
         }
 
         FileUploadExercise result = fileUploadExerciseRepository.save(fileUploadExercise);
