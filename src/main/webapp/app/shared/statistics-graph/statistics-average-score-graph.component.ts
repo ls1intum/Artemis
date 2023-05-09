@@ -60,8 +60,8 @@ export class StatisticsAverageScoreGraphComponent implements OnInit {
     readonly yAxisTickFormatting = axisTickFormattingWithPercentageSign;
     readonly performanceIntervals = [PerformanceInterval.LOWEST, PerformanceInterval.AVERAGE, PerformanceInterval.BEST];
     readonly convertToMapKey = ChartExerciseTypeFilter.convertToMapKey;
-    readonly typeFilter = this.exerciseTypeFilter;
-    readonly chartCategoryFilter = this.categoryFilter;
+    readonly typeFilter: ChartExerciseTypeFilter;
+    readonly chartCategoryFilter: ChartCategoryFilter;
     readonly CRITICAL_CLASS = 'critical-color';
     readonly MEDIAN_CLASS = 'median-color';
     readonly BEST_CLASS = 'best-color';
@@ -84,7 +84,10 @@ export class StatisticsAverageScoreGraphComponent implements OnInit {
         private navigationUtilService: ArtemisNavigationUtilService,
         private exerciseTypeFilter: ChartExerciseTypeFilter,
         private categoryFilter: ChartCategoryFilter,
-    ) {}
+    ) {
+        this.typeFilter = exerciseTypeFilter;
+        this.chartCategoryFilter = categoryFilter;
+    }
 
     ngOnInit(): void {
         this.initializeChart();
