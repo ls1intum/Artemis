@@ -3,7 +3,7 @@ package de.tum.in.www1.artemis.domain;
 import javax.persistence.*;
 
 /**
- * This class models the relation between two competency. Imagine a graph: (tail) --- type --> (head)
+ * This class models the relation between two competencies. Imagine a graph: (tail) --- type --> (head)
  * Because we want to keep this very generic (using the type attribute), this can not be modeled as a simple JPA relationship.
  */
 @Entity
