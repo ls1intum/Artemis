@@ -26,6 +26,7 @@ import { ProgrammingLanguage } from 'app/entities/programming-exercise.model';
 import { CourseAdminService } from 'app/course/manage/course-admin.service';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { AccountService } from 'app/core/auth/account.service';
+import { EventManager } from 'app/core/util/event-manager.service';
 
 @Component({
     selector: 'jhi-course-update',
@@ -79,6 +80,7 @@ export class CourseUpdateComponent implements OnInit {
     tutorialGroupsFeatureActivated = false;
 
     constructor(
+        private eventManager: EventManager,
         private courseManagementService: CourseManagementService,
         private courseAdminService: CourseAdminService,
         private activatedRoute: ActivatedRoute,
@@ -312,6 +314,14 @@ export class CourseUpdateComponent implements OnInit {
      */
     private onSaveSuccess(updatedCourse: Course | null) {
         this.isSaving = false;
+
+        if (this.course != updatedCourse) {
+            this.eventManager.broadcast({
+                name: 'courseModification',
+                content: 'Changed a course',
+            });
+        }
+
         this.router.navigate(['course-management', updatedCourse?.id?.toString()]);
     }
 
