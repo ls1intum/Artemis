@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TextSubmissionAssessmentComponent } from 'app/exercises/text/assess/text-submission-assessment.component';
 import { ArtemisTestModule } from '../../test.module';
 import { By } from '@angular/platform-browser';
@@ -164,16 +164,15 @@ describe('TextSubmissionAssessmentComponent', () => {
         jest.restoreAllMocks();
     });
 
-    it('should create and set parameters correctly', fakeAsync(() => {
+    it('should create and set parameters correctly', async () => {
         expect(component).not.toBeNull();
         component['route'] = route();
         component['activatedRoute'] = route();
-        component.ngOnInit();
-        tick();
+        await component.ngOnInit();
         expect(component.isTestRun).toBeFalse();
         expect(component.exerciseId).toBe(1);
         expect(component.examId).toBe(2);
-    }));
+    });
 
     it('should show jhi-text-assessment-area', () => {
         component['setPropertiesFromServerResponse'](participation);
@@ -364,14 +363,13 @@ describe('TextSubmissionAssessmentComponent', () => {
         expect(cancelAssessmentStub).toHaveBeenCalledWith(participation?.id, submission.id);
     });
 
-    it('should go to next submission', fakeAsync(() => {
+    it('should go to next submission', async () => {
         component['setPropertiesFromServerResponse'](participation);
         const routerSpy = jest.spyOn(router, 'navigate');
         component['route'] = route();
         component['activatedRoute'] = route();
 
-        component.ngOnInit();
-        tick();
+        await component.ngOnInit();
 
         const url = [
             '/course-management',
@@ -391,7 +389,7 @@ describe('TextSubmissionAssessmentComponent', () => {
         component.nextSubmission();
         expect(routerSpy).toHaveBeenCalledOnce();
         expect(routerSpy).toHaveBeenCalledWith(url, queryParams);
-    }));
+    });
 
     it('should navigate to conflicting submission', () => {
         const routerSpy = jest.spyOn(router, 'navigate');
