@@ -47,7 +47,7 @@ export class ResultComponent implements OnInit, OnChanges {
 
     @Input() participation: Participation;
     @Input() isBuilding: boolean;
-    @Input() short = false;
+    @Input() short = true;
     @Input() result?: Result;
     @Input() showUngradedResults = false;
     @Input() showBadge = false;
