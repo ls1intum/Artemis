@@ -6,7 +6,6 @@ import { PrivacyStatement, PrivacyStatementLanguage } from 'app/entities/privacy
 
 describe('PrivacyStatementService', () => {
     let service: PrivacyStatementService;
-    const resourceUrl = SERVER_API_URL + 'api';
     let httpMock: HttpTestingController;
 
     beforeEach(() => {
@@ -21,7 +20,7 @@ describe('PrivacyStatementService', () => {
         const update = new PrivacyStatement(PrivacyStatementLanguage.ENGLISH);
         update.text = 'updated text';
         service.updatePrivacyStatement(update).subscribe((resp) => expect(resp).toEqual(update));
-        const req = httpMock.expectOne({ method: 'PUT', url: `${resourceUrl}/privacy-statement` });
+        const req = httpMock.expectOne({ method: 'PUT', url: `api/privacy-statement` });
         req.flush(update);
         tick();
     }));
@@ -31,7 +30,7 @@ describe('PrivacyStatementService', () => {
         const expected = new PrivacyStatement(lang);
         expected.text = 'text';
         service.getPrivacyStatementForUpdate(lang).subscribe((resp) => expect(resp).toEqual(expected));
-        const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/privacy-statement-for-update?language=${lang}` });
+        const req = httpMock.expectOne({ method: 'GET', url: `api/privacy-statement-for-update?language=${lang}` });
         req.flush(expected);
         tick();
     }));
@@ -41,7 +40,7 @@ describe('PrivacyStatementService', () => {
         const expected = new PrivacyStatement(lang);
         expected.text = 'text';
         service.getPrivacyStatement(lang).subscribe((resp) => expect(resp).toEqual(expected));
-        const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/privacy-statement?language=${lang}` });
+        const req = httpMock.expectOne({ method: 'GET', url: `api/privacy-statement?language=${lang}` });
         req.flush(expected);
         tick();
     }));
