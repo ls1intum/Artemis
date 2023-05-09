@@ -49,7 +49,7 @@ describe('Participation Service', () => {
         service
             .find(123)
             .pipe(take(1))
-            .subscribe((resp) => expect(resp).toMatchObject({ body: participationDefault }));
+            .subscribe((resp) => expect(resp.body).toMatchObject({ ...participationDefault, results: [], submissions: [] }));
 
         const req = httpMock.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
@@ -185,24 +185,22 @@ describe('Participation Service', () => {
         exercise.categories = undefined;
         exercise.exampleSolutionPublicationDate = undefined;
 
-        const returnedFromService = Object.assign(
-            {
-                repositoryUrl: 'BBBBBB',
-                buildPlanId: 'BBBBBB',
-                initializationState: 'BBBBBB',
-                initializationDate: currentDate,
-                presentationScore: 1,
-                exercise,
-            },
-            participationDefault,
-        );
+        const returnedFromService = {
+            ...participationDefault,
+            repositoryUrl: 'BBBBBB',
+            buildPlanId: 'BBBBBB',
+            initializationState: 'BBBBBB',
+            initializationDate: currentDate,
+            presentationScore: 1,
+            exercise,
+        };
 
         const expected = Object.assign({}, returnedFromService);
 
         service
-            .update(exercise, expected)
+            .update(exercise, expected as StudentParticipation)
             .pipe(take(1))
-            .subscribe((resp) => expect(resp).toMatchObject({ body: expected }));
+            .subscribe((resp) => expect(resp.body).toMatchObject({ ...expected, results: [], submissions: [] }));
         const req = httpMock.expectOne({ method: 'PUT' });
         req.flush(returnedFromService);
         tick();
