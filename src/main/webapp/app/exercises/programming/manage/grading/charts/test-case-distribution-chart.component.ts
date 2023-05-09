@@ -119,17 +119,18 @@ export class TestCaseDistributionChartComponent extends ProgrammingGradingCharts
 
     // ngx
     // array containing the ngx-dedicated objects in order to display the weight and bonus chart
-    ngxWeightData: NgxChartsMultiSeriesDataEntry[] = [
-        { name: this.translateService.instant('artemisApp.programmingExercise.configureGrading.charts.testCaseWeights.weight'), series: [] as any[] },
-        { name: this.translateService.instant('artemisApp.programmingExercise.configureGrading.charts.testCaseWeights.weightAndBonus'), series: [] as any[] },
-    ];
+    ngxWeightData: NgxChartsMultiSeriesDataEntry[];
     // array containing the ngx-dedicated objects in order to display the points chart
-    ngxPointsData: NgxChartsMultiSeriesDataEntry[] = [
-        { name: this.translateService.instant('artemisApp.programmingExercise.configureGrading.charts.testCasePoints.points'), series: [] as any[] },
-    ];
+    ngxPointsData: NgxChartsMultiSeriesDataEntry[];
 
     constructor(private translateService: TranslateService, private navigationUtilService: ArtemisNavigationUtilService) {
         super();
+        this.ngxWeightData = [
+            { name: this.translateService.instant('artemisApp.programmingExercise.configureGrading.charts.testCaseWeights.weight'), series: [] as any[] },
+            { name: this.translateService.instant('artemisApp.programmingExercise.configureGrading.charts.testCaseWeights.weightAndBonus'), series: [] as any[] },
+        ];
+        this.ngxPointsData = [{ name: this.translateService.instant('artemisApp.programmingExercise.configureGrading.charts.testCasePoints.points'), series: [] as any[] }];
+
         this.translateService.onLangChange.subscribe(() => {
             this.updateTranslation();
         });
