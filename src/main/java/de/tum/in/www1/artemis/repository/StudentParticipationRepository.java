@@ -192,6 +192,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             SELECT DISTINCT p FROM StudentParticipation p
             LEFT JOIN FETCH p.results r
             LEFT JOIN FETCH r.submission s
+            LEFT JOIN FETCH p.submissions
             WHERE p.exercise.id = :#{#exerciseId}
                 AND (r.id = (SELECT max(id) FROM p.results)
                     OR r.assessmentType <> 'AUTOMATIC'
