@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
@@ -252,10 +253,26 @@ public class ConversationService {
      *
      * @param exercise the exercise that is being deleted
      */
-    public void deregisterAllClientsFromExerciseChannel(Exercise exercise) {
+    public void deregisterAllClientsFromChannel(Exercise exercise) {
         if (exercise.isCourseExercise() && exercise.getChannel() != null) {
             // deregister all clients from the channel
             Channel originalChannel = channelRepository.findByIdElseThrow(exercise.getChannel().getId());
+
+            Set<ConversationParticipant> channelParticipants = conversationParticipantRepository.findConversationParticipantByConversationId(originalChannel.getId());
+            Set<User> usersToBeDeregistered = channelParticipants.stream().map(ConversationParticipant::getUser).collect(Collectors.toSet());
+            broadcastOnConversationMembershipChannel(originalChannel.getCourse(), MetisCrudAction.DELETE, originalChannel, usersToBeDeregistered);
+        }
+    }
+
+    /**
+     * Deregister all clients from the lecture channel of the given exercise
+     *
+     * @param lecture the lecture that is being deleted
+     */
+    public void deregisterAllClientsFromChannel(Lecture lecture) {
+        if (lecture.getChannel() != null) {
+            // deregister all clients from the channel
+            Channel originalChannel = channelRepository.findByIdElseThrow(lecture.getChannel().getId());
 
             Set<ConversationParticipant> channelParticipants = conversationParticipantRepository.findConversationParticipantByConversationId(originalChannel.getId());
             Set<User> usersToBeDeregistered = channelParticipants.stream().map(ConversationParticipant::getUser).collect(Collectors.toSet());
