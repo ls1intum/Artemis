@@ -31,7 +31,7 @@ import { Course } from 'app/entities/course.model';
 import { faFileAlt } from '@fortawesome/free-regular-svg-icons';
 import { faCircleNotch, faGear, faPlusSquare } from '@fortawesome/free-solid-svg-icons';
 
-export type Annotation = { fileName: string; row: number; column: number; text: string; type: string; timestamp: number; hash?: string | null };
+export type Annotation = { fileName: string; row: number; column: number; text: string; type: string; timestamp: number; hash?: string };
 
 @Component({
     selector: 'jhi-code-editor-ace',
@@ -249,7 +249,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
                     }
                 }),
                 catchError(() => {
-                    return of(null);
+                    return of(undefined);
                 }),
             )
             .subscribe(() => {
@@ -461,9 +461,9 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
      */
     addLineWidgetWithFeedback(line: number) {
         // If the component was not found in the elementArray, we get it from the DOM and add it to elementArray
-        let inlineFeedback: Element | null = this.elementArray.find((element) => element.id === 'test-' + line) ?? null;
+        let inlineFeedback: Element | undefined = this.elementArray.find((element) => element.id === 'test-' + line);
         if (!inlineFeedback) {
-            inlineFeedback = document.querySelector(`#test-${line}`);
+            inlineFeedback = document.querySelector(`#test-${line}`) ?? undefined;
             if (inlineFeedback) {
                 this.elementArray.push(inlineFeedback);
             }

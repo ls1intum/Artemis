@@ -23,4 +23,14 @@ public interface LearningGoalRelationRepository extends JpaRepository<LearningGo
             """)
     Set<LearningGoalRelation> findAllByLearningGoalId(@Param("learningGoalId") Long learningGoalId);
 
+    @Query("""
+            SELECT relation
+            FROM LearningGoalRelation relation
+            LEFT JOIN FETCH relation.headLearningGoal
+            LEFT JOIN FETCH relation.tailLearningGoal
+            WHERE relation.headLearningGoal.course.id = :#{#courseId}
+            AND relation.tailLearningGoal.course.id = :#{#courseId}
+            """)
+    Set<LearningGoalRelation> findAllByCourseId(@Param("courseId") Long courseId);
+
 }
