@@ -1,4 +1,5 @@
-import { Event, EventProcessor, Hub, Integration } from '@sentry/types';
+import { Event, Hub } from '@sentry/angular-ivy';
+import { EventProcessor, Integration } from '@sentry/types';
 import { sha1Hex } from 'app/shared/util/crypto.utils';
 
 export class ArtemisDeduplicate implements Integration {

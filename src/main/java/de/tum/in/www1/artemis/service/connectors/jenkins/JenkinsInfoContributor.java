@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service.connectors.bamboo;
+package de.tum.in.www1.artemis.service.connectors.jenkins;
 
 import java.net.URL;
 
@@ -11,15 +11,18 @@ import org.springframework.stereotype.Component;
 import de.tum.in.www1.artemis.config.Constants;
 
 @Component
-@Profile("bamboo")
-public class BambooBuildPlanLinkInfoContributor implements InfoContributor {
+@Profile("jenkins")
+public class JenkinsInfoContributor implements InfoContributor {
 
     @Value("${artemis.continuous-integration.url}")
-    private URL bambooServerUrl;
+    private URL JENKINS_SERVER_URL;
 
     @Override
     public void contribute(Info.Builder builder) {
-        final var buildPlanURLTemplate = bambooServerUrl + "/browse/{buildPlanId}";
+        final var buildPlanURLTemplate = JENKINS_SERVER_URL + "/job/{projectKey}/job/{buildPlanId}";
         builder.withDetail(Constants.INFO_BUILD_PLAN_URL_DETAIL, buildPlanURLTemplate);
+
+        // Store name of the continuous integration system
+        builder.withDetail(Constants.CONTINUOUS_INTEGRATION_NAME, "Jenkins");
     }
 }

@@ -380,6 +380,14 @@ public class LearningGoalResource {
             relation.setTailLearningGoal(tailLearningGoal);
             relation.setHeadLearningGoal(headLearningGoal);
             relation.setType(relationType);
+
+            var learningGoals = learningGoalRepository.findAllForCourse(course.getId());
+            var learningGoalRelations = learningGoalRelationRepository.findAllByCourseId(course.getId());
+            learningGoalRelations.add(relation);
+            if (learningGoalService.doesCreateCircularRelation(learningGoals, learningGoalRelations)) {
+                throw new BadRequestException("You can't define circular dependencies between competencies");
+            }
+
             learningGoalRelationRepository.save(relation);
 
             return ResponseEntity.ok().body(relation);
@@ -536,5 +544,4 @@ public class LearningGoalResource {
         }
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(role, course, null);
     }
-
 }
