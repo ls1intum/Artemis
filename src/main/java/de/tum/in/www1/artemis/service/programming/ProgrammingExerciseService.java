@@ -215,6 +215,7 @@ public class ProgrammingExerciseService {
         // Save programming exercise to prevent transient exception
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
 
+        // create exercise channel and add participants to it asynchronously
         if (programmingExercise.isCourseExercise()) {
             Channel createdChannel = channelService.createExerciseChannel(programmingExercise);
             programmingExercise.setChannel(createdChannel);

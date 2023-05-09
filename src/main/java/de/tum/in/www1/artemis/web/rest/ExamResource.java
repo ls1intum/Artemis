@@ -167,6 +167,7 @@ public class ExamResource {
         if (!exam.isTestExam()) {
             Channel createdChannel = channelService.createExamChannel(exam);
             exam.setChannel(createdChannel);
+            channelService.registerUsersToChannelAsynchronously(false, true, true, List.of(), createdChannel.getCourse(), createdChannel);
         }
         Exam result = examRepository.save(exam);
 
