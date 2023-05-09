@@ -235,8 +235,8 @@ describe('Exercise Scores Component', () => {
         [FilterProp.SUCCESSFUL, { results: [{ successful: false }] } as Participation, false],
         [FilterProp.UNSUCCESSFUL, { results: [{ successful: false }] } as Participation, true],
         [FilterProp.UNSUCCESSFUL, { results: [{ successful: true }] } as Participation, false],
-        [FilterProp.BUILD_FAILED, { results: [{ submission: { buildFailed: true } as Submission }] } as Participation, true],
-        [FilterProp.BUILD_FAILED, { results: [{ submission: {} as Submission }] } as Participation, false],
+        [FilterProp.BUILD_FAILED, { results: [{}], submissions: [{ buildFailed: true } as Submission] } as Participation, true],
+        [FilterProp.BUILD_FAILED, { results: [{}], submissions: [{}] } as Participation, false],
         [FilterProp.MANUAL, { results: [{ assessmentType: AssessmentType.SEMI_AUTOMATIC }] } as Participation, true],
         [FilterProp.MANUAL, { results: [{ assessmentType: AssessmentType.AUTOMATIC }] } as Participation, false],
         [FilterProp.AUTOMATIC, { results: [{ assessmentType: AssessmentType.AUTOMATIC }] } as Participation, true],
@@ -348,18 +348,5 @@ describe('Exercise Scores Component', () => {
 
         expect(component.rangeFilter).toBeUndefined();
         expect(component.filteredParticipations).toEqual([participation]);
-    });
-
-    it.each([
-        [{}, ['/course-management', '43', 'programming-exercises', '42', 'submissions', 'new', 'assessment']],
-        [{ results: [{ assessmentType: AssessmentType.AUTOMATIC }] }, ['/course-management', '43', 'programming-exercises', '42', 'submissions', 'new', 'assessment']],
-        [
-            { results: [{ assessmentType: AssessmentType.MANUAL, submission: { id: 44 } }] },
-            ['/course-management', '43', 'programming-exercises', '42', 'submissions', '44', 'assessment'],
-        ],
-    ])('getAssessmentLink should correctly determine if new assessment', (participation: StudentParticipation, expectedLink: string[]) => {
-        component.exercise = { type: ExerciseType.PROGRAMMING, id: 42 } as ProgrammingExercise;
-        component.course = { id: 43 };
-        expect(component.getAssessmentLink(participation)).toEqual(expectedLink);
     });
 });
