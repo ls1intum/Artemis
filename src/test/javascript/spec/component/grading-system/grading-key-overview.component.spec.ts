@@ -183,7 +183,7 @@ describe('GradeKeyOverviewComponent', () => {
         const reachablePoints = 200;
 
         const scoresStorageService = fixture.debugElement.injector.get(ScoresStorageService);
-        const getStoredScoresStub = jest.spyOn(scoresStorageService, 'getStoredTotalScores').mockReturnValue(new CourseScores(250, 200, new StudentScores()));
+        const getStoredScoresStub = jest.spyOn(scoresStorageService, 'getStoredTotalScores').mockReturnValue(new CourseScores(250, 200, 0, new StudentScores()));
         const gradingSystemServiceSpy = jest.spyOn(gradingSystemService, 'setGradePoints');
 
         jest.spyOn(gradingSystemService, 'findGradeSteps').mockReturnValue(of(gradeStepsDto));

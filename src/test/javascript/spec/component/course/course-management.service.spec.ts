@@ -86,7 +86,7 @@ describe('Course Management Service', () => {
 
         courseForDashboard = new CourseForDashboardDTO();
         courseForDashboard.course = course;
-        courseScores = new CourseScores(0, 0, { absoluteScore: 0, relativeScore: 0, currentRelativeScore: 0, presentationScore: 0 });
+        courseScores = new CourseScores(0, 0, 0, { absoluteScore: 0, relativeScore: 0, currentRelativeScore: 0, presentationScore: 0 });
         courseForDashboard.totalScores = courseScores;
         courseForDashboard.programmingScores = courseScores;
         courseForDashboard.modelingScores = courseScores;
