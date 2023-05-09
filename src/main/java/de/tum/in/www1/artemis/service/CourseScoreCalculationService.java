@@ -490,7 +490,7 @@ public class CourseScoreCalculationService {
     }
 
     /**
-     * Calculates the number of presentations for a single student, referred to as the presentationScore for basic
+     * Counts the number of presentations for a single student, referred to as the presentationScore for basic
      * presentations.
      *
      * @param course                the course for which the presentation score should be calculated
@@ -499,18 +499,17 @@ public class CourseScoreCalculationService {
      */
     private double calculateBasicPresentationScoreForStudent(Course course, List<StudentParticipation> studentParticipations) {
         if (studentParticipations == null || studentParticipations.isEmpty()) {
-            return 0;
+            return 0.0;
         }
 
-        double presentationScoreSum = studentParticipations.stream()
-                .mapToDouble(participation -> roundScoreSpecifiedByCourseSettings(participation.getPresentationScore() == null ? 0 : participation.getPresentationScore(), course))
-                .sum();
+        double presentationCount = studentParticipations.stream()
+                .filter(participation -> participation.getPresentationScore() != null && participation.getPresentationScore() > 0.0).count();
 
-        return roundScoreSpecifiedByCourseSettings(presentationScoreSum, course);
+        return roundScoreSpecifiedByCourseSettings(presentationCount, course);
     }
 
     /**
-     * Calculates the points for presentations for a single student given the participations of the student, the
+     * Calculates the points for presentations for a single student given the participation list of the student, the
      * reachable points of the course and the presentationsWeight of the courses GradingScale.
      *
      * @param course                      the course for which the presentation score should be calculated
@@ -521,22 +520,23 @@ public class CourseScoreCalculationService {
     private double calculatePresentationPointsForStudent(Course course, List<StudentParticipation> studentParticipations, double reachablePresentationPoints) {
         // return 0 if no participations are given
         if (studentParticipations == null || studentParticipations.isEmpty()) {
-            return 0;
+            return 0.0;
         }
 
         // return 0 if no grading scale is set for the course
         GradingScale gradingScale = gradingScaleService.findGradingScaleByCourseId(course.getId()).orElse(null);
         if (gradingScale == null) {
-            return 0;
+            return 0.0;
         }
 
         // return 0 if the grading scale is not configured for graded presentations
         int presentationsNumber = gradingScale.getPresentationsNumber() == null ? 0 : gradingScale.getPresentationsNumber();
         if (presentationsNumber <= 0) {
-            return 0;
+            return 0.0;
         }
 
-        double presentationPointSum = calculateBasicPresentationScoreForStudent(course, studentParticipations);
+        double presentationPointSum = studentParticipations.stream().filter(participation -> participation.getPresentationScore() != null)
+                .mapToDouble(StudentParticipation::getPresentationScore).sum();
         double presentationPointAvg = presentationPointSum / presentationsNumber;
         double presentationPoints = reachablePresentationPoints * presentationPointAvg / 100.0;
 
@@ -551,24 +551,24 @@ public class CourseScoreCalculationService {
      */
     private double calculateReachablePresentationPoints(Course course, double reachablePoints) {
         // return 0 if reachable points are 0
-        if (reachablePoints <= 0) {
-            return 0;
+        if (reachablePoints <= 0.0) {
+            return 0.0;
         }
 
         // return 0 if no grading scale is set for the course
         GradingScale gradingScale = gradingScaleService.findGradingScaleByCourseId(course.getId()).orElse(null);
         if (gradingScale == null) {
-            return 0;
+            return 0.0;
         }
 
         // return 0 if the grading scale is not configured for graded presentations
-        double presentationsWeight = gradingScale.getPresentationsWeight() == null ? 0 : gradingScale.getPresentationsWeight();
-        if (presentationsWeight <= 0) {
-            return 0;
+        double presentationsWeight = gradingScale.getPresentationsWeight() == null ? 0.0 : gradingScale.getPresentationsWeight();
+        if (presentationsWeight <= 0.0) {
+            return 0.0;
         }
 
-        double reachablePointsWithPresentation = -reachablePoints / (presentationsWeight - 100) * 100;
-        double reachablePresentationPoints = reachablePointsWithPresentation * presentationsWeight / 100;
+        double reachablePointsWithPresentation = -reachablePoints / (presentationsWeight - 100.0) * 100.0;
+        double reachablePresentationPoints = reachablePointsWithPresentation * presentationsWeight / 100.0;
 
         return roundScoreSpecifiedByCourseSettings(reachablePresentationPoints, course);
     }
