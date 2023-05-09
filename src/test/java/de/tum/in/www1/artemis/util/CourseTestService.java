@@ -676,8 +676,8 @@ public class CourseTestService {
         assertThat(receivedCourse.getExercises()).as("Five exercises are returned").hasSize(5);
         // Test that the received course has two lectures
         assertThat(receivedCourse.getLectures()).as("Two lectures are returned").hasSize(2);
-        // Test that the received course has two learning goals
-        assertThat(receivedCourse.getLearningGoals()).as("Two learning goals are returned").hasSize(2);
+        // Test that the received course has two competencies
+        assertThat(receivedCourse.getLearningGoals()).as("Two competencies are returned").hasSize(2);
 
         // Iterate over all exercises of the remaining course
         for (Exercise exercise : courses.get(0).getExercises()) {
