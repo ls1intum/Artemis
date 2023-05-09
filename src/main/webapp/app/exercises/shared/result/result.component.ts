@@ -74,7 +74,7 @@ export class ResultComponent implements OnInit, OnChanges {
     constructor(
         private jhiWebsocketService: JhiWebsocketService,
         private participationService: ParticipationService,
-        private translate: TranslateService,
+        private translateService: TranslateService,
         private http: HttpClient,
         private modalService: NgbModal,
         private exerciseService: ExerciseService,
@@ -128,7 +128,7 @@ export class ResultComponent implements OnInit, OnChanges {
 
         this.evaluate();
 
-        this.translate.onLangChange.subscribe(() => {
+        this.translateService.onLangChange.subscribe(() => {
             if (this.resultString) {
                 this.resultString = this.resultService.getResultString(this.result, this.exercise, this.short);
             }
