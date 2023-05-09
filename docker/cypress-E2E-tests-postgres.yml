@@ -1,0 +1,73 @@
+# ----------------------------------------------------------------------------------------------------------------------
+# Cypress Setup Postgres
+# ----------------------------------------------------------------------------------------------------------------------
+
+services:
+    postgresql:
+        extends:
+            file: ./postgresql.yml
+            service: postgresql
+
+    artemis-app:
+        extends:
+            file: ./artemis.yml
+            service: artemis-app
+        depends_on:
+            postgresql:
+                condition: service_healthy
+        env_file:
+            - ./artemis/config/cypress-application-local.env
+            - ./artemis/config/cypress-application-postgres.env
+        environment:
+            SPRING_PROFILES_ACTIVE: "artemis,bamboo,bitbucket,jira,prod,docker"
+
+    nginx:
+        extends:
+            file: ./nginx.yml
+            service: nginx
+        # the artemis-app service needs to be started, otherwise there are problems with name resolution in docker
+        depends_on:
+            artemis-app:
+                condition: service_started
+        volumes:
+            - ./nginx/artemis-nginx-cypress.conf:/etc/nginx/conf.d/artemis-nginx-cypress.conf:ro
+        ports:
+            - "80:80"
+            - "443:443"
+            # see comments in artemis/config/cypress-application-local.env why this port is necessary
+            - "54321:54321"
+
+    artemis-cypress:
+        # Cypress image with node and chrome browser installed (Cypress installation needs to be done separately because we require additional dependencies)
+        image: docker.io/cypress/browsers:node18.12.0-chrome107
+        pull_policy: always
+        depends_on:
+            artemis-app:
+                condition: service_healthy
+        environment:
+            CYPRESS_baseUrl: "https://artemis-nginx"
+            CYPRESS_video: "${bamboo_cypress_video_enabled}"
+            CYPRESS_adminUsername: "${bamboo_artemis_admin_username}"
+            CYPRESS_adminPassword: "${bamboo_artemis_admin_password}"
+            CYPRESS_username: "${bamboo_cypress_username_template}"
+            CYPRESS_password: "${bamboo_cypress_password_template}"
+            CYPRESS_allowGroupCustomization: "true"
+            CYPRESS_studentGroupName: "artemis-e2etest-students"
+            CYPRESS_tutorGroupName: "artemis-e2etest-tutors"
+            CYPRESS_editorGroupName: "artemis-e2etest-editors"
+            CYPRESS_instructorGroupName: "artemis-e2etest-instructors"
+        command: sh -c "cd /app/artemis/src/test/cypress && chmod 777 /root && npm ci && npm run cypress:run"
+        volumes:
+            - ..:/app/artemis
+        networks:
+            - artemis
+
+networks:
+    artemis:
+        driver: "bridge"
+        name: artemis
+volumes:
+    artemis-postgresql-data:
+        name: artemis-postgresql-data
+    artemis-data:
+        name: artemis-data
