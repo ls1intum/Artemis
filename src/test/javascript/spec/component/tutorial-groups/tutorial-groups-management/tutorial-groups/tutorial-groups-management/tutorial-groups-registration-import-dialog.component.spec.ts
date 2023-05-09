@@ -167,6 +167,7 @@ describe('TutorialGroupsRegistrationImportDialog', () => {
     });
 
     it('should fail when parser throws exception', async () => {
+        jest.spyOn(console, 'error').mockImplementation();
         // given
         mockedParse.mockImplementation(() => {
             throw new Error('testError');
