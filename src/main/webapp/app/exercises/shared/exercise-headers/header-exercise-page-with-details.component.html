@@ -130,6 +130,27 @@
                     }}
                 </span>
             </div>
+            <!-- TODO add translations -->
+            <div *ngIf="exercise.presentationScoreEnabled">
+                <div *ngIf="course?.presentationScore ?? 0 > 0">
+                    {{ 'Presented:' }}
+                    <span *ngIf="(studentParticipation?.presentationScore ?? 0) > 0" class="badge bg-success">
+                        {{ 'global.generic.yes' | artemisTranslate }}
+                    </span>
+                    <span *ngIf="(studentParticipation?.presentationScore ?? 0) <= 0" class="badge bg-secondary">
+                        {{ 'global.generic.no' | artemisTranslate }}
+                    </span>
+                </div>
+                <div *ngIf="!course?.presentationScore ?? 0 > 0">
+                    {{ 'Presentation Rating:' }}
+                    <span *ngIf="studentParticipation?.presentationScore" class="badge bg-success">
+                        {{ studentParticipation!.presentationScore + '%' }}
+                    </span>
+                    <span *ngIf="!studentParticipation?.presentationScore" class="badge bg-secondary">
+                        {{ 'global.generic.unset' | artemisTranslate }}
+                    </span>
+                </div>
+            </div>
         </ng-template>
     </div>
 </div>
