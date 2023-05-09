@@ -48,7 +48,7 @@ export default defineConfig({
         toConsole: true,
     },
     e2e: {
-        setupNodeEvents(on, config) {
+        setupNodeEvents(on) {
             on('task', {
                 error(message: string) {
                     console.error('\x1b[31m', 'ERROR: ', message, '\x1b[0m');
