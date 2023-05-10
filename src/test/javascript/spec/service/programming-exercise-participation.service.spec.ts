@@ -11,7 +11,7 @@ describe('ProgrammingExerciseParticipation Service', () => {
     let service: ProgrammingExerciseParticipationService;
     let httpMock: HttpTestingController;
     let accountService: AccountService;
-    const resourceUrl = SERVER_API_URL + 'api/programming-exercise-participations/';
+    const resourceUrl = 'api/programming-exercise-participations/';
 
     let titleSpy: jest.SpyInstance;
     let accessRightsSpy: jest.SpyInstance;
