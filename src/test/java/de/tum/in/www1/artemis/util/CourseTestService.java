@@ -19,6 +19,7 @@ import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
 
+import org.assertj.core.data.Offset;
 import org.mockito.ArgumentMatchers;
 import org.mockito.MockedStatic;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -150,6 +151,9 @@ public class CourseTestService {
 
     @Autowired
     private ConversationParticipantRepository conversationParticipantRepository;
+
+    @Autowired
+    private ParticipationRepository participationRepository;
 
     private static final int numberOfStudents = 8;
 
@@ -832,6 +836,49 @@ public class CourseTestService {
     }
 
     // Test
+    public void testGetCoursesForDashboardPracticeRepositories() throws Exception {
+        User student1 = database.getUserByLogin(userPrefix + "student1");
+
+        Course course = database.createCourse();
+        ProgrammingExercise programmingExercise = database.addProgrammingExerciseToCourse(course, false);
+        programmingExercise.setReleaseDate(ZonedDateTime.now().minusDays(2));
+        programmingExercise.setDueDate(ZonedDateTime.now().minusHours(2));
+        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().minusMinutes(90));
+        programmingExerciseRepository.save(programmingExercise);
+        Result gradedResult = database.addProgrammingParticipationWithResultForExercise(programmingExercise, userPrefix + "student1");
+        gradedResult.completionDate(ZonedDateTime.now().minusHours(3)).assessmentType(AssessmentType.AUTOMATIC).score(42D);
+        resultRepo.save(gradedResult);
+        StudentParticipation gradedParticipation = (StudentParticipation) gradedResult.getParticipation();
+        gradedParticipation.setInitializationState(InitializationState.FINISHED);
+        participationRepository.save(gradedParticipation);
+        database.addProgrammingSubmissionToResultAndParticipation(gradedResult, gradedParticipation, "asdf");
+        StudentParticipation practiceParticipation = ModelFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INITIALIZED, programmingExercise, student1);
+        practiceParticipation.setTestRun(true);
+        participationRepository.save(practiceParticipation);
+        Result practiceResult = database.addResultToParticipation(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusHours(1), practiceParticipation);
+        practiceResult.setRated(false);
+        resultRepo.save(practiceResult);
+        database.addProgrammingSubmissionToResultAndParticipation(practiceResult, practiceParticipation, "ghjk");
+        database.addProgrammingParticipationWithResultForExercise(programmingExercise, userPrefix + "student2");
+
+        List<CourseForDashboardDTO> receivedCoursesForDashboard = request.getList("/api/courses/for-dashboard", HttpStatus.OK, CourseForDashboardDTO.class);
+        CourseForDashboardDTO receivedCourseForDashboard = request.get("/api/courses/" + course.getId() + "/for-dashboard", HttpStatus.OK, CourseForDashboardDTO.class);
+        CourseForDashboardDTO receivedCourseForDashboardFromGeneralCall = receivedCoursesForDashboard.stream().filter(dto -> dto.course().getId().equals(course.getId()))
+                .findFirst().get();
+
+        assertThat(receivedCourseForDashboardFromGeneralCall.participationResults()).hasSize(1);
+        assertThat(receivedCourseForDashboard.participationResults()).hasSize(1);
+
+        assertThat(receivedCourseForDashboardFromGeneralCall.course().getExercises().stream().findFirst().get().getStudentParticipations()).hasSize(1);
+        assertThat(receivedCourseForDashboard.course().getExercises().stream().findFirst().get().getStudentParticipations()).hasSize(2);
+
+        assertThat(receivedCourseForDashboardFromGeneralCall.totalScores().studentScores().absoluteScore()).isEqualTo(0.42 * 42, Offset.offset(0.1));
+        assertThat(receivedCourseForDashboard.totalScores().studentScores().absoluteScore()).isEqualTo(0.42 * 42, Offset.offset(0.1));
+        assertThat(receivedCourseForDashboardFromGeneralCall.programmingScores().studentScores().absoluteScore()).isEqualTo(0.42 * 42, Offset.offset(0.1));
+        assertThat(receivedCourseForDashboard.programmingScores().studentScores().absoluteScore()).isEqualTo(0.42 * 42, Offset.offset(0.1));
+    }
+
+    // Test
     public void testGetAllCoursesForDashboard() throws Exception {
         String suffix = "getall";
         adjustUserGroupsToCustomGroups(suffix);
@@ -860,26 +907,31 @@ public class CourseTestService {
 
         // Iterate over all exercises of the remaining course
         for (Exercise exercise : activeCourseNotFiltered.getExercises()) {
-            // Test that the exercise does not have more than one participation.
-            assertThat(exercise.getStudentParticipations()).as("At most one participation for exercise").hasSizeLessThanOrEqualTo(1);
+            if (exercise.getExerciseType() == ExerciseType.PROGRAMMING) {
+                assertThat(exercise.getStudentParticipations()).as("At most two participations for programming exercise").hasSizeLessThanOrEqualTo(2);
+            }
+            else {
+                assertThat(exercise.getStudentParticipations()).as("At most one participation for exercise").hasSizeLessThanOrEqualTo(1);
+            }
             if (!exercise.getStudentParticipations().isEmpty()) {
                 // Buffer participation so that null checking is easier.
-                Participation participation = exercise.getStudentParticipations().iterator().next();
-                if (!participation.getSubmissions().isEmpty()) {
-                    // The call filters participations by submissions and their result. After the call each participation shouldn't have more than one submission.
-                    assertThat(participation.getSubmissions()).as("At most one submission for participation").hasSizeLessThanOrEqualTo(1);
-                    Submission submission = participation.getSubmissions().iterator().next();
-                    if (submission != null) {
-                        // Test that the correct text submission was filtered.
-                        if (submission instanceof TextSubmission textSubmission) {
-                            assertThat(textSubmission.getText()).as("Correct text submission").isEqualTo("text");
-                        }
-                        // Test that the correct modeling submission was filtered.
-                        else if (submission instanceof ModelingSubmission modelingSubmission) {
-                            assertThat(modelingSubmission.getModel()).as("Correct modeling submission").isEqualTo("model1");
+                exercise.getStudentParticipations().forEach(participation -> {
+                    if (!participation.getSubmissions().isEmpty()) {
+                        // The call filters participations by submissions and their result. After the call each participation shouldn't have more than one submission.
+                        assertThat(participation.getSubmissions()).as("At most one submission for participation").hasSizeLessThanOrEqualTo(1);
+                        Submission submission = participation.getSubmissions().iterator().next();
+                        if (submission != null) {
+                            // Test that the correct text submission was filtered.
+                            if (submission instanceof TextSubmission textSubmission) {
+                                assertThat(textSubmission.getText()).as("Correct text submission").isEqualTo("text");
+                            }
+                            // Test that the correct modeling submission was filtered.
+                            else if (submission instanceof ModelingSubmission modelingSubmission) {
+                                assertThat(modelingSubmission.getModel()).as("Correct modeling submission").isEqualTo("model1");
+                            }
                         }
                     }
-                }
+                });
             }
         }
     }
@@ -998,12 +1050,12 @@ public class CourseTestService {
                 if (exercise instanceof ModelingExercise) {
                     assertThat(exercise.getNumberOfSubmissions().inTime()).as("Number of in-time submissions is correct").isEqualTo(2);
                 }
-                // Mock data contains exactly one submission for the text exercise
-                if (exercise instanceof TextExercise) {
+                // Mock data contains exactly one in-time submission for the text and programming exercise
+                if (exercise instanceof TextExercise || exercise instanceof ProgrammingExercise) {
                     assertThat(exercise.getNumberOfSubmissions().inTime()).as("Number of in-time submissions is correct").isEqualTo(1);
                 }
-                // Mock data contains no submissions for the file upload and programming exercise
-                if (exercise instanceof FileUploadExercise || exercise instanceof ProgrammingExercise) {
+                // Mock data contains no submissions for the file upload exercise
+                if (exercise instanceof FileUploadExercise) {
                     assertThat(exercise.getNumberOfSubmissions().inTime()).as("Number of in-time submissions is correct").isZero();
                 }
 
@@ -1021,7 +1073,7 @@ public class CourseTestService {
             }
 
             StatsForDashboardDTO stats = request.get("/api/courses/" + testCourse.getId() + "/stats-for-assessment-dashboard", HttpStatus.OK, StatsForDashboardDTO.class);
-            long numberOfInTimeSubmissions = course.getId().equals(testCourses.get(0).getId()) ? 3 : 0; // course 1 has 3 submissions, course 2 has 0 submissions
+            long numberOfInTimeSubmissions = course.getId().equals(testCourses.get(0).getId()) ? 5 : 0; // course 1 has 5 submissions, course 2 has 0 submissions
             assertThat(stats.getNumberOfSubmissions().inTime()).as("Number of in-time submissions is correct").isEqualTo(numberOfInTimeSubmissions);
             assertThat(stats.getNumberOfSubmissions().late()).as("Number of latte submissions is correct").isZero();
             assertThat(stats.getTotalNumberOfAssessments().inTime()).as("Number of in-time assessments is correct").isZero();
@@ -2034,8 +2086,6 @@ public class CourseTestService {
         courseRepo.save(course);
 
         var programmingExercise = programmingExerciseRepository.findAllWithEagerTemplateAndSolutionParticipations().get(0);
-        database.addStudentParticipationForProgrammingExercise(programmingExercise, userPrefix + "student1");
-        database.addStudentParticipationForProgrammingExercise(programmingExercise, userPrefix + "student1");
 
         mockDelegate.mockDeleteRepository(programmingExercise.getProjectKey(), (programmingExercise.getProjectKey()).toLowerCase() + "-student1", false);
         var buildPlanId = (programmingExercise.getProjectKey() + "-student1").toUpperCase();
@@ -2510,11 +2560,11 @@ public class CourseTestService {
         assertThat(courseDTO.numberOfTeachingAssistantsInCourse()).isEqualTo(5);
         assertThat(courseDTO.numberOfInstructorsInCourse()).isEqualTo(1);
 
-        // Assessments - 133 because each we have only 2 submissions which have assessments, but as they have complaints which got accepted
+        // Assessments - 80 because each we have only 4 submissions which have assessments, but as some have complaints which got accepted
         // they now have 2 results each.
-        assertThat(courseDTO.currentPercentageAssessments()).isEqualTo(133.3);
+        assertThat(courseDTO.currentPercentageAssessments()).isEqualTo(80);
         assertThat(courseDTO.currentAbsoluteAssessments()).isEqualTo(4);
-        assertThat(courseDTO.currentMaxAssessments()).isEqualTo(3);
+        assertThat(courseDTO.currentMaxAssessments()).isEqualTo(5);
 
         // Complaints
         assertThat(courseDTO.currentPercentageComplaints()).isEqualTo(100);

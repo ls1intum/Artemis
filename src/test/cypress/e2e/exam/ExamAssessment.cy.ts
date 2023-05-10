@@ -156,7 +156,7 @@ describe('Exam assessment', () => {
             if (dayjs().isBefore(resultDate)) {
                 cy.wait(resultDate.diff(dayjs(), 'ms') + 10000);
             }
-            examManagement.checkQuizSubmission(course.id!, exam.id!, studentOneName, '50%, 5 points');
+            examManagement.checkQuizSubmission(course.id!, exam.id!, studentOneName, '50%');
             cy.login(studentOne, '/courses/' + course.id + '/exams/' + exam.id);
             // Sometimes the feedback fails to load properly on the first load...
             const resultSelector = '#result-score';

@@ -19,7 +19,7 @@ import de.tum.in.www1.artemis.domain.view.QuizView;
 @Table(name = "drag_and_drop_mapping")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class DragAndDropMapping extends DomainObject {
+public class DragAndDropMapping extends DomainObject implements QuizQuestionComponent<DragAndDropQuestion> {
 
     @Column(name = "drag_item_index")
     @JsonView(QuizView.Before.class)
