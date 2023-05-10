@@ -14,7 +14,7 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 
-describe('Component Tests', () => {
+describe('Password Component Tests', () => {
     describe('PasswordComponent', () => {
         let comp: PasswordComponent;
         let fixture: ComponentFixture<PasswordComponent>;
@@ -42,6 +42,7 @@ describe('Component Tests', () => {
         });
 
         it('should show error if passwords do not match', () => {
+            comp.ngOnInit();
             // GIVEN
             comp.passwordForm.patchValue({
                 newPassword: 'password1',
@@ -64,6 +65,7 @@ describe('Component Tests', () => {
 
             jest.spyOn(service, 'save').mockReturnValue(of(new HttpResponse({ body: true })));
 
+            comp.ngOnInit();
             comp.passwordForm.patchValue({
                 currentPassword: passwordValues.currentPassword,
                 newPassword: passwordValues.newPassword,
@@ -80,6 +82,7 @@ describe('Component Tests', () => {
         it('should set success to true upon success', () => {
             // GIVEN
             jest.spyOn(service, 'save').mockReturnValue(of(new HttpResponse({ body: true })));
+            comp.ngOnInit();
             comp.passwordForm.patchValue({
                 newPassword: 'myPassword',
                 confirmPassword: 'myPassword',
@@ -97,6 +100,7 @@ describe('Component Tests', () => {
         it('should notify of error if change password fails', () => {
             // GIVEN
             jest.spyOn(service, 'save').mockReturnValue(throwError(() => new Error('ERROR')));
+            comp.ngOnInit();
             comp.passwordForm.patchValue({
                 newPassword: 'myPassword',
                 confirmPassword: 'myPassword',

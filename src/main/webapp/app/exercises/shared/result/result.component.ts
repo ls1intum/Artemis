@@ -17,7 +17,7 @@ import { Result } from 'app/entities/result.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
-import { captureException } from '@sentry/browser';
+import { captureException } from '@sentry/angular-ivy';
 import { hasExerciseDueDatePassed } from 'app/exercises/shared/exercise/exercise.utils';
 import { faCircleNotch, faExclamationCircle, faFile } from '@fortawesome/free-solid-svg-icons';
 import { faCircle } from '@fortawesome/free-regular-svg-icons';
@@ -47,7 +47,7 @@ export class ResultComponent implements OnInit, OnChanges {
 
     @Input() participation: Participation;
     @Input() isBuilding: boolean;
-    @Input() short = false;
+    @Input() short = true;
     @Input() result?: Result;
     @Input() showUngradedResults = false;
     @Input() showBadge = false;
@@ -74,7 +74,7 @@ export class ResultComponent implements OnInit, OnChanges {
     constructor(
         private jhiWebsocketService: JhiWebsocketService,
         private participationService: ParticipationService,
-        private translate: TranslateService,
+        private translateService: TranslateService,
         private http: HttpClient,
         private modalService: NgbModal,
         private exerciseService: ExerciseService,
@@ -128,7 +128,7 @@ export class ResultComponent implements OnInit, OnChanges {
 
         this.evaluate();
 
-        this.translate.onLangChange.subscribe(() => {
+        this.translateService.onLangChange.subscribe(() => {
             if (this.resultString) {
                 this.resultString = this.resultService.getResultString(this.result, this.exercise, this.short);
             }

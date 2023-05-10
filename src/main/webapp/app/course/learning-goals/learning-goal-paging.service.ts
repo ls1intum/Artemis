@@ -10,7 +10,7 @@ type EntityResponseType = SearchResult<LearningGoal>;
 
 @Injectable({ providedIn: 'root' })
 export class LearningGoalPagingService extends PagingService {
-    public resourceUrl = SERVER_API_URL + 'api/competencies';
+    public resourceUrl = 'api/competencies';
 
     constructor(private http: HttpClient) {
         super();
