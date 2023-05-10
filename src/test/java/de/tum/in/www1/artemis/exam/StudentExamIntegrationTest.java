@@ -309,8 +309,8 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         request.delete("/api/courses/" + exam2.getCourse().getId() + "/exams/" + exam2.getId(), HttpStatus.OK);
 
-        assertThat(studentExamRepository.findAllTestRunsByExamId(exam2.getId())).hasSize(0);
-        assertThat(studentExamRepository.findByExamId(exam2.getId())).hasSize(0);
+        assertThat(studentExamRepository.findAllTestRunsByExamId(exam2.getId())).isEmpty();
+        assertThat(studentExamRepository.findByExamId(exam2.getId())).isEmpty();
     }
 
     private List<StudentExam> prepareStudentExamsForConduction(boolean early, boolean setFields) throws Exception {
@@ -1521,7 +1521,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         assertThat(studentExamGradeInfoFromServer.studentResult().overallScoreAchieved()).isEqualTo(100.0);
         assertThat(studentExamGradeInfoFromServer.studentResult().overallGrade()).isNull();
         assertThat(studentExamGradeInfoFromServer.studentResult().hasPassed()).isFalse();
-        assertThat(studentExamGradeInfoFromServer.studentResult().overallPointsAchievedInFirstCorrection()).isEqualTo(0.0);
+        assertThat(studentExamGradeInfoFromServer.studentResult().overallPointsAchievedInFirstCorrection()).isZero();
         assertThat(studentExamGradeInfoFromServer.studentResult().overallGradeInFirstCorrection()).isNull();
         assertThat(studentExamGradeInfoFromServer.studentResult().gradeWithBonus()).isNull();
         assertThat(studentExamGradeInfoFromServer.studentExam()).isEqualTo(studentExam);
@@ -1615,7 +1615,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         assertThat(studentExamGradeInfoFromServer.studentResult().overallScoreAchieved()).isEqualTo(100.0);
         assertThat(studentExamGradeInfoFromServer.studentResult().overallGrade()).isEqualTo("1.0");
         assertThat(studentExamGradeInfoFromServer.studentResult().hasPassed()).isTrue();
-        assertThat(studentExamGradeInfoFromServer.studentResult().overallPointsAchievedInFirstCorrection()).isEqualTo(0.0);
+        assertThat(studentExamGradeInfoFromServer.studentResult().overallPointsAchievedInFirstCorrection()).isZero();
         assertThat(studentExamGradeInfoFromServer.studentResult().overallGradeInFirstCorrection()).isEqualTo("5.0");
         assertThat(studentExamGradeInfoFromServer.studentResult().gradeWithBonus()).isNull();
         assertThat(studentExamGradeInfoFromServer.studentExam()).isEqualTo(studentExam);
@@ -1919,7 +1919,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                 .isEqualTo(2.0);
         assertThat(studentExamGradeInfoFromServer.studentResult().gradeWithBonus().bonusStrategy()).isEqualTo(bonusStrategy);
         assertThat(studentExamGradeInfoFromServer.studentResult().gradeWithBonus().bonusFromTitle()).isEqualTo("Real exam 1");
-        assertThat(studentExamGradeInfoFromServer.studentResult().gradeWithBonus().studentPointsOfBonusSource()).isEqualTo(0.0);
+        assertThat(studentExamGradeInfoFromServer.studentResult().gradeWithBonus().studentPointsOfBonusSource()).isZero();
         assertThat(studentExamGradeInfoFromServer.studentResult().gradeWithBonus().bonusGrade()).isEqualTo(GradingScale.DEFAULT_PLAGIARISM_GRADE);
         assertThat(studentExamGradeInfoFromServer.studentResult().gradeWithBonus().finalPoints()).isEqualTo(22.0);
         assertThat(studentExamGradeInfoFromServer.studentResult().gradeWithBonus().finalGrade()).isEqualTo("3.0");
@@ -1967,7 +1967,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         assertThat(studentExamGradeInfoFromServer.studentResult().overallPointsAchieved()).isEqualTo(24.0);
         assertThat(studentExamGradeInfoFromServer.studentResult().overallGrade()).isEqualTo("3.0");
 
-        assertThat(studentExamGradeInfoFromServer.studentResult().gradeWithBonus().studentPointsOfBonusSource()).isEqualTo(0.0);
+        assertThat(studentExamGradeInfoFromServer.studentResult().gradeWithBonus().studentPointsOfBonusSource()).isZero();
         assertThat(studentExamGradeInfoFromServer.studentResult().gradeWithBonus().bonusGrade()).isEqualTo(noParticipationGrade);
         assertThat(studentExamGradeInfoFromServer.studentResult().gradeWithBonus().finalPoints()).isEqualTo(24.0);
         assertThat(studentExamGradeInfoFromServer.studentResult().gradeWithBonus().finalGrade()).isEqualTo("3.0");
@@ -2194,10 +2194,10 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                 assertThat(submittedAnswer.getScoreInPoints()).isEqualTo(4D);
             } // DND submitted answers 0 points as one correct and two false -> PROPORTIONAL_WITH_PENALTY
             else if (submittedAnswer instanceof DragAndDropSubmittedAnswer) {
-                assertThat(submittedAnswer.getScoreInPoints()).isEqualTo(0D);
+                assertThat(submittedAnswer.getScoreInPoints()).isZero();
             } // SA submitted answers 0 points as one correct and one false -> PROPORTIONAL_WITHOUT_PENALTY
             else if (submittedAnswer instanceof ShortAnswerSubmittedAnswer) {
-                assertThat(submittedAnswer.getScoreInPoints()).isEqualTo(0D);
+                assertThat(submittedAnswer.getScoreInPoints()).isZero();
             }
         }
     }

@@ -87,9 +87,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         }
 
         // Add submission policy to the programming exercise.
-        if (programmingExercise.getSubmissionPolicy() == null) {
-            programmingExercise.setSubmissionPolicy(submissionPolicyRepository.findByProgrammingExerciseId(programmingExercise.getId()));
-        }
+        programmingExercise.setSubmissionPolicy(submissionPolicyRepository.findByProgrammingExerciseId(programmingExercise.getId()));
 
         try {
             repositoryAccessService.checkAccessRepositoryElseThrow(programmingParticipation, userRepository.getUserWithGroupsAndAuthorities(), programmingExercise,
