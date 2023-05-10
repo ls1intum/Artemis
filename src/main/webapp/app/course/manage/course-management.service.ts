@@ -244,7 +244,7 @@ export class CourseManagementService {
      */
     findAllForRegistration(): Observable<EntityArrayResponseType> {
         return this.http
-            .get<Course[]>(`${this.resourceUrl}/for-registration`, { observe: 'response' })
+            .get<Course[]>(`${this.resourceUrl}/for-enrollment`, { observe: 'response' })
             .pipe(map((res: EntityArrayResponseType) => this.processCourseEntityArrayResponseType(res)));
     }
 
@@ -253,7 +253,7 @@ export class CourseManagementService {
      */
     findOneForRegistration(courseId: number): Observable<EntityResponseType> {
         return this.http
-            .get<Course>(`${this.resourceUrl}/${courseId}/for-registration`, { observe: 'response' })
+            .get<Course>(`${this.resourceUrl}/${courseId}/for-enrollment`, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.processCourseEntityResponseType(res)));
     }
 

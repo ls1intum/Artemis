@@ -746,14 +746,14 @@ public class CourseTestService {
         // remove student from course so that they are not already registered
         course.setStudentGroupName("someNonExistingStudentGroupName");
         courseRepo.save(course);
-        request.get("/api/courses/" + course.getId() + "/for-registration", HttpStatus.OK, Course.class);
+        request.get("/api/courses/" + course.getId() + "/for-enrollment", HttpStatus.OK, Course.class);
     }
 
     // Test
     public void testGetCourseForRegistrationAccessDenied() throws Exception {
         Course course = createCourseWithRegistrationEnabled(false);
         removeAllGroupsFromStudent1();
-        request.get("/api/courses/" + course.getId() + "/for-registration", HttpStatus.FORBIDDEN, Course.class);
+        request.get("/api/courses/" + course.getId() + "/for-enrollment", HttpStatus.FORBIDDEN, Course.class);
     }
 
     // Test
@@ -1032,7 +1032,7 @@ public class CourseTestService {
         courseRepo.save(courseNotActivePast);
         courseRepo.save(courseNotActiveFuture);
 
-        List<Course> courses = request.getList("/api/courses/for-registration", HttpStatus.OK, Course.class);
+        List<Course> courses = request.getList("/api/courses/for-enrollment", HttpStatus.OK, Course.class);
         assertThat(courses).as("Only active course is returned").contains(courseActiveRegistrationEnabled);
         assertThat(courses).as("Inactive courses are not returned").doesNotContain(courseActiveRegistrationDisabled, courseNotActivePast, courseNotActiveFuture);
     }
@@ -1401,7 +1401,7 @@ public class CourseTestService {
         mockDelegate.mockAddUserToGroupInUserManagement(student, course1.getStudentGroupName(), false);
         mockDelegate.mockAddUserToGroupInUserManagement(student, course2.getStudentGroupName(), false);
 
-        User updatedStudent = request.postWithResponseBody("/api/courses/" + course1.getId() + "/register", null, User.class, HttpStatus.OK);
+        User updatedStudent = request.postWithResponseBody("/api/courses/" + course1.getId() + "/enroll", null, User.class, HttpStatus.OK);
         assertThat(updatedStudent.getGroups()).as("User is registered for course").contains(course1.getStudentGroupName());
 
         List<AuditEvent> auditEvents = auditEventRepo.find("ab12cde", Instant.now().minusSeconds(20), Constants.ENROLL_IN_COURSE);
@@ -1409,7 +1409,7 @@ public class CourseTestService {
         AuditEvent auditEvent = auditEvents.get(0);
         assertThat(auditEvent.getData()).as("Correct Event Data").containsEntry("course", course1.getTitle());
 
-        request.postWithResponseBody("/api/courses/" + course2.getId() + "/register", null, User.class, HttpStatus.FORBIDDEN);
+        request.postWithResponseBody("/api/courses/" + course2.getId() + "/enroll", null, User.class, HttpStatus.FORBIDDEN);
     }
 
     // Test
@@ -1428,8 +1428,8 @@ public class CourseTestService {
         mockDelegate.mockAddUserToGroupInUserManagement(student, notYetStartedCourse.getStudentGroupName(), false);
         mockDelegate.mockAddUserToGroupInUserManagement(student, finishedCourse.getStudentGroupName(), false);
 
-        request.post("/api/courses/" + notYetStartedCourse.getId() + "/register", User.class, HttpStatus.FORBIDDEN);
-        request.post("/api/courses/" + finishedCourse.getId() + "/register", User.class, HttpStatus.FORBIDDEN);
+        request.post("/api/courses/" + notYetStartedCourse.getId() + "/enroll", User.class, HttpStatus.FORBIDDEN);
+        request.post("/api/courses/" + finishedCourse.getId() + "/enroll", User.class, HttpStatus.FORBIDDEN);
     }
 
     // Test
