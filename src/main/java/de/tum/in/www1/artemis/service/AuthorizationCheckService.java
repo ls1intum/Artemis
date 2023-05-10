@@ -35,7 +35,8 @@ public class AuthorizationCheckService {
 
     private final CourseRepository courseRepository;
 
-    @Value("${artemis.user-management.course-registration.allowed-username-pattern:#{null}}") // TODO
+    // TODO: rename to course-enrollment
+    @Value("${artemis.user-management.course-registration.allowed-username-pattern:#{null}}")
     private Optional<Pattern> allowedCourseEnrollmentUsernamePattern;
 
     public AuthorizationCheckService(UserRepository userRepository, CourseRepository courseRepository) {
