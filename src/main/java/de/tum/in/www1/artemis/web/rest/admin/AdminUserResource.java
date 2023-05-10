@@ -219,33 +219,29 @@ public class AdminUserResource {
     /**
      * DELETE users/:login : delete the "login" User.
      *
-     * @param login            the login of the user to delete
-     * @param adminLanguageKey the language key of the admin (used for setting some properties of the deleted user entity).
+     * @param login the login of the user to delete
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("users/{login:" + Constants.LOGIN_REGEX + "}")
     @EnforceAdmin
-    public ResponseEntity<Void> deleteUser(@PathVariable String login, @RequestParam(name = "adminLanguageKey") String adminLanguageKey) {
+    public ResponseEntity<Void> deleteUser(@PathVariable String login) {
         log.debug("REST request to delete User: {}", login);
         if (userRepository.isCurrentUser(login)) {
             throw new BadRequestAlertException("You cannot delete yourself", "userManagement", "cannotDeleteYourself");
         }
-
-        userService.softDeleteUser(login, getValidatedLanguageKey(adminLanguageKey));
-
+        userService.softDeleteUser(login);
         return ResponseEntity.ok().headers(HeaderUtil.createAlert(applicationName, "artemisApp.userManagement.deleted", login)).build();
     }
 
     /**
      * Delete users: deletes the provided users
      *
-     * @param logins           user logins to delete
-     * @param adminLanguageKey the language key of the admin (used for setting some properties of the deleted user entity)
+     * @param logins user logins to delete
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("users")
     @EnforceAdmin
-    public ResponseEntity<List<String>> deleteUsers(@RequestParam(name = "login") List<String> logins, @RequestParam(name = "adminLanguageKey") String adminLanguageKey) {
+    public ResponseEntity<List<String>> deleteUsers(@RequestParam(name = "login") List<String> logins) {
         log.debug("REST request to delete {} users", logins.size());
         List<String> deletedUsers = new java.util.ArrayList<>();
 
@@ -256,7 +252,7 @@ public class AdminUserResource {
         for (String login : logins) {
             try {
                 if (!userRepository.isCurrentUser(login)) {
-                    userService.softDeleteUser(login, getValidatedLanguageKey(adminLanguageKey));
+                    userService.softDeleteUser(login);
                     deletedUsers.add(login);
                 }
             }
@@ -268,15 +264,5 @@ public class AdminUserResource {
         }
         return ResponseEntity.ok().headers(HeaderUtil.createAlert(applicationName, "artemisApp.userManagement.batch.deleted", String.valueOf(deletedUsers.size())))
                 .body(deletedUsers);
-    }
-
-    private String getValidatedLanguageKey(String languageKey) {
-        final String result = languageKey.replaceAll("\"", "").toLowerCase().trim();
-
-        if (!"en".equals(result) && !"de".equals(result)) {
-            return Constants.DEFAULT_LANGUAGE;
-        }
-
-        return result;
     }
 }

@@ -10,7 +10,6 @@ import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -27,7 +26,6 @@ import org.springframework.util.StringUtils;
 import de.tum.in.www1.artemis.domain.Authority;
 import de.tum.in.www1.artemis.domain.GuidedTourSetting;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.exception.AccountRegistrationBlockedException;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.exception.UsernameAlreadyUsedException;
@@ -415,13 +413,12 @@ public class UserService {
     /**
      * Performs soft-delete on the user based on login string
      *
-     * @param login            user login string
-     * @param adminLanguageKey the language key of the admin (used for setting some properties of the deleted user entity)
+     * @param login user login string
      */
-    public void softDeleteUser(String login, String adminLanguageKey) {
+    public void softDeleteUser(String login) {
         userRepository.findOneWithGroupsByLogin(login).ifPresent(user -> {
             user.setDeleted(true);
-            anonymizeUser(user, adminLanguageKey);
+            anonymizeUser(user);
             log.warn("Soft Deleted User: {}", user);
         });
     }
@@ -430,19 +427,18 @@ public class UserService {
      * Sets the properties of the user to random or dummy values, making it impossible to identify the user.
      * Also updates the user in connectors and auth provider.
      *
-     * @param user             the user that should be anonymized
-     * @param adminLanguageKey the language key of the admin (used for setting some properties of the deleted user entity)
+     * @param user the user that should be anonymized
      */
-    protected void anonymizeUser(User user, String adminLanguageKey) {
+    protected void anonymizeUser(User user) {
         final String originalLogin = user.getLogin();
         final Set<String> originalGroups = user.getGroups();
         final String randomPassword = RandomUtil.generatePassword();
 
-        user.setFirstName(getFirstNameForSoftDeletion(adminLanguageKey));
-        user.setLastName(getLastNameForSoftDeletion(adminLanguageKey));
+        user.setFirstName(USER_FIRST_NAME_AFTER_SOFT_DELETE);
+        user.setLastName(USER_LAST_NAME_AFTER_SOFT_DELETE);
         user.setLogin(RandomUtil.generateRandomAlphanumericString());
         user.setPassword(randomPassword);
-        user.setEmail(RandomUtil.generateRandomAlphanumericString() + getEmailDomainForSoftDeletion(adminLanguageKey));
+        user.setEmail(RandomUtil.generateRandomAlphanumericString() + USER_EMAIL_DOMAIN_AFTER_SOFT_DELETE);
         user.setRegistrationNumber(null);
         user.setImageUrl(null);
         user.setActivated(false);
@@ -453,27 +449,6 @@ public class UserService {
         userRepository.flush();
 
         updateUserInConnectorsAndAuthProvider(user, originalLogin, originalGroups, randomPassword);
-    }
-
-    private String getFirstNameForSoftDeletion(String languageKey) {
-        if (Objects.equals(languageKey, Language.GERMAN.getLanguageKey())) {
-            return USER_FIRST_NAME_AFTER_SOFT_DELETE_DE;
-        }
-        return USER_FIRST_NAME_AFTER_SOFT_DELETE;
-    }
-
-    private String getLastNameForSoftDeletion(String languageKey) {
-        if (Objects.equals(languageKey, Language.GERMAN.getLanguageKey())) {
-            return USER_LAST_NAME_AFTER_SOFT_DELETE_DE;
-        }
-        return USER_LAST_NAME_AFTER_SOFT_DELETE;
-    }
-
-    private String getEmailDomainForSoftDeletion(String languageKey) {
-        if (Objects.equals(languageKey, Language.GERMAN.getLanguageKey())) {
-            return USER_EMAIL_DOMAIN_AFTER_SOFT_DELETE_DE;
-        }
-        return USER_EMAIL_DOMAIN_AFTER_SOFT_DELETE;
     }
 
     /**
