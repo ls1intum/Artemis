@@ -73,14 +73,14 @@ public class RepositoryAccessService {
             // Return a message to the client.
             String errorMessage;
             if (!programmingExercise.isReleased()) {
-                errorMessage = "artemisApp.exerciseActions.startExerciseBeforeStartDate";
+                errorMessage = "startExerciseBeforeStartDate";
             }
             else if (exerciseDateService.isAfterDueDate(programmingParticipation)) {
-                errorMessage = "artemisApp.exerciseActions.submitAfterDueDate";
+                errorMessage = "submitAfterDueDate";
             }
             else if (programmingExercise.getSubmissionPolicy() instanceof LockRepositoryPolicy lockRepositoryPolicy
                     && lockRepositoryPolicy.getSubmissionLimit() <= submissionPolicyService.getParticipationSubmissionCount((Participation) programmingParticipation)) {
-                errorMessage = "artemisApp.exerciseActions.submitAfterReachingSubmissionLimit";
+                errorMessage = "submitAfterReachingSubmissionLimit";
             }
             else {
                 throw new IllegalStateException("The participation is locked but the reason is unknown.");

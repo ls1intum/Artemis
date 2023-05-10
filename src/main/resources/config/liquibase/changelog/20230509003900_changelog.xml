@@ -11,9 +11,10 @@
         -->
         <sql>
             UPDATE participation
-            JOIN exercise ON participation.exercise_id = exercise.id
+                JOIN exercise ON participation.exercise_id = exercise.id
             SET participation.locked = 1
             WHERE participation.discriminator = 'PESP'
+                AND participation.test_run = 0
                 AND (
                     (exercise.release_date IS NOT NULL AND exercise.release_date &gt; NOW())
                     OR (exercise.start_date IS NOT NULL AND exercise.start_date &gt; NOW())
@@ -30,6 +31,7 @@
                 JOIN exercise ON participation.exercise_id = exercise.id
             SET participation.locked = 1
             WHERE participation.discriminator = 'PESP'
+                AND participation.test_run = 0
                 AND (
                     (
                         exercise.due_date IS NOT NULL
@@ -69,9 +71,24 @@
                 JOIN count_valid_submissions cvs ON participation.id = cvs.participation_id
             SET participation.locked = 1
             WHERE participation.discriminator = 'PESP'
+                AND participation.test_run = 0
                 AND sp.discriminator = 'LRP'
                 AND sp.active = 1
                 AND sp.submission_limit &lt;= cvs.submission_count;
+        </sql>
+        <!-- Lock all participations for exam exercises where the exam start date is in the future or the individual exam end date is in the past.
+
+        -->
+        <sql>
+            UPDATE participation
+                JOIN exercise ON participation.exercise_id = exercise.id
+                JOIN exercise_group ON exercise.exercise_group_id = exercise_group.id
+                JOIN exam ON exercise_group.exam_id = exam.id
+                JOIN student_exam ON exam.id = student_exam.exam_id
+            SET participation.locked = 1
+            WHERE participation.discriminator = 'PESP'
+              AND participation.test_run = 0
+              AND (exam.start_date &gt; NOW() OR DATEADD(ss, student_exam.working_time, exam.start_date) &lt; NOW());
         </sql>
     </changeSet>
 </databaseChangeLog>

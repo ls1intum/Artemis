@@ -58,10 +58,7 @@
             "copiedUrl": "Copied URL",
             "uploadFile": "Upload a file",
             "viewTeam": "Team",
-            "sshKeyTip": "To use ssh, you need to add an ssh-key to your account {link:here}.",
-            "startExerciseBeforeStartDate": "You cannot participate before the start date of the exercise.",
-            "submitAfterDueDate": "You cannot submit after the due date of the exercise.",
-            "submitAfterReachingSubmissionLimit": "You reached the submission limit and cannot participate anymore."
+            "sshKeyTip": "To use ssh, you need to add an ssh-key to your account {link:here}."
         }
     }
 }

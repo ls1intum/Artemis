@@ -1,4 +1,5 @@
 import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { catchError, switchMap, tap } from 'rxjs/operators';
 import { Observable, Subscription, of, throwError } from 'rxjs';
@@ -228,7 +229,7 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges 
                 }),
             )
             .subscribe({
-                error: (error: Error) => {
+                error: (error: HttpErrorResponse) => {
                     this.commitState = CommitState.UNCOMMITTED_CHANGES;
                     if (error.message === ConnectionError.message) {
                         this.onError.emit('submitFailed' + error.message);
@@ -236,10 +237,15 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges 
                         this.onError.emit('submitFailed');
                     }
 
-                    const httpErrorResponse: any = error as any;
-                    const errorDetail: string = httpErrorResponse.error.detail;
-                    if (errorDetail.includes('checkoutFailed')) {
-                        this.onError.emit('checkoutFailed');
+                    if (error.error.detail) {
+                        const detailMessage = error.error.detail;
+                        if (detailMessage.includes('startExerciseBeforeStartDate')) {
+                            this.onError.emit('startExerciseBeforeStartDate');
+                        } else if (detailMessage.includes('submitAfterDueDate')) {
+                            this.onError.emit('submitAfterDueDate');
+                        } else if (detailMessage.includes('submitAfterReachingSubmissionLimit')) {
+                            this.onError.emit('submitAfterReachingSubmissionLimit');
+                        }
                     }
                 },
             });
