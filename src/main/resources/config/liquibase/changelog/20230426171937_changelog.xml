@@ -23,6 +23,7 @@
                                  referencedColumnNames="id"
                                  referencedTableName="conversation"
                                  onDelete="SET NULL"/>
+        <sql>ALTER TABLE conversation MODIFY COLUMN name VARCHAR(30)</sql>
     </changeSet>
     <changeSet author="baboci" id="20230426171937-02">
         <addColumn tableName="exam">
