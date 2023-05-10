@@ -601,7 +601,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
         updateUserNotificationReadDate(userId, ZonedDateTime.now());
     }
 
-    @Query(value = "SELECT * FROM jhi_user u WHERE u.isDeleted = false REGEXP_LIKE(u.email, :#{#emailPattern})", nativeQuery = true)
+    @Query(value = "SELECT * FROM jhi_user u WHERE is_deleted = false AND REGEXP_LIKE(u.email, :#{#emailPattern})", nativeQuery = true)
     List<User> findAllMatchingEmailPattern(@Param("emailPattern") String emailPattern);
 
     /**
