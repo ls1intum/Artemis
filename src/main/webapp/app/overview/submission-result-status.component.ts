@@ -29,7 +29,7 @@ export class SubmissionResultStatusComponent implements OnChanges {
     @Input() showBadge = false;
     @Input() showUngradedResults = false;
     @Input() showIcon = true;
-    @Input() short = false;
+    @Input() short = true;
     @Input() triggerLastGraded = true;
 
     quizNotStarted: boolean;
