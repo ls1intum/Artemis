@@ -49,6 +49,7 @@ import de.tum.in.www1.artemis.service.dto.UserDTO;
 import de.tum.in.www1.artemis.service.ldap.LdapUserDto;
 import de.tum.in.www1.artemis.service.ldap.LdapUserService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
+import de.tum.in.www1.artemis.service.metis.conversation.ConversationService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.EmailAlreadyUsedException;
 import de.tum.in.www1.artemis.web.rest.errors.PasswordViolatesRequirementsException;
@@ -121,6 +122,8 @@ public class UserService {
 
     private final OneToOneChatRepository oneToOneChatRepository;
 
+    private final ConversationService conversationService;
+
     public UserService(UserCreationService userCreationService, UserRepository userRepository, AuthorityService authorityService, AuthorityRepository authorityRepository,
             CacheManager cacheManager, Optional<LdapUserService> ldapUserService, GuidedTourSettingsRepository guidedTourSettingsRepository, PasswordService passwordService,
             Optional<VcsUserManagementService> optionalVcsUserManagementService, Optional<CIUserManagementService> optionalCIUserManagementService,
@@ -129,7 +132,7 @@ public class UserService {
             ExerciseHintActivationRepository exerciseHintActivationRepository, TutorialGroupRegistrationRepository tutorialGroupRegistrationRepository,
             TutorialGroupRepository tutorialGroupRepository, SingleUserNotificationRepository singleUserNotificationRepository, NotificationRepository notificationRepository,
             PostRepository postRepository, ConversationRepository conversationRepository, ConversationParticipantRepository conversationParticipantRepository,
-            OneToOneChatRepository oneToOneChatRepository) {
+            OneToOneChatRepository oneToOneChatRepository, ConversationService conversationService) {
         this.userCreationService = userCreationService;
         this.userRepository = userRepository;
         this.authorityService = authorityService;
@@ -153,6 +156,7 @@ public class UserService {
         this.conversationRepository = conversationRepository;
         this.conversationParticipantRepository = conversationParticipantRepository;
         this.oneToOneChatRepository = oneToOneChatRepository;
+        this.conversationService = conversationService;
     }
 
     /**
@@ -665,7 +669,7 @@ public class UserService {
     }
 
     /**
-     * add the user to the specified group and update in VCS (like GitLab) if used
+     * add the user to the specified group and update in VCS (like GitLab) if used, and registers the user to necessary channels
      *
      * @param user  the user
      * @param group the group
@@ -682,6 +686,8 @@ public class UserService {
         // e.g. Gitlab: TODO: include the role to distinguish more cases
         optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.updateVcsUser(user.getLogin(), user, Set.of(), Set.of(group)));
         optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.addUserToGroups(user.getLogin(), Set.of(group)));
+        // register user to all channels that need to be participant
+        conversationService.registerUserToChannels(user, group, role);
     }
 
     /**

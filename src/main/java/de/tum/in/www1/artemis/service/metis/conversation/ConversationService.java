@@ -30,8 +30,8 @@ import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ConversationRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.GroupChatRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.OneToOneChatRepository;
-import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.security.Role;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.ConversationDTO;
@@ -65,10 +65,12 @@ public class ConversationService {
 
     private final CourseRepository courseRepository;
 
+    private final ConversationService conversationService;
+
     public ConversationService(ConversationDTOService conversationDTOService, UserRepository userRepository, ChannelRepository channelRepository,
             ConversationParticipantRepository conversationParticipantRepository, ConversationRepository conversationRepository, SimpMessageSendingOperations messagingTemplate,
             OneToOneChatRepository oneToOneChatRepository, PostRepository postRepository, GroupChatRepository groupChatRepository,
-            AuthorizationCheckService authorizationCheckService, CourseRepository courseRepository) {
+            AuthorizationCheckService authorizationCheckService, CourseRepository courseRepository, ConversationService conversationService) {
         this.conversationDTOService = conversationDTOService;
         this.userRepository = userRepository;
         this.channelRepository = channelRepository;
@@ -80,6 +82,7 @@ public class ConversationService {
         this.groupChatRepository = groupChatRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.courseRepository = courseRepository;
+        this.conversationService = conversationService;
     }
 
     /**
@@ -183,7 +186,7 @@ public class ConversationService {
      * @param group            the group of the user
      * @param role             the role of the user
      */
-    public void registerUserToDefaultChannels(User userToAddToGroup, String group, Role role) {
+    public void registerUserToChannels(User userToAddToGroup, String group, Role role) {
         final List<String> channelNames = Arrays.stream(DefaultChannelType.values()).toList().stream().map(DefaultChannelType::getName).toList();
 
         List<Course> courses = switch (role) {
@@ -194,8 +197,15 @@ public class ConversationService {
         };
 
         for (Course c : courses) {
-            channelRepository.findChannelsByCourseId(c.getId()).stream().filter(channel -> channelNames.contains(channel.getName())).forEach(channel -> {
-                registerUsersToConversation(c, Set.of(userToAddToGroup), channel, Optional.empty());
+            channelRepository.findChannelsByCourseId(c.getId()).forEach(channel -> {
+                // add user to default channels
+                if (channelNames.contains(channel.getName())) {
+                    registerUsersToConversation(c, Set.of(userToAddToGroup), channel, Optional.empty());
+                }
+                // add to exercise or lecture channel if user is not member
+                if ((channel.getLecture() != null || channel.getExercise() != null) && !conversationService.isMember(channel.getId(), userToAddToGroup.getId())) {
+                    registerUsersToConversation(c, Set.of(userToAddToGroup), channel, Optional.empty());
+                }
             });
         }
     }

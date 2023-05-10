@@ -1011,7 +1011,6 @@ public class CourseResource {
                 throw new EntityNotFoundException("User", userLogin);
             }
             courseService.addUserToGroup(userToAddToGroup.get(), group, role);
-            conversationService.registerUserToDefaultChannels(userToAddToGroup.get(), group, role);
             return ResponseEntity.ok().body(null);
         }
         else {
