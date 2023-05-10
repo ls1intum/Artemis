@@ -235,6 +235,12 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges 
                     } else {
                         this.onError.emit('submitFailed');
                     }
+
+                    const httpErrorResponse: any = error as any;
+                    const errorDetail: string = httpErrorResponse.error.detail;
+                    if (errorDetail.includes('checkoutFailed')) {
+                        this.onError.emit('checkoutFailed');
+                    }
                 },
             });
     }

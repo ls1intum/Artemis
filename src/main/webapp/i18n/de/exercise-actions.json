@@ -58,7 +58,9 @@
             "uploadFile": "Datei hochladen",
             "viewTeam": "Team",
             "sshKeyTip": "Um SSH zu nutzen, musst du {link:hier} einen SSH-Schlüssel zu deinem Konto hinzufügen.",
-            "startExerciseBeforeDueDate": "Du kannst vor dem Startdatum nicht an der Aufgabe teilnehmen."
+            "startExerciseBeforeStartDate": "Du kannst vor dem Startdatum nicht an der Aufgabe teilnehmen.",
+            "submitAfterDueDate": "Du kannst nach der Abgabefrist keine weiteren Abgaben einreichen.",
+            "submitAfterReachingSubmissionLimit": "Du hast das Abgabelimit erreicht und kannst keine weiteren Abgaben einreichen."
         }
     }
 }
