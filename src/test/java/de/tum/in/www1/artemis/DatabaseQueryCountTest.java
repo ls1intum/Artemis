@@ -59,7 +59,7 @@ class DatabaseQueryCountTest extends AbstractSpringIntegrationBambooBitbucketJir
         // 1 DB call to get the course with exercise, lectures, exams
         // 1 DB call to load all exercises
         // 1 DB call to load all exams
-        // 1 DB call to load all learning goals
+        // 1 DB call to load all competencies
         // 1 DB call to load all prerequisite
         // 1 DB call to load all tutorial groups
         // 1 DB call to load the tutorial group configuration
