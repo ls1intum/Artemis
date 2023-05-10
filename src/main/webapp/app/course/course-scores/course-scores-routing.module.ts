@@ -4,19 +4,26 @@ import { UserRouteAccessService } from 'app/core/auth/user-route-access-service'
 import { NgModule } from '@angular/core';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { CourseManagementResolve } from 'app/course/manage/course-management-resolve.service';
+import { CourseManagementTabBarComponent } from 'app/course/manage/course-management-tab-bar/course-management-tab-bar.component';
 
 const routes: Routes = [
     {
         path: ':courseId/scores',
-        component: CourseScoresComponent,
-        resolve: {
-            course: CourseManagementResolve,
-        },
-        data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
-            pageTitle: 'artemisApp.instructorDashboard.title',
-        },
-        canActivate: [UserRouteAccessService],
+        component: CourseManagementTabBarComponent,
+        children: [
+            {
+                path: '',
+                component: CourseScoresComponent,
+                resolve: {
+                    course: CourseManagementResolve,
+                },
+                data: {
+                    authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
+                    pageTitle: 'artemisApp.instructorDashboard.title',
+                },
+                canActivate: [UserRouteAccessService],
+            },
+        ],
     },
 ];
 
