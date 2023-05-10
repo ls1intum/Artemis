@@ -29,6 +29,13 @@ import { SubmissionPolicyType } from 'app/entities/submission-policy.model';
 import { faBan, faExclamationCircle, faHandshakeAngle, faQuestionCircle, faSave } from '@fortawesome/free-solid-svg-icons';
 import { ModePickerOption } from 'app/exercises/shared/mode-picker/mode-picker.component';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
+import {
+    GradingStepInputs,
+    InfoStepInputs,
+    InfrastructureInputs,
+    LanguageStepInputs,
+    ProblemStepInputs,
+} from 'app/exercises/programming/manage/update/wizard-mode/programming-exercise-update-wizard.component';
 
 @Component({
     selector: 'jhi-programming-exercise-update',
@@ -979,7 +986,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         this.selectedProjectType = history.state.programmingExerciseForImportFromFile.projectType;
     }
 
-    getInfoStepInputs() {
+    getInfoStepInputs(): InfoStepInputs {
         return {
             titleNamePattern: this.titleNamePattern,
             shortNamePattern: this.shortNamePattern,
@@ -996,7 +1003,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         };
     }
 
-    getLanguageStepInputs() {
+    getLanguageStepInputs(): LanguageStepInputs {
         return {
             appNamePatternForSwift: this.appNamePatternForSwift,
             modePickerOptions: this.modePickerOptions,
@@ -1013,7 +1020,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         };
     }
 
-    getGradingStepInputs() {
+    getGradingStepInputs(): GradingStepInputs {
         return {
             staticCodeAnalysisAllowed: this.staticCodeAnalysisAllowed,
             onStaticCodeAnalysisChanged: this.staticCodeAnalysisChanged,
@@ -1021,7 +1028,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         };
     }
 
-    getProblemStepInputs() {
+    getProblemStepInputs(): ProblemStepInputs {
         return {
             problemStatementLoaded: this.problemStatementLoaded,
             templateParticipationResultLoaded: this.templateParticipationResultLoaded,
@@ -1035,6 +1042,18 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             onRecreateBuildPlanOrUpdateTemplateChange: this.onRecreateBuildPlanOrUpdateTemplateChange,
             updateTemplate: this.updateTemplate,
             selectedProjectType: this.selectedProjectType,
+        };
+    }
+
+    getInfrastructureStepInputs(): InfrastructureInputs {
+        return {
+            invalidRepositoryNamePattern: this.invalidRepositoryNamePattern,
+            invalidDirectoryNamePattern: this.invalidDirectoryNamePattern,
+            updateRepositoryName: this.updateRepositoryName,
+            updateCheckoutDirectory: this.updateCheckoutDirectory,
+            refreshAuxiliaryRepositoryChecks: this.refreshAuxiliaryRepositoryChecks,
+            auxiliaryRepositoryDuplicateNames: this.auxiliaryRepositoryDuplicateNames,
+            auxiliaryRepositoryDuplicateDirectories: this.auxiliaryRepositoryDuplicateDirectories,
         };
     }
 }

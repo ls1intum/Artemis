@@ -58,6 +58,17 @@ export type ProblemStepInputs = {
     selectedProjectType: ProjectType;
 };
 
+export type InfrastructureInputs = {
+    // preview
+    invalidRepositoryNamePattern: RegExp;
+    invalidDirectoryNamePattern: RegExp;
+    updateRepositoryName: (auxiliaryRepository: AuxiliaryRepository) => (newValue: any) => string | undefined;
+    updateCheckoutDirectory: (editedAuxiliaryRepository: AuxiliaryRepository) => (newValue: any) => string | undefined;
+    refreshAuxiliaryRepositoryChecks: () => void;
+    auxiliaryRepositoryDuplicateNames: boolean;
+    auxiliaryRepositoryDuplicateDirectories: boolean;
+};
+
 @Component({
     selector: 'jhi-programming-exercise-update-wizard',
     templateUrl: './programming-exercise-update-wizard.component.html',

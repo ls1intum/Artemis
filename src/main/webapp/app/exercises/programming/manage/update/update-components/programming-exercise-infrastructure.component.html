@@ -1,4 +1,3 @@
-<!-- Preview
 <div *ngIf="!shouldHidePreview || (programmingExercise.title && programmingExercise.shortName)">
     <div class="form-group mt-2 mb-0">
         <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.preview.label" for="preview"></label>
@@ -22,8 +21,8 @@
                     <jhi-table-editable-field
                         [id]="row.id + '-repositoryName'"
                         [value]="row.name || ''"
-                        [onValueUpdate]="infoInputs.updateRepositoryName(row)"
-                        [pattern]="infoInputs.invalidRepositoryNamePattern"
+                        [onValueUpdate]="infrastructureInputs.updateRepositoryName(row)"
+                        [pattern]="infrastructureInputs.invalidRepositoryNamePattern"
                         [isRequired]="true"
                         [translationBase]="'artemisApp.programmingExercise.auxiliaryRepository.repositoryNameRequired'"
                     >
@@ -35,8 +34,8 @@
                     <jhi-table-editable-field
                         [id]="row.id + '-checkoutDirectory'"
                         [value]="row.checkoutDirectory || ''"
-                        [onValueUpdate]="infoInputs.updateCheckoutDirectory(row)"
-                        [pattern]="infoInputs.invalidDirectoryNamePattern"
+                        [onValueUpdate]="infrastructureInputs.updateCheckoutDirectory(row)"
+                        [pattern]="infrastructureInputs.invalidDirectoryNamePattern"
                         [translationBase]="'artemisApp.programmingExercise.auxiliaryRepository.invalidDirectoryName'"
                     >
                     </jhi-table-editable-field>
@@ -52,16 +51,22 @@
                     <jhi-remove-auxiliary-repository-button
                         placement="right auto"
                         [programmingExercise]="programmingExercise"
-                        (onRefresh)="infoInputs.refreshAuxiliaryRepositoryChecks()"
+                        (onRefresh)="infrastructureInputs.refreshAuxiliaryRepositoryChecks()"
                         [row]="row"
                         class="ml-2"
                     ></jhi-remove-auxiliary-repository-button>
                 </ng-template>
             </ngx-datatable-column>
         </ngx-datatable>
-        <ngb-alert [dismissible]="false" [type]="'danger'" *ngIf="infoInputs.auxiliaryRepositoryDuplicateNames || infoInputs.auxiliaryRepositoryDuplicateDirectories">
-            <span *ngIf="infoInputs.auxiliaryRepositoryDuplicateNames">{{ 'artemisApp.programmingExercise.auxiliaryRepository.duplicateRepositoryNames' | artemisTranslate }}</span>
-            <span *ngIf="infoInputs.auxiliaryRepositoryDuplicateDirectories">{{
+        <ngb-alert
+            [dismissible]="false"
+            [type]="'danger'"
+            *ngIf="infrastructureInputs.auxiliaryRepositoryDuplicateNames || infrastructureInputs.auxiliaryRepositoryDuplicateDirectories"
+        >
+            <span *ngIf="infrastructureInputs.auxiliaryRepositoryDuplicateNames">{{
+                'artemisApp.programmingExercise.auxiliaryRepository.duplicateRepositoryNames' | artemisTranslate
+            }}</span>
+            <span *ngIf="infrastructureInputs.auxiliaryRepositoryDuplicateDirectories">{{
                 'artemisApp.programmingExercise.auxiliaryRepository.duplicateDirectoryNames' | artemisTranslate
             }}</span>
         </ngb-alert>
@@ -70,9 +75,8 @@
         </ngb-alert>
         <jhi-add-auxiliary-repository-button
             [programmingExercise]="programmingExercise"
-            (onRefresh)="infoInputs.refreshAuxiliaryRepositoryChecks()"
+            (onRefresh)="infrastructureInputs.refreshAuxiliaryRepositoryChecks()"
             class="ml-2"
         ></jhi-add-auxiliary-repository-button>
     </div>
 </div>
--->
