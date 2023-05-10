@@ -44,6 +44,7 @@ export enum MarkdownEditorHeight {
     SMALL = 200,
     MEDIUM = 500,
     LARGE = 1000,
+    EXTRA_LARGE = 1500,
 }
 
 export enum EditorMode {
@@ -152,6 +153,8 @@ export class MarkdownEditorComponent implements AfterViewInit {
 
     /** {visualMode} when editor is created the visual mode is set to false, since the edit mode is set active */
     visualMode = false;
+    @Input()
+    minHeightEditor = MarkdownEditorHeight.SMALL.valueOf();
 
     @ContentChild(MultipleChoiceVisualQuestionComponent, { static: false }) visualChild: MultipleChoiceVisualQuestionComponent;
 
