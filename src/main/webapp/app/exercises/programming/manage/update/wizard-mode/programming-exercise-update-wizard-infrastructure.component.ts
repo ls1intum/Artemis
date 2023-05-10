@@ -3,13 +3,9 @@ import { InfrastructureInputs } from 'app/exercises/programming/manage/update/wi
 
 @Component({
     selector: 'jhi-programming-exercise-update-wizard-infrastructure',
-    template: `
-        <h1><span jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.generalInfoStepTitle">General Info</span></h1>
-        <p><span jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.generalInfoStepMessage">Add general info.</span></p>
-        <jhi-programming-exercise-infrastructure [infrastructureStepInputs]="infrastructureInputs"> </jhi-programming-exercise-infrastructure>
-    `,
+    templateUrl: './programming-exercise-update-wizard-infrastructure.component.html',
     styleUrls: ['./programming-exercise-update-wizard.component.scss'],
 })
 export class ProgrammingExerciseUpdateWizardInfrastructureComponent {
-    @Input() infrastructureInputs: InfrastructureInputs;
+    @Input() infrastructureStepInputs: InfrastructureInputs;
 }

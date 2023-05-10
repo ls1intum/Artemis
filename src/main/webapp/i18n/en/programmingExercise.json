@@ -71,7 +71,9 @@
                     "gradingStepTitle": "Grading",
                     "gradingStepMessage": "Specify how students should be graded when completing this exercise.",
                     "problemStepTitle": "Problem Statement",
-                    "problemStepMessage": "Specify the problem statement for the new exercise."
+                    "problemStepMessage": "Specify the problem statement for the new exercise.",
+                    "infrastructureStepTitle": "Infrastructure",
+                    "infrastructureStepMessage": "Additional settings regarding infrastructure, etc"
                 },
                 "gradingLabels": {
                     "points": "There is a total of {maxPoints} points to achieve in this {exerciseType}.",

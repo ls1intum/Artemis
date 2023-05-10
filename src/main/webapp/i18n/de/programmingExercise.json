@@ -65,7 +65,9 @@
                     "gradingStepTitle": "Benotung",
                     "gradingStepMessage": "Lege fest, wie Studenten bei dieser Übung benotet werden sollen.",
                     "problemStepTitle": "Aufgabenstellung",
-                    "problemStepMessage": "Lege die Aufgabenstellung für die neue Übung fest."
+                    "problemStepMessage": "Lege die Aufgabenstellung für die neue Übung fest.",
+                    "infrastructureStepTitle": "Infrastruktur",
+                    "infrastructureStepMessage": "Sonstige Einstellung bezüglich Infrastruktur, etc"
                 },
                 "gradingLabels": {
                     "points": "Es gibt insgesamt maximal {maxPoints} Punkte bei dieser {exerciseType} zu erreichen.",
