@@ -610,7 +610,7 @@ public class ProgrammingExerciseRepositoryService {
 
     /**
      * Locks or unlocks the participations and repositories if necessary due to the changes in the programming exercise.
-     * This might be because of changes in the release date or due date.
+     * This might be because of changes in the release date or due date, or because of a change in whether offline IDEs are allowed or not.
      * As of now the submission policy cannot be changed here. See {@link SubmissionPolicyResource#updateSubmissionPolicy(Long, SubmissionPolicy)} for that.
      *
      * @param programmingExerciseBeforeUpdate the original exercise with unchanged values

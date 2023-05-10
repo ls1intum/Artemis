@@ -17,9 +17,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
-import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.*;
-import de.tum.in.www1.artemis.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.connectors.GitService;
@@ -45,12 +43,9 @@ public class ProgrammingExerciseParticipationService {
 
     private final GitService gitService;
 
-    private final ProgrammingSubmissionRepository programmingSubmissionRepository;
-
     public ProgrammingExerciseParticipationService(SolutionProgrammingExerciseParticipationRepository solutionParticipationRepository,
             TemplateProgrammingExerciseParticipationRepository templateParticipationRepository, ProgrammingExerciseStudentParticipationRepository studentParticipationRepository,
-            ParticipationRepository participationRepository, TeamRepository teamRepository, GitService gitService, Optional<VersionControlService> versionControlService,
-            ProgrammingSubmissionRepository programmingSubmissionRepository) {
+            ParticipationRepository participationRepository, TeamRepository teamRepository, GitService gitService, Optional<VersionControlService> versionControlService) {
         this.studentParticipationRepository = studentParticipationRepository;
         this.solutionParticipationRepository = solutionParticipationRepository;
         this.templateParticipationRepository = templateParticipationRepository;
@@ -58,7 +53,6 @@ public class ProgrammingExerciseParticipationService {
         this.teamRepository = teamRepository;
         this.versionControlService = versionControlService;
         this.gitService = gitService;
-        this.programmingSubmissionRepository = programmingSubmissionRepository;
     }
 
     /**
@@ -165,42 +159,6 @@ public class ProgrammingExerciseParticipationService {
         templateParticipation.setProgrammingExercise(newExercise);
         newExercise.setTemplateParticipation(templateParticipation);
         templateParticipationRepository.save(templateParticipation);
-    }
-
-    /**
-     * Determines whether a lock repository policy is enforced for a participation.
-     * of a programming exercise. This method does NOT take any other factors into account.
-     *
-     * @param programmingExercise      the programmingExercise to check the submission policy for
-     * @param programmingParticipation that is either locked or unlocked
-     * @return true when the repository should be locked, false if not
-     */
-    public boolean isLockRepositoryPolicyEnforced(ProgrammingExercise programmingExercise, Participation programmingParticipation) {
-        if (programmingExercise.getSubmissionPolicy() instanceof LockRepositoryPolicy policy) {
-            return policy.isActive() && policy.getSubmissionLimit() <= getParticipationSubmissionCount(programmingParticipation);
-        }
-        return false;
-    }
-
-    /**
-     * Calculates and returns the number of submissions for one participation. This amount represents
-     * the amount of unique manual submissions with at least one result.
-     *
-     * @param participation for which the number of submissions should be determined
-     * @return the number of submissions of this participation
-     */
-    public int getParticipationSubmissionCount(Participation participation) {
-        final Long participationId = participation.getId();
-        int submissionCompensation = 0;
-        participation = participationRepository.findByIdWithLatestSubmissionAndResult(participationId)
-                .orElseThrow(() -> new EntityNotFoundException("Participation", participationId));
-        var submissions = participation.getSubmissions();
-        if (submissions != null && !submissions.isEmpty()) {
-            submissionCompensation = submissions.iterator().next().getResults().isEmpty() ? 1 : 0;
-        }
-        return (int) programmingSubmissionRepository.findAllByParticipationIdWithResults(participationId).stream()
-                .filter(submission -> submission.getType() == SubmissionType.MANUAL && !submission.getResults().isEmpty()).map(ProgrammingSubmission::getCommitHash).distinct()
-                .count() + submissionCompensation;
     }
 
     /**
