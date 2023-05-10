@@ -201,41 +201,41 @@ public class ChannelService {
         conversationService.notifyAllConversationMembersAboutUpdate(updatedChannel);
     }
 
-    public Channel createLectureChannel(Lecture lecture) {
+    public Channel createLectureChannel(Lecture lecture, String channelName) {
         Channel channelToCreate = new Channel();
-        channelToCreate.setName(formatChannelName('l', 1, lecture.getTitle()));
+        channelToCreate.setName(channelName.substring(0, 30));
         channelToCreate.setIsPublic(true);
         channelToCreate.setIsAnnouncementChannel(false);
         channelToCreate.setIsArchived(false);
-        channelToCreate.setDescription("Channel for lecture - " + lecture.getTitle());
+        channelToCreate.setDescription("Channel for lecture: " + lecture.getTitle());
         return createChannel(lecture.getCourse(), channelToCreate, Optional.of(userRepository.getUserWithGroupsAndAuthorities()));
     }
 
     public Channel createExerciseChannel(Exercise exercise) {
         Channel channelToCreate = new Channel();
-        channelToCreate.setName(formatChannelName('e', 2, exercise.getTitle()));
+        channelToCreate.setName(exercise.getTitle().substring(0, 30));
         channelToCreate.setIsPublic(true);
         channelToCreate.setIsAnnouncementChannel(false);
         channelToCreate.setIsArchived(false);
-        channelToCreate.setDescription("Channel for exercise - " + exercise.getTitle());
+        channelToCreate.setDescription(String.format("Channel for %s exercise: %s", exercise.getExerciseType().getExerciseTypeAsReadableString(), exercise.getTitle()));
         return createChannel(exercise.getCourseViaExerciseGroupOrCourseMember(), channelToCreate, Optional.of(userRepository.getUserWithGroupsAndAuthorities()));
     }
 
     public Channel createExamChannel(Exam exam) {
         Channel channelToCreate = new Channel();
         channelToCreate.setName(exam.getTitle().toLowerCase().replace(' ', '-'));
-        channelToCreate.setIsPublic(false); // TODO: discuss if it should be public or private
+        channelToCreate.setIsPublic(false);
         channelToCreate.setIsAnnouncementChannel(false);
         channelToCreate.setIsArchived(false);
-        channelToCreate.setDescription("Channel for exam - " + exam.getTitle());
+        channelToCreate.setDescription("Channel for exam: " + exam.getTitle());
         return createChannel(exam.getCourse(), channelToCreate, Optional.of(userRepository.getUserWithGroupsAndAuthorities()));
     }
 
-    public void updateLectureChannel(Lecture originalLecture, Lecture updatedLecture) {
+    public void updateLectureChannel(Lecture originalLecture, Lecture updatedLecture, String channelName) {
         if (originalLecture.getChannel() == null) {
             return;
         }
-        Channel updatedChannel = updateChannelName(originalLecture.getChannel().getId(), updatedLecture.getTitle());
+        Channel updatedChannel = updateChannelName(originalLecture.getChannel().getId(), channelName);
         updatedLecture.setChannel(updatedChannel);
 
     }
@@ -248,26 +248,17 @@ public class ChannelService {
         updatedExercise.setChannel(updatedChannel);
     }
 
-    private Channel updateChannelName(Long channelId, String newName) {
+    private Channel updateChannelName(Long channelId, String newChannelName) {
         Channel originalChannel = channelRepository.findByIdElseThrow(channelId);
-        String newChannelName = updateChannelSuffix(Objects.requireNonNull(originalChannel.getName()), newName);
 
         // Update channel name if necessary
-        if (!originalChannel.getName().equals(newChannelName)) {
+        if (!newChannelName.equals(originalChannel.getName())) {
             originalChannel.setName(newChannelName);
+            channelIsValidOrThrow(originalChannel.getCourse().getId(), originalChannel);
             return channelRepository.save(originalChannel);
         }
         else {
             return originalChannel;
         }
-    }
-
-    private String formatChannelName(char prefix, int infix, String suffix) {
-        // TODO: Figure out whether two digits for the number are enough
-        return String.format("%c-%02d-%.15s", prefix, infix, suffix.toLowerCase().replace(' ', '-'));
-    }
-
-    private String updateChannelSuffix(String channelName, String newSuffix) {
-        return String.format("%s%.15s", channelName.substring(0, 5), newSuffix.toLowerCase().replace(' ', '-'));
     }
 }

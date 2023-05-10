@@ -20,13 +20,13 @@ import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ExerciseService;
 import de.tum.in.www1.artemis.service.LectureImportService;
 import de.tum.in.www1.artemis.service.LectureService;
 import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
+import de.tum.in.www1.artemis.web.rest.dto.LectureDTO;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -62,11 +62,8 @@ public class LectureResource {
 
     private final ExerciseService exerciseService;
 
-    private final ChannelRepository channelRepository;
-
     public LectureResource(LectureRepository lectureRepository, LectureService lectureService, LectureImportService lectureImportService, CourseRepository courseRepository,
-            UserRepository userRepository, AuthorizationCheckService authCheckService, ExerciseService exerciseService, ChannelService channelService,
-            ChannelRepository channelRepository) {
+            UserRepository userRepository, AuthorizationCheckService authCheckService, ExerciseService exerciseService, ChannelService channelService) {
         this.lectureRepository = lectureRepository;
         this.lectureService = lectureService;
         this.lectureImportService = lectureImportService;
@@ -75,26 +72,26 @@ public class LectureResource {
         this.authCheckService = authCheckService;
         this.exerciseService = exerciseService;
         this.channelService = channelService;
-        this.channelRepository = channelRepository;
     }
 
     /**
      * POST /lectures : Create a new lecture.
      *
-     * @param lecture the lecture to create
+     * @param lectureDTO the lecture to create and a unique channel name
      * @return the ResponseEntity with status 201 (Created) and with body the new lecture, or with status 400 (Bad Request) if the lecture has already an ID
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("/lectures")
     @PreAuthorize("hasRole('EDITOR')")
-    public ResponseEntity<Lecture> createLecture(@RequestBody Lecture lecture) throws URISyntaxException {
+    public ResponseEntity<Lecture> createLecture(@RequestBody LectureDTO lectureDTO) throws URISyntaxException {
+        Lecture lecture = lectureDTO.lecture();
         log.debug("REST request to save Lecture : {}", lecture);
         if (lecture.getId() != null) {
             throw new BadRequestAlertException("A new lecture cannot already have an ID", ENTITY_NAME, "idExists");
         }
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, lecture.getCourse(), null);
 
-        Channel createdChannel = channelService.createLectureChannel(lecture);
+        Channel createdChannel = channelService.createLectureChannel(lecture, lectureDTO.channelName());
 
         lecture.setChannel(createdChannel);
         Lecture savedLecture = lectureRepository.save(lecture);
@@ -105,13 +102,14 @@ public class LectureResource {
     /**
      * PUT /lectures : Updates an existing lecture.
      *
-     * @param lecture the lecture to update
+     * @param lectureDTO the lecture to update and the updated channel name
      * @return the ResponseEntity with status 200 (OK) and with body the updated lecture, or with status 400 (Bad Request) if the lecture is not valid, or with status 500 (Internal
      *         Server Error) if the lecture couldn't be updated
      */
     @PutMapping("/lectures")
     @PreAuthorize("hasRole('EDITOR')")
-    public ResponseEntity<Lecture> updateLecture(@RequestBody Lecture lecture) {
+    public ResponseEntity<Lecture> updateLecture(@RequestBody LectureDTO lectureDTO) {
+        Lecture lecture = lectureDTO.lecture();
         log.debug("REST request to update Lecture : {}", lecture);
         if (lecture.getId() == null) {
             throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idNull");
@@ -125,7 +123,7 @@ public class LectureResource {
         lecture.setLectureUnits(originalLecture.getLectureUnits());
 
         // Make sure that the original references are preserved and the channel is updated if necessary
-        channelService.updateLectureChannel(originalLecture, lecture);
+        channelService.updateLectureChannel(originalLecture, lecture, lectureDTO.channelName());
 
         Lecture result = lectureRepository.save(lecture);
         return ResponseEntity.ok().body(result);
