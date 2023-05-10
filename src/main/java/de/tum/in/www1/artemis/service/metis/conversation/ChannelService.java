@@ -264,10 +264,10 @@ public class ChannelService {
 
     private String formatChannelName(char prefix, int infix, String suffix) {
         // TODO: Figure out whether two digits for the number are enough
-        return String.format("%c-%02d-%s", prefix, infix, suffix.toLowerCase().replace(' ', '-'));
+        return String.format("%c-%02d-%.15s", prefix, infix, suffix.toLowerCase().replace(' ', '-'));
     }
 
     private String updateChannelSuffix(String channelName, String newSuffix) {
-        return String.format("%s%s", channelName.substring(0, 5), newSuffix.toLowerCase().replace(' ', '-'));
+        return String.format("%s%.15s", channelName.substring(0, 5), newSuffix.toLowerCase().replace(' ', '-'));
     }
 }
