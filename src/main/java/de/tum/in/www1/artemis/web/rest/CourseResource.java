@@ -371,15 +371,15 @@ public class CourseResource {
     }
 
     /**
-     * GET /courses/{courseId}/for-registration : get a course by id if the course allows registration and is currently active.
+     * GET /courses/{courseId}/for-enrollment : get a course by id if the course allows enrollment and is currently active.
      *
      * @param courseId the id of the course to retrieve
      * @return the active course
      */
-    @GetMapping("courses/{courseId}/for-registration")
+    @GetMapping("courses/{courseId}/for-enrollment")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<Course> getCourseForRegistration(@PathVariable long courseId) {
-        log.debug("REST request to get a currently active course for registration");
+    public ResponseEntity<Course> getCourseForEnrollment(@PathVariable long courseId) {
+        log.debug("REST request to get a currently active course for enrollment");
         User user = userRepository.getUserWithGroupsAndAuthoritiesAndOrganizations();
 
         Course course = courseRepository.findSingleWithOrganizationsAndPrerequisitesElseThrow(courseId);
@@ -389,22 +389,22 @@ public class CourseResource {
     }
 
     /**
-     * GET /courses/for-registration : get all courses that the current user can register to.
-     * Decided by the start and end date and if the registrationEnabled flag is set correctly
+     * GET /courses/for-enrollment : get all courses that the current user can enroll in.
+     * Decided by the start and end date and if the enrollmentEnabled flag is set correctly
      *
      * @return the list of courses which are active
      */
-    @GetMapping("courses/for-registration")
+    @GetMapping("courses/for-enrollment")
     @PreAuthorize("hasRole('USER')")
-    public List<Course> getAllCoursesForRegistration() {
+    public List<Course> getAllCoursesForEnrollment() {
         log.debug("REST request to get all currently active courses that are not online courses");
         User user = userRepository.getUserWithGroupsAndAuthoritiesAndOrganizations();
 
-        Set<Course> allRegisteredCourses = courseService.findAllActiveForUser(user);
-        List<Course> allCoursesToPotentiallyRegister = courseRepository.findAllActiveNotOnlineAndRegistrationEnabledWithOrganizationsAndPrerequisites();
-        // check whether registration is actually possible for each of the courses
-        return allCoursesToPotentiallyRegister.stream().filter(course -> {
-            boolean isAlreadyInCourse = allRegisteredCourses.contains(course);
+        Set<Course> allEnrolledCourses = courseService.findAllActiveForUser(user);
+        List<Course> allCoursesToPotentiallyEnroll = courseRepository.findAllActiveNotOnlineAndEnrollmentEnabledWithOrganizationsAndPrerequisites();
+        // check whether enrollment is actually possible for each of the courses
+        return allCoursesToPotentiallyEnroll.stream().filter(course -> {
+            boolean isAlreadyInCourse = allEnrolledCourses.contains(course);
             return authCheckService.isUserAllowedToSelfEnrollInCourse(user, course) && !isAlreadyInCourse;
         }).toList();
     }

@@ -150,11 +150,11 @@ public class Course extends DomainObject {
     @Column(name = "course_icon")
     private String courseIcon;
 
-    @Column(name = "registration_enabled")
-    private Boolean registrationEnabled; // TODO
+    @Column(name = "registration_enabled") // TODO: rename column in database
+    private Boolean enrollmentEnabled;
 
-    @Column(name = "registration_confirmation_message")
-    private String registrationConfirmationMessage; // TODO
+    @Column(name = "registration_confirmation_message") // TODO: rename column in database
+    private String enrollmentConfirmationMessage;
 
     @Column(name = "presentation_score")
     private Integer presentationScore;
@@ -465,19 +465,19 @@ public class Course extends DomainObject {
     }
 
     public Boolean isEnrollmentEnabled() {
-        return registrationEnabled; // TODO
+        return enrollmentEnabled; // TODO
     }
 
     public void setEnrollmentEnabled(Boolean enrollmentEnabled) {
-        this.registrationEnabled = enrollmentEnabled;
+        this.enrollmentEnabled = enrollmentEnabled;
     } // TODO
 
     public String getEnrollmentConfirmationMessage() {
-        return registrationConfirmationMessage;
+        return enrollmentConfirmationMessage;
     } // TODO
 
     public void setEnrollmentConfirmationMessage(String enrollmentConfirmationMessage) {
-        this.registrationConfirmationMessage = enrollmentConfirmationMessage; // TODO
+        this.enrollmentConfirmationMessage = enrollmentConfirmationMessage; // TODO
     }
 
     public Integer getPresentationScore() {
@@ -605,12 +605,12 @@ public class Course extends DomainObject {
     }
 
     @Override
-    public String toString() { // TODO
+    public String toString() {
         return "Course{" + "id=" + getId() + ", title='" + getTitle() + "'" + ", description='" + getDescription() + "'" + ", shortName='" + getShortName() + "'"
                 + ", studentGroupName='" + getStudentGroupName() + "'" + ", teachingAssistantGroupName='" + getTeachingAssistantGroupName() + "'" + ", editorGroupName='"
                 + getEditorGroupName() + "'" + ", instructorGroupName='" + getInstructorGroupName() + "'" + ", startDate='" + getStartDate() + "'" + ", endDate='" + getEndDate()
                 + "'" + ", semester='" + getSemester() + "'" + "'" + ", onlineCourse='" + isOnlineCourse() + "'" + ", color='" + getColor() + "'" + ", courseIcon='"
-                + getCourseIcon() + "'" + ", registrationEnabled='" + isEnrollmentEnabled() + "'" + "'" + ", presentationScore='" + getPresentationScore() + "}";
+                + getCourseIcon() + "'" + ", enrollmentEnabled='" + isEnrollmentEnabled() + "'" + "'" + ", presentationScore='" + getPresentationScore() + "}";
     }
 
     public void setNumberOfInstructors(Long numberOfInstructors) {

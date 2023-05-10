@@ -155,9 +155,9 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
                 WHERE (course.startDate IS NULL OR course.startDate <= :now)
                     AND (course.endDate IS NULL OR course.endDate >= :now)
                     AND course.onlineCourse = false
-                    AND course.registrationEnabled = true
+                    AND course.enrollmentEnabled = true
             """)
-    List<Course> findAllActiveNotOnlineAndRegistrationEnabledWithOrganizationsAndPrerequisites(@Param("now") ZonedDateTime now);
+    List<Course> findAllActiveNotOnlineAndEnrollmentEnabledWithOrganizationsAndPrerequisites(@Param("now") ZonedDateTime now);
 
     @Query("""
                 SELECT course
@@ -311,7 +311,7 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     }
 
     /**
-     * Get a single course to register with eagerly loaded organizations and prerequisites.
+     * Get a single course to enroll with eagerly loaded organizations and prerequisites.
      *
      * @param courseId the id of the course
      * @return the course entity
@@ -321,13 +321,13 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     }
 
     /**
-     * Get all the courses to register with eagerly loaded organizations and prerequisites.
-     * Online courses are not included, as they are not meant to be registered for.
+     * Get all the courses to enroll with eagerly loaded organizations and prerequisites.
+     * Online courses are not included, as they are not meant to be enrolled in.
      *
      * @return the list of course entities
      */
-    default List<Course> findAllActiveNotOnlineAndRegistrationEnabledWithOrganizationsAndPrerequisites() {
-        return findAllActiveNotOnlineAndRegistrationEnabledWithOrganizationsAndPrerequisites(ZonedDateTime.now());
+    default List<Course> findAllActiveNotOnlineAndEnrollmentEnabledWithOrganizationsAndPrerequisites() {
+        return findAllActiveNotOnlineAndEnrollmentEnabledWithOrganizationsAndPrerequisites(ZonedDateTime.now());
     }
 
     /**
