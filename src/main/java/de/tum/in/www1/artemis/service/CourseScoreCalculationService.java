@@ -53,18 +53,19 @@ public class CourseScoreCalculationService {
     }
 
     /**
-     * Calculates max and reachable max points for the given exercises.
+     * Calculates max and reachable max points for the given exercises. Also calculates the reachable presentation points for the course, if the course is given.
      * Max points are the sum of the points for all included (see {@link #includeIntoScoreCalculation(Exercise)}) exercises, whose due date is over or unset or who are
      * automatically assessed and the buildAndTestStudentSubmissionsAfterDueDate is in the past.
      * Reachable max points contain only those points where the exercise's assessmentDueDate is in the past. (see {@link #isAssessmentDone(Exercise)}).
-     * Example: An exercise that is is not automatically assessed (e.g. text exercise), that has the dueDate in the past but the assessmentDueDate set in the future is included in
+     * Example: An exercise that is not automatically assessed (e.g. text exercise), that has the dueDate in the past but the assessmentDueDate set in the future is included in
      * the max points calculation,
      * but not in the reachable max points calculation.
      *
+     * @param course    the course for which the reachable presentation points should be calculated.
      * @param exercises the exercises which are included into max points calculation
      * @return the max and reachable max points for the given exercises
      */
-    private MaxAndReachablePoints calculateMaxAndReachablePoints(Set<Exercise> exercises) {
+    private MaxAndReachablePoints calculateMaxAndReachablePoints(Course course, Set<Exercise> exercises) {
 
         if (exercises.isEmpty()) {
             return new MaxAndReachablePoints(0, 0, 0);
@@ -72,6 +73,7 @@ public class CourseScoreCalculationService {
 
         double maxPoints = 0.0;
         double reachableMaxPoints = 0.0;
+        double reachablePresentationPoints = 0.0;
 
         for (var exercise : exercises) {
             if (!includeIntoScoreCalculation(exercise)) {
@@ -86,29 +88,13 @@ public class CourseScoreCalculationService {
             }
         }
 
-        return new MaxAndReachablePoints(maxPoints, reachableMaxPoints, 0);
-    }
+        if (course != null) {
+            reachablePresentationPoints = calculateReachablePresentationPoints(course, reachableMaxPoints);
+            maxPoints += reachablePresentationPoints;
+            reachableMaxPoints += reachablePresentationPoints;
+        }
 
-    /**
-     * Calculates max and reachable max points for the given exercises. Also calculates the reachable presentation points for the course.
-     * Max points are the sum of the points for all included (see {@link #includeIntoScoreCalculation(Exercise)}) exercises, whose due date is over or unset or who are
-     * automatically assessed and the buildAndTestStudentSubmissionsAfterDueDate is in the past.
-     * Reachable max points contain only those points where the exercise's assessmentDueDate is in the past. (see {@link #isAssessmentDone(Exercise)}).
-     * Example: An exercise that is not automatically assessed (e.g. text exercise), that has the dueDate in the past but the assessmentDueDate set in the future is included in
-     * the max points calculation, but not in the reachable max points calculation.
-     *
-     * @param course    the course to which the exercises belong to
-     * @param exercises the exercises which are included into max points calculation
-     * @return the max and reachable max points for the given exercises and the reachable presentation points given the exercises
-     */
-    private MaxAndReachablePoints calculateMaxAndReachablePointsWithPresentationPoints(Course course, Set<Exercise> exercises) {
-        MaxAndReachablePoints maxAndReachablePoints = calculateMaxAndReachablePoints(exercises);
-
-        double reachablePresentationPoints = calculateReachablePresentationPoints(course, maxAndReachablePoints.reachablePoints);
-        double maxPoints = maxAndReachablePoints.maxPoints + reachablePresentationPoints;
-        double reachablePoints = maxAndReachablePoints.reachablePoints + reachablePresentationPoints;
-
-        return new MaxAndReachablePoints(maxPoints, reachablePoints, reachablePresentationPoints);
+        return new MaxAndReachablePoints(maxPoints, reachableMaxPoints, reachablePresentationPoints);
     }
 
     /**
@@ -129,7 +115,7 @@ public class CourseScoreCalculationService {
         // Retrieve the course from the first exercise. All exercises belong to the same course.
         Course course = courseExercises.iterator().next().getCourseViaExerciseGroupOrCourseMember();
 
-        MaxAndReachablePoints maxAndReachablePoints = calculateMaxAndReachablePointsWithPresentationPoints(course, courseExercises);
+        MaxAndReachablePoints maxAndReachablePoints = calculateMaxAndReachablePoints(course, courseExercises);
 
         List<PlagiarismCase> plagiarismCases;
 
@@ -220,7 +206,7 @@ public class CourseScoreCalculationService {
 
         Set<Exercise> courseExercises = course.getExercises();
 
-        MaxAndReachablePoints maxAndReachablePoints = calculateMaxAndReachablePointsWithPresentationPoints(course, courseExercises);
+        MaxAndReachablePoints maxAndReachablePoints = calculateMaxAndReachablePoints(course, courseExercises);
 
         List<PlagiarismCase> plagiarismCases = new ArrayList<>();
         for (Exercise exercise : courseExercises) {
@@ -274,7 +260,7 @@ public class CourseScoreCalculationService {
             // Filter out the entities per exercise type.
             Set<Exercise> exercisesOfExerciseType = course.getExercises().stream().filter(exercise -> exercise.getExerciseType() == exerciseType).collect(Collectors.toSet());
 
-            MaxAndReachablePoints maxAndReachablePointsOfExerciseType = calculateMaxAndReachablePoints(exercisesOfExerciseType);
+            MaxAndReachablePoints maxAndReachablePointsOfExerciseType = calculateMaxAndReachablePoints(null, exercisesOfExerciseType);
 
             List<StudentParticipation> studentParticipationsOfExerciseType = studentParticipations.stream()
                     .filter(participation -> participation.getExercise().getExerciseType() == exerciseType).toList();
@@ -511,7 +497,7 @@ public class CourseScoreCalculationService {
 
     /**
      * Calculates the points for presentations for a single student given the participation list of the student, the
-     * reachable points of the course and the presentationsWeight of the courses GradingScale.
+     * reachable points of the course, and the presentationsWeight of the courses GradingScale.
      *
      * @param course                      the course for which the presentation score should be calculated
      * @param studentParticipations       the participations relevant for presentations of the student.
