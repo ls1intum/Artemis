@@ -78,7 +78,7 @@ Imprint English template
 
    #### Authorized to represent
 
-   The Technical University of Munich is legally represented by the President Prof. Dr. Thomas F. Hofmann.
+   The <University> is legally represented by the President <President>.
 
    #### VAT identification number
 

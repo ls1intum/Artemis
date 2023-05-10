@@ -36,12 +36,11 @@ public class LegalDocumentService {
     }
 
     /**
-     * Returns the imprint if you want to view it.
+     * Returns the imprint if you want to update it.
      *
      * @param language the language of the imprint
      * @return the imprint that should be updated
      */
-
     public Imprint getImprintForUpdate(LegalDocumentLanguage language) {
         return (Imprint) getLegalDocumentForUpdate(language, LegalDocumentType.IMPRINT);
     }
@@ -52,7 +51,6 @@ public class LegalDocumentService {
      * @param language the language of the imprint
      * @return the imprint to view
      */
-
     public Imprint getImprint(LegalDocumentLanguage language) {
         return (Imprint) getLegalDocument(language, LegalDocumentType.IMPRINT);
     }
@@ -63,7 +61,6 @@ public class LegalDocumentService {
      * @param language the language of the privacy statement
      * @return the privacy statement to view
      */
-
     public PrivacyStatement getPrivacyStatement(LegalDocumentLanguage language) {
         return (PrivacyStatement) getLegalDocument(language, LegalDocumentType.PRIVACY_STATEMENT);
     }
@@ -84,7 +81,6 @@ public class LegalDocumentService {
      * @param privacyStatement the privacy statement to update with the new content
      * @return the updated privacy statement
      */
-
     public PrivacyStatement updatePrivacyStatement(PrivacyStatement privacyStatement) {
         return (PrivacyStatement) updateLegalDocument(privacyStatement);
     }
