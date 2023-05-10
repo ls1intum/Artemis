@@ -195,7 +195,7 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     }
 
     private void createPrerequisite() {
-        // Add the first learning goal as a prerequisite to the other course
+        // Add the first competency as a prerequisite to the other course
         LearningGoal learningGoal = learningGoalRepository.findByIdWithConsecutiveCourses(idOfLearningGoal).get();
         Course course2 = courseRepository.findWithEagerLearningGoalsById(idOfCourseTwo).get();
         course2.addPrerequisite(learningGoal);
@@ -479,7 +479,7 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         relation.setType(LearningGoalRelation.RelationType.EXTENDS);
         learningGoalRelationRepository.save(relation);
 
-        // Should return bad request, as the learning goal still has relations
+        // Should return bad request, as the competency still has relations
         request.delete("/api/courses/" + idOfCourse + "/competencies/" + idOfLearningGoal, HttpStatus.BAD_REQUEST);
     }
 
@@ -518,6 +518,32 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         request.post("/api/courses/" + idOfCourse + "/competencies/" + idOfLearningGoal + "/relations/" + idOfOtherLearningGoal + "?type=" + "abc123xyz", null,
                 HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createLearningGoalRelation_shouldReturnBadRequest_ForCircularRelations() throws Exception {
+        LearningGoal learningGoal = learningGoalRepository.findByIdElseThrow(idOfLearningGoal);
+        Course course = courseRepository.findByIdElseThrow(idOfCourse);
+        Long idOfOtherLearningGoal1 = database.createLearningGoal(course).getId();
+        LearningGoal otherLearningGoal1 = learningGoalRepository.findByIdElseThrow(idOfOtherLearningGoal1);
+        Long idOfOtherLearningGoal2 = database.createLearningGoal(course).getId();
+        LearningGoal otherLearningGoal2 = learningGoalRepository.findByIdElseThrow(idOfOtherLearningGoal1);
+
+        var relation1 = new LearningGoalRelation();
+        relation1.setTailLearningGoal(learningGoal);
+        relation1.setHeadLearningGoal(otherLearningGoal1);
+        relation1.setType(LearningGoalRelation.RelationType.EXTENDS);
+        learningGoalRelationRepository.save(relation1);
+
+        var relation2 = new LearningGoalRelation();
+        relation2.setTailLearningGoal(otherLearningGoal1);
+        relation2.setHeadLearningGoal(otherLearningGoal2);
+        relation2.setType(LearningGoalRelation.RelationType.MATCHES);
+        learningGoalRelationRepository.save(relation2);
+
+        request.post("/api/courses/" + idOfCourse + "/competencies/" + idOfOtherLearningGoal2 + "/relations/" + idOfLearningGoal + "?type="
+                + LearningGoalRelation.RelationType.ASSUMES.name(), null, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -865,7 +891,7 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void addPrerequisite_doNotAllowCycle() throws Exception {
-        // Test that a learning goal of a course can not be a prerequisite to the same course
+        // Test that a competency of a course can not be a prerequisite to the same course
         LearningGoal learningGoal = learningGoalRepository.findById(idOfLearningGoal).get();
         request.postWithResponseBody("/api/courses/" + idOfCourse + "/prerequisites/" + idOfLearningGoal, learningGoal, LearningGoal.class, HttpStatus.CONFLICT);
     }

@@ -7,7 +7,7 @@ import { Rating } from 'app/entities/rating.model';
     providedIn: 'root',
 })
 export class RatingService {
-    private ratingResourceUrl = SERVER_API_URL + 'api/results/';
+    private ratingResourceUrl = 'api/results/';
 
     constructor(private http: HttpClient) {}
 

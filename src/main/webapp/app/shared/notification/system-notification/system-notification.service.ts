@@ -12,8 +12,8 @@ type EntityArrayResponseType = HttpResponse<SystemNotification[]>;
 
 @Injectable({ providedIn: 'root' })
 export class SystemNotificationService {
-    public resourceUrl = SERVER_API_URL + 'api/system-notifications';
-    public publicResourceUrl = SERVER_API_URL + 'api/public/system-notifications';
+    public resourceUrl = 'api/system-notifications';
+    public publicResourceUrl = 'api/public/system-notifications';
 
     constructor(private router: Router, private http: HttpClient) {}
 

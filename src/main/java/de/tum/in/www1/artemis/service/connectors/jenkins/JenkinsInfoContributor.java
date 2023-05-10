@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service.connectors.gitlabci;
+package de.tum.in.www1.artemis.service.connectors.jenkins;
 
 import java.net.URL;
 
@@ -11,16 +11,18 @@ import org.springframework.stereotype.Component;
 import de.tum.in.www1.artemis.config.Constants;
 
 @Component
-@Profile("gitlabci")
-public class GitLabCIBuildPlanLinkInfoContributor implements InfoContributor {
+@Profile("jenkins")
+public class JenkinsInfoContributor implements InfoContributor {
 
-    @Value("${server.url}")
-    private URL artemisServerUrl;
+    @Value("${artemis.continuous-integration.url}")
+    private URL JENKINS_SERVER_URL;
 
     @Override
     public void contribute(Info.Builder builder) {
-        // TODO: Not defined in https://github.com/ls1intum/Artemis/blob/develop/src/main/webapp/app/exercises/programming/shared/utils/programming-exercise.utils.ts#L24-L28
-        final var buildPlanURLTemplate = artemisServerUrl + "/api/public/programming-exercises/{exerciseId}/build-plan";
+        final var buildPlanURLTemplate = JENKINS_SERVER_URL + "/job/{projectKey}/job/{buildPlanId}";
         builder.withDetail(Constants.INFO_BUILD_PLAN_URL_DETAIL, buildPlanURLTemplate);
+
+        // Store name of the continuous integration system
+        builder.withDetail(Constants.CONTINUOUS_INTEGRATION_NAME, "Jenkins");
     }
 }

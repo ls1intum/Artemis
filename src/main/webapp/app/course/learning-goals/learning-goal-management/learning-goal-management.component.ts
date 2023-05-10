@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { LearningGoalService } from 'app/course/learning-goals/learningGoal.service';
 import { AlertService } from 'app/core/util/alert.service';
-import { CourseLearningGoalProgress, LearningGoal, LearningGoalRelation, getIcon, getIconTooltip } from 'app/entities/learningGoal.model';
+import { CourseLearningGoalProgress, LearningGoal, LearningGoalRelation, LearningGoalRelationError, getIcon, getIconTooltip } from 'app/entities/learningGoal.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { filter, finalize, map, switchMap } from 'rxjs/operators';
 import { onError } from 'app/shared/util/global.utils';
@@ -33,6 +33,8 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
     nodes: Node[] = [];
     edges: Edge[] = [];
     clusters: ClusterNode[] = [];
+    learningGoalRelationError = LearningGoalRelationError;
+    relationError: LearningGoalRelationError = LearningGoalRelationError.NONE;
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -68,6 +70,39 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
                 this.loadData();
             }
         });
+    }
+
+    validate(): void {
+        if (this.headLearningGoal && this.tailLearningGoal && this.relationType && this.headLearningGoal === this.tailLearningGoal) {
+            this.relationError = LearningGoalRelationError.SELF;
+            return;
+        }
+        if (this.doesRelationAlreadyExist()) {
+            this.relationError = LearningGoalRelationError.EXISTING;
+            return;
+        }
+        if (this.containsCircularRelation()) {
+            this.relationError = LearningGoalRelationError.CIRCULAR;
+            return;
+        }
+        this.relationError = LearningGoalRelationError.NONE;
+    }
+
+    getErrorMessage(error: LearningGoalRelationError): string {
+        switch (error) {
+            case LearningGoalRelationError.CIRCULAR: {
+                return 'artemisApp.learningGoal.relation.createsCircularRelation';
+            }
+            case LearningGoalRelationError.EXISTING: {
+                return 'artemisApp.learningGoal.relation.relationAlreadyExists';
+            }
+            case LearningGoalRelationError.SELF: {
+                return 'artemisApp.learningGoal.relation.selfRelation';
+            }
+            case LearningGoalRelationError.NONE: {
+                throw new TypeError('There is no error message if there is no error.');
+            }
+        }
     }
 
     identify(index: number, learningGoal: LearningGoal) {
@@ -201,7 +236,7 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Opens a modal for selecting a learning goal to import to the current course.
+     * Opens a modal for selecting a competency to import to the current course.
      */
     openImportModal() {
         const modalRef = this.modalService.open(CompetencyImportComponent, { size: 'lg', backdrop: 'static' });
@@ -223,6 +258,19 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
     }
 
     createRelation() {
+        if (this.relationError !== LearningGoalRelationError.NONE) {
+            switch (this.relationError) {
+                case LearningGoalRelationError.CIRCULAR: {
+                    throw new TypeError('Creation of circular relations is not allowed.');
+                }
+                case LearningGoalRelationError.EXISTING: {
+                    throw new TypeError('Creation of an already existing relation is not allowed.');
+                }
+                case LearningGoalRelationError.SELF: {
+                    throw new TypeError('Creation of a self relation is not allowed.');
+                }
+            }
+        }
         this.learningGoalService
             .createLearningGoalRelation(this.tailLearningGoal!, this.headLearningGoal!, this.relationType!, this.courseId)
             .pipe(
@@ -244,5 +292,202 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
             },
             error: (res: HttpErrorResponse) => onError(this.alertService, res),
         });
+    }
+
+    private containsCircularRelation(): boolean {
+        if (this.headLearningGoal !== this.tailLearningGoal) {
+            return !!(
+                this.tailLearningGoal &&
+                this.headLearningGoal &&
+                this.relationType &&
+                this.doesCreateCircularRelation(this.nodes, this.edges, {
+                    source: this.tailLearningGoal! + '',
+                    target: this.headLearningGoal! + '',
+                    label: this.relationType!,
+                } as Edge)
+            );
+        } else {
+            return false;
+        }
+    }
+
+    private doesRelationAlreadyExist(): boolean {
+        return this.edges.find((edge) => edge.source === this.tailLearningGoal?.toString() && edge.target === this.headLearningGoal?.toString()) !== undefined;
+    }
+
+    /**
+     * Checks if adding an edge would create a circular relation
+     * @param   {Node[]} nodes an array of all existing nodes of a graph
+     * @param   {Edge[]} edges an array of all existing edges of a graph
+     * @param   {Edge} edgeToAdd the edge that you try to add to the graph
+     *
+     * @returns {boolean} whether or not adding the provided edge would result in a circle in the graph
+     */
+    private doesCreateCircularRelation(nodes: Node[], edges: Edge[], edgeToAdd: Edge): boolean {
+        const edgesWithNewEdge = JSON.parse(JSON.stringify(edges));
+        edgesWithNewEdge.push(edgeToAdd);
+        const graph = new Graph();
+        for (const node of nodes) {
+            graph.addVertex(new Vertex(node.id));
+        }
+        for (const edge of edgesWithNewEdge) {
+            const headVertex = graph.vertices.find((vertex: Vertex) => vertex.getLabel() === edge.target);
+            const tailVertex = graph.vertices.find((vertex: Vertex) => vertex.getLabel() === edge.source);
+            if (headVertex === undefined || tailVertex === undefined) {
+                throw new TypeError('Every edge needs a source or a target.');
+            }
+            // only extends and assumes relations are considered when checking for circles because only they don't make sense
+            // MATCHES relations are considered in the next step by merging the edges and combining the adjacencyLists
+            switch (edge.label) {
+                case 'EXTENDS':
+                case 'ASSUMES': {
+                    graph.addEdge(tailVertex, headVertex);
+                    break;
+                }
+            }
+        }
+        // combine vertices that are connected through MATCHES
+        for (const edge of edgesWithNewEdge) {
+            if (edge.label === 'MATCHES') {
+                const headVertex = graph.vertices.find((vertex: Vertex) => vertex.getLabel() === edge.target);
+                const tailVertex = graph.vertices.find((vertex: Vertex) => vertex.getLabel() === edge.source);
+                if (headVertex === undefined || tailVertex === undefined) {
+                    throw new TypeError('Every edge needs a source or a target.');
+                }
+                if (headVertex.getAdjacencyList().includes(tailVertex) || tailVertex.getAdjacencyList().includes(headVertex)) {
+                    return true;
+                }
+                // create a merged vertex
+                const mergedVertex = new Vertex(tailVertex.getLabel() + ', ' + headVertex.getLabel());
+                // add all neighbours to merged vertex
+                mergedVertex.getAdjacencyList().push(...headVertex.getAdjacencyList());
+                mergedVertex.getAdjacencyList().push(...tailVertex.getAdjacencyList());
+                // update every vertex that initially had one of the two merged vertices as neighbours to now reference the merged vertex
+                for (const vertex of graph.vertices) {
+                    for (const adjacentVertex of vertex.getAdjacencyList()) {
+                        if (adjacentVertex.getLabel() === headVertex.getLabel() || adjacentVertex.getLabel() === tailVertex.getLabel()) {
+                            const index = vertex.getAdjacencyList().indexOf(adjacentVertex, 0);
+                            if (index > -1) {
+                                vertex.getAdjacencyList().splice(index, 1);
+                            }
+                            vertex.getAdjacencyList().push(mergedVertex);
+                        }
+                    }
+                }
+            }
+        }
+        return graph.hasCycle();
+    }
+}
+
+/**
+ * A class that represents a vertex in a graph
+ * @class
+ *
+ * @constructor
+ *
+ * @property label          a label to identify the vertex (we use the node id)
+ * @property beingVisited   is the vertex the one that is currently being visited during the graph traversal
+ * @property visited        has this vertex been visited before
+ * @property adjacencyList  an array that contains all adjacent vertices
+ */
+export class Vertex {
+    private readonly label: string;
+    private beingVisited: boolean;
+    private visited: boolean;
+    private readonly adjacencyList: Vertex[];
+
+    constructor(label: string) {
+        this.label = label;
+        this.adjacencyList = [];
+    }
+
+    getLabel(): string {
+        return this.label;
+    }
+
+    addNeighbor(adjacent: Vertex): void {
+        this.adjacencyList.push(adjacent);
+    }
+
+    getAdjacencyList(): Vertex[] {
+        return this.adjacencyList;
+    }
+
+    isBeingVisited(): boolean {
+        return this.beingVisited;
+    }
+
+    setBeingVisited(beingVisited: boolean): void {
+        this.beingVisited = beingVisited;
+    }
+
+    isVisited(): boolean {
+        return this.visited;
+    }
+
+    setVisited(visited: boolean) {
+        this.visited = visited;
+    }
+}
+
+/**
+ * A class that represents a graph
+ * @class
+ *
+ * @constructor
+ *
+ * @property vertices   an array of all vertices in the graph (edges are represented by the adjacent vertices property of each vertex)
+ */
+export class Graph {
+    vertices: Vertex[];
+
+    constructor() {
+        this.vertices = [];
+    }
+
+    public addVertex(vertex: Vertex): void {
+        this.vertices.push(vertex);
+    }
+
+    public addEdge(from: Vertex, to: Vertex): void {
+        from.addNeighbor(to);
+    }
+
+    /**
+     * Checks if the graph contains a circle
+     *
+     * @returns {boolean} whether or not the graph contains a circle
+     */
+    public hasCycle(): boolean {
+        // we have to check for every vertex if it is part of a cycle in case the graph is not connected
+        for (const vertex of this.vertices) {
+            if (!vertex.isVisited() && this.vertexHasCycle(vertex)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Checks if a vertex is part of a circle
+     *
+     * @returns {boolean} whether or not the vertex is part of a circle
+     */
+    private vertexHasCycle(sourceVertex: Vertex): boolean {
+        sourceVertex.setBeingVisited(true);
+
+        for (const neighbor of sourceVertex.getAdjacencyList()) {
+            if (neighbor.isBeingVisited()) {
+                // backward edge exists
+                return true;
+            } else if (!neighbor.isVisited() && this.vertexHasCycle(neighbor)) {
+                return true;
+            }
+        }
+
+        sourceVertex.setBeingVisited(false);
+        sourceVertex.setVisited(true);
+        return false;
     }
 }

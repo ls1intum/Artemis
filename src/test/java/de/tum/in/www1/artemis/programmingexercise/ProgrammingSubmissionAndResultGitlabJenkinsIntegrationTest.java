@@ -367,7 +367,7 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
         assertThat(results).hasSize(1);
         var result = results.get(0);
         assertThat(result.isSuccessful()).isFalse();
-        assertThat(result.getScore()).isEqualTo(0D);
+        assertThat(result.getScore()).isZero();
 
         // Assert that the submission is linked to the participation
         var submission = (ProgrammingSubmission) result.getSubmission();

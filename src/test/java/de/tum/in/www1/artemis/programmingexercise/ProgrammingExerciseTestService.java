@@ -388,8 +388,8 @@ public class ProgrammingExerciseTestService {
         mockDelegate.mockConnectorRequestsForSetup(exercise, false);
         var generatedExercise = request.postWithResponseBody(ROOT + SETUP, exercise, ProgrammingExercise.class);
         var savedExercise = programmingExerciseRepository.findById(generatedExercise.getId()).get();
-        assertThat(generatedExercise.getBonusPoints()).isEqualTo(0D);
-        assertThat(savedExercise.getBonusPoints()).isEqualTo(0D);
+        assertThat(generatedExercise.getBonusPoints()).isZero();
+        assertThat(savedExercise.getBonusPoints()).isZero();
     }
 
     void importFromFile_validJavaExercise_isSuccessfullyImported(boolean scaEnabled) throws Exception {
@@ -2077,7 +2077,7 @@ public class ProgrammingExerciseTestService {
     void buildLogStatistics_noStatistics() throws Exception {
         exercise = programmingExerciseRepository.save(ModelFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course));
         var statistics = request.get("/api/programming-exercises/" + exercise.getId() + "/build-log-statistics", HttpStatus.OK, BuildLogStatisticsDTO.class);
-        assertThat(statistics.getBuildCount()).isEqualTo(0);
+        assertThat(statistics.getBuildCount()).isZero();
         assertThat(statistics.getAgentSetupDuration()).isNull();
         assertThat(statistics.getTestDuration()).isNull();
         assertThat(statistics.getScaDuration()).isNull();

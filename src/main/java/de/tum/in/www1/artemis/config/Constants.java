@@ -245,6 +245,10 @@ public final class Constants {
 
     public static final String VERSION_CONTROL_URL = "versionControlUrl";
 
+    public static final String VERSION_CONTROL_NAME = "versionControlName";
+
+    public static final String CONTINUOUS_INTEGRATION_NAME = "continuousIntegrationName";
+
     public static final String USE_EXTERNAL = "useExternal";
 
     public static final String EXTERNAL_CREDENTIAL_PROVIDER = "externalCredentialProvider";

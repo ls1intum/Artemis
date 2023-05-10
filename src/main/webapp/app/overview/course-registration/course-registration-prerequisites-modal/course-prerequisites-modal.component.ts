@@ -49,9 +49,9 @@ export class CoursePrerequisitesModalComponent implements OnInit {
     }
 
     /**
-     * Calculates a unique identity for each learning goal card shown in the component
+     * Calculates a unique identity for each competency card shown in the component
      * @param index The index in the list
-     * @param learningGoal The learning goal of the current iteration
+     * @param learningGoal The competency of the current iteration
      */
     identify(index: number, learningGoal: LearningGoal) {
         return `${index}-${learningGoal.id}`;
