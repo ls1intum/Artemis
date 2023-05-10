@@ -174,19 +174,6 @@ class UserBambooBitbucketJiraIntegrationTest extends AbstractSpringIntegrationBa
     }
 
     /**
-     * Tests if the deletion of a user by admin succeeds
-     */
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void deleteUserWithGermanLocale_isSuccessful() throws Exception {
-        bitbucketRequestMockProvider.mockUpdateAnyUserDetails(false, 1);
-        bitbucketRequestMockProvider.mockUpdateAnyUserPassword(false, 1);
-        bitbucketRequestMockProvider.mockRemoveAnyUserFromAnyGroups();
-        jiraRequestMockProvider.mockRemoveAnyUserFromAnyGroups();
-        userTestService.deleteUserWithGermanLocale_isSuccessful();
-    }
-
-    /**
      * Tests if the deletion of the current user by themselves fails.
      */
     @Test

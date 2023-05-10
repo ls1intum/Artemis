@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.util;
 import static de.tum.in.www1.artemis.repository.UserRepository.FILTER_WITHOUT_REG_NO;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.time.ZonedDateTime;
@@ -105,12 +104,11 @@ public class UserTestService {
 
     private void assertThatUserWasSoftDeleted(User originalUser, User deletedUser) throws Exception {
         assertThat(deletedUser.isDeleted()).isTrue();
-        assertThat(deletedUser.getFirstName()).isIn(Constants.USER_FIRST_NAME_AFTER_SOFT_DELETE, Constants.USER_FIRST_NAME_AFTER_SOFT_DELETE_DE);
-        assertThat(deletedUser.getLastName()).isIn(Constants.USER_LAST_NAME_AFTER_SOFT_DELETE, Constants.USER_LAST_NAME_AFTER_SOFT_DELETE_DE);
+        assertThat(deletedUser.getFirstName()).isEqualTo(Constants.USER_FIRST_NAME_AFTER_SOFT_DELETE);
+        assertThat(deletedUser.getLastName()).isEqualTo(Constants.USER_LAST_NAME_AFTER_SOFT_DELETE);
         assertThat(deletedUser.getLogin()).isNotEqualTo(originalUser.getLogin());
         assertThat(deletedUser.getPassword()).isNotEqualTo(originalUser.getPassword());
-        assertTrue(deletedUser.getEmail().endsWith(Constants.USER_EMAIL_DOMAIN_AFTER_SOFT_DELETE)
-                || deletedUser.getEmail().endsWith(Constants.USER_EMAIL_DOMAIN_AFTER_SOFT_DELETE_DE));
+        assertThat(deletedUser.getEmail()).endsWith(Constants.USER_EMAIL_DOMAIN_AFTER_SOFT_DELETE);
         assertThat(deletedUser.getRegistrationNumber()).isEqualTo(null);
         assertThat(deletedUser.getImageUrl()).isEqualTo(null);
         assertThat(deletedUser.getActivated()).isFalse();
@@ -133,35 +131,14 @@ public class UserTestService {
         student.setImageUrl("https://www.somewebsite.com/image.jpg");
         userRepository.save(student);
 
-        var params = new LinkedMultiValueMap<String, String>();
-        params.add("adminLanguageKey", "en");
-        request.delete("/api/admin/users/" + student.getLogin(), HttpStatus.OK, params);
+        request.delete("/api/admin/users/" + student.getLogin(), HttpStatus.OK);
 
         final var deletedUser = userRepository.findById(student.getId()).orElseThrow();
         assertThatUserWasSoftDeleted(student, deletedUser);
-    }
-
-    // Test
-    public void deleteUserWithGermanLocale_isSuccessful() throws Exception {
-        student.setRegistrationNumber("123");
-        student.setImageUrl("https://www.somewebsite.com/image.jpg");
-        userRepository.save(student);
-
-        var params = new LinkedMultiValueMap<String, String>();
-        params.add("adminLanguageKey", "de");
-        request.delete("/api/admin/users/" + student.getLogin(), HttpStatus.OK, params);
-
-        final var deletedUser = userRepository.findById(student.getId()).orElseThrow();
-        assertThatUserWasSoftDeleted(student, deletedUser);
-        assertThat(deletedUser.getFirstName()).isEqualTo(Constants.USER_FIRST_NAME_AFTER_SOFT_DELETE_DE);
-        assertThat(deletedUser.getLastName()).isEqualTo(Constants.USER_LAST_NAME_AFTER_SOFT_DELETE_DE);
-        assertThat(deletedUser.getEmail()).endsWith(Constants.USER_EMAIL_DOMAIN_AFTER_SOFT_DELETE_DE);
     }
 
     // Test
     public void deleteSelf_isNotSuccessful(String currentUserLogin) throws Exception {
-        var params = new LinkedMultiValueMap<String, String>();
-        params.add("adminLanguageKey", "en");
         request.delete("/api/admin/users/" + currentUserLogin, HttpStatus.BAD_REQUEST);
         final var deletedUser = userRepository.findById(student.getId()).orElseThrow();
         assertThatUserWasNotSoftDeleted(student, deletedUser);
@@ -178,7 +155,6 @@ public class UserTestService {
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         users.stream().map(User::getLogin).forEach(login -> params.add("login", login));
 
-        params.add("adminLanguageKey", "en");
         request.delete("/api/admin/users", HttpStatus.OK, params);
 
         for (var user : users) {
