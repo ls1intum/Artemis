@@ -294,7 +294,7 @@ public class DataExportService {
                     storeModelingSubmissionContent(modelingSubmission, exerciseDir);
                 }
                 else if (submission instanceof QuizSubmission) {
-                    createCsvForQuizAnswers((QuizExercise) exercise, participation, exerciseDir);
+                    createQuizAnswersExport((QuizExercise) exercise, participation, exerciseDir);
                 }
 
                 createResultsTxtFile(submission, exerciseDir);
@@ -302,7 +302,7 @@ public class DataExportService {
         }
     }
 
-    private void createCsvForQuizAnswers(QuizExercise quizExercise, StudentParticipation participation, Path outputDir) throws IOException {
+    private void createQuizAnswersExport(QuizExercise quizExercise, StudentParticipation participation, Path outputDir) throws IOException {
         List<String> headers = new ArrayList<>(List.of("id", "question title", "submission id", "score"));
         Set<QuizQuestion> quizQuestions = quizQuestionRepository.getQuizQuestionsByExerciseId(quizExercise.getId());
         QuizSubmission quizSubmission = null;
@@ -310,6 +310,8 @@ public class DataExportService {
         // collect necessary information for csv headers
         for (var submission : participation.getSubmissions()) {
             quizSubmission = quizSubmissionRepository.findWithEagerSubmittedAnswersById(submission.getId());
+            List<String> multipleChoiceQuestionsSubmissions = new ArrayList<>();
+            List<String> shortAnswerQuestionsSubmissions = new ArrayList<>();
             for (var question : quizQuestions) {
                 var submittedAnswer = quizSubmission.getSubmittedAnswerForQuestion(question);
                 // if this question wasn't answered, the submitted answer is null
@@ -317,31 +319,85 @@ public class DataExportService {
                     if (submittedAnswer instanceof DragAndDropSubmittedAnswer dragAndDropSubmittedAnswer) {
                         dragAndDropQuizAnswerConversionService.convertDragAndDropQuizAnswerToImage(dragAndDropSubmittedAnswer, outputDir);
                     }
-                    else {
-                        populateHeaders(submittedAnswer, headers);
+                    else if (submittedAnswer instanceof ShortAnswerSubmittedAnswer shortAnswerSubmittedAnswer) {
+                        shortAnswerQuestionsSubmissions.add(createExportForShortAnswerQuestion(shortAnswerSubmittedAnswer));
+                    }
+                    else if (submittedAnswer instanceof MultipleChoiceSubmittedAnswer multipleChoiceSubmittedAnswer) {
+                        multipleChoiceQuestionsSubmissions.add(createExportForMultipleChoiceAnswerQuestion(multipleChoiceSubmittedAnswer));
                     }
                 }
-
+            }
+            if (!multipleChoiceQuestionsSubmissions.isEmpty()) {
+                Files.write(outputDir.resolve("quiz_submission_" + submission.getId() + "_multiple_choice_answers.txt"), multipleChoiceQuestionsSubmissions);
+            }
+            if (!shortAnswerQuestionsSubmissions.isEmpty()) {
+                Files.write(outputDir.resolve("quiz_submission_" + submission.getId() + "_short_answer_answers.txt"), shortAnswerQuestionsSubmissions);
             }
         }
 
         // write csv
-        CSVFormat csvFormat = CSVFormat.DEFAULT.builder().setHeader(headers.toArray(new String[0])).build();
-        for (var submission : participation.getSubmissions()) {
-            try (final CSVPrinter printer = new CSVPrinter(Files.newBufferedWriter(outputDir.resolve("quiz_submission_" + submission.getId() + "_answers" + CSV_FILE_EXTENSION)),
-                    csvFormat)) {
-                for (var question : quizQuestions) {
-                    var submittedAnswer = quizSubmission.getSubmittedAnswerForQuestion(question);
-                    // if this question wasn't answered, the submitted answer is null
-                    if (submittedAnswer != null) {
-                        printer.printRecord(getSubmittedAnswerStreamToPrint(submittedAnswer));
-                    }
+        // CSVFormat csvFormat = CSVFormat.DEFAULT.builder().setHeader(headers.toArray(new String[0])).build();
+        // for (var submission : participation.getSubmissions()) {
+        // try (final CSVPrinter printer = new CSVPrinter(Files.newBufferedWriter(outputDir.resolve("quiz_submission_" + submission.getId() + "_answers" + CSV_FILE_EXTENSION)),
+        // csvFormat)) {
+        // for (var question : quizQuestions) {
+        // var submittedAnswer = quizSubmission.getSubmittedAnswerForQuestion(question);
+        // // if this question wasn't answered, the submitted answer is null
+        // if (submittedAnswer != null) {
+        // printer.printRecord(getSubmittedAnswerStreamToPrint(submittedAnswer));
+        // }
+        //
+        // }
+        // printer.flush();
+        // }
+        // }
 
-                }
-                printer.flush();
-            }
+    }
+
+    private String createExportForMultipleChoiceAnswerQuestion(MultipleChoiceSubmittedAnswer multipleChoiceSubmittedAnswer) {
+        StringBuilder stringBuilder = new StringBuilder();
+        MultipleChoiceQuestion question = (MultipleChoiceQuestion) multipleChoiceSubmittedAnswer.getQuizQuestion();
+        if (question.isSingleChoice()) {
+            stringBuilder.append("Single Choice Question: ");
         }
+        else {
+            stringBuilder.append("Multiple Choice Question: ");
+        }
+        stringBuilder.append(question.getTitle()).append("\n");
+        stringBuilder.append("Your score: ").append(multipleChoiceSubmittedAnswer.getScoreInPoints()).append("\n");
+        for (var answerOption : question.getAnswerOptions()) {
+            if (answerOption.isInvalid()) {
+                stringBuilder.append("Invalid answer option: ");
+            }
+            else if (answerOption.isIsCorrect() && multipleChoiceSubmittedAnswer.getSelectedOptions().contains(answerOption)) {
+                stringBuilder.append("Correct and selected answer: ");
+            }
+            else if (answerOption.isIsCorrect() && !multipleChoiceSubmittedAnswer.getSelectedOptions().contains(answerOption)) {
+                stringBuilder.append("Correct but NOT selected answer: ");
+            }
+            else if (!answerOption.isIsCorrect() && multipleChoiceSubmittedAnswer.getSelectedOptions().contains(answerOption)) {
+                stringBuilder.append("Incorrect but selected answer: ");
+            }
+            else if (!answerOption.isIsCorrect() && !multipleChoiceSubmittedAnswer.getSelectedOptions().contains(answerOption)) {
+                stringBuilder.append("Incorrect and NOT selected answer: ");
+            }
+            stringBuilder.append(answerOption.getText()).append("\t").append("\n");
+        }
+        return stringBuilder.toString();
+    }
 
+    private String createExportForShortAnswerQuestion(ShortAnswerSubmittedAnswer shortAnswerSubmittedAnswer) {
+        // TODO short answer question export
+        StringBuilder stringBuilder = new StringBuilder();
+        ShortAnswerQuestion question = (ShortAnswerQuestion) shortAnswerSubmittedAnswer.getQuizQuestion();
+        stringBuilder.append("Short Answer Question: ").append(question.getTitle()).append("\n");
+        stringBuilder.append("Your score: ").append(shortAnswerSubmittedAnswer.getScoreInPoints()).append("\n");
+        // for (var shortAnswerSpot : question.getSpots()) {
+        // stringBuilder.append("Spot: ").append(shortAnswerSpot.getSpotNr()).append("\n");
+        // stringBuilder.append("Correct solution: ").append(shortAnswerSpot.getSolution()).append("\n");
+        // stringBuilder.append("Your solution: ").append(shortAnswerSubmittedAnswer.getSubmittedText(shortAnswerSpot.getSpotNr())).append("\n");
+        // }
+        return stringBuilder.toString();
     }
 
     private void createCommunicationExport(List<Post> posts, List<AnswerPost> answerPosts, List<Reaction> reactions, long courseId, Path courseDir) throws IOException {
@@ -354,6 +410,10 @@ public class DataExportService {
         String[] headers = { "content/emoji", "creation date" };
         CSVFormat csvFormat = CSVFormat.DEFAULT.builder().setHeader(headers).build();
         try (final CSVPrinter printer = new CSVPrinter(Files.newBufferedWriter(courseDir.resolve("messages_posts_reactions" + CSV_FILE_EXTENSION)), csvFormat)) {
+            printer.println();
+            printer.print("Messages/Posts");
+            printer.println();
+            printer.println();
             for (var post : postsInCourse) {
                 printer.printRecord(post.getContent(), post.getCreationDate());
             }
@@ -446,27 +506,29 @@ public class DataExportService {
     }
 
     private void createResultsTxtFile(Submission submission, Path outputDir) throws IOException {
-        // String[] headers = new String[] { "id", "exercise ", "submission id", "assessment type", "score", "complaint for result" };
-        // CSVFormat csvFormat = CSVFormat.DEFAULT.builder().setHeader(headers).build();
-        // try (final CSVPrinter printer = new CSVPrinter(Files.newBufferedWriter(outputDir.resolve("results_submission_" + submission.getId() + CSV_FILE_EXTENSION)), csvFormat)) {
-        // for (var result : submission.getResults()) {
-        // if (result != null) {
-        // printer.printRecord(result.getId(), result.getSubmission().getParticipation().getExercise().getTitle(), result.getSubmission().getId(),
-        // result.getAssessmentType(), result.getScore(), result.hasComplaint());
-        // }
-        //
-        // }
-        // printer.flush();
-        StringBuilder resultScoreAndFeddbacks = new StringBuilder();
+        StringBuilder resultScoreAndFeedbacks = new StringBuilder();
         for (var result : submission.getResults()) {
             if (result != null) {
-                resultScoreAndFeddbacks.append("Score of submission: ").append(result.getScore()).append("\n");
-                for (var feedback : result.getFeedbacks()) {
-                    resultScoreAndFeddbacks.append("Feedback: ").append(feedback.getText()).append("\t").append(feedback.getDetailText()).append("\t").append(feedback.getCredits())
-                            .append("\n");
+                resultScoreAndFeedbacks.append("Score of submission: ").append(result.getScore()).append("%").append(" ")
+                        .append(result.getScore() * submission.getParticipation().getExercise().getMaxPoints() / 100).append(" Points").append("\n");
+                if (submission instanceof ProgrammingSubmission && result.getPassedTestCaseCount() != null && result.getTestCaseCount() != null && result.getTestCaseCount() > 0) {
+                    resultScoreAndFeedbacks.append("Passed test cases: ").append(result.getPassedTestCaseCount()).append("/").append(result.getTestCaseCount()).append("\n");
                 }
-                Files.writeString(outputDir.resolve("results_submission_" + submission.getId() + TXT_FILE_EXTENSION), resultScoreAndFeddbacks);
+                for (var feedback : result.getFeedbacks()) {
+                    resultScoreAndFeedbacks.append("- Feedback: ");
+                    // null if it's manual feedback
+                    if (feedback.getText() != null) {
+                        resultScoreAndFeedbacks.append(feedback.getText()).append("\t");
+                    }
+                    // null if the test case passes
+                    if (feedback.getDetailText() != null) {
+                        resultScoreAndFeedbacks.append(feedback.getDetailText()).append("\t");
+                    }
+                    resultScoreAndFeedbacks.append(feedback.getCredits()).append("\n");
+                }
+                Files.writeString(outputDir.resolve("submission_" + submission.getId() + "_result_" + result.getId() + TXT_FILE_EXTENSION), resultScoreAndFeedbacks);
             }
+            resultScoreAndFeedbacks = new StringBuilder();
         }
 
     }

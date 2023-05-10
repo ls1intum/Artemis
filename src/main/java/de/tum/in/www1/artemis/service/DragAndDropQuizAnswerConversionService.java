@@ -46,7 +46,7 @@ public class DragAndDropQuizAnswerConversionService {
         Path dndSubmissionPathImg = outputDir.resolve(
                 "dragAndDropQuestion_" + dragAndDropSubmittedAnswer.getQuizQuestion().getId() + "_submission_" + dragAndDropSubmittedAnswer.getSubmission().getId() + ".png");
         Path dndSubmissionPathPdf = Path.of(dndSubmissionPathImg.toString().replace(".png", ".pdf"));
-        ImageIO.write(backgroundImage, "PNG", dndSubmissionPathImg.toFile());
+        // ImageIO.write(backgroundImage, "PNG", dndSubmissionPathImg.toFile());
         storeSubmissionAsPdf(backgroundImage, dndSubmissionPathPdf);
     }
 
