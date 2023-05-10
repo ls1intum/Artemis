@@ -2,13 +2,27 @@ package de.tum.in.www1.artemis.lecture;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import javax.validation.constraints.NotNull;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.util.LinkedMultiValueMap;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
@@ -27,6 +41,9 @@ class AttachmentResourceIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @Autowired
     private LectureRepository lectureRepository;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     private Attachment attachment;
 
@@ -54,40 +71,37 @@ class AttachmentResourceIntegrationTest extends AbstractSpringIntegrationBambooB
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createAttachment() throws Exception {
-        var actualAttachment = request.postWithResponseBody("/api/attachments", attachment, Attachment.class, HttpStatus.CREATED);
+        MvcResult result = request.getMvc().perform(buildCreateAttachment(attachment, "testContent")).andExpect(status().isCreated()).andReturn();
+        var actualAttachment = objectMapper.readValue(result.getResponse().getContentAsString(), Attachment.class);
         var expectedAttachment = attachmentRepository.findById(actualAttachment.getId()).get();
         assertThat(actualAttachment).isEqualTo(expectedAttachment);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void createAttachment_idExists() throws Exception {
-        attachment.setId(1L);
-        request.postWithResponseBody("/api/attachments", attachment, Attachment.class, HttpStatus.BAD_REQUEST);
+    void createAttachment_noFile() throws Exception {
+        request.getMvc().perform(buildCreateAttachment(attachment)).andExpect(status().isBadRequest());
     }
 
-    @Test
+    @ParameterizedTest
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void updateAttachment() throws Exception {
+    @ValueSource(booleans = { true, false })
+    void updateAttachment(boolean fileUpdate) throws Exception {
         attachment = attachmentRepository.save(attachment);
         attachment.setName("new name");
         var params = new LinkedMultiValueMap<String, String>();
         var notificationText = "notified!";
         params.add("notificationText", notificationText);
 
-        var actualAttachment = request.putWithResponseBodyAndParams("/api/attachments", attachment, Attachment.class, HttpStatus.OK, params);
+        String fileContent = fileUpdate ? "testContent" : null;
+
+        MvcResult result = request.getMvc().perform(buildUpdateAttachment(attachment.getId(), attachment, fileContent, params)).andExpect(status().isOk()).andReturn();
+        var actualAttachment = objectMapper.readValue(result.getResponse().getContentAsString(), Attachment.class);
         var expectedAttachment = attachmentRepository.findById(actualAttachment.getId()).get();
         assertThat(actualAttachment.getName()).isEqualTo("new name");
         var ignoringFields = new String[] { "name", "fileService", "prevLink", "lecture.lectureUnits", "lecture.posts", "lecture.course", "lecture.attachments" };
         assertThat(actualAttachment).usingRecursiveComparison().ignoringFields(ignoringFields).isEqualTo(expectedAttachment);
         verify(groupNotificationService).notifyStudentGroupAboutAttachmentChange(actualAttachment, notificationText);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void updateAttachment_noId() throws Exception {
-        attachment.setName("new name");
-        request.putWithResponseBody("/api/attachments", attachment, Attachment.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -148,5 +162,30 @@ class AttachmentResourceIntegrationTest extends AbstractSpringIntegrationBambooB
         lecture.setCourse(course);
         lectureRepository.save(lecture);
         request.delete("/api/attachments/" + attachment.getId(), HttpStatus.FORBIDDEN);
+    }
+
+    private MockHttpServletRequestBuilder buildCreateAttachment(@NotNull Attachment attachment) throws JsonProcessingException {
+        return buildCreateAttachment(attachment, null);
+    }
+
+    private MockHttpServletRequestBuilder buildCreateAttachment(@NotNull Attachment attachment, String fileContent) throws JsonProcessingException {
+        var attachmentPart = new MockMultipartFile("attachment", "", MediaType.APPLICATION_JSON_VALUE, objectMapper.writeValueAsBytes(attachment));
+        var builder = MockMvcRequestBuilders.multipart(HttpMethod.POST, "/api/attachments").file(attachmentPart);
+        if (fileContent != null) {
+            var filePart = new MockMultipartFile("file", "test.txt", MediaType.TEXT_PLAIN_VALUE, fileContent.getBytes());
+            builder.file(filePart);
+        }
+        return builder.contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
+    }
+
+    private MockHttpServletRequestBuilder buildUpdateAttachment(@NotNull Long id, @NotNull Attachment attachment, String fileContent, LinkedMultiValueMap<String, String> params)
+            throws JsonProcessingException {
+        var attachmentPart = new MockMultipartFile("attachment", "", MediaType.APPLICATION_JSON_VALUE, objectMapper.writeValueAsBytes(attachment));
+        var builder = MockMvcRequestBuilders.multipart(HttpMethod.PUT, "/api/attachments/" + id).file(attachmentPart);
+        if (fileContent != null) {
+            var filePart = new MockMultipartFile("file", "test.txt", MediaType.TEXT_PLAIN_VALUE, fileContent.getBytes());
+            builder.file(filePart);
+        }
+        return builder.params(params).contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
     }
 }
