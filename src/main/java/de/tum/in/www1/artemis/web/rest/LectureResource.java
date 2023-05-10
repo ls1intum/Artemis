@@ -124,18 +124,8 @@ public class LectureResource {
         // NOTE: Make sure that all references are preserved here
         lecture.setLectureUnits(originalLecture.getLectureUnits());
 
-        if (originalLecture.getChannel() != null) {
-            Channel originalChannel = channelRepository.findByIdElseThrow(originalLecture.getChannel().getId());
-            // Update Channel title if necessary
-            String newChannelName = channelService.updateChannelSuffix(Objects.requireNonNull(originalChannel.getName()), lecture.getTitle());
-            if (!originalChannel.getName().equals(newChannelName)) {
-                originalChannel.setName(newChannelName);
-                channelRepository.save(originalChannel);
-            }
-
-            // Make sure that the original references are preserved.
-            lecture.setChannel(originalChannel);
-        }
+        // Make sure that the original references are preserved and the channel is updated if necessary
+        channelService.updateLectureChannel(originalLecture, lecture);
 
         Lecture result = lectureRepository.save(lecture);
         return ResponseEntity.ok().body(result);

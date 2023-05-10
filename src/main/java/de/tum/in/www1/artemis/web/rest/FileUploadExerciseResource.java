@@ -255,6 +255,9 @@ public class FileUploadExerciseResource {
             fileUploadExercise.setChannel(originalChannel);
         }
 
+        // Make sure that the original references are preserved and the channel is updated if necessary
+        channelService.updateExerciseChannel(fileUploadExerciseBeforeUpdate, fileUploadExercise);
+
         var updatedExercise = fileUploadExerciseRepository.save(fileUploadExercise);
         exerciseService.logUpdate(updatedExercise, updatedExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         exerciseService.updatePointsInRelatedParticipantScores(fileUploadExerciseBeforeUpdate, updatedExercise);

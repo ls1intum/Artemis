@@ -215,11 +215,8 @@ public class TextExerciseResource {
         // Forbid conversion between normal course exercise and exam exercise
         exerciseService.checkForConversionBetweenExamAndCourseExercise(textExercise, textExerciseBeforeUpdate, ENTITY_NAME);
 
-        if (textExerciseBeforeUpdate.getChannel() != null) {
-            // Make sure that the original references are preserved.
-            Channel originalChannel = channelRepository.findByIdElseThrow(textExerciseBeforeUpdate.getChannel().getId());
-            textExercise.setChannel(originalChannel);
-        }
+        // Make sure that the original references are preserved and the channel is updated if necessary
+        channelService.updateExerciseChannel(textExerciseBeforeUpdate, textExercise);
 
         TextExercise updatedTextExercise = textExerciseRepository.save(textExercise);
         exerciseService.logUpdate(updatedTextExercise, updatedTextExercise.getCourseViaExerciseGroupOrCourseMember(), user);

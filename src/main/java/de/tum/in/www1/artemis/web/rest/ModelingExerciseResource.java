@@ -213,11 +213,8 @@ public class ModelingExerciseResource {
         // Forbid conversion between normal course exercise and exam exercise
         exerciseService.checkForConversionBetweenExamAndCourseExercise(modelingExercise, modelingExerciseBeforeUpdate, ENTITY_NAME);
 
-        if (modelingExerciseBeforeUpdate.getChannel() != null) {
-            // Make sure that the original references are preserved.
-            Channel originalChannel = channelRepository.findByIdElseThrow(modelingExerciseBeforeUpdate.getChannel().getId());
-            modelingExercise.setChannel(originalChannel);
-        }
+        // Make sure that the original references are preserved and the channel is updated if necessary
+        channelService.updateExerciseChannel(modelingExerciseBeforeUpdate, modelingExercise);
 
         ModelingExercise updatedModelingExercise = modelingExerciseRepository.save(modelingExercise);
         exerciseService.logUpdate(modelingExercise, modelingExercise.getCourseViaExerciseGroupOrCourseMember(), user);

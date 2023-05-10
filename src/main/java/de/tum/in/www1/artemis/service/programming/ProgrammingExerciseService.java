@@ -49,6 +49,7 @@ import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.in.www1.artemis.service.hestia.ProgrammingExerciseTaskService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
+import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationScheduleService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.service.util.structureoraclegenerator.OracleGenerator;
@@ -129,6 +130,8 @@ public class ProgrammingExerciseService {
 
     private final ChannelRepository channelRepository;
 
+    private final ChannelService channelService;
+
     public ProgrammingExerciseService(ProgrammingExerciseRepository programmingExerciseRepository, GitService gitService, Optional<VersionControlService> versionControlService,
             Optional<ContinuousIntegrationService> continuousIntegrationService,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
@@ -139,7 +142,8 @@ public class ProgrammingExerciseService {
             ProgrammingExerciseSolutionEntryRepository programmingExerciseSolutionEntryRepository, ProgrammingExerciseTaskService programmingExerciseTaskService,
             ProgrammingExerciseGitDiffReportRepository programmingExerciseGitDiffReportRepository, ExerciseSpecificationService exerciseSpecificationService,
             ProgrammingExerciseRepositoryService programmingExerciseRepositoryService, AuxiliaryRepositoryService auxiliaryRepositoryService,
-            SubmissionPolicyService submissionPolicyService, Optional<ProgrammingLanguageFeatureService> programmingLanguageFeatureService, ChannelRepository channelRepository) {
+            SubmissionPolicyService submissionPolicyService, Optional<ProgrammingLanguageFeatureService> programmingLanguageFeatureService, ChannelRepository channelRepository,
+            ChannelService channelService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.gitService = gitService;
         this.versionControlService = versionControlService;
@@ -164,6 +168,7 @@ public class ProgrammingExerciseService {
         this.submissionPolicyService = submissionPolicyService;
         this.programmingLanguageFeatureService = programmingLanguageFeatureService;
         this.channelRepository = channelRepository;
+        this.channelService = channelService;
     }
 
     /**
@@ -424,11 +429,8 @@ public class ProgrammingExerciseService {
         setURLsForAuxiliaryRepositoriesOfExercise(updatedProgrammingExercise);
         connectAuxiliaryRepositoriesToExercise(updatedProgrammingExercise);
 
-        if (programmingExerciseBeforeUpdate.getChannel() != null) {
-            // Make sure that the original references are preserved.
-            Channel originalChannel = channelRepository.findByIdElseThrow(programmingExerciseBeforeUpdate.getChannel().getId());
-            programmingExerciseBeforeUpdate.setChannel(originalChannel);
-        }
+        // Make sure that the original references are preserved and the channel is updated if necessary
+        channelService.updateExerciseChannel(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
 
         ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(updatedProgrammingExercise);
 

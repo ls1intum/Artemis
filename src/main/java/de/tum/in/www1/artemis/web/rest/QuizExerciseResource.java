@@ -214,11 +214,8 @@ public class QuizExerciseResource {
             quizExercise.setQuizBatches(batches);
         }
 
-        if (originalQuiz.getChannel() != null) {
-            // Make sure that the original references are preserved.
-            Channel originalChannel = channelRepository.findByIdElseThrow(originalQuiz.getChannel().getId());
-            quizExercise.setChannel(originalChannel);
-        }
+        // Make sure that the original references are preserved and the channel is updated if necessary
+        channelService.updateExerciseChannel(originalQuiz, quizExercise);
 
         quizExercise = quizExerciseService.save(quizExercise);
         exerciseService.logUpdate(quizExercise, quizExercise.getCourseViaExerciseGroupOrCourseMember(), user);

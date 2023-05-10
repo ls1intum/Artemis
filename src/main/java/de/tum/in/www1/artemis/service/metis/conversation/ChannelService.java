@@ -231,12 +231,43 @@ public class ChannelService {
         return createChannel(exam.getCourse(), channelToCreate, Optional.of(userRepository.getUserWithGroupsAndAuthorities()));
     }
 
-    public String updateChannelSuffix(String channelName, String newSuffix) {
-        return String.format("%s%.15s", channelName.substring(0, 5), newSuffix.toLowerCase().replace(' ', '-'));
+    public void updateLectureChannel(Lecture originalLecture, Lecture updatedLecture) {
+        if (originalLecture.getChannel() == null) {
+            return;
+        }
+        Channel updatedChannel = updateChannelName(originalLecture.getChannel().getId(), updatedLecture.getTitle());
+        updatedLecture.setChannel(updatedChannel);
+
+    }
+
+    public void updateExerciseChannel(Exercise originalExercise, Exercise updatedExercise) {
+        if (originalExercise.getChannel() == null) {
+            return;
+        }
+        Channel updatedChannel = updateChannelName(originalExercise.getChannel().getId(), updatedExercise.getTitle());
+        updatedExercise.setChannel(updatedChannel);
+    }
+
+    private Channel updateChannelName(Long channelId, String newName) {
+        Channel originalChannel = channelRepository.findByIdElseThrow(channelId);
+        String newChannelName = updateChannelSuffix(Objects.requireNonNull(originalChannel.getName()), newName);
+
+        // Update channel name if necessary
+        if (!originalChannel.getName().equals(newChannelName)) {
+            originalChannel.setName(newChannelName);
+            return channelRepository.save(originalChannel);
+        }
+        else {
+            return originalChannel;
+        }
     }
 
     private String formatChannelName(char prefix, int infix, String suffix) {
         // TODO: Figure out whether two digits for the number are enough
-        return String.format("%c-%02d-%.15s", prefix, infix, suffix.toLowerCase().replace(' ', '-'));
+        return String.format("%c-%02d-%s", prefix, infix, suffix.toLowerCase().replace(' ', '-'));
+    }
+
+    private String updateChannelSuffix(String channelName, String newSuffix) {
+        return String.format("%s%s", channelName.substring(0, 5), newSuffix.toLowerCase().replace(' ', '-'));
     }
 }
