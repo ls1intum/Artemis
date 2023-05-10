@@ -98,6 +98,8 @@
                 "totalScore": "Your overall points",
                 "totalPresentationScore": "Your total presentation score: {{ number }}",
                 "presentationScoreBonus": "Required presentation score for the bonus: {{ number }}",
+                "totalPresentationPoints": "Your presentation points: {{ number }}",
+                "achievablePresentationPoints": "Achievable presentation points: {{ number }}",
                 "hideNotIncludedInScoreExercises": "Hide Optional",
                 "exerciseCount": "{{ number }} {{type}}",
                 "yourPoints": "Your points: {{ number }}",

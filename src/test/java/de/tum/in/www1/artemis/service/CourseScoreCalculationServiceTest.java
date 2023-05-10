@@ -166,6 +166,7 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationBambooB
         CourseScoresDTO totalCourseScores = courseForDashboard.totalScores();
         assertThat(totalCourseScores.maxPoints()).isZero();
         assertThat(totalCourseScores.reachablePoints()).isZero();
+        assertThat(totalCourseScores.reachablePresentationPoints()).isZero();
         assertThat(totalCourseScores.studentScores().absoluteScore()).isZero();
         assertThat(totalCourseScores.studentScores().relativeScore()).isZero();
         assertThat(totalCourseScores.studentScores().currentRelativeScore()).isZero();
@@ -174,6 +175,7 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationBambooB
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getScoresAndParticipationResultsForPastCourse() {
         // Create course with assessment due date passed.
         Course pastCourse = database.createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(TEST_PREFIX, true);
@@ -184,6 +186,7 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationBambooB
         CourseScoresDTO totalCourseScores = courseForDashboard.totalScores();
         assertThat(totalCourseScores.maxPoints()).isEqualTo(5.0);
         assertThat(totalCourseScores.reachablePoints()).isEqualTo(5.0);
+        assertThat(totalCourseScores.reachablePresentationPoints()).isZero();
         assertThat(totalCourseScores.studentScores().absoluteScore()).isZero();
         assertThat(totalCourseScores.studentScores().relativeScore()).isZero();
         assertThat(totalCourseScores.studentScores().currentRelativeScore()).isZero();

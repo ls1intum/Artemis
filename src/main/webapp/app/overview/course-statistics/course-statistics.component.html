@@ -119,14 +119,17 @@
                             </a>
                         </div>
                     </div>
-                    <div *ngIf="course.presentationScore ?? 0 > 0">
+                    <div *ngIf="(course.presentationScore ?? 0) > 0">
                         <h3>{{ 'artemisApp.courseOverview.statistics.totalPresentationScore' | artemisTranslate : { number: overallPresentationScore } }}</h3>
                         <h3>{{ 'artemisApp.courseOverview.statistics.presentationScoreBonus' | artemisTranslate : { number: course.presentationScore } }}</h3>
                     </div>
-                    <!-- TODO: Add translations -->
-                    <div *ngIf="reachablePresentationPoints ?? 0 > 0">
-                        <h5 class="fw-bolder">Your total presentation points: {{ overallPresentationScore }}</h5>
-                        <h5 class="fw-bolder">Reachable presentation points: {{ reachablePresentationPoints }}</h5>
+                    <div *ngIf="(reachablePresentationPoints ?? 0) > 0">
+                        <h5 class="fw-bolder">
+                            {{ 'artemisApp.courseOverview.statistics.totalPresentationPoints' | artemisTranslate : { number: overallPresentationScore } }}
+                        </h5>
+                        <h5 class="fw-bolder">
+                            {{ 'artemisApp.courseOverview.statistics.achievablePresentationPoints' | artemisTranslate : { number: reachablePresentationPoints } }}
+                        </h5>
                     </div>
                 </div>
             </div>
