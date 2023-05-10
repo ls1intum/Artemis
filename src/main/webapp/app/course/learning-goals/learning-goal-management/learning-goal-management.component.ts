@@ -236,7 +236,7 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Opens a modal for selecting a learning goal to import to the current course.
+     * Opens a modal for selecting a competency to import to the current course.
      */
     openImportModal() {
         const modalRef = this.modalService.open(CompetencyImportComponent, { size: 'lg', backdrop: 'static' });

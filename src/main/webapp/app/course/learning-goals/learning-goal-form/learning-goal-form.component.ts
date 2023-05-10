@@ -12,7 +12,7 @@ import { LearningGoalTaxonomy } from 'app/entities/learningGoal.model';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
 
 /**
- * Async Validator to make sure that a learning goal title is unique within a course
+ * Async Validator to make sure that a competency title is unique within a course
  */
 export const titleUniqueValidator = (learningGoalService: LearningGoalService, courseId: number, initialTitle?: string) => {
     return (learningGoalTitleControl: FormControl<string | undefined>) => {
