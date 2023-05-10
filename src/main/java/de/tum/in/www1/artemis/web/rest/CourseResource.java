@@ -202,9 +202,9 @@ public class CourseResource {
         courseUpdate.setTutorialGroupsConfiguration(existingCourse.getTutorialGroupsConfiguration());
         courseUpdate.setOnlineCourseConfiguration(existingCourse.getOnlineCourseConfiguration());
 
-        courseUpdate.validateRegistrationConfirmationMessage();
+        courseUpdate.validateEnrollmentConfirmationMessage();
         courseUpdate.validateComplaintsAndRequestMoreFeedbackConfig();
-        courseUpdate.validateOnlineCourseAndRegistrationEnabled();
+        courseUpdate.validateOnlineCourseAndEnrollmentEnabled();
         courseUpdate.validateShortName();
         courseUpdate.validateAccuracyOfScores();
         if (!courseUpdate.isValidStartAndEndDate()) {
@@ -281,20 +281,20 @@ public class CourseResource {
     }
 
     /**
-     * POST /courses/{courseId}/register : Register for an existing course. This method registers the current user for the given course id in case the course has already started
+     * POST /courses/{courseId}/enroll : Enroll in an existing course. This method enrolls the current user for the given course id in case the course has already started
      * and not finished yet. The user is added to the course student group in the Authentication System and the course student group is added to the user's groups in the Artemis
      * database.
      *
      * @param courseId to find the course
-     * @return response entity for user who has been registered to the course
+     * @return response entity for user who has been enrolled in the course
      */
-    @PostMapping("courses/{courseId}/register")
+    @PostMapping("courses/{courseId}/enroll")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<User> registerForCourse(@PathVariable Long courseId) {
+    public ResponseEntity<User> enrollInCourse(@PathVariable Long courseId) {
         Course course = courseRepository.findWithEagerOrganizationsElseThrow(courseId);
         User user = userRepository.getUserWithGroupsAndAuthoritiesAndOrganizations();
-        log.debug("REST request to register {} for Course {}", user.getName(), course.getTitle());
-        courseService.registerUserForCourseOrThrow(user, course);
+        log.debug("REST request to enroll {} in Course {}", user.getName(), course.getTitle());
+        courseService.enrollUserForCourseOrThrow(user, course);
         return ResponseEntity.ok(user);
     }
 
@@ -383,7 +383,7 @@ public class CourseResource {
         User user = userRepository.getUserWithGroupsAndAuthoritiesAndOrganizations();
 
         Course course = courseRepository.findSingleWithOrganizationsAndPrerequisitesElseThrow(courseId);
-        authCheckService.checkUserAllowedToSelfRegisterForCourseElseThrow(user, course);
+        authCheckService.checkUserAllowedToSelfEnrollInCourseElseThrow(user, course);
 
         return ResponseEntity.ok(course);
     }
@@ -405,7 +405,7 @@ public class CourseResource {
         // check whether registration is actually possible for each of the courses
         return allCoursesToPotentiallyRegister.stream().filter(course -> {
             boolean isAlreadyInCourse = allRegisteredCourses.contains(course);
-            return authCheckService.isUserAllowedToSelfRegisterForCourse(user, course) && !isAlreadyInCourse;
+            return authCheckService.isUserAllowedToSelfEnrollInCourse(user, course) && !isAlreadyInCourse;
         }).toList();
     }
 
@@ -430,7 +430,7 @@ public class CourseResource {
             // user might be allowed to register for the course
             // We need the course with organizations so that we can check if the user is allowed to register
             course = courseRepository.findSingleWithOrganizationsAndPrerequisitesElseThrow(courseId);
-            if (authCheckService.isUserAllowedToSelfRegisterForCourse(user, course)) {
+            if (authCheckService.isUserAllowedToSelfEnrollInCourse(user, course)) {
                 // suppress error alert with skipAlert: true so that the client can redirect to the registration page
                 throw new AccessForbiddenAlertException(ErrorConstants.DEFAULT_TYPE, "You don't have access to this course, but you could register.", ENTITY_NAME,
                         "noAccessButCouldRegister", true);

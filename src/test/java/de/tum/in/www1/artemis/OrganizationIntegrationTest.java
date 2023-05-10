@@ -69,8 +69,8 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);
         Course course1 = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "testcourse1", "tutor", "editor", "instructor");
         Course course2 = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "testcourse2", "tutor", "editor", "instructor");
-        course1.setRegistrationEnabled(true);
-        course2.setRegistrationEnabled(true);
+        course1.setEnrollmentEnabled(true);
+        course2.setEnrollmentEnabled(true);
         course1.setOrganizations(organizations);
 
         course1 = courseRepo.save(course1);
@@ -105,8 +105,8 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         Course course2 = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "testcourse2", "tutor", "editor", "instructor");
         Course course3 = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "testcourse2", "tutor", "editor", "instructor");
 
-        course1.setRegistrationEnabled(true);
-        course2.setRegistrationEnabled(true);
+        course1.setEnrollmentEnabled(true);
+        course2.setEnrollmentEnabled(true);
         course1.setOrganizations(organizations);
         course3.setOrganizations(otherOrganizations);
 

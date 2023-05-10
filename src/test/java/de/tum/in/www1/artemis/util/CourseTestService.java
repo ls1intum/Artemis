@@ -712,7 +712,7 @@ public class CourseTestService {
     private Course createCourseWithRegistrationEnabled(boolean registrationEnabled) throws Exception {
         List<Course> courses = database.createCoursesWithExercisesAndLecturesAndLectureUnitsAndLearningGoals(userPrefix, true, false, numberOfTutors);
         Course course = courses.get(0);
-        course.setRegistrationEnabled(registrationEnabled);
+        course.setEnrollmentEnabled(registrationEnabled);
         courseRepo.save(course);
         return course;
     }
@@ -1019,10 +1019,10 @@ public class CourseTestService {
     public void testGetCoursesForRegistrationAndAccurateTimeZoneEvaluation() throws Exception {
         Course courseActiveRegistrationEnabled = ModelFactory.generateCourse(1L, ZonedDateTime.now().minusMinutes(25), ZonedDateTime.now().plusMinutes(25), new HashSet<>(),
                 "testuser", "tutor", "editor", "instructor");
-        courseActiveRegistrationEnabled.setRegistrationEnabled(true);
+        courseActiveRegistrationEnabled.setEnrollmentEnabled(true);
         Course courseActiveRegistrationDisabled = ModelFactory.generateCourse(2L, ZonedDateTime.now().minusMinutes(25), ZonedDateTime.now().plusMinutes(25), new HashSet<>(),
                 "testuser", "tutor", "editor", "instructor");
-        courseActiveRegistrationDisabled.setRegistrationEnabled(false);
+        courseActiveRegistrationDisabled.setEnrollmentEnabled(false);
         Course courseNotActivePast = ModelFactory.generateCourse(3L, ZonedDateTime.now().minusDays(5), ZonedDateTime.now().minusMinutes(25), new HashSet<>(), "testuser", "tutor",
                 "editor", "instructor");
         Course courseNotActiveFuture = ModelFactory.generateCourse(4L, ZonedDateTime.now().plusMinutes(25), ZonedDateTime.now().plusDays(5), new HashSet<>(), "testuser", "tutor",
@@ -1393,7 +1393,7 @@ public class CourseTestService {
         ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);
         Course course1 = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "testcourse1", "tutor", "editor", "instructor");
         Course course2 = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "testcourse2", "tutor", "editor", "instructor");
-        course1.setRegistrationEnabled(true);
+        course1.setEnrollmentEnabled(true);
 
         course1 = courseRepo.save(course1);
         course2 = courseRepo.save(course2);
@@ -1404,7 +1404,7 @@ public class CourseTestService {
         User updatedStudent = request.postWithResponseBody("/api/courses/" + course1.getId() + "/register", null, User.class, HttpStatus.OK);
         assertThat(updatedStudent.getGroups()).as("User is registered for course").contains(course1.getStudentGroupName());
 
-        List<AuditEvent> auditEvents = auditEventRepo.find("ab12cde", Instant.now().minusSeconds(20), Constants.REGISTER_FOR_COURSE);
+        List<AuditEvent> auditEvents = auditEventRepo.find("ab12cde", Instant.now().minusSeconds(20), Constants.ENROLL_IN_COURSE);
         assertThat(auditEvents).as("Audit Event for course registration added").hasSize(1);
         AuditEvent auditEvent = auditEvents.get(0);
         assertThat(auditEvent.getData()).as("Correct Event Data").containsEntry("course", course1.getTitle());
@@ -1420,7 +1420,7 @@ public class CourseTestService {
         ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);
         Course notYetStartedCourse = ModelFactory.generateCourse(null, futureTimestamp, futureTimestamp, new HashSet<>(), "testcourse1", "tutor", "editor", "instructor");
         Course finishedCourse = ModelFactory.generateCourse(null, pastTimestamp, pastTimestamp, new HashSet<>(), "testcourse2", "tutor", "editor", "instructor");
-        notYetStartedCourse.setRegistrationEnabled(true);
+        notYetStartedCourse.setEnrollmentEnabled(true);
 
         notYetStartedCourse = courseRepo.save(notYetStartedCourse);
         finishedCourse = courseRepo.save(finishedCourse);
@@ -2655,7 +2655,7 @@ public class CourseTestService {
 
         // with RegistrationEnabled
         course.setOnlineCourse(true);
-        course.setRegistrationEnabled(true);
+        course.setEnrollmentEnabled(true);
         request.getMvc().perform(buildCreateCourse(course)).andExpect(status().isBadRequest());
     }
 

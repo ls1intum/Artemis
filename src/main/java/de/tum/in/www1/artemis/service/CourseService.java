@@ -447,17 +447,17 @@ public class CourseService {
     }
 
     /**
-     * Registers a user in a course by adding them to the student group of the course
+     * Enrolls a user in a course by adding them to the student group of the course
      *
      * @param user   The user that should get added to the course
      * @param course The course to which the user should get added to
      */
-    public void registerUserForCourseOrThrow(User user, Course course) {
-        authCheckService.checkUserAllowedToSelfRegisterForCourseElseThrow(user, course);
+    public void enrollUserForCourseOrThrow(User user, Course course) {
+        authCheckService.checkUserAllowedToSelfEnrollInCourseElseThrow(user, course);
         userService.addUserToGroup(user, course.getStudentGroupName(), Role.STUDENT);
-        final var auditEvent = new AuditEvent(user.getLogin(), Constants.REGISTER_FOR_COURSE, "course=" + course.getTitle());
+        final var auditEvent = new AuditEvent(user.getLogin(), Constants.ENROLL_IN_COURSE, "course=" + course.getTitle());
         auditEventRepository.add(auditEvent);
-        log.info("User {} has successfully registered for course {}", user.getLogin(), course.getTitle());
+        log.info("User {} has successfully enrolled in course {}", user.getLogin(), course.getTitle());
     }
 
     /**

@@ -162,7 +162,7 @@ public final class Constants {
 
     public static final String SETUP_COMMIT_MESSAGE = "Setup";
 
-    public static final String REGISTER_FOR_COURSE = "REGISTER_FOR_COURSE";
+    public static final String ENROLL_IN_COURSE = "ENROLL_IN_COURSE";
 
     public static final String DELETE_EXERCISE = "DELETE_EXERCISE";
 

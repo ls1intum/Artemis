@@ -46,7 +46,7 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationBambooBitbu
 
         private Course getCourseForSelfRegistrationAllowedTest() {
             var course = database.createCourse();
-            course.setRegistrationEnabled(true);
+            course.setEnrollmentEnabled(true);
             course.setStartDate(ZonedDateTime.now().minusDays(2));
             course.setEndDate(ZonedDateTime.now().plusDays(2));
             course.setStudentGroupName("test-students");
@@ -63,7 +63,7 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationBambooBitbu
         void testIsUserAllowedToSelfRegisterForCourseForAllowed() {
             Course course = getCourseForSelfRegistrationAllowedTest();
             courseRepository.save(course);
-            assertThatCode(() -> authCheckService.checkUserAllowedToSelfRegisterForCourseElseThrow(this.student1, course)).doesNotThrowAnyException();
+            assertThatCode(() -> authCheckService.checkUserAllowedToSelfEnrollInCourseElseThrow(this.student1, course)).doesNotThrowAnyException();
         }
 
         @Test
@@ -73,7 +73,7 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationBambooBitbu
             var student2 = database.getUserByLogin(TEST_PREFIX + "student2");
             Course course = getCourseForSelfRegistrationAllowedTest();
             courseRepository.save(course);
-            assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> authCheckService.checkUserAllowedToSelfRegisterForCourseElseThrow(student2, course));
+            assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> authCheckService.checkUserAllowedToSelfEnrollInCourseElseThrow(student2, course));
         }
 
         @Test
@@ -82,7 +82,7 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationBambooBitbu
             Course course = getCourseForSelfRegistrationAllowedTest();
             course.setStartDate(ZonedDateTime.now().plusDays(1));
             courseRepository.save(course);
-            assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> authCheckService.checkUserAllowedToSelfRegisterForCourseElseThrow(this.student1, course));
+            assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> authCheckService.checkUserAllowedToSelfEnrollInCourseElseThrow(this.student1, course));
         }
 
         @Test
@@ -91,16 +91,16 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationBambooBitbu
             Course course = getCourseForSelfRegistrationAllowedTest();
             course.setEndDate(ZonedDateTime.now().minusDays(1));
             courseRepository.save(course);
-            assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> authCheckService.checkUserAllowedToSelfRegisterForCourseElseThrow(this.student1, course));
+            assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> authCheckService.checkUserAllowedToSelfEnrollInCourseElseThrow(this.student1, course));
         }
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void testIsUserAllowedToSelfRegisterForCourseForRegistrationDisabled() {
             Course course = getCourseForSelfRegistrationAllowedTest();
-            course.setRegistrationEnabled(false);
+            course.setEnrollmentEnabled(false);
             courseRepository.save(course);
-            assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> authCheckService.checkUserAllowedToSelfRegisterForCourseElseThrow(this.student1, course));
+            assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> authCheckService.checkUserAllowedToSelfEnrollInCourseElseThrow(this.student1, course));
         }
 
         @Test
@@ -108,17 +108,17 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationBambooBitbu
         void testIsUserAllowedToSelfRegisterForCourseForDifferentOrganizations() {
             var courseWithOrganizations = database.createCourseWithOrganizations();
             assertThatExceptionOfType(AccessForbiddenException.class)
-                    .isThrownBy(() -> authCheckService.checkUserAllowedToSelfRegisterForCourseElseThrow(this.student1, courseWithOrganizations));
+                    .isThrownBy(() -> authCheckService.checkUserAllowedToSelfEnrollInCourseElseThrow(this.student1, courseWithOrganizations));
         }
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void testIsUserAllowedToSelfRegisterForOnlineCourse() {
             Course course = getCourseForSelfRegistrationAllowedTest();
-            course.setRegistrationEnabled(false);
+            course.setEnrollmentEnabled(false);
             course.setOnlineCourse(true);
             courseRepository.save(course);
-            assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> authCheckService.checkUserAllowedToSelfRegisterForCourseElseThrow(this.student1, course));
+            assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> authCheckService.checkUserAllowedToSelfEnrollInCourseElseThrow(this.student1, course));
         }
     }
 }

@@ -263,7 +263,7 @@ export class CourseManagementService {
      * @param courseId - the id of the course
      */
     registerForCourse(courseId: number): Observable<HttpResponse<User>> {
-        return this.http.post<User>(`${this.resourceUrl}/${courseId}/register`, null, { observe: 'response' }).pipe(
+        return this.http.post<User>(`${this.resourceUrl}/${courseId}/enroll`, null, { observe: 'response' }).pipe(
             map((res: HttpResponse<User>) => {
                 if (res.body != undefined) {
                     this.accountService.syncGroups(res.body);
