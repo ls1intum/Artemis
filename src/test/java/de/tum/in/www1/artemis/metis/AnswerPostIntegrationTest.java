@@ -143,7 +143,7 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         request.postWithResponseBody("/api/courses/" + courseId + "/answer-posts", answerPostToSave, AnswerPost.class, HttpStatus.BAD_REQUEST);
 
         var newAnswerPostCount = answerPostRepository.count() - answerPostCount;
-        assertThat(newAnswerPostCount).isEqualTo(0);
+        assertThat(newAnswerPostCount).isZero();
 
         // active messaging again
         persistedCourse.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
@@ -201,7 +201,7 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         var newAnswerPostCount = answerPostRepository.count() - answerPostCount;
         assertThat(postRepository.findPostByIdElseThrow(existingAnswerPostToSave.getPost().getId()).getAnswerCount())
                 .isEqualTo(existingAnswerPostToSave.getPost().getAnswerCount());
-        assertThat(newAnswerPostCount).isEqualTo(0);
+        assertThat(newAnswerPostCount).isZero();
     }
 
     // GET
@@ -668,7 +668,7 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
         request.delete("/api/courses/" + courseId + "/answer-posts/" + answerPostToNotDelete.getId(), HttpStatus.FORBIDDEN);
         var newAnswerPostCount = answerPostRepository.count() - answerPostCount;
-        assertThat(newAnswerPostCount).isEqualTo(0);
+        assertThat(newAnswerPostCount).isZero();
         // should not decrement answerCount
         assertThat(postRepository.findPostByIdElseThrow(answerPostToNotDelete.getPost().getId()).getAnswerCount()).isEqualTo(answerPostToNotDelete.getPost().getAnswerCount());
     }

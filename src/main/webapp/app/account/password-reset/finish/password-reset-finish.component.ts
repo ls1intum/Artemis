@@ -3,7 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 
 import { PasswordResetFinishService } from './password-reset-finish.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { FormBuilder, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH } from 'app/app.constants';
 
 @Component({
@@ -23,10 +23,7 @@ export class PasswordResetFinishComponent implements OnInit, AfterViewInit {
     success = false;
     key = '';
 
-    passwordForm = this.fb.nonNullable.group({
-        newPassword: ['', [Validators.required, Validators.minLength(PASSWORD_MIN_LENGTH), Validators.maxLength(PASSWORD_MAX_LENGTH)]],
-        confirmPassword: ['', [Validators.required, Validators.minLength(PASSWORD_MIN_LENGTH), Validators.maxLength(PASSWORD_MAX_LENGTH)]],
-    });
+    passwordForm: FormGroup;
 
     constructor(private passwordResetFinishService: PasswordResetFinishService, private route: ActivatedRoute, private profileService: ProfileService, private fb: FormBuilder) {}
 
@@ -36,6 +33,17 @@ export class PasswordResetFinishComponent implements OnInit, AfterViewInit {
                 this.key = params['key'];
             }
             this.initialized = true;
+        });
+        this.initializeForm();
+    }
+
+    private initializeForm() {
+        if (this.passwordForm) {
+            return;
+        }
+        this.passwordForm = this.fb.nonNullable.group({
+            newPassword: ['', [Validators.required, Validators.minLength(PASSWORD_MIN_LENGTH), Validators.maxLength(PASSWORD_MAX_LENGTH)]],
+            confirmPassword: ['', [Validators.required, Validators.minLength(PASSWORD_MIN_LENGTH), Validators.maxLength(PASSWORD_MAX_LENGTH)]],
         });
     }
 

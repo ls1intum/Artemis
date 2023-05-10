@@ -25,7 +25,6 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.Participation;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
@@ -300,7 +299,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
                     assertThat(programmingExerciseExercise.getTestRepositoryUrl()).as("Test repository url was filtered out").isNull();
                     assertThat(programmingExerciseExercise.getTemplateBuildPlanId()).as("Template build plan was filtered out").isNull();
                     assertThat(programmingExerciseExercise.getSolutionBuildPlanId()).as("Solution build plan was filtered out").isNull();
-                    assertThat(programmingExerciseExercise.getStudentParticipations()).as("Number of participations is correct").isEmpty();
+                    assertThat(programmingExerciseExercise.getStudentParticipations()).as("Number of participations is correct").hasSize(2);
                 }
                 else if (exerciseWithDetails instanceof QuizExercise quizExercise) {
                     assertThat(quizExercise.getDuration()).as("Duration was set correctly").isEqualTo(10);
@@ -576,7 +575,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
                     assertThat(stats.getNumberOfSubmissions().inTime()).as("Number of in-time submissions for modeling exercise is correct").isEqualTo(2);
                 }
                 if (exercise instanceof ProgrammingExercise) {
-                    assertThat(stats.getNumberOfSubmissions().inTime()).as("Number of in-time submissions for programming exercise is correct").isZero();
+                    assertThat(stats.getNumberOfSubmissions().inTime()).as("Number of in-time submissions for programming exercise is correct").isEqualTo(1);
                 }
                 if (exercise instanceof QuizExercise) {
                     assertThat(stats.getNumberOfSubmissions().inTime()).as("Number of in-time submissions for quiz exercise is correct").isZero();
@@ -616,30 +615,6 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     void testResetExercise_forbidden() throws Exception {
         var exercise = database.addCourseWithOneReleasedTextExercise().getExercises().iterator().next();
         request.delete("/api/exercises/" + exercise.getId() + "/reset", HttpStatus.FORBIDDEN);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testCleanupExercise() throws Exception {
-        List<Course> courses = database.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, 5);
-        for (Course course : courses) {
-            for (Exercise exercise : course.getExercises()) {
-                request.delete("/api/exercises/" + exercise.getId() + "/cleanup", HttpStatus.OK);
-                if (exercise instanceof ProgrammingExercise) {
-                    for (StudentParticipation participation : exercise.getStudentParticipations()) {
-                        ProgrammingExerciseStudentParticipation programmingExerciseParticipation = (ProgrammingExerciseStudentParticipation) participation;
-                        assertThat(programmingExerciseParticipation.getBuildPlanId()).as("Build plan id has been removed").isNull();
-                    }
-                }
-            }
-        }
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor2", roles = "INSTRUCTOR")
-    void testCleanupExercise_forbidden() throws Exception {
-        var exercise = database.addCourseWithOneReleasedTextExercise().getExercises().iterator().next();
-        request.delete("/api/exercises/" + exercise.getId() + "/cleanup", HttpStatus.FORBIDDEN);
     }
 
     @Test
