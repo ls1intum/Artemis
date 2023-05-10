@@ -11,7 +11,7 @@ import { ResultTemplateStatus, evaluateTemplateStatus } from 'app/exercises/shar
 @Component({
     selector: 'jhi-standalone-feedback',
     templateUrl: './standalone-feedback.component.html',
-    styleUrls: ['./../feedback.scss'],
+    styleUrls: ['./../feedback.scss', 'standalone-feedback.scss'],
 })
 export class StandaloneFeedbackComponent implements OnInit {
     exercise?: Exercise;
