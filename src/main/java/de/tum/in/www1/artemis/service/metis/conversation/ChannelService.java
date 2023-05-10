@@ -29,7 +29,7 @@ public class ChannelService {
 
     public static final String CHANNEL_ENTITY_NAME = "messages.channel";
 
-    private static final String CHANNEL_NAME_REGEX = "^[a-z0-9$]{1}[a-z0-9-]{0,20}$";
+    private static final String CHANNEL_NAME_REGEX = "^[a-z0-9$][a-z0-9-]{0,30}$";
 
     private final ConversationParticipantRepository conversationParticipantRepository;
 
