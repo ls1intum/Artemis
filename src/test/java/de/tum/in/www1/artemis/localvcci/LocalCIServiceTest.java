@@ -3,6 +3,8 @@ package de.tum.in.www1.artemis.localvcci;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.Test;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationLocalCILocalVCTest;
@@ -39,6 +41,8 @@ class LocalCIServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
         continuousIntegrationService.updatePlanRepository(null, null, null, null, null, null, null, null);
         assertThat(continuousIntegrationService.getPlanKey(null)).isNull();
         assertThat(continuousIntegrationService.getWebHookUrl(null, null)).isEmpty();
-        assertThat(continuousIntegrationService.retrieveLatestArtifact(null)).isNull();
+        ResponseEntity<byte[]> latestArtifactResponse = continuousIntegrationService.retrieveLatestArtifact(null);
+        assertThat(latestArtifactResponse.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
+        assertThat(latestArtifactResponse.getBody()).hasSize(0);
     }
 }

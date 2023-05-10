@@ -6,6 +6,7 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
@@ -164,7 +165,7 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
     public ResponseEntity<byte[]> retrieveLatestArtifact(ProgrammingExerciseParticipation participation) {
         // Build artifacts are not supported by local CI yet.
         log.error("Unsupported action: LocalCIService.retrieveLatestArtifact()");
-        return null;
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).body(new byte[0]);
     }
 
     @Override

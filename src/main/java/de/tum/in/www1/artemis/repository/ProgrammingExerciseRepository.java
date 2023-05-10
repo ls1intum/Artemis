@@ -80,7 +80,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     @EntityGraph(type = LOAD, attributePaths = "submissionPolicy")
     Optional<ProgrammingExercise> findWithSubmissionPolicyById(Long exerciseId);
 
-    List<ProgrammingExercise> findByProjectKey(String projectKey);
+    List<ProgrammingExercise> findAllByProjectKey(String projectKey);
 
     @EntityGraph(type = LOAD, attributePaths = "submissionPolicy")
     List<ProgrammingExercise> findWithSubmissionPolicyByProjectKey(String projectKey);
@@ -99,7 +99,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
             exercises = findWithSubmissionPolicyByProjectKey(projectKey);
         }
         else {
-            exercises = findByProjectKey(projectKey);
+            exercises = findAllByProjectKey(projectKey);
         }
         if (exercises.size() != 1) {
             throw new EntityNotFoundException("No exercise or multiple exercises found for the given project key: " + projectKey);
