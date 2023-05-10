@@ -70,7 +70,6 @@ export class ParticipationSubmissionComponent implements OnInit {
         private textAssessmentService: TextAssessmentService,
         private programmingAssessmentService: ProgrammingAssessmentManualResultService,
         private eventManager: EventManager,
-        private translate: TranslateService,
         private profileService: ProfileService,
     ) {}
 
@@ -115,7 +114,7 @@ export class ParticipationSubmissionComponent implements OnInit {
                         solutionParticipation.programmingExercise = this.exercise;
                     } else {
                         // Should not happen
-                        alert(this.translate.instant('artemisApp.participation.noParticipation'));
+                        alert(this.translateService.instant('artemisApp.participation.noParticipation'));
                     }
                     this.isLoading = false;
                 });
@@ -177,9 +176,9 @@ export class ParticipationSubmissionComponent implements OnInit {
         if (this.participation?.type === ParticipationType.STUDENT || this.participation?.type === ParticipationType.PROGRAMMING) {
             return (this.participation as StudentParticipation).student?.name || (this.participation as StudentParticipation).team?.name;
         } else if (this.participation?.type === ParticipationType.SOLUTION) {
-            return this.translate.instant('artemisApp.participation.solutionParticipation');
+            return this.translateService.instant('artemisApp.participation.solutionParticipation');
         } else if (this.participation?.type === ParticipationType.TEMPLATE) {
-            return this.translate.instant('artemisApp.participation.templateParticipation');
+            return this.translateService.instant('artemisApp.participation.templateParticipation');
         }
         return 'N/A';
     }

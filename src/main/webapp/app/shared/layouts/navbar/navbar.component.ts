@@ -329,6 +329,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         tutorial_groups_checklist: 'artemisApp.pages.checklist.title',
         create_tutorial_groups_configuration: 'artemisApp.pages.createTutorialGroupsConfiguration.title',
         edit_build_plan: 'artemisApp.programmingExercise.buildPlanEditor',
+        privacy_statement: 'artemisApp.privacyStatement.title',
     };
 
     studentPathBreadcrumbTranslations = {

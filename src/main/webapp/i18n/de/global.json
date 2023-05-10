@@ -104,6 +104,7 @@
                 "metrics": "Metriken",
                 "health": "Status",
                 "configuration": "Konfiguration",
+                "privacyStatement": "Datenschutzerklärung",
                 "logs": "Protokoll",
                 "audits": "Audits",
                 "apidocs": "API",
