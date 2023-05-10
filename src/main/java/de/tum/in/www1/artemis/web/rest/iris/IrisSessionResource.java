@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.web.rest.iris;
 
-import java.util.concurrent.ThreadLocalRandom;
+import java.net.URI;
+import java.net.URISyntaxException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,6 +16,7 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisSessionRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.iris.IrisSessionService;
 
 /**
  * REST controller for managing {@link IrisSession}.
@@ -33,32 +35,33 @@ public class IrisSessionResource {
 
     private final UserRepository userRepository;
 
+    private final IrisSessionService irisSessionService;
+
     public IrisSessionResource(ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService, IrisSessionRepository irisSessionRepository,
-            UserRepository userRepository) {
+            UserRepository userRepository, IrisSessionService irisSessionService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.authCheckService = authCheckService;
         this.irisSessionRepository = irisSessionRepository;
         this.userRepository = userRepository;
+        this.irisSessionService = irisSessionService;
     }
 
     /**
      * GET programming-exercises/{exerciseId}/session: Retrieve the current iris session for the programming exercise.
      *
      * @param exerciseId of the exercise
-     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the current iris session for the exercise
+     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the current iris session for the exercise or {@code 404 (Not Found)} if no session exists
      */
     @GetMapping("programming-exercises/{exerciseId}/sessions")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<IrisSession> getCurrentSession(@PathVariable Long exerciseId) {
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, null);
+        var user = userRepository.getUserWithGroupsAndAuthorities();
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
 
-        // var result = irisSessionRepository.findByExerciseId(exercise.getId());
-        var result = new IrisSession();
-        result.setId(ThreadLocalRandom.current().nextLong());
-        result.setExercise(exercise);
-        result.setUser(userRepository.getUser());
-        return ResponseEntity.ok(result);
+        var session = irisSessionRepository.findByExerciseIdAndUserIdElseThrow(exercise.getId(), user.getId());
+        irisSessionService.checkHasAccessToIrisSession(session, user);
+        return ResponseEntity.ok(session);
     }
 
     /**
@@ -69,17 +72,13 @@ public class IrisSessionResource {
      */
     @PostMapping("programming-exercises/{exerciseId}/sessions")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<IrisSession> createSessionForProgrammingExercise(@PathVariable Long exerciseId) {
+    public ResponseEntity<IrisSession> createSessionForProgrammingExercise(@PathVariable Long exerciseId) throws URISyntaxException {
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, null);
+        var user = userRepository.getUserWithGroupsAndAuthorities();
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
+        var session = irisSessionService.createSessionForProgrammingExercise(exercise, user);
 
-        // TODO: Check that no session exists so far
-        var result = new IrisSession();
-        result.setId(ThreadLocalRandom.current().nextLong());
-        result.setExercise(exercise);
-        result.setUser(userRepository.getUser());
-        // TODO: Set attributes
-        // TODO: Save session
-        return ResponseEntity.ok(result);
+        var uriString = "/api/iris/sessions/" + session.getId();
+        return ResponseEntity.created(new URI(uriString)).body(session);
     }
 }
