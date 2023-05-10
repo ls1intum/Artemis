@@ -13,6 +13,7 @@
         [languageStepInputs]="getLanguageStepInputs()"
         [gradingStepInputs]="getGradingStepInputs()"
         [problemStepInputs]="getProblemStepInputs()"
+        [infrastructureStepInputs]="getInfrastructureStepInputs()"
         [auxiliaryRepositoriesSupported]="auxiliaryRepositoriesSupported"
     ></jhi-programming-exercise-update-wizard>
     <form name="editForm" role="form" novalidate #editForm="ngForm" (keydown.enter)="isEventInsideTextArea($event)" *ngIf="!isShowingWizardMode">
@@ -94,23 +95,7 @@
                 [updateTemplate]="updateTemplate"
                 [selectedProjectType]="selectedProjectType"
             ></jhi-programming-exercise-problem>
-            <jhi-programming-exercise-infrastructure
-                [isImportFromExistingExercise]="isImportFromExistingExercise"
-                [isEdit]="isEdit"
-                [programmingExercise]="programmingExercise"
-                [infrastructureInputs]="getInfrastructureStepInputs()"
-                [auxiliaryRepositoriesSupported]="auxiliaryRepositoriesSupported"
-                [sequentialTestRunsAllowed]="sequentialTestRunsAllowed"
-                [checkoutSolutionRepositoryAllowed]="checkoutSolutionRepositoryAllowed"
-                [publishBuildPlanUrlAllowed]="publishBuildPlanUrlAllowed"
-                [testwiseCoverageAnalysisSupported]="testwiseCoverageAnalysisSupported"
-                [validIdeSelection]="validIdeSelection"
-                [recreateBuildPlans]="recreateBuildPlans"
-                [recreateBuildPlanOrUpdateTemplateChange]="onRecreateBuildPlanOrUpdateTemplateChange"
-                [updateTemplate]="updateTemplate"
-                [selectedProjectType]="selectedProjectType"
-            >
-            </jhi-programming-exercise-infrastructure>
+            <jhi-programming-exercise-infrastructure [infrastructureStepInputs]="getInfrastructureStepInputs()"> </jhi-programming-exercise-infrastructure>
 
             <div class="update-programming-exercise-footer">
                 <div class="update-programming-exercise-footer-content">

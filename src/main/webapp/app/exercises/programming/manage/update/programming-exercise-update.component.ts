@@ -173,7 +173,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     nextWizardStep() {
         this.currentWizardModeStep++;
 
-        if (this.currentWizardModeStep > 5) {
+        if (this.currentWizardModeStep > 6) {
             this.save();
         }
     }
@@ -1047,13 +1047,26 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
 
     getInfrastructureStepInputs(): InfrastructureInputs {
         return {
-            invalidRepositoryNamePattern: this.invalidRepositoryNamePattern,
-            invalidDirectoryNamePattern: this.invalidDirectoryNamePattern,
-            updateRepositoryName: this.updateRepositoryName,
-            updateCheckoutDirectory: this.updateCheckoutDirectory,
-            refreshAuxiliaryRepositoryChecks: this.refreshAuxiliaryRepositoryChecks,
-            auxiliaryRepositoryDuplicateNames: this.auxiliaryRepositoryDuplicateNames,
+            auxiliaryRepositoriesSupported: this.auxiliaryRepositoriesSupported,
             auxiliaryRepositoryDuplicateDirectories: this.auxiliaryRepositoryDuplicateDirectories,
+            auxiliaryRepositoryDuplicateNames: this.auxiliaryRepositoryDuplicateNames,
+            checkoutSolutionRepositoryAllowed: this.checkoutSolutionRepositoryAllowed,
+            invalidDirectoryNamePattern: this.invalidDirectoryNamePattern,
+            invalidRepositoryNamePattern: this.invalidRepositoryNamePattern,
+            isEdit: this.isEdit,
+            isImportFromExistingExercise: this.isImportFromExistingExercise,
+            programmingExercise: this.programmingExercise,
+            publishBuildPlanUrlAllowed: this.publishBuildPlanUrlAllowed,
+            recreateBuildPlanOrUpdateTemplateChange: this.onRecreateBuildPlanOrUpdateTemplateChange,
+            recreateBuildPlans: this.recreateBuildPlans,
+            refreshAuxiliaryRepositoryChecks: this.refreshAuxiliaryRepositoryChecks,
+            selectedProjectType: this.selectedProjectType,
+            sequentialTestRunsAllowed: this.sequentialTestRunsAllowed,
+            testwiseCoverageAnalysisSupported: this.testwiseCoverageAnalysisSupported,
+            updateCheckoutDirectory: this.updateCheckoutDirectory,
+            updateRepositoryName: this.updateRepositoryName,
+            updateTemplate: this.updateTemplate,
+            validIdeSelection: this.validIdeSelection,
         };
     }
 }

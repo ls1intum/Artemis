@@ -52,7 +52,8 @@
                     "difficultyStepTitle": "Schwierigkeit",
                     "languageStepTitle": "Sprache",
                     "gradingStepTitle": "Benotung",
-                    "problemStepTitle": "Problem"
+                    "problemStepTitle": "Problem",
+                    "infrastructureStepTitle": "Infrastruktur"
                 },
                 "detailedSteps": {
                     "generalInfoStepTitle": "Allgemeine Informationen",

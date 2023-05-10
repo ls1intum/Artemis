@@ -35,6 +35,12 @@
                 [isPerformed]="isCompleted(5)"
                 [labelTranslationKey]="'artemisApp.programmingExercise.wizardMode.steps.problemStepTitle'"
             ></jhi-programming-exercise-update-wizard-step>
+            <div class="connector" [ngClass]="isCompleted(5) ? 'check' : 'unset'"></div>
+            <jhi-programming-exercise-update-wizard-step
+                [currentlySelected]="isCurrentStep(6)"
+                [isPerformed]="isCompleted(6)"
+                [labelTranslationKey]="'artemisApp.programmingExercise.wizardMode.steps.infrastructureStepTitle'"
+            ></jhi-programming-exercise-update-wizard-step>
         </div>
     </div>
     <div class="ms-3">

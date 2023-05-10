@@ -60,13 +60,28 @@ export type ProblemStepInputs = {
 
 export type InfrastructureInputs = {
     // preview
-    invalidRepositoryNamePattern: RegExp;
-    invalidDirectoryNamePattern: RegExp;
-    updateRepositoryName: (auxiliaryRepository: AuxiliaryRepository) => (newValue: any) => string | undefined;
-    updateCheckoutDirectory: (editedAuxiliaryRepository: AuxiliaryRepository) => (newValue: any) => string | undefined;
-    refreshAuxiliaryRepositoryChecks: () => void;
-    auxiliaryRepositoryDuplicateNames: boolean;
+    auxiliaryRepositoriesSupported: boolean;
     auxiliaryRepositoryDuplicateDirectories: boolean;
+    auxiliaryRepositoryDuplicateNames: boolean;
+    checkoutSolutionRepositoryAllowed: boolean;
+    invalidDirectoryNamePattern: RegExp;
+    invalidRepositoryNamePattern: RegExp;
+    isEdit: boolean;
+    isImportFromExistingExercise: boolean;
+    programmingExercise: ProgrammingExercise;
+
+    // checkbox things
+    publishBuildPlanUrlAllowed: boolean;
+    recreateBuildPlanOrUpdateTemplateChange: () => void; // default false
+    recreateBuildPlans: boolean;
+    refreshAuxiliaryRepositoryChecks: () => void;
+    selectedProjectType: ProjectType;
+    sequentialTestRunsAllowed: boolean;
+    testwiseCoverageAnalysisSupported: boolean;
+    updateCheckoutDirectory: (editedAuxiliaryRepository: AuxiliaryRepository) => (newValue: any) => string | undefined;
+    updateRepositoryName: (auxiliaryRepository: AuxiliaryRepository) => (newValue: any) => string | undefined;
+    updateTemplate: boolean;
+    validIdeSelection: () => boolean | undefined;
 };
 
 @Component({
@@ -101,6 +116,7 @@ export class ProgrammingExerciseUpdateWizardComponent implements OnInit {
     @Input() languageStepInputs: LanguageStepInputs;
     @Input() gradingStepInputs: GradingStepInputs;
     @Input() problemStepInputs: ProblemStepInputs;
+    @Input() infrastructureStepInputs: InfrastructureInputs;
     @Input() auxiliaryRepositoriesSupported: boolean;
 
     constructor(protected activatedRoute: ActivatedRoute) {}

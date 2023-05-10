@@ -31,11 +31,11 @@ export class ProgrammingExerciseUpdateWizardBottomBarComponent {
     }
 
     getNextIcon() {
-        return this.currentStep < 5 ? faArrowRight : faCheck;
+        return this.currentStep < 6 ? faArrowRight : faCheck;
     }
 
     getNextText() {
-        return this.currentStep < 5 ? 'artemisApp.programmingExercise.home.nextStepLabel' : 'entity.action.finish';
+        return this.currentStep < 6 ? 'artemisApp.programmingExercise.home.nextStepLabel' : 'entity.action.finish';
     }
 
     nextStep() {
