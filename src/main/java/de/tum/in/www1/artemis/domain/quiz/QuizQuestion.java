@@ -236,4 +236,10 @@ public abstract class QuizQuestion extends DomainObject {
      * @return a boolean which is true if the question-changes make an update necessary and false if not
      */
     public abstract boolean isUpdateOfResultsAndStatisticsNecessary(QuizQuestion originalQuizQuestion);
+
+    /**
+     * Initialize QuizQuestionStatistic of the implementor
+     *
+     */
+    public abstract void initializeStatistic();
 }
