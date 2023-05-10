@@ -29,6 +29,11 @@ public class ProgrammingExerciseStudentParticipation extends StudentParticipatio
     @JsonView(QuizView.Before.class)
     private String branch;
 
+    /**
+     * Defines if the participation is locked, i.e. if the student can currently not make any submissions.
+     * This takes into account: the start date of the exercise (or the exam), the (individual) due date, and the lock repository policy.
+     * Course exercise practice repositories and instructor exam test run repositories will never be locked.
+     */
     @Column(name = "locked")
     @JsonView(QuizView.Before.class)
     private boolean locked;
@@ -65,7 +70,8 @@ public class ProgrammingExerciseStudentParticipation extends StudentParticipatio
         this.branch = branch;
     }
 
-    public boolean getIsLocked() {
+    @Override
+    public boolean isLocked() {
         return locked;
     }
 

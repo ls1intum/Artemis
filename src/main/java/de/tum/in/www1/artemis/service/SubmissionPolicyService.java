@@ -310,7 +310,7 @@ public class SubmissionPolicyService {
      * @param participation for which the number of submissions should be determined
      * @return the number of submissions of this participation
      */
-    private int getParticipationSubmissionCount(Participation participation) {
+    public int getParticipationSubmissionCount(Participation participation) {
         final Long participationId = participation.getId();
         int submissionCompensation = 0;
         participation = participationRepository.findByIdWithLatestSubmissionAndResult(participationId)

@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.service.messaging;
 
-import java.time.ZonedDateTime;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -155,6 +154,10 @@ public class InstanceMessageReceiveService {
             SecurityUtils.setAuthorizationObject();
             processScheduleExamMonitoringCancel(message.getMessageObject());
         });
+        hazelcastInstance.<Long>getTopic(MessageTopic.STUDENT_EXAM_RESCHEDULE_DURING_CONDUCTION.toString()).addMessageListener(message -> {
+            SecurityUtils.setAuthorizationObject();
+            processExamWorkingTimeChangeDuringConduction(message.getMessageObject());
+        });
         hazelcastInstance.<Long[]>getTopic(MessageTopic.PARTICIPANT_SCORE_SCHEDULE.toString()).addMessageListener(message -> {
             SecurityUtils.setAuthorizationObject();
             processScheduleParticipantScore(message.getMessageObject()[0], message.getMessageObject()[1], message.getMessageObject()[2]);
@@ -257,21 +260,6 @@ public class InstanceMessageReceiveService {
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
         // Run the runnable immediately so that the repositories are locked as fast as possible
         programmingExerciseScheduleService.lockAllStudentParticipationsWithEarlierDueDate(programmingExercise).run();
-    }
-
-    /**
-     * Locks all repositories that do not have an individual due date after now
-     *
-     * @param exerciseId the id of the programming exercises where the repos should be locked
-     */
-    public void processLockAllRepositoriesAndParticipationsWithoutLaterIndividualDueDate(Long exerciseId) {
-        log.info("Received lock all repositories without an individual due date after now for programming exercise {}", exerciseId);
-        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
-        // Run the runnable immediately so that the repositories are locked as fast as possible
-        programmingExerciseScheduleService.lockStudentRepositoriesAndParticipations(programmingExercise, participation -> {
-            ZonedDateTime individualDueDate = participation.getIndividualDueDate();
-            return individualDueDate == null || individualDueDate.isBefore(ZonedDateTime.now());
-        }).run();
     }
 
     public void processRemoveNonActivatedUser(Long userId) {

@@ -673,12 +673,13 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
      * Tasks to unlock will be grouped so that for every existing due date (which is the exam start date + the different working times), one task will be scheduled.
      * NOTE: this will not immediately unlock the repositories as only a Runnable is returned!
      *
-     * @param exercise  The exercise for which the repositories should be unlocked
-     * @param condition a condition that determines whether the operation will be executed for a specific participation
+     * @param exercise        The exercise for which the repositories should be unlocked
+     * @param unlockOperation the operation that will be executed for every participation that fulfills the condition
+     * @param condition       a condition that determines whether the operation will be executed for a specific participation
      * @return a Runnable that will unlock the repositories once it is executed
      */
     @NotNull
-    public Runnable runUnlockOperation(ProgrammingExercise exercise, BiConsumer<ProgrammingExercise, ProgrammingExerciseStudentParticipation> lockOperation,
+    public Runnable runUnlockOperation(ProgrammingExercise exercise, BiConsumer<ProgrammingExercise, ProgrammingExerciseStudentParticipation> unlockOperation,
             Predicate<ProgrammingExerciseStudentParticipation> condition) {
         Long programmingExerciseId = exercise.getId();
         return () -> {
@@ -692,7 +693,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
                         individualDueDates.add(new Tuple<>(dueDate, participation));
                     }
                     programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(programmingExercise.getId());
-                    lockOperation.accept(programmingExercise, participation);
+                    unlockOperation.accept(programmingExercise, participation);
                 };
                 List<ProgrammingExerciseStudentParticipation> failedUnlockOperations = invokeOperationOnAllParticipationsThatSatisfy(programmingExerciseId,
                         unlockAndCollectOperation, condition, "add write permissions to all student repositories");

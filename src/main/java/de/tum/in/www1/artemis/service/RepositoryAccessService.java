@@ -7,9 +7,9 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.in.www1.artemis.service.exam.ExamSubmissionService;
 import de.tum.in.www1.artemis.service.plagiarism.PlagiarismService;
-import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.AccessUnauthorizedException;
 import de.tum.in.www1.artemis.web.rest.repository.RepositoryActionType;
@@ -24,20 +24,23 @@ public class RepositoryAccessService {
 
     private final PlagiarismService plagiarismService;
 
-    private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
-
     private final AuthorizationCheckService authorizationCheckService;
 
     private final ExamSubmissionService examSubmissionService;
 
+    private final ExerciseDateService exerciseDateService;
+
+    private final SubmissionPolicyService submissionPolicyService;
+
     public RepositoryAccessService(ParticipationAuthorizationCheckService participationAuthCheckService, PlagiarismService plagiarismService,
-            ProgrammingExerciseParticipationService programmingExerciseParticipationService, AuthorizationCheckService authorizationCheckService,
-            ExamSubmissionService examSubmissionService) {
+            AuthorizationCheckService authorizationCheckService, ExamSubmissionService examSubmissionService, ExerciseDateService exerciseDateService,
+            SubmissionPolicyService submissionPolicyService) {
         this.participationAuthCheckService = participationAuthCheckService;
         this.plagiarismService = plagiarismService;
-        this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.authorizationCheckService = authorizationCheckService;
         this.examSubmissionService = examSubmissionService;
+        this.exerciseDateService = exerciseDateService;
+        this.submissionPolicyService = submissionPolicyService;
     }
 
     /**
@@ -46,7 +49,7 @@ public class RepositoryAccessService {
      *
      * @param programmingParticipation The participation for which the repository should be accessed.
      * @param user                     The user who wants to access the repository.
-     * @param programmingExercise      The programming exercise of the participation.
+     * @param programmingExercise      The programming exercise of the participation with the submission policy set.
      * @param repositoryActionType     The type of action that the user wants to perform on the repository (i.e. WRITE or READ).
      */
     public void checkAccessRepositoryElseThrow(ProgrammingExerciseParticipation programmingParticipation, User user, ProgrammingExercise programmingExercise,
@@ -59,27 +62,49 @@ public class RepositoryAccessService {
             throw new AccessUnauthorizedException();
         }
 
-        // Error case 2: The user's participation repository is locked.
-        boolean lockRepositoryPolicyEnforced = programmingExerciseParticipationService.isLockRepositoryPolicyEnforced(programmingExercise,
-                (Participation) programmingParticipation);
+        boolean isAtLeastEditor = authorizationCheckService.isAtLeastEditorForExercise(programmingExercise, user);
+        boolean isStudent = authorizationCheckService.isOnlyStudentInCourse(programmingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
+        boolean isTeachingAssistant = !isStudent && !isAtLeastEditor;
 
+        // Error case 2: The user's participation is locked.
         // Editors and up are able to push to any repository even if the participation is locked for the student.
-        boolean isAtLeastEditor = authorizationCheckService.isAtLeastEditorInCourse(programmingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
-        if (repositoryActionType == RepositoryActionType.WRITE && !isAtLeastEditor && (programmingParticipation.isLocked() || lockRepositoryPolicyEnforced)) {
-            throw new AccessForbiddenException();
+        // Teaching assistants trying to push to a student assignment repository will be blocked by the next check.
+        if (repositoryActionType == RepositoryActionType.WRITE && isStudent && programmingParticipation.isLocked()) {
+            // Return a message to the client.
+            String errorMessage;
+            if (!programmingExercise.isReleased()) {
+                errorMessage = "artemisApp.exerciseActions.startExerciseBeforeStartDate";
+            }
+            else if (exerciseDateService.isAfterDueDate(programmingParticipation)) {
+                errorMessage = "artemisApp.exerciseActions.submitAfterDueDate";
+            }
+            else if (programmingExercise.getSubmissionPolicy() instanceof LockRepositoryPolicy lockRepositoryPolicy
+                    && lockRepositoryPolicy.getSubmissionLimit() <= submissionPolicyService.getParticipationSubmissionCount((Participation) programmingParticipation)) {
+                errorMessage = "artemisApp.exerciseActions.submitAfterReachingSubmissionLimit";
+            }
+            else {
+                throw new IllegalStateException("The participation is locked but the reason is unknown.");
+            }
+
+            throw new AccessForbiddenException(errorMessage);
         }
 
-        boolean isStudent = authorizationCheckService.isOnlyStudentInCourse(programmingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
+        // Error case 3: A teaching assistant tries to push into a base repository (in that case the participation is not a StudentParticipation)
+        // or into a student assignment repository (in that case the teaching assistant does not own the participation).
+        boolean isStudentParticipation = programmingParticipation instanceof StudentParticipation;
+        if (isTeachingAssistant && repositoryActionType == RepositoryActionType.WRITE
+                && (!isStudentParticipation || !((StudentParticipation) programmingParticipation).isOwnedBy(user))) {
+            throw new AccessUnauthorizedException();
+        }
 
-        // Error case 3: The student can reset the repository only before and a tutor/instructor only after the due date has passed
+        // Error case 4: The student can reset the repository only before and a tutor/instructor only after the due date has passed
         if (repositoryActionType == RepositoryActionType.RESET) {
             checkAccessRepositoryForReset(programmingParticipation, isStudent, programmingExercise);
         }
 
-        // Error case 4: Before or after exam working time, students are not allowed to read or submit to the repository for an exam exercise. Teaching assistants are only allowed
+        // Error case 5: Before or after exam working time, students are not allowed to read or submit to the repository for an exam exercise. Teaching assistants are only allowed
         // to read the student's repository.
         // But the student should still be able to access if they are notified for a related plagiarism case.
-        boolean isTeachingAssistant = !isStudent && !isAtLeastEditor;
         if ((isStudent || (isTeachingAssistant && repositoryActionType != RepositoryActionType.READ))
                 && !examSubmissionService.isAllowedToSubmitDuringExam(programmingExercise, user, false) && !userWasNotifiedAboutPlagiarismCase) {
             throw new AccessForbiddenException();
