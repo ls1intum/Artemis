@@ -2,7 +2,7 @@
 <databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.18.xsd">
-    <changeSet id="20230509003800" author="frederik_kutsch" >
+    <changeSet id="20230510004500" author="frederik_kutsch" >
         <addColumn tableName="participation">
             <column name="locked" type="boolean" defaultValueBoolean="false">
                 <constraints nullable="false" />
