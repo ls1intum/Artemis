@@ -22,7 +22,7 @@ import de.tum.in.www1.artemis.domain.view.QuizView;
 @Table(name = "drop_location")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class DropLocation extends TempIdObject {
+public class DropLocation extends TempIdObject implements QuizQuestionComponent<DragAndDropQuestion> {
 
     @Column(name = "pos_x")
     @JsonView(QuizView.Before.class)
