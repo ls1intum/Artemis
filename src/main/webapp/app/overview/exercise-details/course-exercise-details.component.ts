@@ -450,6 +450,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         this.discussionComponent = instance; // save the reference to the component instance
         if (this.exercise) {
             instance.exercise = this.exercise;
+            instance.isCommunicationPage = false;
         }
     }
 

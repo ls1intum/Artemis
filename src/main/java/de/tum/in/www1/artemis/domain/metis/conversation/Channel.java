@@ -141,4 +141,12 @@ public class Channel extends Conversation {
     public Exam getExam() {
         return exam;
     }
+
+    public void setLecture(Lecture lecture) {
+        this.lecture = lecture;
+    }
+
+    public void setExercise(Exercise exercise) {
+        this.exercise = exercise;
+    }
 }

@@ -298,6 +298,7 @@ public class LectureResource {
         }).collect(Collectors.toCollection(ArrayList::new));
 
         lecture.setLectureUnits(lectureUnitsUserIsAllowedToSee);
+        lecture.getChannel().setLecture(null);
         return lecture;
     }
 

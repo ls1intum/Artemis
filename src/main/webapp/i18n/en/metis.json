@@ -41,6 +41,12 @@
                 "exercise": "Exercise",
                 "lecture": "Lecture"
             },
+            "channel": {
+                "label": "Channel",
+                "show": "Show channel",
+                "hide": "Hide channel",
+                "redirectToChannel": "Go to channel"
+            },
             "communication": {
                 "label": "Communication",
                 "show": "Show communication",

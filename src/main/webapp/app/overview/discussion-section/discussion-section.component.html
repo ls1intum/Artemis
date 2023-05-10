@@ -6,10 +6,10 @@
         </div>
         <div class="card">
             <!-- header -->
-            <div class="card-header text-white" [ngbTooltip]="'artemisApp.metis.communication.hide' | artemisTranslate" (click)="collapsed = true">
+            <div class="card-header text-white" [ngbTooltip]="'artemisApp.metis.channel.hide' | artemisTranslate" (click)="collapsed = true">
                 <div class="row flex-grow-1">
                     <div class="col">
-                        <h5 class="mb-0 fw-medium" jhiTranslate="artemisApp.metis.communication.label">Communication</h5>
+                        <h5 class="mb-0 fw-medium" jhiTranslate="artemisApp.metis.channel.label">Communication</h5>
                     </div>
                     <div class="col-auto">
                         <fa-icon [icon]="faChevronRight"></fa-icon>
@@ -21,7 +21,7 @@
                 <div class="my-2" *ngIf="currentPost !== undefined; else threadView">
                     <fa-icon [icon]="faArrowLeft" (click)="resetCurrentPost()" class="back-button me-2 clickable"> </fa-icon>
                     <span class="back-instruction">{{ 'artemisApp.metis.post.showAllPosts' | artemisTranslate }}</span>
-                    <jhi-posting-thread [post]="currentPost" [showAnswers]="true"></jhi-posting-thread>
+                    <jhi-posting-thread [post]="currentPost" [showAnswers]="true" [id]="'item-' + currentPost.id" [isCommunicationPage]="isCommunicationPage"></jhi-posting-thread>
                 </div>
                 <!-- loading posts -->
                 <div class="post-result-information row mt-2" *ngIf="isLoading">
@@ -34,11 +34,12 @@
                 <!-- new post button -->
                 <div class="row mt-2" *ngIf="createdPost">
                     <div class="col-12">
-                        <button id="new-post" class="btn btn-sm btn-primary" (click)="createEditModal.open()">
+                        <button id="new-post" class="btn btn-sm btn-primary" (click)="toggleSendMessage()">
                             <fa-icon [icon]="faPlus"></fa-icon>
                             <span class="d-none d-md-inline">{{ 'artemisApp.metis.addNewPost' | artemisTranslate }}</span>
                         </button>
-                        <jhi-post-create-edit-modal #createEditModal [posting]="createdPost" (onCreate)="createEmptyPost()"></jhi-post-create-edit-modal>
+                        <!--                        TODO: change new message button-->
+                        <jhi-message-inline-input *ngIf="shouldSendMessage" class="message-input" [posting]="{}" (onCreate)="createEmptyPost()"> </jhi-message-inline-input>
                     </div>
                 </div>
                 <ng-template #threadView>
@@ -58,7 +59,7 @@
                         </div>
                     </div>
 
-                    <form [formGroup]="formGroup">
+                    <form [formGroup]="formGroup" *ngIf="isCommunicationPage">
                         <!-- filter and sort controls -->
                         <div class="row justify-content-between">
                             <!-- filter -->
@@ -113,16 +114,6 @@
                         </div>
                     </form>
                     <div class="bold-line row mt-1 mb-2"></div>
-                    <!-- new post button -->
-                    <div class="row mt-2" *ngIf="createdPost && this.posts?.length! > 2">
-                        <div class="col-12">
-                            <button class="btn btn-sm btn-primary" (click)="createEditModal.open()">
-                                <fa-icon [icon]="faPlus"></fa-icon>
-                                <span class="d-none d-md-inline">{{ 'artemisApp.metis.addNewPost' | artemisTranslate }}</span>
-                            </button>
-                            <jhi-post-create-edit-modal #createEditModal [posting]="createdPost" (onCreate)="createEmptyPost()"></jhi-post-create-edit-modal>
-                        </div>
-                    </div>
                     <div class="items-container">
                         <jhi-posting-thread
                             *ngFor="let post of posts; trackBy: postsTrackByFn"
@@ -130,6 +121,7 @@
                             class="item"
                             [post]="post"
                             [showAnswers]="posts.length === 1"
+                            [isCommunicationPage]="isCommunicationPage"
                         ></jhi-posting-thread>
                     </div>
                 </ng-template>
@@ -138,9 +130,9 @@
     </div>
     <!-- collapsed posts -->
     <ng-template #collapsedPosts>
-        <div class="postings-container collapsed-discussion text-white" (click)="collapsed = false" [ngbTooltip]="'artemisApp.metis.communication.show' | artemisTranslate">
+        <div class="postings-container collapsed-discussion text-white" (click)="collapsed = false" [ngbTooltip]="'artemisApp.metis.channel.show' | artemisTranslate">
             <fa-icon class="expand-postings-icon" [icon]="faChevronLeft"></fa-icon>
-            <span class="h5" jhiTranslate="artemisApp.metis.communication.label"></span>
+            <span class="h5" jhiTranslate="artemisApp.metis.channel.label"></span>
             <fa-icon class="expand-postings-icon" [icon]="faChevronLeft"></fa-icon>
         </div>
     </ng-template>

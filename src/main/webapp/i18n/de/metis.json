@@ -41,6 +41,12 @@
                 "exercise": "Aufgabe",
                 "lecture": "Vortrag"
             },
+            "channel": {
+                "label": "Kanäle",
+                "show": "Kanäle anzeigen",
+                "hide": "Kanäle einklappen",
+                "redirectToChannel": "Zum Kanäle gehen"
+            },
             "communication": {
                 "label": "Kommunikation",
                 "show": "Kommunikation anzeigen",

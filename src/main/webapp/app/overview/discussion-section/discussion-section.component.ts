@@ -25,10 +25,12 @@ import { FormBuilder } from '@angular/forms';
 export class DiscussionSectionComponent extends CourseDiscussionDirective implements OnInit, AfterViewInit, OnDestroy {
     @Input() exercise?: Exercise;
     @Input() lecture?: Lecture;
+    @Input() isCommunicationPage?: boolean;
     @ViewChild(PostCreateEditModalComponent) postCreateEditModal?: PostCreateEditModalComponent;
     collapsed = false;
     currentPostId?: number;
     currentPost?: Post;
+    shouldSendMessage: boolean;
     readonly pageType = PageType.PAGE_SECTION;
 
     // Icons
@@ -66,8 +68,7 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
                     this.metisService.setCourse(this.course!);
                     this.metisService.setPageType(this.pageType);
                     this.metisService.getFilteredPosts({
-                        exerciseId: this.exercise?.id,
-                        lectureId: this.lecture?.id,
+                        conversationId: this.lecture?.id ? this.lecture.channel?.id : this.exercise?.id ? this.exercise.channel?.id : undefined,
                     });
                     this.createEmptyPost();
                     this.resetFormGroup();
@@ -212,6 +213,7 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
             courseId: undefined,
             exerciseId: this.exercise?.id,
             lectureId: this.lecture?.id,
+            conversationId: this.lecture ? this.lecture?.channel?.id : this.exercise?.channel?.id,
             searchText: this.searchText,
             filterToUnresolved: this.formGroup.get('filterToUnresolved')?.value,
             filterToOwn: this.formGroup.get('filterToOwn')?.value,
@@ -259,4 +261,8 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
         }
         return 0;
     };
+
+    toggleSendMessage(): void {
+        this.shouldSendMessage = !this.shouldSendMessage;
+    }
 }
