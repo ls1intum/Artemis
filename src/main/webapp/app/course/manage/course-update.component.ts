@@ -191,8 +191,8 @@ export class CourseUpdateComponent implements OnInit {
                 maxRequestMoreFeedbackTimeDays: new FormControl(this.course.maxRequestMoreFeedbackTimeDays, {
                     validators: [Validators.required, Validators.min(0)],
                 }),
-                registrationEnabled: new FormControl(this.course.registrationEnabled),
-                registrationConfirmationMessage: new FormControl(this.course.registrationConfirmationMessage, {
+                registrationEnabled: new FormControl(this.course.enrollmentEnabled),
+                registrationConfirmationMessage: new FormControl(this.course.enrollmentConfirmationMessage, {
                     validators: [Validators.maxLength(2000)],
                 }),
                 presentationScore: new FormControl({ value: this.course.presentationScore, disabled: this.course.presentationScore === 0 }, [
@@ -391,12 +391,12 @@ export class CourseUpdateComponent implements OnInit {
      * Enable or disable student course registration
      */
     changeRegistrationEnabled() {
-        this.course.registrationEnabled = !this.course.registrationEnabled;
-        if (this.course.registrationEnabled) {
+        this.course.enrollmentEnabled = !this.course.enrollmentEnabled;
+        if (this.course.enrollmentEnabled) {
             // online course cannot be activated if registration enabled is set
             this.courseForm.controls['onlineCourse'].setValue(false);
         }
-        this.courseForm.controls['registrationEnabled'].setValue(this.course.registrationEnabled);
+        this.courseForm.controls['registrationEnabled'].setValue(this.course.enrollmentEnabled);
     }
 
     /**
