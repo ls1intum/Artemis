@@ -291,7 +291,7 @@ export class AccountService implements IAccountService {
      * @param languageKey The new languageKey
      */
     updateLanguage(languageKey: string): Observable<void> {
-        return this.http.post<void>(`${SERVER_API_URL}api/account/change-language`, languageKey);
+        return this.http.post<void>('api/account/change-language', languageKey);
     }
 
     /**
