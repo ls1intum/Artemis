@@ -51,77 +51,84 @@ describe('TextSubmissionAssessmentComponent', () => {
     let exampleSubmissionService: ExampleSubmissionService;
     let router: Router;
 
-    const exercise = {
-        id: 1,
-        type: ExerciseType.TEXT,
-        assessmentType: AssessmentType.MANUAL,
-        problemStatement: '',
-        course: { id: 123, isAtLeastInstructor: true } as Course,
-    } as TextExercise;
-    const participation: StudentParticipation = {
-        type: ParticipationType.STUDENT,
-        id: 2,
-        exercise,
-    } as unknown as StudentParticipation;
-    const submission = {
-        submissionExerciseType: SubmissionExerciseType.TEXT,
-        id: 2278,
-        submitted: true,
-        type: SubmissionType.MANUAL,
-        submissionDate: dayjs('2019-07-09T10:47:33.244Z'),
-        text: 'First text. Second text.',
-        participation,
-    } as unknown as TextSubmission;
-    submission.results = [
-        {
-            id: 2374,
-            completionDate: dayjs('2019-07-09T11:51:23.251Z'),
-            successful: false,
-            score: 8,
-            rated: true,
-            hasComplaint: true,
-            submission,
-            participation,
-        } as unknown as Result,
-    ];
+    let exercise: TextExercise;
+    let participation: StudentParticipation;
+    let submission: TextSubmission;
 
-    getLatestSubmissionResult(submission)!.feedbacks = [
-        {
-            id: 1,
-            detailText: 'First Feedback',
-            credits: 1,
-            reference: 'First text id',
-        } as Feedback,
-    ];
-    submission.blocks = [
-        {
-            id: 'First text id',
-            text: 'First text.',
-            startIndex: 0,
-            endIndex: 11,
-            submission,
-        } as TextBlock,
-        {
-            id: 'second text id',
-            text: 'Second text.',
-            startIndex: 12,
-            endIndex: 24,
-            submission,
-        } as TextBlock,
-    ];
-    submission.participation!.submissions = [submission];
-    submission.participation!.results = [getLatestSubmissionResult(submission)!];
-
-    const route = (): ActivatedRoute =>
-        ({
-            paramMap: of(convertToParamMap({ courseId: 123, exerciseId: 1, examId: 2, exerciseGroupId: 3 })),
-            queryParamMap: of(convertToParamMap({ testRun: 'false', correctionRound: 2 })),
-            data: of({
-                studentParticipation: participation,
-            }),
-        } as any as ActivatedRoute);
+    let route: () => ActivatedRoute;
 
     beforeEach(() => {
+        // data set up
+        exercise = {
+            id: 1,
+            type: ExerciseType.TEXT,
+            assessmentType: AssessmentType.MANUAL,
+            problemStatement: '',
+            course: { id: 123, isAtLeastInstructor: true } as Course,
+        } as TextExercise;
+        participation = {
+            type: ParticipationType.STUDENT,
+            id: 2,
+            exercise,
+        } as unknown as StudentParticipation;
+        submission = {
+            submissionExerciseType: SubmissionExerciseType.TEXT,
+            id: 2278,
+            submitted: true,
+            type: SubmissionType.MANUAL,
+            submissionDate: dayjs('2019-07-09T10:47:33.244Z'),
+            text: 'First text. Second text.',
+            participation,
+        } as unknown as TextSubmission;
+        submission.results = [
+            {
+                id: 2374,
+                completionDate: dayjs('2019-07-09T11:51:23.251Z'),
+                successful: false,
+                score: 8,
+                rated: true,
+                hasComplaint: true,
+                submission,
+                participation,
+            } as unknown as Result,
+        ];
+
+        getLatestSubmissionResult(submission)!.feedbacks = [
+            {
+                id: 1,
+                detailText: 'First Feedback',
+                credits: 1,
+                reference: 'First text id',
+            } as Feedback,
+        ];
+        submission.blocks = [
+            {
+                id: 'First text id',
+                text: 'First text.',
+                startIndex: 0,
+                endIndex: 11,
+                submission,
+            } as TextBlock,
+            {
+                id: 'second text id',
+                text: 'Second text.',
+                startIndex: 12,
+                endIndex: 24,
+                submission,
+            } as TextBlock,
+        ];
+        submission.participation!.submissions = [submission];
+        submission.participation!.results = [getLatestSubmissionResult(submission)!];
+
+        route = (): ActivatedRoute =>
+            ({
+                paramMap: of(convertToParamMap({ courseId: 123, exerciseId: 1, examId: 2, exerciseGroupId: 3 })),
+                queryParamMap: of(convertToParamMap({ testRun: 'false', correctionRound: 2 })),
+                data: of({
+                    studentParticipation: participation,
+                }),
+            } as any as ActivatedRoute);
+
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, RouterTestingModule],
             declarations: [
@@ -262,6 +269,8 @@ describe('TextSubmissionAssessmentComponent', () => {
         const alertService = TestBed.inject(AlertService);
         const errorStub = jest.spyOn(alertService, 'error');
 
+        component['textBlockRefs'] = [];
+
         component.updateAssessmentAfterComplaint(assessmentAfterComplaint);
 
         expect(errorStub).toHaveBeenCalledWith('artemisApp.textAssessment.error.invalidAssessments');
@@ -390,7 +399,7 @@ describe('TextSubmissionAssessmentComponent', () => {
         ];
         const queryParams = { queryParams: { 'correction-round': 0 } };
 
-        component.nextSubmission();
+        await component.nextSubmission();
         expect(routerSpy).toHaveBeenCalledOnce();
         expect(routerSpy).toHaveBeenCalledWith(url, queryParams);
     });
@@ -403,6 +412,10 @@ describe('TextSubmissionAssessmentComponent', () => {
         const url = [
             '/course-management',
             component.courseId,
+            'exams',
+            component.examId,
+            'exercise-groups',
+            component.exerciseGroupId,
             'text-exercises',
             component.exerciseId,
             'participations',
