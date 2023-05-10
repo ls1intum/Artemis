@@ -1,0 +1,117 @@
+# ----------------------------------------------------------------------------------------------------------------------
+# Sorry Cypress Setup
+# ----------------------------------------------------------------------------------------------------------------------
+# this is the docker compose file for the sorry cypress setup
+# ----------------------------------------------------------------------------------------------------------------------
+
+services:
+  mongo:
+    image: mongo:4.4
+    container_name: Mongo
+    hostname: mongo
+    restart: always
+    volumes:
+      - files/mongo:/data/db
+    ports:
+      - 27017:27017
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: 'sorry-cypress'
+      MONGO_INITDB_ROOT_PASSWORD: 'sorry-cypress'
+
+  director:
+    image: agoldis/sorry-cypress-director
+    container_name: Director
+    hostname: director
+    restart: always
+    environment:
+      DASHBOARD_URL: 'https://sorry-cypress.ase.cit.tum.de'
+      EXECUTION_DRIVER: '../execution/mongo/driver'
+      MONGODB_URI: 'mongodb://sorry-cypress:sorry-cypress@mongo:27017'
+      MONGODB_DATABASE: 'sorry-cypress'
+      ALLOWED_KEYS: '<insert-cypress-key>'
+      SCREENSHOTS_DRIVER: '../screenshots/minio.driver'
+      MINIO_ACCESS_KEY: '<insert-minio-user-access-key>'
+      MINIO_SECRET_KEY: '<insert-minio-user-secret>'
+      MINIO_ENDPOINT: 'storage.sorry-cypress.ase.cit.tum.de'
+      MINIO_URL: 'https://storage.sorry-cypress.ase.cit.tum.de'
+      MINIO_PORT: '443'
+      MINIO_USESSL: 'true'
+      MINIO_BUCKET: 'sorry-cypress'
+      PROBE_LOGGER: 'false'
+    ports:
+      - 1234:1234
+    depends_on:
+      - mongo
+
+  api:
+    image: agoldis/sorry-cypress-api
+    container_name: API
+    hostname: api
+    environment:
+      MONGODB_URI: 'mongodb://sorry-cypress:sorry-cypress@mongo:27017'
+      MONGODB_DATABASE: 'sorry-cypress'
+      APOLLO_PLAYGROUND: 'false'
+    ports:
+      - 4000:4000
+    depends_on:
+      - mongo
+
+  dashboard:
+    image: agoldis/sorry-cypress-dashboard
+    container_name: Dashboard
+    hostname: dashboard
+    restart: always
+    environment:
+      GRAPHQL_SCHEMA_URL: 'https://sorry-cypress.ase.cit.tum.de/api'
+      GRAPHQL_CLIENT_CREDENTIALS: 'include'
+      PORT: 8080
+      CI_URL: ''
+    expose:
+      - "8080"
+    ports:
+      - 8080:8080
+    depends_on:
+      - mongo
+      - api
+
+  storage:
+    image: minio/minio
+    container_name: Minio
+    hostname: storage
+    restart: always
+    environment:
+      MINIO_ROOT_USER: 'artemis'
+      MINIO_ROOT_PASSWORD: '<insert-minio-root-password>'
+    volumes:
+      - files/minio:/data
+    command: minio server --console-address ":9090" /data
+    ports:
+      - 9000:9000
+      - 9090:9090
+
+  createbuckets:
+    image: minio/mc
+    container_name: MinioBucketCreator
+    depends_on:
+      - storage
+    entrypoint: >
+      /bin/sh -c "
+      sleep 3;
+      /usr/bin/mc config host add myminio http://storage:9000 artemis <insert-minio-root-password>;
+      /usr/bin/mc mb myminio/sorry-cypress;
+      /usr/bin/mc anonymous set download myminio/sorry-cypress;
+      exit 0;
+      "
+
+  nginx:
+    image: nginx
+    container_name: Nginx
+    restart: always
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - files/nginx/nginx.conf:/etc/nginx/nginx.conf
+      - files/nginx/.htpasswd:/etc/nginx/.htpasswd
+      - files/nginx/fullchain.pem:/etc/certificates/fullchain.pem
+      - files/nginx/privkey.pem:/etc/certificates/privkey.pem
