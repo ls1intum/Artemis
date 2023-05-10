@@ -228,7 +228,7 @@ entity Participation (participation) {
     buildPlanId String,
     initializationState InitializationState,
     initializationDate ZonedDateTime,
-    presentationScore Integer
+    presentationScore Double
 }
 
 entity ExerciseResult (result) {
