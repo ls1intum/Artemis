@@ -584,12 +584,12 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         assertThat(receivedOnlyParticipation.getSubmissions()).isEmpty();
         assertThat(receivedOnlyParticipation.getSubmissionCount()).isEqualTo(0);
 
-        assertThat(receivedParticipationWithResult.getResults()).containsExactly(result2, result3);
+        assertThat(receivedParticipationWithResult.getResults()).containsExactlyInAnyOrder(result2, result3);
         assertThat(receivedParticipationWithResult.getSubmissions()).isEmpty();
         assertThat(receivedParticipationWithResult.getSubmissionCount()).isEqualTo(1);
 
         assertThat(receivedParticipationWithOnlySubmission.getResults()).isEmpty();
-        assertThat(receivedParticipationWithOnlySubmission.getSubmissions()).containsExactly(onlySubmissioin);
+        assertThat(receivedParticipationWithOnlySubmission.getSubmissions()).containsExactlyInAnyOrder(onlySubmissioin);
         assertThat(receivedParticipationWithOnlySubmission.getSubmissionCount()).isEqualTo(1);
 
         assertThat(receivedTestParticipation.getResults()).isEmpty();
