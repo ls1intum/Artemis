@@ -1,6 +1,6 @@
 import { IrisMessage } from 'app/entities/iris/message.model';
 import { MessageService } from 'app/shared/iris/message.service';
-import { BehaviorSubject, Observable, ReplaySubject, map } from 'rxjs';
+import { Observable, ReplaySubject, map } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
@@ -33,23 +33,16 @@ export class IrisService implements OnDestroy {
         return this.user;
     }
     /**
-     * to be used to set posts from outside
-     * @param {IrisMessage[]} messages that are managed by metis service
-     */
-    setIrisMessages(messages: IrisMessage[]): void {
-        this.messages$.next(messages);
-    }
-    /**
      * creates a new message by invoking the message service
      * @param {IrisMessage} message to be created
-     * @return {Observable<IrisMessage>} created post
+     * @return {Observable<IrisMessage>} created message
      */
     createIrisMessage(message: IrisMessage): Observable<IrisMessage> {
         return this.messageService.create(this.sessionId, message).pipe(map((res: HttpResponse<IrisMessage>) => res.body!));
     }
     /**
      * Creates (and updates) the websocket channel for receiving messages in dedicated channels;
-     * @param channel which the metis service should subscribe to
+     * @param channel which the iris service should subscribe to
      */
     createWebsocketSubscription(channel: string): void {
         // if channel subscription does not change, do nothing
@@ -67,13 +60,11 @@ export class IrisService implements OnDestroy {
     }
 
     /**
-     * Determines the channel to be used for websocket communication based on the current post context filter,
-     * i.e., when being on a lecture page, the context is a certain lectureId (e.g., 1), the channel is set to '/topic/metis/lectures/1';
-     * By calling the createWebsocketSubscription method with this channel as parameter, the metis service also subscribes to that messages in this channel
+     * Determines the channel to be used for websocket communication
+     * By calling the createWebsocketSubscription method with this channel as parameter, the iris service also subscribes to that messages in this channel
      */
     private createSubscriptionChannel(): void {
-        let channel = 'topic/iris/sessions';
-        channel += this.sessionId;
+        const channel = 'topic/iris/sessions/' + this.sessionId;
         this.createWebsocketSubscription(channel);
     }
 }
