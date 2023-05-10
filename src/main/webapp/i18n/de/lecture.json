@@ -24,7 +24,8 @@
                 "question": "Soll die Vorlesung <strong>{{ title }}</strong> wirklich dauerhaft gelöscht werden? Diese Aktion kann NICHT rückgängig gemacht werden!",
                 "typeNameToConfirm": "Bitte gib den Namen der Vorlesung zur Bestätigung ein."
             },
-            "title": "Title",
+            "title": "Titel",
+            "channelName": "Kanalname",
             "description": "Beschreibung",
             "startDate": "Start",
             "endDate": "Ende",

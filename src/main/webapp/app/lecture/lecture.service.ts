@@ -23,14 +23,18 @@ export class LectureService {
         private entityTitleService: EntityTitleService,
     ) {}
 
-    create(lecture: Lecture): Observable<EntityResponseType> {
+    create(lecture: Lecture, channelName: string): Observable<EntityResponseType> {
         const copy = this.convertLectureDatesFromClient(lecture);
-        return this.http.post<Lecture>(this.resourceUrl, copy, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.convertLectureResponseDatesFromServer(res)));
+        return this.http
+            .post<Lecture>(this.resourceUrl, { lecture: copy, channelName }, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.convertLectureResponseDatesFromServer(res)));
     }
 
-    update(lecture: Lecture): Observable<EntityResponseType> {
+    update(lecture: Lecture, channelName: string): Observable<EntityResponseType> {
         const copy = this.convertLectureDatesFromClient(lecture);
-        return this.http.put<Lecture>(this.resourceUrl, copy, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.convertLectureResponseDatesFromServer(res)));
+        return this.http
+            .put<Lecture>(this.resourceUrl, { lecture: copy, channelName }, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.convertLectureResponseDatesFromServer(res)));
     }
 
     find(lectureId: number): Observable<EntityResponseType> {

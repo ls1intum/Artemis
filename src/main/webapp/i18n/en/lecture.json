@@ -25,6 +25,7 @@
                 "typeNameToConfirm": "Please type in the name of the lecture to confirm."
             },
             "title": "Title",
+            "channelName": "Channel Name",
             "description": "Description",
             "startDate": "Start Date",
             "endDate": "End Date",

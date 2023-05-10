@@ -51,7 +51,7 @@ describe('Lecture Service', () => {
             const returnedFromService = { ...elemDefault };
             const expected = { ...returnedFromService };
             service
-                .create(elemDefault)
+                .create(elemDefault, 'lecture-default')
                 .pipe(take(1))
                 .subscribe((resp) => (expectedResult = resp));
             const req = httpMock.expectOne({
@@ -66,7 +66,7 @@ describe('Lecture Service', () => {
             const returnedFromService = { ...elemDefault };
             const expected = { ...returnedFromService };
             service
-                .update(elemDefault)
+                .update(elemDefault, 'lecture-default')
                 .pipe(take(1))
                 .subscribe((resp) => (expectedResult = resp));
             const req = httpMock.expectOne({

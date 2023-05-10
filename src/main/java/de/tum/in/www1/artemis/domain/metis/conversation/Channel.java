@@ -22,7 +22,7 @@ public class Channel extends Conversation {
      * The name of the channel. Must be unique in the course.
      */
     @Column(name = "name")
-    @Size(min = 1, max = 20)
+    @Size(min = 1, max = 30)
     @NotBlank
     private String name;
 
