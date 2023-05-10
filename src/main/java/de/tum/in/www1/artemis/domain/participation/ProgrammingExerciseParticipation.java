@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.domain.participation;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Set;
 
 import javax.annotation.Nullable;
 

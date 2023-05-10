@@ -416,21 +416,22 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringInte
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void checkResetRepository_afterDueDateGradedParticipation_forbidden() throws Exception {
-        programmingExerciseParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
-        programmingExercise.setDueDate(ZonedDateTime.now().minusHours(2));
-        programmingExerciseRepository.save(programmingExercise);
+    void checkResetRepository_participationLocked_forbidden() throws Exception {
+        ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise,
+                TEST_PREFIX + "student1");
+        programmingExerciseStudentParticipation.setLocked(true);
+        programmingExerciseParticipation = programmingExerciseStudentParticipationRepository.save(programmingExerciseStudentParticipation);
 
         request.put("/api/programming-exercise-participations/" + programmingExerciseParticipation.getId() + "/reset-repository", null, HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void checkResetRepository_exam_forbidden() throws Exception {
+    void checkResetRepository_exam_badRequest() throws Exception {
         programmingExercise = database.addCourseExamExerciseGroupWithOneProgrammingExercise();
         programmingExerciseParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
 
-        request.put("/api/programming-exercise-participations/" + programmingExerciseParticipation.getId() + "/reset-repository", null, HttpStatus.FORBIDDEN);
+        request.put("/api/programming-exercise-participations/" + programmingExerciseParticipation.getId() + "/reset-repository", null, HttpStatus.BAD_REQUEST);
     }
 
     private Result addStudentParticipationWithResult(AssessmentType assessmentType, ZonedDateTime completionDate) {

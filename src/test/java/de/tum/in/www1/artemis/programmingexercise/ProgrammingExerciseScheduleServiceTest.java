@@ -103,21 +103,23 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
         bitbucketRequestMockProvider.reset();
     }
 
-    private void verifyLockStudentRepositoryOperation(boolean wasCalled, long timeoutInMs) {
+    private void verifyLockStudentRepositoryAndParticipationOperation(boolean wasCalled, long timeoutInMs) {
         final Set<StudentParticipation> studentParticipations = programmingExercise.getStudentParticipations();
-        verifyLockStudentRepositoryOperation(wasCalled, studentParticipations, timeoutInMs);
+        verifyLockStudentRepositoryAndParticipationOperation(wasCalled, studentParticipations, timeoutInMs);
     }
 
-    private void verifyLockStudentRepositoryOperation(boolean wasCalled, StudentParticipation participation, long timeoutInMs) {
-        verifyLockStudentRepositoryOperation(wasCalled, List.of(participation), timeoutInMs);
+    private void verifyLockStudentRepositoryAndParticipationOperation(boolean wasCalled, StudentParticipation participation, long timeoutInMs) {
+        verifyLockStudentRepositoryAndParticipationOperation(wasCalled, List.of(participation), timeoutInMs);
     }
 
-    private void verifyLockStudentRepositoryOperation(boolean wasCalled, Iterable<StudentParticipation> studentParticipations, long timeoutInMs) {
+    private void verifyLockStudentRepositoryAndParticipationOperation(boolean wasCalled, Iterable<StudentParticipation> studentParticipations, long timeoutInMs) {
         int callCount = wasCalled ? 1 : 0;
         for (StudentParticipation studentParticipation : studentParticipations) {
             ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation = (ProgrammingExerciseStudentParticipation) studentParticipation;
             verify(versionControlService, timeout(timeoutInMs).times(callCount)).setRepositoryPermissionsToReadOnly(programmingExerciseStudentParticipation.getVcsRepositoryUrl(),
                     programmingExercise.getProjectKey(), programmingExerciseStudentParticipation.getStudents());
+            verify(programmingExerciseStudentParticipationRepository, timeout(timeoutInMs).times(callCount)).updateLockedById(programmingExerciseStudentParticipation.getId(),
+                    true);
         }
     }
 
@@ -141,7 +143,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
         instanceMessageReceiveService.processScheduleProgrammingExercise(programmingExercise.getId());
 
         // Lock student repository must be called once per participation.
-        verifyLockStudentRepositoryOperation(true, dueDateDelayMS);
+        verifyLockStudentRepositoryAndParticipationOperation(true, dueDateDelayMS);
         // Instructor build should have been triggered.
         verify(programmingTriggerService, timeout(dueDateDelayMS).times(1)).triggerInstructorBuildForExercise(programmingExercise.getId());
     }
@@ -157,7 +159,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
         Thread.sleep(SCHEDULER_TASK_TRIGGER_DELAY_MS);  // ok
 
         // Lock student repository must not be called.
-        verifyLockStudentRepositoryOperation(false, 0);
+        verifyLockStudentRepositoryAndParticipationOperation(false, 0);
         verify(programmingTriggerService, never()).triggerInstructorBuildForExercise(programmingExercise.getId());
     }
 
@@ -169,7 +171,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
         Thread.sleep(SCHEDULER_TASK_TRIGGER_DELAY_MS);    // ok
 
         // Lock student repository must not be called.
-        verifyLockStudentRepositoryOperation(false, 0);
+        verifyLockStudentRepositoryAndParticipationOperation(false, 0);
         verify(programmingTriggerService, never()).triggerInstructorBuildForExercise(programmingExercise.getId());
         // Update all scores should not have been triggered.
         verify(programmingExerciseGradingService, never()).updateAllResults(programmingExercise);
@@ -192,7 +194,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
         instanceMessageReceiveService.processScheduleProgrammingExercise(programmingExercise.getId());
 
         // Lock student repository must be called once per participation.
-        verifyLockStudentRepositoryOperation(true, delayMS * 2);
+        verifyLockStudentRepositoryAndParticipationOperation(true, delayMS * 2);
         verify(programmingTriggerService, timeout(delayMS * 2).times(1)).triggerInstructorBuildForExercise(programmingExercise.getId());
     }
 
@@ -210,7 +212,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
 
         Thread.sleep(delayMS + SCHEDULER_TASK_TRIGGER_DELAY_MS);      // ok
 
-        verifyLockStudentRepositoryOperation(false, 0);
+        verifyLockStudentRepositoryAndParticipationOperation(false, 0);
         verify(programmingTriggerService, never()).triggerInstructorBuildForExercise(programmingExercise.getId());
         verify(programmingExerciseGradingService, never()).updateAllResults(programmingExercise);
     }
@@ -231,7 +233,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
 
         instanceMessageReceiveService.processScheduleProgrammingExercise(programmingExercise.getId());
 
-        verifyLockStudentRepositoryOperation(true, delayMS);
+        verifyLockStudentRepositoryAndParticipationOperation(true, delayMS);
         verify(programmingTriggerService, timeout(5000).times(1)).triggerInstructorBuildForExercise(programmingExercise.getId());
     }
 
@@ -250,7 +252,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
         Thread.sleep(delayMS + SCHEDULER_TASK_TRIGGER_DELAY_MS);      // ok
 
         // Only lock participations
-        verifyLockStudentRepositoryOperation(true, delayMS);
+        verifyLockStudentRepositoryAndParticipationOperation(true, delayMS);
         // but do not build all
         verify(programmingTriggerService, never()).triggerInstructorBuildForExercise(programmingExercise.getId());
     }
@@ -271,7 +273,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
 
         Thread.sleep(dueDateDelayMS + SCHEDULER_TASK_TRIGGER_DELAY_MS);   // ok
 
-        verifyLockStudentRepositoryOperation(true, dueDateDelayMS);
+        verifyLockStudentRepositoryAndParticipationOperation(true, dueDateDelayMS);
         verify(programmingTriggerService, never()).triggerInstructorBuildForExercise(programmingExercise.getId());
         // has AFTER_DUE_DATE tests and no additional build after due date => update the scores to show those test cases in it
         verify(programmingExerciseGradingService, timeout(5000).times(1)).updateResultsOnlyRegularDueDateParticipations(programmingExercise);
@@ -295,7 +297,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
 
         Thread.sleep(dueDateDelayMS + SCHEDULER_TASK_TRIGGER_DELAY_MS);   // ok
 
-        verifyLockStudentRepositoryOperation(true, dueDateDelayMS / 2);
+        verifyLockStudentRepositoryAndParticipationOperation(true, dueDateDelayMS / 2);
         verify(programmingTriggerService, timeout(dueDateDelayMS).times(1)).triggerInstructorBuildForExercise(programmingExercise.getId());
         // has AFTER_DUE_DATE tests, but also buildAfterDueDate => do not update results, but use the results created on additional build run
         verify(programmingExerciseGradingService, never()).updateAllResults(programmingExercise);
@@ -323,7 +325,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
 
         Thread.sleep(dueDateDelayMS + SCHEDULER_TASK_TRIGGER_DELAY_MS);   // ok
 
-        verifyLockStudentRepositoryOperation(true, dueDateDelayMS / 2);
+        verifyLockStudentRepositoryAndParticipationOperation(true, dueDateDelayMS / 2);
         if (hasBuildAndTestAfterDueDate) {
             verify(programmingTriggerService, timeout(dueDateDelayMS).times(1)).triggerInstructorBuildForExercise(programmingExercise.getId());
         }
@@ -370,11 +372,11 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
         assertThat(studentParticipationIndividualDueDate.getIndividualDueDate()).isNotEqualTo(programmingExercise.getDueDate());
 
         // the repo-lock for the participation with a later due date should only have been called after that individual due date has passed
-        verifyLockStudentRepositoryOperation(true, studentParticipationsRegularDueDate, delayMS);
+        verifyLockStudentRepositoryAndParticipationOperation(true, studentParticipationsRegularDueDate, delayMS);
         // first the operation should not be called
-        verifyLockStudentRepositoryOperation(false, participationIndividualDueDate, 0);
+        verifyLockStudentRepositoryAndParticipationOperation(false, participationIndividualDueDate, 0);
         // after some time the operation should be called as well (verify waits up to 5s until this condition is fulfilled)
-        verifyLockStudentRepositoryOperation(true, participationIndividualDueDate, 3 * delayMS + SCHEDULER_TASK_TRIGGER_DELAY_MS);
+        verifyLockStudentRepositoryAndParticipationOperation(true, participationIndividualDueDate, 3 * delayMS + SCHEDULER_TASK_TRIGGER_DELAY_MS);
     }
 
     @Test
@@ -398,11 +400,11 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
         Thread.sleep(delayMS + SCHEDULER_TASK_TRIGGER_DELAY_MS);      // ok
 
         // not yet locked on regular due date
-        verifyLockStudentRepositoryOperation(false, participationIndividualDueDate, 0);
+        verifyLockStudentRepositoryAndParticipationOperation(false, participationIndividualDueDate, 0);
         verify(programmingTriggerService, never()).triggerInstructorBuildForExercise(programmingExercise.getId());
 
         // locked after individual due date
-        verifyLockStudentRepositoryOperation(true, participationIndividualDueDate, 2 * delayMS + SCHEDULER_TASK_TRIGGER_DELAY_MS);
+        verifyLockStudentRepositoryAndParticipationOperation(true, participationIndividualDueDate, 2 * delayMS + SCHEDULER_TASK_TRIGGER_DELAY_MS);
 
         Thread.sleep(delayMS + SCHEDULER_TASK_TRIGGER_DELAY_MS);      // ok
 
