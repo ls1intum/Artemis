@@ -16,7 +16,6 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
-import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
@@ -40,17 +39,12 @@ public class ChannelService {
 
     private final ConversationService conversationService;
 
-    private final SingleUserNotificationService singleUserNotificationService;
-
-    private final LectureRepository lectureRepository;
-
     public ChannelService(ConversationParticipantRepository conversationParticipantRepository, ChannelRepository channelRepository, UserRepository userRepository,
-            ConversationService conversationService, LectureRepository lectureRepository) {
+            ConversationService conversationService) {
         this.conversationParticipantRepository = conversationParticipantRepository;
         this.channelRepository = channelRepository;
         this.userRepository = userRepository;
         this.conversationService = conversationService;
-        this.lectureRepository = lectureRepository;
     }
 
     /**
@@ -209,8 +203,7 @@ public class ChannelService {
 
     public Channel createLectureChannel(Lecture lecture) {
         Channel channelToCreate = new Channel();
-        // TODO: Figure out whether two digits for the number are enough
-        channelToCreate.setName(String.format("l-%02d-%.15s", 1, lecture.getTitle().toLowerCase().replace(' ', '-')));
+        channelToCreate.setName(formatChannelName('l', 1, lecture.getTitle()));
         channelToCreate.setIsPublic(true);
         channelToCreate.setIsAnnouncementChannel(false);
         channelToCreate.setIsArchived(false);
@@ -220,8 +213,7 @@ public class ChannelService {
 
     public Channel createExerciseChannel(Exercise exercise) {
         Channel channelToCreate = new Channel();
-        // TODO: Figure out whether two digits for the number are enough
-        channelToCreate.setName(String.format("e-%02d-%.15s", 1, exercise.getTitle().toLowerCase().replace(' ', '-')));
+        channelToCreate.setName(formatChannelName('e', 2, exercise.getTitle()));
         channelToCreate.setIsPublic(true);
         channelToCreate.setIsAnnouncementChannel(false);
         channelToCreate.setIsArchived(false);
@@ -237,5 +229,14 @@ public class ChannelService {
         channelToCreate.setIsArchived(false);
         channelToCreate.setDescription("Channel for exam - " + exam.getTitle());
         return createChannel(exam.getCourse(), channelToCreate, Optional.of(userRepository.getUserWithGroupsAndAuthorities()));
+    }
+
+    public String updateChannelSuffix(String channelName, String newSuffix) {
+        return String.format("%s%.15s", channelName.substring(0, 5), newSuffix.toLowerCase().replace(' ', '-'));
+    }
+
+    private String formatChannelName(char prefix, int infix, String suffix) {
+        // TODO: Figure out whether two digits for the number are enough
+        return String.format("%c-%02d-%.15s", prefix, infix, suffix.toLowerCase().replace(' ', '-'));
     }
 }
