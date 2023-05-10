@@ -33,12 +33,10 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.DefaultChannelType;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.security.OAuth2JWKSService;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.*;
@@ -113,14 +111,12 @@ public class CourseResource {
 
     private final ConversationService conversationService;
 
-    private final ChannelRepository channelRepository;
-
     public CourseResource(UserRepository userRepository, CourseService courseService, CourseRepository courseRepository, ExerciseService exerciseService,
             OAuth2JWKSService oAuth2JWKSService, OnlineCourseConfigurationService onlineCourseConfigurationService, AuthorizationCheckService authCheckService,
             TutorParticipationRepository tutorParticipationRepository, SubmissionService submissionService, Optional<VcsUserManagementService> optionalVcsUserManagementService,
             AssessmentDashboardService assessmentDashboardService, ExerciseRepository exerciseRepository, Optional<CIUserManagementService> optionalCiUserManagementService,
             FileService fileService, TutorialGroupsConfigurationService tutorialGroupsConfigurationService, CourseScoreCalculationService courseScoreCalculationService,
-            ConversationService conversationService, ChannelRepository channelRepository, GradingScaleService gradingScaleService) {
+            ConversationService conversationService, GradingScaleService gradingScaleService) {
         this.courseService = courseService;
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
@@ -139,7 +135,6 @@ public class CourseResource {
         this.gradingScaleService = gradingScaleService;
         this.courseScoreCalculationService = courseScoreCalculationService;
         this.conversationService = conversationService;
-        this.channelRepository = channelRepository;
     }
 
     /**
@@ -1016,22 +1011,7 @@ public class CourseResource {
                 throw new EntityNotFoundException("User", userLogin);
             }
             courseService.addUserToGroup(userToAddToGroup.get(), group, role);
-
-            final List<String> channelNames = Arrays.stream(DefaultChannelType.values()).toList().stream().map(DefaultChannelType::getName).toList();
-
-            List<Course> courses = switch (role) {
-                case STUDENT -> courseRepository.findCoursesByStudentGroupName(group);
-                case TEACHING_ASSISTANT -> courseRepository.findCoursesByTeachingAssistantGroupName(group);
-                case INSTRUCTOR -> courseRepository.findCoursesByInstructorGroupName(group);
-                default -> List.of();
-            };
-
-            for (Course c : courses) {
-                channelRepository.findChannelsByCourseId(c.getId()).stream().filter(channel -> channelNames.contains(channel.getName())).forEach(channel -> {
-                    conversationService.registerUsersToConversation(c, Set.of(userToAddToGroup.get()), channel, Optional.empty());
-                });
-            }
-
+            conversationService.registerUserToDefaultChannels(userToAddToGroup.get(), group, role);
             return ResponseEntity.ok().body(null);
         }
         else {
