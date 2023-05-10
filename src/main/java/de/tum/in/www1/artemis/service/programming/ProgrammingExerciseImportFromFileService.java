@@ -94,7 +94,7 @@ public class ProgrammingExerciseImportFromFileService {
      *
      * @param importExerciseDir the directory where the extracted zip file is located
      **/
-    private void copyEmbeddedFiles(Path importExerciseDir) throws IOException {
+    private void copyEmbeddedFiles(Path importExerciseDir) {
         Path embeddedFilesDir = importExerciseDir.resolve("files");
 
         if (!Files.exists(embeddedFilesDir)) {
@@ -105,6 +105,9 @@ public class ProgrammingExerciseImportFromFileService {
                 var targetPath = Path.of(FilePathService.getMarkdownFilePath(), file.getFileName().toString());
                 Files.copy(file, targetPath);
             }
+        }
+        catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
 
