@@ -32,7 +32,7 @@ export interface IComplaintService {
 
 @Injectable({ providedIn: 'root' })
 export class ComplaintService implements IComplaintService {
-    private apiUrl = SERVER_API_URL + 'api';
+    private apiUrl = 'api';
     private resourceUrl = this.apiUrl + '/complaints';
 
     constructor(private http: HttpClient, private complaintResponseService: ComplaintResponseService) {}

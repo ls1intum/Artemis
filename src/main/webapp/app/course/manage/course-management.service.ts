@@ -33,7 +33,7 @@ export type RoleGroup = 'tutors' | 'students' | 'instructors' | 'editors';
 
 @Injectable({ providedIn: 'root' })
 export class CourseManagementService {
-    private resourceUrl = SERVER_API_URL + 'api/courses';
+    private resourceUrl = 'api/courses';
 
     private coursesForNotifications: BehaviorSubject<Course[] | undefined> = new BehaviorSubject<Course[] | undefined>(undefined);
 
