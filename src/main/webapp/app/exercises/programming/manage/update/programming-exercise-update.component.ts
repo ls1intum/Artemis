@@ -32,7 +32,7 @@ import { DocumentationType } from 'app/shared/components/documentation-button/do
 import {
     GradingStepInputs,
     InfoStepInputs,
-    InfrastructureInputs,
+    InfrastructureStepInputs,
     LanguageStepInputs,
     ProblemStepInputs,
 } from 'app/exercises/programming/manage/update/wizard-mode/programming-exercise-update-wizard.component';
@@ -1045,7 +1045,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         };
     }
 
-    getInfrastructureStepInputs(): InfrastructureInputs {
+    getInfrastructureStepInputs(): InfrastructureStepInputs {
         return {
             auxiliaryRepositoriesSupported: this.auxiliaryRepositoriesSupported,
             auxiliaryRepositoryDuplicateDirectories: this.auxiliaryRepositoryDuplicateDirectories,

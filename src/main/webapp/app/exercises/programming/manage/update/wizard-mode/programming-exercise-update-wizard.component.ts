@@ -58,7 +58,7 @@ export type ProblemStepInputs = {
     selectedProjectType: ProjectType;
 };
 
-export type InfrastructureInputs = {
+export type InfrastructureStepInputs = {
     // preview
     auxiliaryRepositoriesSupported: boolean;
     auxiliaryRepositoryDuplicateDirectories: boolean;
@@ -116,7 +116,7 @@ export class ProgrammingExerciseUpdateWizardComponent implements OnInit {
     @Input() languageStepInputs: LanguageStepInputs;
     @Input() gradingStepInputs: GradingStepInputs;
     @Input() problemStepInputs: ProblemStepInputs;
-    @Input() infrastructureStepInputs: InfrastructureInputs;
+    @Input() infrastructureStepInputs: InfrastructureStepInputs;
     @Input() auxiliaryRepositoriesSupported: boolean;
 
     constructor(protected activatedRoute: ActivatedRoute) {}

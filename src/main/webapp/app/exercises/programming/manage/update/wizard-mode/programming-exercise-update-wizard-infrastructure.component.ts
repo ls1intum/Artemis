@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { InfrastructureInputs } from 'app/exercises/programming/manage/update/wizard-mode/programming-exercise-update-wizard.component';
+import { InfrastructureStepInputs } from 'app/exercises/programming/manage/update/wizard-mode/programming-exercise-update-wizard.component';
 
 @Component({
     selector: 'jhi-programming-exercise-update-wizard-infrastructure',
@@ -7,5 +7,5 @@ import { InfrastructureInputs } from 'app/exercises/programming/manage/update/wi
     styleUrls: ['./programming-exercise-update-wizard.component.scss'],
 })
 export class ProgrammingExerciseUpdateWizardInfrastructureComponent {
-    @Input() infrastructureStepInputs: InfrastructureInputs;
+    @Input() infrastructureStepInputs: InfrastructureStepInputs;
 }
