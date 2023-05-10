@@ -50,7 +50,7 @@ describe('EntityTitleService', () => {
             tick(2500);
             expect(result).toBe('Test Entity');
             expect(httpSpy).toHaveBeenCalledOnce();
-            expect(httpSpy).toHaveBeenCalledWith(`${SERVER_API_URL}api/${url}/title`, { observe: 'response', responseType: 'text' });
+            expect(httpSpy).toHaveBeenCalledWith(`api/${url}/title`, { observe: 'response', responseType: 'text' });
         }),
     );
 

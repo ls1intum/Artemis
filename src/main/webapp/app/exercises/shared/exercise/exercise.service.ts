@@ -46,8 +46,8 @@ export interface ExerciseServicable<T extends Exercise> {
 
 @Injectable({ providedIn: 'root' })
 export class ExerciseService {
-    public resourceUrl = SERVER_API_URL + 'api/exercises';
-    public adminResourceUrl = SERVER_API_URL + 'api/admin/exercises';
+    public resourceUrl = 'api/exercises';
+    public adminResourceUrl = 'api/admin/exercises';
 
     constructor(
         private http: HttpClient,
