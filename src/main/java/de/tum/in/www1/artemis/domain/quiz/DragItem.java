@@ -25,7 +25,7 @@ import de.tum.in.www1.artemis.service.FileService;
 @Table(name = "drag_item")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class DragItem extends TempIdObject {
+public class DragItem extends TempIdObject implements QuizQuestionComponent<DragAndDropQuestion> {
 
     @Transient
     private transient FileService fileService = new FileService();

@@ -19,7 +19,7 @@ import de.tum.in.www1.artemis.domain.view.QuizView;
 @Table(name = "answer_option")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class AnswerOption extends DomainObject {
+public class AnswerOption extends DomainObject implements QuizQuestionComponent<MultipleChoiceQuestion> {
 
     @Column(name = "text")
     @JsonView(QuizView.Before.class)
