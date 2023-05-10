@@ -331,7 +331,12 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     @Query("SELECT user FROM User user WHERE user.isDeleted = false AND :#{#groupName} MEMBER OF user.groups AND user NOT IN :#{#ignoredUsers}")
     List<User> findAllInGroupContainingAndNotIn(@Param("groupName") String groupName, @Param("ignoredUsers") Set<User> ignoredUsers);
 
-    @Query("SELECT DISTINCT team.students FROM Team team WHERE team.exercise.course.id = :#{#courseId} AND team.shortName = :#{#teamShortName}")
+    @Query("""
+            SELECT DISTINCT team.students AS student FROM Team team
+            JOIN team.students st
+            WHERE st.isDeleted = false
+            AND team.exercise.course.id = :#{#courseId} AND team.shortName = :#{#teamShortName}
+            """)
     Set<User> findAllInTeam(@Param("courseId") Long courseId, @Param("teamShortName") String teamShortName);
 
     /**
@@ -596,7 +601,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
         updateUserNotificationReadDate(userId, ZonedDateTime.now());
     }
 
-    @Query(value = "SELECT * FROM jhi_user u WHERE REGEXP_LIKE(u.email, :#{#emailPattern})", nativeQuery = true)
+    @Query(value = "SELECT * FROM jhi_user u WHERE u.isDeleted = false REGEXP_LIKE(u.email, :#{#emailPattern})", nativeQuery = true)
     List<User> findAllMatchingEmailPattern(@Param("emailPattern") String emailPattern);
 
     /**
