@@ -30,7 +30,7 @@ export class MessageService {
      * @param {number} sessionId
      * @return {Observable<EntityArrayResponseType>}
      */
-    getPosts(sessionId: number): Observable<EntityArrayResponseType> {
+    getMessages(sessionId: number): Observable<EntityArrayResponseType> {
         return this.http.get<IrisMessage[]>(`${this.resourceUrl}${sessionId}/messages`, { observe: 'response' });
     }
 }
