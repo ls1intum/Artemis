@@ -61,6 +61,7 @@ import { ProgrammingExerciseGradingComponent } from 'app/exercises/programming/m
 import { ProgrammingExerciseProblemComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-problem.component';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
+import { ProgrammingExerciseInfrastructureComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-infrastructure.component';
 
 describe('ProgrammingExercise Management Update Component', () => {
     const courseId = 1;
@@ -109,6 +110,7 @@ describe('ProgrammingExercise Management Update Component', () => {
                 MockComponent(ProgrammingExerciseLanguageComponent),
                 MockComponent(ProgrammingExerciseGradingComponent),
                 MockComponent(ProgrammingExerciseProblemComponent),
+                MockComponent(ProgrammingExerciseInfrastructureComponent),
                 MockComponent(DocumentationButtonComponent),
                 MockPipe(RemoveKeysPipe),
                 MockPipe(ArtemisTranslatePipe),
