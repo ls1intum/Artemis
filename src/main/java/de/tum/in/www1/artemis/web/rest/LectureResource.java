@@ -178,7 +178,9 @@ public class LectureResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Lecture> getLecture(@PathVariable Long lectureId) {
         log.debug("REST request to get lecture {}", lectureId);
-        Lecture lecture = lectureRepository.findByIdElseThrow(lectureId);
+        Lecture lecture = lectureRepository.findByIdWithChannel(lectureId);
+        lecture.getChannel().setLecture(null);
+        lecture.getChannel().setCreator(null);
         authCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.STUDENT, lecture, null);
         return ResponseEntity.ok(lecture);
     }

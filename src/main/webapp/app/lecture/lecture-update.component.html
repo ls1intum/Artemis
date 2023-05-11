@@ -32,11 +32,7 @@
                     <label for="id" jhiTranslate="global.field.id">ID</label>
                     <input type="text" class="form-control" id="id" name="id" [(ngModel)]="lecture.id" readonly />
                 </div>
-                <div class="form-group" *ngIf="lecture.id">
-                    <label class="form-control-label" jhiTranslate="artemisApp.lecture.title" for="field_title">Title</label>
-                    <input required type="text" class="form-control" name="title" id="field_title" [(ngModel)]="lecture.title" />
-                </div>
-                <jhi-title-channel-name *ngIf="!lecture.id" [(title)]="lecture.title" [(channelName)]="channelName" channelNamePrefix="lecture-"></jhi-title-channel-name>
+                <jhi-title-channel-name [(title)]="lecture.title" [(channelName)]="channelName" channelNamePrefix="lecture-"></jhi-title-channel-name>
                 <div class="form-group" id="field_description">
                     <label class="form-control-label" jhiTranslate="artemisApp.lecture.description" for="field_description">Description</label>
                     <jhi-markdown-editor

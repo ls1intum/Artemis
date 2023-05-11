@@ -114,6 +114,20 @@ public interface LectureRepository extends JpaRepository<Lecture, Long> {
     @Cacheable(cacheNames = "lectureTitle", key = "#lectureId", unless = "#result == null")
     String getLectureTitle(@Param("lectureId") Long lectureId);
 
+    /**
+     * Returns the title of the lecture with the given id.
+     *
+     * @param lectureId the id of the lecture
+     * @return the name/title of the lecture or null if the lecture does not exist
+     */
+    @Query("""
+            SELECT DISTINCT lecture
+            FROM Lecture lecture
+            LEFT JOIN FETCH lecture.channel
+            WHERE lecture.id = :lectureId
+            """)
+    Lecture findByIdWithChannel(@Param("lectureId") Long lectureId);
+
     @NotNull
     default Lecture findByIdElseThrow(long lectureId) {
         return findById(lectureId).orElseThrow(() -> new EntityNotFoundException("Lecture", lectureId));
