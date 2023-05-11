@@ -148,6 +148,6 @@ public class AdminCourseResource {
         channelToCreate.setIsAnnouncementChannel(channelType.equals(DefaultChannelType.ANNOUNCEMENT));
         channelToCreate.setIsArchived(false);
         channelToCreate.setDescription(null);
-        channelService.createChannel(course, channelToCreate, Optional.of(userRepository.getUserWithGroupsAndAuthorities()));
+        channelService.createChannel(course, channelToCreate, Optional.empty());
     }
 }
