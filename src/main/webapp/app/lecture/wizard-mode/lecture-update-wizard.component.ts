@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, ViewChild } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Lecture } from 'app/entities/lecture.model';
@@ -21,6 +21,8 @@ export class LectureUpdateWizardComponent implements OnInit {
     @Input() isSaving: boolean;
     @Input() startDate: string;
     @Input() endDate: string;
+    @Input() channelName: string;
+    @Output() channelNameChange = new EventEmitter<string>();
 
     @ViewChild(LectureUpdateWizardUnitsComponent, { static: false }) unitsComponent: LectureUpdateWizardUnitsComponent;
     @ViewChild(LectureUpdateWizardLearningGoalsComponent, { static: false }) learningGoalsComponent: LectureUpdateWizardLearningGoalsComponent;
@@ -107,5 +109,10 @@ export class LectureUpdateWizardComponent implements OnInit {
         } else {
             this.router.navigate(['course-management', this.lecture.course!.id, 'lectures', this.lecture.id]);
         }
+    }
+
+    updateChannelName(newChannelName: string) {
+        this.channelName = newChannelName;
+        this.channelNameChange.emit(newChannelName);
     }
 }

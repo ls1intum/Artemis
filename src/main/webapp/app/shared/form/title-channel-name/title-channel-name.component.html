@@ -1,0 +1,19 @@
+<div>
+    <div class="form-group">
+        <label class="form-control-label" jhiTranslate="artemisApp.lecture.title" for="field_title">Title</label>
+        <input required type="text" class="form-control" name="title" id="field_title" [ngModel]="title" (ngModelChange)="updateTitle($event)" />
+    </div>
+    <div class="form-group">
+        <label class="form-control-label" jhiTranslate="artemisApp.lecture.channelName" for="field_channel_name">Channel Name</label>
+        <input
+            required
+            type="text"
+            class="form-control"
+            name="channelName"
+            id="field_channel_name"
+            [ngModel]="channelName"
+            (ngModelChange)="formatChannelName($event)"
+            maxlength="30"
+        />
+    </div>
+</div>

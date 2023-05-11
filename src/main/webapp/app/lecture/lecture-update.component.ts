@@ -81,8 +81,6 @@ export class LectureUpdateComponent implements OnInit {
             const lecture = data['lecture'];
             this.lecture = lecture ?? new Lecture();
 
-            this.updateChannelName();
-
             const course = data['course'];
             if (course) {
                 this.lecture.course = course;
@@ -205,13 +203,5 @@ export class LectureUpdateComponent implements OnInit {
         }
 
         this.lecture.endDate = this.lecture.startDate;
-    }
-
-    updateChannelName() {
-        this.formatChannelName('lecture-' + this.lecture.title);
-    }
-
-    formatChannelName(name: string) {
-        this.channelName = name.toLowerCase().slice(0, 30).replaceAll(' ', '-');
     }
 }
