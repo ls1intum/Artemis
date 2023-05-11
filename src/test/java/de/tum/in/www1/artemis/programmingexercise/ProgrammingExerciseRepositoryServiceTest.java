@@ -6,6 +6,7 @@ import java.time.ZonedDateTime;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 
@@ -41,11 +42,14 @@ class ProgrammingExerciseRepositoryServiceTest extends AbstractSpringIntegration
         programmingExerciseBeforeUpdate.setReleaseDate(null);
         programmingExerciseRepository.save(programmingExerciseBeforeUpdate);
 
-        // Adding a participation necessitates the authentication object set.
+        // Adding a participation requires the authentication object to be set.
         SecurityContextHolder.getContext().setAuthentication(SecurityUtils.makeAuthorizationObject(TEST_PREFIX + "instructor1"));
         participation = database.addStudentParticipationForProgrammingExercise(programmingExerciseBeforeUpdate, TEST_PREFIX + "student1");
 
         updatedProgrammingExercise = programmingExerciseRepository.findById(programmingExerciseBeforeUpdate.getId()).orElseThrow();
+
+        // The mock is also reset in the parent class but adding the student participation above already calls some methods on this service.
+        Mockito.reset(programmingExerciseParticipationService);
     }
 
     @Test
