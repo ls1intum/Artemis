@@ -57,7 +57,8 @@
             "copiedUrl": "URL kopiert",
             "uploadFile": "Datei hochladen",
             "viewTeam": "Team",
-            "sshKeyTip": "Um SSH zu nutzen, musst du {link:hier} einen SSH-Schlüssel zu deinem Konto hinzufügen."
+            "sshKeyTip": "Um SSH zu nutzen, musst du {link:hier} einen SSH-Schlüssel zu deinem Konto hinzufügen.",
+            "startExerciseBeforeStartDate": "Du kannst vor dem Startdatum nicht an der Aufgabe teilnehmen."
         }
     }
 }

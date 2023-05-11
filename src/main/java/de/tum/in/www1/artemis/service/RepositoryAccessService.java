@@ -73,7 +73,7 @@ public class RepositoryAccessService {
             // Return a message to the client.
             String errorMessage;
             if (!programmingExercise.isReleased()) {
-                errorMessage = "startExerciseBeforeStartDate";
+                errorMessage = "submitBeforeStartDate";
             }
             else if (exerciseDateService.isAfterDueDate(programmingParticipation)) {
                 errorMessage = "submitAfterDueDate";

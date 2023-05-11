@@ -239,8 +239,8 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges 
 
                     if (error.error.detail) {
                         const detailMessage = error.error.detail;
-                        if (detailMessage.includes('startExerciseBeforeStartDate')) {
-                            this.onError.emit('startExerciseBeforeStartDate');
+                        if (detailMessage.includes('submitBeforeStartDate')) {
+                            this.onError.emit('submitBeforeStartDate');
                         } else if (detailMessage.includes('submitAfterDueDate')) {
                             this.onError.emit('submitAfterDueDate');
                         } else if (detailMessage.includes('submitAfterReachingSubmissionLimit')) {
