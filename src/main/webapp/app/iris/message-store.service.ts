@@ -22,10 +22,7 @@ export class IrisMessageStore implements OnDestroy {
         this.subscription = this.action
             .pipe(
                 tap((action: MessageStoreAction) => {
-                    const currentState = this.state.getValue();
-                    const newState = IrisMessageStore.storeReducer(currentState, action);
-                    this.state.next(newState);
-                    console.log('Action received:', action);
+                    this.state.next(IrisMessageStore.storeReducer(this.state.getValue(), action));
                 }),
             )
             .subscribe();
