@@ -62,8 +62,6 @@ import { StudentExam } from 'app/entities/student-exam.model';
     styleUrls: ['navbar.scss'],
 })
 export class NavbarComponent implements OnInit, OnDestroy {
-    readonly SERVER_API_URL = SERVER_API_URL;
-
     inProduction: boolean;
     testServer: boolean;
     isNavbarCollapsed: boolean;

@@ -46,27 +46,10 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     private TextUnit textUnit3;
 
-    private void testAllPreAuthorize() throws Exception {
-        request.put("/api/lectures/" + lecture1.getId() + "/lecture-units-order", List.of(), HttpStatus.FORBIDDEN);
-        request.delete("/api/lectures/" + lecture1.getId() + "/lecture-units/0", HttpStatus.FORBIDDEN);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void testAll_asTutor() throws Exception {
-        this.testAllPreAuthorize();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testAll_asStudent() throws Exception {
-        this.testAllPreAuthorize();
-    }
-
     @BeforeEach
     void initTestCase() throws Exception {
-        this.database.addUsers(TEST_PREFIX, 6, 6, 0, 1);
-        List<Course> courses = this.database.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, 5);
+        this.database.addUsers(TEST_PREFIX, 1, 1, 0, 1);
+        List<Course> courses = this.database.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, 1);
         Course course1 = this.courseRepository.findByIdWithExercisesAndLecturesElseThrow(courses.get(0).getId());
         this.lecture1 = course1.getLectures().stream().findFirst().get();
 
@@ -87,6 +70,23 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         this.lecture1 = lectureRepository.findByIdWithLectureUnitsElseThrow(lecture1.getId());
         this.textUnit = textUnitRepository.findById(this.textUnit.getId()).get();
         this.textUnit2 = textUnitRepository.findById(textUnit2.getId()).get();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testAll_asTutor() throws Exception {
+        this.testAllPreAuthorize();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testAll_asStudent() throws Exception {
+        this.testAllPreAuthorize();
+    }
+
+    private void testAllPreAuthorize() throws Exception {
+        request.put("/api/lectures/" + lecture1.getId() + "/lecture-units-order", List.of(), HttpStatus.FORBIDDEN);
+        request.delete("/api/lectures/" + lecture1.getId() + "/lecture-units/0", HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -118,7 +118,7 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteLectureUnit_shouldRemoveCompletions() throws Exception {
         var lectureUnit = lecture1.getLectureUnits().get(0);
-        var user = userRepo.findOneByLogin(TEST_PREFIX + "student1").get();
+        var user = database.getUserByLogin(TEST_PREFIX + "student1");
 
         LectureUnitCompletion completion = new LectureUnitCompletion();
         completion.setLectureUnit(lectureUnit);

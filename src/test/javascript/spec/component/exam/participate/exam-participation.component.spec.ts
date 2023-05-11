@@ -469,7 +469,7 @@ describe('ExamParticipationComponent', () => {
             jest.spyOn(websocketService, 'receive').mockReturnValue(of(9001));
             comp.initIndividualEndDates(startDate);
             expect(comp.studentExam.workingTime).toBe(9001);
-            expect(artemisDatePipeSpy).toHaveBeenCalledWith(startDate.add(9001, 'seconds'), 'short');
+            expect(artemisDatePipeSpy).toHaveBeenCalledWith(startDate.add(9001, 'seconds'), 'time');
             expect(alertSuccessSpy).toHaveBeenCalledWith('artemisApp.examParticipation.workingTimeIncreased', { date: undefined });
         });
 

@@ -5,6 +5,7 @@ artemis:
     repo-download-clone-path: /opt/artemis/data/repos-download
     file-upload-path: /opt/artemis/data/uploads
     submission-export-path: /opt/artemis/data/exports
+    legal-path: /opt/artemis/data/legal
 
 spring:
     datasource:

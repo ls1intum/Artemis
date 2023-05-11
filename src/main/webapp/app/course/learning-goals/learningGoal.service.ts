@@ -14,7 +14,7 @@ type EntityArrayResponseType = HttpResponse<LearningGoal[]>;
     providedIn: 'root',
 })
 export class LearningGoalService {
-    private resourceURL = SERVER_API_URL + 'api';
+    private resourceURL = 'api';
 
     constructor(private httpClient: HttpClient, private entityTitleService: EntityTitleService, private lectureUnitService: LectureUnitService) {}
 
