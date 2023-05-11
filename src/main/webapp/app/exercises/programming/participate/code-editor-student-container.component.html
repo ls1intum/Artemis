@@ -34,13 +34,18 @@
                     [includedInOverallScore]="exercise.includedInOverallScore"
                 ></jhi-included-in-score-badge></span
             ><br />
-            <span *ngIf="exercise.submissionPolicy"
-                >{{ exercise.submissionPolicy.submissionLimit }} {{ 'artemisApp.programmingExercise.submissionPolicy.submissionsAllowed' | artemisTranslate }}</span
-            >
-            <span *ngIf="exercise.submissionPolicy && exercise.submissionPolicy.type === SubmissionPolicyType.SUBMISSION_PENALTY">
-                ({{ 'artemisApp.programmingExercise.submissionPolicy.submissionPenalty.penaltyInfoLabel' | artemisTranslate }}:
-                {{ exercise.submissionPolicy.exceedingPenalty }}P)</span
-            >
+            <ng-container *ngIf="exercise.submissionPolicy && numberOfSubmissionsForSubmissionPolicy !== undefined">
+                <span>
+                    {{
+                        'artemisApp.programmingExercise.submissionPolicy.submissionsAllowed'
+                            | artemisTranslate : { submissionCount: numberOfSubmissionsForSubmissionPolicy, totalSubmissions: exercise.submissionPolicy.submissionLimit }
+                    }}</span
+                >
+                <span *ngIf="exercise.submissionPolicy.type === SubmissionPolicyType.SUBMISSION_PENALTY">
+                    ({{ 'artemisApp.programmingExercise.submissionPolicy.submissionPenalty.penaltyInfoLabel' | artemisTranslate }}:
+                    {{ exercise.submissionPolicy.exceedingPenalty }}P)</span
+                >
+            </ng-container>
         </div>
         <!-- prettier-ignore -->
         <div editorToolbar class="d-inline-flex align-items-center">

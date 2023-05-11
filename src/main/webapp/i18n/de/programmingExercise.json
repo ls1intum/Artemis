@@ -464,7 +464,7 @@
                 "created": "Die Abgaberichtlinie wurde erfolgreich erstellt!",
                 "updated": "Die Abgaberichtlinie wurde erfolgreich gespeichert!",
                 "deleted": "Die Abgaberichtlinie wurde erfolgreich gelöscht!!",
-                "submissionsAllowed": "erlaubte Abgaben",
+                "submissionsAllowed": "{{submissionCount}}/{{totalSubmissions}} erlaubte Abgaben",
                 "none": {
                     "optionLabel": "Keine"
                 },

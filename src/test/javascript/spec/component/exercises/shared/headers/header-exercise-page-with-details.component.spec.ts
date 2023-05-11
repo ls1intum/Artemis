@@ -28,11 +28,6 @@ describe('HeaderExercisePageWithDetails', () => {
     let exercise: ProgrammingExercise;
     let participation: StudentParticipation;
 
-    const submissionCountingOne: ProgrammingSubmission = { type: SubmissionType.MANUAL, results: [new Result()], commitHash: 'qwer' };
-    const submissionCountingTwo: ProgrammingSubmission = { type: SubmissionType.MANUAL, results: [new Result()], commitHash: 'asdf' };
-    const submissionNotManual: ProgrammingSubmission = { type: SubmissionType.INSTRUCTOR };
-    const submissionNoResult: ProgrammingSubmission = { type: SubmissionType.MANUAL, commitHash: 'yxcv' };
-
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
@@ -169,23 +164,37 @@ describe('HeaderExercisePageWithDetails', () => {
         expect(component.dueDate).toBeUndefined();
     });
 
-    it('should count number of submissions correctly', () => {
-        participation.submissions = [submissionCountingOne, submissionNoResult, submissionCountingTwo, submissionNotManual];
+    it.each([
+        [[] as Result[], 0],
+        [[{ rated: true, submission: { type: SubmissionType.MANUAL, commitHash: 'first' } as ProgrammingSubmission }] as Result[], 1],
+        [
+            [
+                { rated: false, submission: { type: SubmissionType.MANUAL, commitHash: 'first' } as ProgrammingSubmission },
+                { rated: true, submission: { type: SubmissionType.INSTRUCTOR, commitHash: 'first' } as ProgrammingSubmission },
+            ] as Result[],
+            0,
+        ],
+        [
+            [
+                { rated: true, submission: { type: SubmissionType.MANUAL, commitHash: 'first' } as ProgrammingSubmission },
+                { rated: true, submission: { type: SubmissionType.MANUAL, commitHash: 'first' } as ProgrammingSubmission },
+            ] as Result[],
+            1,
+        ],
+        [
+            [
+                { rated: true, submission: { type: SubmissionType.MANUAL, commitHash: 'first' } as ProgrammingSubmission },
+                { rated: true, submission: { type: SubmissionType.MANUAL, commitHash: 'second' } as ProgrammingSubmission },
+            ] as Result[],
+            2,
+        ],
+    ])('should count number of submissions correctly', (results: Result[], expectedNumber: number) => {
+        participation.results = results;
         component.studentParticipation = participation;
         component.submissionPolicy = new LockRepositoryPolicy();
 
         component.ngOnChanges();
 
-        expect(component.numberOfSubmissions).toBe(2);
-    });
-
-    it('should count number of submissions correctly with compensation', () => {
-        participation.submissions = [submissionNoResult, submissionCountingOne, submissionCountingTwo, submissionNotManual];
-        component.studentParticipation = participation;
-        component.submissionPolicy = new LockRepositoryPolicy();
-
-        component.ngOnChanges();
-
-        expect(component.numberOfSubmissions).toBe(3);
+        expect(component.numberOfSubmissions).toBe(expectedNumber);
     });
 });
