@@ -25,7 +25,7 @@ class TopicSubscriptionInterceptorTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     void testAllowSubscription() {
-        database.addUsers(TEST_PREFIX, 4, 0, 1, 1);
+        database.addUsers(TEST_PREFIX, 1, 0, 1, 1);
         var course = database.createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(TEST_PREFIX, false);
         var exercise = course.getExercises().stream().findFirst().orElseThrow();
         var participation = exercise.getStudentParticipations().stream().findFirst().orElseThrow();
