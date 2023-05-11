@@ -140,11 +140,12 @@ public class ChannelService {
     /**
      * Register users to the newly created channel
      *
-     * @param addAllStudents    if true, all students of the course will be added to the channel
-     * @param addAllTutors      if true, all tutors of the course will be added to the channel
-     * @param addAllInstructors if true, all instructors of the course will be added to the channel
-     * @param course            the course to create the channel for
-     * @param channel           the channel to create
+     * @param addAllStudents        if true, all students of the course will be added to the channel
+     * @param addAllTutors          if true, all tutors of the course will be added to the channel
+     * @param addAllInstructors     if true, all instructors of the course will be added to the channel
+     * @param usersLoginsToRegister the logins of the users to register to the channel
+     * @param course                the course to create the channel for
+     * @param channel               the channel to create
      * @return the created channel
      */
     public Set<User> registerUsersToChannel(boolean addAllStudents, boolean addAllTutors, boolean addAllInstructors, List<String> usersLoginsToRegister, Course course,
