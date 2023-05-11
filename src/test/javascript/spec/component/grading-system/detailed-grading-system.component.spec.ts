@@ -833,8 +833,8 @@ describe('Detailed Grading System Component', () => {
         comp.course.presentationScore = presentationScore;
         comp.presentationsConfig = {
             presentationType: presentationType,
-            gradedPresentationsNumber: presentationsNumber,
-            gradedPresentationsWeight: presentationsWeight,
+            presentationsNumber: presentationsNumber,
+            presentationsWeight: presentationsWeight,
         };
         translateStub.mockReturnValue('invalid presentations config');
 

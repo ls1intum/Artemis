@@ -276,7 +276,6 @@ public class GradingScaleResource {
         gradingScale.setCourse(course);
     }
 
-    // TODO: add meaningful error messages
     private void validatePresentationsConfiguration(GradingScale gradingScale) {
         Course course = gradingScale.getCourse();
         if (course == null) {
@@ -292,7 +291,7 @@ public class GradingScaleResource {
             }
             // The presentationScore must be above 0
             if (course.getPresentationScore() <= 0) {
-                throw new BadRequestAlertException("artemisApp.gradingSystem.error.invalidPresentationsNumber", ENTITY_NAME, "alert");
+                throw new BadRequestAlertException("The number of presentations must be a whole number above 0!", ENTITY_NAME, "invalidPresentationsNumber");
             }
         }
 
@@ -300,15 +299,15 @@ public class GradingScaleResource {
         if (gradingScale.getPresentationsNumber() != null || gradingScale.getPresentationsWeight() != null) {
             // The presentationsNumber must be above 0
             if (gradingScale.getPresentationsNumber() == null || gradingScale.getPresentationsNumber() < 1) {
-                throw new BadRequestAlertException("artemisApp.gradingSystem.error.invalidPresentationsNumber", ENTITY_NAME, "alert");
+                throw new BadRequestAlertException("The number of presentations must be a whole number above 0!", ENTITY_NAME, "invalidPresentationsNumber");
             }
             // The presentationsWeight must be between 0 and 99
             if (gradingScale.getPresentationsWeight() == null || gradingScale.getPresentationsWeight() < 0 || gradingScale.getPresentationsWeight() > 99) {
-                throw new BadRequestAlertException("artemisApp.gradingSystem.error.invalidPresentationsWeight", ENTITY_NAME, "alert");
+                throw new BadRequestAlertException("The combined weight of all presentations must be between 0 and 99!", ENTITY_NAME, "invalidPresentationsWeight");
             }
             // The presentationScore must be 0 or null
             if (course.getPresentationScore() != null && course.getPresentationScore() != 0) {
-                throw new BadRequestAlertException("artemisApp.gradingSystem.error.invalidBasicPresentationIsEnabled", ENTITY_NAME, "alert");
+                throw new BadRequestAlertException("Presentations are already enabled for this course!", ENTITY_NAME, "invalidBasicPresentationIsEnabled");
             }
         }
     }

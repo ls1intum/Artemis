@@ -286,7 +286,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
             this.calculateAndFilterNotIncludedInScore();
             this.calculateMaxPoints();
             this.calculateReachablePoints();
-            this.retrieveReachablePresentationPoints();
+            this.calculateReachablePresentationPoints();
             this.calculateAbsoluteScores();
             this.calculateRelativeScores();
             this.calculatePresentationScores();
@@ -437,7 +437,6 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         this.overallPointsPerExercise.set(ExerciseType.MODELING, modelingExerciseTotalScore);
         this.overallPointsPerExercise.set(ExerciseType.TEXT, textExerciseTotalScore);
         this.overallPointsPerExercise.set(ExerciseType.FILE_UPLOAD, fileUploadExerciseTotalScore);
-
         this.ngxDoughnutData = [];
         scores.forEach((score, index) => {
             if (score > 0) {
@@ -546,7 +545,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
      * Retrieve the reachable presentation score for the course from the scores storage service
      * @private
      */
-    private retrieveReachablePresentationPoints(): void {
+    private calculateReachablePresentationPoints(): void {
         this.reachablePresentationPoints = this.retrieveTotalScoreByScoreType(ScoreType.REACHABLE_PRESENTATION_POINTS);
     }
 

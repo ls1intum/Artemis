@@ -59,8 +59,8 @@ describe('Grading System Presentations Component', () => {
 
         component.ngOnChanges();
 
-        expect(component.presentationsConfig.gradedPresentationsNumber).toBeUndefined();
-        expect(component.presentationsConfig.gradedPresentationsWeight).toBeUndefined();
+        expect(component.presentationsConfig.presentationsNumber).toBeUndefined();
+        expect(component.presentationsConfig.presentationsWeight).toBeUndefined();
         expect(component.presentationsConfig.presentationType).toBe(PresentationType.NONE);
     });
 
@@ -69,8 +69,8 @@ describe('Grading System Presentations Component', () => {
 
         component.ngOnChanges();
 
-        expect(component.presentationsConfig.gradedPresentationsNumber).toBeUndefined();
-        expect(component.presentationsConfig.gradedPresentationsWeight).toBeUndefined();
+        expect(component.presentationsConfig.presentationsNumber).toBeUndefined();
+        expect(component.presentationsConfig.presentationsWeight).toBeUndefined();
         expect(component.presentationsConfig.presentationType).toBe(PresentationType.BASIC);
     });
 
@@ -79,8 +79,8 @@ describe('Grading System Presentations Component', () => {
 
         component.ngOnChanges();
 
-        expect(component.presentationsConfig.gradedPresentationsNumber).toBe(gradingScaleWithGradedPresentations.presentationsNumber);
-        expect(component.presentationsConfig.gradedPresentationsWeight).toBe(gradingScaleWithGradedPresentations.presentationsWeight);
+        expect(component.presentationsConfig.presentationsNumber).toBe(gradingScaleWithGradedPresentations.presentationsNumber);
+        expect(component.presentationsConfig.presentationsWeight).toBe(gradingScaleWithGradedPresentations.presentationsWeight);
         expect(component.presentationsConfig.presentationType).toBe(PresentationType.GRADED);
     });
 
@@ -89,7 +89,7 @@ describe('Grading System Presentations Component', () => {
 
         component.updateGradedPresentationsNumber(128);
 
-        expect(component.presentationsConfig.gradedPresentationsNumber).toBe(128);
+        expect(component.presentationsConfig.presentationsNumber).toBe(128);
         expect(gradingScaleWithGradedPresentations.presentationsNumber).toBe(128);
     });
 
@@ -98,7 +98,7 @@ describe('Grading System Presentations Component', () => {
 
         component.updateGradedPresentationsWeight(64);
 
-        expect(component.presentationsConfig.gradedPresentationsWeight).toBe(64);
+        expect(component.presentationsConfig.presentationsWeight).toBe(64);
         expect(gradingScaleWithGradedPresentations.presentationsWeight).toBe(64);
     });
 
@@ -108,9 +108,9 @@ describe('Grading System Presentations Component', () => {
         component.onPresentationTypeChange(PresentationType.GRADED);
 
         expect(component.isGradedPresentation()).toBeTrue();
-        expect(component.presentationsConfig.gradedPresentationsNumber).toBe(2); // Default value
+        expect(component.presentationsConfig.presentationsNumber).toBe(2); // Default value
         expect(gradingScaleWithoutPresentations.presentationsNumber).toBe(2); // Default value
-        expect(component.presentationsConfig.gradedPresentationsWeight).toBe(20); // Default value
+        expect(component.presentationsConfig.presentationsWeight).toBe(20); // Default value
         expect(gradingScaleWithoutPresentations.presentationsWeight).toBe(20); // Default value
     });
 
@@ -120,9 +120,9 @@ describe('Grading System Presentations Component', () => {
         component.onPresentationTypeChange(PresentationType.NONE);
 
         expect(component.isGradedPresentation()).toBeFalse();
-        expect(component.presentationsConfig.gradedPresentationsNumber).toBeUndefined();
+        expect(component.presentationsConfig.presentationsNumber).toBeUndefined();
         expect(gradingScaleWithGradedPresentations.presentationsNumber).toBeUndefined();
-        expect(component.presentationsConfig.gradedPresentationsWeight).toBeUndefined();
+        expect(component.presentationsConfig.presentationsWeight).toBeUndefined();
         expect(gradingScaleWithGradedPresentations.presentationsWeight).toBeUndefined();
     });
 });

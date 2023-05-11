@@ -155,7 +155,7 @@ export abstract class BaseGradingSystemComponent implements OnInit {
         } else {
             this.gradingScale.course = this.course;
             this.gradingScale.course!.maxPoints = this.maxPoints;
-            this.gradingScale.course!.presentationScore = this.presentationsConfig.basicPresentationsNumber;
+            this.gradingScale.course!.presentationScore = this.presentationsConfig.presentationScore;
         }
         if (this.existingGradingScale) {
             if (this.isExam) {
@@ -297,15 +297,17 @@ export abstract class BaseGradingSystemComponent implements OnInit {
     validPresentationsConfig(): boolean {
         if (this.presentationsConfig.presentationType === PresentationType.NONE) {
             // The presentationsNumber and presentationsWeight must be undefined
-            if (this.presentationsConfig.gradedPresentationsNumber !== undefined || this.presentationsConfig.gradedPresentationsWeight !== undefined) {
+            if (this.presentationsConfig.presentationsNumber !== undefined || this.presentationsConfig.presentationsWeight !== undefined) {
                 return false;
             }
-            // TODO: The presentationScore must be 0 or undefined // edit in followup, when presentationScore is
-            //  moved to grading key page
+            // The presentationScore must be 0 or undefined
+            if (this.presentationsConfig.presentationScore !== undefined) {
+                return false;
+            }
         }
         if (this.presentationsConfig.presentationType === PresentationType.BASIC) {
             // The presentationsNumber and presentationsWeight must be undefined
-            if (this.presentationsConfig.gradedPresentationsNumber !== undefined || this.presentationsConfig.gradedPresentationsWeight !== undefined) {
+            if (this.presentationsConfig.presentationsNumber !== undefined || this.presentationsConfig.presentationsWeight !== undefined) {
                 return false;
             }
             // The presentationScore must be above 0
@@ -317,18 +319,18 @@ export abstract class BaseGradingSystemComponent implements OnInit {
         if (this.presentationsConfig.presentationType === PresentationType.GRADED) {
             // The presentationsNumber must be a whole number above 0
             if (
-                this.presentationsConfig.gradedPresentationsNumber === undefined ||
-                !Number.isInteger(this.presentationsConfig.gradedPresentationsNumber) ||
-                this.presentationsConfig.gradedPresentationsNumber < 1
+                this.presentationsConfig.presentationsNumber === undefined ||
+                !Number.isInteger(this.presentationsConfig.presentationsNumber) ||
+                this.presentationsConfig.presentationsNumber < 1
             ) {
                 this.invalidGradeStepsMessage = this.translateService.instant('artemisApp.gradingSystem.error.invalidPresentationsNumber');
                 return false;
             }
             // The presentationsWeight must be between 0 and 100
             if (
-                this.presentationsConfig.gradedPresentationsWeight === undefined ||
-                this.presentationsConfig.gradedPresentationsWeight < 0 ||
-                this.presentationsConfig.gradedPresentationsWeight > 99
+                this.presentationsConfig.presentationsWeight === undefined ||
+                this.presentationsConfig.presentationsWeight < 0 ||
+                this.presentationsConfig.presentationsWeight > 99
             ) {
                 this.invalidGradeStepsMessage = this.translateService.instant('artemisApp.gradingSystem.error.invalidPresentationsWeight');
                 return false;
