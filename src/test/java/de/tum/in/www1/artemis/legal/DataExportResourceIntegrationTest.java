@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -20,7 +21,9 @@ import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -35,6 +38,7 @@ import de.tum.in.www1.artemis.programmingexercise.ProgrammingExerciseTestService
 import de.tum.in.www1.artemis.repository.DataExportRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.DataExportService;
+import de.tum.in.www1.artemis.service.connectors.apollon.ApollonConversionService;
 import de.tum.in.www1.artemis.util.FileUtils;
 import de.tum.in.www1.artemis.util.ZipFileTestUtilService;
 
@@ -42,6 +46,12 @@ import de.tum.in.www1.artemis.util.ZipFileTestUtilService;
 class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     private static final String TEST_PREFIX = "dataexport";
+
+    private static final String FILE_FORMAT_TXT = ".txt";
+
+    private static final String FILE_FORMAT_PDF = ".pdf";
+
+    private static final String FILE_FORMAT_ZIP = ".zip";
 
     @Value("${artemis.data-export-path}")
     Path dataExportPath;
@@ -61,14 +71,21 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
     @Autowired
     private ProgrammingExerciseTestService programmingExerciseTestService;
 
+    @MockBean
+    private ApollonConversionService apollonConversionService;
+
     private static final String TEST_DATA_EXPORT_BASE_FILE_PATH = "src/test/resources/test-data/data-export/data-export.zip";
 
     private static final String FILE_FORMAT_CSV = ".csv";
 
     @BeforeEach
-    void initTestCase() {
+    void initTestCase() throws IOException {
         database.addUsers(TEST_PREFIX, 5, 5, 5, 1);
         database.adjustUserGroupsToCustomGroups(TEST_PREFIX, "", 5, 5, 5, 1);
+        // we can not directly return the input stream using mockito because then the stream is closed when the method is invoked more than once
+        var byteArray = new ClassPathResource("test-data/data-export/apollon_conversion.pdf").getInputStream().readAllBytes();
+        when(apollonConversionService.convertModel(anyString())).thenReturn(new ByteArrayInputStream(byteArray));
+
     }
 
     @Test
@@ -92,12 +109,14 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
         assertThat(courseDirPath).isDirectoryContaining(path -> path.getFileName().toString().endsWith("FileUpload2"))
                 .isDirectoryContaining(path -> path.getFileName().toString().endsWith("Modeling0"))
                 .isDirectoryContaining(path -> path.getFileName().toString().endsWith("Modeling3")).isDirectoryContaining(path -> path.getFileName().toString().endsWith("Text1"))
-                .isDirectoryContaining(path -> path.getFileName().toString().endsWith("TSTEXC")).isDirectoryContaining(path -> path.getFileName().toString().endsWith("quiz"));
+                .isDirectoryContaining(path -> path.getFileName().toString().endsWith("Programming")).isDirectoryContaining(path -> path.getFileName().toString().endsWith("quiz"));
         getExerciseDirectoryPaths(courseDirPath).forEach(this::assertCorrectContentForExercise);
 
     }
 
     private void prepareTestDataForDataExportCreation() throws Exception {
+        // TODO add dnd question
+        // TODO add assertion for mc question file, for short answer question file, for dnd pdf file
         String validModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
         Course course1 = database.addCourseWithExercisesAndSubmissions(TEST_PREFIX, "", 4, 2, 1, 1, false, 1, validModel);
         var programmingExercise = database.addProgrammingExerciseToCourse(course1, false);
@@ -110,28 +129,38 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
         database.addQuizExerciseToCourseWithParticipationAndSubmissionForUser(course1, TEST_PREFIX + "student1");
         database.addSubmission(participation, submission);
         database.addSubmission(participation, submission2);
-        database.addResultToSubmission(submission, AssessmentType.AUTOMATIC, null, 3.0, true, ZonedDateTime.now().minusMinutes(2));
+        database.addResultToSubmission(submission2, AssessmentType.AUTOMATIC, null, 3.0, true, ZonedDateTime.now().minusMinutes(2));
+
+        // add communication and messaging data
+        database.addMessageWithReplyAndReactionInGroupChatOfCourseForUser(TEST_PREFIX + "student1", course1, "group chat");
+        database.addMessageInChannelOfCourseForUser(TEST_PREFIX + "student1", course1, "channel");
+        database.addMessageWithReplyAndReactionInOneToOneChatOfCourseForUser(TEST_PREFIX + "student1", course1, "one-to-one-chat");
+
         // Mock student repo
         Repository studentRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(programmingExerciseTestService.studentRepo.localRepoFile.toPath(), null);
         doReturn(studentRepository).when(gitService).getOrCheckoutRepository(eq(participation.getVcsRepositoryUrl()), anyString(), anyBoolean());
     }
 
     private void assertCorrectContentForExercise(Path exerciseDirPath) {
-        Predicate<Path> participationFile = path -> path.getFileName().toString().endsWith(FILE_FORMAT_CSV) && path.getFileName().toString().contains("participation");
-        Predicate<Path> resultsFile = path -> path.getFileName().toString().endsWith(FILE_FORMAT_CSV) && path.getFileName().toString().contains("results");
+        // Predicate<Path> participationFile = path -> path.getFileName().toString().endsWith(FILE_FORMAT_CSV) && path.getFileName().toString().contains("participation");
+        Predicate<Path> resultsFile = path -> path.getFileName().toString().endsWith(FILE_FORMAT_TXT) && path.getFileName().toString().contains("result");
         Predicate<Path> submissionFile = path -> path.getFileName().toString().endsWith(FILE_FORMAT_CSV) && path.getFileName().toString().contains("submission");
-        assertThat(exerciseDirPath).isDirectoryContaining(participationFile).isDirectoryContaining(resultsFile).isDirectoryContaining(submissionFile);
-        if (exerciseDirPath.toString().contains("TSTEXC")) {
+        assertThat(exerciseDirPath).isDirectoryContaining(submissionFile);
+        // quizzes do not have a result file
+        if (!exerciseDirPath.toString().contains("quiz")) {
+            assertThat(exerciseDirPath).isDirectoryContaining(resultsFile);
+        }
+        if (exerciseDirPath.toString().contains("Programming")) {
             // zip file of the repository
-            assertThat(exerciseDirPath).isDirectoryContaining(path -> path.getFileName().toString().endsWith(".zip"));
+            assertThat(exerciseDirPath).isDirectoryContaining(path -> path.getFileName().toString().endsWith(FILE_FORMAT_ZIP));
         }
         else if (exerciseDirPath.toString().contains("Modeling")) {
-            // model as json file
-            assertThat(exerciseDirPath).isDirectoryContaining(path -> path.getFileName().toString().endsWith(".json"));
+            // model as pdf file
+            assertThat(exerciseDirPath).isDirectoryContaining(path -> path.getFileName().toString().endsWith(FILE_FORMAT_PDF));
         }
         else if (exerciseDirPath.toString().contains("Text")) {
             // submission text txt file
-            assertThat(exerciseDirPath).isDirectoryContaining(path -> path.getFileName().toString().endsWith("_text.txt"));
+            assertThat(exerciseDirPath).isDirectoryContaining(path -> path.getFileName().toString().endsWith("_text" + FILE_FORMAT_TXT));
         }
 
     }

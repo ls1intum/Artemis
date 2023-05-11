@@ -256,7 +256,7 @@ public class DataExportService {
         if (!Files.exists(exerciseDir)) {
             Files.createDirectory(exerciseDir);
         }
-        createParticipationsSubmissionsResultsExport(programmingExercise, exerciseDir);
+        createSubmissionsResultsExport(programmingExercise, exerciseDir);
         RepositoryExportOptionsDTO repositoryExportOptions = new RepositoryExportOptionsDTO();
         repositoryExportOptions.setExportAllParticipants(false);
         repositoryExportOptions.setAnonymizeStudentCommits(false);
@@ -274,12 +274,12 @@ public class DataExportService {
         programmingExerciseExportService.exportStudentRepositories(programmingExercise, listOfProgrammingExerciseParticipations, repositoryExportOptions, tempRepoWorkingDir,
                 exerciseDir, exportRepoErrors);
         // we use this directory only to clone the repository and don't do this in our current directory because the current directory is part of the final data export
-        // so we can delete it after use
+        // --> we can delete it after use
         fileService.scheduleForDirectoryDeletion(tempRepoWorkingDir, 5);
 
     }
 
-    private void createParticipationsSubmissionsResultsExport(Exercise exercise, Path exerciseDir) throws IOException {
+    private void createSubmissionsResultsExport(Exercise exercise, Path exerciseDir) throws IOException {
         for (var participation : exercise.getStudentParticipations()) {
             // createParticipationCsvFile(participation, exerciseDir);
             for (var submission : participation.getSubmissions()) {
@@ -538,7 +538,7 @@ public class DataExportService {
         if (!Files.exists(exercisePath)) {
             Files.createDirectory(exercisePath);
         }
-        createParticipationsSubmissionsResultsExport(exercise, exercisePath);
+        createSubmissionsResultsExport(exercise, exercisePath);
 
     }
 

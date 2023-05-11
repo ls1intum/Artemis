@@ -57,7 +57,9 @@ import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseSolutionEntry;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
 import de.tum.in.www1.artemis.domain.lecture.*;
 import de.tum.in.www1.artemis.domain.metis.*;
+import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
+import de.tum.in.www1.artemis.domain.metis.conversation.GroupChat;
 import de.tum.in.www1.artemis.domain.metis.conversation.OneToOneChat;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
@@ -76,6 +78,7 @@ import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseTaskRepositor
 import de.tum.in.www1.artemis.repository.metis.AnswerPostRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
+import de.tum.in.www1.artemis.repository.metis.ReactionRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ConversationRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismResultRepository;
@@ -351,6 +354,9 @@ public class DatabaseUtilService {
 
     @Autowired
     private ShortAnswerMappingRepository shortAnswerMappingRepository;
+
+    @Autowired
+    private ReactionRepository reactionRepository;
 
     // TODO: this should probably be moved into another service
     public void changeUser(String username) {
@@ -3165,7 +3171,7 @@ public class DatabaseUtilService {
                     modelSubmissionService.handleModelingSubmission(submission, modelingExercise, user);
                     studentParticipationRepo.save(participation);
                     if (numberOfAssessments >= j) {
-                        Result result = generateResult(submission, currentUser);
+                        Result result = generateResultWithScore(submission, currentUser, 3.0);
                         submission.addResult(result);
                         participation.addResult(result);
                         studentParticipationRepo.save(participation);
@@ -3185,7 +3191,7 @@ public class DatabaseUtilService {
                     TextSubmission submission = ModelFactory.generateTextSubmission("submissionText", Language.ENGLISH, true);
                     submission = saveTextSubmission(textExercise, submission, userPrefix + "student" + j);
                     if (numberOfAssessments >= j) {
-                        Result result = generateResult(submission, currentUser);
+                        Result result = generateResultWithScore(submission, currentUser, 3.0);
                         submission.addResult(result);
                         saveResultInParticipation(submission, result);
                         textSubmissionRepo.save(submission);
@@ -3203,7 +3209,7 @@ public class DatabaseUtilService {
                     FileUploadSubmission submission = ModelFactory.generateFileUploadSubmissionWithFile(true, "path/to/file.pdf");
                     saveFileUploadSubmission(fileUploadExercise, submission, userPrefix + "student" + j);
                     if (numberOfAssessments >= j) {
-                        Result result = generateResult(submission, currentUser);
+                        Result result = generateResultWithScore(submission, currentUser, 3.0);
                         saveResultInParticipation(submission, result);
                         fileUploadSubmissionRepo.save(submission);
                         generateComplaintAndResponses(userPrefix, j, numberOfComplaints, numberComplaintResponses, typeComplaint, result, currentUser);
@@ -3230,6 +3236,12 @@ public class DatabaseUtilService {
         result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         result.setAssessor(assessor);
         result.setRated(true);
+        return result;
+    }
+
+    public Result generateResultWithScore(Submission submission, User assessor, Double score) {
+        Result result = generateResult(submission, assessor);
+        result.setScore(score);
         return result;
     }
 
@@ -4835,6 +4847,81 @@ public class DatabaseUtilService {
         conversationParticipant.setUser(getUserByLogin(userName));
 
         return conversationParticipantRepository.save(conversationParticipant);
+    }
+
+    public Conversation addMessageWithReplyAndReactionInGroupChatOfCourseForUser(String login, Course course, String messageText) {
+        Conversation groupChat = new GroupChat();
+        groupChat.setCourse(course);
+        var message = createMessageWithReactionForUser(login, messageText, groupChat);
+        addThreadReplyWithReactionForUserToPost(login, message);
+        return conversationRepository.save(groupChat);
+    }
+
+    public Conversation addMessageWithReplyAndReactionInOneToOneChatOfCourseForUser(String login, Course course, String messageText) {
+        Conversation oneToOneChat = new OneToOneChat();
+        oneToOneChat.setCourse(course);
+        var message = createMessageWithReactionForUser(login, messageText, oneToOneChat);
+        addThreadReplyWithReactionForUserToPost(login, message);
+        return conversationRepository.save(oneToOneChat);
+    }
+
+    private void addThreadReplyWithReactionForUserToPost(String login, Post answerPostBelongsTo) {
+        AnswerPost answerPost = new AnswerPost();
+        answerPost.setAuthor(getUserByLogin(login));
+        answerPost.setContent("answer post");
+        answerPost.setCreationDate(ZonedDateTime.now());
+        answerPost.setPost(answerPostBelongsTo);
+        addReactionForUserToAnswerPost(login, answerPost);
+        postRepository.save(answerPostBelongsTo);
+        answerPostRepository.save(answerPost);
+    }
+
+    private void addReactionForUserToPost(String login, Post post) {
+        Reaction reaction = createReactionForUser(getUserByLogin(login));
+        reaction.setPost(post);
+        conversationRepository.save(post.getConversation());
+        postRepository.save(post);
+        reactionRepository.save(reaction);
+    }
+
+    private void addReactionForUserToAnswerPost(String login, AnswerPost answerPost) {
+        Reaction reaction = createReactionForUser(getUserByLogin(login));
+        reaction.setAnswerPost(answerPost);
+        answerPostRepository.save(answerPost);
+        reactionRepository.save(reaction);
+    }
+
+    private Reaction createReactionForUser(User user) {
+        Reaction reaction = new Reaction();
+        reaction.setEmojiId("heart");
+        reaction.setUser(user);
+        return reaction;
+    }
+
+    public Conversation addMessageInChannelOfCourseForUser(String login, Course course, String messageText) {
+        Channel channel = new Channel();
+        channel.setIsPublic(true);
+        channel.setIsAnnouncementChannel(false);
+        channel.setIsArchived(false);
+        channel.setName("channel");
+        channel.setCourse(course);
+        var message = createMessageWithReactionForUser(login, messageText, channel);
+        addThreadReplyWithReactionForUserToPost(login, message);
+        return conversationRepository.save(channel);
+    }
+
+    private Post createMessageWithReactionForUser(String login, String messageText, Conversation conversation) {
+        Post message = new Post();
+        message.setConversation(conversation);
+        message.setAuthor(getUserByLogin(login));
+        message.setContent(messageText);
+        message.setCreationDate(ZonedDateTime.now());
+        conversation.setCreator(message.getAuthor());
+        addReactionForUserToPost(login, message);
+        conversationRepository.save(conversation);
+        message = postRepository.save(message);
+
+        return message;
     }
 
     public void updateCourseGroups(String userPrefix, List<Course> courses, String suffix) {
