@@ -42,8 +42,6 @@ public class ChannelService {
 
     private final ConversationService conversationService;
 
-    private final SingleUserNotificationService singleUserNotificationService;
-
     private final LectureRepository lectureRepository;
 
     public ChannelService(ConversationParticipantRepository conversationParticipantRepository, ChannelRepository channelRepository, UserRepository userRepository,
