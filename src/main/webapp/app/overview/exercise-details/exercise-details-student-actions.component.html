@@ -60,59 +60,6 @@
     </ng-container>
     <!-- QUIZ EXERCISE ACTIONS END -->
 
-    <!-- MODELING EXERCISE ACTIONS START -->
-    <ng-container *ngSwitchCase="ExerciseType.MODELING">
-        <div class="btn-group gap-1">
-            <button
-                class="view-team"
-                jhi-exercise-action-button
-                [buttonIcon]="faUsers"
-                [buttonLabel]="'artemisApp.exerciseActions.viewTeam' | artemisTranslate"
-                *ngIf="isTeamAvailable"
-                [smallButton]="smallButtons"
-                [hideLabelMobile]="true"
-                [routerLink]="['/courses', courseId, 'exercises', exercise.id, 'teams', assignedTeamId]"
-            ></button>
-            <span tabindex="0" [ngbTooltip]="isBeforeStartDateAndStudent ? ('artemisApp.exerciseActions.startExerciseBeforeDueDate' | artemisTranslate) : ''">
-                <button
-                    [id]="'start-exercise-' + exercise.id"
-                    class="start-exercise"
-                    jhi-exercise-action-button
-                    id="start-modeling-exercise-action"
-                    [buttonIcon]="faPlayCircle"
-                    [buttonLabel]="'artemisApp.exerciseActions.startExercise' | artemisTranslate"
-                    [buttonLoading]="!!exercise.loading"
-                    [smallButton]="smallButtons"
-                    [hideLabelMobile]="false"
-                    [overwriteDisabled]="isBeforeStartDateAndStudent"
-                    *ngIf="!gradedParticipation && isStartExerciseAvailable()"
-                    (click)="startExercise()"
-                ></button>
-            </span>
-            <button
-                [id]="'open-exercise-' + exercise.id"
-                jhi-exercise-action-button
-                id="open-modeling-editor-action"
-                [buttonIcon]="faFolderOpen"
-                [buttonLabel]="
-                    'artemisApp.exerciseActions.' +
-                        (gradedParticipation?.initializationState === InitializationState.INITIALIZED || beforeDueDate
-                            ? 'openModelingEditor'
-                            : resultAfterDueDate
-                            ? 'viewResults'
-                            : 'viewSubmissions') | artemisTranslate
-                "
-                [outlined]="!beforeDueDate && gradedParticipation?.initializationState === InitializationState.FINISHED"
-                [buttonLoading]="!!exercise.loading"
-                [smallButton]="smallButtons"
-                [hideLabelMobile]="false"
-                *ngIf="gradedParticipation?.initializationState === InitializationState.INITIALIZED || gradedParticipation?.initializationState === InitializationState.FINISHED"
-                [routerLink]="['/courses', courseId, 'modeling-exercises', exercise.id, 'participate', gradedParticipation!.id]"
-            ></button>
-        </div>
-    </ng-container>
-    <!-- MODELING EXERCISE ACTIONS END -->
-
     <!-- PROGRAMMING EXERCISE ACTIONS START -->
     <ng-container *ngSwitchCase="ExerciseType.PROGRAMMING">
         <div class="btn-group gap-1">
@@ -236,8 +183,8 @@
     </ng-container>
     <!-- PROGRAMMING EXERCISE ACTIONS END -->
 
-    <!-- TEXT EXERCISE ACTIONS START -->
-    <ng-container *ngSwitchCase="ExerciseType.TEXT">
+    <!-- MODELING/TEXT/FILE UPLOAD EXERCISE ACTIONS START -->
+    <ng-container *ngSwitchDefault>
         <div class="btn-group gap-1">
             <button
                 class="view-team"
@@ -270,70 +217,23 @@
                 [buttonIcon]="faFolderOpen"
                 [buttonLabel]="
                     'artemisApp.exerciseActions.' +
-                        (gradedParticipation?.initializationState === InitializationState.INITIALIZED || beforeDueDate
-                            ? 'openTextEditor'
-                            : resultAfterDueDate
+                        (gradedParticipation?.initializationState === InitializationState.INITIALIZED || (beforeDueDate && !hasRatedGradedResult)
+                            ? editorLabel
+                            : hasRatedGradedResult
                             ? 'viewResults'
                             : 'viewSubmissions') | artemisTranslate
                 "
-                [outlined]="!beforeDueDate && gradedParticipation?.initializationState === InitializationState.FINISHED"
+                [outlined]="(!beforeDueDate || hasRatedGradedResult) && gradedParticipation?.initializationState === InitializationState.FINISHED"
                 [buttonLoading]="!!exercise.loading"
                 [smallButton]="smallButtons"
                 [hideLabelMobile]="false"
-                *ngIf="gradedParticipation?.initializationState === InitializationState.INITIALIZED || gradedParticipation?.initializationState === InitializationState.FINISHED"
-                [routerLink]="['/courses', courseId, 'text-exercises', exercise.id, 'participate', gradedParticipation!.id]"
-            ></button>
-        </div>
-    </ng-container>
-    <!-- TEXT EXERCISE ACTIONS END -->
-
-    <!-- FILE UPLOAD EXERCISE ACTIONS START -->
-    <ng-container *ngSwitchCase="ExerciseType.FILE_UPLOAD">
-        <div class="btn-group gap-1">
-            <button
-                class="view-team"
-                jhi-exercise-action-button
-                [buttonIcon]="faUsers"
-                [buttonLabel]="'artemisApp.exerciseActions.viewTeam' | artemisTranslate"
-                *ngIf="isTeamAvailable"
-                [smallButton]="smallButtons"
-                [hideLabelMobile]="true"
-                [routerLink]="['/courses', courseId, 'exercises', exercise.id, 'teams', assignedTeamId]"
-            ></button>
-            <span tabindex="0" [ngbTooltip]="isBeforeStartDateAndStudent ? ('artemisApp.exerciseActions.startExerciseBeforeDueDate' | artemisTranslate) : ''">
-                <button
-                    [id]="'start-exercise-' + exercise.id"
-                    class="start-exercise"
-                    jhi-exercise-action-button
-                    [buttonIcon]="faPlayCircle"
-                    [buttonLabel]="'artemisApp.exerciseActions.startExercise' | artemisTranslate"
-                    [buttonLoading]="!!exercise.loading"
-                    *ngIf="!gradedParticipation && isStartExerciseAvailable()"
-                    [smallButton]="smallButtons"
-                    [hideLabelMobile]="false"
-                    [overwriteDisabled]="isBeforeStartDateAndStudent"
-                    (click)="startExercise()"
-                ></button>
-            </span>
-            <button
-                jhi-exercise-action-button
-                [buttonIcon]="faFolderOpen"
-                [buttonLabel]="
-                    'artemisApp.exerciseActions.' +
-                        (gradedParticipation?.initializationState === InitializationState.INITIALIZED || beforeDueDate
-                            ? 'uploadFile'
-                            : resultAfterDueDate
-                            ? 'viewResults'
-                            : 'viewSubmissions') | artemisTranslate
+                *ngIf="
+                    (gradedParticipation?.initializationState === InitializationState.INITIALIZED && this.beforeDueDate) ||
+                    gradedParticipation?.initializationState === InitializationState.FINISHED
                 "
-                [outlined]="!beforeDueDate && gradedParticipation?.initializationState === InitializationState.FINISHED"
-                [buttonLoading]="!!exercise.loading"
-                [smallButton]="smallButtons"
-                [hideLabelMobile]="false"
-                *ngIf="gradedParticipation?.initializationState === InitializationState.INITIALIZED || gradedParticipation?.initializationState === InitializationState.FINISHED"
-                [routerLink]="['/courses', courseId, 'file-upload-exercises', exercise.id, 'participate', gradedParticipation!.id]"
+                [routerLink]="['/courses', courseId, exercise.type + '-exercises', exercise.id, 'participate', gradedParticipation!.id]"
             ></button>
         </div>
     </ng-container>
-    <!-- FILE UPLOAD EXERCISE ACTIONS END -->
+    <!-- MODELING/TEXT/FILE UPLOAD EXERCISE ACTIONS END -->
 </div>

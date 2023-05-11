@@ -47,8 +47,9 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     practiceParticipation?: StudentParticipation;
     programmingExercise?: ProgrammingExercise;
     isTeamAvailable: boolean;
-    resultAfterDueDate: boolean;
+    hasRatedGradedResult: boolean;
     beforeDueDate: boolean;
+    editorLabel?: string;
 
     // Icons
     faComment = faComment;
@@ -75,7 +76,15 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
             this.quizNotStarted = ArtemisQuizService.notStarted(quizExercise);
         } else if (this.exercise.type === ExerciseType.PROGRAMMING) {
             this.programmingExercise = this.exercise as ProgrammingExercise;
+        } else if (this.exercise.type === ExerciseType.MODELING) {
+            this.editorLabel = 'openModelingEditor';
+        } else if (this.exercise.type === ExerciseType.TEXT) {
+            this.editorLabel = 'openTextEditor';
+        } else if (this.exercise.type === ExerciseType.FILE_UPLOAD) {
+            this.editorLabel = 'uploadFile';
         }
+
+        this.beforeDueDate = !this.exercise.dueDate || dayjs().isBefore(this.exercise.dueDate);
     }
 
     /**
@@ -101,13 +110,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
         this.gradedParticipation = this.participationService.getSpecificStudentParticipation(studentParticipations, false);
         this.practiceParticipation = this.participationService.getSpecificStudentParticipation(studentParticipations, true);
 
-        this.beforeDueDate = !!this.exercise.dueDate && dayjs().isBefore(this.exercise.dueDate);
-        const afterAssessmentDueDate = !this.exercise.assessmentDueDate || dayjs().isAfter(this.exercise.assessmentDueDate);
-        this.resultAfterDueDate = afterAssessmentDueDate && !!this.gradedParticipation?.results?.some((result) => result.rated === true);
-
-        if (this.exercise.title === 'fdsbgvdfybvdfb') {
-            console.log(this.exercise);
-        }
+        this.hasRatedGradedResult = !!this.gradedParticipation?.results?.some((result) => result.rated === true);
     }
 
     /**
