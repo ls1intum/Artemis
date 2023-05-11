@@ -25,7 +25,7 @@ type TextAssessmentDTO = { feedbacks: Feedback[]; textBlocks: TextBlock[] };
     providedIn: 'root',
 })
 export class TextAssessmentService {
-    private readonly resourceUrl = SERVER_API_URL + 'api';
+    private readonly resourceUrl = 'api';
 
     constructor(private http: HttpClient, private accountService: AccountService) {}
 
@@ -308,7 +308,7 @@ export class TextAssessmentService {
 
             // The request is directly routed to athene via nginx
             this.http
-                .post(`${SERVER_API_URL}athene-tracking/text-exercise-assessment`, trackingObject, {
+                .post(`athene-tracking/text-exercise-assessment`, trackingObject, {
                     headers: { 'X-Athene-Tracking-Authorization': submission.atheneTextAssessmentTrackingToken },
                 })
                 .subscribe();

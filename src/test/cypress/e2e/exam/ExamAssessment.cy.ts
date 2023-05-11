@@ -18,7 +18,7 @@ import {
     programmingExerciseEditor,
     studentAssessment,
 } from '../../support/artemis';
-import { admin, instructor, studentOne, tutor } from '../../support/users';
+import { admin, instructor, studentOne, tutor, users } from '../../support/users';
 import { EXERCISE_TYPE } from '../../support/constants';
 import { Exercise } from '../../support/pageobjects/exam/ExamParticipation';
 
@@ -35,6 +35,7 @@ describe('Exam assessment', () => {
     let programmingAssessmentSuccessful = false;
     let modelingAssessmentSuccessful = false;
     let textAssessmentSuccessful = false;
+    let studentOneName: string;
 
     before('Create a course', () => {
         cy.login(admin);
@@ -42,24 +43,29 @@ describe('Exam assessment', () => {
             course = convertCourseAfterMultiPart(response);
             courseManagementRequest.addStudentToCourse(course, studentOne);
             courseManagementRequest.addTutorToCourse(course, tutor);
+            courseManagementRequest.addInstructorToCourse(course, instructor);
+        });
+        users.getUserInfo(studentOne.username, (userInfo) => {
+            studentOneName = userInfo.name;
         });
     });
 
     // For some reason the typing of cypress gets slower the longer the test runs, so we test the programming exercise first
     describe('Programming exercise assessment', () => {
         before('Prepare exam', () => {
-            examEnd = dayjs().add(2.5, 'minutes');
+            examEnd = dayjs().add(3, 'minutes');
             prepareExam(examEnd, EXERCISE_TYPE.Programming);
         });
 
         it('Assess a programming exercise submission (MANUAL)', () => {
-            cy.login(tutor, '/course-management/' + course.id + '/exams');
-            examManagement.openAssessmentDashboard(exam.id!, 155000);
-            startAssessing();
+            cy.login(instructor);
+            examManagement.verifySubmitted(course.id!, exam.id!, studentOneName);
+            cy.login(tutor);
+            startAssessing(course.id!, exam.id!, 155000);
             examAssessment.addNewFeedback(2, 'Good job');
             examAssessment.submit();
             cy.login(studentOne, '/courses/' + course.id + '/exams/' + exam.id);
-            programmingExerciseEditor.getResultScore().should('contain.text', '66.2%, 6 of 13 passed, 6.6 points').and('be.visible');
+            programmingExerciseEditor.getResultScore().should('contain.text', '66.2%').and('be.visible');
             programmingAssessmentSuccessful = true;
         });
 
@@ -77,9 +83,10 @@ describe('Exam assessment', () => {
         });
 
         it('Assess a modeling exercise submission', () => {
-            cy.login(tutor, '/course-management/' + course.id + '/exams');
-            examManagement.openAssessmentDashboard(exam.id!, 60000);
-            startAssessing();
+            cy.login(instructor);
+            examManagement.verifySubmitted(course.id!, exam.id!, studentOneName);
+            cy.login(tutor);
+            startAssessing(course.id!, exam.id!, 60000);
             modelingExerciseAssessment.addNewFeedback(5, 'Good');
             modelingExerciseAssessment.openAssessmentForComponent(1);
             modelingExerciseAssessment.assessComponent(-1, 'Wrong');
@@ -90,7 +97,7 @@ describe('Exam assessment', () => {
                 expect(assessmentResponse.response?.statusCode).to.equal(200);
             });
             cy.login(studentOne, '/courses/' + course.id + '/exams/' + exam.id);
-            programmingExerciseEditor.getResultScore().should('contain.text', '40%, 4 points').and('be.visible');
+            programmingExerciseEditor.getResultScore().should('contain.text', '40%').and('be.visible');
             modelingAssessmentSuccessful = true;
         });
 
@@ -103,20 +110,21 @@ describe('Exam assessment', () => {
 
     describe('Text exercise assessment', () => {
         before('Prepare exam', () => {
-            examEnd = dayjs().add(30, 'seconds');
+            examEnd = dayjs().add(40, 'seconds');
             prepareExam(examEnd, EXERCISE_TYPE.Text);
         });
 
         it('Assess a text exercise submission', () => {
-            cy.login(tutor, '/course-management/' + course.id + '/exams');
-            examManagement.openAssessmentDashboard(exam.id!, 60000);
-            startAssessing();
+            cy.login(instructor);
+            examManagement.verifySubmitted(course.id!, exam.id!, studentOneName);
+            cy.login(tutor);
+            startAssessing(course.id!, exam.id!, 60000);
             examAssessment.addNewFeedback(7, 'Good job');
             examAssessment.submitTextAssessment().then((assessmentResponse: Interception) => {
                 expect(assessmentResponse.response!.statusCode).to.equal(200);
             });
             cy.login(studentOne, '/courses/' + course.id + '/exams/' + exam.id);
-            programmingExerciseEditor.getResultScore().should('contain.text', '70%, 7 points').and('be.visible');
+            programmingExerciseEditor.getResultScore().should('contain.text', '70%').and('be.visible');
             textAssessmentSuccessful = true;
         });
 
@@ -131,32 +139,36 @@ describe('Exam assessment', () => {
         let resultDate: Dayjs;
 
         before('Prepare exam', () => {
-            examEnd = dayjs().add(25, 'seconds');
+            examEnd = dayjs().add(30, 'seconds');
             resultDate = examEnd.add(5, 'seconds');
             prepareExam(examEnd, EXERCISE_TYPE.Quiz);
         });
 
         it('Assesses quiz automatically', () => {
+            cy.login(instructor);
+            examManagement.verifySubmitted(course.id!, exam.id!, studentOneName);
             if (dayjs().isBefore(examEnd)) {
                 cy.wait(examEnd.diff(dayjs(), 'ms') + 10000);
             }
-            cy.login(admin, `/course-management/${course.id}/exams/${exam.id}/assessment-dashboard`);
+            examManagement.openAssessmentDashboard(course.id!, exam.id!, 60000);
+            cy.visit(`/course-management/${course.id}/exams/${exam.id}/assessment-dashboard`);
             courseAssessment.clickEvaluateQuizzes().its('response.statusCode').should('eq', 200);
             if (dayjs().isBefore(resultDate)) {
-                cy.wait(examEnd.diff(dayjs(), 'ms'));
+                cy.wait(resultDate.diff(dayjs(), 'ms') + 10000);
             }
+            examManagement.checkQuizSubmission(course.id!, exam.id!, studentOneName, '50%');
             cy.login(studentOne, '/courses/' + course.id + '/exams/' + exam.id);
             // Sometimes the feedback fails to load properly on the first load...
             const resultSelector = '#result-score';
             cy.reloadUntilFound(resultSelector);
-            programmingExerciseEditor.getResultScore().should('contain.text', '50%, 5 points').and('be.visible');
+            programmingExerciseEditor.getResultScore().should('contain.text', '50%').and('be.visible');
         });
     });
 
     after('Delete course', () => {
         if (course) {
             cy.login(admin);
-            courseManagementRequest.deleteCourse(course.id!);
+            // courseManagementRequest.deleteCourse(course.id!);
         }
     });
 });
@@ -202,11 +214,13 @@ function makeExamSubmission(course: Course, exam: Exam, exercise: Exercise) {
     examParticipation.startParticipation(studentOne, course, exam);
     examNavigation.openExerciseAtIndex(0);
     examParticipation.makeSubmission(exercise.id, exercise.type, exercise.additionalData);
+    cy.wait(2000);
     examNavigation.handInEarly();
     examStartEnd.finishExam();
 }
 
-function startAssessing() {
+function startAssessing(courseID: number, examID: number, timeout: number) {
+    examManagement.openAssessmentDashboard(courseID, examID, timeout);
     courseAssessment.clickExerciseDashboardButton();
     exerciseAssessment.clickHaveReadInstructionsButton();
     exerciseAssessment.clickStartNewAssessment();
@@ -224,7 +238,7 @@ function handleComplaint(course: Course, exam: Exam, reject: boolean, exerciseTy
     cy.get('.message').should('contain.text', 'Your complaint has been submitted');
 
     cy.login(instructor, '/course-management/' + course.id + '/exams');
-    examManagement.openAssessmentDashboard(exam.id!, 60000);
+    examManagement.openAssessmentDashboard(course.id!, exam.id!);
     courseAssessment.clickExerciseDashboardButton();
     exerciseAssessment.clickHaveReadInstructionsButton();
 

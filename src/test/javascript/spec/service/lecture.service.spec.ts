@@ -15,7 +15,7 @@ import dayjs from 'dayjs/esm';
 describe('Lecture Service', () => {
     let httpMock: HttpTestingController;
     let service: LectureService;
-    const resourceUrl = SERVER_API_URL + 'api/lectures';
+    const resourceUrl = 'api/lectures';
     let expectedResult: any;
     let elemDefault: Lecture;
 

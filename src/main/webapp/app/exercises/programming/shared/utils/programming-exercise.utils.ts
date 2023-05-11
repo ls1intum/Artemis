@@ -63,9 +63,9 @@ export const createCommitUrl = (
  * - The programming exercise buildAndTestAfterDueDate is set
  * - The submission date of the result / result completionDate is before the buildAndTestAfterDueDate
  *
- * Note: We check some error cases in this method as a null value for the given parameters, because the clients using this method might unwillingly provide them (result component).
+ * Note: We check some error cases in this method as a undefined value for the given parameters, because the clients using this method might unwillingly provide them (result component).
  *
- * @param latestResult Result with attached Submission - if submission is null, method will use the result completionDate as a reference.
+ * @param latestResult Result with attached Submission - if submission is undefined, method will use the result completionDate as a reference.
  * @param programmingExercise ProgrammingExercise
  */
 export const isResultPreliminary = (latestResult: Result, programmingExercise?: ProgrammingExercise) => {

@@ -19,15 +19,15 @@ export class AuthServerProvider implements IAuthServerProvider {
     constructor(private http: HttpClient, private localStorage: LocalStorageService, private sessionStorage: SessionStorageService) {}
 
     login(credentials: Credentials): Observable<any> {
-        return this.http.post(SERVER_API_URL + 'api/authenticate', credentials);
+        return this.http.post('api/authenticate', credentials);
     }
 
     loginSAML2(rememberMe: boolean): Observable<any> {
-        return this.http.post(SERVER_API_URL + 'api/saml2', rememberMe.toString());
+        return this.http.post('api/saml2', rememberMe.toString());
     }
 
     logout(): Observable<any> {
-        return this.http.post(SERVER_API_URL + 'api/logout', null);
+        return this.http.post('api/logout', null);
     }
 
     /**

@@ -61,8 +61,8 @@ export class LearningGoalSelectionComponent implements OnInit, ControlValueAcces
     }
 
     /**
-     * Set the available learning goals for selection
-     * @param learningGoals The learning goals of the course
+     * Set the available competencies for selection
+     * @param learningGoals The competencies of the course
      */
     setLearningGoals(learningGoals: LearningGoal[]) {
         this.learningGoals = learningGoals.map((learningGoal) => {
@@ -81,7 +81,7 @@ export class LearningGoalSelectionComponent implements OnInit, ControlValueAcces
 
     writeValue(value?: LearningGoal[]): void {
         if (value && this.learningGoals) {
-            // Compare the ids of the learning goals instead of the whole objects
+            // Compare the ids of the competencies instead of the whole objects
             const ids = value.map((el) => el.id);
             this.value = this.learningGoals.filter((learningGoal) => ids.includes(learningGoal.id));
         } else {
