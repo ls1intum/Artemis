@@ -65,12 +65,10 @@ public class ConversationService {
 
     private final CourseRepository courseRepository;
 
-    private final ConversationService conversationService;
-
     public ConversationService(ConversationDTOService conversationDTOService, UserRepository userRepository, ChannelRepository channelRepository,
             ConversationParticipantRepository conversationParticipantRepository, ConversationRepository conversationRepository, SimpMessageSendingOperations messagingTemplate,
             OneToOneChatRepository oneToOneChatRepository, PostRepository postRepository, GroupChatRepository groupChatRepository,
-            AuthorizationCheckService authorizationCheckService, CourseRepository courseRepository, ConversationService conversationService) {
+            AuthorizationCheckService authorizationCheckService, CourseRepository courseRepository) {
         this.conversationDTOService = conversationDTOService;
         this.userRepository = userRepository;
         this.channelRepository = channelRepository;
@@ -82,7 +80,6 @@ public class ConversationService {
         this.groupChatRepository = groupChatRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.courseRepository = courseRepository;
-        this.conversationService = conversationService;
     }
 
     /**
@@ -203,7 +200,7 @@ public class ConversationService {
                     registerUsersToConversation(c, Set.of(userToAddToGroup), channel, Optional.empty());
                 }
                 // add to exercise or lecture channel if user is not member
-                if ((channel.getLecture() != null || channel.getExercise() != null) && !conversationService.isMember(channel.getId(), userToAddToGroup.getId())) {
+                if ((channel.getLecture() != null || channel.getExercise() != null) && !isMember(channel.getId(), userToAddToGroup.getId())) {
                     registerUsersToConversation(c, Set.of(userToAddToGroup), channel, Optional.empty());
                 }
             });
