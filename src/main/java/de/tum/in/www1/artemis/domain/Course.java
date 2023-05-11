@@ -465,19 +465,19 @@ public class Course extends DomainObject {
     }
 
     public Boolean isEnrollmentEnabled() {
-        return enrollmentEnabled; // TODO
+        return enrollmentEnabled;
     }
 
     public void setEnrollmentEnabled(Boolean enrollmentEnabled) {
         this.enrollmentEnabled = enrollmentEnabled;
-    } // TODO
+    }
 
     public String getEnrollmentConfirmationMessage() {
         return enrollmentConfirmationMessage;
-    } // TODO
+    }
 
     public void setEnrollmentConfirmationMessage(String enrollmentConfirmationMessage) {
-        this.enrollmentConfirmationMessage = enrollmentConfirmationMessage; // TODO
+        this.enrollmentConfirmationMessage = enrollmentConfirmationMessage;
     }
 
     public Integer getPresentationScore() {
