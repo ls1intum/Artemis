@@ -137,7 +137,7 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         teamRepository.saveAll(existingTeams);
 
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
-        this.database.addUsers(TEST_PREFIX, 5, 1, 0, 1);
+        database.addUsers(TEST_PREFIX, 4, 1, 0, 1);
 
         // Add users that are not in the course
         database.createAndSaveUser(TEST_PREFIX + "student42");
@@ -151,7 +151,7 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         Course courseTwo = this.database.createCourse();
         idOfCourseTwo = courseTwo.getId();
 
-        User student1 = userRepository.findOneByLogin(TEST_PREFIX + "student1").get();
+        User student1 = database.getUserByLogin(TEST_PREFIX + "student1");
 
         createLearningGoal();
         createPrerequisite();
