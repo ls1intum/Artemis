@@ -27,7 +27,7 @@
                         required
                         class="form-control input-number-short"
                         [(ngModel)]="gradingScale.course.presentationScore"
-                        (ngModelChange)="updateBasicPresentationsNumber($event)"
+                        (ngModelChange)="updatePresentationScore($event)"
                     />
                 </div>
             </div>
@@ -50,7 +50,7 @@
                         required
                         class="form-control input-number-short"
                         [(ngModel)]="presentationsConfig.presentationsNumber"
-                        (ngModelChange)="updateGradedPresentationsNumber($event)"
+                        (ngModelChange)="updatePresentationsNumber($event)"
                     />
                     <div class="input-group-prepend">
                         <label class="input-group-text" for="field_weightPresentations" jhiTranslate="artemisApp.gradingSystem.gradedPresentation.weight">Combined Weight</label>
@@ -64,7 +64,7 @@
                         required
                         class="form-control input-number-short"
                         [(ngModel)]="presentationsConfig.presentationsWeight"
-                        (ngModelChange)="updateGradedPresentationsWeight($event)"
+                        (ngModelChange)="updatePresentationsWeight($event)"
                     />
                 </div>
             </div>

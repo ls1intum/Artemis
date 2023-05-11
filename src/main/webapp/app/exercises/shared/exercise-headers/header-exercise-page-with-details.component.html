@@ -130,10 +130,9 @@
                     }}
                 </span>
             </div>
-            <!-- TODO add translations -->
             <div *ngIf="exercise.presentationScoreEnabled">
-                <div *ngIf="course?.presentationScore ?? 0 > 0">
-                    {{ 'Presented:' }}
+                <div *ngIf="(course?.presentationScore ?? 0) > 0">
+                    {{ 'artemisApp.courseOverview.exerciseDetails.presented' | artemisTranslate }}
                     <span *ngIf="(studentParticipation?.presentationScore ?? 0) > 0" class="badge bg-success">
                         {{ 'global.generic.yes' | artemisTranslate }}
                     </span>
@@ -141,8 +140,8 @@
                         {{ 'global.generic.no' | artemisTranslate }}
                     </span>
                 </div>
-                <div *ngIf="!course?.presentationScore ?? 0 > 0">
-                    {{ 'Presentation Rating:' }}
+                <div *ngIf="!((course?.presentationScore ?? 0) > 0)">
+                    {{ 'artemisApp.courseOverview.exerciseDetails.presentation' | artemisTranslate }}
                     <span *ngIf="studentParticipation?.presentationScore" class="badge bg-success">
                         {{ studentParticipation!.presentationScore + '%' }}
                     </span>

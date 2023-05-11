@@ -177,14 +177,6 @@ export class CourseManagementPage {
         return cy.get('#course-online-course');
     }
 
-    getCoursePresentationScoreEnabled() {
-        return cy.get('#course-presentation-score-enabled');
-    }
-
-    getCoursePresentationScore() {
-        return cy.get('#course-presentation-score');
-    }
-
     getCourseMaxComplaints() {
         return cy.get('#course-max-complaints');
     }

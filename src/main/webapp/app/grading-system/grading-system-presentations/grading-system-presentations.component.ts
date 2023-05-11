@@ -87,21 +87,21 @@ export class GradingSystemPresentationsComponent implements OnChanges {
         this.presentationsConfig.presentationType = presentationType;
         switch (presentationType) {
             case PresentationType.NONE: {
-                this.updateBasicPresentationsNumber(undefined);
-                this.updateGradedPresentationsNumber(undefined);
-                this.updateGradedPresentationsWeight(undefined);
+                this.updatePresentationScore(undefined);
+                this.updatePresentationsNumber(undefined);
+                this.updatePresentationsWeight(undefined);
                 break;
             }
             case PresentationType.BASIC: {
-                this.updateBasicPresentationsNumber(2); // default value
-                this.updateGradedPresentationsNumber(undefined);
-                this.updateGradedPresentationsWeight(undefined);
+                this.updatePresentationScore(2); // default value
+                this.updatePresentationsNumber(undefined);
+                this.updatePresentationsWeight(undefined);
                 break;
             }
             case PresentationType.GRADED: {
-                this.updateBasicPresentationsNumber(undefined);
-                this.updateGradedPresentationsNumber(2); // default value
-                this.updateGradedPresentationsWeight(20); // default value
+                this.updatePresentationScore(undefined);
+                this.updatePresentationsNumber(2); // default value
+                this.updatePresentationsWeight(20); // default value
                 break;
             }
         }
@@ -111,7 +111,7 @@ export class GradingSystemPresentationsComponent implements OnChanges {
      * Update number of basic presentations
      * @param presentationsNumber
      */
-    updateBasicPresentationsNumber(presentationsNumber?: number) {
+    updatePresentationScore(presentationsNumber?: number) {
         if (this.gradingScale.course) {
             this.presentationsConfig.presentationScore = (presentationsNumber ?? -1) > 0 ? presentationsNumber : undefined;
             this.gradingScale.course.presentationScore = this.presentationsConfig.presentationScore;
@@ -122,7 +122,7 @@ export class GradingSystemPresentationsComponent implements OnChanges {
      * Update number of graded presentations
      * @param presentationsNumber
      */
-    updateGradedPresentationsNumber(presentationsNumber?: number) {
+    updatePresentationsNumber(presentationsNumber?: number) {
         this.presentationsConfig.presentationsNumber = (presentationsNumber ?? -1) > 0 ? presentationsNumber : undefined;
         this.gradingScale.presentationsNumber = this.presentationsConfig.presentationsNumber;
     }
@@ -131,7 +131,7 @@ export class GradingSystemPresentationsComponent implements OnChanges {
      * Update combined weight of graded presentations
      * @param presentationsWeight
      */
-    updateGradedPresentationsWeight(presentationsWeight?: number) {
+    updatePresentationsWeight(presentationsWeight?: number) {
         this.presentationsConfig.presentationsWeight = (presentationsWeight ?? -1) >= 0 ? presentationsWeight : undefined;
         this.gradingScale.presentationsWeight = this.presentationsConfig.presentationsWeight;
     }

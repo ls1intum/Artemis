@@ -87,7 +87,7 @@ describe('Grading System Presentations Component', () => {
     it('should update number of presentations', () => {
         component.gradingScale = gradingScaleWithGradedPresentations;
 
-        component.updateGradedPresentationsNumber(128);
+        component.updatePresentationsNumber(128);
 
         expect(component.presentationsConfig.presentationsNumber).toBe(128);
         expect(gradingScaleWithGradedPresentations.presentationsNumber).toBe(128);
@@ -96,7 +96,7 @@ describe('Grading System Presentations Component', () => {
     it('should update combined weight of presentations', () => {
         component.gradingScale = gradingScaleWithGradedPresentations;
 
-        component.updateGradedPresentationsWeight(64);
+        component.updatePresentationsWeight(64);
 
         expect(component.presentationsConfig.presentationsWeight).toBe(64);
         expect(gradingScaleWithGradedPresentations.presentationsWeight).toBe(64);
