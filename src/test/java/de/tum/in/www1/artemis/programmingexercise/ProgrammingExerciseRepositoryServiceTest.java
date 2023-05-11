@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseRepositoryService;
 
@@ -23,113 +24,113 @@ class ProgrammingExerciseRepositoryServiceTest extends AbstractSpringIntegration
     @Autowired
     private ProgrammingExerciseRepositoryService programmingExerciseRepositoryService;
 
-    private ProgrammingExercise programmingExercise1;
+    private ProgrammingExercise programmingExerciseBeforeUpdate;
 
-    private ProgrammingExercise programmingExercise2;
+    private ProgrammingExercise updatedProgrammingExercise;
+
+    private ProgrammingExerciseStudentParticipation participation;
 
     @BeforeEach
     void init() {
-        database.addUsers(TEST_PREFIX, 0, 0, 0, 2);
+        database.addUsers(TEST_PREFIX, 1, 0, 0, 2);
 
-        var course1 = database.addCourseWithOneProgrammingExercise();
-        programmingExercise1 = database.getFirstExerciseWithType(course1, ProgrammingExercise.class);
-        programmingExercise1.setReleaseDate(null);
-        programmingExerciseRepository.save(programmingExercise1);
+        var course = database.addCourseWithOneProgrammingExercise();
+        programmingExerciseBeforeUpdate = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        programmingExerciseBeforeUpdate.setReleaseDate(null);
+        programmingExerciseRepository.save(programmingExerciseBeforeUpdate);
 
-        var course2 = database.addCourseWithOneProgrammingExercise();
-        programmingExercise2 = database.getFirstExerciseWithType(course2, ProgrammingExercise.class);
-        programmingExercise2.setReleaseDate(null);
-        programmingExerciseRepository.save(programmingExercise2);
+        participation = database.addStudentParticipationForProgrammingExercise(programmingExerciseBeforeUpdate, TEST_PREFIX + "student1");
+
+        updatedProgrammingExercise = programmingExerciseRepository.findById(programmingExerciseBeforeUpdate.getId()).orElseThrow();
     }
-
-    // TODO: Fix tests below:
 
     @Test
     void shouldLockRepositoriesWhenOfflineIDEGetsForbidden() {
-        programmingExercise1.setAllowOfflineIde(true);
-        programmingExercise2.setAllowOfflineIde(false);
-        programmingExerciseRepositoryService.handleRepoAccessRightChanges(programmingExercise1, programmingExercise2);
-        verify(instanceMessageSendService, times(1)).sendLockAllStudentRepositoriesAndParticipations(programmingExercise1.getId());
-        verify(instanceMessageSendService, never()).sendUnlockAllStudentRepositoriesAndParticipations(programmingExercise1.getId());
+        programmingExerciseBeforeUpdate.setAllowOfflineIde(true);
+        updatedProgrammingExercise.setAllowOfflineIde(false);
+
+        programmingExerciseRepositoryService.handleRepoAccessRightChanges(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
+
+        verify(programmingExerciseParticipationService, times(1)).lockStudentRepository(updatedProgrammingExercise, participation);
+        verify(programmingExerciseParticipationService, never()).lockStudentParticipation(updatedProgrammingExercise, participation);
     }
 
     @Test
     void shouldUnlockRepositoriesWhenOfflineIDEGetsAllowed() {
-        programmingExercise1.setAllowOfflineIde(false);
-        programmingExercise2.setAllowOfflineIde(true);
-        programmingExerciseRepositoryService.handleRepoAccessRightChanges(programmingExercise1, programmingExercise2);
-        verify(instanceMessageSendService, times(1)).sendUnlockAllStudentRepositoriesAndParticipations(programmingExercise1.getId());
-        verify(instanceMessageSendService, never()).sendLockAllStudentRepositoriesAndParticipations(programmingExercise1.getId());
+        programmingExerciseBeforeUpdate.setAllowOfflineIde(false);
+        updatedProgrammingExercise.setAllowOfflineIde(true);
+        programmingExerciseRepositoryService.handleRepoAccessRightChanges(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
+
+        verify(programmingExerciseParticipationService, times(1)).unlockStudentRepository(updatedProgrammingExercise, participation);
+
+        verify(programmingExerciseParticipationService, never()).unlockStudentParticipation(updatedProgrammingExercise, participation);
     }
 
     @Test
-    void shouldNotUnlockRepositoriesWhenOfflineIDEGetsAllowedAndDueDateInPast() {
-        programmingExercise1.setAllowOfflineIde(false);
-        programmingExercise2.setAllowOfflineIde(true);
-        programmingExercise1.setDueDate(ZonedDateTime.now().minusHours(1));
-        programmingExercise2.setDueDate(ZonedDateTime.now().minusHours(1));
-        programmingExerciseRepositoryService.handleRepoAccessRightChanges(programmingExercise1, programmingExercise2);
-        verify(instanceMessageSendService, never()).sendLockAllStudentRepositoriesAndParticipations(programmingExercise1.getId());
-        verify(instanceMessageSendService, never()).sendUnlockAllStudentRepositoriesAndParticipations(programmingExercise1.getId());
+    void shouldLockRepositoriesAndParticipationsWhenDueDateIsSetInThePast() {
+        programmingExerciseBeforeUpdate.setDueDate(ZonedDateTime.now().plusHours(1));
+        updatedProgrammingExercise.setDueDate(ZonedDateTime.now().minusHours(1));
+        programmingExerciseRepository.save(updatedProgrammingExercise);
+
+        programmingExerciseRepositoryService.handleRepoAccessRightChanges(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
+
+        verify(programmingExerciseParticipationService, times(1)).lockStudentRepositoryAndParticipation(updatedProgrammingExercise, participation);
     }
 
     @Test
-    void shouldLockRepositoriesWhenDueDateIsSetInThePast() {
-        programmingExercise2.setDueDate(ZonedDateTime.now().minusHours(1));
-        programmingExerciseRepositoryService.handleRepoAccessRightChanges(programmingExercise1, programmingExercise2);
+    void shouldLockRepositoriesAndParticipationsWhenDueDateIsSetInThePastAndNoDueDateBefore() {
+        programmingExerciseBeforeUpdate.setDueDate(null);
+        updatedProgrammingExercise.setDueDate(ZonedDateTime.now().minusHours(1));
+        programmingExerciseRepository.save(updatedProgrammingExercise);
 
-        programmingExercise1.setDueDate(ZonedDateTime.now().plusHours(1));
-        programmingExerciseRepositoryService.handleRepoAccessRightChanges(programmingExercise1, programmingExercise2);
-        verify(instanceMessageSendService, never()).sendUnlockAllStudentRepositoriesAndParticipations(programmingExercise1.getId());
+        programmingExerciseRepositoryService.handleRepoAccessRightChanges(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
+
+        verify(programmingExerciseParticipationService, times(1)).lockStudentRepositoryAndParticipation(updatedProgrammingExercise, participation);
     }
 
     @Test
-    void shouldLockRepositoriesWhenDueDateIsSetInThePastAndNoDueDateBefore() {
-        programmingExercise1.setDueDate(null);
-        programmingExercise2.setDueDate(ZonedDateTime.now().minusHours(1));
+    void shouldUnlockRepositoriesAndParticipationsWhenDueDateIsSetInTheFuture() {
+        programmingExerciseBeforeUpdate.setDueDate(ZonedDateTime.now().minusHours(1));
+        updatedProgrammingExercise.setDueDate(ZonedDateTime.now().plusHours(1));
+        programmingExerciseRepository.save(updatedProgrammingExercise);
 
-        programmingExerciseRepositoryService.handleRepoAccessRightChanges(programmingExercise1, programmingExercise2);
-    }
+        programmingExerciseRepositoryService.handleRepoAccessRightChanges(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
 
-    @Test
-    void shouldUnlockRepositoriesWhenDueDateIsSetInTheFuture() {
-        programmingExercise1.setDueDate(ZonedDateTime.now().minusHours(1));
-        programmingExerciseRepositoryService.handleRepoAccessRightChanges(programmingExercise1, programmingExercise2);
-
-        programmingExercise2.setDueDate(ZonedDateTime.now().plusHours(1));
-        programmingExerciseRepositoryService.handleRepoAccessRightChanges(programmingExercise1, programmingExercise2);
-        verify(instanceMessageSendService, never()).sendLockAllStudentRepositoriesAndParticipations(programmingExercise1.getId());
+        verify(programmingExerciseParticipationService, times(1)).unlockStudentRepositoryAndParticipation(updatedProgrammingExercise, participation);
     }
 
     @Test
     void shouldNotUnlockRepositoriesWhenDueDateIsSetInTheFutureAndNoOfflineIDE() {
-        programmingExercise1.setAllowOfflineIde(false);
-        programmingExercise2.setAllowOfflineIde(false);
+        programmingExerciseBeforeUpdate.setAllowOfflineIde(false);
+        updatedProgrammingExercise.setAllowOfflineIde(false);
+        programmingExerciseBeforeUpdate.setDueDate(ZonedDateTime.now().minusHours(1));
+        updatedProgrammingExercise.setDueDate(ZonedDateTime.now().plusHours(1));
+        programmingExerciseRepository.save(updatedProgrammingExercise);
 
-        programmingExercise1.setDueDate(ZonedDateTime.now().minusHours(1));
-        programmingExerciseRepositoryService.handleRepoAccessRightChanges(programmingExercise1, programmingExercise2);
+        programmingExerciseRepositoryService.handleRepoAccessRightChanges(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
 
-        programmingExercise2.setDueDate(ZonedDateTime.now().plusHours(1));
-        programmingExerciseRepositoryService.handleRepoAccessRightChanges(programmingExercise1, programmingExercise2);
-        verify(instanceMessageSendService, never()).sendUnlockAllStudentRepositoriesAndParticipations(programmingExercise1.getId());
-        verify(instanceMessageSendService, never()).sendLockAllStudentRepositoriesAndParticipations(programmingExercise1.getId());
+        verify(programmingExerciseParticipationService, times(1)).unlockStudentParticipation(updatedProgrammingExercise, participation);
+        verify(programmingExerciseParticipationService, never()).unlockStudentRepository(updatedProgrammingExercise, participation);
     }
 
     @Test
-    void shouldLockRepositoriesWhenExerciseGetsUnreleased() {
-        programmingExercise2.setReleaseDate(ZonedDateTime.now().plusHours(1));
-        programmingExerciseRepositoryService.handleRepoAccessRightChanges(programmingExercise1, programmingExercise2);
+    void shouldLockRepositoriesAndParticipationsWhenExerciseGetsUnreleased() {
+        updatedProgrammingExercise.setReleaseDate(ZonedDateTime.now().plusHours(1));
+        programmingExerciseRepository.save(updatedProgrammingExercise);
 
-        verify(instanceMessageSendService, times(1)).sendLockAllStudentRepositoriesAndParticipations(programmingExercise1.getId());
-        verify(instanceMessageSendService, never()).sendUnlockAllStudentRepositoriesAndParticipations(programmingExercise1.getId());
+        programmingExerciseRepositoryService.handleRepoAccessRightChanges(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
+
+        verify(programmingExerciseParticipationService, times(1)).lockStudentRepositoryAndParticipation(updatedProgrammingExercise, participation);
     }
 
     @Test
-    void shouldUnlockRepositoriesWhenExerciseGetsReleasedImmediately() {
-        programmingExercise1.setReleaseDate(ZonedDateTime.now().plusHours(1));
-        programmingExerciseRepositoryService.handleRepoAccessRightChanges(programmingExercise1, programmingExercise2);
+    void shouldUnlockRepositoriesAndParticipationsWhenExerciseGetsReleasedImmediately() {
+        programmingExerciseBeforeUpdate.setReleaseDate(ZonedDateTime.now().plusHours(1));
+        updatedProgrammingExercise.setReleaseDate(ZonedDateTime.now());
+        programmingExerciseRepository.save(updatedProgrammingExercise);
 
-        verify(instanceMessageSendService, times(1)).sendUnlockAllStudentRepositoriesAndParticipations(programmingExercise1.getId());
-        verify(instanceMessageSendService, never()).sendLockAllStudentRepositoriesAndParticipations(programmingExercise1.getId());
+        programmingExerciseRepositoryService.handleRepoAccessRightChanges(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
+
+        verify(programmingExerciseParticipationService, times(1)).unlockStudentRepositoryAndParticipation(updatedProgrammingExercise, participation);
     }
 }

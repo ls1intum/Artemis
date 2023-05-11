@@ -16,6 +16,7 @@ public enum MessageTopic {
     TEXT_EXERCISE_INSTANT_CLUSTERING("text-exercise-instant-clustering"),
     PROGRAMMING_EXERCISE_UNLOCK_REPOSITORIES("programming-exercise-unlock-repositories"),
     PROGRAMMING_EXERCISE_UNLOCK_REPOSITORIES_AND_PARTICIPATIONS_WITH_EARLIER_START_DATE_AND_LATER_DUE_DATE("programming-exercise-unlock-repositories-and-participations-with-earlier-start-date-and-later-due-date"),
+    PROGRAMMING_EXERCISE_UNLOCK_REPOSITORIES_WITH_EARLIER_START_DATE_AND_LATER_DUE_DATE("programming-exercise-unlock-repositories-with-earlier-start-date-and-later-due-date"),
     PROGRAMMING_EXERCISE_UNLOCK_PARTICIPATIONS_WITH_EARLIER_START_DATE_AND_LATER_DUE_DATE("programming-exercise-unlock-participations-with-earlier-start-date-and-later-due-date"),
     PROGRAMMING_EXERCISE_LOCK_REPOSITORIES_AND_PARTICIPATIONS("programming-exercise-lock-repositories-and-participations"),
     PROGRAMMING_EXERCISE_LOCK_REPOSITORIES("programming-exercise-lock-repositories"),

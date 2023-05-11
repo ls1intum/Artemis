@@ -170,7 +170,8 @@ public class ProgrammingExerciseParticipationService {
      */
     public void lockStudentRepository(ProgrammingExercise programmingExercise, ProgrammingExerciseStudentParticipation participation) {
         if (participation.getInitializationState().hasCompletedState(InitializationState.REPO_CONFIGURED)) {
-            versionControlService.get().setRepositoryPermissionsToReadOnly(participation.getVcsRepositoryUrl(), programmingExercise.getProjectKey(), participation.getStudents());
+            versionControlService.orElseThrow().setRepositoryPermissionsToReadOnly(participation.getVcsRepositoryUrl(), programmingExercise.getProjectKey(),
+                    participation.getStudents());
         }
         else {
             log.warn("Cannot lock student repository for participation {} because the repository was not copied yet!", participation.getId());
@@ -206,6 +207,23 @@ public class ProgrammingExerciseParticipationService {
     }
 
     /**
+     * Unlock a student repository. This is necessary if the student is now allowed to submit either from the online editor or from their local Git client.
+     * This is the case, if the start date of the exercise is in the past, if the due date is in the future, and if the student has not reached the submission limit yet.
+     *
+     * @param programmingExercise the programming exercise this repository belongs to
+     * @param participation       the participation whose repository should be unlocked
+     */
+    public void unlockStudentRepository(ProgrammingExercise programmingExercise, ProgrammingExerciseStudentParticipation participation) {
+        if (participation.getInitializationState().hasCompletedState(InitializationState.REPO_CONFIGURED)) {
+            // TODO: this calls protect branches which might not be necessary if the branches have already been protected during "start exercise" which is typically the case
+            versionControlService.orElseThrow().configureRepository(programmingExercise, participation, true);
+        }
+        else {
+            log.warn("Cannot unlock student repository for participation {} because the repository was not copied yet!", participation.getId());
+        }
+    }
+
+    /**
      * Unlock a student participation. This is necessary if the student is now allowed to submit either from the online editor or from their local Git client.
      * This is the case, if the start date of the exercise is in the past, if the due date is in the future, and if the student has not reached the submission limit yet.
      *
@@ -229,13 +247,7 @@ public class ProgrammingExerciseParticipationService {
      * @throws VersionControlException if unlocking was not successful, e.g. if the repository was already unlocked
      */
     public void unlockStudentRepositoryAndParticipation(ProgrammingExercise programmingExercise, ProgrammingExerciseStudentParticipation participation) {
-        if (participation.getInitializationState().hasCompletedState(InitializationState.REPO_CONFIGURED)) {
-            // TODO: this calls protect branches which might not be necessary if the branches have already been protected during "start exercise" which is typically the case
-            versionControlService.get().configureRepository(programmingExercise, participation, true);
-        }
-        else {
-            log.warn("Cannot unlock student repository for participation {} because the repository was not copied yet!", participation.getId());
-        }
+        unlockStudentRepository(programmingExercise, participation);
         unlockStudentParticipation(programmingExercise, participation);
     }
 

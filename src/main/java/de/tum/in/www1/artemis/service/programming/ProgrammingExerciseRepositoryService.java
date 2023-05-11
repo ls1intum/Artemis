@@ -672,9 +672,20 @@ public class ProgrammingExerciseRepositoryService {
         // Case 3: Offline IDE usage was disallowed and is now allowed.
         boolean moreLenientIdeUsage = !oldExerciseAllowsIdeUsage && updatedExerciseAllowsIdeUsage;
 
-        if (moreLenientStartDate || moreLenientDueDate || moreLenientIdeUsage) {
-            // Unlock all participations that are allowed to submit under the updated configuration, i.e. the current date is within the working time frame.
-            // Only unlock the repositories if offline IDE usage is allowed. Otherwise, just unlock the participations.
+        if (moreLenientIdeUsage) {
+            if (moreLenientStartDate || moreLenientDueDate) {
+                // In this case unlock all repositories and participations within the time frame.
+                instanceMessageSendService.sendUnlockAllStudentRepositoriesAndParticipationsWithEarlierStartDateAndLaterDueDate(programmingExerciseBeforeUpdate.getId());
+            }
+            else {
+                // If the start date or the due date were not changed, the participations are not affected, and we only unlock the repositories.
+                instanceMessageSendService.sendUnlockAllStudentRepositoriesWithEarlierStartDateAndLaterDueDate(programmingExerciseBeforeUpdate.getId());
+            }
+        }
+        else if (moreLenientStartDate || moreLenientDueDate) {
+            // The offline IDE usage was not changed, but the start date or the due date were changed.
+            // Unlock the participations that are allowed to submit under the updated configuration, i.e. the current date is within the working time frame.
+            // But only unlock the repositories in addition to the participations if offline IDE usage is allowed.
             if (updatedExerciseAllowsIdeUsage) {
                 instanceMessageSendService.sendUnlockAllStudentRepositoriesAndParticipationsWithEarlierStartDateAndLaterDueDate(programmingExerciseBeforeUpdate.getId());
             }

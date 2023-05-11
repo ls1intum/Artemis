@@ -109,6 +109,11 @@ public class InstanceMessageReceiveService {
                     SecurityUtils.setAuthorizationObject();
                     processUnlockAllRepositoriesAndParticipationsWithEarlierStartDateAndLaterDueDate((message.getMessageObject()));
                 });
+        hazelcastInstance.<Long>getTopic(MessageTopic.PROGRAMMING_EXERCISE_UNLOCK_REPOSITORIES_WITH_EARLIER_START_DATE_AND_LATER_DUE_DATE.toString())
+                .addMessageListener(message -> {
+                    SecurityUtils.setAuthorizationObject();
+                    processUnlockAllRepositoriesWithEarlierStartDateAndLaterDueDate((message.getMessageObject()));
+                });
         hazelcastInstance.<Long>getTopic(MessageTopic.PROGRAMMING_EXERCISE_UNLOCK_PARTICIPATIONS_WITH_EARLIER_START_DATE_AND_LATER_DUE_DATE.toString())
                 .addMessageListener(message -> {
                     SecurityUtils.setAuthorizationObject();
@@ -225,6 +230,13 @@ public class InstanceMessageReceiveService {
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
         // Run the runnable immediately so that the repositories are unlocked as fast as possible
         programmingExerciseScheduleService.unlockAllStudentRepositoriesAndParticipationsWithEarlierStartDateAndLaterDueDate(programmingExercise).run();
+    }
+
+    public void processUnlockAllRepositoriesWithEarlierStartDateAndLaterDueDate(Long exerciseId) {
+        log.info("Received unlock all repositories with earlier start date and later due date for programming exercise {}", exerciseId);
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
+        // Run the runnable immediately so that the repositories are unlocked as fast as possible
+        programmingExerciseScheduleService.unlockAllStudentRepositoriesWithEarlierStartDateAndLaterDueDate(programmingExercise).run();
     }
 
     public void processUnlockAllParticipationsWithEarlierStartDateAndLaterDueDate(Long exerciseId) {

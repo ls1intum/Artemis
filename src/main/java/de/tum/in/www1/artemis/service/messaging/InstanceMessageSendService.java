@@ -109,6 +109,15 @@ public interface InstanceMessageSendService {
     void sendUnlockAllStudentRepositoriesAndParticipationsWithEarlierStartDateAndLaterDueDate(Long exerciseId);
 
     /**
+     * Send a message to the main server that all student repositories, whose start date is before now and whose due date is after now, should be instantly unlocked.
+     * This does not unlock the participations associated with the repositories! See
+     * {@link #sendUnlockAllStudentRepositoriesAndParticipationsWithEarlierStartDateAndLaterDueDate(Long)} for that.
+     *
+     * @param exerciseId the id of the exercise that should be unlocked
+     */
+    void sendUnlockAllStudentRepositoriesWithEarlierStartDateAndLaterDueDate(Long exerciseId);
+
+    /**
      * Send a message to the main server that all student participations, whose start date is before now and whose due date is after now, should be instantly unlocked.
      * This does not unlock the repositories associated with the participations! See
      * {@link #sendUnlockAllStudentRepositoriesAndParticipationsWithEarlierStartDateAndLaterDueDate(Long)} for that.

@@ -750,12 +750,26 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
     }
 
     /**
-     * Returns a runnable that, once executed, will unlock all student participations that are inside the working time frame and will schedule all repository lock tasks.
+     * Returns a runnable that, once executed, will unlock all student repositories that are inside the working time frame and will schedule all repository lock tasks.
      * Tasks to unlock will be grouped so that for every existing due date (which is the exam start date + the different working times), one task will be scheduled.
      * NOTE: this will not immediately unlock the repositories as only a Runnable is returned!
      *
      * @param exercise The exercise for which the repositories should be unlocked
      * @return a Runnable that will unlock the repositories once it is executed
+     */
+    @NotNull
+    public Runnable unlockAllStudentRepositoriesWithEarlierStartDateAndLaterDueDate(ProgrammingExercise exercise) {
+        return runUnlockOperation(exercise, programmingExerciseParticipationService::unlockStudentRepository,
+                participation -> participation.getProgrammingExercise().isReleased() && exerciseDateService.isBeforeDueDate(participation));
+    }
+
+    /**
+     * Returns a runnable that, once executed, will unlock all student participations that are inside the working time frame and will schedule all participation lock tasks.
+     * Tasks to unlock will be grouped so that for every existing due date (which is the exam start date + the different working times), one task will be scheduled.
+     * NOTE: this will not immediately unlock the participations as only a Runnable is returned!
+     *
+     * @param exercise The exercise for which the participations should be unlocked
+     * @return a Runnable that will unlock the participations once it is executed
      */
     @NotNull
     public Runnable unlockAllStudentParticipationsWithEarlierStartDateAndLaterDueDate(ProgrammingExercise exercise) {

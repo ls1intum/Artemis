@@ -72,6 +72,11 @@ public class MainInstanceMessageSendService implements InstanceMessageSendServic
     }
 
     @Override
+    public void sendUnlockAllStudentRepositoriesWithEarlierStartDateAndLaterDueDate(Long exerciseId) {
+        instanceMessageReceiveService.processUnlockAllRepositoriesWithEarlierStartDateAndLaterDueDate(exerciseId);
+    }
+
+    @Override
     public void sendUnlockAllStudentParticipationsWithEarlierStartDateAndLaterDueDate(Long exerciseId) {
         instanceMessageReceiveService.processUnlockAllParticipationsWithEarlierStartDateAndLaterDueDate(exerciseId);
     }
