@@ -90,7 +90,7 @@ export class LectureUpdateWizardLearningGoalsComponent implements OnInit {
     }
 
     /**
-     * Action on successful learning goals fetch
+     * Action on successful competencies fetch
      */
     protected onLoadLearningGoalsSuccess(learningGoals: LearningGoal[]) {
         this.isLoadingLearningGoals = false;

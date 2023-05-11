@@ -6,7 +6,7 @@ import { map } from 'rxjs/operators';
 
 @Injectable({ providedIn: 'root' })
 export class RepositoryService {
-    private resourceUrl = SERVER_API_URL + 'api/repository';
+    private resourceUrl = 'api/repository';
 
     constructor(private http: HttpClient) {}
 
@@ -47,7 +47,7 @@ export interface IRepositoryFileService {
 
 @Injectable({ providedIn: 'root' })
 export class RepositoryFileService implements IRepositoryFileService {
-    private resourceUrl = SERVER_API_URL + 'api/repository';
+    private resourceUrl = 'api/repository';
 
     constructor(private http: HttpClient) {}
 
