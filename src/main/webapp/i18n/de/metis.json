@@ -5,6 +5,8 @@
             "noPosts": "Keine Beiträge gefunden.",
             "postNumberInformation": "{{ number }} Treffer",
             "addNewPost": "Neuer Beitrag",
+            "newMessage": "Neue Nachricht",
+            "collapseNewMessage": "Einklappen",
             "reply": "Beantworten",
             "showMultipleAnswers": "Zeige {{ number }} Antworten",
             "showSingleAnswer": "Zeige 1 Antwort",

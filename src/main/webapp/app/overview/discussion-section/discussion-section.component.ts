@@ -15,6 +15,7 @@ import { HttpResponse } from '@angular/common/http';
 import { faArrowLeft, faChevronLeft, faChevronRight, faGripLinesVertical, faLongArrowRight } from '@fortawesome/free-solid-svg-icons';
 import { CourseDiscussionDirective } from 'app/shared/metis/course-discussion.directive';
 import { FormBuilder } from '@angular/forms';
+import { Channel } from 'app/entities/metis/conversation/channel.model';
 
 @Component({
     selector: 'jhi-discussion-section',
@@ -27,6 +28,7 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
     @Input() lecture?: Lecture;
     @Input() isCommunicationPage?: boolean;
     @ViewChild(PostCreateEditModalComponent) postCreateEditModal?: PostCreateEditModalComponent;
+    channel: Channel;
     collapsed = false;
     currentPostId?: number;
     currentPost?: Post;
@@ -65,10 +67,11 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
             this.courseManagementService.findOneForDashboard(courseId).subscribe((res: HttpResponse<Course>) => {
                 if (res.body !== undefined) {
                     this.course = res.body!;
+                    this.channel = this.lecture?.channel || this.exercise?.channel!;
                     this.metisService.setCourse(this.course!);
                     this.metisService.setPageType(this.pageType);
                     this.metisService.getFilteredPosts({
-                        conversationId: this.lecture?.id ? this.lecture.channel?.id : this.exercise?.id ? this.exercise.channel?.id : undefined,
+                        conversationId: this.channel.id,
                     });
                     this.createEmptyPost();
                     this.resetFormGroup();
@@ -168,7 +171,9 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
      * this empty post has either exercise or lecture set as context, depending on if this component holds an exercise or a lecture reference
      */
     createEmptyPost(): void {
-        this.createdPost = this.metisService.createEmptyPostForContext(undefined, this.exercise, this.lecture);
+        const conversation = this.channel;
+        this.shouldSendMessage = false;
+        this.createdPost = this.metisService.createEmptyPostForContext(undefined, undefined, undefined, undefined, conversation);
     }
 
     /**

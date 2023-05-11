@@ -5,6 +5,8 @@
             "noPosts": "No posts found.",
             "postNumberInformation": "{{ number }} match(es)",
             "addNewPost": "New post",
+            "newMessage": "New message",
+            "collapseNewMessage": "Hide",
             "reply": "Reply",
             "showMultipleAnswers": "Show {{ number }} replies",
             "showSingleAnswer": "Show 1 reply",

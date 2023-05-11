@@ -35,11 +35,13 @@
                 <div class="row mt-2" *ngIf="createdPost">
                     <div class="col-12">
                         <button id="new-post" class="btn btn-sm btn-primary" (click)="toggleSendMessage()">
-                            <fa-icon [icon]="faPlus"></fa-icon>
-                            <span class="d-none d-md-inline">{{ 'artemisApp.metis.addNewPost' | artemisTranslate }}</span>
+                            <fa-icon *ngIf="!shouldSendMessage" [icon]="faPlus"></fa-icon>
+                            <fa-icon *ngIf="shouldSendMessage" [icon]="faTimes"></fa-icon>
+                            <span *ngIf="!shouldSendMessage" class="d-none d-md-inline">{{ 'artemisApp.metis.newMessage' | artemisTranslate }}</span>
+                            <span *ngIf="shouldSendMessage" class="d-none d-md-inline">{{ 'artemisApp.metis.collapseNewMessage' | artemisTranslate }}</span>
                         </button>
-                        <!--                        TODO: change new message button-->
-                        <jhi-message-inline-input *ngIf="shouldSendMessage" class="message-input" [posting]="{}" (onCreate)="createEmptyPost()"> </jhi-message-inline-input>
+                        <jhi-message-inline-input *ngIf="shouldSendMessage" class="message-input" [posting]="createdPost" (onCreate)="createEmptyPost()">
+                        </jhi-message-inline-input>
                     </div>
                 </div>
                 <ng-template #threadView>
