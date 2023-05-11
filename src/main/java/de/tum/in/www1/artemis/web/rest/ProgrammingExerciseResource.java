@@ -218,10 +218,10 @@ public class ProgrammingExerciseResource {
         }
 
         updatedProgrammingExercise.validateGeneralSettings();
-
         // Valid exercises have set either a course or an exerciseGroup
         updatedProgrammingExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
         programmingExerciseService.validateStaticCodeAnalysisSettings(updatedProgrammingExercise);
+        programmingExerciseService.validateNumberOfTasks(updatedProgrammingExercise);
 
         // fetch course from database to make sure client didn't change groups
         var user = userRepository.getUserWithGroupsAndAuthorities();
