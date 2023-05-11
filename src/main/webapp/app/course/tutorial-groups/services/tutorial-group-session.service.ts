@@ -17,7 +17,7 @@ export class TutorialGroupSessionDTO {
 
 @Injectable({ providedIn: 'root' })
 export class TutorialGroupSessionService {
-    private resourceURL = SERVER_API_URL + 'api';
+    private resourceURL = 'api';
 
     constructor(private httpClient: HttpClient, private tutorialGroupFreePeriodService: TutorialGroupFreePeriodService) {}
     getOneOfTutorialGroup(courseId: number, tutorialGroupId: number, sessionId: number) {

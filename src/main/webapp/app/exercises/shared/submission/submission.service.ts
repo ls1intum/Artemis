@@ -24,8 +24,8 @@ export class SubmissionWithComplaintDTO {
 
 @Injectable({ providedIn: 'root' })
 export class SubmissionService {
-    public resourceUrl = SERVER_API_URL + 'api/submissions';
-    public resourceUrlParticipation = SERVER_API_URL + 'api/participations';
+    public resourceUrl = 'api/submissions';
+    public resourceUrlParticipation = 'api/participations';
 
     constructor(private http: HttpClient, private complaintResponseService: ComplaintResponseService, private accountService: AccountService) {}
 

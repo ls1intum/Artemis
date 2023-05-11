@@ -29,7 +29,7 @@
             align-items: center;
 
             &--small {
-                width: 60px;
+                width: 80px;
                 flex: initial;
             }
         }
@@ -40,6 +40,14 @@
         background: none;
         border: none;
         width: 2rem;
+    }
+}
+
+.sort {
+    &__button {
+        border: none;
+        background: none;
+        color: var(--bs-card-color);
     }
 }
 
