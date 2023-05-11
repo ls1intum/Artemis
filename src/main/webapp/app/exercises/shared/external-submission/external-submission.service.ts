@@ -22,7 +22,7 @@ export class ExternalSubmissionService {
     create(exercise: Exercise, student: User, result: Result): Observable<EntityResponseType> {
         const copy = this.resultService.convertResultDatesFromClient(result);
         return this.http
-            .post<Result>(`${SERVER_API_URL}api/exercises/${exercise.id}/external-submission-results?studentLogin=${student.login}`, copy, { observe: 'response' })
+            .post<Result>(`api/exercises/${exercise.id}/external-submission-results?studentLogin=${student.login}`, copy, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.resultService.convertResultResponseDatesFromServer(res)));
     }
 

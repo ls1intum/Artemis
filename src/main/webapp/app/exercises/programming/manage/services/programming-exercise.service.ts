@@ -44,7 +44,7 @@ export type ProgrammingExerciseInstructorRepositoryType = 'TEMPLATE' | 'SOLUTION
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExerciseService {
-    public resourceUrl = SERVER_API_URL + 'api/programming-exercises';
+    public resourceUrl = 'api/programming-exercises';
 
     constructor(private http: HttpClient, private exerciseService: ExerciseService) {}
 

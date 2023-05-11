@@ -9,8 +9,7 @@ export interface IBuildLogService {
 
 @Injectable({ providedIn: 'root' })
 export class BuildLogService implements IBuildLogService {
-    private restResourceUrlBase = `${SERVER_API_URL}api`;
-    private assignmentResourceUrl = `${this.restResourceUrlBase}/repository`;
+    private assignmentResourceUrl = 'api/repository';
 
     constructor(private http: HttpClient) {}
 

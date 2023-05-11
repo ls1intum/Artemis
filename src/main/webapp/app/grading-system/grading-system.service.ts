@@ -13,7 +13,7 @@ export type EntityArrayResponseType = HttpResponse<GradingScale[]>;
 
 @Injectable({ providedIn: 'root' })
 export class GradingSystemService {
-    public resourceUrl = SERVER_API_URL + 'api/courses';
+    public resourceUrl = 'api/courses';
 
     constructor(private http: HttpClient) {}
 
@@ -152,7 +152,7 @@ export class GradingSystemService {
             .set('searchTerm', pageable.searchTerm)
             .set('sortedColumn', pageable.sortedColumn);
 
-        return this.http.get<SearchResult<GradingScale>>(`${SERVER_API_URL}api/grading-scales`, {
+        return this.http.get<SearchResult<GradingScale>>('api/grading-scales', {
             params,
             observe: 'response',
         });

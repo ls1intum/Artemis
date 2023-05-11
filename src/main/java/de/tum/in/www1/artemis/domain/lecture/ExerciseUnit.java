@@ -21,7 +21,7 @@ import de.tum.in.www1.artemis.domain.LearningGoal;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ExerciseUnit extends LectureUnit {
 
-    // Note: Name, release date and learning goals will always be taken from associated exercise
+    // Note: Name, release date and competencies will always be taken from associated exercise
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "exercise_id")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)

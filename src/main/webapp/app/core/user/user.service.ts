@@ -5,7 +5,7 @@ import { User } from 'app/core/user/user.model';
 
 @Injectable({ providedIn: 'root' })
 export class UserService {
-    public resourceUrl = SERVER_API_URL + 'api/users';
+    public resourceUrl = 'api/users';
 
     constructor(private http: HttpClient) {}
 
