@@ -120,8 +120,12 @@
                         </div>
                     </div>
                     <div *ngIf="(course.presentationScore ?? 0) > 0">
-                        <h3>{{ 'artemisApp.courseOverview.statistics.totalPresentationScore' | artemisTranslate : { number: overallPresentationScore } }}</h3>
-                        <h3>{{ 'artemisApp.courseOverview.statistics.presentationScoreBonus' | artemisTranslate : { number: course.presentationScore } }}</h3>
+                        <h5 class="fw-bolder">
+                            {{ 'artemisApp.courseOverview.statistics.totalPresentationScore' | artemisTranslate : { number: overallPresentationScore } }}
+                        </h5>
+                        <h5 class="fw-bolder">
+                            {{ 'artemisApp.courseOverview.statistics.presentationScoreBonus' | artemisTranslate : { number: course.presentationScore } }}
+                        </h5>
                     </div>
                     <div *ngIf="(reachablePresentationPoints ?? 0) > 0">
                         <h5 class="fw-bolder">
@@ -130,6 +134,15 @@
                         <h5 class="fw-bolder">
                             {{ 'artemisApp.courseOverview.statistics.achievablePresentationPoints' | artemisTranslate : { number: reachablePresentationPoints } }}
                         </h5>
+                        <h6>
+                            {{ 'artemisApp.courseOverview.statistics.gradeInfo' | artemisTranslate }}
+                            <fa-icon
+                                id="reachable-help"
+                                class="me-1"
+                                [icon]="faQuestionCircle"
+                                ngbTooltip="{{ 'artemisApp.courseOverview.statistics.presentationHelp' | artemisTranslate }}"
+                            ></fa-icon>
+                        </h6>
                     </div>
                 </div>
             </div>

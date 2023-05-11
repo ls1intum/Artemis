@@ -125,6 +125,7 @@
                 "gradeInfo": "(based on attainable points)",
                 "gradeHelp": "The grade is based on your attainable points. It could change until the end of the course when more exercises have been assessed.",
                 "bonusHelp": "The bonus points are based on your attainable points. They could change until the end of the course when more exercises have been assessed.",
+                "presentationHelp": "The reachable presentation points are based on your attainable points. They could change until the end of the course when more exercises have been assessed.",
                 "programmingExerciseFailedTests": "{{ tests }} tests failed ({{ percentage }}%)",
                 "programmingExercisePassedTests": "{{ tests }} tests passed ({{ percentage }}%)",
                 "programmingPointLabel": "Programming Points",
