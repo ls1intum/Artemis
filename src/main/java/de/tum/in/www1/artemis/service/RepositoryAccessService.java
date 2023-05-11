@@ -68,8 +68,7 @@ public class RepositoryAccessService {
 
         // Error case 2: The user's participation is locked.
         // Editors and up are able to push to any repository even if the participation is locked for the student.
-        // Teaching assistants trying to push to a student assignment repository will be blocked by the next check.
-        if (repositoryActionType == RepositoryActionType.WRITE && isStudent && programmingParticipation.isLocked()) {
+        if (repositoryActionType == RepositoryActionType.WRITE && !isAtLeastEditor && programmingParticipation.isLocked()) {
             // Return a message to the client.
             String errorMessage;
             if (!programmingExercise.isReleased()) {
@@ -89,20 +88,12 @@ public class RepositoryAccessService {
             throw new AccessForbiddenException(errorMessage);
         }
 
-        // Error case 3: A teaching assistant tries to push into a base repository (in that case the participation is not a StudentParticipation)
-        // or into a student assignment repository (in that case the teaching assistant does not own the participation).
-        boolean isStudentParticipation = programmingParticipation instanceof StudentParticipation;
-        if (isTeachingAssistant && repositoryActionType == RepositoryActionType.WRITE
-                && (!isStudentParticipation || !((StudentParticipation) programmingParticipation).isOwnedBy(user))) {
-            throw new AccessUnauthorizedException();
-        }
-
-        // Error case 4: The student can reset the repository only before and a tutor/instructor only after the due date has passed
+        // Error case 3: The student can reset the repository only before and a tutor/instructor only after the due date has passed
         if (repositoryActionType == RepositoryActionType.RESET) {
             checkAccessRepositoryForReset(programmingParticipation, isStudent, programmingExercise);
         }
 
-        // Error case 5: Before or after exam working time, students are not allowed to read or submit to the repository for an exam exercise. Teaching assistants are only allowed
+        // Error case 4: Before or after exam working time, students are not allowed to read or submit to the repository for an exam exercise. Teaching assistants are only allowed
         // to read the student's repository.
         // But the student should still be able to access if they are notified for a related plagiarism case.
         if ((isStudent || (isTeachingAssistant && repositoryActionType != RepositoryActionType.READ))

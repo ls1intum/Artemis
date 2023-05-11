@@ -56,6 +56,19 @@ class ProgrammingExerciseRepositoryServiceTest extends AbstractSpringIntegration
     }
 
     @Test
+    void shouldUnlockRepositoriesAndParticipationsWhenOfflineIDEGetsAllowedAndStartDateIsSetInThePast() {
+        programmingExerciseBeforeUpdate.setAllowOfflineIde(false);
+        updatedProgrammingExercise.setAllowOfflineIde(true);
+        programmingExerciseBeforeUpdate.setStartDate(ZonedDateTime.now().plusHours(1));
+        updatedProgrammingExercise.setStartDate(ZonedDateTime.now().minusHours(1));
+        programmingExerciseRepository.save(updatedProgrammingExercise);
+
+        programmingExerciseRepositoryService.handleRepoAccessRightChanges(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
+
+        verify(instanceMessageSendService, times(1)).sendUnlockAllStudentRepositoriesAndParticipationsWithEarlierStartDateAndLaterDueDate(programmingExerciseBeforeUpdate.getId());
+    }
+
+    @Test
     void shouldLockRepositoriesAndParticipationsWhenDueDateIsSetInThePast() {
         programmingExerciseBeforeUpdate.setDueDate(ZonedDateTime.now().plusHours(1));
         updatedProgrammingExercise.setDueDate(ZonedDateTime.now().minusHours(1));
@@ -75,6 +88,18 @@ class ProgrammingExerciseRepositoryServiceTest extends AbstractSpringIntegration
         programmingExerciseRepositoryService.handleRepoAccessRightChanges(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
 
         verify(instanceMessageSendService, times(1)).sendLockAllStudentRepositoriesAndParticipationsWithEarlierDueDate(programmingExerciseBeforeUpdate.getId());
+    }
+
+    @Test
+    void shouldLockParticipationsWhenDueDateIsSetInThePastAndOfflineIDEGetsForbidden() {
+        programmingExerciseBeforeUpdate.setDueDate(ZonedDateTime.now().plusHours(1));
+        updatedProgrammingExercise.setDueDate(ZonedDateTime.now().minusHours(1));
+        programmingExerciseBeforeUpdate.setAllowOfflineIde(true);
+        updatedProgrammingExercise.setAllowOfflineIde(false);
+
+        programmingExerciseRepositoryService.handleRepoAccessRightChanges(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
+
+        verify(instanceMessageSendService, times(1)).sendLockAllStudentParticipationsWithEarlierDueDate(programmingExerciseBeforeUpdate.getId());
     }
 
     @Test

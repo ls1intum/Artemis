@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.time.ZonedDateTime;
@@ -20,6 +21,7 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.submissionpolicy.LockRepositoryPolicy;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseGradingService;
@@ -34,6 +36,9 @@ class RepositoryAccessServiceTest extends AbstractSpringIntegrationBambooBitbuck
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private ProgrammingExerciseRepository programmingExerciseRepository;
 
     @Autowired
     private RepositoryAccessService repositoryAccessService;
@@ -53,6 +58,8 @@ class RepositoryAccessServiceTest extends AbstractSpringIntegrationBambooBitbuck
         student = userRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
         course = database.addCourseWithOneProgrammingExercise();
         programmingExercise = (ProgrammingExercise) course.getExercises().stream().iterator().next();
+        programmingExercise.setReleaseDate(ZonedDateTime.now().minusDays(1));
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
     }
 
     @Test
@@ -76,8 +83,9 @@ class RepositoryAccessServiceTest extends AbstractSpringIntegrationBambooBitbuck
         programmingExerciseGradingService.processNewProgrammingExerciseResult(participation, bambooBuildResult);
 
         // Should throw an AccessForbiddenException because the submission limit is already reached.
-        assertThrows(AccessForbiddenException.class,
+        AccessForbiddenException exception = assertThrows(AccessForbiddenException.class,
                 () -> repositoryAccessService.checkAccessRepositoryElseThrow(participation, student, programmingExercise, RepositoryActionType.WRITE));
+        assertThat(exception.getMessage()).isEqualTo("submitAfterReachingSubmissionLimit");
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
