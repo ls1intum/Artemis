@@ -138,12 +138,23 @@ describe('Course messages', () => {
                 });
             });
 
-            it('student should be able to join pre-created channel', () => {
+            it('student should be joined into pre-created channels automatically', () => {
                 cy.login(studentOne, `/courses/${course.id}/messages`);
                 courseMessages.browseChannelsButton();
                 courseMessages.getChannelIdByName('tech-support').then((response) => {
                     const techSupportChannelId = Number(response!);
-                    courseMessages.joinChannel(techSupportChannelId);
+                    courseMessages.checkBadgeJoined(techSupportChannelId).should('exist').contains('Joined');
+                });
+                courseMessages.getChannelIdByName('random').then((response) => {
+                    const techSupportChannelId = Number(response!);
+                    courseMessages.checkBadgeJoined(techSupportChannelId).should('exist').contains('Joined');
+                });
+                courseMessages.getChannelIdByName('announcement').then((response) => {
+                    const techSupportChannelId = Number(response!);
+                    courseMessages.checkBadgeJoined(techSupportChannelId).should('exist').contains('Joined');
+                });
+                courseMessages.getChannelIdByName('organization').then((response) => {
+                    const techSupportChannelId = Number(response!);
                     courseMessages.checkBadgeJoined(techSupportChannelId).should('exist').contains('Joined');
                 });
             });
