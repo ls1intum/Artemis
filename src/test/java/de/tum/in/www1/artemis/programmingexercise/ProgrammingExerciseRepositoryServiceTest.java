@@ -7,6 +7,7 @@ import java.time.ZonedDateTime;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
@@ -32,20 +33,25 @@ class ProgrammingExerciseRepositoryServiceTest extends AbstractSpringIntegration
 
     @BeforeEach
     void init() {
-        database.addUsers(TEST_PREFIX, 1, 0, 0, 2);
+        database.addUsers(TEST_PREFIX, 1, 0, 0, 1);
 
         var course = database.addCourseWithOneProgrammingExercise();
         programmingExerciseBeforeUpdate = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
         programmingExerciseBeforeUpdate.setReleaseDate(null);
         programmingExerciseRepository.save(programmingExerciseBeforeUpdate);
 
-        participation = database.addStudentParticipationForProgrammingExercise(programmingExerciseBeforeUpdate, TEST_PREFIX + "student1");
-
         updatedProgrammingExercise = programmingExerciseRepository.findById(programmingExerciseBeforeUpdate.getId()).orElseThrow();
     }
 
+    private void addParticipation() {
+        // Cannot happen in BeforeEach because this needs the authentication object set (@WithMockUser) which does not work on BeforeEach.
+        participation = database.addStudentParticipationForProgrammingExercise(programmingExerciseBeforeUpdate, TEST_PREFIX + "student1");
+    }
+
     @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void shouldLockRepositoriesWhenOfflineIDEGetsForbidden() {
+        addParticipation();
         programmingExerciseBeforeUpdate.setAllowOfflineIde(true);
         updatedProgrammingExercise.setAllowOfflineIde(false);
 
@@ -56,7 +62,9 @@ class ProgrammingExerciseRepositoryServiceTest extends AbstractSpringIntegration
     }
 
     @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void shouldUnlockRepositoriesWhenOfflineIDEGetsAllowed() {
+        addParticipation();
         programmingExerciseBeforeUpdate.setAllowOfflineIde(false);
         updatedProgrammingExercise.setAllowOfflineIde(true);
         programmingExerciseRepositoryService.handleRepoAccessRightChanges(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
@@ -67,7 +75,9 @@ class ProgrammingExerciseRepositoryServiceTest extends AbstractSpringIntegration
     }
 
     @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void shouldLockRepositoriesAndParticipationsWhenDueDateIsSetInThePast() {
+        addParticipation();
         programmingExerciseBeforeUpdate.setDueDate(ZonedDateTime.now().plusHours(1));
         updatedProgrammingExercise.setDueDate(ZonedDateTime.now().minusHours(1));
         programmingExerciseRepository.save(updatedProgrammingExercise);
@@ -78,7 +88,9 @@ class ProgrammingExerciseRepositoryServiceTest extends AbstractSpringIntegration
     }
 
     @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void shouldLockRepositoriesAndParticipationsWhenDueDateIsSetInThePastAndNoDueDateBefore() {
+        addParticipation();
         programmingExerciseBeforeUpdate.setDueDate(null);
         updatedProgrammingExercise.setDueDate(ZonedDateTime.now().minusHours(1));
         programmingExerciseRepository.save(updatedProgrammingExercise);
@@ -89,7 +101,9 @@ class ProgrammingExerciseRepositoryServiceTest extends AbstractSpringIntegration
     }
 
     @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void shouldUnlockRepositoriesAndParticipationsWhenDueDateIsSetInTheFuture() {
+        addParticipation();
         programmingExerciseBeforeUpdate.setDueDate(ZonedDateTime.now().minusHours(1));
         updatedProgrammingExercise.setDueDate(ZonedDateTime.now().plusHours(1));
         programmingExerciseRepository.save(updatedProgrammingExercise);
@@ -100,7 +114,9 @@ class ProgrammingExerciseRepositoryServiceTest extends AbstractSpringIntegration
     }
 
     @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void shouldNotUnlockRepositoriesWhenDueDateIsSetInTheFutureAndNoOfflineIDE() {
+        addParticipation();
         programmingExerciseBeforeUpdate.setAllowOfflineIde(false);
         updatedProgrammingExercise.setAllowOfflineIde(false);
         programmingExerciseBeforeUpdate.setDueDate(ZonedDateTime.now().minusHours(1));
@@ -114,7 +130,9 @@ class ProgrammingExerciseRepositoryServiceTest extends AbstractSpringIntegration
     }
 
     @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void shouldLockRepositoriesAndParticipationsWhenExerciseGetsUnreleased() {
+        addParticipation();
         updatedProgrammingExercise.setReleaseDate(ZonedDateTime.now().plusHours(1));
         programmingExerciseRepository.save(updatedProgrammingExercise);
 
@@ -124,7 +142,9 @@ class ProgrammingExerciseRepositoryServiceTest extends AbstractSpringIntegration
     }
 
     @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void shouldUnlockRepositoriesAndParticipationsWhenExerciseGetsReleasedImmediately() {
+        addParticipation();
         programmingExerciseBeforeUpdate.setReleaseDate(ZonedDateTime.now().plusHours(1));
         updatedProgrammingExercise.setReleaseDate(ZonedDateTime.now());
         programmingExerciseRepository.save(updatedProgrammingExercise);
