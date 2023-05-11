@@ -9,10 +9,10 @@ import { Imprint } from 'app/entities/imprint.model';
     providedIn: 'root',
 })
 export class LegalDocumentService {
-    private resourceUrlPrivacyStatement = SERVER_API_URL + 'api/privacy-statement';
-    private resourceUrlPrivacyStatementForUpdate = SERVER_API_URL + 'api/privacy-statement-for-update';
-    private resourceUrlImprint = SERVER_API_URL + 'api/imprint';
-    private resourceUrlImprintForUpdate = SERVER_API_URL + 'api/imprint-for-update';
+    private resourceUrlPrivacyStatement = 'api/privacy-statement';
+    private resourceUrlPrivacyStatementForUpdate = 'api/privacy-statement-for-update';
+    private resourceUrlImprint = 'api/imprint';
+    private resourceUrlImprintForUpdate = 'api/imprint-for-update';
 
     constructor(private http: HttpClient) {}
 
