@@ -69,7 +69,7 @@ describe('Student Exam Service', () => {
         service.find(1, 2, 3).subscribe((result) => (returnedExam = result));
 
         expect(getSpy).toHaveBeenCalledOnce();
-        expect(getSpy).toHaveBeenCalledWith(`${SERVER_API_URL}api/courses/1/exams/2/student-exams/3`, { observe: 'response' });
+        expect(getSpy).toHaveBeenCalledWith(`api/courses/1/exams/2/student-exams/3`, { observe: 'response' });
         expect(returnedExam).toBe(findResponse);
         expect(accountService.setAccessRightsForCourse).toHaveBeenCalledTimes(payloadExam?.exam?.course ? 1 : 0);
 
@@ -78,7 +78,7 @@ describe('Student Exam Service', () => {
         service.updateWorkingTime(1, 2, 3, 10).subscribe((result) => (returnedExam = result));
 
         expect(patchSpy).toHaveBeenCalledOnce();
-        expect(patchSpy).toHaveBeenCalledWith(`${SERVER_API_URL}api/courses/1/exams/2/student-exams/3/working-time`, 10, { observe: 'response' });
+        expect(patchSpy).toHaveBeenCalledWith(`api/courses/1/exams/2/student-exams/3/working-time`, 10, { observe: 'response' });
         expect(returnedExam).toBe(updateResponse);
         expect(accountService.setAccessRightsForCourse).toHaveBeenCalledTimes(payloadExam?.exam?.course ? 2 : 0);
     });
@@ -115,7 +115,7 @@ describe('Student Exam Service', () => {
         service.findAllForExam(1, 2).subscribe((result) => (returnedExams = result));
 
         expect(getSpy).toHaveBeenCalledOnce();
-        expect(getSpy).toHaveBeenCalledWith(`${SERVER_API_URL}api/courses/1/exams/2/student-exams`, { observe: 'response' });
+        expect(getSpy).toHaveBeenCalledWith(`api/courses/1/exams/2/student-exams`, { observe: 'response' });
         expect(returnedExams).toBe(response);
         expect(accountService.setAccessRightsForCourse).toHaveBeenCalledTimes(2);
     });

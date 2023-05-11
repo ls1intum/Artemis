@@ -40,7 +40,7 @@ describe('Course Management Service', () => {
     let convertExercisesDateFromServerSpy: jest.SpyInstance;
     let convertDatesForLecturesFromServerSpy: jest.SpyInstance;
     let syncGroupsSpy: jest.SpyInstance;
-    const resourceUrl = SERVER_API_URL + 'api/courses';
+    const resourceUrl = 'api/courses';
     let course: Course;
     let courseForDashboard: CourseForDashboardDTO;
     let courseScores: CourseScores;
