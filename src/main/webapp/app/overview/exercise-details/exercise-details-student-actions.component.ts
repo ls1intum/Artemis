@@ -29,16 +29,13 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     readonly FeatureToggle = FeatureToggle;
     readonly ExerciseType = ExerciseType;
     readonly InitializationState = InitializationState;
-    readonly dayjs = dayjs;
 
     @Input() @HostBinding('class.col') equalColumns = true;
     @Input() @HostBinding('class.col-auto') smallColumns = false;
 
     @Input() exercise: Exercise;
     @Input() courseId: number;
-    @Input() actionsOnly: boolean;
     @Input() smallButtons: boolean;
-    @Input() showResult: boolean;
     @Input() examMode: boolean;
 
     // extension points, see shared/extension-point
@@ -50,6 +47,8 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     practiceParticipation?: StudentParticipation;
     programmingExercise?: ProgrammingExercise;
     isTeamAvailable: boolean;
+    resultAfterDueDate: boolean;
+    beforeDueDate: boolean;
 
     // Icons
     faComment = faComment;
@@ -101,10 +100,19 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
         const studentParticipations = this.exercise.studentParticipations ?? [];
         this.gradedParticipation = this.participationService.getSpecificStudentParticipation(studentParticipations, false);
         this.practiceParticipation = this.participationService.getSpecificStudentParticipation(studentParticipations, true);
+
+        this.beforeDueDate = !!this.exercise.dueDate && dayjs().isBefore(this.exercise.dueDate);
+        const afterAssessmentDueDate = !this.exercise.assessmentDueDate || dayjs().isAfter(this.exercise.assessmentDueDate);
+        this.resultAfterDueDate = afterAssessmentDueDate && !!this.gradedParticipation?.results?.some((result) => result.rated === true);
+
+        if (this.exercise.title === 'fdsbgvdfybvdfb') {
+            console.log(this.exercise);
+        }
     }
 
     /**
-     * Starting an exercise is not possible in the exam or if it's a team exercise and the student is not yet assigned a team, otherwise see exercise.utils -> isStartExerciseAvailable
+     * Starting an exercise is not possible in the exam or if it's a team exercise and the student is not yet assigned a team, otherwise see exercise.utils ->
+     * isStartExerciseAvailable
      */
     isStartExerciseAvailable(): boolean {
         const individualExerciseOrTeamAssigned = !!(!this.exercise.teamMode || this.exercise.studentAssignedTeamId);
@@ -126,10 +134,6 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     }
 
     startExercise() {
-        if (this.exercise.type === ExerciseType.QUIZ) {
-            // Start the quiz
-            return this.router.navigate(['/courses', this.courseId, 'quiz-exercises', this.exercise.id, 'live']);
-        }
         this.exercise.loading = true;
         this.courseExerciseService
             .startExercise(this.exercise.id!)
