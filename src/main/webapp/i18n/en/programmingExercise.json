@@ -198,6 +198,11 @@
                 "ok": "Test cases ok.",
                 "invalidTestCase": "The test case '{{id}}' could not be found in the test repository."
             },
+            "tasksAnalysis": {
+                "issues": "Task issues.",
+                "ok": "Tasks ok.",
+                "numOfTasks15": "The number of tasks should not exceed 15. Currently, there are {{number}} tasks."
+            },
             "hintsAnalysis": {
                 "invalidHints": "There are {{number}} hints that were found in the problem statement markdown but couldn't be found in the database or are not assigned to this programming exercise:",
                 "issues": "Hints issues.",
