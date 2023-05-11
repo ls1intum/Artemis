@@ -416,9 +416,9 @@ public class CourseResource {
     /**
      * GET /courses/{courseId}/for-dashboard
      *
-     * @param courseId the courseId for which exercises, lectures, exams and learning goals should be fetched
+     * @param courseId the courseId for which exercises, lectures, exams and competencies should be fetched
      * @param refresh  if true, this request was initiated by the user clicking on a refresh button
-     * @return a DTO containing a course with all exercises, lectures, exams, learning goals, etc. visible to the user as well as the total scores for the course, the scores per
+     * @return a DTO containing a course with all exercises, lectures, exams, competencies, etc. visible to the user as well as the total scores for the course, the scores per
      *         exercise type for each exercise, and the participation result for each participation.
      */
     // TODO: we should rename this into courses/{courseId}/details
