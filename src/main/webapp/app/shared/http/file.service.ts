@@ -5,7 +5,7 @@ import { ProgrammingLanguage, ProjectType } from 'app/entities/programming-exerc
 
 @Injectable({ providedIn: 'root' })
 export class FileService {
-    private resourceUrl = SERVER_API_URL + 'api/files';
+    private resourceUrl = 'api/files';
 
     constructor(private http: HttpClient) {}
 

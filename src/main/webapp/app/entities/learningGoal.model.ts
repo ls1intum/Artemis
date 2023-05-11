@@ -6,7 +6,7 @@ import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { faBrain, faComments, faCubesStacked, faMagnifyingGlass, faPenFancy, faPlusMinus, faQuestion } from '@fortawesome/free-solid-svg-icons';
 
 /**
- * The available learning goal types (based on Bloom's Taxonomy)
+ * The available competency types (based on Bloom's Taxonomy)
  */
 export enum LearningGoalTaxonomy {
     REMEMBER = 'REMEMBER',

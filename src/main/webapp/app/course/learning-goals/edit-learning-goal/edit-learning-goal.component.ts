@@ -68,7 +68,7 @@ export class EditLearningGoalComponent implements OnInit {
                                 lecture.lectureUnits = [];
                             } else {
                                 // Filter out exercise units, they should be added via the exercise management for now
-                                // TODO: User experience improvements for linking learning objects when editing a learning goal
+                                // TODO: User experience improvements for linking learning objects when editing a competency
                                 lecture.lectureUnits = lecture.lectureUnits.filter((lectureUnit) => lectureUnit.type !== LectureUnitType.EXERCISE);
                             }
                         }
@@ -103,7 +103,7 @@ export class EditLearningGoalComponent implements OnInit {
             .pipe(
                 finalize(() => {
                     this.isLoading = false;
-                    // currently at /course-management/{courseId}/goal-management/{learninGoalId}/edit, going back to /course-management/{courseId}/goal-management/
+                    // currently at /course-management/{courseId}/competency-management/{competencyId}/edit, going back to /course-management/{courseId}/competency-management/
                     this.router.navigate(['../../'], { relativeTo: this.activatedRoute });
                 }),
             )
