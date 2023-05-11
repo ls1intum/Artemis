@@ -108,7 +108,7 @@ describe('CourseLearningGoals', () => {
         expect(getCourseStub).toHaveBeenCalledWith(1);
         expect(courseLearningGoalsComponent.course).toEqual(course);
         expect(courseLearningGoalsComponent.learningGoals).toEqual([learningGoal]);
-        expect(getAllForCourseSpy).not.toHaveBeenCalled(); // do not load learning goals again as already fetched
+        expect(getAllForCourseSpy).not.toHaveBeenCalled(); // do not load competencies again as already fetched
     });
 
     it('should load prerequisites and learning goals (with associated progress) and display a card for each of them', () => {
@@ -135,7 +135,7 @@ describe('CourseLearningGoals', () => {
         courseLearningGoalsComponentFixture.detectChanges();
 
         const learningGoalCards = courseLearningGoalsComponentFixture.debugElement.queryAll(By.directive(LearningGoalCardStubComponent));
-        expect(learningGoalCards).toHaveLength(3); // 1 prerequisite and 2 learning goals
+        expect(learningGoalCards).toHaveLength(3); // 1 prerequisite and 2 competencies
         expect(getAllPrerequisitesForCourseSpy).toHaveBeenCalledOnce();
         expect(getAllForCourseSpy).toHaveBeenCalledOnce();
         expect(courseLearningGoalsComponent.learningGoals).toHaveLength(2);

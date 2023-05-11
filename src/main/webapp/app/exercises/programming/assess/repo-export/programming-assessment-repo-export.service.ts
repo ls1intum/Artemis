@@ -18,7 +18,7 @@ export type RepositoryExportOptions = {
 @Injectable({ providedIn: 'root' })
 export class ProgrammingAssessmentRepoExportService {
     // TODO: We should move this endpoint to api/programming-exercises.
-    public resourceUrl = SERVER_API_URL + 'api/programming-exercises';
+    public resourceUrl = 'api/programming-exercises';
 
     constructor(private http: HttpClient) {}
 
