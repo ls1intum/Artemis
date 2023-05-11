@@ -21,8 +21,8 @@ import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.CompetencyService;
 import de.tum.in.www1.artemis.service.LearningGoalProgressService;
-import de.tum.in.www1.artemis.service.LearningGoalService;
 import de.tum.in.www1.artemis.service.util.RoundingUtil;
 import de.tum.in.www1.artemis.web.rest.dto.CourseLearningGoalProgressDTO;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
@@ -53,7 +53,7 @@ public class LearningGoalResource {
 
     private final LectureUnitRepository lectureUnitRepository;
 
-    private final LearningGoalService learningGoalService;
+    private final CompetencyService competencyService;
 
     private final LearningGoalProgressRepository learningGoalProgressRepository;
 
@@ -63,7 +63,7 @@ public class LearningGoalResource {
 
     public LearningGoalResource(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository,
             LearningGoalRepository learningGoalRepository, LearningGoalRelationRepository learningGoalRelationRepository, LectureUnitRepository lectureUnitRepository,
-            LearningGoalService learningGoalService, LearningGoalProgressRepository learningGoalProgressRepository, ExerciseRepository exerciseRepository,
+            CompetencyService competencyService, LearningGoalProgressRepository learningGoalProgressRepository, ExerciseRepository exerciseRepository,
             LearningGoalProgressService learningGoalProgressService) {
         this.courseRepository = courseRepository;
         this.learningGoalRelationRepository = learningGoalRelationRepository;
@@ -71,7 +71,7 @@ public class LearningGoalResource {
         this.authorizationCheckService = authorizationCheckService;
         this.userRepository = userRepository;
         this.learningGoalRepository = learningGoalRepository;
-        this.learningGoalService = learningGoalService;
+        this.competencyService = competencyService;
         this.learningGoalProgressRepository = learningGoalProgressRepository;
         this.exerciseRepository = exerciseRepository;
         this.learningGoalProgressService = learningGoalProgressService;
@@ -100,7 +100,7 @@ public class LearningGoalResource {
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<SearchResultPageDTO<LearningGoal>> getAllLearningGoalsOnPage(PageableSearchDTO<String> search) {
         final var user = userRepository.getUserWithGroupsAndAuthorities();
-        return ResponseEntity.ok(learningGoalService.getAllOnPageWithSize(search, user));
+        return ResponseEntity.ok(competencyService.getAllOnPageWithSize(search, user));
     }
 
     /**
@@ -384,7 +384,7 @@ public class LearningGoalResource {
             var learningGoals = learningGoalRepository.findAllForCourse(course.getId());
             var learningGoalRelations = learningGoalRelationRepository.findAllByCourseId(course.getId());
             learningGoalRelations.add(relation);
-            if (learningGoalService.doesCreateCircularRelation(learningGoals, learningGoalRelations)) {
+            if (competencyService.doesCreateCircularRelation(learningGoals, learningGoalRelations)) {
                 throw new BadRequestException("You can't define circular dependencies between competencies");
             }
 
@@ -441,7 +441,7 @@ public class LearningGoalResource {
             authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
         }
 
-        Set<LearningGoal> prerequisites = learningGoalService.findAllPrerequisitesForCourse(course, user);
+        Set<LearningGoal> prerequisites = competencyService.findAllPrerequisitesForCourse(course, user);
 
         return ResponseEntity.ok(new ArrayList<>(prerequisites));
     }

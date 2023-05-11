@@ -13,7 +13,7 @@ import de.tum.in.www1.artemis.web.rest.dto.*;
 import de.tum.in.www1.artemis.web.rest.util.PageUtil;
 
 @Service
-public class LearningGoalService {
+public class CompetencyService {
 
     private final LearningGoalRepository learningGoalRepository;
 
@@ -21,7 +21,7 @@ public class LearningGoalService {
 
     private final LearningGoalProgressService learningGoalProgressService;
 
-    public LearningGoalService(LearningGoalRepository learningGoalRepository, AuthorizationCheckService authCheckService, LearningGoalProgressService learningGoalProgressService) {
+    public CompetencyService(LearningGoalRepository learningGoalRepository, AuthorizationCheckService authCheckService, LearningGoalProgressService learningGoalProgressService) {
         this.learningGoalRepository = learningGoalRepository;
         this.authCheckService = authCheckService;
         this.learningGoalProgressService = learningGoalProgressService;
