@@ -6,20 +6,14 @@ import java.time.ZonedDateTime;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.context.SecurityContextHolder;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseRepositoryService;
 
 class ProgrammingExerciseRepositoryServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
-
-    private static final String TEST_PREFIX = "progexreposervice";
 
     @Autowired
     private ProgrammingExerciseRepository programmingExerciseRepository;
@@ -31,25 +25,14 @@ class ProgrammingExerciseRepositoryServiceTest extends AbstractSpringIntegration
 
     private ProgrammingExercise updatedProgrammingExercise;
 
-    private ProgrammingExerciseStudentParticipation participation;
-
     @BeforeEach
     void init() {
-        database.addUsers(TEST_PREFIX, 1, 0, 0, 1);
-
         var course = database.addCourseWithOneProgrammingExercise();
         programmingExerciseBeforeUpdate = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
         programmingExerciseBeforeUpdate.setReleaseDate(null);
         programmingExerciseRepository.save(programmingExerciseBeforeUpdate);
 
-        // Adding a participation requires the authentication object to be set.
-        SecurityContextHolder.getContext().setAuthentication(SecurityUtils.makeAuthorizationObject(TEST_PREFIX + "instructor1"));
-        participation = database.addStudentParticipationForProgrammingExercise(programmingExerciseBeforeUpdate, TEST_PREFIX + "student1");
-
         updatedProgrammingExercise = programmingExerciseRepository.findById(programmingExerciseBeforeUpdate.getId()).orElseThrow();
-
-        // The mock is also reset in the parent class but adding the student participation above already calls some methods on this service.
-        Mockito.reset(programmingExerciseParticipationService);
     }
 
     @Test
@@ -59,19 +42,17 @@ class ProgrammingExerciseRepositoryServiceTest extends AbstractSpringIntegration
 
         programmingExerciseRepositoryService.handleRepoAccessRightChanges(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
 
-        verify(programmingExerciseParticipationService, times(1)).lockStudentRepository(updatedProgrammingExercise, participation);
-        verify(programmingExerciseParticipationService, never()).lockStudentParticipation(updatedProgrammingExercise, participation);
+        verify(instanceMessageSendService, times(1)).sendLockAllStudentRepositories(programmingExerciseBeforeUpdate.getId());
     }
 
     @Test
     void shouldUnlockRepositoriesWhenOfflineIDEGetsAllowed() {
         programmingExerciseBeforeUpdate.setAllowOfflineIde(false);
         updatedProgrammingExercise.setAllowOfflineIde(true);
+
         programmingExerciseRepositoryService.handleRepoAccessRightChanges(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
 
-        verify(programmingExerciseParticipationService, times(1)).unlockStudentRepository(updatedProgrammingExercise, participation);
-
-        verify(programmingExerciseParticipationService, never()).unlockStudentParticipation(updatedProgrammingExercise, participation);
+        verify(instanceMessageSendService, times(1)).sendUnlockAllStudentRepositoriesWithEarlierStartDateAndLaterDueDate(programmingExerciseBeforeUpdate.getId());
     }
 
     @Test
@@ -82,7 +63,7 @@ class ProgrammingExerciseRepositoryServiceTest extends AbstractSpringIntegration
 
         programmingExerciseRepositoryService.handleRepoAccessRightChanges(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
 
-        verify(programmingExerciseParticipationService, times(1)).lockStudentRepositoryAndParticipation(updatedProgrammingExercise, participation);
+        verify(instanceMessageSendService, times(1)).sendLockAllStudentRepositoriesAndParticipationsWithEarlierDueDate(programmingExerciseBeforeUpdate.getId());
     }
 
     @Test
@@ -93,7 +74,7 @@ class ProgrammingExerciseRepositoryServiceTest extends AbstractSpringIntegration
 
         programmingExerciseRepositoryService.handleRepoAccessRightChanges(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
 
-        verify(programmingExerciseParticipationService, times(1)).lockStudentRepositoryAndParticipation(updatedProgrammingExercise, participation);
+        verify(instanceMessageSendService, times(1)).sendLockAllStudentRepositoriesAndParticipationsWithEarlierDueDate(programmingExerciseBeforeUpdate.getId());
     }
 
     @Test
@@ -104,7 +85,7 @@ class ProgrammingExerciseRepositoryServiceTest extends AbstractSpringIntegration
 
         programmingExerciseRepositoryService.handleRepoAccessRightChanges(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
 
-        verify(programmingExerciseParticipationService, times(1)).unlockStudentRepositoryAndParticipation(updatedProgrammingExercise, participation);
+        verify(instanceMessageSendService, times(1)).sendUnlockAllStudentRepositoriesAndParticipationsWithEarlierStartDateAndLaterDueDate(programmingExerciseBeforeUpdate.getId());
     }
 
     @Test
@@ -117,8 +98,7 @@ class ProgrammingExerciseRepositoryServiceTest extends AbstractSpringIntegration
 
         programmingExerciseRepositoryService.handleRepoAccessRightChanges(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
 
-        verify(programmingExerciseParticipationService, times(1)).unlockStudentParticipation(updatedProgrammingExercise, participation);
-        verify(programmingExerciseParticipationService, never()).unlockStudentRepository(updatedProgrammingExercise, participation);
+        verify(instanceMessageSendService, times(1)).sendUnlockAllStudentParticipationsWithEarlierStartDateAndLaterDueDate(programmingExerciseBeforeUpdate.getId());
     }
 
     @Test
@@ -128,7 +108,7 @@ class ProgrammingExerciseRepositoryServiceTest extends AbstractSpringIntegration
 
         programmingExerciseRepositoryService.handleRepoAccessRightChanges(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
 
-        verify(programmingExerciseParticipationService, times(1)).lockStudentRepositoryAndParticipation(updatedProgrammingExercise, participation);
+        verify(instanceMessageSendService, times(1)).sendLockAllStudentRepositoriesAndParticipations(programmingExerciseBeforeUpdate.getId());
     }
 
     @Test
@@ -139,6 +119,6 @@ class ProgrammingExerciseRepositoryServiceTest extends AbstractSpringIntegration
 
         programmingExerciseRepositoryService.handleRepoAccessRightChanges(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
 
-        verify(programmingExerciseParticipationService, times(1)).unlockStudentRepositoryAndParticipation(updatedProgrammingExercise, participation);
+        verify(instanceMessageSendService, times(1)).sendUnlockAllStudentRepositoriesAndParticipationsWithEarlierStartDateAndLaterDueDate(programmingExerciseBeforeUpdate.getId());
     }
 }
