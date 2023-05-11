@@ -23,7 +23,7 @@ import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.util.RoundingUtil;
 
 /**
- * Service for calculating the progress of a student in a learning goal.
+ * Service for calculating the progress of a student in a competency.
  */
 @Service
 public class LearningGoalProgressService {
@@ -57,9 +57,9 @@ public class LearningGoalProgressService {
     }
 
     /**
-     * Asynchronously update the progress for learning goals linked to the given learning object (for the specified participant)
+     * Asynchronously update the progress for competencies linked to the given learning object (for the specified participant)
      *
-     * @param learningObject The learning object for which to fetch the learning goals
+     * @param learningObject The learning object for which to fetch the competencies
      * @param participant    The participant (user or team) for which to update the progress
      */
     @Async
@@ -69,9 +69,9 @@ public class LearningGoalProgressService {
     }
 
     /**
-     * Asynchronously update the progress for the learning goals linked to the given learning object (for all students in the course)
+     * Asynchronously update the progress for the competencies linked to the given learning object (for all students in the course)
      *
-     * @param learningObject The learning object for which to fetch the learning goals
+     * @param learningObject The learning object for which to fetch the competencies
      */
     @Async
     public void updateProgressByLearningObjectAsync(LearningObject learningObject) {
@@ -90,9 +90,9 @@ public class LearningGoalProgressService {
     }
 
     /**
-     * Asynchronously update the existing progress for a specific learning goal
+     * Asynchronously update the existing progress for a specific competency
      *
-     * @param learningGoal The learning goal for which to update all existing student progress
+     * @param learningGoal The competency for which to update all existing student progress
      */
     @Async
     public void updateProgressByLearningGoalAsync(LearningGoal learningGoal) {
@@ -105,9 +105,9 @@ public class LearningGoalProgressService {
     /**
      * Update the existing progress for a specific user in a course
      *
-     * @param user   The user for whom to update the existing learning goal progress
-     * @param course The course for which to fetch the learning goals from
-     * @return All learning goals of the course with the updated progress for the user
+     * @param user   The user for whom to update the existing competency progress
+     * @param course The course for which to fetch the competencies from
+     * @return All competencies of the course with the updated progress for the user
      */
     public Set<LearningGoal> getLearningGoalsAndUpdateProgressByUserInCourse(User user, Course course) {
         var learningGoals = learningGoalRepository.findAllForCourse(course.getId());
@@ -121,9 +121,9 @@ public class LearningGoalProgressService {
     }
 
     /**
-     * Update the progress for all learning goals linked to the given learning object
+     * Update the progress for all competencies linked to the given learning object
      *
-     * @param learningObject The learning object for which to fetch the learning goals
+     * @param learningObject The learning object for which to fetch the competencies
      * @param users          A list of users for which to update the progress
      */
     public void updateProgressByLearningObject(LearningObject learningObject, @NotNull Set<User> users) {
@@ -141,7 +141,7 @@ public class LearningGoalProgressService {
             }
 
             if (learningGoals == null) {
-                // Learning goals couldn't be loaded, the exercise/lecture unit might have already been deleted
+                // Competencies couldn't be loaded, the exercise/lecture unit might have already been deleted
                 logger.debug("Competencies could not be fetched, skipping.");
                 return;
             }
@@ -158,11 +158,11 @@ public class LearningGoalProgressService {
     }
 
     /**
-     * Updates the progress value (and confidence score) of the given learning goal and user, then returns it
+     * Updates the progress value (and confidence score) of the given competency and user, then returns it
      *
-     * @param learningGoalId The id of the learning goal to update the progress for
+     * @param learningGoalId The id of the competency to update the progress for
      * @param user           The user for which the progress should be updated
-     * @return The updated learning goal progress, which is also persisted to the database
+     * @return The updated competency progress, which is also persisted to the database
      */
     public LearningGoalProgress updateLearningGoalProgress(Long learningGoalId, User user) {
         var learningGoal = learningGoalRepository.findByIdWithExercisesAndLectureUnitsAndCompletions(learningGoalId).orElse(null);
@@ -197,7 +197,7 @@ public class LearningGoalProgressService {
         var confidence = RoundingUtil.roundScoreSpecifiedByCourseSettings(calculateConfidence(exercises, user), learningGoal.getCourse());
 
         if (exercises.isEmpty()) {
-            // If the learning goal has no exercises, the confidence score equals the progress
+            // If the competency has no exercises, the confidence score equals the progress
             confidence = progress;
         }
 
@@ -220,9 +220,9 @@ public class LearningGoalProgressService {
     }
 
     /**
-     * Calculate the progress value for the given user in a learning goal.
+     * Calculate the progress value for the given user in a competency.
      *
-     * @param learningObjects A list of all learning objects linked to a specific learning goal
+     * @param learningObjects A list of all learning objects linked to a specific competency
      * @param user            The user for which the progress should be calculated
      * @return The percentage of completed learning objects by the user
      */
@@ -232,11 +232,11 @@ public class LearningGoalProgressService {
     }
 
     /**
-     * Calculate the confidence score for the given user in a learning goal.
+     * Calculate the confidence score for the given user in a competency.
      *
-     * @param exercises A list of all exercises linked to a specific learning goal
+     * @param exercises A list of all exercises linked to a specific competency
      * @param user      The user for which the confidence score should be calculated
-     * @return The average score of the user in all exercises linked to the learning goal
+     * @return The average score of the user in all exercises linked to the competency
      */
     private double calculateConfidence(@NotNull List<Exercise> exercises, @NotNull User user) {
         var studentScores = studentScoreRepository.findAllByExercisesAndUser(exercises, user);

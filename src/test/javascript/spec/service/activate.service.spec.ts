@@ -7,7 +7,7 @@ describe('ActivateService', () => {
     let httpService: MockHttpService;
     let getStub: jest.SpyInstance;
 
-    const getURL = SERVER_API_URL + 'api/activate';
+    const getURL = 'api/activate';
 
     beforeEach(() => {
         httpService = new MockHttpService();

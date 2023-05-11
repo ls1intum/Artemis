@@ -75,7 +75,7 @@ public class CourseScoreCalculationService {
                 continue;
             }
             var maxPointsReachableInExercise = exercise.getMaxPoints();
-            if (exercise.getIncludedInOverallScore() == IncludedInOverallScore.INCLUDED_COMPLETELY) {
+            if (exercise.getIncludedInOverallScore() == IncludedInOverallScore.INCLUDED_COMPLETELY && maxPointsReachableInExercise != null) {
                 maxPoints += maxPointsReachableInExercise;
                 if (isAssessmentDone(exercise)) {
                     reachableMaxPoints += maxPointsReachableInExercise;
@@ -175,7 +175,7 @@ public class CourseScoreCalculationService {
      * @return the CourseForDashboardDTO containing all the mentioned items.
      */
     public CourseForDashboardDTO getScoresAndParticipationResults(Course course, long userId) {
-        List<StudentParticipation> studentParticipations = new ArrayList<>();
+        List<StudentParticipation> gradedStudentParticipations = new ArrayList<>();
         for (Exercise exercise : course.getExercises()) {
             exercise.setCourse(course);
             // This method is used in the CourseResource where the course is first fetched with lazy participations, and participations are then fetched separately in the
@@ -186,9 +186,10 @@ public class CourseScoreCalculationService {
             // TODO: Look into refactoring the fetchParticipationsWithSubmissionsAndResultsForCourses method in the CourseService to always initialize the participations (to an
             // empty list if there aren't any). This way you don't need this very unintuitive check for the initialization state.
             if (Hibernate.isInitialized(exercise.getStudentParticipations())) {
-                var exerciseParticipation = exercise.getStudentParticipations().iterator().next();
-                exerciseParticipation.setExercise(exercise);
-                studentParticipations.add(exerciseParticipation);
+                exercise.getStudentParticipations().stream().filter(participation -> !participation.isTestRun()).forEach(participation -> {
+                    participation.setExercise(exercise);
+                    gradedStudentParticipations.add(participation);
+                });
             }
         }
 
@@ -206,15 +207,15 @@ public class CourseScoreCalculationService {
         }
 
         // Get the total scores for the course.
-        StudentScoresDTO totalStudentScores = calculateCourseScoreForStudent(course, userId, studentParticipations, maxAndReachablePoints, plagiarismCases);
+        StudentScoresDTO totalStudentScores = calculateCourseScoreForStudent(course, userId, gradedStudentParticipations, maxAndReachablePoints, plagiarismCases);
         CourseScoresDTO totalScores = new CourseScoresDTO(maxAndReachablePoints.maxPoints, maxAndReachablePoints.reachablePoints, totalStudentScores);
 
         // Get scores per exercise type for the course (used in course-statistics.component i.a.).
-        Map<ExerciseType, CourseScoresDTO> scoresPerExerciseType = calculateCourseScoresPerExerciseType(course, studentParticipations, userId, plagiarismCases);
+        Map<ExerciseType, CourseScoresDTO> scoresPerExerciseType = calculateCourseScoresPerExerciseType(course, gradedStudentParticipations, userId, plagiarismCases);
 
         // Get participation results (used in course-statistics.component).
         List<Result> participationResults = new ArrayList<>();
-        for (StudentParticipation studentParticipation : studentParticipations) {
+        for (StudentParticipation studentParticipation : gradedStudentParticipations) {
             if (studentParticipation.getResults() != null && !studentParticipation.getResults().isEmpty()) {
                 Result participationResult = getResultForParticipation(studentParticipation, studentParticipation.getIndividualDueDate());
                 participationResult.setParticipation(studentParticipation);

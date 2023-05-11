@@ -28,20 +28,20 @@ public class LearningGoalService {
     }
 
     /**
-     * Get all learning goals for a course, including the progress for the user.
+     * Get all competencies for a course, including the progress for the user.
      *
-     * @param course         The course for which the learning goals should be retrieved.
-     * @param user           The user for whom to filter the visible lecture units attached to the learning goal.
-     * @param updateProgress Whether the learning goal progress should be updated or taken from the database.
-     * @return A list of learning goals with their lecture units (filtered for the user) and user progress.
+     * @param course         The course for which the competencies should be retrieved.
+     * @param user           The user for whom to filter the visible lecture units attached to the competency.
+     * @param updateProgress Whether the competency progress should be updated or taken from the database.
+     * @return A list of competencies with their lecture units (filtered for the user) and user progress.
      */
     public Set<LearningGoal> findAllForCourse(@NotNull Course course, @NotNull User user, boolean updateProgress) {
         if (updateProgress) {
-            // Get the learning goals with the updated progress for the specified user.
+            // Get the competencies with the updated progress for the specified user.
             return learningGoalProgressService.getLearningGoalsAndUpdateProgressByUserInCourse(user, course);
         }
         else {
-            // Fetch the learning goals with the user progress from the database.
+            // Fetch the competencies with the user progress from the database.
             return learningGoalRepository.findAllForCourseWithProgressForUser(course.getId(), user.getId());
         }
     }
@@ -63,11 +63,11 @@ public class LearningGoalService {
     }
 
     /**
-     * Search for all learning goals fitting a {@link PageableSearchDTO search query}. The result is paged.
+     * Search for all competencies fitting a {@link PageableSearchDTO search query}. The result is paged.
      *
      * @param search The search query defining the search term and the size of the returned page
      * @param user   The user for whom to fetch all available lectures
-     * @return A wrapper object containing a list of all found learning goals and the total number of pages
+     * @return A wrapper object containing a list of all found competencies and the total number of pages
      */
     public SearchResultPageDTO<LearningGoal> getAllOnPageWithSize(final PageableSearchDTO<String> search, final User user) {
         final var pageable = PageUtil.createLearningGoalPageRequest(search);
@@ -83,11 +83,11 @@ public class LearningGoalService {
     }
 
     /**
-     * Checks if the provided learning goals and relations between them contain a cycle
+     * Checks if the provided competencies and relations between them contain a cycle
      *
-     * @param learningGoals The set of learning goals that get checked for cycles
+     * @param learningGoals The set of competencies that get checked for cycles
      * @param relations     The set of relations that get checked for cycles
-     * @return A boolean that states whether the provided learning goals and relations contain a cycle
+     * @return A boolean that states whether the provided competencies and relations contain a cycle
      */
     public boolean doesCreateCircularRelation(Set<LearningGoal> learningGoals, Set<LearningGoalRelation> relations) {
         // Inner class Vertex is only used in this method for cycle detection
