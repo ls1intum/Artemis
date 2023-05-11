@@ -146,7 +146,7 @@ public class ChannelService {
      * @param usersLoginsToRegister the logins of the users to register to the channel
      * @param course                the course to create the channel for
      * @param channel               the channel to create
-     * @return the created channel
+     * @return all users that were registered to the channel
      */
     public Set<User> registerUsersToChannel(boolean addAllStudents, boolean addAllTutors, boolean addAllInstructors, List<String> usersLoginsToRegister, Course course,
             Channel channel) {
