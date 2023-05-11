@@ -177,8 +177,7 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit
         const commitHashSet = new Set<string>();
 
         this.studentParticipation?.results
-            ?.filter((result) => result.rated)
-            .map((result) => result.submission)
+            ?.map((result) => result.submission)
             .filter((submission) => submission?.type === SubmissionType.MANUAL)
             .map((submission) => (submission as ProgrammingSubmission).commitHash)
             .forEach((commitHash: string) => commitHashSet.add(commitHash));

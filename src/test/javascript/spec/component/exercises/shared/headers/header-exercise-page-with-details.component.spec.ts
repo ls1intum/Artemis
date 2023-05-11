@@ -166,25 +166,19 @@ describe('HeaderExercisePageWithDetails', () => {
 
     it.each([
         [[] as Result[], 0],
-        [[{ rated: true, submission: { type: SubmissionType.MANUAL, commitHash: 'first' } as ProgrammingSubmission }] as Result[], 1],
+        [[{ submission: { type: SubmissionType.MANUAL, commitHash: 'first' } as ProgrammingSubmission }] as Result[], 1],
+        [[{ submission: { type: SubmissionType.INSTRUCTOR, commitHash: 'first' } as ProgrammingSubmission }] as Result[], 0],
         [
             [
-                { rated: false, submission: { type: SubmissionType.MANUAL, commitHash: 'first' } as ProgrammingSubmission },
-                { rated: true, submission: { type: SubmissionType.INSTRUCTOR, commitHash: 'first' } as ProgrammingSubmission },
-            ] as Result[],
-            0,
-        ],
-        [
-            [
-                { rated: true, submission: { type: SubmissionType.MANUAL, commitHash: 'first' } as ProgrammingSubmission },
-                { rated: true, submission: { type: SubmissionType.MANUAL, commitHash: 'first' } as ProgrammingSubmission },
+                { submission: { type: SubmissionType.MANUAL, commitHash: 'first' } as ProgrammingSubmission },
+                { submission: { type: SubmissionType.MANUAL, commitHash: 'first' } as ProgrammingSubmission },
             ] as Result[],
             1,
         ],
         [
             [
-                { rated: true, submission: { type: SubmissionType.MANUAL, commitHash: 'first' } as ProgrammingSubmission },
-                { rated: true, submission: { type: SubmissionType.MANUAL, commitHash: 'second' } as ProgrammingSubmission },
+                { submission: { type: SubmissionType.MANUAL, commitHash: 'first' } as ProgrammingSubmission },
+                { submission: { type: SubmissionType.MANUAL, commitHash: 'second' } as ProgrammingSubmission },
             ] as Result[],
             2,
         ],
