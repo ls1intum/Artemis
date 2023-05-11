@@ -186,11 +186,16 @@ public class ProgrammingExerciseExportService {
             pathsToBeZipped.add(embeddedFilesDir);
         }
         for (String embeddedFile : embeddedFiles) {
-            String filePath = embeddedFile.substring(embeddedFile.indexOf("(") + 1, embeddedFile.indexOf(")"));
+            // avoid matching other closing ] or () in the squared brackets by getting the index of the last ]
+            String lastPartOfMatchedString = embeddedFile.substring(embeddedFile.lastIndexOf("]") + 1);
+            String filePath = lastPartOfMatchedString.substring(lastPartOfMatchedString.indexOf("(") + 1, lastPartOfMatchedString.indexOf(")"));
             String fileName = filePath.replace(API_MARKDOWN_FILE_PATH, "");
             Path imageFilePath = Path.of(FilePathService.getMarkdownFilePath(), fileName);
             Path imageExportPath = embeddedFilesDir.resolve(fileName);
-            Files.copy(imageFilePath, imageExportPath);
+            // we need this check as it might be that the matched string is different and not filtered out above but the file is already copied
+            if (!Files.exists(imageExportPath)) {
+                Files.copy(imageFilePath, imageExportPath);
+            }
         }
 
     }
