@@ -62,10 +62,7 @@ export class ParticipantScoresDistributionComponent implements OnInit, OnChanges
     } as Color;
     backupDomain: string[];
 
-    constructor(private gradingSystemService: GradingSystemService, private translateService: TranslateService) {
-        this.yAxisLabel = this.translateService.instant('artemisApp.examScores.yAxes');
-        this.xAxisLabel = this.translateService.instant('artemisApp.examScores.xAxes');
-    }
+    constructor(private gradingSystemService: GradingSystemService, private translateService: TranslateService) {}
 
     ngOnInit() {
         this.setupAxisLabels();
