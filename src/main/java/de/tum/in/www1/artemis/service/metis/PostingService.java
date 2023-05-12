@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.metis.AnswerPost;
@@ -29,17 +30,17 @@ import de.tum.in.www1.artemis.web.websocket.dto.metis.PostDTO;
 
 public abstract class PostingService {
 
-    final CourseRepository courseRepository;
+    protected final CourseRepository courseRepository;
 
-    final UserRepository userRepository;
+    protected final UserRepository userRepository;
 
-    final ExerciseRepository exerciseRepository;
+    protected final ExerciseRepository exerciseRepository;
 
-    final LectureRepository lectureRepository;
+    protected final LectureRepository lectureRepository;
 
-    final ConversationParticipantRepository conversationParticipantRepository;
+    protected final ConversationParticipantRepository conversationParticipantRepository;
 
-    final AuthorizationCheckService authorizationCheckService;
+    protected final AuthorizationCheckService authorizationCheckService;
 
     private final SimpMessageSendingOperations messagingTemplate;
 
@@ -81,24 +82,22 @@ public abstract class PostingService {
      * @param postDTO object including the affected post as well as the action
      * @param course  course the posting belongs to
      */
-    void broadcastForPost(PostDTO postDTO, Course course) {
+    protected void broadcastForPost(PostDTO postDTO, Course course) {
         String specificTopicName = METIS_WEBSOCKET_CHANNEL_PREFIX;
         String genericTopicName = METIS_WEBSOCKET_CHANNEL_PREFIX + "courses/" + course.getId();
 
-        if (postDTO.getPost().getExercise() != null) {
-            specificTopicName += "exercises/" + postDTO.getPost().getExercise().getId();
+        if (postDTO.post().getExercise() != null) {
+            specificTopicName += "exercises/" + postDTO.post().getExercise().getId();
             messagingTemplate.convertAndSend(specificTopicName, postDTO);
         }
-        else if (postDTO.getPost().getLecture() != null) {
-            specificTopicName += "lectures/" + postDTO.getPost().getLecture().getId();
+        else if (postDTO.post().getLecture() != null) {
+            specificTopicName += "lectures/" + postDTO.post().getLecture().getId();
             messagingTemplate.convertAndSend(specificTopicName, postDTO);
         }
-        else if (postDTO.getPost().getConversation() != null) {
-            var participants = this.conversationParticipantRepository.findConversationParticipantByConversationId(postDTO.getPost().getConversation().getId());
-            participants.forEach(conversationParticipant -> {
-                messagingTemplate.convertAndSendToUser(conversationParticipant.getUser().getLogin(),
-                        genericTopicName + "/conversations/" + postDTO.getPost().getConversation().getId(), postDTO);
-            });
+        else if (postDTO.post().getConversation() != null) {
+            var participants = this.conversationParticipantRepository.findConversationParticipantByConversationId(postDTO.post().getConversation().getId());
+            participants.forEach(conversationParticipant -> messagingTemplate.convertAndSendToUser(conversationParticipant.getUser().getLogin(),
+                    genericTopicName + "/conversations/" + postDTO.post().getConversation().getId(), postDTO));
 
             return;
         }
@@ -113,7 +112,7 @@ public abstract class PostingService {
      * @param user    requesting user
      * @param course  course the posting belongs to
      */
-    void mayUpdateOrDeletePostingElseThrow(Posting posting, User user, Course course) {
+    protected void mayUpdateOrDeletePostingElseThrow(Posting posting, User user, Course course) {
         if (!user.getId().equals(posting.getAuthor().getId())) {
             authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, user);
         }
@@ -124,7 +123,7 @@ public abstract class PostingService {
      *
      * @param post post that is checked
      */
-    void preCheckPostValidity(Post post) {
+    protected void preCheckPostValidity(Post post) {
         // do not allow postings for exam exercises
         if (post.getExercise() != null) {
             Long exerciseId = post.getExercise().getId();
@@ -135,14 +134,24 @@ public abstract class PostingService {
         }
     }
 
-    Course preCheckUserAndCourse(User user, Long courseId) {
+    protected Course preCheckUserAndCourseForCommunication(User user, Long courseId) {
         final Course course = courseRepository.findByIdElseThrow(courseId);
         // user has to be at least student in the course
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
 
         // check if the course has posts enabled
-        if (!course.getPostsEnabled()) {
-            throw new BadRequestAlertException("Postings are not enabled for this course", getEntityName(), "400", true);
+        if (!courseRepository.isCommunicationEnabled(courseId)) {
+            throw new BadRequestAlertException("Communication feature is not enabled for this course", getEntityName(), "400", true);
+        }
+        return course;
+    }
+
+    protected Course preCheckUserAndCourseForMessaging(User user, Long courseId) {
+        final Course course = courseRepository.findByIdElseThrow(courseId);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
+
+        if (!courseRepository.isMessagingEnabled(course.getId())) {
+            throw new BadRequestAlertException("Messaging is not enabled for this course", getEntityName(), "400", true);
         }
         return course;
     }
@@ -152,7 +161,7 @@ public abstract class PostingService {
      *
      * @param postsInCourse list of posts whose authors are populated with their groups, authorities, and authorRole
      */
-    void setAuthorRoleOfPostings(List<Post> postsInCourse) {
+    protected void setAuthorRoleOfPostings(List<Post> postsInCourse) {
         // prepares a unique set of userIds that authored the current list of postings
         Set<Long> userIds = new HashSet<>();
         postsInCourse.forEach(post -> {
@@ -162,7 +171,7 @@ public abstract class PostingService {
 
         // fetches and sets groups and authorities of all posting authors involved, which are used to display author role icon in the posting header
         // converts fetched set to hashmap type for performant matching of authors
-        Map<Long, User> authors = userRepository.findAllWithGroupsAndAuthoritiesByIdIn(userIds).stream().collect(Collectors.toMap(user -> user.getId(), Function.identity()));
+        Map<Long, User> authors = userRepository.findAllWithGroupsAndAuthoritiesByIdIn(userIds).stream().collect(Collectors.toMap(DomainObject::getId, Function.identity()));
 
         // sets respective author role to display user authority icon on posting headers
         postsInCourse.forEach(post -> {
@@ -181,7 +190,7 @@ public abstract class PostingService {
      * @param posting       posting to assign authorRole
      * @param postingCourse course that the post belongs to, must be explicitly fetched and provided to handle new post creation case
      */
-    void setAuthorRoleForPosting(Posting posting, Course postingCourse) {
+    protected void setAuthorRoleForPosting(Posting posting, Course postingCourse) {
         if (authorizationCheckService.isAtLeastInstructorInCourse(postingCourse, posting.getAuthor())) {
             posting.setAuthorRole(UserRole.INSTRUCTOR);
         }
@@ -194,5 +203,5 @@ public abstract class PostingService {
         }
     }
 
-    abstract String getEntityName();
+    protected abstract String getEntityName();
 }

@@ -36,13 +36,16 @@ import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.treewalk.CanonicalTreeParser;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 
+import de.tum.in.www1.artemis.config.StaticCodeAnalysisConfigurer;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
@@ -62,11 +65,10 @@ import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.CourseExamExportService;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.UrlService;
-import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
-import de.tum.in.www1.artemis.service.connectors.VersionControlService;
-import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultDTO;
+import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabException;
+import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.in.www1.artemis.service.programming.JavaTemplateUpgradeService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeature;
 import de.tum.in.www1.artemis.service.scheduled.AutomaticProgrammingExerciseCleanupService;
@@ -75,6 +77,7 @@ import de.tum.in.www1.artemis.util.*;
 import de.tum.in.www1.artemis.util.GitUtilService.MockFileRepositoryUrl;
 import de.tum.in.www1.artemis.util.InvalidExamExerciseDatesArgumentProvider.InvalidExamExerciseDateConfiguration;
 import de.tum.in.www1.artemis.web.rest.dto.BuildLogStatisticsDTO;
+import de.tum.in.www1.artemis.web.rest.dto.CourseForDashboardDTO;
 
 /**
  * Note: this class should be independent of the actual VCS and CIS and contains common test logic for both scenarios:
@@ -127,10 +130,6 @@ public class ProgrammingExerciseTestService {
     private BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository;
 
     @Autowired
-    @Qualifier("staticCodeAnalysisConfiguration")
-    private Map<ProgrammingLanguage, List<StaticCodeAnalysisDefaultCategory>> staticCodeAnalysisDefaultConfigurations;
-
-    @Autowired
     private PasswordService passwordService;
 
     @Autowired
@@ -180,8 +179,6 @@ public class ProgrammingExerciseTestService {
     public static final String studentLogin = "student1";
 
     public static final String teamShortName = "team1";
-
-    public static final String REPO_BASE_URL = "/api/repository/";
 
     public static final String PARTICIPATION_BASE_URL = "/api/participations/";
 
@@ -382,7 +379,7 @@ public class ProgrammingExerciseTestService {
         if (language == SWIFT) {
             exercise.setPackageName("swiftTest");
         }
-        exercise.setProjectType(programmingLanguageFeature.getProjectTypes().isEmpty() ? null : programmingLanguageFeature.getProjectTypes().get(0));
+        exercise.setProjectType(programmingLanguageFeature.projectTypes().isEmpty() ? null : programmingLanguageFeature.projectTypes().get(0));
         mockDelegate.mockConnectorRequestsForSetup(exercise, false);
         validateProgrammingExercise(request.postWithResponseBody(ROOT + SETUP, exercise, ProgrammingExercise.class, HttpStatus.CREATED));
     }
@@ -393,8 +390,93 @@ public class ProgrammingExerciseTestService {
         mockDelegate.mockConnectorRequestsForSetup(exercise, false);
         var generatedExercise = request.postWithResponseBody(ROOT + SETUP, exercise, ProgrammingExercise.class);
         var savedExercise = programmingExerciseRepository.findById(generatedExercise.getId()).get();
-        assertThat(generatedExercise.getBonusPoints()).isEqualTo(0D);
-        assertThat(savedExercise.getBonusPoints()).isEqualTo(0D);
+        assertThat(generatedExercise.getBonusPoints()).isZero();
+        assertThat(savedExercise.getBonusPoints()).isZero();
+    }
+
+    void importFromFile_validJavaExercise_isSuccessfullyImported(boolean scaEnabled) throws Exception {
+        mockDelegate.mockConnectorRequestForImportFromFile(exercise);
+        Resource resource = new ClassPathResource("test-data/import-from-file/valid-import.zip");
+        if (scaEnabled) {
+            exercise.setStaticCodeAnalysisEnabled(true);
+        }
+
+        var file = new MockMultipartFile("file", "test.zip", "application/zip", resource.getInputStream());
+        var course = database.addEmptyCourse();
+        var importedExercise = request.postWithMultipartFile(ROOT + "/courses/" + course.getId() + "/programming-exercises/import-from-file", exercise, "programmingExercise", file,
+                ProgrammingExercise.class, HttpStatus.OK);
+        assertThat(importedExercise).isNotNull();
+        assertThat(importedExercise.getProgrammingLanguage()).isEqualTo(JAVA);
+        assertThat(importedExercise.getMode()).isEqualTo(ExerciseMode.INDIVIDUAL);
+        assertThat(importedExercise.getProjectType()).isEqualTo(ProjectType.PLAIN_MAVEN);
+        if (scaEnabled) {
+            assertThat(importedExercise.isStaticCodeAnalysisEnabled()).isTrue();
+        }
+        else {
+            assertThat(importedExercise.isStaticCodeAnalysisEnabled()).isFalse();
+        }
+        var savedExercise = programmingExerciseRepository.findById(importedExercise.getId()).get();
+        assertThat(savedExercise).isNotNull();
+        assertThat(savedExercise.getProgrammingLanguage()).isEqualTo(JAVA);
+        assertThat(savedExercise.getMode()).isEqualTo(ExerciseMode.INDIVIDUAL);
+        assertThat(savedExercise.getProjectType()).isEqualTo(ProjectType.PLAIN_MAVEN);
+        if (scaEnabled) {
+            assertThat(savedExercise.isStaticCodeAnalysisEnabled()).isTrue();
+        }
+        else {
+            assertThat(savedExercise.isStaticCodeAnalysisEnabled()).isFalse();
+        }
+        assertThat(importedExercise.getCourseViaExerciseGroupOrCourseMember()).isEqualTo(course);
+    }
+
+    void importFromFile_validExercise_isSuccessfullyImported(ProgrammingLanguage language) throws Exception {
+        mockDelegate.mockConnectorRequestForImportFromFile(exercise);
+        Resource resource = null;
+        exercise.programmingLanguage(language);
+        exercise.setProjectType(null);
+        switch (language) {
+            case PYTHON -> resource = new ClassPathResource("test-data/import-from-file/valid-import-python.zip");
+            case C -> {
+                resource = new ClassPathResource("test-data/import-from-file/valid-import-c.zip");
+                exercise.setProjectType(ProjectType.FACT);
+            }
+            case HASKELL -> resource = new ClassPathResource("test-data/import-from-file/valid-import-haskell.zip");
+            case OCAML -> resource = new ClassPathResource("test-data/import-from-file/valid-import-ocaml.zip");
+            case ASSEMBLER -> resource = new ClassPathResource("test-data/import-from-file/valid-import-assembler.zip");
+        }
+
+        var file = new MockMultipartFile("file", "test.zip", "application/zip", resource.getInputStream());
+        request.postWithMultipartFile(ROOT + "/courses/" + course.getId() + "/programming-exercises/import-from-file", exercise, "programmingExercise", file,
+                ProgrammingExercise.class, HttpStatus.OK);
+    }
+
+    void importFromFile_missingExerciseDetailsJson_badRequest() throws Exception {
+        Resource resource = new ClassPathResource("test-data/import-from-file/missing-json.zip");
+        var file = new MockMultipartFile("file", "test.zip", "application/zip", resource.getInputStream());
+        request.postWithMultipartFile(ROOT + "/courses/" + course.getId() + "/programming-exercises/import-from-file", exercise, "programmingExercise", file,
+                ProgrammingExercise.class, HttpStatus.BAD_REQUEST);
+    }
+
+    void importFromFile_fileNoZip_badRequest() throws Exception {
+        Resource resource = new ClassPathResource("test-data/import-from-file/valid-import.zip");
+        var file = new MockMultipartFile("file", "test.txt", "application/zip", resource.getInputStream());
+        request.postWithMultipartFile(ROOT + "/courses/" + course.getId() + "/programming-exercises/import-from-file", exercise, "programmingExercise", file,
+                ProgrammingExercise.class, HttpStatus.BAD_REQUEST);
+    }
+
+    void importFromFile_tutor_forbidden() throws Exception {
+        course.setInstructorGroupName("test");
+        courseRepository.save(course);
+        var file = new MockMultipartFile("file", "test.zip", "application/zip", new byte[0]);
+        request.postWithMultipartFile(ROOT + "/courses/" + course.getId() + "/programming-exercises/import-from-file", exercise, "programmingExercise", file,
+                ProgrammingExercise.class, HttpStatus.FORBIDDEN);
+    }
+
+    void importFromFile_missingRepository_BadRequest() throws Exception {
+        Resource resource = new ClassPathResource("test-data/import-from-file/missing-repository.zip");
+        var file = new MockMultipartFile("file", "test.zip", "application/zip", resource.getInputStream());
+        request.postWithMultipartFile(ROOT + "/courses/" + course.getId() + "/programming-exercises/import-from-file", exercise, "programmingExercise", file,
+                ProgrammingExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     // TEST
@@ -409,7 +491,7 @@ public class ProgrammingExerciseTestService {
             exercise.setProjectType(ProjectType.GCC);
         }
         else {
-            exercise.setProjectType(programmingLanguageFeature.getProjectTypes().isEmpty() ? null : programmingLanguageFeature.getProjectTypes().get(0));
+            exercise.setProjectType(programmingLanguageFeature.projectTypes().isEmpty() ? null : programmingLanguageFeature.projectTypes().get(0));
         }
         mockDelegate.mockConnectorRequestsForSetup(exercise, false);
         var generatedExercise = request.postWithResponseBody(ROOT + SETUP, exercise, ProgrammingExercise.class);
@@ -418,8 +500,8 @@ public class ProgrammingExerciseTestService {
         assertThat(exercise).isEqualTo(generatedExercise);
         var staticCodeAnalysisCategories = staticCodeAnalysisCategoryRepository.findByExerciseId(generatedExercise.getId());
         assertThat(staticCodeAnalysisCategories).usingRecursiveFieldByFieldElementComparatorIgnoringFields("id", "exercise")
-                .isEqualTo(staticCodeAnalysisDefaultConfigurations.get(exercise.getProgrammingLanguage()));
-        staticCodeAnalysisDefaultConfigurations.get(exercise.getProgrammingLanguage()).forEach(config -> config.getCategoryMappings().forEach(mapping -> {
+                .isEqualTo(StaticCodeAnalysisConfigurer.staticCodeAnalysisConfiguration().get(exercise.getProgrammingLanguage()));
+        StaticCodeAnalysisConfigurer.staticCodeAnalysisConfiguration().get(exercise.getProgrammingLanguage()).forEach(config -> config.getCategoryMappings().forEach(mapping -> {
             assertThat(mapping.getTool()).isNotNull();
             assertThat(mapping.getCategory()).isNotNull();
         }));
@@ -754,7 +836,7 @@ public class ProgrammingExerciseTestService {
         var staticCodeAnalysisCategories = staticCodeAnalysisCategoryRepository.findWithExerciseByExerciseId(exerciseToBeImported.getId());
         assertThat(exerciseToBeImported.isStaticCodeAnalysisEnabled()).isTrue();
         assertThat(staticCodeAnalysisCategories).usingRecursiveFieldByFieldElementComparatorOnFields("name", "state", "penalty", "maxPenalty")
-                .isEqualTo(staticCodeAnalysisDefaultConfigurations.get(sourceExercise.getProgrammingLanguage()));
+                .isEqualTo(StaticCodeAnalysisConfigurer.staticCodeAnalysisConfiguration().get(sourceExercise.getProgrammingLanguage()));
         assertThat(exerciseToBeImported.getMaxStaticCodeAnalysisPenalty()).isEqualTo(80);
     }
 
@@ -1466,39 +1548,6 @@ public class ProgrammingExerciseTestService {
     }
 
     // TEST
-    void startProgrammingExerciseStudentSubmissionFailedWithBuildlog() throws Exception {
-        persistProgrammingExercise();
-        User user = userRepo.findOneByLogin(userPrefix + studentLogin).orElseThrow();
-        mockDelegate.mockConnectorRequestsForStartParticipation(exercise, user.getParticipantIdentifier(), Set.of(user), true);
-        final var participation = createUserParticipation();
-
-        // create a submission which fails
-        database.createProgrammingSubmission(participation, true);
-
-        mockDelegate.resetMockProvider();
-
-        var log1 = new BambooBuildResultDTO.BambooBuildLogEntryDTO(ZonedDateTime.now(), "java.lang.AssertionError: BubbleSort does not sort correctly");
-        var log2 = new BambooBuildResultDTO.BambooBuildLogEntryDTO(ZonedDateTime.now(), "[INFO] Test");
-        var log3 = new BambooBuildResultDTO.BambooBuildLogEntryDTO(ZonedDateTime.now(), "[WARNING]");
-        var log4 = new BambooBuildResultDTO.BambooBuildLogEntryDTO(ZonedDateTime.now(), "[ERROR] [Help 1]");
-        var log5 = new BambooBuildResultDTO.BambooBuildLogEntryDTO(ZonedDateTime.now(), "[ERROR] To see the full stack trace of the errors\"");
-        var log6 = new BambooBuildResultDTO.BambooBuildLogEntryDTO(ZonedDateTime.now(), "Unable to publish artifact");
-        var log7 = new BambooBuildResultDTO.BambooBuildLogEntryDTO(ZonedDateTime.now(), "NOTE: Picked up JDK_JAVA_OPTIONS");
-        var log8 = new BambooBuildResultDTO.BambooBuildLogEntryDTO(ZonedDateTime.now(), "[ERROR] Failed to execute goal org.apache.maven.plugins:maven-checkstyle-plugin");
-        var log9 = new BambooBuildResultDTO.BambooBuildLogEntryDTO(ZonedDateTime.now(), "[INFO] Downloading error");
-        var log10 = new BambooBuildResultDTO.BambooBuildLogEntryDTO(ZonedDateTime.now(), "[INFO] Downloaded error");
-
-        var logs = List.of(log1, log2, log3, log4, log5, log6, log7, log8, log9, log10);
-        // get the failed build log
-        mockDelegate.mockGetBuildLogs(participation, logs);
-        var buildLogs = request.get(REPO_BASE_URL + participation.getId() + "/buildlogs", HttpStatus.OK, List.class);
-
-        assertThat(participation.getInitializationState()).as("Participation should be initialized").isEqualTo(InitializationState.INITIALIZED);
-        // some build logs have been filtered out
-        assertThat(buildLogs).as("Failed build log was created").hasSize(1);
-    }
-
-    // TEST
     void startProgrammingExerciseStudentRetrieveEmptyArtifactPage() throws Exception {
         persistProgrammingExercise();
         User user = userRepo.findOneByLogin(userPrefix + studentLogin).orElseThrow();
@@ -1921,7 +1970,9 @@ public class ProgrammingExerciseTestService {
         exercise.setExampleSolutionPublicationDate(null);
         programmingExerciseRepository.save(exercise);
 
-        Course courseFromServer = request.get("/api/courses/" + exercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK, Course.class);
+        CourseForDashboardDTO courseForDashboardFromServer = request.get("/api/courses/" + exercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard",
+                HttpStatus.OK, CourseForDashboardDTO.class);
+        Course courseFromServer = courseForDashboardFromServer.course();
         ProgrammingExercise programmingExerciseFromApi = programmingExerciseGetter.apply(courseFromServer);
 
         assertThat(programmingExerciseFromApi.isExampleSolutionPublished()).isFalse();
@@ -1930,7 +1981,9 @@ public class ProgrammingExerciseTestService {
         exercise.setExampleSolutionPublicationDate(ZonedDateTime.now().minusHours(1));
         programmingExerciseRepository.save(exercise);
 
-        courseFromServer = request.get("/api/courses/" + exercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK, Course.class);
+        courseForDashboardFromServer = request.get("/api/courses/" + exercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK,
+                CourseForDashboardDTO.class);
+        courseFromServer = courseForDashboardFromServer.course();
         programmingExerciseFromApi = programmingExerciseGetter.apply(courseFromServer);
 
         assertThat(programmingExerciseFromApi.isExampleSolutionPublished()).isTrue();
@@ -1939,7 +1992,9 @@ public class ProgrammingExerciseTestService {
         exercise.setExampleSolutionPublicationDate(ZonedDateTime.now().plusHours(1));
         programmingExerciseRepository.save(exercise);
 
-        courseFromServer = request.get("/api/courses/" + exercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK, Course.class);
+        courseForDashboardFromServer = request.get("/api/courses/" + exercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK,
+                CourseForDashboardDTO.class);
+        courseFromServer = courseForDashboardFromServer.course();
         programmingExerciseFromApi = programmingExerciseGetter.apply(courseFromServer);
 
         assertThat(programmingExerciseFromApi.isExampleSolutionPublished()).isFalse();
@@ -2024,7 +2079,7 @@ public class ProgrammingExerciseTestService {
     void buildLogStatistics_noStatistics() throws Exception {
         exercise = programmingExerciseRepository.save(ModelFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course));
         var statistics = request.get("/api/programming-exercises/" + exercise.getId() + "/build-log-statistics", HttpStatus.OK, BuildLogStatisticsDTO.class);
-        assertThat(statistics.getBuildCount()).isEqualTo(0);
+        assertThat(statistics.getBuildCount()).isZero();
         assertThat(statistics.getAgentSetupDuration()).isNull();
         assertThat(statistics.getTestDuration()).isNull();
         assertThat(statistics.getScaDuration()).isNull();

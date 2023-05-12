@@ -31,7 +31,6 @@
                     [studentParticipation]="gradedStudentParticipation"
                     [showBadge]="true"
                     [triggerLastGraded]="false"
-                    [short]="true"
                 >
                 </jhi-submission-result-status>
             </div>
@@ -78,7 +77,7 @@
                             <fa-icon [icon]="faSignal"></fa-icon>
                             <span class="d-none d-md-inline" jhiTranslate="artemisApp.courseOverview.exerciseDetails.instructorActions.statistics">Statistics</span>
                         </a>
-                        <a *ngIf="exercise.type === PROGRAMMING" [routerLink]="baseResource + 'grading/test-cases'" class="btn btn-info btn-sm">
+                        <a *ngIf="exercise.type === PROGRAMMING" [routerLink]="baseResource + 'grading/test-cases'" class="btn btn-warning btn-sm">
                             <fa-icon [icon]="faFileSignature"></fa-icon>
                             <span class="d-none d-md-inline" jhiTranslate="artemisApp.programmingExercise.configureGrading.shortTitle">Grading</span>
                         </a>
@@ -159,22 +158,7 @@
             </div>
             <!-- RESULTS END -->
             <!-- PROBLEM STATEMENT START -->
-            <div *ngIf="exercise.type === PROGRAMMING; else exerciseTemplate" class="row mb-4">
-                <jhi-programming-exercise-instructions
-                    [exercise]="exercise"
-                    [participation]="practiceStudentParticipation ?? gradedStudentParticipation!"
-                    [personalParticipation]="true"
-                >
-                </jhi-programming-exercise-instructions>
-            </div>
-            <ng-template #exerciseTemplate>
-                <div class="row mb-2 align-items-baseline" *ngIf="exercise.problemStatement" id="problem-statement">
-                    <div class="col-12 col-md-12 markdown-preview problem-statement">
-                        <h3>{{ 'artemisApp.courseOverview.exerciseDetails.problemStatement' | artemisTranslate }}</h3>
-                        <p [innerHTML]="exercise!.problemStatement! | htmlForMarkdown"></p>
-                    </div>
-                </div>
-            </ng-template>
+            <jhi-problem-statement [exercise]="exercise" [participation]="practiceStudentParticipation ?? gradedStudentParticipation!"> </jhi-problem-statement>
             <jhi-reset-repo-button
                 *ngIf="exercise.type === PROGRAMMING && exercise.studentParticipations && exercise.studentParticipations.length"
                 [exercise]="exercise"
@@ -263,7 +247,7 @@
             </a>
         </div>
         <div class="col d-flex flex-grow-1 justify-end" style="max-width: min-content">
-            <router-outlet *ngIf="exercise.course && exercise.course.postsEnabled" (activate)="onChildActivate($event)"></router-outlet>
+            <router-outlet *ngIf="exercise.course && isCommunicationEnabled(exercise.course)" (activate)="onChildActivate($event)"></router-outlet>
         </div>
     </div>
     <jhi-lti-initializer></jhi-lti-initializer>

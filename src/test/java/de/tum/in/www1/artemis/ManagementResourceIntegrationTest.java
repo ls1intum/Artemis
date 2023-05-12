@@ -22,7 +22,7 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.repository.PersistenceAuditEventRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
+import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggleService;
 import de.tum.in.www1.artemis.util.ModelFactory;
@@ -93,7 +93,6 @@ class ManagementResourceIntegrationTest extends AbstractSpringIntegrationBambooB
         request.put("/api/exercises/" + programmingExercise1.getId() + "/resume-programming-participation/" + participation.getId(), null, HttpStatus.OK);
         request.put("/api/participations/" + participation.getId() + "/cleanupBuildPlan", null, HttpStatus.OK);
         request.postWithoutLocation("/api/programming-submissions/" + participation.getId() + "/trigger-failed-build", null, HttpStatus.OK, null);
-        request.delete("/api/exercises/" + programmingExercise1.getId() + "/cleanup", HttpStatus.OK);
         programmingExercise2 = programmingExerciseRepository.save(programmingExercise2);
         request.delete("/api/programming-exercises/" + programmingExercise2.getId(), HttpStatus.OK);
 
@@ -107,7 +106,6 @@ class ManagementResourceIntegrationTest extends AbstractSpringIntegrationBambooB
         request.put("/api/exercises/" + programmingExercise1.getId() + "/resume-programming-participation/" + participation.getId(), null, HttpStatus.FORBIDDEN);
         request.put("/api/participations/" + participation.getId() + "/cleanupBuildPlan", null, HttpStatus.FORBIDDEN);
         request.postWithoutLocation("/api/programming-submissions/" + participation.getId() + "/trigger-failed-build", null, HttpStatus.FORBIDDEN, null);
-        request.delete("/api/exercises/" + programmingExercise1.getId() + "/cleanup", HttpStatus.FORBIDDEN);
         programmingExercise2 = programmingExerciseRepository.save(programmingExercise2);
         request.delete("/api/programming-exercises/" + programmingExercise2.getId(), HttpStatus.FORBIDDEN);
 

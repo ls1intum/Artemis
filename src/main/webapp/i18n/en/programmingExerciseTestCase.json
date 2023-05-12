@@ -3,8 +3,7 @@
         "programmingExerciseTestCase": {
             "home": {
                 "title": "Programming Exercise Test Cases",
-                "createLabel": "Create a new Programming Exercise Test Case",
-                "createOrEditLabel": "Create or edit a Programming Exercise Test Case"
+                "createLabel": "Create a new Programming Exercise Test Case"
             },
             "created": "Created new Programming Exercise Test Case with identifier {{ param }}",
             "updated": "Updated Programming Exercise Test Case with identifier {{ param }}",
@@ -23,6 +22,12 @@
                 "Always": "Always",
                 "AfterDueDate": "After Due Date",
                 "Never": "Never"
+            },
+            "type": {
+                "null": "",
+                "STRUCTURAL": "Structural",
+                "BEHAVIORAL": "Behavior",
+                "MIXED": "Mixed"
             }
         }
     }

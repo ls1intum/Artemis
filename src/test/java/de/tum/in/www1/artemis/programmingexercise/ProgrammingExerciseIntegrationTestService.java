@@ -59,10 +59,11 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
-import de.tum.in.www1.artemis.service.connectors.VersionControlService;
+import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.in.www1.artemis.util.*;
 import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints;
 import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseTestCaseResource;
+import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseResetOptionsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseTestCaseDTO;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryExportOptionsDTO;
 import de.tum.in.www1.artemis.web.websocket.dto.ProgrammingExerciseTestCaseStateDTO;
@@ -74,6 +75,8 @@ import de.tum.in.www1.artemis.web.websocket.dto.ProgrammingExerciseTestCaseState
  */
 @Service
 class ProgrammingExerciseIntegrationTestService {
+
+    private static final String NON_EXISTING_ID = Integer.toString(Integer.MAX_VALUE);
 
     private String userPrefix;
 
@@ -236,9 +239,9 @@ class ProgrammingExerciseIntegrationTestService {
 
         ProgrammingExerciseTestCaseStateDTO releaseStateDTO = request.get("/api/programming-exercises/" + programmingExercise.getId() + "/test-case-state", HttpStatus.OK,
                 ProgrammingExerciseTestCaseStateDTO.class);
-        assertThat(releaseStateDTO.isReleased()).isTrue();
-        assertThat(releaseStateDTO.isHasStudentResult()).isTrue();
-        assertThat(releaseStateDTO.isTestCasesChanged()).isFalse();
+        assertThat(releaseStateDTO.released()).isTrue();
+        assertThat(releaseStateDTO.hasStudentResult()).isTrue();
+        assertThat(releaseStateDTO.testCasesChanged()).isFalse();
     }
 
     void testProgrammingExerciseIsReleased_IsNotReleasedAndHasResults() throws Exception {
@@ -249,9 +252,9 @@ class ProgrammingExerciseIntegrationTestService {
 
         ProgrammingExerciseTestCaseStateDTO releaseStateDTO = request.get("/api/programming-exercises/" + programmingExercise.getId() + "/test-case-state", HttpStatus.OK,
                 ProgrammingExerciseTestCaseStateDTO.class);
-        assertThat(releaseStateDTO.isReleased()).isFalse();
-        assertThat(releaseStateDTO.isHasStudentResult()).isTrue();
-        assertThat(releaseStateDTO.isTestCasesChanged()).isFalse();
+        assertThat(releaseStateDTO.released()).isFalse();
+        assertThat(releaseStateDTO.hasStudentResult()).isTrue();
+        assertThat(releaseStateDTO.testCasesChanged()).isFalse();
     }
 
     void checkIfProgrammingExerciseIsReleased_IsReleasedAndHasNoResults() throws Exception {
@@ -261,13 +264,54 @@ class ProgrammingExerciseIntegrationTestService {
 
         ProgrammingExerciseTestCaseStateDTO releaseStateDTO = request.get("/api/programming-exercises/" + programmingExercise.getId() + "/test-case-state", HttpStatus.OK,
                 ProgrammingExerciseTestCaseStateDTO.class);
-        assertThat(releaseStateDTO.isReleased()).isTrue();
-        assertThat(releaseStateDTO.isHasStudentResult()).isFalse();
-        assertThat(releaseStateDTO.isTestCasesChanged()).isTrue();
+        assertThat(releaseStateDTO.released()).isTrue();
+        assertThat(releaseStateDTO.hasStudentResult()).isFalse();
+        assertThat(releaseStateDTO.testCasesChanged()).isTrue();
     }
 
     void testProgrammingExerciseIsReleased_forbidden() throws Exception {
         request.get("/api/programming-exercises/" + programmingExercise.getId() + "/test-case-state", HttpStatus.FORBIDDEN, Boolean.class);
+    }
+
+    List<Path> exportSubmissionsWithPracticeSubmissionByParticipationIds(boolean excludePracticeSubmissions) throws Exception {
+        var repository1 = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoFile.toPath(), null);
+        var repository2 = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepoFile2.toPath(), null);
+        doReturn(repository1).when(gitService).getOrCheckoutRepository(eq(participation1.getVcsRepositoryUrl()), anyString(), anyBoolean());
+        doReturn(repository2).when(gitService).getOrCheckoutRepository(eq(participation2.getVcsRepositoryUrl()), anyString(), anyBoolean());
+
+        // Set one of the participations to practice mode
+        participation1.setTestRun(false);
+        participation2.setTestRun(true);
+        final var participations = List.of(participation1, participation2);
+        programmingExerciseStudentParticipationRepository.saveAll(participations);
+
+        // Export with excludePracticeSubmissions
+        var participationIds = programmingExerciseStudentParticipationRepository.findAll().stream().map(participation -> participation.getId().toString()).toList();
+        final var path = ROOT + EXPORT_SUBMISSIONS_BY_PARTICIPATIONS.replace("{exerciseId}", String.valueOf(programmingExercise.getId())).replace("{participationIds}",
+                String.join(",", participationIds));
+        var exportOptions = new RepositoryExportOptionsDTO();
+        exportOptions.setExcludePracticeSubmissions(excludePracticeSubmissions);
+
+        downloadedFile = request.postWithResponseBodyFile(path, exportOptions, HttpStatus.OK);
+        assertThat(downloadedFile).exists();
+
+        return unzipExportedFile();
+    }
+
+    void testExportSubmissionsByParticipationIds_excludePracticeSubmissions() throws Exception {
+        List<Path> entries = exportSubmissionsWithPracticeSubmissionByParticipationIds(true);
+
+        // Make sure that the practice submission is not included
+        assertThat(entries).anyMatch(entry -> entry.toString().endsWith(Path.of("student1", ".git").toString()))
+                .noneMatch(entry -> entry.toString().matches(".*practice-[^\\/]*student2.*.git$"));
+    }
+
+    void testExportSubmissionsByParticipationIds_includePracticeSubmissions() throws Exception {
+        List<Path> entries = exportSubmissionsWithPracticeSubmissionByParticipationIds(false);
+
+        // Make sure that the practice submission is included
+        assertThat(entries).anyMatch(entry -> entry.toString().endsWith(Path.of("student1", ".git").toString()))
+                .anyMatch(entry -> entry.toString().matches(".*practice-[^\\/]*student2.*.git$"));
     }
 
     void testExportSubmissionsByParticipationIds_addParticipantIdentifierToProjectName() throws Exception {
@@ -464,6 +508,7 @@ class ProgrammingExerciseIntegrationTestService {
     private RepositoryExportOptionsDTO getOptions() {
         final var repositoryExportOptions = new RepositoryExportOptionsDTO();
         repositoryExportOptions.setFilterLateSubmissions(true);
+        repositoryExportOptions.setExcludePracticeSubmissions(false);
         repositoryExportOptions.setCombineStudentCommits(true);
         repositoryExportOptions.setAnonymizeStudentCommits(true);
         repositoryExportOptions.setAddParticipantName(true);
@@ -1170,6 +1215,16 @@ class ProgrammingExerciseIntegrationTestService {
         request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
+    void createProgrammingExercise_testwiseCoverageAnalysisNotSupported_badRequest(ProgrammingLanguage programmingLanguage) throws Exception {
+        programmingExercise.setId(null);
+        programmingExercise.setProjectType(null);
+        programmingExercise.setTitle("New title");
+        programmingExercise.setShortName("NewShortname");
+        programmingExercise.setProgrammingLanguage(programmingLanguage);
+        programmingExercise.setTestwiseCoverageEnabled(true);
+        request.post(ROOT + SETUP, programmingExercise, HttpStatus.BAD_REQUEST);
+    }
+
     void importProgrammingExercise_sourceExerciseIdNegative_badRequest() throws Exception {
         programmingExercise.setId(-1L);
         request.post(ROOT + IMPORT.replace("{sourceExerciseId}", programmingExercise.getId().toString()), programmingExercise, HttpStatus.BAD_REQUEST);
@@ -1199,7 +1254,7 @@ class ProgrammingExerciseIntegrationTestService {
     void importProgrammingExercise_templateIdDoesNotExist_notFound() throws Exception {
         programmingExercise.setShortName("newShortName");
         programmingExercise.setTitle("newTitle");
-        request.post(ROOT + IMPORT.replace("{sourceExerciseId}", "1337"), programmingExercise, HttpStatus.NOT_FOUND);
+        request.post(ROOT + IMPORT.replace("{sourceExerciseId}", NON_EXISTING_ID), programmingExercise, HttpStatus.NOT_FOUND);
     }
 
     void importProgrammingExercise_sameShortNameInCourse_badRequest() throws Exception {
@@ -1208,8 +1263,8 @@ class ProgrammingExerciseIntegrationTestService {
         programmingExerciseInExam.setId(null);
         programmingExerciseInExam.setTitle(programmingExerciseInExam.getTitle() + "change");
         // short name will still be the same
-        request.post(ROOT + IMPORT.replace("{sourceExerciseId}", "1337"), programmingExercise, HttpStatus.BAD_REQUEST);
-        request.post(ROOT + IMPORT.replace("{sourceExerciseId}", "1337"), programmingExerciseInExam, HttpStatus.BAD_REQUEST);
+        request.post(ROOT + IMPORT.replace("{sourceExerciseId}", NON_EXISTING_ID), programmingExercise, HttpStatus.BAD_REQUEST);
+        request.post(ROOT + IMPORT.replace("{sourceExerciseId}", NON_EXISTING_ID), programmingExerciseInExam, HttpStatus.BAD_REQUEST);
     }
 
     void importProgrammingExercise_sameTitleInCourse_badRequest() throws Exception {
@@ -1218,8 +1273,8 @@ class ProgrammingExerciseIntegrationTestService {
         programmingExerciseInExam.setId(null);
         programmingExerciseInExam.setShortName(programmingExerciseInExam.getShortName() + "change");
         // title will still be the same
-        request.post(ROOT + IMPORT.replace("{sourceExerciseId}", "1337"), programmingExercise, HttpStatus.BAD_REQUEST);
-        request.post(ROOT + IMPORT.replace("{sourceExerciseId}", "1337"), programmingExerciseInExam, HttpStatus.BAD_REQUEST);
+        request.post(ROOT + IMPORT.replace("{sourceExerciseId}", NON_EXISTING_ID), programmingExercise, HttpStatus.BAD_REQUEST);
+        request.post(ROOT + IMPORT.replace("{sourceExerciseId}", NON_EXISTING_ID), programmingExerciseInExam, HttpStatus.BAD_REQUEST);
     }
 
     void importProgrammingExercise_staticCodeAnalysisMustBeSet_badRequest() throws Exception {
@@ -1257,16 +1312,16 @@ class ProgrammingExerciseIntegrationTestService {
 
     void importProgrammingExercise_eitherCourseOrExerciseGroupSet_badRequest() throws Exception {
         programmingExercise.setCourse(null);
-        request.post(ROOT + IMPORT.replace("{sourceExerciseId}", "1337"), programmingExercise, HttpStatus.BAD_REQUEST);
+        request.post(ROOT + IMPORT.replace("{sourceExerciseId}", NON_EXISTING_ID), programmingExercise, HttpStatus.BAD_REQUEST);
         programmingExerciseInExam.setCourse(programmingExercise.getCourseViaExerciseGroupOrCourseMember());
-        request.post(ROOT + IMPORT.replace("{sourceExerciseId}", "1337"), programmingExerciseInExam, HttpStatus.BAD_REQUEST);
+        request.post(ROOT + IMPORT.replace("{sourceExerciseId}", NON_EXISTING_ID), programmingExerciseInExam, HttpStatus.BAD_REQUEST);
     }
 
     void importProgrammingExercise_vcsProjectWithSameKeyAlreadyExists_badRequest() throws Exception {
         programmingExercise.setId(null);
         programmingExercise.setShortName("testShortName");
         mockDelegate.mockCheckIfProjectExistsInVcs(programmingExercise, true);
-        request.post(ROOT + IMPORT.replace("{sourceExerciseId}", "1337"), programmingExercise, HttpStatus.BAD_REQUEST);
+        request.post(ROOT + IMPORT.replace("{sourceExerciseId}", NON_EXISTING_ID), programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
     void importProgrammingExercise_bambooProjectWithSameKeyAlreadyExists_badRequest() throws Exception {
@@ -1274,14 +1329,14 @@ class ProgrammingExerciseIntegrationTestService {
         programmingExercise.setShortName("testShortName");
         mockDelegate.mockCheckIfProjectExistsInVcs(programmingExercise, false);
         mockDelegate.mockCheckIfProjectExistsInCi(programmingExercise, true, false);
-        request.post(ROOT + IMPORT.replace("{sourceExerciseId}", "1337"), programmingExercise, HttpStatus.BAD_REQUEST);
+        request.post(ROOT + IMPORT.replace("{sourceExerciseId}", NON_EXISTING_ID), programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
     void importProgrammingExercise_vcsProjectWithSameTitleAlreadyExists_badRequest() throws Exception {
         programmingExercise.setId(null);
         programmingExercise.setShortName("testShortName");
         mockDelegate.mockCheckIfProjectExistsInVcs(programmingExercise, true);
-        request.post(ROOT + IMPORT.replace("{sourceExerciseId}", "1337"), programmingExercise, HttpStatus.BAD_REQUEST);
+        request.post(ROOT + IMPORT.replace("{sourceExerciseId}", NON_EXISTING_ID), programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
     void importProgrammingExercise_bambooProjectWithSameTitleAlreadyExists_badRequest() throws Exception {
@@ -1289,7 +1344,7 @@ class ProgrammingExerciseIntegrationTestService {
         programmingExercise.setShortName("testShortName");
         mockDelegate.mockCheckIfProjectExistsInVcs(programmingExercise, false);
         mockDelegate.mockCheckIfProjectExistsInCi(programmingExercise, true, false);
-        request.post(ROOT + IMPORT.replace("{sourceExerciseId}", "1337"), programmingExercise, HttpStatus.BAD_REQUEST);
+        request.post(ROOT + IMPORT.replace("{sourceExerciseId}", NON_EXISTING_ID), programmingExercise, HttpStatus.BAD_REQUEST);
     }
 
     void exportSubmissionsByStudentLogins_notInstructorForExercise_forbidden() throws Exception {
@@ -1475,7 +1530,7 @@ class ProgrammingExerciseIntegrationTestService {
         final var testCasesResponse = request.patchWithResponseBody(ROOT + endpoint, updates, new TypeReference<List<ProgrammingExerciseTestCase>>() {
         }, HttpStatus.OK);
         final var updatedTestCase = testCasesResponse.stream().filter(testCase -> testCase.getId().equals(updates.get(0).getId())).findFirst().orElseThrow();
-        assertThat(updatedTestCase.getBonusPoints()).isEqualTo(0d);
+        assertThat(updatedTestCase.getBonusPoints()).isZero();
         assertThat(testCasesResponse.stream().filter(testCase -> !testCase.getId().equals(updatedTestCase.getId()))).allMatch(testCase -> testCase.getBonusPoints() == 1d);
     }
 
@@ -1510,7 +1565,7 @@ class ProgrammingExerciseIntegrationTestService {
         assertThat(testCasesResponse).containsExactlyInAnyOrderElementsOf(testsInDB);
         assertThat(testsInDB).allSatisfy(test -> assertThat(test.getWeight()).isEqualTo(1));
         assertThat(testsInDB).allSatisfy(test -> assertThat(test.getBonusMultiplier()).isEqualTo(1.0));
-        assertThat(testsInDB).allSatisfy(test -> assertThat(test.getBonusPoints()).isEqualTo(0.0));
+        assertThat(testsInDB).allSatisfy(test -> assertThat(test.getBonusPoints()).isZero());
     }
 
     void resetTestCaseWeights_instructorInWrongCourse_forbidden() throws Exception {
@@ -1810,15 +1865,106 @@ class ProgrammingExerciseIntegrationTestService {
         request.get(defaultGetAuxReposEndpoint(), HttpStatus.FORBIDDEN, List.class);
     }
 
-    void testRecreateBuildPlansForbidden() throws Exception {
-        request.put(defaultRecreateBuildPlanEndpoint(), programmingExercise, HttpStatus.FORBIDDEN);
+    void testResetForbidden() throws Exception {
+        var resetOptions = new ProgrammingExerciseResetOptionsDTO(false, false, false, false);
+        request.put(defaultResetEndpoint(), resetOptions, HttpStatus.FORBIDDEN);
     }
 
-    void testRecreateBuildPlansExerciseNotFound() throws Exception {
-        request.put(defaultRecreateBuildPlanEndpoint(-1L), programmingExercise, HttpStatus.NOT_FOUND);
+    void testResetOnlyDeleteBuildPlansForbidden() throws Exception {
+        var resetOptions = new ProgrammingExerciseResetOptionsDTO(true, false, false, false);
+        request.put(defaultResetEndpoint(), resetOptions, HttpStatus.FORBIDDEN);
     }
 
-    void testRecreateBuildPlansExerciseSuccess() throws Exception {
+    void testResetDeleteBuildPlansAndDeleteStudentRepositoriesForbidden() throws Exception {
+        var resetOptions = new ProgrammingExerciseResetOptionsDTO(true, true, false, false);
+        request.put(defaultResetEndpoint(), resetOptions, HttpStatus.FORBIDDEN);
+    }
+
+    void testResetOnlyDeleteStudentParticipationsSubmissionsAndResultsForbidden() throws Exception {
+        var resetOptions = new ProgrammingExerciseResetOptionsDTO(false, false, true, false);
+        request.put(defaultResetEndpoint(), resetOptions, HttpStatus.FORBIDDEN);
+    }
+
+    void testResetExerciseNotFound() throws Exception {
+        var resetOptions = new ProgrammingExerciseResetOptionsDTO(false, false, false, false);
+        request.put(defaultResetEndpoint(-1L), resetOptions, HttpStatus.NOT_FOUND);
+    }
+
+    void testResetOnlyDeleteBuildPlansSuccess() throws Exception {
+        final var projectKey = programmingExercise.getProjectKey();
+        for (final var planName : List.of(userPrefix + "student1", userPrefix + "student2")) {
+            mockDelegate.mockDeleteBuildPlan(projectKey, projectKey + "-" + planName.toUpperCase(), false);
+        }
+
+        // Two participations exist with build plans before reset
+        var participations = programmingExerciseStudentParticipationRepository.findByExerciseId(programmingExercise.getId());
+        assertThat(participations).hasSize(2);
+        participations.forEach(participation -> {
+            assertThat(participation.getBuildPlanId()).isNotNull();
+        });
+
+        var resetOptions = new ProgrammingExerciseResetOptionsDTO(true, false, false, false);
+        request.put(defaultResetEndpoint(programmingExercise.getId()), resetOptions, HttpStatus.OK);
+
+        // Two participations exist with build plans removed after reset
+        participations = programmingExerciseStudentParticipationRepository.findByExerciseId(programmingExercise.getId());
+        assertThat(participations).hasSize(2);
+        participations.forEach(participation -> {
+            assertThat(participation.getBuildPlanId()).isNull();
+        });
+    }
+
+    void testResetDeleteBuildPlansAndDeleteStudentRepositoriesSuccess() throws Exception {
+        final var projectKey = programmingExercise.getProjectKey();
+        for (final var planName : List.of(userPrefix + "student1", userPrefix + "student2")) {
+            mockDelegate.mockDeleteBuildPlan(projectKey, projectKey + "-" + planName.toUpperCase(), false);
+        }
+
+        for (final var repoName : List.of(userPrefix + "student1", userPrefix + "student2")) {
+            mockDelegate.mockDeleteRepository(projectKey, (projectKey + "-" + repoName).toLowerCase(), false);
+        }
+
+        // Two participations exist with build plans and repositories before reset
+        var participations = programmingExerciseStudentParticipationRepository.findByExerciseId(programmingExercise.getId());
+        assertThat(participations).hasSize(2);
+        participations.forEach(participation -> {
+            assertThat(participation.getRepositoryUrl()).isNotNull();
+            assertThat(participation.getBuildPlanId()).isNotNull();
+        });
+
+        var resetOptions = new ProgrammingExerciseResetOptionsDTO(true, true, false, false);
+        request.put(defaultResetEndpoint(programmingExercise.getId()), resetOptions, HttpStatus.OK);
+
+        // Two participations exist with build plans and repositories removed after reset
+        participations = programmingExerciseStudentParticipationRepository.findByExerciseId(programmingExercise.getId());
+        assertThat(participations).hasSize(2);
+        participations.forEach(participation -> {
+            assertThat(participation.getRepositoryUrl()).isNull();
+            assertThat(participation.getBuildPlanId()).isNull();
+        });
+    }
+
+    void testResetOnlyDeleteStudentParticipationsSubmissionsAndResultsSuccess() throws Exception {
+        final var projectKey = programmingExercise.getProjectKey();
+        for (final var planName : List.of(userPrefix + "student1", userPrefix + "student2")) {
+            mockDelegate.mockDeleteBuildPlan(projectKey, projectKey + "-" + planName.toUpperCase(), false);
+        }
+
+        for (final var repoName : List.of(userPrefix + "student1", userPrefix + "student2")) {
+            mockDelegate.mockDeleteRepository(projectKey, (projectKey + "-" + repoName).toLowerCase(), false);
+        }
+
+        // Two participations exist before reset
+        assertThat(programmingExerciseStudentParticipationRepository.findByExerciseId(programmingExercise.getId())).hasSize(2);
+
+        var resetOptions = new ProgrammingExerciseResetOptionsDTO(false, false, true, false);
+        request.put(defaultResetEndpoint(programmingExercise.getId()), resetOptions, HttpStatus.OK);
+
+        // No participations exist after reset
+        assertThat(programmingExerciseStudentParticipationRepository.findByExerciseId(programmingExercise.getId()).isEmpty());
+    }
+
+    void testResetOnlyRecreateBuildPlansSuccess() throws Exception {
         addAuxiliaryRepositoryToExercise();
         mockDelegate.mockGetProjectKeyFromAnyUrl(programmingExercise.getProjectKey());
         String templateBuildPlanName = programmingExercise.getProjectKey() + "-" + TEMPLATE.getName();
@@ -1828,7 +1974,9 @@ class ProgrammingExerciseIntegrationTestService {
         mockDelegate.mockDeleteBuildPlan(programmingExercise.getProjectKey(), templateBuildPlanName, false);
         mockDelegate.mockDeleteBuildPlan(programmingExercise.getProjectKey(), solutionBuildPlanName, false);
         mockDelegate.mockConnectorRequestsForSetup(programmingExercise, false);
-        request.put(defaultRecreateBuildPlanEndpoint(), programmingExercise, HttpStatus.OK);
+
+        var resetOptions = new ProgrammingExerciseResetOptionsDTO(false, false, false, true);
+        request.put(defaultResetEndpoint(), resetOptions, HttpStatus.OK);
     }
 
     void testExportAuxiliaryRepositoryForbidden() throws Exception {
@@ -1866,8 +2014,8 @@ class ProgrammingExerciseIntegrationTestService {
         return ROOT + SETUP;
     }
 
-    private String defaultRecreateBuildPlanEndpoint() {
-        return defaultRecreateBuildPlanEndpoint(programmingExercise.getId());
+    private String defaultResetEndpoint() {
+        return defaultResetEndpoint(programmingExercise.getId());
     }
 
     private String defaultGetAuxReposEndpoint() {
@@ -1878,8 +2026,8 @@ class ProgrammingExerciseIntegrationTestService {
         return defaultExportInstructorAuxiliaryRepository(programmingExercise.getId(), repository.getId());
     }
 
-    private String defaultRecreateBuildPlanEndpoint(Long exerciseId) {
-        return ROOT + RECREATE_BUILD_PLANS.replace("{exerciseId}", exerciseId.toString());
+    private String defaultResetEndpoint(Long exerciseId) {
+        return ROOT + RESET.replace("{exerciseId}", exerciseId.toString());
     }
 
     private String defaultGetAuxReposEndpoint(Long exerciseId) {

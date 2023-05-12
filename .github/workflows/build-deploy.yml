@@ -40,6 +40,7 @@ env:
 jobs:
 
   build:
+    name: Build .war artifact
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
@@ -73,18 +74,10 @@ jobs:
         asset_content_type: application/x-webarchive
 
   docker:
+    name: Build and Push Docker Image
     if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == 'ls1intum/Artemis' }}
-    needs: build
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
-    - name: Download Artifact
-      uses: actions/download-artifact@v3
-      with:
-        name: Artemis.war
-    - name: Build Docker Image
-      run: docker build --build-arg WAR_PATH=. -t artemis -f src/main/docker/Dockerfile .
-
     - name: Compute Tag
       uses: actions/github-script@v6
       id: compute-tag
@@ -106,22 +99,30 @@ jobs:
             }
           }
           return "FALSE";
-
-    # Push to GitHub Container Registry
+    - uses: actions/checkout@v3
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v2
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+    # Build and Push to GitHub Container Registry
     - name: Login to GitHub Container Registry
       uses: docker/login-action@v2
+      if: ${{ steps.compute-tag.outputs.result != 'FALSE' }}
       with:
         registry: ghcr.io
         username: ${{ github.repository_owner }}
         password: ${{ secrets.GITHUB_TOKEN }}
+    - name: Build and Push to GitHub Container Registry
+      uses: docker/build-push-action@v4
       if: ${{ steps.compute-tag.outputs.result != 'FALSE' }}
-    - name: Push to GitHub Container Registry
-      env:
-        TAG: ${{ steps.compute-tag.outputs.result }}
-      run: |
-        docker tag artemis ghcr.io/ls1intum/artemis:$TAG
-        docker push ghcr.io/ls1intum/artemis:$TAG
-      if: ${{ steps.compute-tag.outputs.result != 'FALSE' }}
+      with:
+        # TODO: maybe even add arm/v7 for older DevBoards and arm64 for Mac M1 and new DevBoards
+        # TODO: add arm64 support by first building the .war file in a amd64 step then creating the runtime env
+        platforms: amd64
+        file: ./docker/artemis/Dockerfile
+        context: .
+        tags: ghcr.io/ls1intum/artemis:${{ steps.compute-tag.outputs.result }}
+        push: true
 
     # TODO: Push to Docker Hub (develop + tag)
 

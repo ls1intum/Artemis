@@ -160,7 +160,16 @@ describe('ProgrammingExercise Management Update Component', () => {
             // GIVEN
             const entity = new ProgrammingExercise(undefined, undefined);
             entity.releaseDate = dayjs(); // We will get a warning if we do not set a release date
-            jest.spyOn(programmingExerciseService, 'automaticSetup').mockReturnValue(of(new HttpResponse({ body: { ...entity, id: 2 } })));
+            jest.spyOn(programmingExerciseService, 'automaticSetup').mockReturnValue(
+                of(
+                    new HttpResponse({
+                        body: {
+                            ...entity,
+                            id: 2,
+                        },
+                    }),
+                ),
+            );
             comp.programmingExercise = entity;
             comp.backupExercise = {} as ProgrammingExercise;
             comp.programmingExercise.course = course;
@@ -178,7 +187,16 @@ describe('ProgrammingExercise Management Update Component', () => {
             const entity = new ProgrammingExercise(undefined, undefined);
             entity.releaseDate = dayjs(); // We will get a warning if we do not set a release date
             entity.title = 'My Exercise   ';
-            jest.spyOn(programmingExerciseService, 'automaticSetup').mockReturnValue(of(new HttpResponse({ body: { ...entity, id: 1 } })));
+            jest.spyOn(programmingExerciseService, 'automaticSetup').mockReturnValue(
+                of(
+                    new HttpResponse({
+                        body: {
+                            ...entity,
+                            id: 1,
+                        },
+                    }),
+                ),
+            );
             comp.programmingExercise = entity;
             comp.backupExercise = {} as ProgrammingExercise;
             comp.programmingExercise.course = course;
@@ -398,7 +416,7 @@ describe('ProgrammingExercise Management Update Component', () => {
                 fixture.detectChanges();
                 tick();
 
-                expect(comp.isImport).toBeTrue();
+                expect(comp.isImportFromExistingExercise).toBeTrue();
                 expect(comp.originalStaticCodeAnalysisEnabled).toBe(scaActivatedOriginal);
                 expect(comp.programmingExercise.staticCodeAnalysisEnabled).toBe(scaActivatedOriginal);
                 expect(comp.programmingExercise.maxStaticCodeAnalysisPenalty).toBe(maxPenalty);
@@ -439,6 +457,96 @@ describe('ProgrammingExercise Management Update Component', () => {
                 expect(comp.programmingExercise.maxStaticCodeAnalysisPenalty).toBeUndefined();
             }),
         );
+    });
+    describe('import from file', () => {
+        let route: ActivatedRoute;
+
+        beforeEach(() => {
+            route = TestBed.inject(ActivatedRoute);
+            route.params = of({ courseId });
+
+            route.url = of([{ path: 'import-from-file' } as UrlSegment]);
+        });
+        it('should reset dates, id, project key and store zipFile', fakeAsync(() => {
+            const programmingExercise = new ProgrammingExercise(undefined, undefined);
+            programmingExercise.programmingLanguage = ProgrammingLanguage.JAVA;
+            programmingExercise.projectType = ProjectType.PLAIN_MAVEN;
+            programmingExercise.dueDate = dayjs();
+            programmingExercise.releaseDate = dayjs();
+            programmingExercise.startDate = dayjs();
+            programmingExercise.projectKey = 'projectKey';
+
+            programmingExercise.assessmentDueDate = dayjs();
+            programmingExercise.exampleSolutionPublicationDate = dayjs();
+            programmingExercise.programmingLanguage = ProgrammingLanguage.JAVA;
+            programmingExercise.zipFileForImport = new File([''], 'test.zip');
+            programmingExercise.allowOfflineIde = true;
+            programmingExercise.allowOnlineEditor = true;
+            programmingExercise.publishBuildPlanUrl = true;
+            programmingExercise.allowComplaintsForAutomaticAssessments = true;
+            programmingExercise.allowManualFeedbackRequests = true;
+            programmingExercise.publishBuildPlanUrl = false;
+            history.pushState({ programmingExerciseForImportFromFile: programmingExercise }, '');
+            programmingExercise.shortName = 'shortName';
+            programmingExercise.title = 'title';
+
+            route.data = of({ programmingExercise });
+            const getFeaturesStub = jest.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature');
+            getFeaturesStub.mockImplementation((language: ProgrammingLanguage) => getProgrammingLanguageFeature(language));
+            comp.ngOnInit();
+            fixture.detectChanges();
+            tick();
+            expect(comp.isImportFromFile).toBeTrue();
+            expect(comp.programmingExercise.projectKey).toBeUndefined();
+            expect(comp.programmingExercise.id).toBeUndefined();
+            expect(comp.programmingExercise.dueDate).toBeUndefined();
+            expect(comp.programmingExercise.releaseDate).toBeUndefined();
+            expect(comp.programmingExercise.startDate).toBeUndefined();
+            expect(comp.programmingExercise.assessmentDueDate).toBeUndefined();
+            expect(comp.programmingExercise.exampleSolutionPublicationDate).toBeUndefined();
+            expect(comp.programmingExercise.zipFileForImport?.name).toBe('test.zip');
+            expect(comp.programmingExercise.allowComplaintsForAutomaticAssessments).toBeFalse();
+            expect(comp.programmingExercise.allowManualFeedbackRequests).toBeFalse();
+            expect(comp.programmingExercise.allowOfflineIde).toBeTrue();
+            expect(comp.programmingExercise.allowOnlineEditor).toBeTrue();
+            expect(comp.programmingExercise.publishBuildPlanUrl).toBeFalse();
+            expect(comp.programmingExercise.programmingLanguage).toBe(ProgrammingLanguage.JAVA);
+            expect(comp.programmingExercise.projectType).toBe(ProjectType.PLAIN_MAVEN);
+            // allow manual feedback requests and complaints for automatic assessments should be set to false because we reset all dates and hence they can only be false
+            expect(comp.programmingExercise.allowManualFeedbackRequests).toBeFalse();
+            expect(comp.programmingExercise.allowComplaintsForAutomaticAssessments).toBeFalse();
+            // name and short name should be imported
+            expect(comp.programmingExercise.title).toBe('title');
+            expect(comp.programmingExercise.shortName).toBe('shortName');
+        }));
+        it('should call import-from-file from service on import for entity from file', fakeAsync(() => {
+            // GIVEN
+            const entity = new ProgrammingExercise(undefined, undefined);
+            entity.zipFileForImport = new File([''], 'test.zip');
+            comp.isImportFromFile = true;
+            entity.releaseDate = dayjs(); // We will get a warning if we do not set a release date
+            jest.spyOn(programmingExerciseService, 'importFromFile').mockReturnValue(
+                of(
+                    new HttpResponse({
+                        body: {
+                            ...entity,
+                            id: 2,
+                        },
+                    }),
+                ),
+            );
+            comp.programmingExercise = entity;
+            comp.backupExercise = {} as ProgrammingExercise;
+            comp.programmingExercise.course = course;
+            comp.courseId = course.id!;
+            // WHEN
+            comp.save();
+            tick(); // simulate async
+
+            // THEN
+            expect(programmingExerciseService.importFromFile).toHaveBeenCalledWith(entity, 1);
+            expect(comp.isSaving).toBeFalse();
+        }));
     });
 
     describe('input error validation', () => {
@@ -800,6 +908,9 @@ const getProgrammingLanguageFeature = (programmingLanguage: ProgrammingLanguage)
                 packageNameRequired: true,
                 checkoutSolutionRepositoryAllowed: false,
                 projectTypes: [ProjectType.PLAIN, ProjectType.XCODE],
+                testwiseCoverageAnalysisSupported: false,
+                auxiliaryRepositoriesSupported: true,
+                publishBuildPlanUrlAllowed: true,
             } as ProgrammingLanguageFeature;
         case ProgrammingLanguage.JAVA:
             return {
@@ -810,6 +921,9 @@ const getProgrammingLanguageFeature = (programmingLanguage: ProgrammingLanguage)
                 packageNameRequired: true,
                 checkoutSolutionRepositoryAllowed: true,
                 projectTypes: [ProjectType.PLAIN_MAVEN, ProjectType.MAVEN_MAVEN],
+                testwiseCoverageAnalysisSupported: true,
+                auxiliaryRepositoriesSupported: true,
+                publishBuildPlanUrlAllowed: true,
             } as ProgrammingLanguageFeature;
         case ProgrammingLanguage.HASKELL:
             return {
@@ -820,6 +934,9 @@ const getProgrammingLanguageFeature = (programmingLanguage: ProgrammingLanguage)
                 packageNameRequired: false,
                 checkoutSolutionRepositoryAllowed: true,
                 projectTypes: [],
+                testwiseCoverageAnalysisSupported: false,
+                auxiliaryRepositoriesSupported: true,
+                publishBuildPlanUrlAllowed: true,
             } as ProgrammingLanguageFeature;
         case ProgrammingLanguage.C:
             return {
@@ -830,6 +947,9 @@ const getProgrammingLanguageFeature = (programmingLanguage: ProgrammingLanguage)
                 packageNameRequired: false,
                 checkoutSolutionRepositoryAllowed: true,
                 projectTypes: [ProjectType.FACT, ProjectType.GCC],
+                testwiseCoverageAnalysisSupported: false,
+                auxiliaryRepositoriesSupported: true,
+                publishBuildPlanUrlAllowed: true,
             } as ProgrammingLanguageFeature;
         default:
             throw new Error();

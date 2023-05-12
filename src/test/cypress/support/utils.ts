@@ -27,6 +27,13 @@ export function enterDate(selector: string, date: day.Dayjs) {
 }
 
 /**
+ * Allows to check a specified input field for a value
+ * */
+export function checkField(field: string, value: any) {
+    cy.get(field).should('have.value', value);
+}
+
+/**
  * Formats the dayjs object with the time format which the server uses. Also makes sure that dayjs uses the utc timezone.
  * @param dayjs the dayjs object
  * @returns a formatted string representing the date with utc timezone
@@ -45,6 +52,15 @@ export function dayjsToString(dayjs: day.Dayjs) {
  */
 export function trimDate(date: string) {
     return date.slice(0, 19);
+}
+
+export function titleCaseWord(str: string) {
+    str = str.replace('_', ' ');
+    const sentence = str.toLowerCase().split(' ');
+    for (let i = 0; i < sentence.length; i++) {
+        sentence[i] = sentence[i][0].toUpperCase() + sentence[i].slice(1);
+    }
+    return sentence.join(' ');
 }
 
 export function getExercise(exerciseId: number) {

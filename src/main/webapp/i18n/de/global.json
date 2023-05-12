@@ -104,6 +104,7 @@
                 "metrics": "Metriken",
                 "health": "Status",
                 "configuration": "Konfiguration",
+                "privacyStatement": "Datenschutzerklärung",
                 "logs": "Protokoll",
                 "audits": "Audits",
                 "apidocs": "API",
@@ -248,7 +249,7 @@
             "exercise": "Aufgaben",
             "scores": "Bewertungen",
             "exams": "Klausuren",
-            "manageHints": "Verwalte Hinweise",
+            "hints": "Hinweise",
             "addExternalSubmission": "Externe Einreichung anlegen",
             "addAuxiliaryRepository": "Hilfsrepository anlegen",
             "toggleToUnsubmitted": "Setze Studierenden-Klausur auf nicht abgegeben",
@@ -287,6 +288,9 @@
         },
         "exportRepos": {
             "title": "Herunterladen bestätigen"
+        },
+        "resetProgrammingExercise": {
+            "title": "Programmieraufgabe zurücksetzen"
         },
         "validation": {
             "required": "Dieses Feld wird benötigt.",

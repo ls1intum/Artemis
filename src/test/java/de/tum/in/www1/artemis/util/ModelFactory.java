@@ -539,12 +539,13 @@ public class ModelFactory {
 
     public static Course generateCourse(Long id, ZonedDateTime startDate, ZonedDateTime endDate, Set<Exercise> exercises, String studentGroupName,
             String teachingAssistantGroupName, String editorGroupName, String instructorGroupName) {
-        return generateCourse(id, startDate, endDate, exercises, studentGroupName, teachingAssistantGroupName, editorGroupName, instructorGroupName, 3, 3, 7, 2000, 2000, true, 7);
+        return generateCourse(id, startDate, endDate, exercises, studentGroupName, teachingAssistantGroupName, editorGroupName, instructorGroupName, 3, 3, 7, 2000, 2000, true,
+                true, 7);
     }
 
     public static Course generateCourse(Long id, ZonedDateTime startDate, ZonedDateTime endDate, Set<Exercise> exercises, String studentGroupName,
             String teachingAssistantGroupName, String editorGroupName, String instructorGroupName, Integer maxComplaints, Integer maxTeamComplaints, Integer maxComplaintTimeDays,
-            int maxComplaintTextLimit, int maxComplaintResponseTextLimit, boolean postsEnabled, int requestMoreFeedbackTimeDays) {
+            int maxComplaintTextLimit, int maxComplaintResponseTextLimit, boolean communicationEnabled, boolean messagingEnabled, int requestMoreFeedbackTimeDays) {
         Course course = new Course();
         course.setId(id);
         course.setTitle("Course title " + UUID.randomUUID());
@@ -556,7 +557,19 @@ public class ModelFactory {
         course.setMaxComplaintTimeDays(maxComplaintTimeDays);
         course.setMaxComplaintTextLimit(maxComplaintTextLimit);
         course.setMaxComplaintResponseTextLimit(maxComplaintResponseTextLimit);
-        course.setPostsEnabled(postsEnabled);
+        if (communicationEnabled && messagingEnabled) {
+            course.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
+        }
+        else if (communicationEnabled && !messagingEnabled) {
+            course.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_ONLY);
+        }
+        else if (!communicationEnabled && messagingEnabled) {
+            course.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.MESSAGING_ONLY);
+        }
+        else {
+            course.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.DISABLED);
+
+        }
         course.setMaxRequestMoreFeedbackTimeDays(requestMoreFeedbackTimeDays);
         course.setStudentGroupName(studentGroupName);
         course.setTeachingAssistantGroupName(teachingAssistantGroupName);
@@ -678,7 +691,37 @@ public class ModelFactory {
     }
 
     /**
-     * Generates a test eam (test exams have no student review dates)
+     * Generates an exam
+     *
+     * @param course      the associated course
+     * @param visibleDate the visible date of the exam
+     * @param startDate   the start date of the exam
+     * @param endDate     the end date of the exam
+     * @param testExam    if the exam is a test exam
+     * @return the created exam
+     */
+    public static Exam generateExam(Course course, ZonedDateTime visibleDate, ZonedDateTime startDate, ZonedDateTime endDate, boolean testExam) {
+        Exam exam = new Exam();
+        exam.setTitle((testExam ? "Test" : "Real") + " exam 1");
+        exam.setTestExam(testExam);
+        exam.setVisibleDate(visibleDate);
+        exam.setStartDate(startDate);
+        exam.setEndDate(endDate);
+        exam.setWorkingTime(3000);
+        exam.setStartText("Start Text");
+        exam.setEndText("End Text");
+        exam.setConfirmationStartText("Confirmation Start Text");
+        exam.setConfirmationEndText("Confirmation End Text");
+        exam.setExamMaxPoints(90);
+        exam.setNumberOfExercisesInExam(1);
+        exam.setRandomizeExerciseOrder(false);
+        exam.setNumberOfCorrectionRoundsInExam(testExam ? 0 : 1);
+        exam.setCourse(course);
+        return exam;
+    }
+
+    /**
+     * Generates a test exam (test exams have no student review dates)
      *
      * @param course the associated course
      * @return the created exam
@@ -696,23 +739,7 @@ public class ModelFactory {
      */
     private static Exam generateExamHelper(Course course, boolean testExam) {
         ZonedDateTime currentTime = now();
-        Exam exam = new Exam();
-        exam.setTitle((testExam ? "Test " : "Real ") + "exam 1");
-        exam.setTestExam(testExam);
-        exam.setVisibleDate(currentTime);
-        exam.setStartDate(currentTime.plusMinutes(10));
-        exam.setEndDate(currentTime.plusMinutes(testExam ? 80 : 60));
-        exam.setWorkingTime(3000);
-        exam.setStartText("Start Text");
-        exam.setEndText("End Text");
-        exam.setConfirmationStartText("Confirmation Start Text");
-        exam.setConfirmationEndText("Confirmation End Text");
-        exam.setExamMaxPoints(90);
-        exam.setNumberOfExercisesInExam(1);
-        exam.setRandomizeExerciseOrder(false);
-        exam.setNumberOfCorrectionRoundsInExam(testExam ? 0 : 1);
-        exam.setCourse(course);
-        return exam;
+        return generateExam(course, currentTime, currentTime.plusMinutes(10), currentTime.plusMinutes(testExam ? 80 : 60), testExam);
     }
 
     public static ExerciseGroup generateExerciseGroup(boolean mandatory, Exam exam) {
@@ -1329,7 +1356,7 @@ public class ModelFactory {
      * @param campus                of tutorial group
      * @return example tutorial gorup
      */
-    public static TutorialGroup generateTutorialGroup(String title, String additionalInformation, Integer capacity, Boolean isOnline, Language language, String campus) {
+    public static TutorialGroup generateTutorialGroup(String title, String additionalInformation, Integer capacity, Boolean isOnline, String language, String campus) {
         TutorialGroup tutorialGroup = new TutorialGroup();
         tutorialGroup.setTitle(title);
         tutorialGroup.setAdditionalInformation(additionalInformation);

@@ -12,7 +12,7 @@ export class ScoresDTO {
 
 @Injectable({ providedIn: 'root' })
 export class ParticipantScoresService {
-    public resourceUrl = SERVER_API_URL + 'api';
+    public resourceUrl = 'api';
 
     constructor(private http: HttpClient) {}
 

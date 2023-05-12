@@ -86,7 +86,7 @@ public class ConversationService {
      * @return true if the user is a member of the conversation, false otherwise
      */
     public boolean isMember(Long conversationId, Long userId) {
-        return conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(conversationId, userId).isPresent();
+        return conversationParticipantRepository.existsByConversationIdAndUserId(conversationId, userId);
     }
 
     /**
@@ -378,4 +378,17 @@ public class ConversationService {
         return users;
     }
 
+    /**
+     * Find all conversations for which the given user should be able to receive notifications.
+     *
+     * @param user                    The user for which to find the courses.
+     * @param unreadConversationsOnly Whether to only return conversations that have unread messages.
+     * @return A list of conversations for which the user should receive notifications.
+     */
+    public List<Conversation> findAllConversationsForNotifications(User user, boolean unreadConversationsOnly) {
+        if (unreadConversationsOnly) {
+            return conversationRepository.findAllUnreadConversationsWhereUserIsParticipant(user.getId());
+        }
+        return conversationRepository.findAllWhereUserIsParticipant(user.getId());
+    }
 }

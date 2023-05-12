@@ -55,9 +55,9 @@ pipeline {
                     mkdir results
                     if [ -e assignment/tests.xml ]
                     then
-                        sed -i 's/<testsuites>//g ; s/<\/testsuites>//g' assignment/tests.xml
+                        sed -i 's/<testsuites>/<testsuite>/g ; s/<\/testsuites>/<\/testsuite>/g' assignment/tests.xml
                         cp assignment/tests.xml $WORKSPACE/results/ || true
-                        sed -i 's/[^[:print:]]/�/g' $WORKSPACE/results/*.xml || true
+                        sed -i 's/[^[:print:]\t]/�/g' $WORKSPACE/results/*.xml || true
                     fi
                     '''
                 sendTestResults credentialsId: '#jenkinsNotificationToken', notificationUrl: '#notificationsUrl'

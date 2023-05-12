@@ -148,33 +148,45 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
         return replacements;
     }
 
-    private String[] getResourcePath(ProgrammingLanguage programmingLanguage, Optional<ProjectType> projectType, boolean isStaticCodeAnalysisEnabled, boolean isSequentialRuns) {
+    private Path getResourcePath(final ProgrammingLanguage programmingLanguage, final Optional<ProjectType> projectType, final boolean isStaticCodeAnalysisEnabled,
+            final boolean isSequentialRuns) {
         if (programmingLanguage == null) {
             throw new IllegalArgumentException("ProgrammingLanguage should not be null");
         }
-        final var pipelineScriptFilename = isStaticCodeAnalysisEnabled ? "Jenkinsfile-staticCodeAnalysis" : "Jenkinsfile";
-        final var regularOrSequentialDir = isSequentialRuns ? "sequentialRuns" : "regularRuns";
-        final var programmingLanguageName = programmingLanguage.name().toLowerCase();
 
-        Optional<String> projectTypeName;
+        final Optional<String> projectTypeName = getProjectTypeName(programmingLanguage, projectType);
+        return buildResourcePath(programmingLanguage, projectTypeName, isSequentialRuns, isStaticCodeAnalysisEnabled);
+    }
 
+    private static Optional<String> getProjectTypeName(final ProgrammingLanguage programmingLanguage, final Optional<ProjectType> projectType) {
         // Set a project type name in case the chosen Jenkinsfile also depend on the project type
         if (projectType.isPresent() && ProgrammingLanguage.C.equals(programmingLanguage)) {
-            projectTypeName = Optional.of(projectType.get().name().toLowerCase(Locale.ROOT));
+            return Optional.of(projectType.get().name().toLowerCase(Locale.ROOT));
         }
         else if (projectType.isPresent() && projectType.get().isGradle()) {
-            projectTypeName = Optional.of("gradle");
+            return Optional.of("gradle");
         }
         // Maven is also the project type for all other Java exercises (also if the project type is not present)
         else if (ProgrammingLanguage.JAVA.equals(programmingLanguage)) {
-            projectTypeName = Optional.of("maven");
+            return Optional.of("maven");
         }
         else {
-            projectTypeName = Optional.empty();
+            return Optional.empty();
+        }
+    }
+
+    private static Path buildResourcePath(final ProgrammingLanguage programmingLanguage, final Optional<String> projectTypeName, final boolean isSequentialRuns,
+            final boolean isStaticCodeAnalysisEnabled) {
+        final String programmingLanguageName = programmingLanguage.name().toLowerCase();
+        final String regularOrSequentialDir = isSequentialRuns ? "sequentialRuns" : "regularRuns";
+        final String pipelineScriptFilename = isStaticCodeAnalysisEnabled ? "Jenkinsfile-staticCodeAnalysis" : "Jenkinsfile";
+
+        Path resourcePath = Path.of("templates", "jenkins", programmingLanguageName);
+        if (projectTypeName.isPresent()) {
+            resourcePath = resourcePath.resolve(projectTypeName.get());
         }
 
-        return projectTypeName.map(name -> new String[] { "templates", "jenkins", programmingLanguageName, name, regularOrSequentialDir, pipelineScriptFilename })
-                .orElseGet(() -> new String[] { "templates", "jenkins", programmingLanguageName, regularOrSequentialDir, pipelineScriptFilename });
+        return resourcePath.resolve(regularOrSequentialDir).resolve(pipelineScriptFilename);
     }
 
     @Override
@@ -191,11 +203,11 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
 
         Map<String, String> replacements = Map.of(REPLACE_PIPELINE_SCRIPT, pipeLineScript, REPLACE_PUSH_TOKEN, pushToken);
 
-        final var xmlResource = resourceLoaderService.getResource(resourcePath.toString());
+        final var xmlResource = resourceLoaderService.getResource(resourcePath);
         return XmlFileUtils.readXmlFile(xmlResource, replacements);
     }
 
-    private String replacePipelineScriptParameters(String[] pipelineScriptPath, Map<String, String> variablesToReplace) {
+    private String replacePipelineScriptParameters(final Path pipelineScriptPath, final Map<String, String> variablesToReplace) {
         final var resource = resourceLoaderService.getResource(pipelineScriptPath);
         try {
             var pipelineScript = StreamUtils.copyToString(resource.getInputStream(), Charset.defaultCharset());
@@ -241,9 +253,11 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
             StaticCodeAnalysisTool tool = StaticCodeAnalysisTool.getToolsForProgrammingLanguage(programmingLanguage).get(0);
             // Copy swiftlint configuration into student's repository
             script.append("cp .swiftlint.yml assignment || true").append(lineEnding);
-            // Execute swiftlint within the student's repository and save the report into the sca directory
-            // sh command: swiftlint lint assignment > <scaDir>/<result>.xml
-            script.append("swiftlint lint assignment > ").append(STATIC_CODE_ANALYSIS_REPORT_DIR).append("/").append(tool.getFilePattern()).append(lineEnding);
+            // Change into the student's repository
+            script.append("cd assignment").append(lineEnding);
+            // Execute swiftlint and save the report into the sca directory
+            // sh command: swiftlint > ../<scaDir>/<result>.xml
+            script.append("swiftlint > ../").append(STATIC_CODE_ANALYSIS_REPORT_DIR).append("/").append(tool.getFilePattern()).append(lineEnding);
         }
         return script.toString();
     }

@@ -10,13 +10,15 @@
             "cardNoExerciseLabel": "No exercise planned",
             "cardExerciseLabel": "Next Exercise:",
             "register": {
-                "signUp": "Register for a course",
+                "title": "Course Registration",
                 "registerSuccessful": "Registration successful",
-                "signUpForCourse": "Register",
+                "registerForCourse": "Register",
+                "notInCourseButCanRegister": "You are not registered for this course, but you can register yourself.",
                 "cancel": "Cancel",
                 "coursePrerequisites": "Prerequisites",
                 "noCourse": "No courses available for registration",
-                "courseLoading": "Courses are loading...",
+                "courseLoading": "Course is loading...",
+                "coursesLoading": "Courses are loading...",
                 "courseSignupConfirmationTitle": "Confirm Course Registration"
             },
             "course": "Course"
@@ -101,7 +103,7 @@
                 "yourPoints": "Your points: {{ number }}",
                 "reachablePoints": "Attainable points: {{ number }} ({{ relative }}%)",
                 "totalPoints": "Overall points: {{ number }} ({{ relative }}%)",
-                "presentationScore": "Presentation score: {{ number }}",
+                "presentationScore": "Presentations: {{ number }}",
                 "noStatistics": "No statistics available for this course.",
                 "bonusPointTooltip": "Bonus Exercise: Points count as bonus points towards your course score!",
                 "notIncludedTooltip": "Not Included Exercise: Points do NOT count towards your course score!",

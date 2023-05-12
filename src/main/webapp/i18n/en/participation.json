@@ -3,8 +3,7 @@
         "participation": {
             "home": {
                 "title": "Participation",
-                "createLabel": "Create new participation",
-                "createOrEditLabel": "Create or edit participation"
+                "createLabel": "Create new participation"
             },
             "created": "Created new participation with identifier {{ param }}",
             "updated": "Updated participation with identifier {{ param }}",
@@ -18,6 +17,10 @@
             "addPresentation": {
                 "label": "Add presentation",
                 "error": "Could not add presentation. Please try again."
+            },
+            "savePresentation": {
+                "label": "Save presentation",
+                "error": "Could not save presentation. Please try again."
             },
             "removePresentation": {
                 "label": "Remove presentation",
@@ -36,12 +39,13 @@
             "initializationDate": "Participation Start Date",
             "individualDueDate": "Individual Due Date",
             "initializationNotYetStarted": "Not yet started",
-            "presentationScore": "Presentation Score",
+            "presentationScore": "Presentation",
+            "presentationGrade": "Presentation Grade",
             "results": "Results",
             "student": "Student",
             "team": "Team",
             "students": "Students",
-            "practiceMode": "Practice Mode",
+            "practice": "Practice",
             "templateParticipation": "Template Participation",
             "solutionParticipation": "Solution Participation",
             "noParticipation": "That participation could not be found!",

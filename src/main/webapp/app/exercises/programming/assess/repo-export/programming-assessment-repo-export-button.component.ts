@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ProgrammingAssessmentRepoExportDialogComponent } from 'app/exercises/programming/assess/repo-export/programming-assessment-repo-export-dialog.component';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
@@ -22,14 +22,16 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
     `,
 })
 export class ProgrammingAssessmentRepoExportButtonComponent {
-    ButtonType = ButtonType;
-    ButtonSize = ButtonSize;
+    readonly ButtonType = ButtonType;
+    readonly ButtonSize = ButtonSize;
     readonly FeatureToggle = FeatureToggle;
 
     @Input() participationIdList: number[];
     @Input() participantIdentifierList: string; // comma separated
     @Input() singleParticipantMode = false;
     @Input() programmingExercises: ProgrammingExercise[];
+
+    @Output() buttonPressed = new EventEmitter<void>();
 
     // Icons
     faDownload = faDownload;
@@ -42,6 +44,7 @@ export class ProgrammingAssessmentRepoExportButtonComponent {
      * @param {MouseEvent} event - Mouse event
      */
     openRepoExportDialog(event: MouseEvent) {
+        this.buttonPressed.emit();
         event.stopPropagation();
         const modalRef = this.modalService.open(ProgrammingAssessmentRepoExportDialogComponent, { keyboard: true, size: 'lg' });
         modalRef.componentInstance.programmingExercises = this.programmingExercises;

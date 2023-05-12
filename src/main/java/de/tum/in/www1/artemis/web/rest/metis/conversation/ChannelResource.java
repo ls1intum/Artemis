@@ -14,9 +14,12 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
+import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
@@ -24,13 +27,14 @@ import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
 import de.tum.in.www1.artemis.service.metis.conversation.ConversationDTOService;
 import de.tum.in.www1.artemis.service.metis.conversation.ConversationService;
 import de.tum.in.www1.artemis.service.metis.conversation.auth.ChannelAuthorizationService;
+import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
 import de.tum.in.www1.artemis.service.tutorialgroups.TutorialGroupChannelManagementService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.ChannelDTO;
 
 @RestController
 @RequestMapping("/api/courses")
-public class ChannelResource {
+public class ChannelResource extends ConversationManagementResource {
 
     private final Logger log = LoggerFactory.getLogger(ChannelResource.class);
 
@@ -44,26 +48,31 @@ public class ChannelResource {
 
     private final ConversationDTOService conversationDTOService;
 
-    private final CourseRepository courseRepository;
-
     private final UserRepository userRepository;
 
     private final ConversationService conversationService;
 
     private final TutorialGroupChannelManagementService tutorialGroupChannelManagementService;
 
-    public ChannelResource(ChannelService channelService, ChannelRepository channelRepository, ChannelAuthorizationService channelAuthorizationService,
+    private final SingleUserNotificationService singleUserNotificationService;
+
+    private final ConversationParticipantRepository conversationParticipantRepository;
+
+    public ChannelResource(ConversationParticipantRepository conversationParticipantRepository, SingleUserNotificationService singleUserNotificationService,
+            ChannelService channelService, ChannelRepository channelRepository, ChannelAuthorizationService channelAuthorizationService,
             AuthorizationCheckService authorizationCheckService, ConversationDTOService conversationDTOService, CourseRepository courseRepository, UserRepository userRepository,
             ConversationService conversationService, TutorialGroupChannelManagementService tutorialGroupChannelManagementService) {
+        super(courseRepository);
         this.channelService = channelService;
         this.channelRepository = channelRepository;
         this.channelAuthorizationService = channelAuthorizationService;
         this.authorizationCheckService = authorizationCheckService;
         this.conversationDTOService = conversationDTOService;
-        this.courseRepository = courseRepository;
         this.userRepository = userRepository;
         this.conversationService = conversationService;
         this.tutorialGroupChannelManagementService = tutorialGroupChannelManagementService;
+        this.singleUserNotificationService = singleUserNotificationService;
+        this.conversationParticipantRepository = conversationParticipantRepository;
     }
 
     /**
@@ -76,6 +85,7 @@ public class ChannelResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<List<ChannelDTO>> getCourseChannelsOverview(@PathVariable Long courseId) {
         log.debug("REST request to all channels of course: {}", courseId);
+        checkMessagingEnabledElseThrow(courseId);
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, courseRepository.findByIdElseThrow(courseId), requestingUser);
         var isAtLeastInstructor = authorizationCheckService.isAtLeastInstructorInCourse(courseRepository.findByIdElseThrow(courseId), requestingUser);
@@ -103,6 +113,7 @@ public class ChannelResource {
         log.debug("REST request to create channel in course {} with properties : {}", courseId, channelDTO);
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
         var course = courseRepository.findByIdElseThrow(courseId);
+        checkMessagingEnabledElseThrow(course);
         channelAuthorizationService.isAllowedToCreateChannel(course, requestingUser);
 
         var channelToCreate = new Channel();
@@ -132,6 +143,7 @@ public class ChannelResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<ChannelDTO> updateChannel(@PathVariable Long courseId, @PathVariable Long channelId, @RequestBody ChannelDTO channelDTO) {
         log.debug("REST request to update channel {} with properties : {}", channelId, channelDTO);
+        checkMessagingEnabledElseThrow(courseId);
 
         var originalChannel = channelRepository.findByIdElseThrow(channelId);
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
@@ -159,6 +171,7 @@ public class ChannelResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Void> deleteChannel(@PathVariable Long courseId, @PathVariable Long channelId) {
         log.debug("REST request to delete channel {}", channelId);
+        checkMessagingEnabledElseThrow(courseId);
         var channel = channelRepository.findByIdElseThrow(channelId);
         if (!channel.getCourse().getId().equals(courseId)) {
             throw new BadRequestAlertException("The channel does not belong to the course", CHANNEL_ENTITY_NAME, "channel.course.mismatch");
@@ -170,7 +183,11 @@ public class ChannelResource {
             throw new BadRequestAlertException("The channel belongs to tutorial group " + tutorialGroup.getTitle(), CHANNEL_ENTITY_NAME, "channel.tutorialGroup.mismatch");
         }, Optional::empty);
 
+        var usersToNotify = conversationParticipantRepository.findConversationParticipantByConversationId(channel.getId()).stream().map(ConversationParticipant::getUser)
+                .collect(Collectors.toSet());
         conversationService.deleteConversation(channel);
+        usersToNotify.forEach(
+                user -> singleUserNotificationService.notifyClientAboutConversationCreationOrDeletion(channel, user, requestingUser, NotificationType.CONVERSATION_DELETE_CHANNEL));
         return ResponseEntity.ok().build();
     }
 
@@ -185,6 +202,7 @@ public class ChannelResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Void> archiveChannel(@PathVariable Long courseId, @PathVariable Long channelId) {
         log.debug("REST request to archive channel : {}", channelId);
+        checkMessagingEnabledElseThrow(courseId);
         var channelFromDatabase = channelRepository.findByIdElseThrow(channelId);
         checkEntityIdMatchesPathIds(channelFromDatabase, Optional.of(courseId), Optional.of(channelId));
         channelAuthorizationService.isAllowedToArchiveChannel(channelFromDatabase, userRepository.getUserWithGroupsAndAuthorities());
@@ -203,6 +221,7 @@ public class ChannelResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Void> unArchiveChannel(@PathVariable Long courseId, @PathVariable Long channelId) {
         log.debug("REST request to unarchive channel : {}", channelId);
+        checkMessagingEnabledElseThrow(courseId);
         var channelFromDatabase = channelRepository.findByIdElseThrow(channelId);
         checkEntityIdMatchesPathIds(channelFromDatabase, Optional.of(courseId), Optional.of(channelId));
         channelAuthorizationService.isAllowedToUnArchiveChannel(channelFromDatabase, userRepository.getUserWithGroupsAndAuthorities());
@@ -222,6 +241,7 @@ public class ChannelResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Void> grantChannelModeratorRole(@PathVariable Long courseId, @PathVariable Long channelId, @RequestBody List<String> userLogins) {
         log.debug("REST request to grant channel moderator role to users {} in channel {}", userLogins.toString(), channelId);
+        checkMessagingEnabledElseThrow(courseId);
         var channel = channelRepository.findByIdElseThrow(channelId);
         if (!channel.getCourse().getId().equals(courseId)) {
             throw new BadRequestAlertException("The channel does not belong to the course", CHANNEL_ENTITY_NAME, "channel.course.mismatch");
@@ -244,6 +264,7 @@ public class ChannelResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Void> revokeChannelModeratorRole(@PathVariable Long courseId, @PathVariable Long channelId, @RequestBody List<String> userLogins) {
         log.debug("REST request to revoke channel moderator role from users {} in channel {}", userLogins.toString(), channelId);
+        checkMessagingEnabledElseThrow(courseId);
         var channel = channelRepository.findByIdElseThrow(channelId);
         if (!channel.getCourse().getId().equals(courseId)) {
             throw new BadRequestAlertException("The channel does not belong to the course", CHANNEL_ENTITY_NAME, "channel.course.mismatch");
@@ -274,6 +295,7 @@ public class ChannelResource {
     public ResponseEntity<Void> registerUsersToChannel(@PathVariable Long courseId, @PathVariable Long channelId, @RequestBody(required = false) List<String> userLogins,
             @RequestParam(defaultValue = "false") Boolean addAllStudents, @RequestParam(defaultValue = "false") Boolean addAllTutors,
             @RequestParam(defaultValue = "false") Boolean addAllInstructors) {
+        checkMessagingEnabledElseThrow(courseId);
         List<String> usersLoginsToRegister = new ArrayList<>();
         if (userLogins != null) {
             usersLoginsToRegister.addAll(userLogins);
@@ -296,6 +318,8 @@ public class ChannelResource {
         usersToRegister.addAll(conversationService.findUsersInDatabase(course, addAllStudents, addAllTutors, addAllInstructors));
         usersToRegister.addAll(conversationService.findUsersInDatabase(usersLoginsToRegister.stream().toList()));
         conversationService.registerUsersToConversation(course, usersToRegister, channelFromDatabase, Optional.empty());
+        usersToRegister.forEach(user -> singleUserNotificationService.notifyClientAboutConversationCreationOrDeletion(channelFromDatabase, user, requestingUser,
+                NotificationType.CONVERSATION_ADD_USER_CHANNEL));
         return ResponseEntity.ok().build();
     }
 
@@ -310,6 +334,7 @@ public class ChannelResource {
     @PostMapping("/{courseId}/channels/{channelId}/deregister")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Void> deregisterUsers(@PathVariable Long courseId, @PathVariable Long channelId, @RequestBody List<String> userLogins) {
+        checkMessagingEnabledElseThrow(courseId);
         if (userLogins == null || userLogins.isEmpty()) {
             throw new BadRequestAlertException("No user logins provided", CHANNEL_ENTITY_NAME, "userLoginsEmpty");
         }
@@ -331,6 +356,8 @@ public class ChannelResource {
         }
 
         conversationService.deregisterUsersFromAConversation(course, usersToDeRegister, channelFromDatabase);
+        usersToDeRegister.forEach(user -> singleUserNotificationService.notifyClientAboutConversationCreationOrDeletion(channelFromDatabase, user, requestingUser,
+                NotificationType.CONVERSATION_REMOVE_USER_CHANNEL));
         return ResponseEntity.ok().build();
     }
 

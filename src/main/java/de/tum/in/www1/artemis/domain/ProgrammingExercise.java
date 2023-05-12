@@ -6,6 +6,7 @@ import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
 import javax.persistence.*;
@@ -25,6 +26,7 @@ import de.tum.in.www1.artemis.domain.hestia.ExerciseHint;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPolicy;
 import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeature;
@@ -119,9 +121,6 @@ public class ProgrammingExercise extends Exercise {
     @JoinColumn(unique = true, name = "submission_policy_id")
     @JsonIgnoreProperties("programmingExercise")
     private SubmissionPolicy submissionPolicy;
-
-    @Transient
-    private boolean isLocalSimulationTransient;
 
     @Nullable
     @Column(name = "project_type", table = "programming_exercise_details")
@@ -292,6 +291,7 @@ public class ProgrammingExercise extends Exercise {
         this.branch = branch;
     }
 
+    @JsonIgnore
     public String getBranch() {
         return branch;
     }
@@ -649,6 +649,30 @@ public class ProgrammingExercise extends Exercise {
     }
 
     /**
+     * Find relevant participations for this exercise. Normally there are only one practice and graded participation.
+     * In case there are multiple, they are filtered as implemented in {@link Exercise#findRelevantParticipation(List)}
+     *
+     * @param participations the list of available participations
+     * @return the found participation in an unmodifiable list or the empty list, if none exists
+     */
+    @Override
+    public List<StudentParticipation> findRelevantParticipation(List<StudentParticipation> participations) {
+        List<StudentParticipation> participationOfExercise = participations.stream()
+                .filter(participation -> participation.getExercise() != null && participation.getExercise().equals(this)).toList();
+        List<StudentParticipation> gradedParticipations = participationOfExercise.stream().filter(participation -> !participation.isTestRun()).toList();
+        List<StudentParticipation> practiceParticipations = participationOfExercise.stream().filter(Participation::isTestRun).toList();
+
+        if (gradedParticipations.size() > 1) {
+            gradedParticipations = super.findRelevantParticipation(gradedParticipations);
+        }
+        if (practiceParticipations.size() > 1) {
+            practiceParticipations = super.findRelevantParticipation(practiceParticipations);
+        }
+
+        return Stream.concat(gradedParticipations.stream(), practiceParticipations.stream()).toList();
+    }
+
+    /**
      * Check if manual results are allowed for the exercise
      *
      * @return true if manual results are allowed, false otherwise
@@ -698,31 +722,12 @@ public class ProgrammingExercise extends Exercise {
                 + ", packageName='" + getPackageName() + "'" + ", testCasesChanged='" + testCasesChanged + "'" + "}";
     }
 
-    public boolean getIsLocalSimulation() {
-        return this.isLocalSimulationTransient;
-    }
-
-    public void setIsLocalSimulation(Boolean isLocalSimulationTransient) {
-        this.isLocalSimulationTransient = isLocalSimulationTransient;
-    }
-
     public boolean getCheckoutSolutionRepository() {
         return this.checkoutSolutionRepositoryTransient;
     }
 
     public void setCheckoutSolutionRepository(boolean checkoutSolutionRepository) {
         this.checkoutSolutionRepositoryTransient = checkoutSolutionRepository;
-    }
-
-    /**
-     * Sets the transient attribute "isLocalSimulation" if the exercises is a programming exercise
-     * and the testRepositoryUrl contains the String "artemislocalhost" which is the indicator that the programming exercise has
-     * no connection to a version control and continuous integration server
-     */
-    public void checksAndSetsIfProgrammingExerciseIsLocalSimulation() {
-        if (getTestRepositoryUrl().contains("artemislocalhost")) {
-            setIsLocalSimulation(true);
-        }
     }
 
     /**
@@ -769,7 +774,7 @@ public class ProgrammingExercise extends Exercise {
         }
 
         // Check if the programming language supports static code analysis
-        if (Boolean.TRUE.equals(isStaticCodeAnalysisEnabled()) && !programmingLanguageFeature.isStaticCodeAnalysis()) {
+        if (Boolean.TRUE.equals(isStaticCodeAnalysisEnabled()) && !programmingLanguageFeature.staticCodeAnalysis()) {
             throw new BadRequestAlertException("The static code analysis is not supported for this programming language", "Exercise", "staticCodeAnalysisNotSupportedForLanguage");
         }
 

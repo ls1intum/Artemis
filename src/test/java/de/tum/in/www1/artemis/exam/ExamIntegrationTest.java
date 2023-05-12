@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.*;
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
+import static org.springframework.http.HttpStatus.CREATED;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -181,6 +182,10 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
     private Exam testExam1;
 
+    private static final int NUMBER_OF_STUDENTS = 4;
+
+    private static final int NUMBER_OF_TUTORS = 2;
+
     private StudentExam studentExam1;
 
     private static final int numberOfStudents = 10;
@@ -192,11 +197,10 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @BeforeEach
     void initTestCase() {
 
-        database.addUsers(TEST_PREFIX, numberOfStudents, 5, 0, 1);
+        database.addUsers(TEST_PREFIX, NUMBER_OF_STUDENTS, NUMBER_OF_TUTORS, 0, 1);
         // Add users that are not in the course
         database.createAndSaveUser(TEST_PREFIX + "student42", passwordService.hashPassword(ModelFactory.USER_PASSWORD));
         database.createAndSaveUser(TEST_PREFIX + "tutor6", passwordService.hashPassword(ModelFactory.USER_PASSWORD));
-        database.createAndSaveUser(TEST_PREFIX + "instructor6", passwordService.hashPassword(ModelFactory.USER_PASSWORD));
         database.createAndSaveUser(TEST_PREFIX + "instructor10", passwordService.hashPassword(ModelFactory.USER_PASSWORD));
 
         course1 = database.addEmptyCourse();
@@ -280,6 +284,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testRegisterUsersInExam() throws Exception {
+        database.addStudents(TEST_PREFIX, 5, 10);
         jiraRequestMockProvider.enableMockingOfRequests();
 
         var exam = ModelFactory.generateExam(course1);
@@ -481,8 +486,8 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         // TODO IMPORTANT test more complex exam configurations (mixed exercise type, more variants and more registered students)
 
         // registering users
-        var student1 = database.getUserByLogin(TEST_PREFIX + "student1");
-        var student2 = database.getUserByLogin(TEST_PREFIX + "student2");
+        User student1 = database.getUserByLogin(TEST_PREFIX + "student1");
+        User student2 = database.getUserByLogin(TEST_PREFIX + "student2");
         var registeredUsers = Set.of(student1, student2);
         exam2.setExamUsers(Set.of(new ExamUser()));
         // setting dates
@@ -540,8 +545,8 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         // TODO IMPORTANT test more complex exam configurations (mixed exercise type, more variants and more registered students)
 
         // registering users
-        var student1 = database.getUserByLogin(TEST_PREFIX + "student1");
-        var student2 = database.getUserByLogin(TEST_PREFIX + "student2");
+        User student1 = database.getUserByLogin(TEST_PREFIX + "student1");
+        User student2 = database.getUserByLogin(TEST_PREFIX + "student2");
         var registeredUsers = Set.of(student1, student2);
         exam2.setExamUsers(Set.of(new ExamUser()));
         // setting dates
@@ -594,7 +599,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGenerateStudentExams() throws Exception {
-        Exam exam = database.setupExamWithExerciseGroupsExercisesRegisteredStudents(TEST_PREFIX, course1);
+        Exam exam = database.setupExamWithExerciseGroupsExercisesRegisteredStudents(TEST_PREFIX, course1, 2);
 
         // invoke generate student exams
         List<StudentExam> studentExams = request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/generate-student-exams",
@@ -617,7 +622,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGenerateStudentExamsCleanupOldParticipations() throws Exception {
-        Exam exam = database.setupExamWithExerciseGroupsExercisesRegisteredStudents(TEST_PREFIX, course1);
+        Exam exam = database.setupExamWithExerciseGroupsExercisesRegisteredStudents(TEST_PREFIX, course1, 4);
 
         request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/generate-student-exams", Optional.empty(), StudentExam.class,
                 HttpStatus.OK);
@@ -670,7 +675,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGenerateStudentExamsNoExerciseNumber_badRequest() throws Exception {
-        Exam exam = database.setupExamWithExerciseGroupsExercisesRegisteredStudents(TEST_PREFIX, course1);
+        Exam exam = database.setupExamWithExerciseGroupsExercisesRegisteredStudents(TEST_PREFIX, course1, 1);
         exam.setNumberOfExercisesInExam(null);
         examRepository.save(exam);
 
@@ -682,7 +687,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGenerateStudentExamsNotEnoughExerciseGroups_badRequest() throws Exception {
-        Exam exam = database.setupExamWithExerciseGroupsExercisesRegisteredStudents(TEST_PREFIX, course1);
+        Exam exam = database.setupExamWithExerciseGroupsExercisesRegisteredStudents(TEST_PREFIX, course1, 1);
         exam.setNumberOfExercisesInExam(exam.getNumberOfExercisesInExam() + 2);
         examRepository.save(exam);
 
@@ -694,7 +699,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGenerateStudentExamsTooManyMandatoryExerciseGroups_badRequest() throws Exception {
-        Exam exam = database.setupExamWithExerciseGroupsExercisesRegisteredStudents(TEST_PREFIX, course1);
+        Exam exam = database.setupExamWithExerciseGroupsExercisesRegisteredStudents(TEST_PREFIX, course1, 2);
         exam.setNumberOfExercisesInExam(exam.getNumberOfExercisesInExam() - 2);
         examRepository.save(exam);
 
@@ -706,26 +711,15 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGenerateMissingStudentExams() throws Exception {
-        Exam exam = database.setupExamWithExerciseGroupsExercisesRegisteredStudents(TEST_PREFIX, course1);
-
+        Exam exam = database.setupExamWithExerciseGroupsExercisesRegisteredStudents(TEST_PREFIX, course1, 2);
         // Generate student exams
         List<StudentExam> studentExams = request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/generate-student-exams",
                 Optional.empty(), StudentExam.class, HttpStatus.OK);
         assertThat(studentExams).hasSize(exam.getExamUsers().size());
+        exam = examRepository.save(exam);
 
         // Register two new students
-        var student5 = database.getUserByLogin(TEST_PREFIX + "student5");
-        var student6 = database.getUserByLogin(TEST_PREFIX + "student6");
-        var registeredUsers = Set.of(student5, student6);
-        exam = examRepository.save(exam);
-        for (var user : registeredUsers) {
-            var registeredExamUser = new ExamUser();
-            registeredExamUser.setUser(user);
-            registeredExamUser.setExam(exam);
-            registeredExamUser = examUserRepository.save(registeredExamUser);
-            exam.addExamUser(registeredExamUser);
-        }
-        examRepository.save(exam);
+        database.registerUsersForExamAndSaveExam(exam, TEST_PREFIX, 3, 4);
 
         // Generate individual exams for the two missing students
         List<StudentExam> missingStudentExams = request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/generate-missing-student-exams",
@@ -764,7 +758,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testRemovingAllStudents() throws Exception {
         doNothing().when(gitService).combineAllCommitsOfRepositoryIntoOne(any());
-        Exam exam = database.setupExamWithExerciseGroupsExercisesRegisteredStudents(TEST_PREFIX, course1);
+        Exam exam = database.setupExamWithExerciseGroupsExercisesRegisteredStudents(TEST_PREFIX, course1, 4);
 
         // Generate student exams
         List<StudentExam> studentExams = request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/generate-student-exams",
@@ -814,7 +808,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testRemovingAllStudentsAndParticipations() throws Exception {
         doNothing().when(gitService).combineAllCommitsOfRepositoryIntoOne(any());
-        Exam exam = database.setupExamWithExerciseGroupsExercisesRegisteredStudents(TEST_PREFIX, course1);
+        Exam exam = database.setupExamWithExerciseGroupsExercisesRegisteredStudents(TEST_PREFIX, course1, 4);
 
         // Generate student exams
         List<StudentExam> studentExams = request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/generate-student-exams",
@@ -893,7 +887,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor6", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor10", roles = "INSTRUCTOR")
     void testCreateExam_checkCourseAccess_InstructorNotInCourse_forbidden() throws Exception {
         Exam exam = ModelFactory.generateExam(course1);
         request.post("/api/courses/" + course1.getId() + "/exams", exam, HttpStatus.FORBIDDEN);
@@ -979,7 +973,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testCreateTestExam_asInstructor_badReuestWithWorkingTimeGreatherThanWorkingWindow() throws Exception {
+    void testCreateTestExam_asInstructor_badRequestWithWorkingTimeGreaterThanWorkingWindow() throws Exception {
         // Test for bad request, where workingTime is greater than difference between StartDate and EndDate
         Exam examC = ModelFactory.generateTestExam(course1);
         examC.setWorkingTime(5000);
@@ -1313,7 +1307,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     void testDeleteStudent() throws Exception {
         doNothing().when(gitService).combineAllCommitsOfRepositoryIntoOne(any());
         // Create an exam with registered students
-        Exam exam = database.setupExamWithExerciseGroupsExercisesRegisteredStudents(TEST_PREFIX, course1);
+        Exam exam = database.setupExamWithExerciseGroupsExercisesRegisteredStudents(TEST_PREFIX, course1, 4);
         var student1 = database.getUserByLogin(TEST_PREFIX + "student1");
         var student2 = database.getUserByLogin(TEST_PREFIX + "student2");
 
@@ -1377,7 +1371,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     void testDeleteStudentForTestExam_badRequest() throws Exception {
         doNothing().when(gitService).combineAllCommitsOfRepositoryIntoOne(any());
         // Create an exam with registered students
-        Exam exam = database.setupExamWithExerciseGroupsExercisesRegisteredStudents(TEST_PREFIX, course1);
+        Exam exam = database.setupExamWithExerciseGroupsExercisesRegisteredStudents(TEST_PREFIX, course1, 1);
         exam.setTestExam(true);
         examRepository.save(exam);
 
@@ -1432,7 +1426,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     void testDeleteStudentWithParticipationsAndSubmissions() throws Exception {
         doNothing().when(gitService).combineAllCommitsOfRepositoryIntoOne(any());
         // Create an exam with registered students
-        Exam exam = database.setupExamWithExerciseGroupsExercisesRegisteredStudents(TEST_PREFIX, course1);
+        Exam exam = database.setupExamWithExerciseGroupsExercisesRegisteredStudents(TEST_PREFIX, course1, 4);
         var student1 = database.getUserByLogin(TEST_PREFIX + "student1");
 
         // Create individual student exams
@@ -1548,14 +1542,14 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDeleteStudentThatDoesNotExist() throws Exception {
-        Exam exam = database.setupExamWithExerciseGroupsExercisesRegisteredStudents(TEST_PREFIX, course1);
+        Exam exam = database.setupExamWithExerciseGroupsExercisesRegisteredStudents(TEST_PREFIX, course1, 1);
         request.delete("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/students/nonExistingStudent", HttpStatus.NOT_FOUND);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student5", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetStudentExamForStart() throws Exception {
-        Exam exam = database.addActiveExamWithRegisteredUser(course1, database.getUserByLogin(TEST_PREFIX + "student5"));
+        Exam exam = database.addActiveExamWithRegisteredUser(course1, database.getUserByLogin(TEST_PREFIX + "student1"));
         exam.setVisibleDate(ZonedDateTime.now().minusHours(1).minusMinutes(5));
         StudentExam response = request.get("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/own-student-exam", HttpStatus.OK, StudentExam.class);
         assertThat(response.getExam()).isEqualTo(exam);
@@ -2092,6 +2086,8 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         gradingScale.setExam(exam);
         gradingScaleRepository.save(gradingScale);
 
+        await().until(() -> participantScoreScheduleService.isIdle());
+
         if (withCourseBonus) {
             configureCourseAsBonusWithIndividualAndTeamResults(course, gradingScale);
         }
@@ -2212,7 +2208,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
                     }
                     case TEST_PREFIX + "student3" -> {
                         assertThat(studentResult.gradeWithBonus().mostSeverePlagiarismVerdict()).isEqualTo(PlagiarismVerdict.PLAGIARISM);
-                        assertThat(studentResult.gradeWithBonus().studentPointsOfBonusSource()).isEqualTo(0.0);
+                        assertThat(studentResult.gradeWithBonus().studentPointsOfBonusSource()).isZero();
                         assertThat(studentResult.gradeWithBonus().bonusGrade()).isEqualTo(GradingScale.DEFAULT_PLAGIARISM_GRADE);
                         assertThat(studentResult.gradeWithBonus().finalGrade()).isEqualTo("1.0");
                     }
@@ -2363,9 +2359,9 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor6", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor10", roles = "INSTRUCTOR")
     void testCourseAndExamAccessForInstructors_notInstructorInCourse_forbidden() throws Exception {
-        // Instructor6 is not instructor for the course
+        // Instructor10 is not instructor for the course
         // Update exam
         request.put("/api/courses/" + course1.getId() + "/exams", exam1, HttpStatus.FORBIDDEN);
         // Get exam
@@ -3045,19 +3041,19 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student5", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetStudentExamForTestExamForStart_fetchExam_successful() throws Exception {
-        var student5 = database.getUserByLogin(TEST_PREFIX + "student5");
-        var testExam5 = database.addTestExam(course2);
-        testExam5 = examRepository.save(testExam5);
-        var examUser5 = new ExamUser();
-        examUser5.setExam(testExam5);
-        examUser5.setUser(student5);
-        examUser5 = examUserRepository.save(examUser5);
-        testExam5.addExamUser(examUser5);
-        examRepository.save(testExam5);
-        var studentExam5 = database.addStudentExamForTestExam(testExam5, student5);
-        StudentExam studentExamReceived = request.get("/api/courses/" + course2.getId() + "/exams/" + testExam5.getId() + "/own-student-exam", HttpStatus.OK, StudentExam.class);
+        var student1 = database.getUserByLogin(TEST_PREFIX + "student1");
+        var testExam = database.addTestExam(course2);
+        testExam = examRepository.save(testExam);
+        var examUser = new ExamUser();
+        examUser.setExam(testExam);
+        examUser.setUser(student1);
+        examUser = examUserRepository.save(examUser);
+        testExam.addExamUser(examUser);
+        examRepository.save(testExam);
+        var studentExam5 = database.addStudentExamForTestExam(testExam, student1);
+        StudentExam studentExamReceived = request.get("/api/courses/" + course2.getId() + "/exams/" + testExam.getId() + "/own-student-exam", HttpStatus.OK, StudentExam.class);
         assertThat(studentExamReceived).isEqualTo(studentExam5);
     }
 
@@ -3109,7 +3105,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor6", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor10", roles = "INSTRUCTOR")
     void testGetExamForImportWithExercises_noInstructorAccess() throws Exception {
         request.get("/api/exams/" + exam2.getId(), HttpStatus.FORBIDDEN, Exam.class);
     }
@@ -3333,12 +3329,12 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         Exam exam = database.addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(course1);
         exam.setId(null);
 
-        final Exam received = request.postWithResponseBody("/api/courses/" + course1.getId() + "/exam-import", exam, Exam.class, HttpStatus.CREATED);
+        final Exam received = request.postWithResponseBody("/api/courses/" + course1.getId() + "/exam-import", exam, Exam.class, CREATED);
         assertThat(received.getId()).isNotNull();
         assertThat(received.getTitle()).isEqualTo(exam.getTitle());
         assertThat(received.getCourse()).isEqualTo(course1);
         assertThat(received.getCourse()).isEqualTo(exam.getCourse());
-        assertThat(received.getExerciseGroups().size()).isEqualTo(4);
+        assertThat(received.getExerciseGroups()).hasSize(4);
     }
 
     @Test
@@ -3348,8 +3344,8 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         exam.setCourse(course1);
         exam.setId(null);
 
-        final Exam received = request.postWithResponseBody("/api/courses/" + course1.getId() + "/exam-import", exam, Exam.class, HttpStatus.CREATED);
-        assertThat(received.getExerciseGroups().size()).isEqualTo(4);
+        final Exam received = request.postWithResponseBody("/api/courses/" + course1.getId() + "/exam-import", exam, Exam.class, CREATED);
+        assertThat(received.getExerciseGroups()).hasSize(4);
 
         for (int i = 0; i <= 3; i++) {
             Exercise expected = exam.getExerciseGroups().get(i).getExercises().stream().findFirst().get();
@@ -3385,10 +3381,10 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
     private Set<User> getRegisteredStudentsForExam() {
         var registeredStudents = new HashSet<User>();
-        for (int i = 1; i <= numberOfStudents; i++) {
+        for (int i = 1; i <= NUMBER_OF_STUDENTS; i++) {
             registeredStudents.add(database.getUserByLogin(TEST_PREFIX + "student" + i));
         }
-        for (int i = 1; i <= 5; i++) {
+        for (int i = 1; i <= NUMBER_OF_TUTORS; i++) {
             registeredStudents.add(database.getUserByLogin(TEST_PREFIX + "tutor" + i));
         }
 

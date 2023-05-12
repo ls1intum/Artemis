@@ -176,7 +176,7 @@ public class GitService {
             @Override
             public char[] getPassphrase(URIish uri, int attempt) {
                 // Example: /Users/artemis/.ssh/artemis/id_rsa contains /Users/artemis/.ssh/artemis
-                if (gitSshPrivateKeyPath.isPresent() && uri.getPath().contains(gitSshPrivateKeyPath.get())) {
+                if (gitSshPrivateKeyPath.isPresent() && gitSshPrivateKeyPassphrase.isPresent() && uri.getPath().contains(gitSshPrivateKeyPath.get())) {
                     return gitSshPrivateKeyPassphrase.get().toCharArray();
                 }
                 else {
@@ -1249,6 +1249,7 @@ public class GitService {
         else {
             zipRepoName += "-" + studentTeamOrDefault + ".zip";
         }
+        zipRepoName = participation.addPracticePrefixIfTestRun(zipRepoName);
         return zipFiles(repo.getLocalPath(), zipRepoName, repositoryDir, null);
     }
 

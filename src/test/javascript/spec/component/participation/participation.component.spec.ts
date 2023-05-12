@@ -31,6 +31,9 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTestModule } from '../../test.module';
 import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
+import { Exam } from 'app/entities/exam.model';
+import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import { GradeStepsDTO } from 'app/entities/grade-step.model';
 
 describe('ParticipationComponent', () => {
     let component: ParticipationComponent;
@@ -97,7 +100,7 @@ describe('ParticipationComponent', () => {
         expect(component.isLoading).toBeFalse();
         expect(component.participations).toHaveLength(1);
         expect(component.participations[0].id).toBe(participation.id);
-        expect(component.presentationScoreEnabled).toBeFalse();
+        expect(component.basicPresentationEnabled).toBeFalse();
 
         expect(exerciseFindStub).toHaveBeenCalledOnce();
         expect(exerciseFindStub).toHaveBeenCalledWith(theExercise.id);
@@ -122,7 +125,7 @@ describe('ParticipationComponent', () => {
         expect(component.isLoading).toBeFalse();
         expect(component.participations).toHaveLength(1);
         expect(component.participations[0].id).toBe(participation.id);
-        expect(component.presentationScoreEnabled).toBeFalse();
+        expect(component.basicPresentationEnabled).toBeFalse();
         expect(component.exerciseSubmissionState).toEqual(submissionState);
 
         expect(exerciseFindStub).toHaveBeenCalledOnce();
@@ -293,22 +296,28 @@ describe('ParticipationComponent', () => {
             jest.restoreAllMocks();
         });
 
-        const courseWithPresentationScore = {
+        const courseWithBasicPresentations = {
             id: 1,
-            title: 'Presentation Score',
+            title: 'Basic Presentations',
             presentationScore: 2,
         } as Course;
 
-        const courseWithoutPresentationScore = {
+        const courseWithoutPresentations = {
             id: 2,
-            title: 'No Presentation Score',
+            title: 'No Presentations',
+            presentationScore: 0,
+        } as Course;
+
+        const courseWithGradedPresentation = {
+            id: 3,
+            title: 'Graded Presentations',
             presentationScore: 0,
         } as Course;
 
         const exercise1 = {
             id: 1,
             title: 'Exercise 1',
-            course: courseWithPresentationScore,
+            course: courseWithBasicPresentations,
             presentationScoreEnabled: true,
             isAtLeastTutor: true,
         } as Exercise;
@@ -316,10 +325,23 @@ describe('ParticipationComponent', () => {
         const exercise2 = {
             id: 2,
             title: 'Exercise 2',
-            course: courseWithoutPresentationScore,
+            course: courseWithoutPresentations,
             presentationScoreEnabled: false,
             isAtLeastTutor: true,
         } as Exercise;
+
+        const exercise3 = {
+            id: 1,
+            title: 'Exercise 3',
+            course: courseWithGradedPresentation,
+            presentationScoreEnabled: true,
+            isAtLeastTutor: true,
+        } as Exercise;
+
+        const gradingScaleWithGradedPresentation = {
+            presentationsNumber: 2,
+            presentationsWeight: 20,
+        } as GradeStepsDTO;
 
         const participation = {
             id: 123,
@@ -327,30 +349,56 @@ describe('ParticipationComponent', () => {
             exercise: exercise1,
         } as StudentParticipation;
 
-        it('should add a presentation score if the feature is enabled', fakeAsync(() => {
+        it('should add a presentation score if basic presentations is enabled', fakeAsync(() => {
             component.exercise = exercise1;
-            component.presentationScoreEnabled = component.checkPresentationScoreConfig();
+            component.basicPresentationEnabled = component.checkBasicPresentationConfig();
 
-            component.addPresentation(participation);
+            component.addBasicPresentation(participation);
             tick();
 
             expect(updateStub).toHaveBeenCalledOnce();
             expect(updateStub).toHaveBeenCalledWith(exercise1, participation);
         }));
 
-        it('should not add a presentation score if the feature is disabled', fakeAsync(() => {
-            component.exercise = exercise2;
-            component.presentationScoreEnabled = component.checkPresentationScoreConfig();
+        it('should add a presentation score if graded presentations is enabled', fakeAsync(() => {
+            component.exercise = exercise3;
+            component.gradeStepsDTO = gradingScaleWithGradedPresentation;
+            component.gradedPresentationEnabled = component.checkGradedPresentationConfig();
 
-            component.addPresentation(participation);
+            participation.presentationScore = 20;
+            component.addGradedPresentation(participation);
+            tick();
+
+            expect(updateStub).toHaveBeenCalledOnce();
+            expect(updateStub).toHaveBeenCalledWith(exercise3, participation);
+        }));
+
+        it('should not add an invalid presentation score if graded presentations is enabled', fakeAsync(() => {
+            component.exercise = exercise3;
+            component.gradeStepsDTO = gradingScaleWithGradedPresentation;
+            component.gradedPresentationEnabled = component.checkGradedPresentationConfig();
+
+            participation.presentationScore = 200;
+            component.addGradedPresentation(participation);
             tick();
 
             expect(updateStub).not.toHaveBeenCalled();
         }));
 
-        it('should remove a presentation score if the feature is enabled', fakeAsync(() => {
+        it('should not add a presentation score if presentations is disabled', fakeAsync(() => {
+            component.exercise = exercise2;
+            component.basicPresentationEnabled = component.checkBasicPresentationConfig();
+            component.gradedPresentationEnabled = component.checkGradedPresentationConfig();
+
+            component.addBasicPresentation(participation);
+            tick();
+
+            expect(updateStub).not.toHaveBeenCalled();
+        }));
+
+        it('should remove a presentation score if basic presentations is enabled', fakeAsync(() => {
             component.exercise = exercise1;
-            component.presentationScoreEnabled = component.checkPresentationScoreConfig();
+            component.basicPresentationEnabled = component.checkBasicPresentationConfig();
 
             component.removePresentation(participation);
             tick();
@@ -359,9 +407,22 @@ describe('ParticipationComponent', () => {
             expect(updateStub).toHaveBeenCalledWith(exercise1, participation);
         }));
 
-        it('should do nothing on removal of a presentation score if the feature is disabled', fakeAsync(() => {
+        it('should remove a presentation score if graded presentations is enabled', fakeAsync(() => {
+            component.exercise = exercise3;
+            component.gradeStepsDTO = gradingScaleWithGradedPresentation;
+            component.gradedPresentationEnabled = component.checkGradedPresentationConfig();
+
+            component.removePresentation(participation);
+            tick();
+
+            expect(updateStub).toHaveBeenCalledOnce();
+            expect(updateStub).toHaveBeenCalledWith(exercise3, participation);
+        }));
+
+        it('should do nothing on removal of a presentation score if presentations is disabled', fakeAsync(() => {
             component.exercise = exercise2;
-            component.presentationScoreEnabled = component.checkPresentationScoreConfig();
+            component.basicPresentationEnabled = component.checkBasicPresentationConfig();
+            component.gradedPresentationEnabled = component.checkGradedPresentationConfig();
 
             component.removePresentation(participation);
             tick();
@@ -371,10 +432,59 @@ describe('ParticipationComponent', () => {
 
         it('should check if the presentation score actions should be displayed', () => {
             component.exercise = exercise1;
-            expect(component.checkPresentationScoreConfig()).toBeTrue();
+            expect(component.checkBasicPresentationConfig()).toBeTrue();
+            expect(component.checkGradedPresentationConfig()).toBeFalse();
 
             component.exercise = exercise2;
-            expect(component.checkPresentationScoreConfig()).toBeFalse();
+            expect(component.checkBasicPresentationConfig()).toBeFalse();
+            expect(component.checkGradedPresentationConfig()).toBeFalse();
+
+            component.exercise = exercise3;
+            component.gradeStepsDTO = gradingScaleWithGradedPresentation;
+            expect(component.checkBasicPresentationConfig()).toBeFalse();
+            expect(component.checkGradedPresentationConfig()).toBeTrue();
+        });
+    });
+
+    describe('getScoresRoute', () => {
+        const course = {
+            id: 1,
+            title: 'Course 1',
+        } as Course;
+
+        it('should return the correct route for an exercise without an exam', () => {
+            const exercise = {
+                id: 10,
+                title: 'Exercise 1',
+                type: 'text',
+                course: course,
+            } as Exercise;
+
+            const expectedRoute = ['/course-management', '1', 'text-exercises', '10', 'scores'];
+            const result = component.getScoresRoute(exercise).map((part) => part.toString());
+            expect(result).toEqual(expectedRoute);
+        });
+
+        it('should return the correct route for an exercise within an exam', () => {
+            const exam = {
+                id: 100,
+                course: course,
+            } as Exam;
+            const exerciseGroup = {
+                id: 50,
+                exam: exam,
+            } as ExerciseGroup;
+            const exercise = {
+                id: 20,
+                title: 'Exercise 2',
+                type: 'programming',
+                exerciseGroup: exerciseGroup,
+                course: undefined,
+            } as Exercise;
+
+            const expectedRoute = ['/course-management', '1', 'exams', '100', 'exercise-groups', '50', 'programming-exercises', '20', 'scores'];
+            const result = component.getScoresRoute(exercise).map((part) => part.toString());
+            expect(result).toEqual(expectedRoute);
         });
     });
 });

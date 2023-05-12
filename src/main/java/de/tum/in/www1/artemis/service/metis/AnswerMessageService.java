@@ -1,11 +1,11 @@
 package de.tum.in.www1.artemis.service.metis;
 
 import java.util.Objects;
+import java.util.Set;
 
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.Post;
@@ -21,6 +21,7 @@ import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.metis.conversation.ConversationService;
 import de.tum.in.www1.artemis.service.metis.conversation.auth.ChannelAuthorizationService;
+import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.MetisCrudAction;
@@ -39,16 +40,19 @@ public class AnswerMessageService extends PostingService {
 
     private final ChannelAuthorizationService channelAuthorizationService;
 
+    private final SingleUserNotificationService singleUserNotificationService;
+
     @SuppressWarnings("PMD.ExcessiveParameterList")
-    public AnswerMessageService(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository,
-            AnswerPostRepository answerPostRepository, ConversationMessageRepository conversationMessageRepository, ConversationService conversationService,
-            ExerciseRepository exerciseRepository, LectureRepository lectureRepository, SimpMessageSendingOperations messagingTemplate,
+    public AnswerMessageService(SingleUserNotificationService singleUserNotificationService, CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService,
+            UserRepository userRepository, AnswerPostRepository answerPostRepository, ConversationMessageRepository conversationMessageRepository,
+            ConversationService conversationService, ExerciseRepository exerciseRepository, LectureRepository lectureRepository, SimpMessageSendingOperations messagingTemplate,
             ConversationParticipantRepository conversationParticipantRepository, ChannelAuthorizationService channelAuthorizationService) {
         super(courseRepository, userRepository, exerciseRepository, lectureRepository, authorizationCheckService, messagingTemplate, conversationParticipantRepository);
         this.answerPostRepository = answerPostRepository;
         this.conversationMessageRepository = conversationMessageRepository;
         this.conversationService = conversationService;
         this.channelAuthorizationService = channelAuthorizationService;
+        this.singleUserNotificationService = singleUserNotificationService;
     }
 
     /**
@@ -68,9 +72,9 @@ public class AnswerMessageService extends PostingService {
             throw new BadRequestAlertException("A new answer post cannot already have an ID", METIS_ANSWER_POST_ENTITY_NAME, "idexists");
         }
 
-        final Course course = preCheckUserAndCourse(user, courseId);
         Post post = conversationMessageRepository.findMessagePostByIdElseThrow(answerMessage.getPost().getId());
         Conversation conversation = conversationService.mayInteractWithConversationElseThrow(answerMessage.getPost().getConversation().getId(), user);
+        var course = preCheckUserAndCourseForMessaging(user, courseId);
 
         if (conversation instanceof Channel channel) {
             channelAuthorizationService.isAllowedToCreateNewAnswerPostInChannel(channel, user);
@@ -85,7 +89,12 @@ public class AnswerMessageService extends PostingService {
         AnswerPost savedAnswerMessage = answerPostRepository.save(answerMessage);
         savedAnswerMessage.getPost().setConversation(conversation);
         this.preparePostAndBroadcast(savedAnswerMessage, course);
-
+        Set<User> usersInvolved = conversationMessageRepository.findUsersWhoRepliedInMessage(post.getId());
+        // do not notify the author of the post if they are not part of the conversation (e.g. if they left or have been removed from the conversation)
+        if (conversationService.isMember(post.getConversation().getId(), post.getAuthor().getId())) {
+            usersInvolved.add(post.getAuthor());
+        }
+        usersInvolved.forEach(userInvolved -> singleUserNotificationService.notifyUserAboutNewMessageReply(savedAnswerMessage, userInvolved, user));
         return savedAnswerMessage;
     }
 
@@ -107,12 +116,12 @@ public class AnswerMessageService extends PostingService {
             throw new BadRequestAlertException("Invalid id", METIS_ANSWER_POST_ENTITY_NAME, "idnull");
         }
         AnswerPost existingAnswerMessage = this.findById(answerMessageId);
-        final Course course = preCheckUserAndCourse(user, courseId);
 
         AnswerPost updatedAnswerMessage;
 
         // check if requesting user is allowed to update the content, i.e. if user is author of answer post or at least tutor
         Conversation conversation = mayUpdateOrDeleteAnswerMessageElseThrow(existingAnswerMessage, user);
+        var course = preCheckUserAndCourseForMessaging(user, courseId);
         // only the content of the message can be updated
         existingAnswerMessage.setContent(answerMessage.getContent());
 
@@ -143,9 +152,9 @@ public class AnswerMessageService extends PostingService {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
 
         // checks
-        final Course course = preCheckUserAndCourse(user, courseId);
         AnswerPost answerMessage = this.findById(answerMessageId);
         Conversation conversation = mayUpdateOrDeleteAnswerMessageElseThrow(answerMessage, user);
+        var course = preCheckUserAndCourseForMessaging(user, courseId);
 
         // delete
         answerPostRepository.deleteById(answerMessageId);

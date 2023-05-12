@@ -92,7 +92,7 @@
                     <fa-icon [icon]="faListAlt"></fa-icon>
                     <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations">Participations</span>
                 </a>
-
+                <jhi-external-submission *ngIf="exercise.isAtLeastInstructor" class="d-inline-block me-1 mb-1" [exercise]="exercise"></jhi-external-submission>
                 <button
                     jhi-exercise-action-button
                     [buttonIcon]="faDownload"
@@ -103,6 +103,7 @@
                     [autoClose]="'outside'"
                     placement="bottom-right auto"
                     container="body"
+                    #exportPopover="ngbPopover"
                 ></button>
                 <ng-template #popContent>
                     <h5 jhiTranslate="artemisApp.exercise.export.options"></h5>
@@ -115,6 +116,7 @@
                         *ngIf="exercise.type === ExerciseType.PROGRAMMING"
                         [programmingExercises]="[exercise]"
                         class="me-1"
+                        (buttonPressed)="closeExportPopover()"
                     ></jhi-programming-assessment-repo-export>
                     <jhi-exercise-submission-export
                         *ngIf="
@@ -167,13 +169,9 @@
 
                 <ngx-datatable-column prop="" [sortable]="true" [minWidth]="100" [width]="180">
                     <ng-template ngx-datatable-header-template>
-                        <span *ngIf="exercise.teamMode" class="datatable-header-cell-wrapper" (click)="controls.onSort('team.name')">
-                            <span class="datatable-header-cell-label bold sortable">{{ 'artemisApp.exercise.teamName' | artemisTranslate }}</span>
-                            <fa-icon [icon]="controls.iconForSortPropField('team.name')"></fa-icon>
-                        </span>
-                        <span *ngIf="!exercise.teamMode" class="datatable-header-cell-wrapper" (click)="controls.onSort('student.name')">
-                            <span class="datatable-header-cell-label bold sortable">{{ 'artemisApp.exercise.studentName' | artemisTranslate }}</span>
-                            <fa-icon [icon]="controls.iconForSortPropField('student.name')"></fa-icon>
+                        <span class="datatable-header-cell-wrapper" (click)="controls.onSort(exercise.teamMode ? 'team.name' : 'student.name')">
+                            <span class="datatable-header-cell-label bold sortable">{{ 'artemisApp.exercise.name' | artemisTranslate }}</span>
+                            <fa-icon [icon]="controls.iconForSortPropField(exercise.teamMode ? 'team.name' : 'student.name')"></fa-icon>
                         </span>
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
@@ -248,7 +246,7 @@
                 <ngx-datatable-column *ngIf="exercise.type === ExerciseType.PROGRAMMING && afterDueDate" prop="" [minWidth]="100" [width]="110">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('testRun')">
-                            <span class="datatable-header-cell-label bold" jhiTranslate="artemisApp.participation.practiceMode"> Practice Mode </span>
+                            <span class="datatable-header-cell-label bold" jhiTranslate="artemisApp.participation.practice"> Practice </span>
                             <fa-icon [icon]="controls.iconForSortPropField('testRun')"></fa-icon>
                         </span>
                     </ng-template>
@@ -309,42 +307,51 @@
                                     Online editor
                                 </a>
                             </div>
-                            <div
-                                *ngIf="(newManualResultAllowed || (value.results?.[0]?.assessmentType && value.results[0].assessmentType !== AssessmentType.AUTOMATIC)) &&
-                                        value.results?.[0]?.submission"
-                            >
-                                <a
-                                    [routerLink]="getAssessmentLink(value)"
-                                    class="btn btn-sm me-1"
-                                    [class.btn-success]="(!value.results?.[0]?.assessmentType || value.results?.[0].assessmentType === AssessmentType.AUTOMATIC) && !value.results?.[0]?.hasComplaint"
-                                    [class.btn-primary]="value.results?.[0]?.completionDate || value.results?.[0]?.hasComplaint"
-                                    [class.btn-warning]="!value.results?.[0]?.completionDate && !value.results?.[0]?.hasComplaint"
+                            <ng-container *ngFor="let correctionRound of correctionRoundIndices">
+                                <div
+                                    *ngIf="(correctionRound == 0 || value.results?.[correctionRound - 1]?.completionDate) &&
+                                    (newManualResultAllowed || (value.results?.[correctionRound]?.assessmentType && value.results[correctionRound].assessmentType !== AssessmentType.AUTOMATIC))"
                                 >
-                                    <fa-icon [icon]="faFolderOpen" [fixedWidth]="true"></fa-icon>
-                                    <ng-container *ngIf="!value.results?.[0].hasComplaint; else courseComplaint">
-                                        {{ ('artemisApp.assessment.dashboard.actions.' +
-                                            (!value.results?.[0]?.assessmentType || value.results?.[0].assessmentType === AssessmentType.AUTOMATIC ? 'assess' : (value.results?.[0]?.completionDate ? 'open' : 'continue')))
-                                            | artemisTranslate
-                                        }}
-                                    </ng-container>
-                                    <ng-template #courseComplaint>
-                                        {{ 'artemisApp.exerciseAssessmentDashboard.showComplaint' | artemisTranslate }}
-                                    </ng-template>
-                                </a>
-                                <button
-                                    *ngIf="
-                                        newManualResultAllowed &&
-                                        value.results[0]?.assessmentType &&
-                                        !value.results[0].completionDate &&
-                                        value.results[0].assessmentType !== AssessmentType.AUTOMATIC
-                                    "
-                                    (click)="cancelAssessment(value.results[0].submission)"
-                                    [disabled]="isLoading"
-                                    class="btn btn-danger btn-sm mb-1"
-                                >
-                                    <fa-icon [fixedWidth]="true" [icon]="faBan"></fa-icon>&nbsp;{{ 'artemisApp.assessment.dashboard.actions.cancel' | artemisTranslate }}
-                                </button>
-                            </div>
+                                    <a
+                                        [routerLink]="getAssessmentLink(value, correctionRound)"
+                                        [queryParams]="correctionRoundIndices?.length && correctionRoundIndices.length > 1 ? { 'correction-round': correctionRound } : {}"
+                                        class="btn btn-sm me-1 mb-2"
+                                        [class.btn-success]="(!value.results?.[correctionRound]?.assessmentType || value.results?.[correctionRound].assessmentType === AssessmentType.AUTOMATIC) && !value.results?.[correctionRound]?.hasComplaint"
+                                        [class.btn-primary]="value.results?.[correctionRound]?.completionDate || value.results?.[correctionRound]?.hasComplaint"
+                                        [class.btn-warning]="value.results?.[correctionRound] && !value.results[correctionRound].completionDate && !value.results[correctionRound].hasComplaint"
+                                    >
+                                        <fa-icon [icon]="faFolderOpen" [fixedWidth]="true"></fa-icon>
+                                        <ng-container *ngIf="!value.results?.[correctionRound]?.hasComplaint; else complaint">
+                                            {{ ('artemisApp.assessment.dashboard.actions.' + (this.exercise.exerciseGroup ? 'examCorrectionRound.' : '') +
+                                            (!value.results?.[correctionRound]?.assessmentType || value.results?.[correctionRound].assessmentType === AssessmentType.AUTOMATIC ? 'assess' : (value.results?.[correctionRound]?.completionDate ? 'open' : 'continue')))
+                                            | artemisTranslate: { correctionRound: correctionRound + 1 }
+                                            }}
+                                        </ng-container>
+                                        <ng-template #complaint>
+                                            {{ 'artemisApp.exerciseAssessmentDashboard.showComplaint' | artemisTranslate }}
+                                        </ng-template>
+                                    </a>
+                                    <button
+                                        *ngIf="
+                                            newManualResultAllowed &&
+                                            value.results?.[correctionRound]?.assessmentType &&
+                                            !value.results[correctionRound].completionDate &&
+                                            value.results[correctionRound].assessmentType !== AssessmentType.AUTOMATIC
+                                        "
+                                        (click)="cancelAssessment(value.results[correctionRound])"
+                                        [disabled]="isLoading"
+                                        class="btn btn-danger btn-sm mb-1"
+                                    >
+                                        <fa-icon [fixedWidth]="true" [icon]="faBan"></fa-icon>
+                                        <span>
+                                            {{
+                                                'artemisApp.assessment.dashboard.actions.' + (this.exercise.exerciseGroup ? 'examCorrectionRound.' : '') + 'cancel'
+                                                    | artemisTranslate : { correctionRound: correctionRound + 1 }
+                                            }}
+                                        </span>
+                                    </button>
+                                </div>
+                            </ng-container>
                         </div>
                     </ng-template>
                 </ngx-datatable-column>

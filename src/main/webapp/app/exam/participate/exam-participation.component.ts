@@ -1,5 +1,4 @@
 import { Component, HostListener, OnDestroy, OnInit, QueryList, ViewChildren } from '@angular/core';
-import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
@@ -29,7 +28,7 @@ import dayjs from 'dayjs/esm';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { cloneDeep } from 'lodash-es';
 import { Course } from 'app/entities/course.model';
-import { captureException } from '@sentry/browser';
+import { captureException } from '@sentry/angular-ivy';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ExamPage } from 'app/entities/exam-page.model';
 import { ExamPageComponent } from 'app/exam/participate/exercises/exam-page.component';
@@ -134,7 +133,6 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     faGraduationCap = faGraduationCap;
 
     constructor(
-        private courseCalculationService: CourseScoreCalculationService,
         private websocketService: JhiWebsocketService,
         private route: ActivatedRoute,
         private router: Router,
@@ -481,6 +479,9 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                 this.connected,
                 this.examMonitoringGloballyEnabled,
             );
+
+            // Reset the visited pages array so ngOnInit will be called for only the active page
+            this.resetPageComponentVisited(this.exerciseIndex);
         }
     }
 
@@ -695,6 +696,19 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         const activeComponent = this.activePageComponent;
         if (activeComponent) {
             activeComponent.onActivate();
+        }
+    }
+
+    /**
+     * Resets the pageComponentVisited array by setting all elements to false, and then sets the element
+     * at the specified activePageIndex to true, if provided and within the array bounds.
+     *
+     * @param {number} activePageIndex - The index of the currently active exercise page in the pageComponentVisited array.
+     */
+    private resetPageComponentVisited(activePageIndex: number) {
+        this.pageComponentVisited.fill(false);
+        if (activePageIndex >= 0) {
+            this.pageComponentVisited[activePageIndex] = true;
         }
     }
 

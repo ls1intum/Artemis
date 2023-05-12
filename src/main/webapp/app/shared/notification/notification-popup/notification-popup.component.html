@@ -5,7 +5,10 @@
                 <fa-icon [icon]="faExclamationTriangle"></fa-icon>
             </div>
             <ng-template #displayQuizIcon>
-                <fa-icon [icon]="faCheckDouble"></fa-icon>
+                <fa-icon *ngIf="notification.title === QuizNotificationTitleHtmlConst; else displayMessageIcon" [icon]="faCheckDouble"></fa-icon>
+            </ng-template>
+            <ng-template #displayMessageIcon>
+                <fa-icon [icon]="faMessage" class="text-info"></fa-icon>
             </ng-template>
         </div>
         <div class="pe-4 py-3">
@@ -16,9 +19,11 @@
                 <h5 class="pe-4">{{ 'artemisApp.notification.liveExamExerciseUpdateNotification' | artemisTranslate }}</h5>
             </div>
             <ng-template #displayNormalNotificationTitle>
-                <h5 class="pe-4">{{ notification.title }}</h5>
+                <h5 class="pe-4">
+                    {{ getNotificationTitleTranslation(notification) }}
+                </h5>
             </ng-template>
-            {{ notification.text }}
+            {{ getNotificationTextTranslation(notification) }}
         </div>
     </div>
 </div>

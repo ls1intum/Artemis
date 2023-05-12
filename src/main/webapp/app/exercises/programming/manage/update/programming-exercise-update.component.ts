@@ -56,7 +56,8 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     auxiliaryRepositoryDuplicateDirectories: boolean;
     auxiliaryRepositoryNamedCorrectly: boolean;
     submitButtonTitle: string;
-    isImport: boolean;
+    isImportFromExistingExercise: boolean;
+    isImportFromFile: boolean;
     isEdit: boolean;
     isExamMode: boolean;
     isShowingWizardMode = false;
@@ -68,6 +69,8 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     problemStatementLoaded = false;
     templateParticipationResultLoaded = true;
     notificationText?: string;
+    courseId: number;
+
     EditorMode = EditorMode;
     AssessmentType = AssessmentType;
     rerenderSubject = new Subject<void>();
@@ -75,7 +78,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     private selectedProgrammingLanguageValue: ProgrammingLanguage;
     // This is used to revert the select if the user cancels to override the new selected project type.
     private selectedProjectTypeValue: ProjectType;
-
     maxPenaltyPattern = '^([0-9]|([1-9][0-9])|100)$';
     // Java package name Regex according to Java 14 JLS (https://docs.oracle.com/javase/specs/jls/se14/html/jls-7.html#jls-7.4.1),
     // with the restriction to a-z,A-Z,_ as "Java letter" and 0-9 as digits due to JavaScript/Browser Unicode character class limitations
@@ -109,6 +111,9 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     public staticCodeAnalysisAllowed = false;
     public checkoutSolutionRepositoryAllowed = false;
     public sequentialTestRunsAllowed = false;
+    public publishBuildPlanUrlAllowed = false;
+    public testwiseCoverageAnalysisSupported = false;
+    public auxiliaryRepositoriesSupported = false;
     public auxiliaryRepositoriesValid = true;
 
     // Additional options for import
@@ -237,6 +242,9 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         this.staticCodeAnalysisAllowed = programmingLanguageFeature.staticCodeAnalysis;
         this.checkoutSolutionRepositoryAllowed = programmingLanguageFeature.checkoutSolutionRepositoryAllowed;
         this.sequentialTestRunsAllowed = programmingLanguageFeature.sequentialTestRuns;
+        this.publishBuildPlanUrlAllowed = programmingLanguageFeature.publishBuildPlanUrlAllowed;
+        this.testwiseCoverageAnalysisSupported = programmingLanguageFeature.testwiseCoverageAnalysisSupported;
+        this.auxiliaryRepositoriesSupported = programmingLanguageFeature.auxiliaryRepositoriesSupported;
         // filter out MAVEN_MAVEN and GRADLE_GRADLE because they are not directly selectable but only via a checkbox
         this.projectTypes = programmingLanguageFeature.projectTypes.filter((projectType) => projectType !== ProjectType.MAVEN_MAVEN && projectType !== ProjectType.GRADLE_GRADLE);
         this.modePickerOptions = this.projectTypes.map((projectType) => ({
@@ -262,7 +270,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         this.programmingExercise.checkoutSolutionRepository = this.checkoutSolutionRepositoryAllowed && language === ProgrammingLanguage.HASKELL;
 
         // Only load problem statement template when creating a new exercise and not when importing an existing exercise
-        if (this.programmingExercise.id === undefined) {
+        if (this.programmingExercise.id === undefined && !this.isImportFromFile) {
             this.loadProgrammingLanguageTemplate(language);
             // Rerender the instructions as the template has changed.
             this.rerenderSubject.next();
@@ -283,7 +291,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         this.updateProjectTypeSettings(type);
 
         // Only load problem statement template when creating a new exercise and not when importing an existing exercise
-        if (this.programmingExercise.id === undefined) {
+        if (this.programmingExercise.id === undefined && !this.isImportFromFile) {
             this.loadProgrammingLanguageTemplate(this.programmingExercise.programmingLanguage!);
             // Rerender the instructions as the template has changed.
             this.rerenderSubject.next();
@@ -364,13 +372,19 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             }
         });
 
-        // If it is an import, just get the course, otherwise handle the edit and new cases
+        // If it is an import from this instance, just get the course, otherwise handle the edit and new cases
         this.activatedRoute.url
             .pipe(
-                tap((segments) => (this.isImport = segments.some((segment) => segment.path === 'import'))),
+                tap((segments) => {
+                    this.isImportFromExistingExercise = segments.some((segment) => segment.path === 'import');
+                    this.isImportFromFile = segments.some((segment) => segment.path === 'import-from-file');
+                }),
                 switchMap(() => this.activatedRoute.params),
                 tap((params) => {
-                    if (this.isImport) {
+                    if (this.isImportFromFile) {
+                        this.createProgrammingExerciseForImportFromFile();
+                    }
+                    if (this.isImportFromExistingExercise) {
                         this.createProgrammingExerciseForImport(params);
                     } else {
                         if (params['courseId'] && params['examId'] && params['exerciseGroupId']) {
@@ -378,12 +392,16 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                                 this.isExamMode = true;
                                 this.programmingExercise.exerciseGroup = res.body!;
                             });
+                            // we need the course id  to make the request to the server if it's an import from file
+                            if (this.isImportFromFile) {
+                                this.courseId = params['courseId'];
+                            }
                         } else if (params['courseId']) {
-                            const courseId = params['courseId'];
-                            this.courseService.find(courseId).subscribe((res) => {
+                            this.courseId = params['courseId'];
+                            this.courseService.find(this.courseId).subscribe((res) => {
                                 this.isExamMode = false;
                                 this.programmingExercise.course = res.body!;
-                                if (this.programmingExercise.course?.defaultProgrammingLanguage) {
+                                if (this.programmingExercise.course?.defaultProgrammingLanguage && !this.isImportFromFile) {
                                     this.selectedProgrammingLanguage = this.programmingExercise.course.defaultProgrammingLanguage!;
                                 }
                                 this.exerciseCategories = this.programmingExercise.categories || [];
@@ -398,7 +416,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                     }
 
                     // Set submit button text depending on component state
-                    if (this.isImport) {
+                    if (this.isImportFromExistingExercise || this.isImportFromFile) {
                         this.submitButtonTitle = 'entity.action.import';
                     } else if (this.programmingExercise.id) {
                         this.isEdit = true;
@@ -418,7 +436,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
 
         // If an exercise is created, load our readme template so the problemStatement is not empty
         this.selectedProgrammingLanguage = this.programmingExercise.programmingLanguage!;
-        if (this.programmingExercise.id) {
+        if (this.programmingExercise.id || this.isImportFromFile) {
             this.problemStatementLoaded = true;
         }
         // Select the correct pattern
@@ -472,7 +490,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
      * @param params given by ActivatedRoute
      */
     private createProgrammingExerciseForImport(params: Params) {
-        this.isImport = true;
+        this.isImportFromExistingExercise = true;
         this.originalStaticCodeAnalysisEnabled = this.programmingExercise.staticCodeAnalysisEnabled;
         // The source exercise is injected via the Resolver. The route parameters determine the target exerciseGroup or course
         if (params['courseId'] && params['examId'] && params['exerciseGroupId']) {
@@ -572,8 +590,9 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                 message: 'artemisApp.programmingExercise.auxiliaryRepository.editedWarning',
             });
         }
-
-        if (this.isImport) {
+        if (this.isImportFromFile) {
+            this.subscribeToSaveResponse(this.programmingExerciseService.importFromFile(this.programmingExercise, this.courseId));
+        } else if (this.isImportFromExistingExercise) {
             this.subscribeToSaveResponse(this.programmingExerciseService.importExercise(this.programmingExercise, this.recreateBuildPlans, this.updateTemplate));
         } else if (this.programmingExercise.id !== undefined) {
             const requestOptions = {} as any;
@@ -677,7 +696,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
 
     onStaticCodeAnalysisChanged() {
         // On import: If SCA mode changed, activate recreation of build plans and update of the template
-        if (this.isImport && this.programmingExercise.staticCodeAnalysisEnabled !== this.originalStaticCodeAnalysisEnabled) {
+        if (this.isImportFromExistingExercise && this.programmingExercise.staticCodeAnalysisEnabled !== this.originalStaticCodeAnalysisEnabled) {
             this.recreateBuildPlans = true;
             this.updateTemplate = true;
         }
@@ -938,6 +957,26 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                 translateValues: {},
             });
         }
+    }
+
+    private createProgrammingExerciseForImportFromFile() {
+        this.programmingExercise = cloneDeep(history.state.programmingExerciseForImportFromFile);
+        this.programmingExercise.id = undefined;
+        this.programmingExercise.exerciseGroup = undefined;
+        this.programmingExercise.course = undefined;
+        this.programmingExercise.projectKey = undefined;
+        this.programmingExercise.dueDate = undefined;
+        this.programmingExercise.assessmentDueDate = undefined;
+        this.programmingExercise.releaseDate = undefined;
+        this.programmingExercise.startDate = undefined;
+        this.programmingExercise.exampleSolutionPublicationDate = undefined;
+        //without dates set, they can only be false
+        this.programmingExercise.allowComplaintsForAutomaticAssessments = false;
+        this.programmingExercise.allowManualFeedbackRequests = false;
+        this.selectedProgrammingLanguage = this.programmingExercise.programmingLanguage!;
+        // we need to get it from the history object as setting the programming language
+        // sets the project type of the programming exercise to the default value for the programming language.
+        this.selectedProjectType = history.state.programmingExerciseForImportFromFile.projectType;
     }
 
     getInfoStepInputs() {

@@ -8,7 +8,7 @@ import { StatsForDashboard } from 'app/course/dashboards/stats-for-dashboard.mod
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { CourseManagementOverviewStatisticsDto } from 'app/course/manage/overview/course-management-overview-statistics-dto.model';
 import { Course, CourseGroup } from 'app/entities/course.model';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType, ScoresPerExerciseType } from 'app/entities/exercise.model';
 import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { Organization } from 'app/entities/organization.model';
@@ -21,20 +21,31 @@ import { MockRouter } from '../../helpers/mocks/mock-router';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { OnlineCourseConfiguration } from 'app/entities/online-course-configuration.model';
+import { CourseForDashboardDTO } from 'app/course/manage/course-for-dashboard-dto';
+import { CourseScores } from 'app/course/course-scores/course-scores';
+import { ScoresStorageService } from 'app/course/course-scores/scores-storage.service';
+import { CourseStorageService } from 'app/course/manage/course-storage.service';
+import { Result } from 'app/entities/result.model';
 
 describe('Course Management Service', () => {
     let courseManagementService: CourseManagementService;
     let accountService: AccountService;
     let lectureService: LectureService;
     let httpMock: HttpTestingController;
+    let courseStorageService: CourseStorageService;
+    let scoresStorageService: ScoresStorageService;
     let isAtLeastTutorInCourseSpy: jest.SpyInstance;
     let isAtLeastEditorInCourseSpy: jest.SpyInstance;
     let isAtLeastInstructorInCourseSpy: jest.SpyInstance;
     let convertExercisesDateFromServerSpy: jest.SpyInstance;
     let convertDatesForLecturesFromServerSpy: jest.SpyInstance;
     let syncGroupsSpy: jest.SpyInstance;
-    const resourceUrl = SERVER_API_URL + 'api/courses';
+    const resourceUrl = 'api/courses';
     let course: Course;
+    let courseForDashboard: CourseForDashboardDTO;
+    let courseScores: CourseScores;
+    let scoresPerExerciseType: ScoresPerExerciseType;
+    let participationResult: Result;
     let onlineCourseConfiguration: OnlineCourseConfiguration;
     let exercises: Exercise[];
     let returnedFromService: any;
@@ -54,6 +65,8 @@ describe('Course Management Service', () => {
         httpMock = TestBed.inject(HttpTestingController);
         accountService = TestBed.inject(AccountService);
         lectureService = TestBed.inject(LectureService);
+        courseStorageService = TestBed.inject(CourseStorageService);
+        scoresStorageService = TestBed.inject(ScoresStorageService);
 
         isAtLeastTutorInCourseSpy = jest.spyOn(accountService, 'isAtLeastTutorInCourse').mockReturnValue(false);
         isAtLeastEditorInCourseSpy = jest.spyOn(accountService, 'isAtLeastEditorInCourse').mockReturnValue(false);
@@ -70,6 +83,29 @@ describe('Course Management Service', () => {
         course.endDate = undefined;
         course.learningGoals = [];
         course.prerequisites = [];
+
+        courseForDashboard = new CourseForDashboardDTO();
+        courseForDashboard.course = course;
+        courseScores = new CourseScores(0, 0, { absoluteScore: 0, relativeScore: 0, currentRelativeScore: 0, presentationScore: 0 });
+        courseForDashboard.totalScores = courseScores;
+        courseForDashboard.programmingScores = courseScores;
+        courseForDashboard.modelingScores = courseScores;
+        courseForDashboard.quizScores = courseScores;
+        courseForDashboard.textScores = courseScores;
+        courseForDashboard.fileUploadScores = courseScores;
+        participationResult = new Result();
+        const participation = new StudentParticipation();
+        participation.id = 432;
+        participationResult.participation = participation;
+        courseForDashboard.participationResults = [participationResult];
+
+        scoresPerExerciseType = new Map<ExerciseType, CourseScores>();
+        scoresPerExerciseType.set(ExerciseType.PROGRAMMING, courseScores);
+        scoresPerExerciseType.set(ExerciseType.MODELING, courseScores);
+        scoresPerExerciseType.set(ExerciseType.QUIZ, courseScores);
+        scoresPerExerciseType.set(ExerciseType.TEXT, courseScores);
+        scoresPerExerciseType.set(ExerciseType.FILE_UPLOAD, courseScores);
+
         onlineCourseConfiguration = new OnlineCourseConfiguration();
         onlineCourseConfiguration.id = 234;
         onlineCourseConfiguration.ltiKey = 'key';
@@ -160,18 +196,30 @@ describe('Course Management Service', () => {
     }));
 
     it('should find all courses for dashboard', fakeAsync(() => {
-        returnedFromService = [{ ...course }];
+        const courseStorageServiceSpy = jest.spyOn(courseStorageService, 'setCourses');
+        returnedFromService = [{ ...courseForDashboard }];
         courseManagementService
             .findAllForDashboard()
             .pipe(take(1))
-            .subscribe((res) => expect(res.body).toEqual([{ ...course }]));
+            .subscribe((res) => {
+                expect(res.body).toEqual([{ ...course }]);
+                expect(courseStorageServiceSpy).toHaveBeenCalledOnce();
+            });
         requestAndExpectDateConversion('GET', `${resourceUrl}/for-dashboard`, returnedFromService, course);
         tick();
     }));
 
+    it('should pass on an empty response body when fetching all courses for dashboard and there is no response body sent from the server', () => {
+        courseManagementService.findAllForDashboard().subscribe((res) => expect(res.body).toBeNull());
+
+        const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/for-dashboard` });
+        req.flush(null);
+    });
+
     it('should find one course for dashboard', fakeAsync(() => {
-        courseManagementService
-            .getCourseUpdates(course.id!)
+        returnedFromService = { ...courseForDashboard };
+        courseStorageService
+            .subscribeToCourseUpdates(course.id!)
             .pipe(take(1))
             .subscribe((updatedCourse) => {
                 expect(updatedCourse).toEqual(course);
@@ -181,6 +229,30 @@ describe('Course Management Service', () => {
             .pipe(take(1))
             .subscribe((res) => expect(res.body).toEqual(course));
         requestAndExpectDateConversion('GET', `${resourceUrl}/${course.id}/for-dashboard`, returnedFromService, course, true);
+        tick();
+    }));
+
+    it('should pass on an empty response body when fetching one course for dashboard and there is no response body sent from the server', () => {
+        courseManagementService.findOneForDashboard(course.id!).subscribe((res) => expect(res.body).toBeNull());
+
+        const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/${course.id}/for-dashboard` });
+        req.flush(null);
+    });
+
+    it('should set the totalScores, the scoresPerExerciseType, and the participantScores in the scoresStorageService', fakeAsync(() => {
+        const setStoredTotalScoresSpy = jest.spyOn(scoresStorageService, 'setStoredTotalScores');
+        const setStoredScoresPerExerciseTypeSpy = jest.spyOn(scoresStorageService, 'setStoredScoresPerExerciseType');
+        const setParticipationResultsSpy = jest.spyOn(scoresStorageService, 'setStoredParticipationResults');
+        courseManagementService
+            .findOneForDashboard(course.id!)
+            .pipe(take(1))
+            .subscribe(() => {
+                expect(setStoredTotalScoresSpy).toHaveBeenCalledWith(course.id!, courseScores);
+                expect(setStoredScoresPerExerciseTypeSpy).toHaveBeenCalledWith(course.id!, scoresPerExerciseType);
+                expect(setParticipationResultsSpy).toHaveBeenCalledWith(courseForDashboard.participationResults);
+            });
+        const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/${course.id}/for-dashboard` });
+        req.flush(courseForDashboard);
         tick();
     }));
 
@@ -205,7 +277,7 @@ describe('Course Management Service', () => {
     it('should find all courses to register', fakeAsync(() => {
         returnedFromService = [{ ...course }];
         courseManagementService
-            .findAllToRegister()
+            .findAllForRegistration()
             .pipe(take(1))
             .subscribe((res) => expect(res.body).toEqual([{ ...course }]));
         requestAndExpectDateConversion('GET', `${resourceUrl}/for-registration`, returnedFromService, course);

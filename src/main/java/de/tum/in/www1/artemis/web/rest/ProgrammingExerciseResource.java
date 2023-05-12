@@ -7,8 +7,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
@@ -30,14 +28,15 @@ import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.*;
-import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
-import de.tum.in.www1.artemis.service.connectors.VersionControlService;
+import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
+import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.service.programming.*;
 import de.tum.in.www1.artemis.web.rest.dto.BuildLogStatisticsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
+import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseResetOptionsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
@@ -95,31 +94,11 @@ public class ProgrammingExerciseResource {
 
     private final AuxiliaryRepositoryService auxiliaryRepositoryService;
 
-    private final SubmissionPolicyService submissionPolicyService;
-
     private final SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
 
     private final TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
 
     private final BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository;
-
-    /**
-     * Java package name Regex according to Java 14 JLS
-     * (<a href="https://docs.oracle.com/javase/specs/jls/se14/html/jls-7.html#jls-7.4.1">https://docs.oracle.com/javase/specs/jls/se14/html/jls-7.html#jls-7.4.1</a>),
-     * with the restriction to a-z,A-Z,_ as "Java letter" and 0-9 as digits due to JavaScript/Browser Unicode character class limitations
-     */
-    private static final String packageNameRegex = "^(?!.*(?:\\.|^)(?:abstract|continue|for|new|switch|assert|default|if|package|synchronized|boolean|do|goto|private|this|break|double|implements|protected|throw|byte|else|import|public|throws|case|enum|instanceof|return|transient|catch|extends|int|short|try|char|final|interface|static|void|class|finally|long|strictfp|volatile|const|float|native|super|while|_|true|false|null)(?:\\.|$))[A-Z_a-z]\\w*(?:\\.[A-Z_a-z]\\w*)*$";
-
-    /**
-     * Swift package name Regex derived from
-     * (<a href="https://docs.swift.org/swift-book/ReferenceManual/LexicalStructure.html#ID412">https://docs.swift.org/swift-book/ReferenceManual/LexicalStructure.html#ID412</a>),
-     * with the restriction to a-z,A-Z as "Swift letter" and 0-9 as digits where no separators are allowed
-     */
-    private static final String packageNameRegexForSwift = "^(?!(?:associatedtype|class|deinit|enum|extension|fileprivate|func|import|init|inout|internal|let|open|operator|private|protocol|public|rethrows|static|struct|subscript|typealias|var|break|case|continue|default|defer|do|else|fallthrough|for|guard|if|in|repeat|return|switch|where|while|as|Any|catch|false|is|nil|super|self|Self|throw|throws|true|try|_|[sS]wift)$)[A-Za-z][\\dA-Za-z]*$";
-
-    private final Pattern packageNamePattern = Pattern.compile(packageNameRegex);
-
-    private final Pattern packageNamePatternForSwift = Pattern.compile(packageNameRegexForSwift);
 
     public ProgrammingExerciseResource(ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository,
             UserRepository userRepository, AuthorizationCheckService authCheckService, CourseService courseService,
@@ -150,7 +129,6 @@ public class ProgrammingExerciseResource {
         this.courseRepository = courseRepository;
         this.gitService = gitService;
         this.auxiliaryRepositoryService = auxiliaryRepositoryService;
-        this.submissionPolicyService = submissionPolicyService;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.buildLogStatisticsEntryRepository = buildLogStatisticsEntryRepository;
@@ -188,17 +166,6 @@ public class ProgrammingExerciseResource {
     }
 
     /**
-     * Validates static code analysis settings
-     *
-     * @param programmingExercise exercise to validate
-     */
-    private void validateStaticCodeAnalysisSettings(ProgrammingExercise programmingExercise) {
-        ProgrammingLanguageFeature programmingLanguageFeature = programmingLanguageFeatureService.get()
-                .getProgrammingLanguageFeatures(programmingExercise.getProgrammingLanguage());
-        programmingExercise.validateStaticCodeAnalysisSettings(programmingLanguageFeature);
-    }
-
-    /**
      * POST /programming-exercises/setup : Set up a new programmingExercise (with all needed repositories etc.)
      *
      * @param programmingExercise the programmingExercise to set up
@@ -209,71 +176,12 @@ public class ProgrammingExerciseResource {
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<ProgrammingExercise> createProgrammingExercise(@RequestBody ProgrammingExercise programmingExercise) {
         log.debug("REST request to setup ProgrammingExercise : {}", programmingExercise);
-        if (programmingExercise.getId() != null) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "A new programmingExercise cannot already have an ID", "idExists")).body(null);
-        }
 
         // Valid exercises have set either a course or an exerciseGroup
         programmingExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(programmingExercise);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
-
-        programmingExercise.validateGeneralSettings();
-        programmingExercise.validateProgrammingSettings();
-        programmingExercise.validateManualFeedbackSettings();
-        auxiliaryRepositoryService.validateAndAddAuxiliaryRepositoriesOfProgrammingExercise(programmingExercise, programmingExercise.getAuxiliaryRepositories());
-        submissionPolicyService.validateSubmissionPolicyCreation(programmingExercise);
-
-        ProgrammingLanguageFeature programmingLanguageFeature = programmingLanguageFeatureService.get()
-                .getProgrammingLanguageFeatures(programmingExercise.getProgrammingLanguage());
-
-        // Check if package name is set
-        if (programmingLanguageFeature.isPackageNameRequired()) {
-            if (programmingExercise.getPackageName() == null) {
-                return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The package name is invalid", "packagenameInvalid")).body(null);
-            }
-
-            // Check if package name matches regex
-            Matcher packageNameMatcher;
-            if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.SWIFT) {
-                packageNameMatcher = packageNamePatternForSwift.matcher(programmingExercise.getPackageName());
-            }
-            else {
-                packageNameMatcher = packageNamePattern.matcher(programmingExercise.getPackageName());
-            }
-            if (!packageNameMatcher.matches()) {
-                return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The package name is invalid", "packagenameInvalid")).body(null);
-            }
-        }
-
-        // Check if project type is selected
-        if (!programmingLanguageFeature.getProjectTypes().isEmpty()) {
-            if (programmingExercise.getProjectType() == null) {
-                return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The project type is not set", "projectTypeNotSet")).body(null);
-            }
-            if (!programmingLanguageFeature.getProjectTypes().contains(programmingExercise.getProjectType())) {
-                return ResponseEntity.badRequest()
-                        .headers(HeaderUtil.createAlert(applicationName, "The project type is not supported for this programming language", "projectTypeNotSupported")).body(null);
-            }
-        }
-        else {
-            if (programmingExercise.getProjectType() != null) {
-                return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The project type is set but not supported", "projectTypeSet")).body(null);
-            }
-        }
-
-        // Check if checkout solution repository is enabled
-        if (programmingExercise.getCheckoutSolutionRepository() && !programmingLanguageFeature.isCheckoutSolutionRepositoryAllowed()) {
-            return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createAlert(applicationName, "Checking out the solution repository is not supported for this language", "checkoutSolutionNotSupported"))
-                    .body(null);
-        }
-
-        programmingExerciseRepository.validateCourseSettings(programmingExercise, course);
-        validateStaticCodeAnalysisSettings(programmingExercise);
-
-        programmingExercise.generateAndSetProjectKey();
-        programmingExerciseService.checkIfProjectExists(programmingExercise);
+        programmingExerciseService.validateNewProgrammingExerciseSettings(programmingExercise, course);
 
         try {
             // Setup all repositories etc
@@ -313,7 +221,7 @@ public class ProgrammingExerciseResource {
 
         // Valid exercises have set either a course or an exerciseGroup
         updatedProgrammingExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
-        validateStaticCodeAnalysisSettings(updatedProgrammingExercise);
+        programmingExerciseService.validateStaticCodeAnalysisSettings(updatedProgrammingExercise);
 
         // fetch course from database to make sure client didn't change groups
         var user = userRepository.getUserWithGroupsAndAuthorities();
@@ -614,9 +522,8 @@ public class ProgrammingExerciseResource {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, programmingExercise, null);
         boolean hasAtLeastOneStudentResult = programmingExerciseService.hasAtLeastOneStudentResult(programmingExercise);
         boolean isReleased = programmingExercise.isReleased();
-        ProgrammingExerciseTestCaseStateDTO testCaseDTO = new ProgrammingExerciseTestCaseStateDTO().released(isReleased).studentResult(hasAtLeastOneStudentResult)
-                .testCasesChanged(programmingExercise.getTestCasesChanged())
-                .buildAndTestStudentSubmissionsAfterDueDate(programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate());
+        ProgrammingExerciseTestCaseStateDTO testCaseDTO = new ProgrammingExerciseTestCaseStateDTO(isReleased, hasAtLeastOneStudentResult, programmingExercise.getTestCasesChanged(),
+                programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate());
         return ResponseEntity.ok(testCaseDTO);
     }
 
@@ -703,19 +610,43 @@ public class ProgrammingExerciseResource {
     }
 
     /**
-     * Deletes BASE and SOLUTION build plan of a programming exercise and creates those again. This reuses the build plan creation logic of the programming exercise creation
-     * service.
+     * Reset a programming exercise by performing a set of operations as specified in the
+     * ProgrammingExerciseResetOptionsDTO for an exercise given an exerciseId.
      *
-     * @param exerciseId of the programming exercise
-     * @return the ResponseEntity with status 200 (OK) if the recreation was successful.
+     * The available operations include:
+     * 1. deleteBuildPlans: Deleting all student build plans (except BASE/SOLUTION).
+     * 2. deleteRepositories: Deleting all student repositories (requires: 1. deleteBuildPlans == true).
+     * 3. deleteParticipationsSubmissionsAndResults: Deleting all participations, submissions, and results.
+     * 4. recreateBuildPlans: Deleting and recreating the BASE and SOLUTION build plans.
+     *
+     * @param exerciseId                         - Id of the programming exercise to reset.
+     * @param programmingExerciseResetOptionsDTO - Data Transfer Object specifying which operations to perform during the exercise reset.
+     * @return ResponseEntity<Void> - The ResponseEntity with status 200 (OK) if the reset was successful.
      */
-    @PutMapping(RECREATE_BUILD_PLANS)
+    @PutMapping(RESET)
     @PreAuthorize("hasRole('EDITOR')")
-    public ResponseEntity<Void> recreateBuildPlans(@PathVariable Long exerciseId) {
+    @FeatureToggle(Feature.ProgrammingExercises)
+    public ResponseEntity<Void> reset(@PathVariable Long exerciseId, @RequestBody ProgrammingExerciseResetOptionsDTO programmingExerciseResetOptionsDTO) {
+        log.debug("REST request to reset ProgrammingExercise : {}", exerciseId);
         var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesElseThrow(exerciseId);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, user);
-        continuousIntegrationService.get().recreateBuildPlansForExercise(programmingExercise);
+        final var user = userRepository.getUserWithGroupsAndAuthorities();
+
+        if (programmingExerciseResetOptionsDTO.recreateBuildPlans()) {
+            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, user);
+            continuousIntegrationService.get().recreateBuildPlansForExercise(programmingExercise);
+        }
+
+        if (programmingExerciseResetOptionsDTO.deleteParticipationsSubmissionsAndResults()) {
+            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, user);
+            exerciseDeletionService.reset(programmingExercise);
+        }
+
+        if (programmingExerciseResetOptionsDTO.deleteBuildPlans()) {
+            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, user);
+            boolean deleteRepositories = programmingExerciseResetOptionsDTO.deleteRepositories();
+            exerciseDeletionService.cleanup(exerciseId, deleteRepositories);
+        }
+
         return ResponseEntity.ok().build();
     }
 

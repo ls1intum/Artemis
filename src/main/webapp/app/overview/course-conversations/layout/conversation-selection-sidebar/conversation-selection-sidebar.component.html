@@ -47,7 +47,7 @@
                         </jhi-conversation-sidebar-section>
                     </div>
                     <!-- Channels -->
-                    <div [hidden]="searchTerm && searchTerm.length > 0 && !displayedChannelConversations?.length" class="mb-2">
+                    <div [hidden]="searchTerm && searchTerm.length > 0 && !displayedChannelConversations?.length" class="mb-2" id="channel-section">
                         <jhi-conversation-sidebar-section
                             [label]="'artemisApp.conversationsLayout.conversationSelectionSideBar.channels' | artemisTranslate"
                             [headerKey]="'channels'"
@@ -61,7 +61,7 @@
                         >
                             <ng-template>
                                 <div ngbDropdown container="body" class="d-inline-block">
-                                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle sidebar-button" type="button" ngbDropdownToggle>
+                                    <button id="channelButton" class="btn btn-sm btn-outline-secondary dropdown-toggle sidebar-button" type="button" ngbDropdownToggle>
                                         <fa-icon [icon]="faPlus" size="sm"></fa-icon>
                                     </button>
                                     <div ngbDropdownMenu>
@@ -77,7 +77,7 @@
                         </jhi-conversation-sidebar-section>
                     </div>
                     <!-- Group Chats -->
-                    <div [hidden]="searchTerm && searchTerm.length > 0 && !displayedGroupChats?.length" class="mb-2">
+                    <div [hidden]="searchTerm && searchTerm.length > 0 && !displayedGroupChats?.length" class="mb-2" id="group-chat-section">
                         <jhi-conversation-sidebar-section
                             [label]="'artemisApp.conversationsLayout.conversationSelectionSideBar.groupChats' | artemisTranslate"
                             [headerKey]="'groupChats'"
@@ -99,7 +99,7 @@
                         </jhi-conversation-sidebar-section>
                     </div>
                     <!-- Direct Messages -->
-                    <div [hidden]="searchTerm && searchTerm.length > 0 && !displayedOneToOneChats?.length" class="mb-2">
+                    <div [hidden]="searchTerm && searchTerm.length > 0 && !displayedOneToOneChats?.length" class="mb-2" id="direct-messages-section">
                         <jhi-conversation-sidebar-section
                             [label]="'artemisApp.conversationsLayout.conversationSelectionSideBar.oneToOneChats' | artemisTranslate"
                             [headerKey]="'directMessages'"

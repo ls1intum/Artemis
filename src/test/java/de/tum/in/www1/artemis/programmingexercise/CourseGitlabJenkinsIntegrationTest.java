@@ -381,10 +381,41 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkin
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    @ValueSource(booleans = { true, false })
+    void testGetCourseForDashboardAccessDenied(boolean userRefresh) throws Exception {
+        courseTestService.testGetCourseForDashboardAccessDenied(userRefresh);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetCourseForDashboardForbiddenWithRegistrationPossible() throws Exception {
+        courseTestService.testGetCourseForDashboardForbiddenWithRegistrationPossible();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetCourseForRegistration() throws Exception {
+        courseTestService.testGetCourseForRegistration();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetCourseForRegistrationAccessDenied() throws Exception {
+        courseTestService.testGetCourseForRegistrationAccessDenied();
+    }
+
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @WithMockUser(username = TEST_PREFIX + "custom1", roles = { "USER", "TA", "EDITOR", "INSTRUCTOR" })
     @ValueSource(booleans = { true, false })
     void testGetAllCoursesForDashboardExams(boolean userRefresh) throws Exception {
         courseTestService.testGetAllCoursesForDashboardExams(userRefresh);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetCoursesForDashboardPracticeRepositories() throws Exception {
+        courseTestService.testGetCoursesForDashboardPracticeRepositories();
     }
 
     @Test
@@ -420,7 +451,7 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkin
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1")
     void testGetCoursesToRegisterAndAccurateTimeZoneEvaluation() throws Exception {
-        courseTestService.testGetCoursesToRegisterAndAccurateTimeZoneEvaluation();
+        courseTestService.testGetCoursesForRegistrationAndAccurateTimeZoneEvaluation();
     }
 
     @Test

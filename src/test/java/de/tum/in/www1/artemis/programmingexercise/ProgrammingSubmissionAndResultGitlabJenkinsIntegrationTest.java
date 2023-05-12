@@ -4,8 +4,6 @@ import static de.tum.in.www1.artemis.config.Constants.NEW_RESULT_RESOURCE_PATH;
 import static de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage.JAVA;
 import static de.tum.in.www1.artemis.programmingexercise.ProgrammingSubmissionConstants.GITLAB_PUSH_EVENT_REQUEST;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -50,9 +48,6 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
 
     @Autowired
     private ProgrammingSubmissionRepository submissionRepository;
-
-    @Autowired
-    private ProgrammingExerciseStudentParticipationRepository studentParticipationRepository;
 
     @Autowired
     private ProgrammingExerciseRepository programmingExerciseRepository;
@@ -119,24 +114,6 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
         assertThat(buildLogEntries).hasSize(2);
         assertThat(buildLogEntries.get(0).getLog()).isEqualTo("[ERROR] BubbleSort.java:[15,9] not a statement");
         assertThat(buildLogEntries.get(1).getLog()).isEqualTo("[ERROR] BubbleSort.java:[15,10] ';' expected");
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void shouldParseLegacyBuildLogsWhenPipelineLogsNotPresent() throws Exception {
-        // Precondition: Database has participation and a programming submission.
-        String userLogin = TEST_PREFIX + "student1";
-        var course = database.addCourseWithOneProgrammingExercise(false, false, ProgrammingLanguage.JAVA);
-        var exercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
-        exercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(exercise.getId()).orElseThrow();
-
-        var participation = database.addStudentParticipationForProgrammingExercise(exercise, userLogin);
-        database.createProgrammingSubmission(participation, true);
-
-        jenkinsRequestMockProvider.mockGetLegacyBuildLogs(participation);
-        database.changeUser(userLogin);
-        var receivedLogs = request.get("/api/repository/" + participation.getId() + "/buildlogs", HttpStatus.OK, List.class);
-        assertThat(receivedLogs).isNotEmpty();
     }
 
     @Test
@@ -331,10 +308,17 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
         testService.shouldSetSubmissionDateForBuildCorrectlyIfOnlyOnePushIsReceived(firstCommitHash, firstCommitDate, secondCommitHash, secondCommitDate);
     }
 
+    private final List<String> logs = List.of("[2023-03-10T15:19:49.741Z] [ERROR] Log1", "[2023-03-10T15:19:49.742Z] [ERROR] Log2", "[2023-03-10T15:19:49.743Z] [ERROR] Log3");
+
+    private static Stream<Arguments> shouldSaveBuildLogsOnStudentParticipationWithoutResultArguments() {
+        return Arrays.stream(ProgrammingLanguage.values()).flatMap(programmingLanguage -> Stream.of(Arguments.of(programmingLanguage, true, true),
+                Arguments.of(programmingLanguage, false, true), Arguments.of(programmingLanguage, true, false), Arguments.of(programmingLanguage, false, false)));
+    }
+
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @MethodSource("shouldSaveBuildLogsOnStudentParticipationArguments")
+    @MethodSource("shouldSaveBuildLogsOnStudentParticipationWithoutResultArguments")
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void shouldNotReceiveBuildLogsOnStudentParticipationWithoutResult(ProgrammingLanguage programmingLanguage, boolean enableStaticCodeAnalysis) throws Exception {
+    void shouldSaveBuildLogsOnStudentParticipationWithoutResult(ProgrammingLanguage programmingLanguage, boolean enableStaticCodeAnalysis, boolean buildFailed) throws Exception {
         // Precondition: Database has participation and a programming submission.
         String userLogin = TEST_PREFIX + "student1";
         var course = database.addCourseWithOneProgrammingExercise(enableStaticCodeAnalysis, false, programmingLanguage);
@@ -342,13 +326,15 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
         exercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(exercise.getId()).orElseThrow();
 
         var participation = database.addStudentParticipationForProgrammingExercise(exercise, userLogin);
-        var submission = database.createProgrammingSubmission(participation, false);
+        // It should not matter whether the submission has buildFailed set to true or false, because when the result is processed after sending it to Artemis, buildFailed is set to
+        // true anyway if no feedback is provided with the result.
+        var submission = database.createProgrammingSubmission(participation, buildFailed);
 
-        // Call programming-exercises/new-result which do not include build log entries yet
-        var notification = createJenkinsNewResultNotification(exercise.getProjectKey(), userLogin, programmingLanguage, List.of(), new ArrayList<>(), null, new ArrayList<>());
+        // Call programming-exercises/new-result which does include build log entries
+        var notification = createJenkinsNewResultNotification(exercise.getProjectKey(), userLogin, programmingLanguage, List.of(), logs, null, new ArrayList<>());
         postResult(notification, HttpStatus.OK);
 
-        var result = assertBuildError(participation.getId(), userLogin, false);
+        var result = assertBuildError(participation.getId(), userLogin);
         assertThat(result.getSubmission().getId()).isEqualTo(submission.getId());
 
         // Call again and assert that no new submissions have been created
@@ -359,7 +345,7 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @MethodSource("shouldSaveBuildLogsOnStudentParticipationArguments")
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void shouldNotReceiveBuildLogsOnStudentParticipationWithoutSubmissionNorResult(ProgrammingLanguage programmingLanguage, boolean enableStaticCodeAnalysis) throws Exception {
+    void shouldSaveBuildLogsOnStudentParticipationWithoutSubmissionNorResult(ProgrammingLanguage programmingLanguage, boolean enableStaticCodeAnalysis) throws Exception {
         // Precondition: Database has participation without result and a programming
         String userLogin = TEST_PREFIX + "student1";
         var course = database.addCourseWithOneProgrammingExercise(enableStaticCodeAnalysis, false, programmingLanguage);
@@ -368,58 +354,35 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
 
         var participation = database.addStudentParticipationForProgrammingExercise(exercise, userLogin);
 
-        // Call programming-exercises/new-result which do not include build log entries yet
-        var notification = createJenkinsNewResultNotification(exercise.getProjectKey(), userLogin, programmingLanguage, List.of(), new ArrayList<>(), null, new ArrayList<>());
+        // Call programming-exercises/new-result which does include build log entries
+        var notification = createJenkinsNewResultNotification(exercise.getProjectKey(), userLogin, programmingLanguage, List.of(), logs, null, new ArrayList<>());
         postResult(notification, HttpStatus.OK);
 
-        assertBuildError(participation.getId(), userLogin, true);
+        assertBuildError(participation.getId(), userLogin);
     }
 
-    private Result assertBuildError(Long participationId, String userLogin, boolean useLegacyBuildLogs) throws Exception {
+    private Result assertBuildError(Long participationId, String userLogin) throws Exception {
         SecurityUtils.setAuthorizationObject();
-
         // Assert that result is linked to the participation
         var results = resultRepository.findAllByParticipationIdOrderByCompletionDateDesc(participationId);
         assertThat(results).hasSize(1);
         var result = results.get(0);
         assertThat(result.isSuccessful()).isFalse();
-        assertThat(result.getScore()).isEqualTo(0D);
+        assertThat(result.getScore()).isZero();
 
-        // Assert that the submission linked to the participation
+        // Assert that the submission is linked to the participation
         var submission = (ProgrammingSubmission) result.getSubmission();
         assertThat(submission).isNotNull();
         assertThat(submission.isBuildFailed()).isTrue();
 
         var submissionWithLogsOptional = submissionRepository.findWithEagerBuildLogEntriesById(submission.getId());
         assertThat(submissionWithLogsOptional).isPresent();
+        assertThat(submissionWithLogsOptional.get().getBuildLogEntries()).hasSize(3);
 
-        // Assert that the submission does not contain build log entries yet
-        var submissionWithLogs = submissionWithLogsOptional.get();
-        assertThat(submissionWithLogs.getBuildLogEntries()).isEmpty();
-
-        // Assert that the build logs can be retrieved from the REST API
-        var buildWithDetails = jenkinsRequestMockProvider.mockGetLatestBuildLogs(studentParticipationRepository.findById(participationId).orElseThrow(), useLegacyBuildLogs);
         database.changeUser(userLogin);
+        // Assert that the build logs can be retrieved from the REST API from the database
         var receivedLogs = request.get("/api/repository/" + participationId + "/buildlogs", HttpStatus.OK, List.class);
         assertThat(receivedLogs).isNotNull().isNotEmpty();
-
-        if (useLegacyBuildLogs) {
-            verify(buildWithDetails, times(1)).getConsoleOutputHtml();
-        }
-        else {
-            verify(buildWithDetails, times(1)).getConsoleOutputText();
-        }
-
-        // Call again and it should not call Jenkins::getLatestBuildLogs() since the logs are cached.
-        receivedLogs = request.get("/api/repository/" + participationId + "/buildlogs", HttpStatus.OK, List.class);
-        assertThat(receivedLogs).isNotNull().isNotEmpty();
-
-        if (useLegacyBuildLogs) {
-            verify(buildWithDetails, times(1)).getConsoleOutputHtml();
-        }
-        else {
-            verify(buildWithDetails, times(1)).getConsoleOutputText();
-        }
 
         return result;
     }

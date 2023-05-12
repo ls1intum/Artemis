@@ -20,9 +20,8 @@ import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
-import de.tum.in.www1.artemis.service.connectors.VersionControlService;
+import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
@@ -42,28 +41,18 @@ public class ProgrammingExerciseParticipationService {
 
     private final Optional<VersionControlService> versionControlService;
 
-    private final AuthorizationCheckService authCheckService;
-
-    private final UserRepository userRepository;
-
     private final GitService gitService;
 
-    private final ProgrammingExerciseRepository programmingExerciseRepository;
-
     public ProgrammingExerciseParticipationService(SolutionProgrammingExerciseParticipationRepository solutionParticipationRepository,
-            ProgrammingExerciseStudentParticipationRepository studentParticipationRepository, ParticipationRepository participationRepository, TeamRepository teamRepository,
-            TemplateProgrammingExerciseParticipationRepository templateParticipationRepository, Optional<VersionControlService> versionControlService,
-            UserRepository userRepository, AuthorizationCheckService authCheckService, GitService gitService, ProgrammingExerciseRepository programmingExerciseRepository) {
+            TemplateProgrammingExerciseParticipationRepository templateParticipationRepository, ProgrammingExerciseStudentParticipationRepository studentParticipationRepository,
+            ParticipationRepository participationRepository, TeamRepository teamRepository, GitService gitService, Optional<VersionControlService> versionControlService) {
         this.studentParticipationRepository = studentParticipationRepository;
         this.solutionParticipationRepository = solutionParticipationRepository;
         this.templateParticipationRepository = templateParticipationRepository;
         this.participationRepository = participationRepository;
         this.teamRepository = teamRepository;
         this.versionControlService = versionControlService;
-        this.authCheckService = authCheckService;
-        this.userRepository = userRepository;
         this.gitService = gitService;
-        this.programmingExerciseRepository = programmingExerciseRepository;
     }
 
     /**
@@ -138,35 +127,6 @@ public class ProgrammingExerciseParticipationService {
             throw new EntityNotFoundException("No programming exercise participation found with id " + participationId);
         }
         return (ProgrammingExerciseParticipation) participation.get();
-    }
-
-    /**
-     * Check if the currently logged-in user can access a given participation by accessing the exercise and course connected to this participation
-     * The method will treat the participation types differently:
-     * - ProgrammingExerciseStudentParticipations should only be accessible by its owner (student) or users with at least the role TA in the courses.
-     * - Template/SolutionParticipations should only be accessible for users with at least the role TA in the courses.
-     *
-     * @param participation to check permissions for.
-     * @return true if the user can access the participation, false if not. Also returns false if the participation is not from a programming exercise.
-     */
-    public boolean canAccessParticipation(@NotNull ProgrammingExerciseParticipation participation) {
-        if (participation == null) {
-            return false;
-        }
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        // If the current user is owner of the participation, they are allowed to access it
-        if (participation instanceof ProgrammingExerciseStudentParticipation studentParticipation && studentParticipation.isOwnedBy(user)) {
-            return true;
-        }
-
-        ProgrammingExercise programmingExercise = programmingExerciseRepository.getProgrammingExerciseFromParticipation(participation);
-        if (programmingExercise == null) {
-            log.error("canAccessParticipation: could not find programming exercise of participation id {}", participation.getId());
-            // Cannot access a programming participation that has no programming exercise associated with it
-            return false;
-        }
-
-        return authCheckService.isAtLeastTeachingAssistantForExercise(programmingExercise, user);
     }
 
     /**

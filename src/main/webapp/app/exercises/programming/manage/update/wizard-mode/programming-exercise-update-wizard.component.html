@@ -2,22 +2,24 @@
     <jhi-programming-exercise-update-wizard-info
         class="form-step"
         *ngIf="currentStep >= 1"
-        [isImport]="isImport"
+        [isImport]="isImportFromExistingExercise"
+        [isExamMode]="isExamMode"
         [programmingExercise]="programmingExercise"
         [infoStepInputs]="infoStepInputs"
+        [auxiliaryRepositoriesSupported]="auxiliaryRepositoriesSupported"
     ></jhi-programming-exercise-update-wizard-info>
 
     <jhi-programming-exercise-update-wizard-difficulty
         class="form-step"
         *ngIf="currentStep >= 2"
-        [isImport]="isImport"
+        [isImport]="isImportFromExistingExercise"
         [programmingExercise]="programmingExercise"
     ></jhi-programming-exercise-update-wizard-difficulty>
 
     <jhi-programming-exercise-update-wizard-language
         class="form-step"
         *ngIf="currentStep >= 3"
-        [isImport]="isImport"
+        [isImport]="isImportFromExistingExercise"
         [programmingExercise]="programmingExercise"
         [languageStepInputs]="languageStepInputs"
     ></jhi-programming-exercise-update-wizard-language>
@@ -25,7 +27,7 @@
     <jhi-programming-exercise-update-wizard-grading
         class="form-step"
         *ngIf="currentStep >= 4"
-        [isImport]="isImport"
+        [isImportFromExistingExercise]="isImportFromExistingExercise"
         [programmingExercise]="programmingExercise"
         [gradingStepInputs]="gradingStepInputs"
     ></jhi-programming-exercise-update-wizard-grading>
@@ -33,7 +35,7 @@
     <jhi-programming-exercise-update-wizard-problem
         class="form-step"
         *ngIf="currentStep >= 5"
-        [isImport]="isImport"
+        [isImport]="isImportFromExistingExercise"
         [(exercise)]="exercise"
         [problemStepInputs]="problemStepInputs"
     ></jhi-programming-exercise-update-wizard-problem>

@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.notification;
 
 import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.*;
-import static de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants.*;
+import static de.tum.in.www1.artemis.domain.notification.NotificationConstants.*;
 import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsService.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
@@ -63,17 +63,29 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbuc
 
     private Lecture lecture;
 
+    private static final String LECTURE_TITLE = "lecture title";
+
     private Post post;
+
+    private static final String POST_TITLE = "post title";
+
+    private static final String POST_CONTENT = "post content";
 
     private AnswerPost answerPost;
 
+    private static final String ANSWER_POST_CONTENT = "answer post content";
+
     private Course course;
+
+    private static final String COURSE_TITLE = "course title";
 
     private Exam exam;
 
     private User student;
 
     private User instructor;
+
+    private int notificationCountBeforeTest;
 
     // Problem statement of an exam exercise where the length is larger than the allowed max notification target size in the db
     // allowed <= 255, this one has ~ 500
@@ -111,6 +123,7 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbuc
         course.setTeachingAssistantGroupName(TEST_PREFIX + "tutors");
         course.setEditorGroupName(TEST_PREFIX + "editors");
         course.setStudentGroupName(TEST_PREFIX + "students");
+        course.setTitle(COURSE_TITLE);
 
         database.addUsers(TEST_PREFIX, 1, 0, 0, 1);
 
@@ -129,13 +142,15 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbuc
 
         lecture = new Lecture();
         lecture.setCourse(course);
-
-        attachment = new Attachment();
+        lecture.setTitle(LECTURE_TITLE);
 
         exercise = ModelFactory.generateTextExercise(null, null, null, course);
         exerciseRepository.save(exercise);
         updatedExercise = ModelFactory.generateTextExercise(null, null, null, course);
         exerciseRepository.save(updatedExercise);
+
+        attachment = new Attachment();
+        attachment.setExercise(exercise);
 
         ExerciseGroup exerciseGroup = new ExerciseGroup();
         exerciseGroup.setExam(exam);
@@ -154,12 +169,20 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbuc
         post.setExercise(exercise);
         post.setLecture(lecture);
         post.setCourse(course);
+        post.setAuthor(instructor);
+        post.setTitle(POST_TITLE);
+        post.setContent(POST_CONTENT);
 
         answerPost = new AnswerPost();
         answerPost.setPost(post);
+        answerPost.setAuthor(instructor);
+        answerPost.setContent(ANSWER_POST_CONTENT);
 
         // explicitly change the user to prevent issues in the following server call due to userRepository.getUser() (@WithMockUser is not working here)
         database.changeUser(TEST_PREFIX + "instructor1");
+
+        // store the current notification count to let tests work even if notifications are created in other tests
+        notificationCountBeforeTest = notificationRepository.findAll().size();
     }
 
     @AfterEach
@@ -178,7 +201,8 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbuc
         List<Notification> capturedNotifications = notificationRepository.findAll();
         Notification lastCapturedNotification = capturedNotifications.get(capturedNotifications.size() - 1);
         assertThat(lastCapturedNotification.getTitle()).as("The title of the captured notification should be equal to the expected one").isEqualTo(expectedNotificationTitle);
-        assertThat(capturedNotifications).as("The number of created notification should be the same as the number of notified groups/authorities").hasSize(numberOfGroupsAndCalls);
+        assertThat(capturedNotifications).as("The number of created notification should be the same as the number of notified groups/authorities")
+                .hasSize(numberOfGroupsAndCalls + notificationCountBeforeTest);
     }
 
     /// Exercise Update / Release & Scheduling related Tests

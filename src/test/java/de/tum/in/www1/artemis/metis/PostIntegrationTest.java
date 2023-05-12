@@ -31,6 +31,7 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.CourseInformationSharingConfiguration;
 import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
 import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
 import de.tum.in.www1.artemis.domain.exam.Exam;
@@ -39,10 +40,12 @@ import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.metis.PostSortCriterion;
 import de.tum.in.www1.artemis.domain.metis.UserRole;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
+import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.web.rest.dto.PostContextFilter;
+import de.tum.in.www1.artemis.web.websocket.dto.metis.PostDTO;
 
 class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -53,6 +56,9 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
     @Autowired
     private PlagiarismCaseRepository plagiarismCaseRepository;
+
+    @Autowired
+    private CourseRepository courseRepository;
 
     private List<Post> existingPostsAndConversationPosts;
 
@@ -132,6 +138,9 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         doNothing().when(groupNotificationService).notifyAllGroupsAboutNewPostForLecture(any(), any());
         doNothing().when(groupNotificationService).notifyAllGroupsAboutNewCoursePost(any(), any());
         doNothing().when(groupNotificationService).notifyAllGroupsAboutNewAnnouncement(any(), any());
+
+        // We do not need the stub and it leads to flakyness
+        reset(javaMailSender);
     }
 
     @AfterEach
@@ -158,6 +167,43 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         postContextFilter.setExerciseId(exerciseId);
         assertThat(existingExercisePosts).hasSize(postRepository.findPosts(postContextFilter, null, false, null).getSize() - 1);
         verify(groupNotificationService, times(1)).notifyAllGroupsAboutNewPostForExercise(createdPost, course);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testPostingAllowedIfMessagingOnlySetting() throws Exception {
+        messagingFeatureDisabledTest(CourseInformationSharingConfiguration.MESSAGING_ONLY);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testPostingNotAllowedIfDisabledSetting() throws Exception {
+        messagingFeatureDisabledTest(CourseInformationSharingConfiguration.DISABLED);
+    }
+
+    private void messagingFeatureDisabledTest(CourseInformationSharingConfiguration courseInformationSharingConfiguration) throws Exception {
+        var persistedCourse = courseRepository.findByIdElseThrow(courseId);
+        persistedCourse.setCourseInformationSharingConfiguration(courseInformationSharingConfiguration);
+        persistedCourse = courseRepository.saveAndFlush(persistedCourse);
+        assertThat(persistedCourse.getCourseInformationSharingConfiguration()).isEqualTo(courseInformationSharingConfiguration);
+
+        Post postToSave = createPostWithoutContext();
+        Exercise exercise = existingExercisePosts.get(0).getExercise();
+        postToSave.setExercise(exercise);
+
+        Post notCreatedPost = request.postWithResponseBody("/api/courses/" + courseId + "/posts", postToSave, Post.class, HttpStatus.BAD_REQUEST);
+
+        assertThat(notCreatedPost).isNull();
+        PostContextFilter postContextFilter = new PostContextFilter();
+        postContextFilter.setExerciseId(exerciseId);
+        assertThat(existingExercisePosts).hasSameSizeAs(postRepository.findPosts(postContextFilter, null, false, null));
+
+        // conversation participants should not be notified
+        verify(messagingTemplate, never()).convertAndSendToUser(anyString(), anyString(), any(PostDTO.class));
+
+        // active messaging again
+        persistedCourse.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
+        courseRepository.saveAndFlush(persistedCourse);
     }
 
     @Test

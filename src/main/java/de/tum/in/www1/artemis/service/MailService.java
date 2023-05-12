@@ -28,7 +28,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.notification.Notification;
-import de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants;
+import de.tum.in.www1.artemis.domain.notification.NotificationConstants;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
 import de.tum.in.www1.artemis.exception.ArtemisMailException;
@@ -190,7 +190,7 @@ public class MailService {
      * @param notificationSubject that is used to provide further information (e.g. exercise, attachment, post, etc.)
      */
     public void sendNotificationEmail(Notification notification, User user, Object notificationSubject) {
-        NotificationType notificationType = NotificationTitleTypeConstants.findCorrespondingNotificationType(notification.getTitle());
+        NotificationType notificationType = NotificationConstants.findCorrespondingNotificationType(notification.getTitle());
         log.debug("Sending \"{}\" notification email to '{}'", notificationType.name(), user.getEmail());
 
         String localeKey = user.getLangKey();
@@ -207,7 +207,7 @@ public class MailService {
         context.setVariable(NOTIFICATION_SUBJECT, notificationSubject);
 
         context.setVariable(TIME_SERVICE, this.timeService);
-        String subject = notification.getTitle();
+        String subject = messageSource.getMessage(notification.getTitle(), null, context.getLocale());
 
         if (notificationSubject instanceof Exercise exercise) {
             context.setVariable(EXERCISE_TYPE, exercise.getExerciseType());

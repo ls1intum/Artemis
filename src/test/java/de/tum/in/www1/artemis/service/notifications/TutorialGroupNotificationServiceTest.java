@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.service.notifications;
 
-import static de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants.*;
+import static de.tum.in.www1.artemis.domain.notification.NotificationConstants.*;
 import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsService.NOTIFICATION__TUTORIAL_GROUP_NOTIFICATION__TUTORIAL_GROUP_DELETE_UPDATE;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
@@ -131,7 +131,7 @@ class TutorialGroupNotificationServiceTest extends AbstractSpringIntegrationBamb
         var course = courseRepository.findByIdElseThrow(courseId);
 
         var tutorialGroup = tutorialGroupRepository
-                .saveAndFlush(new TutorialGroup(course, title, additionalInformation, capacity, isOnline, campus, language, teachingAssistant, new HashSet<>()));
+                .saveAndFlush(new TutorialGroup(course, title, additionalInformation, capacity, isOnline, campus, language.name(), teachingAssistant, new HashSet<>()));
 
         var registrations = new HashSet<TutorialGroupRegistration>();
         for (var student : registeredStudents) {

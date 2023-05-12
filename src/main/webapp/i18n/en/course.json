@@ -4,8 +4,7 @@
             "home": {
                 "title": "Courses",
                 "createLabel": "Create new course",
-                "editLabel": "Edit course",
-                "createOrEditLabel": "Create or edit a course"
+                "editLabel": "Edit course"
             },
             "created": "Created new course with title {{ param }}",
             "updated": "Updated Course with title {{ param }}",
@@ -40,10 +39,6 @@
             "maxComplaintResponseTextLimit": {
                 "title": "Maximum number of characters per complaint response",
                 "description": "This value indicates the maximum number of characters that may be used for the response per complaint."
-            },
-            "postsEnabled": {
-                "title": "Enable communication features",
-                "description": "Enable course communication overview and communication section on lecture and exercise pages."
             },
             "complaintsEnabled": {
                 "title": "Enable complaints",
@@ -86,6 +81,16 @@
             "onlineCourse": {
                 "title": "Online Course",
                 "description": "Activate this checkbox for external online courses (e.g. on edX/Moodle) so that students can use this Artemis course (via the LTI interface). This also allows automatic account creation if enabled by the Artemis system administrator. You can further configure this in the LTI Configuration page."
+            },
+            "courseCommunicationSetting": {
+                "communicationEnabled": {
+                    "label": "Communication Enabled",
+                    "tooltip": "Enables communication between students, tutors and instructors through a question and answer system. Students can interact with peers and ask questions while moderators can provide course information and answer content-related questions. The communication can happen directly on the page of the respective exercise or lecture or in the dedicated communication space of the course."
+                },
+                "messagingEnabled": {
+                    "label": "Messaging Enabled",
+                    "tooltip": "Enables messaging between course users in private or public channels, group chats or direct messages. Channels can only be created by instructors and tutors. Users can self-join public channels and must be invited to private channels. Every user can start a private group chat and add other users. A group chat is limited to 10 members. Every user can start a private one-to-one chat with another user. The chats happens in the messaging space of the course."
+                }
             },
             "registrationEnabled": {
                 "title": "Student Course Registration Enabled",
@@ -151,10 +156,10 @@
             "courseDashboard": "Course Dashboard",
             "instructorDashboard": "Instructor Course Dashboard",
             "presentationScoreEnabled": {
-                "title": "Presentation Score",
+                "title": "Presentations",
                 "description": "Activate this checkbox to define the number of presentations a student has to hold to receive the grade bonus for the course. Afterwards you can define for every created exercise whether this feature should be activated."
             },
-            "presentationScore": "Required Presentation Score for Bonus",
+            "presentationScore": "Required Presentations",
             "courseGroup": {
                 "outOf": "out of",
                 "usersPerPage": "{{number}} users per page",
@@ -191,7 +196,9 @@
                 "averageStudentScoreTitle": "Average Student Score"
             },
             "activeStudents": "Active students: {{ students }}",
-            "notStartedYet": "The course has not officially started yet. Official course start:"
+            "notStartedYet": "The course has not officially started yet. Official course start:",
+            "noOrganizations": "No Organizations",
+            "organizationAddingHint": "Administrators can add organizations to courses."
         },
         "courseStatistics": {
             "statistics": "Statistics",

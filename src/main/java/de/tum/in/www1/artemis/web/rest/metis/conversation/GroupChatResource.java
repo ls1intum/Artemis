@@ -15,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.metis.conversation.GroupChat;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
@@ -23,19 +24,18 @@ import de.tum.in.www1.artemis.service.metis.conversation.ConversationDTOService;
 import de.tum.in.www1.artemis.service.metis.conversation.ConversationService;
 import de.tum.in.www1.artemis.service.metis.conversation.GroupChatService;
 import de.tum.in.www1.artemis.service.metis.conversation.auth.GroupChatAuthorizationService;
+import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.GroupChatDTO;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.MetisCrudAction;
 
 @RestController
 @RequestMapping("/api/courses")
-public class GroupChatResource {
+public class GroupChatResource extends ConversationManagementResource {
 
     private final Logger log = LoggerFactory.getLogger(GroupChatResource.class);
 
     private final UserRepository userRepository;
-
-    private final CourseRepository courseRepository;
 
     private final GroupChatAuthorizationService groupChatAuthorizationService;
 
@@ -47,15 +47,19 @@ public class GroupChatResource {
 
     private final ConversationDTOService conversationDTOService;
 
-    public GroupChatResource(UserRepository userRepository, CourseRepository courseRepository, GroupChatAuthorizationService groupChatAuthorizationService,
-            ConversationService conversationService, GroupChatService groupChatService, GroupChatRepository groupChatRepository, ConversationDTOService conversationDTOService) {
+    private final SingleUserNotificationService singleUserNotificationService;
+
+    public GroupChatResource(SingleUserNotificationService singleUserNotificationService, UserRepository userRepository, CourseRepository courseRepository,
+            GroupChatAuthorizationService groupChatAuthorizationService, ConversationService conversationService, GroupChatService groupChatService,
+            GroupChatRepository groupChatRepository, ConversationDTOService conversationDTOService) {
+        super(courseRepository);
         this.userRepository = userRepository;
-        this.courseRepository = courseRepository;
         this.groupChatAuthorizationService = groupChatAuthorizationService;
         this.conversationService = conversationService;
         this.groupChatService = groupChatService;
         this.groupChatRepository = groupChatRepository;
         this.conversationDTOService = conversationDTOService;
+        this.singleUserNotificationService = singleUserNotificationService;
     }
 
     /**
@@ -71,6 +75,7 @@ public class GroupChatResource {
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
         log.debug("REST request to create group chat in course {} between: {} and : {}", courseId, requestingUser.getLogin(), otherChatParticipantsLogins);
         var course = courseRepository.findByIdElseThrow(courseId);
+        checkMessagingEnabledElseThrow(course);
         groupChatAuthorizationService.isAllowedToCreateGroupChat(course, requestingUser);
 
         var loginsToSearchFor = new HashSet<>(otherChatParticipantsLogins);
@@ -83,6 +88,8 @@ public class GroupChatResource {
         }
 
         var groupChat = groupChatService.startGroupChat(course, chatMembers);
+        chatMembers.forEach(user -> singleUserNotificationService.notifyClientAboutConversationCreationOrDeletion(groupChat, user, requestingUser,
+                NotificationType.CONVERSATION_CREATE_GROUP_CHAT));
 
         conversationService.broadcastOnConversationMembershipChannel(course, MetisCrudAction.CREATE, groupChat, chatMembers);
 
@@ -101,6 +108,7 @@ public class GroupChatResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<GroupChatDTO> updateGroupChat(@PathVariable Long courseId, @PathVariable Long groupChatId, @RequestBody GroupChatDTO groupChatDTO) {
         log.debug("REST request to update groupChat {} with properties : {}", groupChatId, groupChatDTO);
+        checkMessagingEnabledElseThrow(courseId);
 
         var originalGroupChat = groupChatRepository.findByIdElseThrow(groupChatId);
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
@@ -123,17 +131,20 @@ public class GroupChatResource {
     @PostMapping("/{courseId}/group-chats/{groupChatId}/register")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Void> registerUsersToGroupChat(@PathVariable Long courseId, @PathVariable Long groupChatId, @RequestBody List<String> userLogins) {
+        log.debug("REST request to register {} users to group chat: {}", userLogins.size(), groupChatId);
+        var course = courseRepository.findByIdElseThrow(courseId);
+        checkMessagingEnabledElseThrow(course);
         if (userLogins == null || userLogins.isEmpty()) {
             throw new BadRequestAlertException("No user logins provided", GROUP_CHAT_ENTITY_NAME, "userLoginsEmpty");
         }
-        log.debug("REST request to register {} users to group chat: {}", userLogins.size(), groupChatId);
-        var course = courseRepository.findByIdElseThrow(courseId);
         var groupChatFromDatabase = groupChatRepository.findByIdElseThrow(groupChatId);
         checkEntityIdMatchesPathIds(groupChatFromDatabase, Optional.of(courseId), Optional.of(groupChatId));
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
         groupChatAuthorizationService.isAllowedToAddUsersToGroupChat(groupChatFromDatabase, requestingUser);
         var usersToRegister = conversationService.findUsersInDatabase(userLogins);
         conversationService.registerUsersToConversation(course, usersToRegister, groupChatFromDatabase, Optional.of(MAX_GROUP_CHAT_PARTICIPANTS));
+        usersToRegister.forEach(user -> singleUserNotificationService.notifyClientAboutConversationCreationOrDeletion(groupChatFromDatabase, user, requestingUser,
+                NotificationType.CONVERSATION_ADD_USER_GROUP_CHAT));
         return ResponseEntity.ok().build();
     }
 
@@ -148,11 +159,12 @@ public class GroupChatResource {
     @PostMapping("/{courseId}/group-chats/{groupChatId}/deregister")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Void> deregisterUsersFromGroupChat(@PathVariable Long courseId, @PathVariable Long groupChatId, @RequestBody List<String> userLogins) {
+        log.debug("REST request to deregister {} users from the group chat : {}", userLogins.size(), groupChatId);
+        var course = courseRepository.findByIdElseThrow(courseId);
+        checkMessagingEnabledElseThrow(course);
         if (userLogins == null || userLogins.isEmpty()) {
             throw new BadRequestAlertException("No user logins provided", GROUP_CHAT_ENTITY_NAME, "userLoginsEmpty");
         }
-        log.debug("REST request to deregister {} users from the group chat : {}", userLogins.size(), groupChatId);
-        var course = courseRepository.findByIdElseThrow(courseId);
 
         var groupChatFromDatabase = groupChatRepository.findByIdElseThrow(groupChatId);
         checkEntityIdMatchesPathIds(groupChatFromDatabase, Optional.of(courseId), Optional.of(groupChatId));
@@ -162,6 +174,9 @@ public class GroupChatResource {
         var usersToDeRegister = conversationService.findUsersInDatabase(userLogins);
         conversationService.deregisterUsersFromAConversation(course, usersToDeRegister, groupChatFromDatabase);
         // ToDo: Discuss if we should delete the group chat if it has no participants left, but maybe we want to keep it for data analysis purposes
+
+        usersToDeRegister.forEach(user -> singleUserNotificationService.notifyClientAboutConversationCreationOrDeletion(groupChatFromDatabase, user, requestingUser,
+                NotificationType.CONVERSATION_REMOVE_USER_GROUP_CHAT));
         return ResponseEntity.ok().build();
     }
 

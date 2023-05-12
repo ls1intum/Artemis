@@ -7,9 +7,12 @@ import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.in.www1.artemis.domain.enumeration.CourseInformationSharingConfiguration;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.GroupChatDTO;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.MetisCrudAction;
@@ -18,10 +21,12 @@ class GroupChatIntegrationTest extends AbstractConversationTest {
 
     private static final String TEST_PREFIX = "grtest";
 
+    private static final int NUMBER_OF_STUDENTS = 11;
+
     @BeforeEach
     void setupTestScenario() throws Exception {
         super.setupTestScenario();
-        this.database.addUsers(TEST_PREFIX, 11, 0, 0, 0);
+        this.database.addUsers(TEST_PREFIX, NUMBER_OF_STUDENTS, 0, 0, 0);
         if (userRepository.findOneByLogin(testPrefix + "student42").isEmpty()) {
             userRepository.save(ModelFactory.generateActivatedUser(testPrefix + "student42"));
         }
@@ -56,7 +61,7 @@ class GroupChatIntegrationTest extends AbstractConversationTest {
         // chat with too many users
         // then
         var loginList = new ArrayList<String>();
-        for (int i = 2; i <= 11; i++) {
+        for (int i = 2; i <= NUMBER_OF_STUDENTS; i++) {
             loginList.add(testPrefix + "student" + i);
         }
         request.postWithResponseBody("/api/courses/" + exampleCourseId + "/group-chats/", loginList, GroupChatDTO.class, HttpStatus.BAD_REQUEST);
@@ -73,6 +78,24 @@ class GroupChatIntegrationTest extends AbstractConversationTest {
         request.postWithResponseBody("/api/courses/" + exampleCourseId + "/group-chats/", List.of(testPrefix + "student2", testPrefix + "student3"), GroupChatDTO.class,
                 HttpStatus.FORBIDDEN);
         verifyNoParticipantTopicWebsocketSent();
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = CourseInformationSharingConfiguration.class, names = { "COMMUNICATION_ONLY", "DISABLED" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void startGroupChat_messagingFeatureDeactivated_shouldReturnForbidden(CourseInformationSharingConfiguration courseInformationSharingConfiguration) throws Exception {
+        startGroupChat_messagingDeactivated(courseInformationSharingConfiguration);
+
+    }
+
+    void startGroupChat_messagingDeactivated(CourseInformationSharingConfiguration courseInformationSharingConfiguration) throws Exception {
+        setCourseInformationSharingConfiguration(courseInformationSharingConfiguration);
+
+        request.postWithResponseBody("/api/courses/" + exampleCourseId + "/group-chats/", List.of(testPrefix + "student2", testPrefix + "student3"), GroupChatDTO.class,
+                HttpStatus.FORBIDDEN);
+
+        // active messaging again
+        setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
     }
 
     @Test
@@ -107,6 +130,30 @@ class GroupChatIntegrationTest extends AbstractConversationTest {
         assertThat(updatedGroupChat.getName()).isEqualTo("updated");
         verifyMultipleParticipantTopicWebsocketSent(MetisCrudAction.UPDATE, chat.getId(), "student1", "student2", "student3");
         verifyNoParticipantTopicWebsocketSentExceptAction(MetisCrudAction.UPDATE);
+
+        // cleanup
+        var conversation = groupChatRepository.findById(chat.getId()).get();
+        conversationRepository.delete(conversation);
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = CourseInformationSharingConfiguration.class, names = { "COMMUNICATION_ONLY", "DISABLED" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void updateGroupChat_messagingFeatureDeactivated_shouldReturnForbidden(CourseInformationSharingConfiguration courseInformationSharingConfiguration) throws Exception {
+        updateGroupChat_messagingDeactivated(courseInformationSharingConfiguration);
+
+    }
+
+    void updateGroupChat_messagingDeactivated(CourseInformationSharingConfiguration courseInformationSharingConfiguration) throws Exception {
+        var chat = request.postWithResponseBody("/api/courses/" + exampleCourseId + "/group-chats/", List.of(testPrefix + "student2", testPrefix + "student3"), GroupChatDTO.class,
+                HttpStatus.CREATED);
+        chat.setName("updated");
+
+        setCourseInformationSharingConfiguration(courseInformationSharingConfiguration);
+        request.putWithResponseBody("/api/courses/" + exampleCourseId + "/group-chats/" + chat.getId(), chat, GroupChatDTO.class, HttpStatus.FORBIDDEN);
+
+        // active messaging again
+        setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
 
         // cleanup
         var conversation = groupChatRepository.findById(chat.getId()).get();
@@ -153,6 +200,31 @@ class GroupChatIntegrationTest extends AbstractConversationTest {
         conversationRepository.delete(conversation);
     }
 
+    @ParameterizedTest
+    @EnumSource(value = CourseInformationSharingConfiguration.class, names = { "COMMUNICATION_ONLY", "DISABLED" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void registerDeregisterUsersToGroupChat_messagingFeatureDeactivated_shouldReturnForbidden(CourseInformationSharingConfiguration courseInformationSharingConfiguration)
+            throws Exception {
+        registerDeregisterUsersToGroupChat_messagingDeactivated(courseInformationSharingConfiguration);
+
+    }
+
+    void registerDeregisterUsersToGroupChat_messagingDeactivated(CourseInformationSharingConfiguration courseInformationSharingConfiguration) throws Exception {
+        var chat = request.postWithResponseBody("/api/courses/" + exampleCourseId + "/group-chats/", List.of(testPrefix + "student2", testPrefix + "student3"), GroupChatDTO.class,
+                HttpStatus.CREATED);
+        setCourseInformationSharingConfiguration(courseInformationSharingConfiguration);
+
+        request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/group-chats/" + chat.getId() + "/register", List.of(testPrefix + "student2"), HttpStatus.FORBIDDEN);
+        request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/group-chats/" + chat.getId() + "/deregister", List.of(testPrefix + "student2"), HttpStatus.FORBIDDEN);
+
+        assertParticipants(chat.getId(), 3, "student1", "student2", "student3");
+
+        // cleanup
+        var conversation = groupChatRepository.findById(chat.getId()).get();
+        conversationRepository.delete(conversation);
+        setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void registerUsersToGroupChat_asNonMember_shouldReturnForbidden() throws Exception {
@@ -165,7 +237,10 @@ class GroupChatIntegrationTest extends AbstractConversationTest {
 
         // then
         assertParticipants(chat.getId(), 3, "student1", "student2", "student3");
-        verifyNoParticipantTopicWebsocketSent();
+
+        // cleanup
+        var conversation = groupChatRepository.findById(chat.getId()).get();
+        conversationRepository.delete(conversation);
     }
 
     @Test
@@ -175,7 +250,7 @@ class GroupChatIntegrationTest extends AbstractConversationTest {
         GroupChatDTO chat = createGroupChatWithStudent1To3();
         // when
         var loginList = new ArrayList<String>();
-        for (int i = 4; i <= 11; i++) {
+        for (int i = 4; i <= NUMBER_OF_STUDENTS; i++) {
             loginList.add(testPrefix + "student" + i);
         }
         request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/group-chats/" + chat.getId() + "/register", loginList, HttpStatus.BAD_REQUEST);

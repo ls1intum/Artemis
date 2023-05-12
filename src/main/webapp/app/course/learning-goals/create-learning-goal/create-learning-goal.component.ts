@@ -17,7 +17,7 @@ import { DocumentationType } from 'app/shared/components/documentation-button/do
     styles: [],
 })
 export class CreateLearningGoalComponent implements OnInit {
-    documentationType = DocumentationType.LearningGoals;
+    documentationType = DocumentationType.Competencies;
     learningGoalToCreate: LearningGoal = new LearningGoal();
     isLoading: boolean;
     courseId: number;
@@ -85,7 +85,7 @@ export class CreateLearningGoalComponent implements OnInit {
             )
             .subscribe({
                 next: () => {
-                    // currently at /course-management/{courseId}/goal-management/create, going back to /course-management/{courseId}/goal-management/
+                    // currently at /course-management/{courseId}/competency-management/create, going back to /course-management/{courseId}/competency-management/
                     this.router.navigate(['../'], { relativeTo: this.activatedRoute });
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),

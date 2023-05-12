@@ -16,15 +16,16 @@ export class ProgrammingExerciseProblemComponent {
 
     programmingExercise: ProgrammingExercise;
 
-    @Input() isImport: boolean;
+    @Input() isImportFromExistingExercise: boolean;
     @Input() isExamMode: boolean;
-
     @Input() problemStatementLoaded: boolean;
     @Input() templateParticipationResultLoaded: boolean;
     @Input() hasUnsavedChanges: boolean;
     @Input() rerenderSubject: Observable<void>;
     @Input() sequentialTestRunsAllowed: boolean;
     @Input() checkoutSolutionRepositoryAllowed: boolean;
+    @Input() publishBuildPlanUrlAllowed: boolean;
+    @Input() testwiseCoverageAnalysisSupported: boolean;
     @Input() validIdeSelection: () => boolean | undefined;
     @Input() selectedProjectType: ProjectType;
     @Input() inProductionEnvironment: boolean;

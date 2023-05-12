@@ -182,6 +182,7 @@ describe('Exercise Scores Component', () => {
         expect(getParticipationsMock).toHaveBeenCalledOnce();
         expect(getParticipationsMock).toHaveBeenCalledWith(2, true);
         expect(component.filteredParticipations).toEqual(participationsToFilter);
+        expect(component.correctionRoundIndices).toEqual([0]);
     }));
 
     it('should get exercise participation link for exercise without an exercise group', () => {
@@ -234,8 +235,8 @@ describe('Exercise Scores Component', () => {
         [FilterProp.SUCCESSFUL, { results: [{ successful: false }] } as Participation, false],
         [FilterProp.UNSUCCESSFUL, { results: [{ successful: false }] } as Participation, true],
         [FilterProp.UNSUCCESSFUL, { results: [{ successful: true }] } as Participation, false],
-        [FilterProp.BUILD_FAILED, { results: [{ submission: { buildFailed: true } as Submission }] } as Participation, true],
-        [FilterProp.BUILD_FAILED, { results: [{ submission: {} as Submission }] } as Participation, false],
+        [FilterProp.BUILD_FAILED, { results: [{}], submissions: [{ buildFailed: true } as Submission] } as Participation, true],
+        [FilterProp.BUILD_FAILED, { results: [{}], submissions: [{}] } as Participation, false],
         [FilterProp.MANUAL, { results: [{ assessmentType: AssessmentType.SEMI_AUTOMATIC }] } as Participation, true],
         [FilterProp.MANUAL, { results: [{ assessmentType: AssessmentType.AUTOMATIC }] } as Participation, false],
         [FilterProp.AUTOMATIC, { results: [{ assessmentType: AssessmentType.AUTOMATIC }] } as Participation, true],

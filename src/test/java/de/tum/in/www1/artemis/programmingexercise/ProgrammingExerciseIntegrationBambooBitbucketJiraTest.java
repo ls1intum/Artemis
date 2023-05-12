@@ -73,6 +73,18 @@ class ProgrammingExerciseIntegrationBambooBitbucketJiraTest extends AbstractSpri
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testExportSubmissionsByParticipationIds_excludePracticeSubmissions() throws Exception {
+        programmingExerciseIntegrationTestService.testExportSubmissionsByParticipationIds_excludePracticeSubmissions();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testExportSubmissionsByParticipationIds_includePracticeSubmissions() throws Exception {
+        programmingExerciseIntegrationTestService.testExportSubmissionsByParticipationIds_includePracticeSubmissions();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testExportSubmissionsByParticipationIds_addParticipantIdentifierToProjectName() throws Exception {
         programmingExerciseIntegrationTestService.testExportSubmissionsByParticipationIds_addParticipantIdentifierToProjectName();
     }
@@ -511,7 +523,7 @@ class ProgrammingExerciseIntegrationBambooBitbucketJiraTest extends AbstractSpri
 
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    // It should fail for all ProgrammingExercises except Haskell and ocaml
+    // It should return a bad request error for all ProgrammingExercises except Haskell and ocaml
     @EnumSource(value = ProgrammingLanguage.class, names = { "HASKELL", "OCAML" }, mode = EnumSource.Mode.EXCLUDE)
     void createProgrammingExercise_checkoutSolutionRepositoryProgrammingLanguageNotSupported_badRequest(ProgrammingLanguage programmingLanguage) throws Exception {
         programmingExerciseIntegrationTestService.createProgrammingExercise_checkoutSolutionRepositoryProgrammingLanguageNotSupported_badRequest(programmingLanguage);
@@ -533,6 +545,14 @@ class ProgrammingExerciseIntegrationBambooBitbucketJiraTest extends AbstractSpri
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createProgrammingExercise_notIncluded_invalidBonusPoints_badRequest() throws Exception {
         programmingExerciseIntegrationTestService.createProgrammingExercise_notIncluded_invalidBonusPoints_badRequest();
+    }
+
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    // It should return a bad request error for all ProgrammingExercises except Java and Kotlin
+    @EnumSource(value = ProgrammingLanguage.class, names = { "JAVA", "KOTLIN" }, mode = EnumSource.Mode.EXCLUDE)
+    void createProgrammingExercise_testwiseCoverageAnalysisNotSupported_badRequest(ProgrammingLanguage programmingLanguage) throws Exception {
+        programmingExerciseIntegrationTestService.createProgrammingExercise_testwiseCoverageAnalysisNotSupported_badRequest(programmingLanguage);
     }
 
     @Test
@@ -918,30 +938,60 @@ class ProgrammingExerciseIntegrationBambooBitbucketJiraTest extends AbstractSpri
         programmingExerciseIntegrationTestService.testGetAuxiliaryRepositoriesEmptyOk();
     }
 
-    // Tests for recreate build plan endpoint
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
-    void testRecreateBuildPlansForbiddenStudent() throws Exception {
-        programmingExerciseIntegrationTestService.testRecreateBuildPlansForbidden();
-    }
+    // Tests for reset endpoint
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void testRecreateBuildPlansForbiddenTutor() throws Exception {
-        programmingExerciseIntegrationTestService.testRecreateBuildPlansForbidden();
+    void testResetForbiddenTutor() throws Exception {
+        programmingExerciseIntegrationTestService.testResetForbidden();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
-    void testRecreateBuildPlansExerciseNotFound() throws Exception {
-        programmingExerciseIntegrationTestService.testRecreateBuildPlansExerciseNotFound();
+    void testResetOnlyDeleteBuildPlansForbiddenEditor() throws Exception {
+        programmingExerciseIntegrationTestService.testResetOnlyDeleteBuildPlansForbidden();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
-    void testRecreateBuildPlansSuccess() throws Exception {
-        programmingExerciseIntegrationTestService.testRecreateBuildPlansExerciseSuccess();
+    void testResetDeleteBuildPlansAndDeleteStudentRepositoriesForbiddenEditor() throws Exception {
+        programmingExerciseIntegrationTestService.testResetDeleteBuildPlansAndDeleteStudentRepositoriesForbidden();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testResetOnlyDeleteStudentParticipationsSubmissionsAndResultsForbiddenEditor() throws Exception {
+        programmingExerciseIntegrationTestService.testResetOnlyDeleteStudentParticipationsSubmissionsAndResultsForbidden();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testResetExerciseNotFound() throws Exception {
+        programmingExerciseIntegrationTestService.testResetExerciseNotFound();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testResetOnlyDeleteBuildPlansSuccess() throws Exception {
+        programmingExerciseIntegrationTestService.testResetOnlyDeleteBuildPlansSuccess();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testResetDeleteBuildPlansAndDeleteStudentRepositoriesSuccess() throws Exception {
+        programmingExerciseIntegrationTestService.testResetDeleteBuildPlansAndDeleteStudentRepositoriesSuccess();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testResetOnlyDeleteStudentParticipationsSubmissionsAndResultsSuccess() throws Exception {
+        programmingExerciseIntegrationTestService.testResetOnlyDeleteStudentParticipationsSubmissionsAndResultsSuccess();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testResetOnlyRecreateBuildPlansSuccess() throws Exception {
+        programmingExerciseIntegrationTestService.testResetOnlyRecreateBuildPlansSuccess();
     }
 
     // Tests for export auxiliary repository for exercise endpoint

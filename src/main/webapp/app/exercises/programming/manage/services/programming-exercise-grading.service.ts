@@ -36,7 +36,7 @@ export interface IProgrammingExerciseGradingService {
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExerciseGradingService implements IProgrammingExerciseGradingService, OnDestroy {
-    public resourceUrl = `${SERVER_API_URL}api/programming-exercises`;
+    public resourceUrl = 'api/programming-exercises';
 
     private connections: { [exerciseId: string]: string } = {};
     private subjects: { [exerciseId: string]: BehaviorSubject<ProgrammingExerciseTestCase[] | undefined> } = {};
@@ -106,9 +106,10 @@ export class ProgrammingExerciseGradingService implements IProgrammingExerciseGr
     }
 
     /**
-     * Use with care: Set all test case weights to 1, all bonus multipliers to 1 and all bonus points to 0.
+     * Use with care: Resets all test cases of an exercise to their initial configuration
+     * Set all test case weights to 1, all bonus multipliers to 1, all bonus points to 0 and visibility to always.
      *
-     * @param exerciseId
+     * @param exerciseId the id of the exercise to reset the test case weights of.
      */
     public resetTestCases(exerciseId: number): Observable<ProgrammingExerciseTestCase[]> {
         return this.http.patch<ProgrammingExerciseTestCase[]>(`${this.resourceUrl}/${exerciseId}/test-cases/reset`, {});

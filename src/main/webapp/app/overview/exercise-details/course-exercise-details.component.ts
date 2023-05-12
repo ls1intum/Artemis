@@ -43,7 +43,7 @@ import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/Plagiar
 import { PlagiarismCaseInfo } from 'app/exercises/shared/plagiarism/types/PlagiarismCaseInfo';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { MAX_RESULT_HISTORY_LENGTH } from 'app/overview/result-history/result-history.component';
-import { Course } from 'app/entities/course.model';
+import { Course, isCommunicationEnabled } from 'app/entities/course.model';
 import { ExerciseCacheService } from 'app/exercises/shared/exercise/exercise-cache.service';
 
 @Component({
@@ -64,6 +64,8 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     readonly FILE_UPLOAD = ExerciseType.FILE_UPLOAD;
     readonly evaluateBadge = ResultService.evaluateBadge;
     readonly dayjs = dayjs;
+
+    readonly isCommunicationEnabled = isCommunicationEnabled;
 
     private currentUser: User;
     private exerciseId: number;
@@ -183,7 +185,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         this.resultWithComplaint = getFirstResultWithComplaintFromResults(this.gradedStudentParticipation?.results);
         this.exerciseService.getExerciseDetails(this.exerciseId).subscribe((exerciseResponse: HttpResponse<Exercise>) => {
             this.handleNewExercise(exerciseResponse.body!);
-            this.getLatestRatedResult();
+            this.loadComplaintAndLatestRatedResult();
         });
         this.plagiarismCaseService.getPlagiarismCaseInfoForStudent(this.courseId, this.exerciseId).subscribe((res: HttpResponse<PlagiarismCaseInfo>) => {
             this.plagiarismCaseInfo = res.body ?? undefined;
@@ -396,10 +398,9 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Returns the latest finished result for modeling and text exercises. It does not have to be rated.
-     * For other exercise types it returns a rated result.
+     * Loads and stores the complaint if any exists. Furthermore, loads the latest rated result and stores it.
      */
-    getLatestRatedResult() {
+    loadComplaintAndLatestRatedResult(): void {
         if (!this.gradedStudentParticipation?.submissions?.[0] || !this.sortedHistoryResults?.length) {
             return;
         }
@@ -416,7 +417,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         });
 
         if (this.exercise!.type === ExerciseType.MODELING || this.exercise!.type === ExerciseType.TEXT) {
-            return this.gradedStudentParticipation?.results?.find((result: Result) => !!result.completionDate) || undefined;
+            return;
         }
 
         const ratedResults = this.gradedStudentParticipation?.results?.filter((result: Result) => result.rated).sort(this.resultSortFunction);

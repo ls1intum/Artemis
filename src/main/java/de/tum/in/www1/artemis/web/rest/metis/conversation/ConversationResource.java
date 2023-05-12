@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
 import de.tum.in.www1.artemis.repository.CourseRepository;
@@ -32,7 +33,7 @@ import tech.jhipster.web.util.PaginationUtil;
 
 @RestController
 @RequestMapping("/api/courses")
-public class ConversationResource {
+public class ConversationResource extends ConversationManagementResource {
 
     private final Logger log = LoggerFactory.getLogger(ConversationResource.class);
 
@@ -44,15 +45,13 @@ public class ConversationResource {
 
     private final UserRepository userRepository;
 
-    private final CourseRepository courseRepository;
-
     public ConversationResource(ConversationService conversationService, ChannelAuthorizationService channelAuthorizationService,
             AuthorizationCheckService authorizationCheckService, UserRepository userRepository, CourseRepository courseRepository) {
+        super(courseRepository);
         this.conversationService = conversationService;
         this.channelAuthorizationService = channelAuthorizationService;
         this.authorizationCheckService = authorizationCheckService;
         this.userRepository = userRepository;
-        this.courseRepository = courseRepository;
     }
 
     /**
@@ -64,6 +63,8 @@ public class ConversationResource {
     @GetMapping("/{courseId}/conversations")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<List<ConversationDTO>> getConversationsOfUser(@PathVariable Long courseId) {
+        checkMessagingEnabledElseThrow(courseId);
+
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, courseRepository.findByIdElseThrow(courseId), requestingUser);
         var conversations = conversationService.getConversationsOfUser(courseId, requestingUser);
@@ -81,6 +82,7 @@ public class ConversationResource {
     @PostMapping("/{courseId}/conversations/{conversationId}/favorite")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Void> changeFavoriteStatus(@PathVariable Long courseId, @PathVariable Long conversationId, @RequestParam Boolean isFavorite) {
+        checkMessagingEnabledElseThrow(courseId);
         var requestingUser = this.userRepository.getUserWithGroupsAndAuthorities();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, courseRepository.findByIdElseThrow(courseId), requestingUser);
         conversationService.switchFavoriteStatus(conversationId, requestingUser, isFavorite);
@@ -98,6 +100,7 @@ public class ConversationResource {
     @PostMapping("/{courseId}/conversations/{conversationId}/hidden")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Void> switchHiddenStatus(@PathVariable Long courseId, @PathVariable Long conversationId, @RequestParam Boolean isHidden) {
+        checkMessagingEnabledElseThrow(courseId);
         var requestingUser = this.userRepository.getUserWithGroupsAndAuthorities();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, courseRepository.findByIdElseThrow(courseId), requestingUser);
         conversationService.switchHiddenStatus(conversationId, requestingUser, isHidden);
@@ -123,6 +126,7 @@ public class ConversationResource {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The page size must not be greater than 20");
         }
         var course = courseRepository.findByIdElseThrow(courseId);
+        checkMessagingEnabledElseThrow(course);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
         var conversationFromDatabase = this.conversationService.getConversationById(conversationId);
         checkEntityIdMatchesPathIds(conversationFromDatabase, Optional.of(courseId), Optional.of(conversationId));
@@ -163,5 +167,18 @@ public class ConversationResource {
                         "conversationIdMismatch");
             }
         });
+    }
+
+    /**
+     * GET api/courses/conversations-for-notifications : Get all conversations for which the current user should receive notifications
+     *
+     * @return the list of Conversations for which the current user should receive notifications about
+     */
+    @GetMapping("/conversations-for-notifications")
+    @PreAuthorize("hasRole('USER')")
+    public List<Conversation> getAllConversationsForNotifications() {
+        log.debug("REST request to get all tutorial groups for which the current user should receive notifications");
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        return conversationService.findAllConversationsForNotifications(user, false);
     }
 }

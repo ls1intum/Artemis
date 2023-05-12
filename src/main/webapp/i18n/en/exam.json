@@ -20,7 +20,12 @@
                 "room": "Room",
                 "seat": "Seat",
                 "saveImages": "Save Images",
-                "numberOfImagesSaved": "Images saved"
+                "numberOfImagesSaved": "Images saved",
+                "attendanceStatus": "Status",
+                "attendanceStatusTitle": "Exam Attendance Status",
+                "attendanceCheckFailed": "Attendance check failed",
+                "attendanceCheckPassed": "Attendance check passed",
+                "didNotAttend": "Did not attend"
             },
             "overview": {
                 "start": "Start: {{start}}",
@@ -458,13 +463,14 @@
                 "registrationNumberNotChecked": "Registration number was not checked",
                 "noSignature": "No signature",
                 "registeredStudents": "Registered students",
-                "notCheckedStudents": "Not checked students",
+                "notCheckedStudents": "Number of students not checked",
+                "allStudentsCheckedPassed": "All the students have been checked successfully",
                 "searchResults": "search results",
                 "usersPerPage": "{{number}} students per page",
                 "showAllUsers": "Show all students",
                 "searchForUsers": "Register a student for this exam by searching for login or name",
                 "checks": "Checks",
-                "signingImagePath": "Signature",
+                "attendanceChecks": "Attendance Checks",
                 "searchStudents": "Search students by name or login",
                 "searchNoResults": "No students found",
                 "login": "Login",
@@ -503,11 +509,6 @@
                     "question": "Are you sure you want to delete the exercise group <strong>{{ title }}</strong>? All associated exercises will also be deleted.",
                     "typeNameToConfirm": "Please type in the name of the exercise group to confirm."
                 },
-                "addTextExercise": "Add Text Exercise",
-                "addQuizExercise": "Add Quiz",
-                "addFileUploadExercise": "Add File Upload Exercise",
-                "addModelingExercise": "Add Modeling Exercise",
-                "addProgrammingExercise": "Add Programming Exercise",
                 "orderCouldNotBeSaved": "The order could not be saved",
                 "importModal": {
                     "title": "Import Exam Exercises",

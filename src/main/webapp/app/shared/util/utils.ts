@@ -1,5 +1,5 @@
 import { omit, sum } from 'lodash-es';
-import { captureException } from '@sentry/browser';
+import { captureException } from '@sentry/angular-ivy';
 import { Result } from 'app/entities/result.model';
 import { Course } from 'app/entities/course.model';
 
@@ -146,6 +146,11 @@ export const splitCamelCase = (word: string) => {
 
 export const isDate = (input: any) => {
     return input instanceof Date || Object.prototype.toString.call(input) === '[object Date]';
+};
+
+// delay is used to ensure apollon editor and redux store is not null (because of React 18 behaviour)
+export const addDelay = async (t: number) => {
+    return new Promise((res) => setTimeout(res, t));
 };
 
 /**

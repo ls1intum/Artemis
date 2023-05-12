@@ -12,6 +12,29 @@ import { OnlineCourseConfiguration } from 'app/entities/online-course-configurat
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutorial-groups-configuration.model';
 
+export enum CourseInformationSharingConfiguration {
+    COMMUNICATION_AND_MESSAGING = 'COMMUNICATION_AND_MESSAGING',
+    COMMUNICATION_ONLY = 'COMMUNICATION_ONLY',
+    MESSAGING_ONLY = 'MESSAGING_ONLY',
+    DISABLED = 'DISABLED',
+}
+
+/**
+ * Note: Keep in sync with method in CourseRepository.java
+ */
+export function isCommunicationEnabled(course: Course | undefined) {
+    const config = course?.courseInformationSharingConfiguration;
+    return config === CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING || config === CourseInformationSharingConfiguration.COMMUNICATION_ONLY;
+}
+
+/**
+ * Note: Keep in sync with method in CourseRepository.java
+ */
+export function isMessagingEnabled(course: Course | undefined) {
+    const config = course?.courseInformationSharingConfiguration;
+    return config === CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING || config === CourseInformationSharingConfiguration.MESSAGING_ONLY;
+}
+
 export const enum Language {
     ENGLISH = 'ENGLISH',
     GERMAN = 'GERMAN',
@@ -43,7 +66,6 @@ export class Course implements BaseEntity {
     public maxComplaintTextLimit?: number;
     public maxComplaintResponseTextLimit?: number;
     public complaintsEnabled?: boolean;
-    public postsEnabled?: boolean;
     public posts?: Post[];
     public requestMoreFeedbackEnabled?: boolean;
     public maxRequestMoreFeedbackTimeDays?: number;
@@ -67,6 +89,7 @@ export class Course implements BaseEntity {
     public organizations?: Organization[];
     public tutorialGroups?: TutorialGroup[];
     public onlineCourseConfiguration?: OnlineCourseConfiguration;
+    public courseInformationSharingConfiguration?: CourseInformationSharingConfiguration;
 
     // helper attributes
     public isAtLeastTutor?: boolean;
@@ -92,10 +115,10 @@ export class Course implements BaseEntity {
         this.maxComplaintTextLimit = 2000; // default value
         this.maxComplaintResponseTextLimit = 2000; // default value
         this.complaintsEnabled = true; // default value
-        this.postsEnabled = true; // default value
         this.requestMoreFeedbackEnabled = true; // default value
         this.maxRequestMoreFeedbackTimeDays = 7; // default value
         this.accuracyOfScores = 1; // default value
+        this.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING; // default value
     }
 
     /**

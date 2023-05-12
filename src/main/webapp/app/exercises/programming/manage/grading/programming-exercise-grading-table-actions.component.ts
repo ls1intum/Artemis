@@ -4,7 +4,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { GradingTab } from 'app/exercises/programming/manage/grading/programming-exercise-configure-grading.component';
-import { ExerciseImportComponent } from 'app/exercises/shared/import/exercise-import.component';
+import { ExerciseImportWrapperComponent } from 'app/exercises/shared/import/exercise-import-wrapper/exercise-import-wrapper.component';
 
 /**
  * The actions of the test case table:
@@ -29,7 +29,7 @@ export class ProgrammingExerciseGradingTableActionsComponent {
     constructor(private modalService: NgbModal) {}
 
     openImportModal() {
-        const modalRef = this.modalService.open(ExerciseImportComponent, { size: 'lg', backdrop: 'static' });
+        const modalRef = this.modalService.open(ExerciseImportWrapperComponent, { size: 'lg', backdrop: 'static' });
         modalRef.componentInstance.exerciseType = ExerciseType.PROGRAMMING;
         modalRef.componentInstance.programmingLanguage = this.exercise.programmingLanguage;
         modalRef.result.then((result: ProgrammingExercise) => this.onCategoryImport.emit(result.id));

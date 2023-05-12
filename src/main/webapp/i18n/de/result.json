@@ -3,10 +3,9 @@
         "result": {
             "home": {
                 "title": "Results",
-                "createLabel": "Result erstellen",
-                "createOrEditLabel": "Result erstellen oder bearbeiten"
+                "createLabel": "Bewertung erstellen"
             },
-            "created": "Result erstellt mit ID {{ param }}",
+            "created": "Bewertung erstellt mit ID {{ param }}",
             "updated": "Bewertung aktualisiert mit ID {{ param }}",
             "deleted": "Bewertung gelöscht mit ID {{ param }}",
             "delete": {

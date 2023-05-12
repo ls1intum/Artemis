@@ -34,6 +34,10 @@ artemis:
     external-system-request:
         batch-size: 50  # wait the time below after 50 requests
         batch-waiting-time: 30000   # in ms = 30s
+    iosAppId: "2J3C6P6X3N.de.tum.cit.artemis"
+    androidAppPackage: "de.tum.informatics.www1.artemis.native_app.android"
+    androidSha256CertFingerprints: "D4:5C:58:77:B2:4E:2F:15:60:59:BB:C0:9C:1C:B0:A9:FD:3D:D8:F3:88:A8:B3:EA:DB:05:06:3B:7E:AF:0C:4F"
+
     continuous-integration:
         # Defines the used docker images for certain programming languages.
         # For each language at least the `default` image has to be defined.
@@ -74,7 +78,7 @@ artemis:
                     default: "tizianleonhardt/era-artemis-assembler:latest"
                 swift:
                     # possible overrides: xcode
-                    default: "norionomura/swiftlint:latest"
+                    default: "ls1tum/artemis-swift-swiftlint-docker:latest"
                 ocaml:
                     default: "ls1tum/artemis-ocaml-docker:v1"
 
@@ -170,6 +174,8 @@ spring:
             hibernate.jdbc.batch_size: 25
             hibernate.jdbc.time_zone: UTC
             hibernate.jdbc.lob.non_contextual_creation: true
+    liquibase:
+        contexts: prod
     messages:
         basename: i18n/messages
     main:
@@ -222,6 +228,8 @@ spring:
           - org.springframework.boot.actuate.autoconfigure.metrics.startup.StartupTimeMetricsListenerAutoConfiguration
           - org.springframework.boot.actuate.autoconfigure.metrics.task.TaskExecutorMetricsAutoConfiguration
           - org.springframework.boot.actuate.autoconfigure.metrics.web.tomcat.TomcatMetricsAutoConfiguration
+    beaninfo:
+        ignore: true
 
 hazelcast:
     phone:

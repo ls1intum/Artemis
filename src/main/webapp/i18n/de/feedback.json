@@ -3,8 +3,7 @@
         "feedback": {
             "home": {
                 "title": "Feedbacks",
-                "createLabel": "Feedback erstellen",
-                "createOrEditLabel": "Feedback erstellen oder bearbeiten"
+                "createLabel": "Feedback erstellen"
             },
             "created": "Feedback erstellt mit ID {{ param }}",
             "updated": "Feedback aktualisiert mit ID {{ param }}",
@@ -19,9 +18,17 @@
             "detailText": "Detailtext",
             "type": "Type",
             "result": "Ergebnis",
+            "truncatedInfo": "Das Feedback is zu lang, um komplett angezeigt zu werden, und wurde gekürzt.",
+            "downloadFullFeedback": "Vollständiges Feedback herunterladen",
             "modal": {
                 "submitted": "Abgegeben",
                 "linkedToCommit": "verknüpft mit Commit"
+            },
+            "group": {
+                "wrong": "Falsch",
+                "warning": "Warnung",
+                "info": "Info",
+                "correct": "Korrekt"
             }
         }
     }

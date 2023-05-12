@@ -508,6 +508,9 @@ describe('ExamParticipationComponent', () => {
 
         it('should correctly increase working time to next day', () => {
             jest.spyOn(websocketService, 'receive').mockReturnValue(of(9001));
+            // the following line uses the current time zone and therefore avoids a time zone flaky test
+            // (if left out, the test would pass in the German time zone and fail in most other time zones)
+            const startDate = dayjs().set('h', 23); //today at 23:00
             comp.initIndividualEndDates(startDate);
             expect(comp.studentExam.workingTime).toBe(9001);
             expect(artemisDatePipeSpy).toHaveBeenCalledWith(startDate.add(9001, 'seconds'), 'short');
@@ -735,5 +738,45 @@ describe('ExamParticipationComponent', () => {
         expect(triggerSpy).toHaveBeenCalledWith(true, false);
         expect(comp.exerciseIndex).toBe(1);
         expect(createParticipationForExerciseSpy).toHaveBeenCalledWith(exercise2);
+    });
+
+    describe('toggleHandInEarly', () => {
+        it('should reset pageComponentVisited after the hand-in-early window is closed', () => {
+            // Create exercises
+            const exercise1 = new ProgrammingExercise(new Course(), undefined);
+            exercise1.id = 15;
+            const exercise2 = new ProgrammingExercise(new Course(), undefined);
+            exercise2.id = 42;
+            exercise2.allowOnlineEditor = true;
+            exercise2.allowOfflineIde = false;
+            const exercise3 = new ProgrammingExercise(new Course(), undefined);
+            exercise3.id = 16;
+            exercise3.allowOnlineEditor = false;
+            exercise3.allowOfflineIde = true;
+
+            // Set initial component state
+            comp.handInEarly = true;
+            comp.studentExam = new StudentExam();
+            comp.studentExam.exercises = [exercise1, exercise2, exercise3];
+            comp.activeExamPage = {
+                isOverviewPage: false,
+                exercise: exercise2,
+            };
+            comp.exerciseIndex = 1;
+            comp.pageComponentVisited = [true, true, true];
+
+            // Spy on the private method resetPageComponentVisited
+            const resetPageComponentVisitedSpy = jest.spyOn<any, any>(comp, 'resetPageComponentVisited');
+
+            // Call toggleHandInEarly to change the handInEarly state
+            comp.toggleHandInEarly();
+
+            // Verify that resetPageComponentVisited has been called with the correct index
+            expect(resetPageComponentVisitedSpy).toHaveBeenCalledOnceWith(1);
+
+            // Verify that the pageComponentVisited array and exerciseIndex are updated correctly
+            expect(comp.pageComponentVisited).toEqual([false, true, false]);
+            expect(comp.exerciseIndex).toBe(1);
+        });
     });
 });

@@ -15,11 +15,13 @@ import org.springframework.util.LinkedMultiValueMap;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.CourseInformationSharingConfiguration;
 import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
 import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.CourseWideContext;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.metis.PostSortCriterion;
+import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.metis.AnswerPostRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
 
@@ -32,6 +34,9 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
     @Autowired
     private PostRepository postRepository;
+
+    @Autowired
+    private CourseRepository courseRepository;
 
     private List<Post> existingPostsWithAnswers;
 
@@ -52,7 +57,7 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @BeforeEach
     void initTestCase() {
 
-        database.addUsers(TEST_PREFIX, 5, 5, 4, 4);
+        database.addUsers(TEST_PREFIX, 4, 4, 4, 1);
         student1 = database.getUserByLogin(TEST_PREFIX + "student1");
 
         // initialize test setup and get all existing posts with answers (four posts, one in each context, are initialized with one answer each): 4 answers in total (with author
@@ -114,6 +119,38 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testPostingAllowedIfMessagingOnlySetting() throws Exception {
+        messagingFeatureDisabledTest(CourseInformationSharingConfiguration.MESSAGING_ONLY);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testPostingNotAllowedIfDisabledSetting() throws Exception {
+        messagingFeatureDisabledTest(CourseInformationSharingConfiguration.DISABLED);
+    }
+
+    private void messagingFeatureDisabledTest(CourseInformationSharingConfiguration courseInformationSharingConfiguration) throws Exception {
+        var persistedCourse = courseRepository.findByIdElseThrow(courseId);
+        persistedCourse.setCourseInformationSharingConfiguration(courseInformationSharingConfiguration);
+        persistedCourse = courseRepository.saveAndFlush(persistedCourse);
+        assertThat(persistedCourse.getCourseInformationSharingConfiguration()).isEqualTo(courseInformationSharingConfiguration);
+
+        AnswerPost answerPostToSave = createAnswerPost(existingPostsWithAnswersCourseWide.get(0));
+
+        var answerPostCount = answerPostRepository.count();
+
+        request.postWithResponseBody("/api/courses/" + courseId + "/answer-posts", answerPostToSave, AnswerPost.class, HttpStatus.BAD_REQUEST);
+
+        var newAnswerPostCount = answerPostRepository.count() - answerPostCount;
+        assertThat(newAnswerPostCount).isZero();
+
+        // active messaging again
+        persistedCourse.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
+        courseRepository.saveAndFlush(persistedCourse);
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCreateAnswerPostInLecture_asInstructor() throws Exception {
         AnswerPost answerPostToSave = createAnswerPost(existingPostsWithAnswersInLecture.get(0));
@@ -164,7 +201,7 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         var newAnswerPostCount = answerPostRepository.count() - answerPostCount;
         assertThat(postRepository.findPostByIdElseThrow(existingAnswerPostToSave.getPost().getId()).getAnswerCount())
                 .isEqualTo(existingAnswerPostToSave.getPost().getAnswerCount());
-        assertThat(newAnswerPostCount).isEqualTo(0);
+        assertThat(newAnswerPostCount).isZero();
     }
 
     // GET
@@ -631,7 +668,7 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
         request.delete("/api/courses/" + courseId + "/answer-posts/" + answerPostToNotDelete.getId(), HttpStatus.FORBIDDEN);
         var newAnswerPostCount = answerPostRepository.count() - answerPostCount;
-        assertThat(newAnswerPostCount).isEqualTo(0);
+        assertThat(newAnswerPostCount).isZero();
         // should not decrement answerCount
         assertThat(postRepository.findPostByIdElseThrow(answerPostToNotDelete.getPost().getId()).getAnswerCount()).isEqualTo(answerPostToNotDelete.getPost().getAnswerCount());
     }
