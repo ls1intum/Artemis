@@ -21,7 +21,7 @@ export class LectureUpdateWizardComponent implements OnInit {
     @Input() isSaving: boolean;
     @Input() startDate: string;
     @Input() endDate: string;
-    @Input() channelName: string;
+    @Input() channelName: string | undefined;
     @Output() channelNameChange = new EventEmitter<string>();
 
     @ViewChild(LectureUpdateWizardUnitsComponent, { static: false }) unitsComponent: LectureUpdateWizardUnitsComponent;

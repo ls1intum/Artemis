@@ -30,7 +30,7 @@ export class LectureService {
             .pipe(map((res: EntityResponseType) => this.convertLectureResponseDatesFromServer(res)));
     }
 
-    update(lecture: Lecture, channelName: string): Observable<EntityResponseType> {
+    update(lecture: Lecture, channelName: string | undefined): Observable<EntityResponseType> {
         const copy = this.convertLectureDatesFromClient(lecture);
         return this.http
             .put<Lecture>(this.resourceUrl, { lecture: copy, channelName }, { observe: 'response' })

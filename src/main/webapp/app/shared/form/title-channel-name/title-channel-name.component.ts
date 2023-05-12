@@ -6,25 +6,24 @@ import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 })
 export class TitleChannelNameComponent implements OnInit {
     @Input() title: string | undefined;
-    @Input() channelName: string;
+    @Input() channelName: string | undefined;
     @Input() channelNamePrefix: string;
 
     @Output() titleChange = new EventEmitter<string>();
     @Output() channelNameChange = new EventEmitter<string>();
+
     ngOnInit(): void {
         if (!this.channelNamePrefix) {
             this.channelNamePrefix = '';
-        }
-
-        if (!this.channelName) {
-            this.formatChannelName(this.channelNamePrefix + (this.title || ''));
         }
     }
 
     updateTitle(newTitle: string) {
         this.title = newTitle;
         this.titleChange.emit(this.title);
-        this.formatChannelName(this.channelNamePrefix + this.title);
+        if (this.channelName !== undefined) {
+            this.formatChannelName(this.channelNamePrefix + this.title);
+        }
     }
 
     formatChannelName(newName: string) {

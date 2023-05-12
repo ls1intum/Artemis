@@ -10,7 +10,7 @@ import { Lecture } from 'app/entities/lecture.model';
 export class LectureUpdateWizardTitleComponent {
     @Input() currentStep: number;
     @Input() lecture: Lecture;
-    @Input() channelName: string;
+    @Input() channelName: string | undefined;
     @Output() channelNameChange = new EventEmitter<string>();
 
     domainCommandsDescription = [new KatexCommand()];

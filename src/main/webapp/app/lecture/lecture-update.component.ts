@@ -29,7 +29,7 @@ export class LectureUpdateComponent implements OnInit {
 
     EditorMode = EditorMode;
     lecture: Lecture;
-    channelName: string;
+    channelName: string | undefined;
     isSaving: boolean;
     isProcessing: boolean;
     processUnitMode: boolean;
@@ -81,7 +81,7 @@ export class LectureUpdateComponent implements OnInit {
             const lecture = data['lecture'];
             this.lecture = lecture ?? new Lecture();
 
-            this.channelName = this.lecture.channel?.name || '';
+            this.channelName = lecture ? this.lecture.channel?.name : '';
 
             const course = data['course'];
             if (course) {
@@ -115,7 +115,8 @@ export class LectureUpdateComponent implements OnInit {
         if (this.lecture.id !== undefined) {
             this.subscribeToSaveResponse(this.lectureService.update(this.lecture, this.channelName));
         } else {
-            this.subscribeToSaveResponse(this.lectureService.create(this.lecture, this.channelName));
+            // Newly created lectures must have a channel name, which cannot be undefined
+            this.subscribeToSaveResponse(this.lectureService.create(this.lecture, this.channelName!));
         }
     }
 
