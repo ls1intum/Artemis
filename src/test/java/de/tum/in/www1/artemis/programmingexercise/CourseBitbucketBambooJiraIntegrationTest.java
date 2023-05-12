@@ -137,6 +137,9 @@ class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringIntegration
         bitbucketRequestMockProvider.mockUpdateUserDetails(TEST_PREFIX + "student1", TEST_PREFIX + "student1@test.de",
                 TEST_PREFIX + "student1First " + TEST_PREFIX + "student1Last");
         bitbucketRequestMockProvider.mockAddUserToGroups();
+        bitbucketRequestMockProvider.mockUpdateUserDetails(TEST_PREFIX + "instructor1", TEST_PREFIX + "instructor1@test.de",
+                TEST_PREFIX + "instructor1First " + TEST_PREFIX + "instructor1Last");
+        bitbucketRequestMockProvider.mockAddUserToGroups();
         courseTestService.testCreateCourseWithDefaultChannels();
     }
 

@@ -484,12 +484,16 @@ public class CourseTestService {
         var student = userRepo.findOneWithGroupsAndAuthoritiesByLogin(userPrefix + "student1").get();
         mockDelegate.mockAddUserToGroupInUserManagement(student, course1.getDefaultStudentGroupName(), false);
 
+        var instructor1 = userRepo.findOneWithGroupsAndAuthoritiesByLogin(userPrefix + "instructor1").get();
+        mockDelegate.mockAddUserToGroupInUserManagement(instructor1, course1.getDefaultInstructorGroupName(), false);
+
         var result = request.getMvc().perform(buildCreateCourse(course1)).andExpect(status().isCreated()).andReturn();
         SecurityContextHolder.setContext(TestSecurityContextHolder.getContext());
         course1 = objectMapper.readValue(result.getResponse().getContentAsString(), Course.class);
         assertThat(courseRepo.findByIdElseThrow(course1.getId())).isNotNull();
 
         request.postWithoutLocation("/api/courses/" + course1.getId() + "/students/" + userPrefix + "student1", null, HttpStatus.OK, null);
+        request.postWithoutLocation("/api/courses/" + course1.getId() + "/instructors/" + userPrefix + "instructor1", null, HttpStatus.OK, null);
 
         // Check if all default channels are created
         var channels = channelRepository.findChannelsByCourseId(course1.getId());
