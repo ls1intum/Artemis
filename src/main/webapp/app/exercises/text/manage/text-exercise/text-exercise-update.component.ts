@@ -57,6 +57,7 @@ export class TextExerciseUpdateComponent implements OnInit {
     // Icons
     faSave = faSave;
     faBan = faBan;
+    channelName: string | undefined;
 
     constructor(
         private alertService: AlertService,
@@ -95,6 +96,7 @@ export class TextExerciseUpdateComponent implements OnInit {
                 this.textExercise.channel = new Channel();
                 this.textExercise.channel.name = '';
             }
+            this.channelName = this.textExercise.channel.name;
             this.backupExercise = cloneDeep(this.textExercise);
             this.examCourseId = this.textExercise.course?.id || this.textExercise.exerciseGroup?.exam?.course?.id;
         });
@@ -184,6 +186,7 @@ export class TextExerciseUpdateComponent implements OnInit {
 
     save() {
         this.isSaving = true;
+        this.textExercise.channel.name = this.channelName;
 
         new SaveExerciseCommand(this.modalService, this.popupService, this.textExerciseService, this.backupExercise, this.editType, this.alertService)
             .save(this.textExercise, this.isExamMode, this.notificationText)
