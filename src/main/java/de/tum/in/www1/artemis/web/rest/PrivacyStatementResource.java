@@ -2,18 +2,19 @@ package de.tum.in.www1.artemis.web.rest;
 
 import javax.ws.rs.BadRequestException;
 
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.PrivacyStatement;
 import de.tum.in.www1.artemis.domain.PrivacyStatementLanguage;
+import de.tum.in.www1.artemis.security.annotations.EnforceAdmin;
+import de.tum.in.www1.artemis.security.annotations.EnforceNothing;
 import de.tum.in.www1.artemis.service.PrivacyStatementService;
 
 /**
  * REST controller for managing and retrieving the Privacy Statement.
  */
 @RestController
-@RequestMapping("/api")
+@RequestMapping("api/")
 public class PrivacyStatementResource {
 
     private final PrivacyStatementService privacyStatementService;
@@ -29,7 +30,8 @@ public class PrivacyStatementResource {
      * @param language the language of the privacy statement
      * @return the privacy statement
      */
-    @GetMapping("/privacy-statement")
+    @EnforceNothing
+    @GetMapping("privacy-statement")
     public PrivacyStatement getPrivacyStatement(@RequestParam("language") String language) {
         if (!PrivacyStatementLanguage.isValidShortName(language)) {
             throw new BadRequestException("Language not supported");
@@ -44,8 +46,8 @@ public class PrivacyStatementResource {
      * @param language the language of the privacy statement
      * @return the privacy statement
      */
-    @GetMapping("/privacy-statement-for-update")
-    @PreAuthorize("hasRole('ADMIN')")
+    @EnforceAdmin
+    @GetMapping("privacy-statement-for-update")
     public PrivacyStatement getPrivacyStatementForUpdate(@RequestParam("language") String language) {
         if (!PrivacyStatementLanguage.isValidShortName(language)) {
             throw new BadRequestException("Language not supported");
@@ -59,8 +61,8 @@ public class PrivacyStatementResource {
      * @param privacyStatement the privacy statement to update
      * @return the updated privacy statement
      */
-    @PutMapping("/privacy-statement")
-    @PreAuthorize("hasRole('ADMIN')")
+    @EnforceAdmin
+    @PutMapping("privacy-statement")
     public PrivacyStatement updatePrivacyStatement(@RequestBody PrivacyStatement privacyStatement) {
         return privacyStatementService.updatePrivacyStatement(privacyStatement);
     }
