@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { TextSubmissionAssessmentComponent } from 'app/exercises/text/assess/text-submission-assessment.component';
 import { ArtemisTestModule } from '../../test.module';
 import { By } from '@angular/platform-browser';
@@ -54,11 +54,9 @@ describe('TextSubmissionAssessmentComponent', () => {
     let exercise: TextExercise;
     let participation: StudentParticipation;
     let submission: TextSubmission;
-
-    let mockActivatedRoute;
+    let mockActivatedRoute: ActivatedRoute;
 
     beforeEach(() => {
-        // data set up
         exercise = {
             id: 1,
             type: ExerciseType.TEXT,
@@ -126,7 +124,7 @@ describe('TextSubmissionAssessmentComponent', () => {
             data: of({
                 studentParticipation: participation,
             }),
-        };
+        } as unknown as ActivatedRoute;
 
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, RouterTestingModule],
@@ -241,15 +239,14 @@ describe('TextSubmissionAssessmentComponent', () => {
         expect(errorStub).toHaveBeenCalledWith('artemisApp.textAssessment.error.invalidAssessments');
     });
 
-    it('should display error when submitting but assessment invalid', async () => {
+    it('should display error when submitting but assessment invalid', () => {
         component.validateFeedback();
         const alertService = TestBed.inject(AlertService);
         const errorStub = jest.spyOn(alertService, 'error');
         component.result = getLatestSubmissionResult(submission);
 
-        await component.ngOnInit();
-
         component.submit();
+
         expect(errorStub).toHaveBeenCalledWith('artemisApp.textAssessment.error.invalidAssessments');
     });
 
@@ -265,9 +262,6 @@ describe('TextSubmissionAssessmentComponent', () => {
 
         const alertService = TestBed.inject(AlertService);
         const errorStub = jest.spyOn(alertService, 'error');
-
-        // add an unreferenced feedback to make the assessment invalid
-        component.unreferencedFeedback = [new Feedback()];
 
         component.updateAssessmentAfterComplaint(assessmentAfterComplaint);
 
@@ -374,11 +368,12 @@ describe('TextSubmissionAssessmentComponent', () => {
         expect(cancelAssessmentStub).toHaveBeenCalledWith(participation?.id, submission.id);
     });
 
-    it('should go to next submission', async () => {
+    it('should go to next submission', fakeAsync(() => {
         component['setPropertiesFromServerResponse'](participation);
         const routerSpy = jest.spyOn(router, 'navigate');
 
-        await component.ngOnInit();
+        component.ngOnInit();
+        tick();
 
         const url = [
             '/course-management',
@@ -395,10 +390,10 @@ describe('TextSubmissionAssessmentComponent', () => {
         ];
         const queryParams = { queryParams: { 'correction-round': 0 } };
 
-        await component.nextSubmission();
+        component.nextSubmission();
         expect(routerSpy).toHaveBeenCalledOnce();
         expect(routerSpy).toHaveBeenCalledWith(url, queryParams);
-    });
+    }));
 
     it('should navigate to conflicting submission', () => {
         const routerSpy = jest.spyOn(router, 'navigate');
@@ -408,10 +403,6 @@ describe('TextSubmissionAssessmentComponent', () => {
         const url = [
             '/course-management',
             component.courseId,
-            'exams',
-            component.examId,
-            'exercise-groups',
-            component.exerciseGroupId,
             'text-exercises',
             component.exerciseId,
             'participations',
