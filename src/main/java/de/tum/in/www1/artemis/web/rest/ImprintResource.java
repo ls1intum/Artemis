@@ -13,7 +13,7 @@ import de.tum.in.www1.artemis.service.LegalDocumentService;
  * REST controller for managing and retrieving the imprint.
  */
 @RestController
-@RequestMapping("/api")
+@RequestMapping("api/")
 public class ImprintResource {
 
     private final LegalDocumentService legalDocumentService;
@@ -29,7 +29,7 @@ public class ImprintResource {
      * @param language the language of the imprint
      * @return the imprint
      */
-    @GetMapping("/imprint")
+    @GetMapping("imprint")
     public Imprint getImprint(@RequestParam("language") String language) {
         if (!LegalDocumentLanguage.isValidShortName(language)) {
             throw new BadRequestException("Language not supported");
@@ -44,7 +44,7 @@ public class ImprintResource {
      * @param language the language of the imprint
      * @return the imprint with the given language
      */
-    @GetMapping("/imprint-for-update")
+    @GetMapping("imprint-for-update")
     @EnforceAdmin
     public Imprint getImprintForUpdate(@RequestParam("language") String language) {
         if (!LegalDocumentLanguage.isValidShortName(language)) {
@@ -59,7 +59,7 @@ public class ImprintResource {
      * @param imprint the imprint to update
      * @return the updated imprint
      */
-    @PutMapping("/imprint")
+    @PutMapping("imprint")
     @EnforceAdmin
     public Imprint updateImprint(@RequestBody Imprint imprint) {
         return legalDocumentService.updateImprint(imprint);

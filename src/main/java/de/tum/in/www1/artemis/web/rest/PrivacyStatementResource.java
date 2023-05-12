@@ -13,7 +13,7 @@ import de.tum.in.www1.artemis.service.LegalDocumentService;
  * REST controller for managing and retrieving the Privacy Statement.
  */
 @RestController
-@RequestMapping("/api")
+@RequestMapping("api/")
 public class PrivacyStatementResource {
 
     private final LegalDocumentService legalDocumentService;
@@ -29,7 +29,7 @@ public class PrivacyStatementResource {
      * @param language the language of the privacy statement
      * @return the privacy statement
      */
-    @GetMapping("/privacy-statement")
+    @GetMapping("privacy-statement")
     public PrivacyStatement getPrivacyStatement(@RequestParam(value = "language") String language) {
         if (!LegalDocumentLanguage.isValidShortName(language)) {
             throw new BadRequestException("Language not supported");
@@ -44,7 +44,7 @@ public class PrivacyStatementResource {
      * @param language the language of the privacy statement
      * @return the privacy statement
      */
-    @GetMapping("/privacy-statement-for-update")
+    @GetMapping("privacy-statement-for-update")
     @EnforceAdmin
     public PrivacyStatement getPrivacyStatementForUpdate(@RequestParam("language") String language) {
         if (!LegalDocumentLanguage.isValidShortName(language)) {
@@ -59,7 +59,7 @@ public class PrivacyStatementResource {
      * @param privacyStatement the privacy statement to update
      * @return the updated privacy statement
      */
-    @PutMapping("/privacy-statement")
+    @PutMapping("privacy-statement")
     @EnforceAdmin
     public PrivacyStatement updatePrivacyStatement(@RequestBody PrivacyStatement privacyStatement) {
         return legalDocumentService.updatePrivacyStatement(privacyStatement);
