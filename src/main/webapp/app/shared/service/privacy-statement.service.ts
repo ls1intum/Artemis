@@ -10,7 +10,7 @@ export class PrivacyStatementService {
     constructor(private http: HttpClient) {}
 
     getPrivacyStatement(language: PrivacyStatementLanguage): Observable<PrivacyStatement> {
-        return this.http.get<PrivacyStatement>('api/privacy-statement', {
+        return this.http.get<PrivacyStatement>('api/public/privacy-statement', {
             params: new HttpParams().set('language', language),
         });
     }
