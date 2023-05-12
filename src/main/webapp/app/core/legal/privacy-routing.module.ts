@@ -2,6 +2,7 @@ import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 
 import { PrivacyComponent } from 'app/core/legal/privacy.component';
+import { DataExportComponent } from 'app/core/legal/data-export/data-export.component';
 
 const routes: Routes = [
     {
@@ -25,6 +26,13 @@ const routes: Routes = [
                 },
             },
         ],
+    },
+    {
+        path: 'data-export',
+        component: DataExportComponent,
+        data: {
+            authorities: ['ADMIN'],
+        },
     },
 ];
 

@@ -4,6 +4,7 @@ import { PrivacyStatementService } from 'app/shared/service/privacy-statement.se
 import { PrivacyStatementLanguage } from 'app/entities/privacy-statement.model';
 import { Subscription } from 'rxjs';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
+import { AccountService } from 'app/core/auth/account.service';
 
 @Component({
     selector: 'jhi-privacy',
@@ -16,8 +17,14 @@ import { JhiLanguageHelper } from 'app/core/language/language.helper';
 export class PrivacyComponent implements AfterViewInit, OnInit, OnDestroy {
     privacyStatement: string;
     private languageChangeSubscription?: Subscription;
+    isAdmin: boolean;
 
-    constructor(private route: ActivatedRoute, private privacyStatementService: PrivacyStatementService, private languageHelper: JhiLanguageHelper) {}
+    constructor(
+        private route: ActivatedRoute,
+        private privacyStatementService: PrivacyStatementService,
+        private languageHelper: JhiLanguageHelper,
+        private accountService: AccountService,
+    ) {}
 
     /**
      * On init get the privacy statement file from the Artemis server and set up a subscription to fetch the file again if the language was changed.
