@@ -18,10 +18,6 @@ services:
             - artemis-data:/opt/artemis/data
         env_file:
             - ./artemis/config/prod-application-local.env
-        # environments can also be used for custom overrides (alternative to application-local.yml)
-        # the following environments are necessary for docker images orchestrated by docker compose
-        environment:
-            SPRING_PROFILES_ACTIVE: artemis,scheduling,athene,prod,docker
         # if you need to use another port than 8080 or one fixed port for all artemis-app containers in the future
         # you will probably not be able to override this setting outside the artemis.yml
         # as stated in the docker compose docs (at least not when this was committed)
