@@ -52,7 +52,6 @@ export const __VERSION__ = ${JSON.stringify(process.env.APP_VERSION || inferVers
 // The root URL for API calls, ending with a '/' - for example: \`"https://www.jhipster.tech:8081/myservice/"\`.
 // If you use an API server, in \`prod\` mode, you will need to enable CORS
 // (see the \`jhipster.cors\` common JHipster property in the \`application-*.yml\` configurations)
-export const SERVER_API_URL = '';
 export const I18N_HASH = ${JSON.stringify(languagesHash.hash)};
 `;
 fs.writeFileSync(path.resolve(__dirname, 'src', 'main', 'webapp', 'app', 'environments', 'environment.override.ts'), environmentConfig);
