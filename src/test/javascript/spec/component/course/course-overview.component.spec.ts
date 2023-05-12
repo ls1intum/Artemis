@@ -238,6 +238,23 @@ describe('CourseOverviewComponent', () => {
         });
     });
 
+    it.each([true, false])('should determine once if there are unread messages', async (hasNewMessages: boolean) => {
+        const spy = jest.spyOn(metisConversationService, 'checkForUnreadMessages');
+        metisConversationService._hasUnreadMessages$.next(hasNewMessages);
+
+        await component.ngOnInit();
+
+        expect(component.hasUnreadMessages).toBe(hasNewMessages);
+
+        const tabs = ['messages', 'exercises', 'messages'];
+        tabs.forEach((tab) => {
+            route.snapshot.firstChild!.routeConfig!.path = tab;
+            component.onSubRouteActivate({ controlConfiguration: undefined });
+
+            expect(spy).toHaveBeenCalledOnce();
+        });
+    });
+
     it('should redirect to the registration page if the API endpoint returned a 403, but the user can register', fakeAsync(() => {
         // mock error response
         findOneForDashboardStub.mockReturnValue(

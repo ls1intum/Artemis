@@ -187,7 +187,7 @@ export class MetisConversationService implements OnDestroy {
     public setUpConversationService = (course: Course): Observable<never> => {
         this._courseId = course.id!;
         this._course = course;
-        return this.conversationService.getConversationsOfUser(this._course.id ?? 0).pipe(
+        return this.conversationService.getConversationsOfUser(this._courseId).pipe(
             map((conversations: HttpResponse<ConversationDto[]>) => {
                 return conversations.body ?? [];
             }),
@@ -215,6 +215,25 @@ export class MetisConversationService implements OnDestroy {
             // service is ready to use and cached values can be received via the respective replay subjects
             switchMap(() => EMPTY),
         );
+    };
+
+    checkForUnreadMessages = (course: Course) => {
+        if (!course?.id) {
+            return;
+        }
+
+        this.conversationService.checkForUnreadMessages(course.id).subscribe({
+            next: (hasNewMessages) => {
+                console.log(hasNewMessages?.body);
+                if (hasNewMessages?.body !== this.hasUnreadMessages) {
+                    this.hasUnreadMessages = hasNewMessages?.body ?? false;
+                    this._hasUnreadMessages$.next(this.hasUnreadMessages);
+                }
+            },
+            error: (errorResponse: HttpErrorResponse) => {
+                onError(this.alertService, errorResponse);
+            },
+        });
     };
 
     private hasUnreadMessagesCheck = (): void => {

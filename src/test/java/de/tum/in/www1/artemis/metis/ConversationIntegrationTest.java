@@ -282,6 +282,22 @@ class ConversationIntegrationTest extends AbstractConversationTest {
         conversationRepository.deleteById(channel.getId());
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void foo() throws Exception {
+        boolean unreadMessages = request.get("/api/courses/" + exampleCourseId + "/unread-messages", HttpStatus.OK, Boolean.class);
+        assertThat(unreadMessages).isFalse();
+
+        var oneToOneChat = request.postWithResponseBody("/api/courses/" + exampleCourseId + "/one-to-one-chats/", List.of(testPrefix + "tutor1"), OneToOneChatDTO.class,
+                HttpStatus.CREATED);
+        this.postInConversation(oneToOneChat.getId(), "instructor1");
+
+        database.changeUser(testPrefix + "tutor1");
+
+        unreadMessages = request.get("/api/courses/" + exampleCourseId + "/unread-messages", HttpStatus.OK, Boolean.class);
+        assertThat(unreadMessages).isTrue();
+    }
+
     private void assertConversationDTOTransientProperties(ConversationDTO conversationDTO, Boolean isCreator, Boolean isMember, Boolean hasChannelModerationRights,
             Boolean isChannelModerator) {
         assertThat(conversationDTO.getIsCreator()).isEqualTo(isCreator);

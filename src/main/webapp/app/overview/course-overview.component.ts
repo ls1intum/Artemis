@@ -41,6 +41,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     public messagesRouteLoaded: boolean;
 
     private conversationServiceInstantiated = false;
+    private checkedForUnreadMessages = false;
 
     // Rendered embedded view for controls in the bar so we can destroy it if needed
     private controlsEmbeddedView?: EmbeddedViewRef<any>;
@@ -114,6 +115,10 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
                         this.subscribeToHasUnreadMessages();
                     },
                 });
+        } else if (!this.checkedForUnreadMessages) {
+            this.metisConversationService.checkForUnreadMessages(this.course!);
+            this.subscribeToHasUnreadMessages();
+            this.checkedForUnreadMessages = true;
         }
     }
 

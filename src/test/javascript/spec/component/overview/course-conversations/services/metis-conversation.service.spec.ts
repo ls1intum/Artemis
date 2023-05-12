@@ -1,4 +1,4 @@
-import { TestBed } from '@angular/core/testing';
+import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { GroupChatService } from 'app/shared/metis/conversations/group-chat.service';
 import { MockProvider } from 'ng-mocks';
@@ -322,5 +322,19 @@ describe('MetisConversationService', () => {
                 },
             });
         });
+    });
+
+    it.each([false, true])('should update subscription for unread messages', (unreadMessages: boolean) => {
+        jest.spyOn(conversationService, 'checkForUnreadMessages').mockReturnValue(of(new HttpResponse<boolean>({ body: unreadMessages })));
+        let numberOfSubscriptions = 0;
+
+        metisConversationService.hasUnreadMessages$.pipe().subscribe((hasUnreadMessages: boolean) => {
+            expect(hasUnreadMessages).toBeTrue();
+            numberOfSubscriptions++;
+        });
+
+        metisConversationService.checkForUnreadMessages(course);
+
+        expect(numberOfSubscriptions).toBe(unreadMessages ? 1 : 0);
     });
 });
