@@ -38,7 +38,7 @@ export class IrisService implements OnDestroy {
      * @return {Observable<IrisMessage>} created message
      */
     createIrisMessage(message: IrisMessage): Observable<IrisMessage> {
-        return this.messageService.create(this.sessionId, message).pipe(map((res: HttpResponse<IrisMessage>) => res.body!));
+        return this.messageService.createMessage(this.sessionId, message).pipe(map((res: HttpResponse<IrisMessage>) => res.body!));
     }
     /**
      * Creates (and updates) the websocket channel for receiving messages in dedicated channels;
