@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -31,6 +32,7 @@ import de.tum.in.www1.artemis.service.dto.OpenAIChatResponseDTO;
  * A service which sends REST requests to the GPT-3.5 API to generate responses to Iris conversations.
  */
 @Service
+@Profile("gpt3_5")
 public class IrisGPT3_5Service implements IrisModel {
 
     private final Logger log = LoggerFactory.getLogger(IrisGPT3_5Service.class);
@@ -104,6 +106,7 @@ public class IrisGPT3_5Service implements IrisModel {
             String responseBody = restTemplate.postForObject(apiURL.toString(), request, String.class);
             log.debug("Response body: {}", responseBody);
 
+            // TODO: Create DTO for error responses, and handle them
             OpenAIChatResponseDTO response = jsonMapper.readValue(responseBody, OpenAIChatResponseDTO.class);
             var irisMessage = convertToIrisMessage(response.getChoices().get(0).getMessage());
 
@@ -142,7 +145,7 @@ public class IrisGPT3_5Service implements IrisModel {
     private Map<String, Object> createRequestParams(List<IrisMessage> conversationHistory) {
         Map<String, Object> parameters = new HashMap<>();
         parameters.put("model", model);
-        parameters.put("messages", convertMessages(conversationHistory));
+        parameters.put("messages", toOpenAIFormat(conversationHistory));
         parameters.put("temperature", temperature);
         parameters.put("max_tokens", maxGeneratedTokens);
         if (stopSequences.length > 0)
@@ -164,24 +167,23 @@ public class IrisGPT3_5Service implements IrisModel {
     }
 
     /**
-     * Converts the system instructions and conversation history into GPT3_5's message format.
+     * Converts a list of IrisMessages into OpenAI's message format.
      *
      * @param conversationHistory The conversation history to convert.
      * @return The converted messages.
      */
-    private static List<Map<String, String>> convertMessages(List<IrisMessage> conversationHistory) {
-        // TODO: Sanitize user input.
-        return conversationHistory.stream().map(IrisGPT3_5Service::toRoleMessage).toList();
+    private static List<Map<String, String>> toOpenAIFormat(List<IrisMessage> conversationHistory) {
+        return conversationHistory.stream().map(IrisGPT3_5Service::toOpenAIFormat).toList();
     }
 
     /**
-     * Converts an IrisMessage into GPT3_5's message format, a map with the keys "role" and "content". The value of
-     * "role" is either "user", "assistant" or "system", depending on the sender of the message.
+     * Converts a single IrisMessage into OpenAI's message format, a map with the keys "role" and "content".
+     * The value of "role" is either "user", "assistant" or "system", depending on the sender of the message.
      *
      * @param message The message to convert.
      * @return The converted message.
      */
-    private static Map<String, String> toRoleMessage(IrisMessage message) {
+    private static Map<String, String> toOpenAIFormat(IrisMessage message) {
         // @formatter:off
         return Map.of(
                 "role", toRole(message.getSender()),
@@ -191,10 +193,10 @@ public class IrisGPT3_5Service implements IrisModel {
     }
 
     /**
-     * Converts an IrisMessageSender into GPT3_5's role format, either "user", "assistant" or "system".
+     * Converts an IrisMessageSender into OpenAI's role format, either "user", "assistant" or "system".
      *
      * @param sender The sender to convert.
-     * @return The equivalent role, either "user", "assistant" or "system".
+     * @return The equivalent OpenAI role, either "user", "assistant" or "system".
      */
     private static String toRole(IrisMessageSender sender) {
         return switch (sender) {

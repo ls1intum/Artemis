@@ -78,10 +78,10 @@ public class LearningGoalResource {
     }
 
     /**
-     * GET /competencies/:competencyId/title : Returns the title of the learning goal with the given id
+     * GET /competencies/:competencyId/title : Returns the title of the competency with the given id
      *
      * @param competencyId the id of the competency
-     * @return the title of the learning goal wrapped in an ResponseEntity or 404 Not Found if no learning goal with that id exists
+     * @return the title of the competency wrapped in an ResponseEntity or 404 Not Found if no competency with that id exists
      */
     @GetMapping("/competencies/{competencyId}/title")
     @PreAuthorize("hasRole('USER')")
@@ -91,7 +91,7 @@ public class LearningGoalResource {
     }
 
     /**
-     * Search for all learning goals by title and course title. The result is pageable.
+     * Search for all competencies by title and course title. The result is pageable.
      *
      * @param search The pageable search containing the page size, page number and query string
      * @return The desired page, sorted and matching the given query
@@ -104,10 +104,10 @@ public class LearningGoalResource {
     }
 
     /**
-     * GET /courses/:courseId/competencies : gets all the learning goals of a course
+     * GET /courses/:courseId/competencies : gets all the competencies of a course
      *
-     * @param courseId the id of the course for which the learning goals should be fetched
-     * @return the ResponseEntity with status 200 (OK) and with body the found learning goals
+     * @param courseId the id of the course for which the competencies should be fetched
+     * @return the ResponseEntity with status 200 (OK) and with body the found competencies
      */
     @GetMapping("/courses/{courseId}/competencies")
     @PreAuthorize("hasRole('USER')")
@@ -122,11 +122,11 @@ public class LearningGoalResource {
     }
 
     /**
-     * GET /courses/:courseId/competencies/:competencyId : gets the learning goal with the specified id
+     * GET /courses/:courseId/competencies/:competencyId : gets the competency with the specified id
      *
-     * @param competencyId the id of the learning goal to retrieve
-     * @param courseId     the id of the course to which the learning goal belongs
-     * @return the ResponseEntity with status 200 (OK) and with body the learning goal, or with status 404 (Not Found)
+     * @param competencyId the id of the competency to retrieve
+     * @param courseId     the id of the course to which the competency belongs
+     * @return the ResponseEntity with status 200 (OK) and with body the competency, or with status 404 (Not Found)
      */
     @GetMapping("/courses/{courseId}/competencies/{competencyId}")
     @PreAuthorize("hasRole('USER')")
@@ -150,11 +150,11 @@ public class LearningGoalResource {
     }
 
     /**
-     * PUT /courses/:courseId/competencies : Updates an existing learning goal.
+     * PUT /courses/:courseId/competencies : Updates an existing competency.
      *
-     * @param courseId     the id of the course to which the learning goals belongs
-     * @param learningGoal the learningGoal to update
-     * @return the ResponseEntity with status 200 (OK) and with body the updated learningGoal
+     * @param courseId     the id of the course to which the competencies belong
+     * @param learningGoal the competency to update
+     * @return the ResponseEntity with status 200 (OK) and with body the updated competency
      */
     @PutMapping("/courses/{courseId}/competencies")
     @PreAuthorize("hasRole('INSTRUCTOR')")
@@ -185,11 +185,11 @@ public class LearningGoalResource {
     }
 
     /**
-     * POST /courses/:courseId/competencies : creates a new learning goal.
+     * POST /courses/:courseId/competencies : creates a new competency.
      *
-     * @param courseId     the id of the course to which the learning goal should be added
-     * @param learningGoal the learning goal that should be created
-     * @return the ResponseEntity with status 201 (Created) and with body the new learning goal
+     * @param courseId     the id of the course to which the competency should be added
+     * @param learningGoal the competency that should be created
+     * @return the ResponseEntity with status 201 (Created) and with body the new competency
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("/courses/{courseId}/competencies")
@@ -219,7 +219,7 @@ public class LearningGoalResource {
     /**
      * POST /courses/:courseId/competencies/import : imports a new competency.
      *
-     * @param courseId           the id of the course to which the learning goal should be imported to
+     * @param courseId           the id of the course to which the competency should be imported to
      * @param competencyToImport the competency that should be imported
      * @return the ResponseEntity with status 201 (Created) and with body containing the imported competency
      * @throws URISyntaxException if the Location URI syntax is incorrect
@@ -247,8 +247,8 @@ public class LearningGoalResource {
     /**
      * DELETE /courses/:courseId/competencies/:competencyId
      *
-     * @param courseId     the id of the course to which the learning goal belongs
-     * @param competencyId the id of the learning goal to remove
+     * @param courseId     the id of the course to which the competency belongs
+     * @param competencyId the id of the competency to remove
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("/courses/{courseId}/competencies/{competencyId}")
@@ -282,12 +282,12 @@ public class LearningGoalResource {
     }
 
     /**
-     * GET /courses/:courseId/competencies/:competencyId/student-progress gets the learning goal progress for a user
+     * GET /courses/:courseId/competencies/:competencyId/student-progress gets the competency progress for a user
      *
-     * @param courseId     the id of the course to which the learning goal belongs
-     * @param competencyId the id of the learning goal for which to get the progress
+     * @param courseId     the id of the course to which the competency belongs
+     * @param competencyId the id of the competency for which to get the progress
      * @param refresh      whether to update the student progress or fetch it from the database (default)
-     * @return the ResponseEntity with status 200 (OK) and with the learning goal course performance in the body
+     * @return the ResponseEntity with status 200 (OK) and with the competency course performance in the body
      */
     @GetMapping("/courses/{courseId}/competencies/{competencyId}/student-progress")
     @PreAuthorize("hasRole('USER')")
@@ -311,11 +311,11 @@ public class LearningGoalResource {
     }
 
     /**
-     * GET /courses/:courseId/competencies/:competencyId/course-progress gets the learning goal progress for the whole course
+     * GET /courses/:courseId/competencies/:competencyId/course-progress gets the competency progress for the whole course
      *
-     * @param courseId     the id of the course to which the learning goal belongs
-     * @param competencyId the id of the learning goal for which to get the progress
-     * @return the ResponseEntity with status 200 (OK) and with the learning goal course performance in the body
+     * @param courseId     the id of the course to which the competency belongs
+     * @param competencyId the id of the competency for which to get the progress
+     * @return the ResponseEntity with status 200 (OK) and with the competency course performance in the body
      */
     @GetMapping("/courses/{courseId}/competencies/{competencyId}/course-progress")
     @PreAuthorize("hasRole('INSTRUCTOR')")
@@ -335,11 +335,11 @@ public class LearningGoalResource {
     }
 
     /**
-     * GET /courses/:courseId/competencies/:competencyId/relations get the relations for the learning goal
+     * GET /courses/:courseId/competencies/:competencyId/relations get the relations for the competency
      *
-     * @param courseId     the id of the course to which the learning goal belongs
-     * @param competencyId the id of the learning goal for which to fetch all relations
-     * @return the ResponseEntity with status 200 (OK) and with a list of relations for the learning goal in the body
+     * @param courseId     the id of the course to which the competency belongs
+     * @param competencyId the id of the competency for which to fetch all relations
+     * @return the ResponseEntity with status 200 (OK) and with a list of relations for the competency in the body
      */
     @GetMapping("/courses/{courseId}/competencies/{competencyId}/relations")
     @PreAuthorize("hasRole('USER')")
@@ -356,9 +356,9 @@ public class LearningGoalResource {
     /**
      * POST /courses/:courseId/competencies/:tailCompetencyId/relations/headCompetencyId
      *
-     * @param courseId         the id of the course to which the learning goals belong
-     * @param tailCompetencyId the id of the learning goal at the tail of the relation
-     * @param headCompetencyId the id of the learning goal at the head of the relation
+     * @param courseId         the id of the course to which the competencies belong
+     * @param tailCompetencyId the id of the competency at the tail of the relation
+     * @param headCompetencyId the id of the competency at the head of the relation
      * @param type             the type of the relation as request parameter
      * @return the ResponseEntity with status 200 (OK)
      */
@@ -380,6 +380,14 @@ public class LearningGoalResource {
             relation.setTailLearningGoal(tailLearningGoal);
             relation.setHeadLearningGoal(headLearningGoal);
             relation.setType(relationType);
+
+            var learningGoals = learningGoalRepository.findAllForCourse(course.getId());
+            var learningGoalRelations = learningGoalRelationRepository.findAllByCourseId(course.getId());
+            learningGoalRelations.add(relation);
+            if (learningGoalService.doesCreateCircularRelation(learningGoals, learningGoalRelations)) {
+                throw new BadRequestException("You can't define circular dependencies between competencies");
+            }
+
             learningGoalRelationRepository.save(relation);
 
             return ResponseEntity.ok().body(relation);
@@ -393,8 +401,8 @@ public class LearningGoalResource {
      * DELETE /courses/:courseId/competencies/:competencyId/relations/:competencyRelationId
      *
      * @param courseId             the id of the course
-     * @param competencyId         the id of the learning goal to which the relation belongs
-     * @param competencyRelationId the id of the learning goal relation
+     * @param competencyId         the id of the competency to which the relation belongs
+     * @param competencyRelationId the id of the competency relation
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("/courses/{courseId}/competencies/{competencyId}/relations/{competencyRelationId}")
@@ -418,8 +426,8 @@ public class LearningGoalResource {
     /**
      * GET /courses/:courseId/prerequisites
      *
-     * @param courseId the id of the course for which the learning goals should be fetched
-     * @return the ResponseEntity with status 200 (OK) and with body the found learning goals
+     * @param courseId the id of the course for which the competencies should be fetched
+     * @return the ResponseEntity with status 200 (OK) and with body the found competencies
      */
     @GetMapping("/courses/{courseId}/prerequisites")
     @PreAuthorize("hasRole('USER')")
@@ -441,8 +449,8 @@ public class LearningGoalResource {
     /**
      * POST /courses/:courseId/prerequisites/:competencyId
      *
-     * @param courseId     the id of the course for which the learning goal should be a prerequisite
-     * @param competencyId the id of the prerequisite (learning goal) to add
+     * @param courseId     the id of the course for which the competency should be a prerequisite
+     * @param competencyId the id of the prerequisite (competency) to add
      * @return the ResponseEntity with status 200 (OK)
      */
     @PostMapping("/courses/{courseId}/prerequisites/{competencyId}")
@@ -466,8 +474,8 @@ public class LearningGoalResource {
     /**
      * DELETE /courses/:courseId/prerequisites/:competencyId
      *
-     * @param courseId     the id of the course for which the learning goal is a prerequisite
-     * @param competencyId the id of the prerequisite (learning goal) to remove
+     * @param courseId     the id of the course for which the competency is a prerequisite
+     * @param competencyId the id of the prerequisite (competency) to remove
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("/courses/{courseId}/prerequisites/{competencyId}")
@@ -489,14 +497,14 @@ public class LearningGoalResource {
     }
 
     /**
-     * Link the learning goal to a set of lecture units (and exercises if it includes exercise units)
+     * Link the competency to a set of lecture units (and exercises if it includes exercise units)
      *
-     * @param learningGoal         The learning goal to be linked
-     * @param lectureUnitsToAdd    A set of lecture units to link to the specified learning goal
-     * @param lectureUnitsToRemove A set of lecture units to unlink from the specified learning goal
+     * @param learningGoal         The competency to be linked
+     * @param lectureUnitsToAdd    A set of lecture units to link to the specified competency
+     * @param lectureUnitsToRemove A set of lecture units to unlink from the specified competency
      */
     private void linkLectureUnitsToLearningGoal(LearningGoal learningGoal, Set<LectureUnit> lectureUnitsToAdd, Set<LectureUnit> lectureUnitsToRemove) {
-        // Remove the learning goal from the old lecture units
+        // Remove the competency from the old lecture units
         var lectureUnitsToRemoveFromDb = lectureUnitRepository.findAllByIdWithLearningGoalsBidirectional(lectureUnitsToRemove.stream().map(LectureUnit::getId).toList());
         lectureUnitRepository.saveAll(lectureUnitsToRemoveFromDb.stream().filter(lectureUnit -> !(lectureUnit instanceof ExerciseUnit)).map(lectureUnit -> {
             lectureUnit.getLearningGoals().remove(learningGoal);
@@ -508,7 +516,7 @@ public class LearningGoalResource {
                     return exercise;
                 }).collect(Collectors.toSet()));
 
-        // Add the learning goal to the new lecture units
+        // Add the competency to the new lecture units
         var lectureUnitsFromDb = lectureUnitRepository.findAllByIdWithLearningGoalsBidirectional(lectureUnitsToAdd.stream().map(LectureUnit::getId).toList());
         var lectureUnitsWithoutExercises = lectureUnitsFromDb.stream().filter(lectureUnit -> !(lectureUnit instanceof ExerciseUnit)).collect(Collectors.toSet());
         var exercises = lectureUnitsFromDb.stream().filter(lectureUnit -> lectureUnit instanceof ExerciseUnit).map(lectureUnit -> ((ExerciseUnit) lectureUnit).getExercise())
@@ -521,11 +529,11 @@ public class LearningGoalResource {
     }
 
     /**
-     * Checks if the user has the necessary permissions and the learning goal matches the course.
+     * Checks if the user has the necessary permissions and the competency matches the course.
      *
      * @param role         The minimal role the user must have in the course
      * @param course       The course for which to check the authorization role for
-     * @param learningGoal The learning goal to be accessed by the user
+     * @param learningGoal The competency to be accessed by the user
      */
     private void checkAuthorizationForLearningGoal(Role role, @NotNull Course course, @NotNull LearningGoal learningGoal) {
         if (learningGoal.getCourse() == null) {
@@ -536,5 +544,4 @@ public class LearningGoalResource {
         }
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(role, course, null);
     }
-
 }

@@ -23,7 +23,7 @@ import { MatChipInputEvent, MatChipsModule } from '@angular/material/chips';
 import { TranslateService } from '@ngx-translate/core';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { Title } from '@angular/platform-browser';
-import * as Sentry from '@sentry/browser';
+import * as Sentry from '@sentry/angular-ivy';
 import { LANGUAGES } from 'app/core/language/language.constants';
 import { AdminUserService } from 'app/core/user/admin-user.service';
 
@@ -205,6 +205,17 @@ describe('User Management Update Component', () => {
                 expect(setTitleOnTitleServiceSpy).not.toHaveBeenCalled();
             }),
         ));
+
+        it('foo', fakeAsync(() => {
+            // GIVEN
+            jest.spyOn(TestBed.inject(ProfileService), 'getProfileInfo').mockReturnValue(of({ activeProfiles: ['bamboo'] } as ProfileInfo));
+
+            // WHEN
+            comp.ngOnInit();
+
+            // THEN
+            expect(comp.editForm.controls['idInput']).toBeDefined();
+        }));
     });
 
     describe('save', () => {
