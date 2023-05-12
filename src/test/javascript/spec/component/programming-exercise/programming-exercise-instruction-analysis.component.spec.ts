@@ -3,6 +3,7 @@ import { By } from '@angular/platform-browser';
 import { DebugElement } from '@angular/core';
 import { TaskCommand } from 'app/shared/markdown-editor/domainCommands/programming-exercise/task.command';
 import { triggerChanges } from '../../helpers/utils/general.utils';
+import { TaskCountWarningComponent } from 'app/exercises/programming/manage/instructions-editor/analysis/task-count-warning/task-count-warning.component';
 import { ProgrammingExerciseInstructionAnalysisComponent } from 'app/exercises/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.component';
 import { ProgrammingExerciseInstructionAnalysisService } from 'app/exercises/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.service';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
@@ -34,7 +35,7 @@ describe('ProgrammingExerciseInstructionInstructorAnalysis', () => {
         beforeEach(() => {
             TestBed.configureTestingModule({
                 imports: [MockDirective(NgbTooltip)],
-                declarations: [ProgrammingExerciseInstructionAnalysisComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FaIconComponent)],
+                declarations: [ProgrammingExerciseInstructionAnalysisComponent, TaskCountWarningComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FaIconComponent)],
                 providers: [{ provide: ProgrammingExerciseInstructionAnalysisService, useClass: MockProgrammingExerciseInstructionAnalysisService }],
             })
                 .compileComponents()
