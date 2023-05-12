@@ -25,6 +25,7 @@ services:
             file: ./mysql.yml
             service: mysql
         restart: always
+        user: "1337:1337"
         env_file:
             - ${DATABASE_ENV_FILE:-./mysql/default.env}
         volumes:
