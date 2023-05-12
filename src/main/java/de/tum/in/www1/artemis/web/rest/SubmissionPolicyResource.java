@@ -238,6 +238,15 @@ public class SubmissionPolicyResource {
         return ResponseEntity.ok().headers(responseHeaders).body(submissionPolicy);
     }
 
+    /**
+     * GET participations/:participationId/submission-count
+     * <br>
+     * <br>
+     * Retrieves the amount of submissions that are counted for the submission policy. These are all submissions that have at least one result.
+     *
+     * @param participationId of the participation for which the submission count should be retrieved
+     * @return the ResponseEntity with status 200 (OK) containing the number of submissions in its body.
+     */
     @GetMapping("participations/{participationId}/submission-count")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Integer> getParticipationSubmissionCount(@PathVariable Long participationId) {
