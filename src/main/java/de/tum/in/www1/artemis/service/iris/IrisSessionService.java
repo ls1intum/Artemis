@@ -21,15 +21,19 @@ import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 @Service
 public class IrisSessionService {
 
-    private final AuthorizationCheckService authCheckService;
-
     private final UserRepository userRepository;
+
+    private final IrisChatService irisChatService;
+
+    private final AuthorizationCheckService authCheckService;
 
     private final IrisSessionRepository irisSessionRepository;
 
-    public IrisSessionService(AuthorizationCheckService authCheckService, UserRepository userRepository, IrisSessionRepository irisSessionRepository) {
-        this.authCheckService = authCheckService;
+    public IrisSessionService(UserRepository userRepository, IrisChatService irisChatService, AuthorizationCheckService authCheckService,
+            IrisSessionRepository irisSessionRepository) {
         this.userRepository = userRepository;
+        this.irisChatService = irisChatService;
+        this.authCheckService = authCheckService;
         this.irisSessionRepository = irisSessionRepository;
     }
 
@@ -68,5 +72,10 @@ public class IrisSessionService {
         irisSession.setExercise(exercise);
         irisSession.setUser(user);
         return irisSessionRepository.save(irisSession);
+    }
+
+    public void requestMessageFromIris(IrisSession session) {
+        // TODO: Future: Switch between different session types
+        irisChatService.sendToLLM(session);
     }
 }

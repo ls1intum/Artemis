@@ -1,6 +1,7 @@
-package de.tum.in.www1.artemis.service.iris;
+package de.tum.in.www1.artemis.service.iris.model;
 
 import java.net.URL;
+import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -92,7 +93,7 @@ public class IrisGPT3_5Service implements IrisModel {
      */
     @Override
     @Async
-    public CompletableFuture<String> getResponse(IrisSession session) {
+    public CompletableFuture<IrisMessage> getResponse(IrisSession session) {
         try {
             Map<String, Object> requestParams = createRequestParams(session.getMessages());
             ObjectMapper jsonMapper = new ObjectMapper();
@@ -104,14 +105,31 @@ public class IrisGPT3_5Service implements IrisModel {
             log.debug("Response body: {}", responseBody);
 
             OpenAIChatResponseDTO response = jsonMapper.readValue(responseBody, OpenAIChatResponseDTO.class);
-            String content = response.getChoices().get(0).getMessage().getContent();
+            var irisMessage = convertToIrisMessage(response.getChoices().get(0).getMessage());
 
-            return CompletableFuture.completedFuture(content);
+            return CompletableFuture.completedFuture(irisMessage);
         }
         catch (JsonProcessingException e) {
             log.error(e.getMessage(), e);
             return CompletableFuture.failedFuture(e);
         }
+    }
+
+    /**
+     * Converts the response from the GPT-3.5 API into an {@link IrisMessage} object.
+     *
+     * @param message the response from the GPT-3.5 API
+     * @return the converted {@link IrisMessage}
+     */
+    private IrisMessage convertToIrisMessage(OpenAIChatResponseDTO.Message message) {
+        var content = new IrisMessageContent();
+        content.setTextContent(message.getContent());
+        var irisMessage = new IrisMessage();
+        irisMessage.setSender(IrisMessageSender.LLM);
+        irisMessage.setSentAt(ZonedDateTime.now());
+        irisMessage.setContent(List.of(content));
+
+        return irisMessage;
     }
 
     /**

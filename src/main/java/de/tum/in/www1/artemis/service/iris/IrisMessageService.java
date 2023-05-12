@@ -20,16 +20,36 @@ import de.tum.in.www1.artemis.repository.iris.IrisSessionRepository;
 @Service
 public class IrisMessageService {
 
+    private final IrisSessionService irisSessionService;
+
+    private final IrisSessionRepository irisSessionRepository;
+
     private final IrisMessageRepository irisMessageRepository;
 
     private final IrisMessageContentRepository irisMessageContentRepository;
 
-    private final IrisSessionRepository irisSessionRepository;
-
-    public IrisMessageService(IrisMessageRepository irisMessageRepository, IrisMessageContentRepository irisMessageContentRepository, IrisSessionRepository irisSessionRepository) {
+    public IrisMessageService(IrisSessionService irisSessionService, IrisSessionRepository irisSessionRepository, IrisMessageRepository irisMessageRepository,
+            IrisMessageContentRepository irisMessageContentRepository) {
+        this.irisSessionService = irisSessionService;
+        this.irisSessionRepository = irisSessionRepository;
         this.irisMessageRepository = irisMessageRepository;
         this.irisMessageContentRepository = irisMessageContentRepository;
-        this.irisSessionRepository = irisSessionRepository;
+    }
+
+    /**
+     * Saves a new message to the database. The message must have a session and a sender.
+     * This method ensures that the message is saved in the session and the contents are saved.
+     * Also triggers a request for an answer from an LLM.
+     *
+     * @param message The message to save
+     * @param session The session the message belongs to
+     * @param sender  The sender of the message
+     * @return The saved message
+     */
+    public IrisMessage saveMessageAndRequestAnswer(IrisMessage message, IrisSession session, IrisMessageSender sender) {
+        var irisMessage = saveMessage(message, session, sender);
+        irisSessionService.requestMessageFromIris(session);
+        return irisMessage;
     }
 
     /**
@@ -41,7 +61,7 @@ public class IrisMessageService {
      * @param sender  The sender of the message
      * @return The saved message
      */
-    public IrisMessage saveNewMessage(IrisMessage message, IrisSession session, IrisMessageSender sender) {
+    public IrisMessage saveMessage(IrisMessage message, IrisSession session, IrisMessageSender sender) {
         if (message.getContent().isEmpty()) {
             throw new BadRequestException("Message must have at least one content element");
         }
@@ -66,7 +86,6 @@ public class IrisMessageService {
         }
         message.getContent().addAll(contents);
         savedMessage = irisMessageRepository.save(message);
-        // TODO: Send to LLM
 
         return savedMessage;
     }
