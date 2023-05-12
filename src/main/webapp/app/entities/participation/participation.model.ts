@@ -39,8 +39,8 @@ export abstract class Participation implements BaseEntity {
     public initializationDate?: dayjs.Dayjs;
     public individualDueDate?: dayjs.Dayjs;
     public presentationScore?: number;
-    public results?: Result[];
-    public submissions?: Submission[];
+    public results?: Result[] = [];
+    public submissions?: Submission[] = [];
     public exercise?: Exercise;
     public type?: ParticipationType;
 

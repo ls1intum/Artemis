@@ -49,7 +49,7 @@ describe('Participation Service', () => {
         service
             .find(123)
             .pipe(take(1))
-            .subscribe((resp) => expect(resp.body).toMatchObject({ ...participationDefault, results: [], submissions: [] }));
+            .subscribe((resp) => expect(resp).toMatchObject({ body: participationDefault }));
 
         const req = httpMock.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
