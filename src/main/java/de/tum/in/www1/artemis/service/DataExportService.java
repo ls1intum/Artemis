@@ -328,29 +328,12 @@ public class DataExportService {
                 }
             }
             if (!multipleChoiceQuestionsSubmissions.isEmpty()) {
-                Files.write(outputDir.resolve("quiz_submission_" + submission.getId() + "_multiple_choice_answers.txt"), multipleChoiceQuestionsSubmissions);
+                Files.write(outputDir.resolve("quiz_submission_" + submission.getId() + "_multiple_choice_questions_answers.txt"), multipleChoiceQuestionsSubmissions);
             }
             if (!shortAnswerQuestionsSubmissions.isEmpty()) {
-                Files.write(outputDir.resolve("quiz_submission_" + submission.getId() + "_short_answer_answers.txt"), shortAnswerQuestionsSubmissions);
+                Files.write(outputDir.resolve("quiz_submission_" + submission.getId() + "_short_answer_questions_answers.txt"), shortAnswerQuestionsSubmissions);
             }
         }
-
-        // write csv
-        // CSVFormat csvFormat = CSVFormat.DEFAULT.builder().setHeader(headers.toArray(new String[0])).build();
-        // for (var submission : participation.getSubmissions()) {
-        // try (final CSVPrinter printer = new CSVPrinter(Files.newBufferedWriter(outputDir.resolve("quiz_submission_" + submission.getId() + "_answers" + CSV_FILE_EXTENSION)),
-        // csvFormat)) {
-        // for (var question : quizQuestions) {
-        // var submittedAnswer = quizSubmission.getSubmittedAnswerForQuestion(question);
-        // // if this question wasn't answered, the submitted answer is null
-        // if (submittedAnswer != null) {
-        // printer.printRecord(getSubmittedAnswerStreamToPrint(submittedAnswer));
-        // }
-        //
-        // }
-        // printer.flush();
-        // }
-        // }
 
     }
 
@@ -392,11 +375,6 @@ public class DataExportService {
         ShortAnswerQuestion question = (ShortAnswerQuestion) shortAnswerSubmittedAnswer.getQuizQuestion();
         stringBuilder.append("Short Answer Question: ").append(question.getTitle()).append("\n");
         stringBuilder.append("Your score: ").append(shortAnswerSubmittedAnswer.getScoreInPoints()).append("\n");
-        // for (var shortAnswerSpot : question.getSpots()) {
-        // stringBuilder.append("Spot: ").append(shortAnswerSpot.getSpotNr()).append("\n");
-        // stringBuilder.append("Correct solution: ").append(shortAnswerSpot.getSolution()).append("\n");
-        // stringBuilder.append("Your solution: ").append(shortAnswerSubmittedAnswer.getSubmittedText(shortAnswerSpot.getSpotNr())).append("\n");
-        // }
         return stringBuilder.toString();
     }
 
@@ -439,36 +417,6 @@ public class DataExportService {
 
         }
 
-    }
-
-    void populateHeaders(SubmittedAnswer answer, List<String> headers) {
-        if (answer instanceof MultipleChoiceSubmittedAnswer multipleChoiceSubmittedAnswer) {
-            for (var selectedOption : multipleChoiceSubmittedAnswer.getSelectedOptions()) {
-                headers.add("selected option for quiz question " + answer.getQuizQuestion().getTitle());
-            }
-        }
-        else if (answer instanceof ShortAnswerSubmittedAnswer shortAnswerSubmittedAnswer) {
-            for (var submittedText : shortAnswerSubmittedAnswer.getSubmittedTexts()) {
-                headers.add("submitted text for quiz question spot " + submittedText.getSpot().getSpotNr());
-            }
-        }
-    }
-
-    Stream<?> getSubmittedAnswerStreamToPrint(SubmittedAnswer submittedAnswer) {
-        var builder = Stream.builder();
-        builder.add(submittedAnswer.getId()).add(submittedAnswer.getQuizQuestion().getTitle()).add(submittedAnswer.getSubmission().getId()).add(submittedAnswer.getScoreInPoints());
-        if (submittedAnswer instanceof MultipleChoiceSubmittedAnswer multipleChoiceSubmittedAnswer) {
-            for (var selectedOption : multipleChoiceSubmittedAnswer.getSelectedOptions()) {
-                builder.add(selectedOption.getText());
-            }
-        }
-        else if (submittedAnswer instanceof ShortAnswerSubmittedAnswer shortAnswerSubmittedAnswer) {
-            for (var submittedText : shortAnswerSubmittedAnswer.getSubmittedTexts()) {
-                builder.add(submittedText.getText());
-            }
-
-        }
-        return builder.build();
     }
 
     private void storeModelingSubmissionContent(ModelingSubmission modelingSubmission, Path outputDir) throws IOException {
@@ -560,18 +508,9 @@ public class DataExportService {
 
     private void createSubmissionCsvFile(Submission submission, Path outputPath) throws IOException {
 
-        List<String> headers = new ArrayList<>(List.of("id", "submissionDate", "type", "durationInMinutes"));
+        List<String> headers = new ArrayList<>(List.of("id", "submissionDate"));
         if (submission instanceof ProgrammingSubmission) {
             headers.add("commitHash");
-        }
-        else if (submission instanceof TextSubmission) {
-            headers.add("text");
-        }
-        else if (submission instanceof ModelingSubmission) {
-            headers.add("model");
-        }
-        else if (submission instanceof QuizSubmission) {
-            headers.add("scoreInPoints");
         }
         CSVFormat csvFormat = CSVFormat.DEFAULT.builder().setHeader(headers.toArray(String[]::new)).build();
 

@@ -356,6 +356,15 @@ public class DatabaseUtilService {
     private ShortAnswerMappingRepository shortAnswerMappingRepository;
 
     @Autowired
+    private DragAndDropMappingRepository dragAndDropMappingRepository;
+
+    @Autowired
+    private DropLocationRepository dropLocationRepository;
+
+    @Autowired
+    private DragItemRepository dragItemRepository;
+
+    @Autowired
     private ReactionRepository reactionRepository;
 
     // TODO: this should probably be moved into another service
@@ -2561,15 +2570,41 @@ public class DatabaseUtilService {
         mapping.setQuestion(shortAnswerQuestion);
         mapping.setShortAnswerSpotIndex(1);
         shortAnswerQuestion.addCorrectMapping(mapping);
+
+        var submittedDragAndDropAnswer = new DragAndDropSubmittedAnswer();
+        DragAndDropQuestion dragAndDropQuestion = (DragAndDropQuestion) (quizExercise.getQuizQuestions().get(1));
+        submittedDragAndDropAnswer.setQuizQuestion(dragAndDropQuestion);
+        dragAndDropQuestion.setExercise(quizExercise);
+        DragAndDropMapping dragAndDropMapping = new DragAndDropMapping();
+        DragItem validDragItem = new DragItem();
+        validDragItem.setText("drag item");
+        dragAndDropMapping.setDragItem(validDragItem);
+        DropLocation validDropLocation = new DropLocation();
+        dragAndDropMapping.setDragItemIndex(0);
+        dragAndDropMapping.setDropLocationIndex(0);
+        validDropLocation.setPosX(10.0);
+        validDropLocation.setPosY(10.0);
+        validDropLocation.setHeight(10.0);
+        validDropLocation.setWidth(10.0);
+        dragAndDropMapping.setDropLocation(validDropLocation);
+        dragAndDropQuestion.setCorrectMappings(List.of(dragAndDropMapping));
+        submittedDragAndDropAnswer.addMappings(dragAndDropMapping);
         studentParticipationRepo.save(studentParticipation);
         quizSubmissionRepository.save(quizSubmission);
         submittedShortAnswer.setSubmission(quizSubmission);
         submittedAnswerMC.setSubmission(quizSubmission);
+        submittedDragAndDropAnswer.setSubmission(quizSubmission);
         shortAnswerSpotRepository.save(shortAnswerSpot);
+        dropLocationRepository.save(validDropLocation);
+        dragItemRepository.save(validDragItem);
+        dragAndDropMappingRepository.save(dragAndDropMapping);
+        submittedAnswerRepository.save(submittedDragAndDropAnswer);
         submittedAnswerRepository.save(submittedAnswerMC);
+        submittedAnswerRepository.save(submittedDragAndDropAnswer);
         submittedAnswerRepository.save(submittedShortAnswer);
         quizSubmission.addSubmittedAnswers(submittedAnswerMC);
         quizSubmission.addSubmittedAnswers(submittedShortAnswer);
+        quizSubmission.addSubmittedAnswers(submittedDragAndDropAnswer);
         studentParticipation.addSubmission(quizSubmission);
         quizExercise = quizExerciseRepository.save(quizExercise);
         studentParticipationRepo.save(studentParticipation);

@@ -82,7 +82,7 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
     void initTestCase() throws IOException {
         database.addUsers(TEST_PREFIX, 5, 5, 5, 1);
         database.adjustUserGroupsToCustomGroups(TEST_PREFIX, "", 5, 5, 5, 1);
-        // we can not directly return the input stream using mockito because then the stream is closed when the method is invoked more than once
+        // we cannot directly return the input stream using mockito because then the stream is closed when the method is invoked more than once
         var byteArray = new ClassPathResource("test-data/data-export/apollon_conversion.pdf").getInputStream().readAllBytes();
         when(apollonConversionService.convertModel(anyString())).thenReturn(new ByteArrayInputStream(byteArray));
 
@@ -116,12 +116,13 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
 
     private void prepareTestDataForDataExportCreation() throws Exception {
         // TODO add dnd question
-        // TODO add assertion for mc question file, for short answer question file, for dnd pdf file
+        // TODO add assertion for dnd pdf file
+        var userLogin = TEST_PREFIX + "student1";
         String validModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
         Course course1 = database.addCourseWithExercisesAndSubmissions(TEST_PREFIX, "", 4, 2, 1, 1, false, 1, validModel);
         var programmingExercise = database.addProgrammingExerciseToCourse(course1, false);
         programmingExerciseTestService.setup(this, versionControlService, continuousIntegrationService);
-        var participation = database.addStudentParticipationForProgrammingExerciseForLocalRepo(programmingExercise, TEST_PREFIX + "student1",
+        var participation = database.addStudentParticipationForProgrammingExerciseForLocalRepo(programmingExercise, userLogin,
                 programmingExerciseTestService.studentRepo.localRepoFile.toURI());
         var submission = database.createProgrammingSubmission(participation, false, "abc");
         var submission2 = database.createProgrammingSubmission(participation, false, "def");
@@ -132,9 +133,9 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
         database.addResultToSubmission(submission2, AssessmentType.AUTOMATIC, null, 3.0, true, ZonedDateTime.now().minusMinutes(2));
 
         // add communication and messaging data
-        database.addMessageWithReplyAndReactionInGroupChatOfCourseForUser(TEST_PREFIX + "student1", course1, "group chat");
-        database.addMessageInChannelOfCourseForUser(TEST_PREFIX + "student1", course1, "channel");
-        database.addMessageWithReplyAndReactionInOneToOneChatOfCourseForUser(TEST_PREFIX + "student1", course1, "one-to-one-chat");
+        database.addMessageWithReplyAndReactionInGroupChatOfCourseForUser(userLogin, course1, "group chat");
+        database.addMessageInChannelOfCourseForUser(userLogin, course1, "channel");
+        database.addMessageWithReplyAndReactionInOneToOneChatOfCourseForUser(userLogin, course1, "one-to-one-chat");
 
         // Mock student repo
         Repository studentRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(programmingExerciseTestService.studentRepo.localRepoFile.toPath(), null);
@@ -161,6 +162,10 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
         else if (exerciseDirPath.toString().contains("Text")) {
             // submission text txt file
             assertThat(exerciseDirPath).isDirectoryContaining(path -> path.getFileName().toString().endsWith("_text" + FILE_FORMAT_TXT));
+        }
+        else if (exerciseDirPath.toString().contains("quiz")) {
+            assertThat(exerciseDirPath).isDirectoryContaining(path -> path.getFileName().toString().endsWith("short_answer_questions_answers" + FILE_FORMAT_TXT))
+                    .isDirectoryContaining(path -> path.getFileName().toString().endsWith("multiple_choice_questions_answers" + FILE_FORMAT_TXT));
         }
 
     }
