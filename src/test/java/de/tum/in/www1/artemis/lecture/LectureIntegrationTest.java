@@ -44,13 +44,10 @@ class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
 
     private Lecture lecture1;
 
-    private final int numberOfStudents = 1;
-
-    private final int numberOfTutors = 5;
-
     @BeforeEach
     void initTestCase() throws Exception {
-        this.database.addUsers(TEST_PREFIX, numberOfStudents, numberOfTutors, 0, 1);
+        int numberOfTutors = 2;
+        database.addUsers(TEST_PREFIX, 1, numberOfTutors, 0, 1);
         List<Course> courses = this.database.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, true, numberOfTutors);
         this.course1 = this.courseRepository.findByIdWithExercisesAndLecturesElseThrow(courses.get(0).getId());
         var lecture = this.course1.getLectures().stream().findFirst().get();
