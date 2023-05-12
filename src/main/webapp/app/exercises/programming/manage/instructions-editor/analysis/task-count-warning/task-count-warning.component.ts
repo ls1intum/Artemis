@@ -6,8 +6,8 @@ import { faCheckCircle, faExclamationTriangle } from '@fortawesome/free-solid-sv
     templateUrl: './task-count-warning.component.html',
 })
 export class TaskCountWarningComponent {
+    readonly faExclamationTriangle = faExclamationTriangle;
+    readonly faCheckCircle = faCheckCircle;
     @Input() advisedMaxNumOfTasks = 15;
     @Input() numOfTasks: number;
-    @Input() faExclamationTriangle = faExclamationTriangle;
-    @Input() faCheckCircle = faCheckCircle;
 }
