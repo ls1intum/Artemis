@@ -245,7 +245,7 @@ public class ChannelService {
         if (originalExercise.getChannel() == null) {
             return;
         }
-        Channel updatedChannel = updateChannelName(originalExercise.getChannel().getId(), updatedExercise.getTitle());
+        Channel updatedChannel = updateChannelName(originalExercise.getChannel().getId(), Objects.requireNonNull(updatedExercise.getChannel().getName()));
         updatedExercise.setChannel(updatedChannel);
     }
 

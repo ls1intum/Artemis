@@ -9,6 +9,8 @@ export class TitleChannelNameComponent implements OnInit {
     @Input() channelName: string | undefined;
     @Input() channelNamePrefix: string;
 
+    @Input() minTitleLength: number;
+
     @Output() titleChange = new EventEmitter<string>();
     @Output() channelNameChange = new EventEmitter<string>();
 

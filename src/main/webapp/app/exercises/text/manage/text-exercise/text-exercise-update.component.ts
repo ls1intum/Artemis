@@ -23,6 +23,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
+import { Channel } from 'app/entities/metis/conversation/channel.model';
 
 @Component({
     selector: 'jhi-text-exercise-update',
@@ -90,6 +91,10 @@ export class TextExerciseUpdateComponent implements OnInit {
         // Get the textExercise
         this.activatedRoute.data.subscribe(({ textExercise }) => {
             this.textExercise = textExercise;
+            if (this.textExercise.id == undefined && this.textExercise.channel == undefined) {
+                this.textExercise.channel = new Channel();
+                this.textExercise.channel.name = '';
+            }
             this.backupExercise = cloneDeep(this.textExercise);
             this.examCourseId = this.textExercise.course?.id || this.textExercise.exerciseGroup?.exam?.course?.id;
         });

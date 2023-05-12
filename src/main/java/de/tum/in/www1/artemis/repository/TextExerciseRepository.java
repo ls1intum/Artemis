@@ -34,7 +34,7 @@ public interface TextExerciseRepository extends JpaRepository<TextExercise, Long
             """)
     List<TextExercise> findByCourseIdWithCategories(@Param("courseId") Long courseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "teamAssignmentConfig", "categories", "learningGoals" })
+    @EntityGraph(attributePaths = { "teamAssignmentConfig", "channel", "learningGoals", "categories" }, type = LOAD)
     Optional<TextExercise> findWithEagerTeamAssignmentConfigAndCategoriesAndLearningGoalsById(Long exerciseId);
 
     List<TextExercise> findByAssessmentTypeAndDueDateIsAfter(AssessmentType assessmentType, ZonedDateTime dueDate);

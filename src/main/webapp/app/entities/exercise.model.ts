@@ -18,6 +18,7 @@ import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { ExerciseInfo } from 'app/exam/exam-scores/exam-score-dtos.model';
 import { faCheckDouble, faFileUpload, faFont, faKeyboard, faProjectDiagram, faQuestion } from '@fortawesome/free-solid-svg-icons';
 import { CourseScores } from 'app/course/course-scores/course-scores';
+import { Channel } from 'app/entities/metis/conversation/channel.model';
 
 export enum DifficultyLevel {
     EASY = 'EASY',
@@ -103,6 +104,7 @@ export abstract class Exercise implements BaseEntity {
     public testRunParticipationsExist?: boolean;
     public averageRating?: number;
     public numberOfRatings?: number;
+    public channel: Channel;
 
     // helper attributes
     public secondCorrectionEnabled = false;

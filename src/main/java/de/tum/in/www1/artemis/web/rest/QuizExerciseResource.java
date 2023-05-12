@@ -154,11 +154,11 @@ public class QuizExerciseResource {
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(quizExercise);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
 
-        quizExercise = quizExerciseService.save(quizExercise);
         if (quizExercise.isCourseExercise()) {
             Channel createdChannel = channelService.createExerciseChannel(quizExercise, quizExercise.getChannel().getName());
             quizExercise.setChannel(createdChannel);
         }
+        quizExercise = quizExerciseService.save(quizExercise);
 
         return ResponseEntity.created(new URI("/api/quiz-exercises/" + quizExercise.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, quizExercise.getId().toString())).body(quizExercise);
