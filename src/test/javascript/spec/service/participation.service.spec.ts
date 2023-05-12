@@ -195,12 +195,12 @@ describe('Participation Service', () => {
             exercise,
         };
 
-        const expected = Object.assign({}, returnedFromService);
+        const expected = Object.assign({}, returnedFromService) as StudentParticipation;
 
         service
-            .update(exercise, expected as StudentParticipation)
+            .update(exercise, expected)
             .pipe(take(1))
-            .subscribe((resp) => expect(resp.body).toMatchObject({ ...expected, results: [], submissions: [] }));
+            .subscribe((resp) => expect(resp.body).toMatchObject({ ...expected }));
         const req = httpMock.expectOne({ method: 'PUT' });
         req.flush(returnedFromService);
         tick();
