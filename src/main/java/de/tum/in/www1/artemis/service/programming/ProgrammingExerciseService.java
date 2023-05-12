@@ -73,8 +73,6 @@ public class ProgrammingExerciseService {
      */
     private static final String SWIFT_PACKAGE_NAME_REGEX = "^(?!(?:associatedtype|class|deinit|enum|extension|fileprivate|func|import|init|inout|internal|let|open|operator|private|protocol|public|rethrows|static|struct|subscript|typealias|var|break|case|continue|default|defer|do|else|fallthrough|for|guard|if|in|repeat|return|switch|where|while|as|Any|catch|false|is|nil|super|self|Self|throw|throws|true|try|_|[sS]wift)$)[A-Za-z][\\dA-Za-z]*$";
 
-    private static final int MAX_NUM_OF_TASKS = 50;
-
     private final Pattern packageNamePattern = Pattern.compile(PACKAGE_NAME_REGEX);
 
     private final Pattern packageNamePatternForSwift = Pattern.compile(SWIFT_PACKAGE_NAME_REGEX);
@@ -241,7 +239,6 @@ public class ProgrammingExerciseService {
             throw new BadRequestAlertException("A new programmingExercise cannot already have an ID", "Exercise", "idexists");
         }
 
-        validateNumberOfTasks(programmingExercise);
         programmingExercise.validateGeneralSettings();
         programmingExercise.validateProgrammingSettings();
         programmingExercise.validateManualFeedbackSettings();
@@ -273,6 +270,7 @@ public class ProgrammingExerciseService {
 
         programmingExercise.generateAndSetProjectKey();
         checkIfProjectExists(programmingExercise);
+
     }
 
     private void validateProjectType(ProgrammingExercise programmingExercise, ProgrammingLanguageFeature programmingLanguageFeature) {
@@ -497,7 +495,6 @@ public class ProgrammingExerciseService {
      */
     public ProgrammingExercise updateProblemStatement(ProgrammingExercise programmingExercise, String problemStatement, @Nullable String notificationText)
             throws EntityNotFoundException {
-        validateNumberOfTasks(programmingExercise);
         programmingExercise.setProblemStatement(problemStatement);
         ProgrammingExercise updatedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
 
@@ -506,13 +503,6 @@ public class ProgrammingExerciseService {
         groupNotificationService.notifyAboutExerciseUpdate(programmingExercise, notificationText);
 
         return updatedProgrammingExercise;
-    }
-
-    public void validateNumberOfTasks(ProgrammingExercise programmingExercise) {
-        List<ProgrammingExerciseTask> tasks = programmingExerciseTaskService.extractTasks(programmingExercise);
-        if (tasks.size() > MAX_NUM_OF_TASKS) {
-            throw new BadRequestAlertException("Maximum " + MAX_NUM_OF_TASKS + " tasks are allowed for programming exercises", "Exercise", "tooManyTasks");
-        }
     }
 
     /**

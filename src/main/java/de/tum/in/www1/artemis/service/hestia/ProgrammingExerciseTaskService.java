@@ -164,7 +164,7 @@ public class ProgrammingExerciseTaskService {
      * @param exercise the exercise for which the tasks and test cases should be extracted
      * @return the extracted tasks with the corresponding test cases
      */
-    public List<ProgrammingExerciseTask> extractTasks(ProgrammingExercise exercise) {
+    private List<ProgrammingExerciseTask> extractTasks(ProgrammingExercise exercise) {
         var tasks = new ArrayList<ProgrammingExerciseTask>();
         var problemStatement = exercise.getProblemStatement();
         if (problemStatement == null || problemStatement.isEmpty()) {
