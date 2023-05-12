@@ -64,28 +64,13 @@ export class CourseDiscussionComponent extends CourseDiscussionDirective impleme
             const courseId = +params.courseId;
             this.searchText = queryParams.searchText;
 
+            this.course = this.courseStorageService.getCourse(courseId);
+            if (this.course) {
+                this.onCourseLoad(this.course);
+            }
+
             this.courseStorageService.subscribeToCourseUpdates(courseId).subscribe((course: Course) => {
-                this.course = course;
-                if (this.course?.lectures) {
-                    this.lectures = this.course.lectures.sort(this.overviewContextSortFn);
-                }
-                if (this.course?.exercises) {
-                    this.exercises = this.course.exercises.sort(this.overviewContextSortFn);
-                }
-                this.metisService.setCourse(this.course!);
-                this.metisService.setPageType(this.pageType);
-                this.metisService.getFilteredPosts({
-                    courseId: this.course!.id,
-                    searchText: this.searchText ? this.searchText : undefined,
-                    postSortCriterion: this.currentSortCriterion,
-                    sortingOrder: this.currentSortDirection,
-                    pagingEnabled: this.pagingEnabled,
-                    page: this.page - 1,
-                    pageSize: this.itemsPerPage,
-                });
-                this.resetCurrentFilter();
-                this.createEmptyPost();
-                this.resetFormGroup();
+                this.onCourseLoad(course);
             });
         });
         this.postsSubscription = this.metisService.posts.pipe().subscribe((posts: Post[]) => {
@@ -95,6 +80,30 @@ export class CourseDiscussionComponent extends CourseDiscussionDirective impleme
         this.totalItemsSubscription = this.metisService.totalNumberOfPosts.pipe().subscribe((totalItems: number) => {
             this.totalItems = totalItems;
         });
+    }
+
+    onCourseLoad(course: Course) {
+        this.course = course;
+        if (this.course?.lectures) {
+            this.lectures = this.course.lectures.sort(this.overviewContextSortFn);
+        }
+        if (this.course?.exercises) {
+            this.exercises = this.course.exercises.sort(this.overviewContextSortFn);
+        }
+        this.metisService.setCourse(this.course!);
+        this.metisService.setPageType(this.pageType);
+        this.metisService.getFilteredPosts({
+            courseId: this.course!.id,
+            searchText: this.searchText ? this.searchText : undefined,
+            postSortCriterion: this.currentSortCriterion,
+            sortingOrder: this.currentSortDirection,
+            pagingEnabled: this.pagingEnabled,
+            page: this.page - 1,
+            pageSize: this.itemsPerPage,
+        });
+        this.resetCurrentFilter();
+        this.createEmptyPost();
+        this.resetFormGroup();
     }
 
     /**
