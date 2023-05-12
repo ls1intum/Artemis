@@ -55,7 +55,7 @@ describe('TextSubmissionAssessmentComponent', () => {
     let participation: StudentParticipation;
     let submission: TextSubmission;
 
-    let route: () => ActivatedRoute;
+    let mockActivatedRoute;
 
     beforeEach(() => {
         // data set up
@@ -120,14 +120,13 @@ describe('TextSubmissionAssessmentComponent', () => {
         submission.participation!.submissions = [submission];
         submission.participation!.results = [getLatestSubmissionResult(submission)!];
 
-        route = (): ActivatedRoute =>
-            ({
-                paramMap: of(convertToParamMap({ courseId: 123, exerciseId: 1, examId: 2, exerciseGroupId: 3 })),
-                queryParamMap: of(convertToParamMap({ testRun: 'false', correctionRound: 2 })),
-                data: of({
-                    studentParticipation: participation,
-                }),
-            } as any as ActivatedRoute);
+        mockActivatedRoute = {
+            paramMap: of(convertToParamMap({ courseId: 123, exerciseId: 1, examId: 2, exerciseGroupId: 3 })),
+            queryParamMap: of(convertToParamMap({ testRun: 'false', correctionRound: 2 })),
+            data: of({
+                studentParticipation: participation,
+            }),
+        };
 
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, RouterTestingModule],
@@ -147,7 +146,7 @@ describe('TextSubmissionAssessmentComponent', () => {
                 MockPipe(ArtemisTranslatePipe),
             ],
             providers: [
-                { provide: ActivatedRoute, useValue: route },
+                { provide: ActivatedRoute, useValue: mockActivatedRoute },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -164,8 +163,6 @@ describe('TextSubmissionAssessmentComponent', () => {
         textAssessmentService = TestBed.inject(TextAssessmentService);
         router = TestBed.inject(Router);
 
-        component['route'] = route();
-        component['activatedRoute'] = route();
         fixture.detectChanges();
     });
 
@@ -380,8 +377,6 @@ describe('TextSubmissionAssessmentComponent', () => {
     it('should go to next submission', async () => {
         component['setPropertiesFromServerResponse'](participation);
         const routerSpy = jest.spyOn(router, 'navigate');
-        component['route'] = route();
-        component['activatedRoute'] = route();
 
         await component.ngOnInit();
 
