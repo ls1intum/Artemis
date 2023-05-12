@@ -38,7 +38,7 @@ describe('Test Exam creation/deletion', () => {
 
     it('Creates a test exam', function () {
         navigationBar.openCourseManagement();
-        courseManagement.openExamsOfCourse(course.shortName!);
+        courseManagement.openExamsOfCourse(course.id!);
 
         examManagement.createNewExam();
         examCreation.setTitle(examData.title);
@@ -73,7 +73,7 @@ describe('Test Exam creation/deletion', () => {
             expect(examBody.confirmationEndText).to.eq(examData.confirmationEndText);
             cy.url().should('contain', `/exams/${examId}`);
         });
-        cy.get('#exam-detail-title').should('contain.text', examData.title);
+        examManagement.getExamTitle().contains(examData.title);
     });
 
     describe('Test exam deletion', () => {
@@ -87,7 +87,7 @@ describe('Test Exam creation/deletion', () => {
 
         it('Deletes an existing test exam', () => {
             navigationBar.openCourseManagement();
-            courseManagement.openExamsOfCourse(course.shortName!);
+            courseManagement.openExamsOfCourse(course.id!);
             examManagement.getExamSelector(examData.title).should('exist');
             examManagement.openExam(examId);
             examDetails.deleteExam(examData.title);

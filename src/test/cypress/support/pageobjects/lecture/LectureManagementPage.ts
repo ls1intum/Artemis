@@ -16,6 +16,10 @@ export class LectureManagementPage {
         return cy.wait('@deleteLecture');
     }
 
+    getLectures() {
+        return cy.get('#lectures');
+    }
+
     getLecture(lectureId: number) {
         return cy.get(`#lecture-${lectureId}`);
     }

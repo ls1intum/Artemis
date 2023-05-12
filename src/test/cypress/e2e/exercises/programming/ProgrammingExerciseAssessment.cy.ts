@@ -71,7 +71,7 @@ describe('Programming exercise assessment', () => {
     it('Assesses the programming exercise submission and verifies it', () => {
         // Asses submission
         cy.login(tutor, '/course-management');
-        courseManagement.openAssessmentDashboardOfCourse(course.shortName!);
+        courseManagement.openAssessmentDashboardOfCourse(course.id!);
         courseAssessment.clickExerciseDashboardButton();
         exerciseAssessment.clickHaveReadInstructionsButton();
         exerciseAssessment.clickStartNewAssessment();
@@ -87,7 +87,7 @@ describe('Programming exercise assessment', () => {
             }
         });
 
-        // Verify assesment as student
+        // Verify assessment as student
         cy.login(studentOne, `/courses/${course.id}/exercises/${exercise.id}`);
         const totalPoints = tutorFeedbackPoints + tutorCodeFeedbackPoints;
         const percentage = totalPoints * 10;
@@ -99,7 +99,7 @@ describe('Programming exercise assessment', () => {
         programmingExerciseFeedback.shouldShowScore(percentage);
         programmingExerciseFeedback.shouldShowCodeFeedback(exercise.id!, 'BubbleSort.java', tutorCodeFeedback, '-2', programmingExerciseEditor);
 
-        // Accept compaint
+        // Accept complaint
         cy.login(instructor, `/course-management/${course.id}/complaints`);
         programmingExerciseAssessment.acceptComplaint('Makes sense', false).then((request: Interception) => {
             expect(request.response!.statusCode).to.equal(200);

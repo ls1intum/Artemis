@@ -15,7 +15,6 @@ import {
     examStartEnd,
     exerciseAssessment,
     modelingExerciseAssessment,
-    programmingExerciseEditor,
     studentAssessment,
 } from '../../support/artemis';
 import { admin, instructor, studentOne, tutor, users } from '../../support/users';
@@ -65,7 +64,7 @@ describe('Exam assessment', () => {
             examAssessment.addNewFeedback(2, 'Good job');
             examAssessment.submit();
             cy.login(studentOne, '/courses/' + course.id + '/exams/' + exam.id);
-            programmingExerciseEditor.getResultScore().should('contain.text', '66.2%').and('be.visible');
+            examParticipation.getResultScore().should('contain.text', '66.2%').and('be.visible');
             programmingAssessmentSuccessful = true;
         });
 
@@ -97,7 +96,7 @@ describe('Exam assessment', () => {
                 expect(assessmentResponse.response?.statusCode).to.equal(200);
             });
             cy.login(studentOne, '/courses/' + course.id + '/exams/' + exam.id);
-            programmingExerciseEditor.getResultScore().should('contain.text', '40%').and('be.visible');
+            examParticipation.getResultScore().should('contain.text', '40%').and('be.visible');
             modelingAssessmentSuccessful = true;
         });
 
@@ -124,7 +123,7 @@ describe('Exam assessment', () => {
                 expect(assessmentResponse.response!.statusCode).to.equal(200);
             });
             cy.login(studentOne, '/courses/' + course.id + '/exams/' + exam.id);
-            programmingExerciseEditor.getResultScore().should('contain.text', '70%').and('be.visible');
+            examParticipation.getResultScore().should('contain.text', '70%').and('be.visible');
             textAssessmentSuccessful = true;
         });
 
@@ -158,10 +157,7 @@ describe('Exam assessment', () => {
             }
             examManagement.checkQuizSubmission(course.id!, exam.id!, studentOneName, '50%');
             cy.login(studentOne, '/courses/' + course.id + '/exams/' + exam.id);
-            // Sometimes the feedback fails to load properly on the first load...
-            const resultSelector = '#result-score';
-            cy.reloadUntilFound(resultSelector);
-            programmingExerciseEditor.getResultScore().should('contain.text', '50%').and('be.visible');
+            examParticipation.getResultScore().should('contain.text', '50%').and('be.visible');
         });
     });
 
@@ -224,7 +220,7 @@ function startAssessing(courseID: number, examID: number, timeout: number) {
     courseAssessment.clickExerciseDashboardButton();
     exerciseAssessment.clickHaveReadInstructionsButton();
     exerciseAssessment.clickStartNewAssessment();
-    cy.get('#assessmentLockedCurrentUser').should('be.visible');
+    exerciseAssessment.getLockedMessage();
 }
 
 function handleComplaint(course: Course, exam: Exam, reject: boolean, exerciseType: EXERCISE_TYPE) {

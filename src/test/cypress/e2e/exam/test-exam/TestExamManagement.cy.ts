@@ -57,7 +57,7 @@ describe('Test Exam management', () => {
         it('Create exercise group', () => {
             cy.visit('/');
             navigationBar.openCourseManagement();
-            courseManagement.openExamsOfCourse(course.shortName!);
+            courseManagement.openExamsOfCourse(course.id!);
             examManagement.openExerciseGroups(exam.id!);
             examExerciseGroups.shouldShowNumberOfExerciseGroups(groupCount);
             examExerciseGroups.clickAddExerciseGroup();
@@ -138,7 +138,7 @@ describe('Test Exam management', () => {
         it('Delete an exercise group', () => {
             cy.visit('/');
             navigationBar.openCourseManagement();
-            courseManagement.openExamsOfCourse(course.shortName!);
+            courseManagement.openExamsOfCourse(course.id!);
             examManagement.openExerciseGroups(exam.id!);
             // If the group in the "Create group test" was created successfully, we delete it so there is no group with no exercise
             let group = exerciseGroup;

@@ -44,7 +44,7 @@ describe('Text exercise assessment', () => {
 
     it('Assesses the text exercise submission', () => {
         cy.login(tutor, '/course-management');
-        courseManagement.openAssessmentDashboardOfCourse(course.shortName!);
+        courseManagement.openAssessmentDashboardOfCourse(course.id!);
         courseAssessment.clickExerciseDashboardButton();
         exerciseAssessment.clickHaveReadInstructionsButton();
         exerciseAssessment.clickStartNewAssessment();

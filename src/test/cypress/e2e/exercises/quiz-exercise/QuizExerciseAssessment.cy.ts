@@ -3,7 +3,7 @@ import { Course } from 'app/entities/course.model';
 import shortAnswerQuizTemplate from '../../../fixtures/exercise/quiz/short_answer/template.json';
 import multipleChoiceQuizTemplate from '../../../fixtures/exercise/quiz/multiple_choice/template.json';
 import { convertModelAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
-import { courseManagementRequest } from '../../../support/artemis';
+import { courseManagementRequest, exerciseResult } from '../../../support/artemis';
 import { admin, studentOne, tutor } from '../../../support/users';
 
 describe('Quiz Exercise Assessment', () => {
@@ -34,8 +34,7 @@ describe('Quiz Exercise Assessment', () => {
             courseManagementRequest.startExerciseParticipation(quizExercise.id!);
             courseManagementRequest.createMultipleChoiceSubmission(quizExercise, [0, 2]);
             cy.visit('/courses/' + course.id + '/exercises/' + quizExercise.id);
-            cy.reloadUntilFound('#submission-result-graded');
-            cy.contains('50%').should('be.visible');
+            exerciseResult.shouldShowScore(50);
         });
     });
 
@@ -54,8 +53,7 @@ describe('Quiz Exercise Assessment', () => {
             courseManagementRequest.startExerciseParticipation(quizExercise.id!);
             courseManagementRequest.createShortAnswerSubmission(quizExercise, ['give', 'let', 'run', 'desert']);
             cy.visit('/courses/' + course.id + '/exercises/' + quizExercise.id);
-            cy.reloadUntilFound('#submission-result-graded');
-            cy.contains('66.7%').should('be.visible');
+            exerciseResult.shouldShowScore(66.7);
         });
     });
 

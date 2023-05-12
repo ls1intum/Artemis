@@ -52,7 +52,7 @@ describe('Exam creation/deletion', () => {
 
     it('Creates an exam', () => {
         navigationBar.openCourseManagement();
-        courseManagement.openExamsOfCourse(course.shortName!);
+        courseManagement.openExamsOfCourse(course.id!);
 
         examManagement.createNewExam();
         examCreation.setTitle(examData.title);
@@ -106,7 +106,7 @@ describe('Exam creation/deletion', () => {
 
         it('Deletes an existing exam', () => {
             navigationBar.openCourseManagement();
-            courseManagement.openExamsOfCourse(course.shortName!);
+            courseManagement.openExamsOfCourse(course.id!);
             examManagement.openExam(examId);
             examDetails.deleteExam(examData.title);
             examManagement.getExamSelector(examData.title).should('not.exist');
@@ -124,10 +124,10 @@ describe('Exam creation/deletion', () => {
 
         it('Edits an existing exam', () => {
             navigationBar.openCourseManagement();
-            courseManagement.openExamsOfCourse(course.shortName!);
+            courseManagement.openExamsOfCourse(course.id!);
             examManagement.openExam(examId);
-            cy.get('#exam-detail-title').contains(examData.title);
-            cy.get('#editButton').click();
+            examManagement.getExamTitle().contains(examData.title);
+            examManagement.clickEdit();
 
             examCreation.setTitle(editedExamData.title);
             examCreation.setVisibleDate(editedExamData.visibleDate);

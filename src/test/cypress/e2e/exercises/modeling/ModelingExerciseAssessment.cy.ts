@@ -2,7 +2,15 @@ import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { Course } from 'app/entities/course.model';
 import day from 'dayjs/esm';
 import { convertModelAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
-import { courseAssessment, courseManagementRequest, exerciseAssessment, exerciseResult, modelingExerciseAssessment, modelingExerciseFeedback } from '../../../support/artemis';
+import {
+    courseAssessment,
+    courseManagement,
+    courseManagementRequest,
+    exerciseAssessment,
+    exerciseResult,
+    modelingExerciseAssessment,
+    modelingExerciseFeedback,
+} from '../../../support/artemis';
 import { admin, instructor, studentOne, tutor } from '../../../support/users';
 
 describe('Modeling Exercise Assessment', () => {
@@ -19,6 +27,7 @@ describe('Modeling Exercise Assessment', () => {
             courseManagementRequest.createModelingExercise({ course }).then((modelingResponse) => {
                 modelingExercise = modelingResponse.body;
                 cy.login(studentOne);
+                cy.wait(500);
                 courseManagementRequest.startExerciseParticipation(modelingExercise.id!).then((participation) => {
                     courseManagementRequest.makeModelingExerciseSubmission(modelingExercise.id!, participation.body);
                     cy.login(instructor);
@@ -30,12 +39,13 @@ describe('Modeling Exercise Assessment', () => {
 
     it('Tutor can assess a submission', () => {
         cy.login(tutor, '/course-management');
-        cy.get(`[href="/course-management/${course.id}/assessment-dashboard"]`).click();
-        cy.url().should('contain', `/course-management/${course.id}/assessment-dashboard`);
+        courseManagement.openCourse(course.id!);
+        courseManagement.openAssessmentDashboard();
+        cy.wait(500);
         courseAssessment.clickExerciseDashboardButton();
         exerciseAssessment.clickHaveReadInstructionsButton();
         exerciseAssessment.clickStartNewAssessment();
-        cy.get('#assessmentLockedCurrentUser').should('be.visible');
+        exerciseAssessment.getLockedMessage().should('be.visible');
         modelingExerciseAssessment.addNewFeedback(1, 'Thanks, good job.');
         modelingExerciseAssessment.openAssessmentForComponent(1);
         modelingExerciseAssessment.assessComponent(-1, 'False');
@@ -55,7 +65,6 @@ describe('Modeling Exercise Assessment', () => {
                 .then((exercise) => {
                     modelingExercise = exercise;
                 });
-            cy.login(studentOne, `/courses/${course.id}/exercises/${modelingExercise.id}`);
         });
 
         it('Student can view the assessment and complain', () => {

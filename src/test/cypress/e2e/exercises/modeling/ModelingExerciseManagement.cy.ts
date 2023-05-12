@@ -21,11 +21,8 @@ describe('Modeling Exercise Management', () => {
     });
 
     describe('Create Modeling Exercise', () => {
-        before('Login as instructor', () => {
-            cy.login(instructor);
-        });
-
         it('Create a new modeling exercise', () => {
+            cy.login(instructor);
             cy.visit(`/course-management/${course.id}/exercises`);
             courseManagementExercises.createModelingExercise();
             modelingExerciseCreation.setTitle('Modeling ' + generateUUID());
@@ -59,12 +56,15 @@ describe('Modeling Exercise Management', () => {
                     modelingExerciseAssessment.assessComponent(0, 'Unnecessary');
                     modelingExerciseAssessment.submitExample();
                     cy.visit(`/course-management/${course.id}/modeling-exercises/${modelingExercise.id}`);
-                    cy.get('#modeling-editor-canvas').should('exist');
+                    modelingExerciseEditor.getModelingCanvas().should('exist');
                 });
         });
 
-        after('Delete exericse', () => {
-            courseManagementRequest.deleteModelingExercise(modelingExercise.id!);
+        after('Delete modeling exercise', () => {
+            if (modelingExercise) {
+                cy.login(admin);
+                courseManagementRequest.deleteModelingExercise(modelingExercise.id!);
+            }
         });
     });
 
@@ -89,12 +89,8 @@ describe('Modeling Exercise Management', () => {
             modelingExerciseCreation.setPoints(points);
             modelingExerciseCreation.save();
             cy.visit(`/course-management/${course.id}/exercises`);
-            cy.get('#exercise-card-' + modelingExercise.id)
-                .find('#modeling-exercise-' + modelingExercise.id + '-title')
-                .should('contain.text', newTitle);
-            cy.get('#exercise-card-' + modelingExercise.id)
-                .find('#modeling-exercise-' + modelingExercise.id + '-maxPoints')
-                .should('contain.text', points.toString());
+            courseManagementExercises.getModelingExerciseTitle(modelingExercise.id!).contains(newTitle);
+            courseManagementExercises.getModelingExerciseMaxPoints(modelingExercise.id!).contains(points.toString());
         });
 
         after('Delete exericse', () => {
@@ -102,12 +98,28 @@ describe('Modeling Exercise Management', () => {
         });
     });
 
-    describe('Modeling Exercise Release', () => {
-        beforeEach('Login as instructor', () => {
-            cy.login(instructor);
+    describe('Delete Modeling Exercise', () => {
+        let modelingExercise: ModelingExercise;
+
+        before('Create Modeling exercise', () => {
+            cy.login(admin, '/');
+            courseManagementRequest.createModelingExercise({ course }).then((resp) => {
+                modelingExercise = resp.body;
+            });
         });
 
+        it('Deletes an existing text exercise', () => {
+            cy.login(instructor, '/');
+            navigationBar.openCourseManagement();
+            courseManagement.openExercisesOfCourse(course.id!);
+            courseManagementExercises.deleteModelingExercise(modelingExercise);
+            courseManagementExercises.getExercise(modelingExercise.id!).should('not.exist');
+        });
+    });
+
+    describe('Modeling Exercise Release', () => {
         it('Student can not see unreleased Modeling Exercise', () => {
+            cy.login(instructor);
             courseManagementRequest.createModelingExercise({ course }, 'Modeling ' + generateUUID(), dayjs().add(1, 'hour')).then((resp) => {
                 modelingExercise = resp.body;
             });
@@ -117,6 +129,7 @@ describe('Modeling Exercise Management', () => {
         });
 
         it('Student can see released Modeling Exercise', () => {
+            cy.login(instructor);
             courseManagementRequest.createModelingExercise({ course }, 'Modeling ' + generateUUID(), dayjs().subtract(1, 'hour')).then((resp) => {
                 modelingExercise = resp.body;
             });

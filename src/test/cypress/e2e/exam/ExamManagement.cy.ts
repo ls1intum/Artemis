@@ -59,7 +59,7 @@ describe('Exam management', () => {
         it('Create exercise group', () => {
             cy.visit('/');
             navigationBar.openCourseManagement();
-            courseManagement.openExamsOfCourse(course.shortName!);
+            courseManagement.openExamsOfCourse(course.id!);
             examManagement.openExerciseGroups(exam.id!);
             examExerciseGroups.shouldShowNumberOfExerciseGroups(groupCount);
             examExerciseGroups.clickAddExerciseGroup();
@@ -140,7 +140,7 @@ describe('Exam management', () => {
         it('Delete an exercise group', () => {
             cy.visit('/');
             navigationBar.openCourseManagement();
-            courseManagement.openExamsOfCourse(course.shortName!);
+            courseManagement.openExamsOfCourse(course.id!);
             examManagement.openExerciseGroups(exam.id!);
             // If the group in the "Create group test" was created successfully, we delete it so there is no group with no exercise
             let group = exerciseGroup;
@@ -164,14 +164,14 @@ describe('Exam management', () => {
             studentExamManagement.clickRegisterCourseStudents().then((request: Interception) => {
                 expect(request.response!.statusCode).to.eq(200);
             });
-            cy.get('#registered-students').contains(studentOne.username).should('be.visible');
+            studentExamManagement.getRegisteredStudents().contains(studentOne.username).should('be.visible');
         });
 
         it('Generates student exams', () => {
             cy.visit(`/course-management/${course.id}/exams`);
             examManagement.openStudentExams(exam.id!);
             studentExamManagement.clickGenerateStudentExams();
-            cy.get('#generateMissingStudentExamsButton').should('be.disabled');
+            studentExamManagement.getGenerateStudentExamsButton().should('be.disabled');
         });
     });
 

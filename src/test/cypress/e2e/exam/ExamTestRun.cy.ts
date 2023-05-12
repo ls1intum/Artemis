@@ -114,7 +114,7 @@ describe('Exam test run', () => {
 
     it('Conducts a test run', () => {
         examTestRun.startParticipation(instructor, course, exam, testRun.id);
-        cy.get('#testRunRibbon').contains('Test Run');
+        examTestRun.getTestRunRibbon().contains('Test Run');
 
         for (let j = 0; j < exerciseArray.length; j++) {
             const exercise = exerciseArray[j];

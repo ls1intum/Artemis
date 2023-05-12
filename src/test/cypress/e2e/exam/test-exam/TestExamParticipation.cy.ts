@@ -8,7 +8,7 @@ import { generateUUID } from '../../../support/utils';
 import { EXERCISE_TYPE } from '../../../support/constants';
 import { Exercise } from 'src/test/cypress/support/pageobjects/exam/ExamParticipation';
 import { examExerciseGroupCreation, examNavigation, examParticipation, examStartEnd } from 'src/test/cypress/support/artemis';
-import { admin, studentOne, studentThree, studentTwo } from 'src/test/cypress/support/users';
+import { admin, studentOne, studentThree, studentTwo, users } from 'src/test/cypress/support/users';
 import { courseManagementRequest } from 'src/test/cypress/support/requests/ArtemisRequests';
 import { Interception } from 'cypress/types/net-stubbing';
 
@@ -120,12 +120,18 @@ describe('Test exam participation', () => {
 
     describe('Normal Hand-in', () => {
         let exam: Exam;
+        let studentOneName: string;
         const examTitle = 'exam' + generateUUID();
 
         before('Create exam', () => {
             exerciseArray = [];
 
             cy.login(admin);
+
+            users.getUserInfo(studentOne.username, (userInfo) => {
+                studentOneName = userInfo.name;
+            });
+
             const examContent = new ExamBuilder(course)
                 .title(examTitle)
                 .testExam()
@@ -151,7 +157,8 @@ describe('Test exam participation', () => {
             examNavigation.openExerciseAtIndex(textExerciseIndex);
             examParticipation.makeSubmission(textExercise.id, textExercise.type, textExercise.additionalData);
             examParticipation.clickSaveAndContinue();
-            cy.get('#fullname', { timeout: 20000 }).should('be.visible');
+            examParticipation.checkExamFullnameInputExists();
+            examParticipation.checkYourFullname(studentOneName);
             examStartEnd.finishExam().then((request: Interception) => {
                 expect(request.response!.statusCode).to.eq(200);
             });
