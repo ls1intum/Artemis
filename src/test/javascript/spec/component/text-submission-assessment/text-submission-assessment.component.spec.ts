@@ -256,7 +256,7 @@ describe('TextSubmissionAssessmentComponent', () => {
         expect(errorStub).toHaveBeenCalledWith('artemisApp.textAssessment.error.invalidAssessments');
     });
 
-    it('should display error when complaint resolved but assessment invalid', () => {
+    it('should display error when complaint resolved but assessment invalid', async () => {
         // would be called on receive of event
         let onSuccessCalled = false;
         let onErrorCalled = false;
@@ -269,7 +269,8 @@ describe('TextSubmissionAssessmentComponent', () => {
         const alertService = TestBed.inject(AlertService);
         const errorStub = jest.spyOn(alertService, 'error');
 
-        component['textBlockRefs'] = [];
+        // add an unreferenced feedback to make the assessment invalid
+        component.unreferencedFeedback = [new Feedback()];
 
         component.updateAssessmentAfterComplaint(assessmentAfterComplaint);
 
