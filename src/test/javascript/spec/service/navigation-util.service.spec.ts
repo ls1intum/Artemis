@@ -69,6 +69,7 @@ describe('Navigation Util Service', () => {
         const queryParam = { filterOption: 30 };
         const urlTreeMock = { path: 'testValue' } as unknown as UrlTree;
         const creationMock = jest.spyOn(router, 'createUrlTree');
+        creationMock.mockReturnValue(urlTreeMock);
         const serializationMock = jest.spyOn(router, 'serializeUrl');
         const windowStub = jest.spyOn(window, 'open').mockImplementation();
 
