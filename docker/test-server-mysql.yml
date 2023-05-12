@@ -9,7 +9,7 @@ services:
         extends:
             file: ./artemis.yml
             service: artemis-app
-        image: ghcr.io/ls1intum/artemis:${ARTEMIS_TAG:-latest}
+        image: ghcr.io/ls1intum/artemis:${ARTEMIS_DOCKER_TAG:-latest}
         depends_on:
             mysql:
                 condition: service_healthy
