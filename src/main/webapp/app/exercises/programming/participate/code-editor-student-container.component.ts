@@ -194,6 +194,11 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
         return [];
     }
 
+    receivedNewResult() {
+        this.loadStudentExerciseHints();
+        this.getNumberOfSubmissionsForSubmissionPolicy();
+    }
+
     loadStudentExerciseHints() {
         this.exerciseHintService.getActivatedExerciseHints(this.exercise.id!).subscribe((activatedRes?: HttpResponse<ExerciseHint[]>) => {
             this.activatedExerciseHints = activatedRes!.body!;
