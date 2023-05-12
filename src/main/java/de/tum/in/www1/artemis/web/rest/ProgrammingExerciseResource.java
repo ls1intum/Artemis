@@ -192,7 +192,7 @@ public class ProgrammingExerciseResource {
             // Setup all repositories etc
             ProgrammingExercise newProgrammingExercise = programmingExerciseService.createProgrammingExercise(programmingExercise);
             if (newProgrammingExercise.isCourseExercise()) {
-                Channel createdChannel = channelService.createExerciseChannel(newProgrammingExercise);
+                Channel createdChannel = channelService.createExerciseChannel(newProgrammingExercise, newProgrammingExercise.getChannel().getName());
                 newProgrammingExercise.setChannel(createdChannel);
             }
 

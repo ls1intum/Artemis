@@ -156,7 +156,7 @@ public class QuizExerciseResource {
 
         quizExercise = quizExerciseService.save(quizExercise);
         if (quizExercise.isCourseExercise()) {
-            Channel createdChannel = channelService.createExerciseChannel(quizExercise);
+            Channel createdChannel = channelService.createExerciseChannel(quizExercise, quizExercise.getChannel().getName());
             quizExercise.setChannel(createdChannel);
         }
 

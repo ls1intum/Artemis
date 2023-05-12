@@ -5,6 +5,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -201,7 +202,7 @@ public class ChannelService {
         conversationService.notifyAllConversationMembersAboutUpdate(updatedChannel);
     }
 
-    public Channel createLectureChannel(Lecture lecture, String channelName) {
+    public Channel createLectureChannel(Lecture lecture, @NotNull String channelName) {
         Channel channelToCreate = new Channel();
         channelToCreate.setName(channelName);
         channelToCreate.setIsPublic(true);
@@ -211,9 +212,9 @@ public class ChannelService {
         return createChannel(lecture.getCourse(), channelToCreate, Optional.of(userRepository.getUserWithGroupsAndAuthorities()));
     }
 
-    public Channel createExerciseChannel(Exercise exercise) {
+    public Channel createExerciseChannel(Exercise exercise, @NotNull String channelName) {
         Channel channelToCreate = new Channel();
-        channelToCreate.setName(exercise.getTitle().substring(0, 30));
+        channelToCreate.setName(channelName);
         channelToCreate.setIsPublic(true);
         channelToCreate.setIsAnnouncementChannel(false);
         channelToCreate.setIsArchived(false);

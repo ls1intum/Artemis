@@ -50,10 +50,12 @@ public class ModelingExerciseImportService extends ExerciseImportService {
         Map<Long, GradingInstruction> gradingInstructionCopyTracker = new HashMap<>();
         ModelingExercise newExercise = copyModelingExerciseBasis(importedExercise, gradingInstructionCopyTracker);
         newExercise.setKnowledge(templateExercise.getKnowledge());
-        if (newExercise.isCourseExercise()) {
-            Channel createdChannel = channelService.createExerciseChannel(newExercise);
+
+        if (newExercise.isCourseExercise() && importedExercise.getChannel() != null) {
+            Channel createdChannel = channelService.createExerciseChannel(newExercise, importedExercise.getChannel().getName());
             newExercise.setChannel(createdChannel);
         }
+
         modelingExerciseRepository.save(newExercise);
         newExercise.setExampleSubmissions(copyExampleSubmission(templateExercise, newExercise, gradingInstructionCopyTracker));
         return newExercise;
