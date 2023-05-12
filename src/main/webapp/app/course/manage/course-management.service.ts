@@ -169,6 +169,7 @@ export class CourseManagementService {
         if (userRefresh) {
             params = params.set('refresh', String(true));
         }
+        console.log('Get request!');
         return this.http.get<CourseForDashboardDTO>(`${this.resourceUrl}/${courseId}/for-dashboard`, { params, observe: 'response' }).pipe(
             map((res: HttpResponse<CourseForDashboardDTO>) => {
                 if (res.body) {
