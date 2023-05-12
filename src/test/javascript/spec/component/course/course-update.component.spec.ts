@@ -33,6 +33,8 @@ import { CourseAdminService } from 'app/course/manage/course-admin.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { By } from '@angular/platform-browser';
+import { EventManager } from 'app/core/util/event-manager.service';
+import { cloneDeep } from 'lodash-es';
 
 @Component({ selector: 'jhi-markdown-editor', template: '' })
 class MarkdownEditorStubComponent {
@@ -53,6 +55,7 @@ describe('Course Management Update Component', () => {
     let course: Course;
     const validTimeZone = 'Europe/Berlin';
     let loadImageSpy: jest.SpyInstance;
+    let eventManager: EventManager;
 
     beforeEach(() => {
         course = new Course();
@@ -123,6 +126,7 @@ describe('Course Management Update Component', () => {
                 loadImageService = TestBed.inject(LoadImageService);
                 loadImageSpy = jest.spyOn(loadImageService, 'loadImageFile');
                 accountService = TestBed.inject(AccountService);
+                eventManager = TestBed.inject(EventManager);
             });
     });
 
@@ -250,6 +254,34 @@ describe('Course Management Update Component', () => {
             expect(createStub).toHaveBeenCalledOnce();
             expect(createStub).toHaveBeenCalledWith(entity, undefined);
             expect(comp.isSaving).toBeFalse();
+        }));
+
+        it('should broadcast course modification on delete', fakeAsync(() => {
+            // GIVEN
+            const broadcastSpy = jest.spyOn(eventManager, 'broadcast');
+
+            const previousCourse = new Course();
+            previousCourse.id = 123;
+            previousCourse.title = 'previous title';
+            comp.course = previousCourse;
+
+            const updatedCourse = cloneDeep(previousCourse);
+            updatedCourse.title = 'updated title';
+            comp.courseForm = new FormGroup({
+                title: new FormControl(updatedCourse.title),
+            });
+            const updateStub = jest.spyOn(courseManagementService, 'update').mockReturnValue(of(new HttpResponse({ body: updatedCourse })));
+
+            // WHEN
+            comp.save();
+            tick();
+
+            // THEN
+            expect(updateStub).toHaveBeenCalledOnce();
+            expect(broadcastSpy).toHaveBeenCalledWith({
+                name: 'courseModification',
+                content: 'Changed a course',
+            });
         }));
     });
 

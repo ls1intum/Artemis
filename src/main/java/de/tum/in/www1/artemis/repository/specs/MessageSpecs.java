@@ -1,10 +1,12 @@
 package de.tum.in.www1.artemis.repository.specs;
 
 import javax.persistence.criteria.Expression;
+import javax.persistence.criteria.JoinType;
 import javax.persistence.criteria.Predicate;
 
 import org.springframework.data.jpa.domain.Specification;
 
+import de.tum.in.www1.artemis.domain.metis.AnswerPost_;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.metis.Post_;
 import de.tum.in.www1.artemis.domain.metis.conversation.Conversation_;
@@ -20,6 +22,11 @@ public class MessageSpecs {
     public static Specification<Post> getConversationSpecification(Long conversationId) {
         return ((root, query, criteriaBuilder) -> {
             query.distinct(true); // get distinct messages
+            // fetch additional values to avoid subsequent db calls
+            var answerFetch = root.fetch(Post_.ANSWERS, JoinType.LEFT);
+            answerFetch.fetch(AnswerPost_.REACTIONS, JoinType.LEFT);
+            root.fetch(Post_.REACTIONS, JoinType.LEFT);
+            root.fetch(Post_.TAGS, JoinType.LEFT);
             return criteriaBuilder.equal(root.get(Post_.CONVERSATION).get(Conversation_.ID), conversationId);
         });
     }
