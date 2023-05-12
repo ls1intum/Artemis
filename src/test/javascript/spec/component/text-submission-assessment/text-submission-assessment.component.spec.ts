@@ -256,7 +256,7 @@ describe('TextSubmissionAssessmentComponent', () => {
         expect(errorStub).toHaveBeenCalledWith('artemisApp.textAssessment.error.invalidAssessments');
     });
 
-    it('should display error when complaint resolved but assessment invalid', async () => {
+    it('should display error when complaint resolved but assessment invalid', () => {
         // would be called on receive of event
         let onSuccessCalled = false;
         let onErrorCalled = false;
