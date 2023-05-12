@@ -20,6 +20,7 @@ describe('ModelingSubmission Service', () => {
         httpMock = TestBed.inject(HttpTestingController);
 
         elemDefault = new ModelingSubmission();
+        elemDefault.id = 5;
     });
 
     const getDefaultValues = (updateValues = {}) => {
@@ -37,7 +38,7 @@ describe('ModelingSubmission Service', () => {
         service
             .getSubmission(123, correctionRound)
             .pipe(take(1))
-            .subscribe((resp) => expect(resp).toEqual({ ...elemDefault, id: 5 }));
+            .subscribe((resp) => expect(resp).toEqual({ ...elemDefault }));
 
         const req = httpMock.expectOne({ method: 'GET', url: `api/modeling-submissions/123?correction-round=7` });
         expect(req.request.params.get('correction-round')).toBe(`${correctionRound}`);
@@ -97,7 +98,7 @@ describe('ModelingSubmission Service', () => {
         service
             .getSubmissionWithoutAssessment(exerciseId, true, correctionRound)
             .pipe(take(1))
-            .subscribe((resp) => expect(resp).toMatchObject({ ...elemDefault, id: exerciseId }));
+            .subscribe((resp) => expect(resp).toStrictEqual({ ...elemDefault }));
         const req = httpMock.expectOne({ method: 'GET', url: `api/exercises/${exerciseId}/modeling-submission-without-assessment?correction-round=${correctionRound}&lock=true` });
         expect(req.request.params.get('lock')).toBe('true');
         expect(req.request.params.get('correction-round')).toBe(`${correctionRound}`);
@@ -106,11 +107,11 @@ describe('ModelingSubmission Service', () => {
     }));
 
     it('should getLatestSubmissionForModelingEditor', fakeAsync(() => {
-        const { returnedFromService, participationId, exerciseId } = getDefaultValues();
+        const { returnedFromService, participationId } = getDefaultValues();
         service
             .getLatestSubmissionForModelingEditor(participationId)
             .pipe(take(1))
-            .subscribe((resp) => expect(resp).toMatchObject({ ...elemDefault, id: exerciseId }));
+            .subscribe((resp) => expect(resp).toMatchObject({ ...elemDefault }));
         const req = httpMock.expectOne({ method: 'GET', url: `api/participations/${participationId}/latest-modeling-submission` });
         req.flush(returnedFromService);
         tick();
