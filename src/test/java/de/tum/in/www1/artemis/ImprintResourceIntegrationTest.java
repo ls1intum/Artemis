@@ -115,7 +115,7 @@ class ImprintResourceIntegrationTest extends AbstractSpringIntegrationBambooBitb
     }
 
     @Test
-    void testGetImprintReturnsEmptyStringIfNoLanguageFound() throws Exception {
+    void testGetImprint_noLanguageFound_badRequest() throws Exception {
         try (MockedStatic<Files> mockedFiles = mockStatic(Files.class)) {
             mockedFiles.when(() -> Files.exists(argThat(path -> path.toString().contains("_de")))).thenReturn(false);
             mockedFiles.when(() -> Files.exists(argThat(path -> path.toString().contains("_en")))).thenReturn(false);

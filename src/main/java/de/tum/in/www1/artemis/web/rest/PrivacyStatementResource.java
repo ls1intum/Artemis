@@ -2,11 +2,11 @@ package de.tum.in.www1.artemis.web.rest;
 
 import javax.ws.rs.BadRequestException;
 
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.LegalDocumentLanguage;
 import de.tum.in.www1.artemis.domain.PrivacyStatement;
+import de.tum.in.www1.artemis.security.annotations.EnforceAdmin;
 import de.tum.in.www1.artemis.service.LegalDocumentService;
 
 /**
@@ -45,7 +45,7 @@ public class PrivacyStatementResource {
      * @return the privacy statement
      */
     @GetMapping("/privacy-statement-for-update")
-    @PreAuthorize("hasRole('ADMIN')")
+    @EnforceAdmin
     public PrivacyStatement getPrivacyStatementForUpdate(@RequestParam("language") String language) {
         if (!LegalDocumentLanguage.isValidShortName(language)) {
             throw new BadRequestException("Language not supported");
@@ -60,7 +60,7 @@ public class PrivacyStatementResource {
      * @return the updated privacy statement
      */
     @PutMapping("/privacy-statement")
-    @PreAuthorize("hasRole('ADMIN')")
+    @EnforceAdmin
     public PrivacyStatement updatePrivacyStatement(@RequestBody PrivacyStatement privacyStatement) {
         return legalDocumentService.updatePrivacyStatement(privacyStatement);
     }

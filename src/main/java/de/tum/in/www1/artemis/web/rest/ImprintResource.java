@@ -2,11 +2,11 @@ package de.tum.in.www1.artemis.web.rest;
 
 import javax.ws.rs.BadRequestException;
 
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.Imprint;
 import de.tum.in.www1.artemis.domain.LegalDocumentLanguage;
+import de.tum.in.www1.artemis.security.annotations.EnforceAdmin;
 import de.tum.in.www1.artemis.service.LegalDocumentService;
 
 /**
@@ -45,7 +45,7 @@ public class ImprintResource {
      * @return the imprint with the given language
      */
     @GetMapping("/imprint-for-update")
-    @PreAuthorize("hasRole('ADMIN')")
+    @EnforceAdmin
     public Imprint getImprintForUpdate(@RequestParam("language") String language) {
         if (!LegalDocumentLanguage.isValidShortName(language)) {
             throw new BadRequestException("Language not supported");
@@ -60,7 +60,7 @@ public class ImprintResource {
      * @return the updated imprint
      */
     @PutMapping("/imprint")
-    @PreAuthorize("hasRole('ADMIN')")
+    @EnforceAdmin
     public Imprint updateImprint(@RequestBody Imprint imprint) {
         return legalDocumentService.updateImprint(imprint);
     }
