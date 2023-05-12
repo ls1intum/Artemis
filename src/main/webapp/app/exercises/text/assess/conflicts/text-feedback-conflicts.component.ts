@@ -114,7 +114,7 @@ export class TextFeedbackConflictsComponent extends TextAssessmentBaseComponent 
             setLatestSubmissionResult(this.leftSubmission, getLatestSubmissionResult(this.leftSubmission));
             this.exercise = participation!.exercise as TextExercise;
         }
-        this.activatedRoute.data?.subscribe(({ conflictingTextSubmissions }) => this.setPropertiesFromServerResponse(conflictingTextSubmissions));
+        this.activatedRoute.data.subscribe(({ conflictingTextSubmissions }) => this.setPropertiesFromServerResponse(conflictingTextSubmissions));
     }
 
     private setPropertiesFromServerResponse(conflictingTextSubmissions: TextSubmission[]) {
