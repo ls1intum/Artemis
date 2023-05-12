@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
 
+import org.cryptacular.io.ClassPathResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -363,6 +364,9 @@ public class DatabaseUtilService {
 
     @Autowired
     private DragItemRepository dragItemRepository;
+
+    @Autowired
+    private QuizQuestionRepository quizQuestionRepository;
 
     @Autowired
     private ReactionRepository reactionRepository;
@@ -2590,7 +2594,7 @@ public class DatabaseUtilService {
         return course;
     }
 
-    public QuizExercise addQuizExerciseToCourseWithParticipationAndSubmissionForUser(Course course, String login) {
+    public QuizExercise addQuizExerciseToCourseWithParticipationAndSubmissionForUser(Course course, String login) throws IOException {
         QuizExercise quizExercise = createAndSaveQuiz(course, futureTimestamp, futureFutureTimestamp, QuizMode.SYNCHRONIZED);
         quizExercise.setTitle("quiz");
         quizExercise.setDuration(120);
@@ -2627,6 +2631,12 @@ public class DatabaseUtilService {
 
         var submittedDragAndDropAnswer = new DragAndDropSubmittedAnswer();
         DragAndDropQuestion dragAndDropQuestion = (DragAndDropQuestion) (quizExercise.getQuizQuestions().get(1));
+        var pathInFileSystem = Path.of(FilePathService.getDragAndDropBackgroundFilePath(), "DragAndDropBackground_2023-05-06T17-44-53-002_40f4080e.jpg");
+        if (Files.exists(pathInFileSystem)) {
+            Files.delete(pathInFileSystem);
+        }
+        Files.copy(new ClassPathResource("test-data/data-export/DragAndDropBackground_2023-05-06T17-44-53-002_40f4080e.jpg").getInputStream(), pathInFileSystem);
+        dragAndDropQuestion.setBackgroundFilePath("/api/files/drag-and-drop/backgrounds/3/DragAndDropBackground_2023-05-06T17-44-53-002_40f4080e.jpg");
         submittedDragAndDropAnswer.setQuizQuestion(dragAndDropQuestion);
         dragAndDropQuestion.setExercise(quizExercise);
         DragAndDropMapping dragAndDropMapping = new DragAndDropMapping();
@@ -2636,13 +2646,12 @@ public class DatabaseUtilService {
         DropLocation validDropLocation = new DropLocation();
         dragAndDropMapping.setDragItemIndex(0);
         dragAndDropMapping.setDropLocationIndex(0);
-        validDropLocation.setPosX(10.0);
-        validDropLocation.setPosY(10.0);
+        validDropLocation.setPosX(100.0);
+        validDropLocation.setPosY(100.0);
         validDropLocation.setHeight(10.0);
         validDropLocation.setWidth(10.0);
         dragAndDropMapping.setDropLocation(validDropLocation);
-        dragAndDropQuestion.setCorrectMappings(List.of(dragAndDropMapping));
-        submittedDragAndDropAnswer.addMappings(dragAndDropMapping);
+        dragAndDropQuestion.addCorrectMapping(dragAndDropMapping);
         studentParticipationRepo.save(studentParticipation);
         quizSubmissionRepository.save(quizSubmission);
         submittedShortAnswer.setSubmission(quizSubmission);
@@ -2651,15 +2660,19 @@ public class DatabaseUtilService {
         shortAnswerSpotRepository.save(shortAnswerSpot);
         dropLocationRepository.save(validDropLocation);
         dragItemRepository.save(validDragItem);
-        dragAndDropMappingRepository.save(dragAndDropMapping);
+        dragAndDropMapping.setSubmittedAnswer(submittedDragAndDropAnswer);
         submittedAnswerRepository.save(submittedDragAndDropAnswer);
+        dragAndDropMapping.setQuestion(null);
+        dragAndDropMapping = dragAndDropMappingRepository.save(dragAndDropMapping);
+        dragAndDropMapping.setQuestion(dragAndDropQuestion);
+        quizQuestionRepository.save(dragAndDropQuestion);
         submittedAnswerRepository.save(submittedAnswerMC);
-        submittedAnswerRepository.save(submittedDragAndDropAnswer);
         submittedAnswerRepository.save(submittedShortAnswer);
         quizSubmission.addSubmittedAnswers(submittedAnswerMC);
         quizSubmission.addSubmittedAnswers(submittedShortAnswer);
         quizSubmission.addSubmittedAnswers(submittedDragAndDropAnswer);
         studentParticipation.addSubmission(quizSubmission);
+        quizQuestionRepository.save(dragAndDropQuestion);
         quizExercise = quizExerciseRepository.save(quizExercise);
         studentParticipationRepo.save(studentParticipation);
         quizSubmissionRepository.save(quizSubmission);

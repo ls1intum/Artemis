@@ -115,7 +115,6 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
     }
 
     private void prepareTestDataForDataExportCreation() throws Exception {
-        // TODO add dnd question
         // TODO add assertion for dnd pdf file
         var userLogin = TEST_PREFIX + "student1";
         String validModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
@@ -165,7 +164,8 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
         }
         else if (exerciseDirPath.toString().contains("quiz")) {
             assertThat(exerciseDirPath).isDirectoryContaining(path -> path.getFileName().toString().endsWith("short_answer_questions_answers" + FILE_FORMAT_TXT))
-                    .isDirectoryContaining(path -> path.getFileName().toString().endsWith("multiple_choice_questions_answers" + FILE_FORMAT_TXT));
+                    .isDirectoryContaining(path -> path.getFileName().toString().endsWith("multiple_choice_questions_answers" + FILE_FORMAT_TXT))
+                    .isDirectoryContaining(path -> path.getFileName().toString().contains("dragAndDropQuestion") && path.getFileName().toString().endsWith(FILE_FORMAT_PDF));
         }
 
     }

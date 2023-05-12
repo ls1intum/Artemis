@@ -37,7 +37,7 @@ public class DragAndDropQuizAnswerConversionService {
         this.fileService = fileService;
     }
 
-    public void convertDragAndDropQuizAnswerToImage(DragAndDropSubmittedAnswer dragAndDropSubmittedAnswer, Path outputDir) throws IOException {
+    public void convertDragAndDropQuizAnswerAndStoreAsPdf(DragAndDropSubmittedAnswer dragAndDropSubmittedAnswer, Path outputDir) throws IOException {
         DragAndDropQuestion question = (DragAndDropQuestion) dragAndDropSubmittedAnswer.getQuizQuestion();
         String backgroundFilePath = question.getBackgroundFilePath();
         BufferedImage backgroundImage = ImageIO.read(new File(fileService.actualPathForPublicPath(backgroundFilePath)));

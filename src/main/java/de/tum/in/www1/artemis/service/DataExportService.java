@@ -317,7 +317,7 @@ public class DataExportService {
                 // if this question wasn't answered, the submitted answer is null
                 if (submittedAnswer != null) {
                     if (submittedAnswer instanceof DragAndDropSubmittedAnswer dragAndDropSubmittedAnswer) {
-                        dragAndDropQuizAnswerConversionService.convertDragAndDropQuizAnswerToImage(dragAndDropSubmittedAnswer, outputDir);
+                        dragAndDropQuizAnswerConversionService.convertDragAndDropQuizAnswerAndStoreAsPdf(dragAndDropSubmittedAnswer, outputDir);
                     }
                     else if (submittedAnswer instanceof ShortAnswerSubmittedAnswer shortAnswerSubmittedAnswer) {
                         shortAnswerQuestionsSubmissions.add(createExportForShortAnswerQuestion(shortAnswerSubmittedAnswer));
