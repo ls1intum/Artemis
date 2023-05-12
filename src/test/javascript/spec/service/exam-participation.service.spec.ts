@@ -196,15 +196,14 @@ describe('Exam Participation Service', () => {
         /*configure the exam of a student exam*/
         const examToSend = new Exam();
 
-        const returnedFromService = Object.assign({}, studentExam, {
+        const returnedFromService = Object.assign(studentExam, {
             exercises: [exercise],
             exam: examToSend,
         });
-        const expected = Object.assign({}, returnedFromService);
         service
             .submitStudentExam(2, 2, returnedFromService)
             .pipe(take(1))
-            .subscribe((resp) => expect(resp).toMatchObject({ body: expected }));
+            .subscribe((resp) => expect(resp).toMatchObject({ body: returnedFromService }));
 
         const req = httpMock.expectOne({ method: 'POST' });
         req.flush(returnedFromService);
