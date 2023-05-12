@@ -155,7 +155,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
             .authorizeRequests()
             .antMatchers("/api/admin/**").hasAuthority(Role.ADMIN.getAuthority())
             .antMatchers("/api/public/**").permitAll()
-            // TODO: Remove the following three lines in April 2024 together with LegacyResource
+            // TODO: Remove the following three lines in May 2024 together with LegacyResource
             .antMatchers(HttpMethod.POST, "/api/programming-exercises/new-result").permitAll()
             .antMatchers(HttpMethod.POST, "/api/programming-submissions/*").permitAll()
             .antMatchers(HttpMethod.POST, "/api/programming-exercises/test-cases-changed/*").permitAll()
