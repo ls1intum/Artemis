@@ -294,7 +294,7 @@ describe('Profile Service', () => {
             service.getProfileInfo().subscribe(() => {});
 
             const req = httpMock.expectOne({ method: 'GET' });
-            const infoUrl = SERVER_API_URL + 'management/info';
+            const infoUrl = 'management/info';
             expect(req.request.url).toEqual(infoUrl);
         });
 

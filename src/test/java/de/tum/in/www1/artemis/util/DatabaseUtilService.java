@@ -421,8 +421,12 @@ public class DatabaseUtilService {
     }
 
     public List<User> generateActivatedUsers(String loginPrefix, String commonPasswordHash, String[] groups, Set<Authority> authorities, int amount) {
+        return generateActivatedUsers(loginPrefix, commonPasswordHash, groups, authorities, 1, amount);
+    }
+
+    public List<User> generateActivatedUsers(String loginPrefix, String commonPasswordHash, String[] groups, Set<Authority> authorities, int from, int to) {
         List<User> generatedUsers = new ArrayList<>();
-        for (int i = 1; i <= amount; i++) {
+        for (int i = from; i <= to; i++) {
             var login = loginPrefix + i;
             // the following line either creates the user or resets and existing user to its original state
             User user = createOrReuseExistingUser(login, commonPasswordHash);
@@ -623,6 +627,19 @@ public class DatabaseUtilService {
         }
 
         return usersToAdd;
+    }
+
+    /**
+     * generates and adds students to the repo, starting with student with the index to
+     *
+     * @param prefix the test prefix
+     * @param from   first student to be added (inclusive)
+     * @param to     last student to be added (inclusive)
+     */
+    public void addStudents(String prefix, int from, int to) {
+        var students = generateActivatedUsers(prefix + "student", passwordService.hashPassword(USER_PASSWORD), new String[] { "tumuser", "testgroup", prefix + "tumuser" },
+                studentAuthorities, from, to);
+        userRepo.saveAll(students);
     }
 
     public List<Team> addTeamsForExercise(Exercise exercise, String shortNamePrefix, String loginPrefix, int numberOfTeams, User owner) {
@@ -1052,50 +1069,73 @@ public class DatabaseUtilService {
                 exampleSubmissionRepo.save(exampleSubmission);
             }
 
-            User user = (userRepo.findOneByLogin(prefix + "student1")).get();
+            User user = getUserByLogin(prefix + "student1");
             StudentParticipation participation1 = ModelFactory.generateStudentParticipation(InitializationState.INITIALIZED, modelingExercise, user);
             StudentParticipation participation2 = ModelFactory.generateStudentParticipation(InitializationState.FINISHED, textExercise, user);
             StudentParticipation participation3 = ModelFactory.generateStudentParticipation(InitializationState.UNINITIALIZED, modelingExercise, user);
+            StudentParticipation participation4 = ModelFactory.generateProgrammingExerciseStudentParticipation(InitializationState.FINISHED, programmingExercise, user);
+            StudentParticipation participation5 = ModelFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INITIALIZED, programmingExercise, user);
+            participation5.setTestRun(true);
 
             Submission modelingSubmission1 = ModelFactory.generateModelingSubmission("model1", true);
             Submission modelingSubmission2 = ModelFactory.generateModelingSubmission("model2", true);
             Submission textSubmission = ModelFactory.generateTextSubmission("text", Language.ENGLISH, true);
+            Submission programmingSubmission1 = ModelFactory.generateProgrammingSubmission(true, "1234", SubmissionType.MANUAL);
+            Submission programmingSubmission2 = ModelFactory.generateProgrammingSubmission(true, "5678", SubmissionType.MANUAL);
 
             Result result1 = ModelFactory.generateResult(true, 10D);
             Result result2 = ModelFactory.generateResult(true, 12D);
             Result result3 = ModelFactory.generateResult(false, 0D);
+            Result result4 = ModelFactory.generateResult(true, 12D);
+            Result result5 = ModelFactory.generateResult(false, 42D);
 
             participation1 = studentParticipationRepo.save(participation1);
             participation2 = studentParticipationRepo.save(participation2);
             participation3 = studentParticipationRepo.save(participation3);
+            participation4 = studentParticipationRepo.save(participation4);
+            participation5 = studentParticipationRepo.save(participation5);
 
             submissionRepository.save(modelingSubmission1);
             submissionRepository.save(modelingSubmission2);
             submissionRepository.save(textSubmission);
+            submissionRepository.save(programmingSubmission1);
+            submissionRepository.save(programmingSubmission2);
 
             modelingSubmission1.setParticipation(participation1);
             textSubmission.setParticipation(participation2);
             modelingSubmission2.setParticipation(participation3);
+            programmingSubmission1.setParticipation(participation4);
+            programmingSubmission2.setParticipation(participation5);
 
             result1.setParticipation(participation1);
             result2.setParticipation(participation3);
             result3.setParticipation(participation2);
+            result4.setParticipation(participation4);
+            result5.setParticipation(participation5);
 
             result1 = resultRepo.save(result1);
             result2 = resultRepo.save(result2);
             result3 = resultRepo.save(result3);
+            result4 = resultRepo.save(result4);
+            result5 = resultRepo.save(result5);
 
             result1.setSubmission(modelingSubmission1);
             result2.setSubmission(modelingSubmission2);
             result3.setSubmission(textSubmission);
+            result4.setSubmission(programmingSubmission1);
+            result5.setSubmission(programmingSubmission2);
 
             modelingSubmission1.addResult(result1);
             modelingSubmission2.addResult(result2);
             textSubmission.addResult(result3);
+            programmingSubmission1.addResult(result4);
+            programmingSubmission2.addResult(result5);
 
             submissionRepository.save(modelingSubmission1);
             submissionRepository.save(modelingSubmission2);
             submissionRepository.save(textSubmission);
+            submissionRepository.save(programmingSubmission1);
+            submissionRepository.save(programmingSubmission2);
         }
 
         return Arrays.asList(course1, course2);
@@ -1116,7 +1156,7 @@ public class DatabaseUtilService {
 
         PlagiarismCase plagiarismCase = new PlagiarismCase();
         plagiarismCase.setExercise(textExercise);
-        plagiarismCase.setStudent(userRepo.findOneByLogin(userPrefix + "student1").get());
+        plagiarismCase.setStudent(getUserByLogin(userPrefix + "student1"));
         plagiarismCase = plagiarismCaseRepository.save(plagiarismCase);
 
         List<Post> posts = new ArrayList<>();
@@ -1500,7 +1540,11 @@ public class DatabaseUtilService {
     }
 
     public Exam setupExamWithExerciseGroupsExercisesRegisteredStudents(String userPrefix, Course course) {
-        var exam = ModelFactory.generateExam(course);
+        return setupExamWithExerciseGroupsExercisesRegisteredStudents(userPrefix, course, 4);
+    }
+
+    public Exam setupExamWithExerciseGroupsExercisesRegisteredStudents(String userPrefix, Course course, int numberOfStudents) {
+        Exam exam = ModelFactory.generateExam(course);
         exam.setNumberOfExercisesInExam(4);
         exam.setRandomizeExerciseOrder(true);
         exam.setStartDate(ZonedDateTime.now().plusHours(2));
@@ -1561,23 +1605,33 @@ public class DatabaseUtilService {
         exerciseRepo.saveAll(List.of(exercise5a, exercise5b, exercise5c));
 
         // register user
-        var student1 = getUserByLogin(userPrefix + "student1");
-        var student2 = getUserByLogin(userPrefix + "student2");
-        var student3 = getUserByLogin(userPrefix + "student3");
-        var student4 = getUserByLogin(userPrefix + "student4");
-        var registeredUsers = Set.of(student1, student2, student3, student4);
-        Set<ExamUser> registeredExamUsers = new HashSet<>();
-        for (var user : registeredUsers) {
-            var registeredExamUser = new ExamUser();
-            registeredExamUser.setUser(user);
+        return registerUsersForExamAndSaveExam(exam, userPrefix, numberOfStudents);
+    }
+
+    public Exam registerUsersForExamAndSaveExam(Exam exam, String userPrefix, int numberOfStudents) {
+        return registerUsersForExamAndSaveExam(exam, userPrefix, 1, numberOfStudents);
+    }
+
+    /**
+     * registers students for exam and saves the exam in the repository
+     *
+     * @param exam       exam to which students should be registered to
+     * @param userPrefix prefix of the users
+     * @param from       index of the first student to be registered
+     * @param to         index of the last student to be registered
+     * @return exam that was saved in the repository
+     */
+    public Exam registerUsersForExamAndSaveExam(Exam exam, String userPrefix, int from, int to) {
+
+        for (int i = from; i <= to; i++) {
+            ExamUser registeredExamUser = new ExamUser();
+            registeredExamUser.setUser(getUserByLogin(userPrefix + "student" + i));
             registeredExamUser.setExam(exam);
-            registeredExamUser = examUserRepository.save(registeredExamUser);
             exam.addExamUser(registeredExamUser);
-            registeredExamUsers.add(registeredExamUser);
+            examUserRepository.save(registeredExamUser);
         }
-        exam.setExamUsers(registeredExamUsers);
-        exam = examRepository.save(exam);
-        return exam;
+
+        return examRepository.save(exam);
     }
 
     public Exam addExam(Course course) {
@@ -4252,7 +4306,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Generate submissions for a student for an exercise. Results are mixed.
+     * Generate submissions for a student for an exercise. Results depend on the studentID.
      *
      * @param quizExercise   QuizExercise the submissions are for (we assume 3 questions here)
      * @param studentID      ID of the student

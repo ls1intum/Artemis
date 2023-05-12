@@ -8,7 +8,7 @@
         </h4>
 
         <button
-            id="modeling-exercise-create-button"
+            id="create-modeling-exercise"
             *ngIf="course && course.isAtLeastEditor"
             class="btn btn-primary jh-create-entity create-modeling-exercise text-truncate mb-1 me-1"
             [routerLink]="['/course-management', course.id, 'modeling-exercises', 'new']"
@@ -18,7 +18,7 @@
             <span jhiTranslate="artemisApp.modelingExercise.home.createLabel">Create new Modeling Exercise</span>
         </button>
         <button
-            id="modeling-exercise-import-button"
+            id="import-modeling-exercise"
             *ngIf="course && course.isAtLeastEditor"
             class="btn btn-primary jh-create-entity create-modeling-exercise text-truncate mb-1 me-1"
             (click)="openImportModal()"

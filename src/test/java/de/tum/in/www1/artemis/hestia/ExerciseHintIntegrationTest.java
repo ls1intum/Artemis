@@ -179,7 +179,7 @@ class ExerciseHintIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     void rateNotActivatedHintForAnExerciseForbidden() throws Exception {
         request.postWithoutLocation("/api/programming-exercises/" + exercise.getId() + "/exercise-hints/" + exerciseHint.getId() + "/rating/" + 4, null, HttpStatus.NOT_FOUND,
                 null);
-        assertThat(exerciseHintActivationRepository.count()).isEqualTo(0);
+        assertThat(exerciseHintActivationRepository.count()).isZero();
     }
 
     @Test

@@ -41,7 +41,7 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     @BeforeEach
     void initTestCase() {
 
-        database.addUsers(TEST_PREFIX, 5, 5, 4, 1);
+        database.addUsers(TEST_PREFIX, 4, 4, 4, 1);
 
         // initialize test setup and get all existing posts with answers (four posts, one in each context, are initialized with one answer each): 4 answers in total (with author
         // student1)
