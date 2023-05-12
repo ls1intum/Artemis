@@ -1,13 +1,17 @@
 package de.tum.in.www1.artemis.exam;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -102,6 +106,7 @@ class ExamActivityIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
                 examAction = new ConnectionUpdatedAction();
                 ((ConnectionUpdatedAction) examAction).setConnected(false);
             }
+            default -> throw new IllegalArgumentException("Invalid ExamActionType: " + examActionType);
         }
         examAction.setType(examActionType);
         examAction.setTimestamp(ZonedDateTime.now());
@@ -156,8 +161,8 @@ class ExamActivityIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         for (ExamAction examAction : examActions) {
             examActivityResource.updatePerformedExamActions(exam.getId(), examAction);
-            verify(this.websocketMessagingService).sendMessage("/topic/exam-monitoring/" + exam.getId() + "/action", examAction);
         }
+        verify(this.websocketMessagingService, times(examActions.size())).sendMessage(eq("/topic/exam-monitoring/" + exam.getId() + "/action"), any(ExamAction.class));
 
         var examActivity = examMonitoringScheduleService.getExamActivityFromCache(exam.getId(), studentExam.getId());
 
@@ -192,21 +197,13 @@ class ExamActivityIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @EnumSource(ExamActionType.class)
     void testGetInitialExamActions(ExamActionType examActionType) throws Exception {
         ExamAction examAction = createExamActionBasedOnType(examActionType);
-
         examActivityResource.updatePerformedExamActions(exam.getId(), examAction);
-
         verify(this.websocketMessagingService).sendMessage("/topic/exam-monitoring/" + exam.getId() + "/action", examAction);
 
         List<ExamAction> examActions = request.getList("/api/exam-monitoring/" + exam.getId() + "/load-actions", HttpStatus.OK, ExamAction.class);
+        assertThat(examActions.get(0)).extracting(ExamAction::getExamActivityId, ExamAction::getStudentExamId, ExamAction::getId, ExamAction::getType)
+                .containsExactly(examAction.getExamActivityId(), examAction.getStudentExamId(), examAction.getId(), examAction.getType());
 
-        assertEquals(1, examActions.size());
-
-        var receivedAction = examActions.get(0);
-        // We need to validate those values to be equal.
-        assertEquals(examAction.getExamActivityId(), receivedAction.getExamActivityId());
-        assertEquals(examAction.getStudentExamId(), receivedAction.getStudentExamId());
-        assertEquals(examAction.getId(), receivedAction.getId());
-        assertEquals(examAction.getType(), receivedAction.getType());
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
@@ -216,9 +213,8 @@ class ExamActivityIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         exam.setMonitoring(!monitoring);
         exam = examRepository.save(exam);
 
-        var result = request.putWithResponseBody("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/statistics", monitoring, Boolean.class, HttpStatus.OK);
-
-        assertEquals(result, monitoring);
-        assertEquals(examRepository.findByIdElseThrow(exam.getId()).isMonitoring(), monitoring);
+        boolean result = request.putWithResponseBody("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/statistics", monitoring, Boolean.class, HttpStatus.OK);
+        assertEquals(monitoring, result);
+        assertEquals(examRepository.findById(exam.getId()).map(Exam::isMonitoring), Optional.of(monitoring));
     }
 }

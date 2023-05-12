@@ -7,10 +7,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.io.File;
 import java.io.FileInputStream;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import javax.validation.constraints.NotNull;
 
@@ -123,20 +120,17 @@ class ExamUserIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testAddStudentsToExamWithSeatAndRoomFields() throws Exception {
-        List<ExamUserDTO> examUserDTOs = new ArrayList<>();
-        ExamUserDTO examUserDTO1 = new ExamUserDTO(TEST_PREFIX + "student1", "", "", "03756882", "", "", "101", "11", true, true, true, true, "");
-        ExamUserDTO examUserDTO2 = new ExamUserDTO(TEST_PREFIX + "student2", "", "", "03756883", "", "", "102", "11", true, true, true, true, "");
-        examUserDTOs.add(examUserDTO1);
-        examUserDTOs.add(examUserDTO2);
+        List<ExamUserDTO> examUserDTOs = List.of(new ExamUserDTO(TEST_PREFIX + "student1", "", "", "03756882", "", "", "101", "11", true, true, true, true, ""),
+                new ExamUserDTO(TEST_PREFIX + "student2", "", "", "03756883", "", "", "102", "11", true, true, true, true, ""));
 
         List<ExamUserDTO> responseNotFoundExamUsers = request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students", examUserDTOs,
                 ExamUserDTO.class, OK);
         assertThat(responseNotFoundExamUsers).isEmpty();
+
         Exam exam = examRepository.findWithExamUsersById(exam1.getId()).orElseThrow();
         var examUsers = exam.getExamUsers();
-        assertThat(examUsers).hasSize(2);
 
-        examUsers.forEach(eu -> {
+        assertThat(examUsers).hasSize(2).allSatisfy(eu -> {
             assertThat(eu.getSigningImagePath()).isNullOrEmpty();
             assertThat(eu.getStudentImagePath()).isNullOrEmpty();
             assertThat(eu.getPlannedRoom()).isNotNull();
@@ -201,17 +195,23 @@ class ExamUserIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
         headers.set("X-Artemis-Client-Fingerprint", "bar");
         headers.set("X-Forwarded-For", "10.0.28.1");
 
-        for (var studentExam : studentExams) {
+        studentExams.parallelStream().forEach(studentExam -> {
             var user = studentExam.getUser();
             database.changeUser(user.getLogin());
-            var response = request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/conduction", HttpStatus.OK,
-                    StudentExam.class, headers);
+            StudentExam response = null;
+            try {
+                response = request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/conduction", HttpStatus.OK,
+                        StudentExam.class, headers);
+            }
+            catch (Exception e) {
+                throw new RuntimeException(e);
+            }
             assertThat(response).isEqualTo(studentExam);
             assertThat(response.isStarted()).isTrue();
             assertThat(response.getExercises()).hasSize(exam2.getNumberOfExercisesInExam());
 
             assertThat(studentExamRepository.findById(studentExam.getId()).get().isStarted()).isTrue();
-        }
+        });
 
         // change back to instructor user
         database.changeUser(TEST_PREFIX + "instructor1");

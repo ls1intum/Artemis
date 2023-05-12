@@ -166,17 +166,13 @@ class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createTextExerciseSubmissionAndCalculateScore() {
         TextExercise exercise = createTextExerciseWithSGI(course1);
-        Submission submissionWithoutResult = new TextSubmission();
-        submissionWithoutResult.setSubmissionDate(pastTimestamp.plusMinutes(3L));
-        submissionWithoutResult = database.addSubmission(exercise, submissionWithoutResult, TEST_PREFIX + "student1");
-        database.addSubmission((StudentParticipation) submissionWithoutResult.getParticipation(), submissionWithoutResult);
+        Submission submission = database.addSubmission(exercise, new TextSubmission(), TEST_PREFIX + "student1");
+        submission.setSubmissionDate(pastTimestamp.plusMinutes(3L));
+        database.addSubmission((StudentParticipation) submission.getParticipation(), submission);
 
         List<Feedback> feedbacks = createFeedback(exercise);
-        var result = new Result();
-        result.setSubmission(submissionWithoutResult);
-        result.setFeedbacks(feedbacks);
-        result.setParticipation(submissionWithoutResult.getParticipation());
-        submissionWithoutResult.addResult(result);
+        Result result = new Result().submission(submission).feedbacks(feedbacks).participation(submission.getParticipation());
+        submission.addResult(result);
 
         resultRepository.submitResult(result, exercise, ExerciseDateService.getDueDate(result.getParticipation()));
         resultRepository.save(result);

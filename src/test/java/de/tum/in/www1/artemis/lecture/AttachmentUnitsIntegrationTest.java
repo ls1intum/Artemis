@@ -78,34 +78,36 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationBambooBitb
         this.testAllPreAuthorize();
     }
 
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void splitLectureFile_asInstructor_shouldGetUnitsInformation() throws Exception {
-        // TODO: move code of the next 3 lines into RequestUtilService and simply invoke request.postWithMultipartFile() --> potentially create a customized version
+    LectureUnitInformationDTO checkLectureUnitInformation() throws Exception {
         var createResult = request.getMvc().perform(buildGetSplitInformation()).andExpect(status().isOk()).andReturn();
         LectureUnitInformationDTO lectureUnitSplitInfo = mapper.readValue(createResult.getResponse().getContentAsString(), LectureUnitInformationDTO.class);
         assertThat(lectureUnitSplitInfo.units()).hasSize(2);
+        return lectureUnitSplitInfo;
+    }
+
+    List<AttachmentUnit> checkAttachmentUnits(LectureUnitInformationDTO lectureUnitSplitInfo) throws Exception {
+        var createUnitsResult = request.getMvc().perform(buildSplitAndCreateAttachmentUnits(lectureUnitSplitInfo)).andExpect(status().isOk()).andReturn();
+        List<AttachmentUnit> attachmentUnits = mapper.readValue(createUnitsResult.getResponse().getContentAsString(),
+                mapper.getTypeFactory().constructCollectionType(List.class, AttachmentUnit.class));
+        assertThat(attachmentUnits).hasSize(2);
+        return attachmentUnits;
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void splitLectureFile_asInstructor_shouldGetUnitsInformation() throws Exception {
+        LectureUnitInformationDTO lectureUnitSplitInfo = checkLectureUnitInformation();
         assertThat(lectureUnitSplitInfo.numberOfPages()).isEqualTo(20);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void splitLectureFile_asInstructor_shouldCreateAttachmentUnits() throws Exception {
-        // TODO: move code of the next 3 lines into RequestUtilService and simply invoke request.postWithMultipartFile() --> potentially create a customized version
-        var splitResult = request.getMvc().perform(buildGetSplitInformation()).andExpect(status().isOk()).andReturn();
-        LectureUnitInformationDTO lectureUnitSplitInfo = mapper.readValue(splitResult.getResponse().getContentAsString(), LectureUnitInformationDTO.class);
-
-        assertThat(lectureUnitSplitInfo.units()).hasSize(2);
+        LectureUnitInformationDTO lectureUnitSplitInfo = checkLectureUnitInformation();
         assertThat(lectureUnitSplitInfo.numberOfPages()).isEqualTo(20);
 
         lectureUnitSplitInfo = new LectureUnitInformationDTO(lectureUnitSplitInfo.units(), lectureUnitSplitInfo.numberOfPages(), false);
-
-        // TODO: move code of the next 3 lines into RequestUtilService and simply invoke request.postWithMultipartFile() --> potentially create a customized version
-        var createUnitsResult = request.getMvc().perform(buildSplitAndCreateAttachmentUnits(lectureUnitSplitInfo)).andExpect(status().isOk()).andReturn();
-        List<AttachmentUnit> attachmentUnits = mapper.readValue(createUnitsResult.getResponse().getContentAsString(),
-                mapper.getTypeFactory().constructCollectionType(List.class, AttachmentUnit.class));
-
-        assertThat(attachmentUnits).hasSize(2);
+        List<AttachmentUnit> attachmentUnits = checkAttachmentUnits(lectureUnitSplitInfo);
 
         List<Long> attachmentUnitIds = attachmentUnits.stream().map(AttachmentUnit::getId).toList();
         List<AttachmentUnit> attachmentUnitList = attachmentUnitRepository.findAllById(attachmentUnitIds);
@@ -117,18 +119,11 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationBambooBitb
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void splitLectureFile_asInstructor_shouldCreateAttachmentUnits_and_removeBreakSlides() throws Exception {
-        // TODO: move code of the next 3 lines into RequestUtilService and simply invoke request.postWithMultipartFile() --> potentially create a customized version
-        var splitResult = request.getMvc().perform(buildGetSplitInformation()).andExpect(status().isOk()).andReturn();
-        LectureUnitInformationDTO lectureUnitSplitInfo = mapper.readValue(splitResult.getResponse().getContentAsString(), LectureUnitInformationDTO.class);
-        assertThat(lectureUnitSplitInfo.units()).hasSize(2);
+        LectureUnitInformationDTO lectureUnitSplitInfo = checkLectureUnitInformation();
         assertThat(lectureUnitSplitInfo.numberOfPages()).isEqualTo(20);
-        lectureUnitSplitInfo = new LectureUnitInformationDTO(lectureUnitSplitInfo.units(), lectureUnitSplitInfo.numberOfPages(), true);
 
-        // TODO: move code of the next 3 lines into RequestUtilService and simply invoke request.postWithMultipartFile() --> potentially create a customized version
-        var createUnitsResult = request.getMvc().perform(buildSplitAndCreateAttachmentUnits(lectureUnitSplitInfo)).andExpect(status().isOk()).andReturn();
-        List<AttachmentUnit> attachmentUnits = mapper.readValue(createUnitsResult.getResponse().getContentAsString(),
-                mapper.getTypeFactory().constructCollectionType(List.class, AttachmentUnit.class));
-        assertThat(attachmentUnits).hasSize(2);
+        lectureUnitSplitInfo = new LectureUnitInformationDTO(lectureUnitSplitInfo.units(), lectureUnitSplitInfo.numberOfPages(), true);
+        List<AttachmentUnit> attachmentUnits = checkAttachmentUnits(lectureUnitSplitInfo);
 
         List<Long> attachmentUnitIds = attachmentUnits.stream().map(AttachmentUnit::getId).toList();
         List<AttachmentUnit> attachmentUnitList = attachmentUnitRepository.findAllById(attachmentUnitIds);
