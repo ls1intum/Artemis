@@ -7,12 +7,11 @@ import { MockRouter } from '../helpers/mocks/mock-router';
 
 describe('Navigation Util Service', () => {
     let service: ArtemisNavigationUtilService;
-    let router: MockRouter;
+
+    const router = new MockRouter();
+    router.setUrl('a');
 
     beforeEach(() => {
-        router = new MockRouter();
-        router.setUrl('a');
-
         return TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
             providers: [
@@ -30,6 +29,7 @@ describe('Navigation Util Service', () => {
 
     afterEach(() => {
         jest.restoreAllMocks();
+        router.navigate.mockRestore();
     });
 
     it('should go back', () => {
