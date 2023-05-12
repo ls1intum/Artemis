@@ -476,6 +476,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
                 // This has to go in the future
                 this.addTranslationAsCrumb(currentPath, 'import');
                 break;
+            case 'import-from-file':
+                this.addTranslationAsCrumb(currentPath, 'import-from-file');
+                break;
             case 'example-submissions':
                 // Special case: Don't display the ID here but the name directly (clicking the ID wouldn't work)
                 this.addTranslationAsCrumb(currentPath, 'example-submission-editor');

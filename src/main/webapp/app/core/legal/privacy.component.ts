@@ -21,7 +21,9 @@ export class PrivacyComponent implements AfterViewInit, OnInit, OnDestroy {
     ngOnInit(): void {
         // Update the view if the language was changed
         this.languageChangeSubscription = this.languageHelper.language.subscribe((lang) => {
-            this.privacyStatementService.getPrivacyStatement(lang as LegalDocumentLanguage).subscribe((statement) => (this.privacyStatement = statement.text));
+            this.privacyStatementService.getPrivacyStatement(lang as LegalDocumentLanguage).subscribe((statement) => {
+                this.privacyStatement = statement.text;
+            });
         });
     }
 

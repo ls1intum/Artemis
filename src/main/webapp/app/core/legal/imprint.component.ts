@@ -21,7 +21,9 @@ export class ImprintComponent implements AfterViewInit, OnInit, OnDestroy {
     ngOnInit(): void {
         // Update the view if the language was changed
         this.languageChangeSubscription = this.languageHelper.language.subscribe((lang) => {
-            this.legalDocumentService.getImprint(lang as LegalDocumentLanguage).subscribe((imprint) => (this.imprint = imprint.text));
+            this.legalDocumentService.getImprint(lang as LegalDocumentLanguage).subscribe((imprint) => {
+                this.imprint = imprint.text;
+            });
         });
     }
 

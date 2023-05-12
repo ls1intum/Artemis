@@ -40,7 +40,6 @@ class ImprintResourceIntegrationTest extends AbstractSpringIntegrationBambooBitb
             mockedFiles.when(() -> Files.readString(argThat(path -> path.toString().contains("_de")))).thenThrow(new IOException());
             request.get("/api/imprint?language=de", HttpStatus.INTERNAL_SERVER_ERROR, Imprint.class);
         }
-
     }
 
     @Test
@@ -50,7 +49,6 @@ class ImprintResourceIntegrationTest extends AbstractSpringIntegrationBambooBitb
             mockedFiles.when(() -> Files.exists(argThat(path -> path.toString().contains("_de")))).thenReturn(true);
             mockedFiles.when(() -> Files.readString(argThat(path -> path.toString().contains("_de")))).thenThrow(new IOException());
             request.get("/api/imprint-for-update?language=de", HttpStatus.INTERNAL_SERVER_ERROR, Imprint.class);
-
         }
     }
 
@@ -64,7 +62,6 @@ class ImprintResourceIntegrationTest extends AbstractSpringIntegrationBambooBitb
                     .thenThrow(new IOException());
             request.putWithResponseBody("/api/imprint", new Imprint("text", LegalDocumentLanguage.GERMAN), Imprint.class, HttpStatus.INTERNAL_SERVER_ERROR);
         }
-
     }
 
     @Test
@@ -78,11 +75,9 @@ class ImprintResourceIntegrationTest extends AbstractSpringIntegrationBambooBitb
             mockedFiles.verify(() -> Files.createDirectories(any()));
             mockedFiles.verify(() -> Files.writeString(argThat(path -> path.toString().contains("_de")), anyString(), eq(StandardOpenOption.CREATE),
                     eq(StandardOpenOption.TRUNCATE_EXISTING)));
-
         }
         assertThat(response.getText()).isEqualTo("updatedText");
         assertThat(response.getLanguage()).isEqualTo(LegalDocumentLanguage.GERMAN);
-
     }
 
     // no mock user as anonymous access should be allowed

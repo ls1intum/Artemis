@@ -133,7 +133,7 @@ describe('LegalDocumentUpdateComponent', () => {
             fixture.detectChanges();
             const button = fixture.nativeElement.querySelector('#update-legal-document-btn');
             button.click();
-            tick(100);
+            tick();
             fixture.detectChanges();
             expect(updateFile).toHaveBeenCalledOnce();
             expect(updateFile).toHaveBeenCalledWith(expected);

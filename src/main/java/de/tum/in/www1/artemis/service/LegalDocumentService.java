@@ -11,10 +11,17 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Imprint;
+import de.tum.in.www1.artemis.domain.LegalDocument;
+import de.tum.in.www1.artemis.domain.LegalDocumentLanguage;
+import de.tum.in.www1.artemis.domain.LegalDocumentType;
+import de.tum.in.www1.artemis.domain.PrivacyStatement;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
+/**
+ * Service class responsible for providing and managing legal documents (privacy statment, imprint).
+ */
 @Service
 public class LegalDocumentService {
 
@@ -147,7 +154,6 @@ public class LegalDocumentService {
             throw new BadRequestAlertException("Legal document text cannot be empty", legalDocument.getType().name(), "emptyLegalDocument");
         }
         try {
-
             // If the directory, doesn't exist, we need to create the directory first, otherwise writeString fails.
             if (!Files.exists(legalDocumentsBasePath)) {
                 Files.createDirectories(legalDocumentsBasePath);

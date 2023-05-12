@@ -84,17 +84,19 @@ export class LegalDocumentUpdateComponent implements OnInit, AfterContentChecked
         this.legalDocument.text = this.markdownEditor.markdown!;
         if (this.legalDocumentType === LegalDocumentType.PRIVACY_STATEMENT) {
             this.legalDocumentService.updatePrivacyStatement(this.legalDocument).subscribe((statement) => {
-                this.legalDocument = statement;
-                this.unsavedChanges = false;
-                this.isSaving = false;
+                this.setUpdatedDocument(statement);
             });
         } else {
-            this.legalDocumentService.updateImprint(this.legalDocument).subscribe((statement) => {
-                this.legalDocument = statement;
-                this.unsavedChanges = false;
-                this.isSaving = false;
+            this.legalDocumentService.updateImprint(this.legalDocument).subscribe((imprint) => {
+                this.setUpdatedDocument(imprint);
             });
         }
+    }
+
+    private setUpdatedDocument(updatedDocument: LegalDocument) {
+        this.legalDocument = updatedDocument;
+        this.unsavedChanges = false;
+        this.isSaving = false;
     }
 
     checkUnsavedChanges(content: string) {
@@ -107,7 +109,9 @@ export class LegalDocumentUpdateComponent implements OnInit, AfterContentChecked
         } else {
             this.markdownEditor.markdown = '';
             this.currentLanguage = legalDocumentLanguage;
-            this.getLegalDocumentForUpdate(this.legalDocumentType, legalDocumentLanguage).subscribe((document) => (this.legalDocument = document));
+            this.getLegalDocumentForUpdate(this.legalDocumentType, legalDocumentLanguage).subscribe((document) => {
+                this.legalDocument = document;
+            });
         }
     }
 
@@ -115,17 +119,20 @@ export class LegalDocumentUpdateComponent implements OnInit, AfterContentChecked
         this.unsavedChangesWarning = this.modalService.open(UnsavedChangesWarningComponent, { size: 'lg', backdrop: 'static' });
         if (this.legalDocumentType === LegalDocumentType.PRIVACY_STATEMENT) {
             this.unsavedChangesWarning.componentInstance.textMessage = 'artemisApp.legal.privacyStatement.unsavedChangesWarning';
-        } else {
+        } else if (this.legalDocumentType === LegalDocumentType.IMPRINT) {
             this.unsavedChangesWarning.componentInstance.textMessage = 'artemisApp.legal.imprint.unsavedChangesWarning';
+        } else {
+            throw new Error('Unknown legal document type!');
         }
 
-        this.unsavedChangesWarning.result.then(
-            () => {
+        this.unsavedChangesWarning.result
+            .then(() => {
                 this.unsavedChanges = false;
                 this.onLanguageChange(legalDocumentLanguage);
-            },
-            () => {},
-        );
+            })
+            .catch(() => {
+                //ignore, just prevents the console from logging an error about a rejected promise
+            });
     }
 
     /**
