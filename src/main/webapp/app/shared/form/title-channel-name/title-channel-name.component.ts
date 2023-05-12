@@ -17,7 +17,7 @@ export class TitleChannelNameComponent implements OnInit {
         }
 
         if (!this.channelName) {
-            this.formatChannelName(this.channelNamePrefix + this.title);
+            this.formatChannelName(this.channelNamePrefix + (this.title || ''));
         }
     }
 

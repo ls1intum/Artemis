@@ -203,7 +203,7 @@ public class ChannelService {
 
     public Channel createLectureChannel(Lecture lecture, String channelName) {
         Channel channelToCreate = new Channel();
-        channelToCreate.setName(channelName.substring(0, 30));
+        channelToCreate.setName(channelName);
         channelToCreate.setIsPublic(true);
         channelToCreate.setIsAnnouncementChannel(false);
         channelToCreate.setIsArchived(false);

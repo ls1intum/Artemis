@@ -81,6 +81,8 @@ export class LectureUpdateComponent implements OnInit {
             const lecture = data['lecture'];
             this.lecture = lecture ?? new Lecture();
 
+            this.channelName = this.lecture.channel?.name || '';
+
             const course = data['course'];
             if (course) {
                 this.lecture.course = course;
