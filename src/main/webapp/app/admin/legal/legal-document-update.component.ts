@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { AfterContentChecked, ChangeDetectorRef, Component, OnInit, ViewChild } from '@angular/core';
 import { faBan, faCheckCircle, faCircleNotch, faExclamationTriangle, faSave } from '@fortawesome/free-solid-svg-icons';
 import { LegalDocumentService } from 'app/shared/service/legal-document.service';
 import { MarkdownEditorComponent, MarkdownEditorHeight } from 'app/shared/markdown-editor/markdown-editor.component';
@@ -14,7 +14,7 @@ import { JhiLanguageHelper } from 'app/core/language/language.helper';
     styleUrls: ['./legal-document-update.component.scss'],
     templateUrl: './legal-document-update.component.html',
 })
-export class LegalDocumentUpdateComponent implements OnInit {
+export class LegalDocumentUpdateComponent implements OnInit, AfterContentChecked {
     readonly supportedLanguages: LegalDocumentLanguage[] = [LegalDocumentLanguage.GERMAN, LegalDocumentLanguage.ENGLISH];
     readonly faBan = faBan;
     readonly faSave = faSave;
@@ -40,7 +40,13 @@ export class LegalDocumentUpdateComponent implements OnInit {
     unsavedChangesWarning: NgbModalRef;
     titleKey: string;
 
-    constructor(private legalDocumentService: LegalDocumentService, private modalService: NgbModal, private route: ActivatedRoute, private languageHelper: JhiLanguageHelper) {}
+    constructor(
+        private legalDocumentService: LegalDocumentService,
+        private modalService: NgbModal,
+        private route: ActivatedRoute,
+        private languageHelper: JhiLanguageHelper,
+        private changeDetectorRef: ChangeDetectorRef,
+    ) {}
 
     ngOnInit() {
         // Tap the URL to determine, if it's the imprint or the privacy statement
@@ -99,6 +105,7 @@ export class LegalDocumentUpdateComponent implements OnInit {
         if (this.unsavedChanges) {
             this.showWarning(legalDocumentLanguage);
         } else {
+            this.markdownEditor.markdown = '';
             this.currentLanguage = legalDocumentLanguage;
             this.getLegalDocumentForUpdate(this.legalDocumentType, legalDocumentLanguage).subscribe((document) => (this.legalDocument = document));
         }
@@ -112,9 +119,20 @@ export class LegalDocumentUpdateComponent implements OnInit {
             this.unsavedChangesWarning.componentInstance.textMessage = 'artemisApp.legal.imprint.unsavedChangesWarning';
         }
 
-        this.unsavedChangesWarning.result.then(() => {
-            this.unsavedChanges = false;
-            this.onLanguageChange(legalDocumentLanguage);
-        });
+        this.unsavedChangesWarning.result.then(
+            () => {
+                this.unsavedChanges = false;
+                this.onLanguageChange(legalDocumentLanguage);
+            },
+            () => {},
+        );
+    }
+
+    /**
+     * This lifecycle hook is required to avoid causing "Expression has changed after it was checked"-error when dismissing all changes in the markdown editor
+     * on dismissing the unsaved changes warning modal -> we do not want to store changes in the legal document that are not saved
+     * */
+    ngAfterContentChecked() {
+        this.changeDetectorRef.detectChanges();
     }
 }
