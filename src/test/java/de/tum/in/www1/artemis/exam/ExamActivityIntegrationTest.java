@@ -2,16 +2,12 @@ package de.tum.in.www1.artemis.exam;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -161,8 +157,8 @@ class ExamActivityIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         for (ExamAction examAction : examActions) {
             examActivityResource.updatePerformedExamActions(exam.getId(), examAction);
+            verify(this.websocketMessagingService).sendMessage("/topic/exam-monitoring/" + exam.getId() + "/action", examAction);
         }
-        verify(this.websocketMessagingService, times(examActions.size())).sendMessage(eq("/topic/exam-monitoring/" + exam.getId() + "/action"), any(ExamAction.class));
 
         var examActivity = examMonitoringScheduleService.getExamActivityFromCache(exam.getId(), studentExam.getId());
 
@@ -201,6 +197,7 @@ class ExamActivityIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         verify(this.websocketMessagingService).sendMessage("/topic/exam-monitoring/" + exam.getId() + "/action", examAction);
 
         List<ExamAction> examActions = request.getList("/api/exam-monitoring/" + exam.getId() + "/load-actions", HttpStatus.OK, ExamAction.class);
+        assertThat(examActions).hasSize(1);
         assertThat(examActions.get(0)).extracting(ExamAction::getExamActivityId, ExamAction::getStudentExamId, ExamAction::getId, ExamAction::getType)
                 .containsExactly(examAction.getExamActivityId(), examAction.getStudentExamId(), examAction.getId(), examAction.getType());
 
@@ -215,6 +212,6 @@ class ExamActivityIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         boolean result = request.putWithResponseBody("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/statistics", monitoring, Boolean.class, HttpStatus.OK);
         assertEquals(monitoring, result);
-        assertEquals(examRepository.findById(exam.getId()).map(Exam::isMonitoring), Optional.of(monitoring));
+        assertThat(examRepository.findById(exam.getId())).map(Exam::isMonitoring).contains(monitoring);
     }
 }

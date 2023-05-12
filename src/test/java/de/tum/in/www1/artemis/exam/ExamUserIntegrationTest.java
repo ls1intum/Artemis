@@ -198,7 +198,7 @@ class ExamUserIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
         studentExams.parallelStream().forEach(studentExam -> {
             var user = studentExam.getUser();
             database.changeUser(user.getLogin());
-            StudentExam response = null;
+            StudentExam response;
             try {
                 response = request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/conduction", HttpStatus.OK,
                         StudentExam.class, headers);
@@ -206,6 +206,7 @@ class ExamUserIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
             catch (Exception e) {
                 throw new RuntimeException(e);
             }
+
             assertThat(response).isEqualTo(studentExam);
             assertThat(response.isStarted()).isTrue();
             assertThat(response.getExercises()).hasSize(exam2.getNumberOfExercisesInExam());
