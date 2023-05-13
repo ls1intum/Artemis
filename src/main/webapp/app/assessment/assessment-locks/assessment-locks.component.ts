@@ -14,7 +14,7 @@ import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment
 import { ProgrammingAssessmentManualResultService } from 'app/exercises/programming/assess/manual-result/programming-assessment-manual-result.service';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { faBan, faFolderOpen } from '@fortawesome/free-solid-svg-icons';
-import { combineLatest, take } from 'rxjs';
+import { combineLatest } from 'rxjs';
 
 @Component({
     selector: 'jhi-assessment-locks',
@@ -59,15 +59,13 @@ export class AssessmentLocksComponent implements OnInit {
     }
 
     public ngOnInit() {
-        combineLatest([this.route.params, this.route.queryParams])
-            .pipe(take(1))
-            .subscribe(([params, queryParams]) => {
-                this.courseId = Number(params['courseId']);
-                this.examId = Number(params['examId']);
-                this.tutorId = Number(queryParams['tutorId']);
+        combineLatest([this.route.params, this.route.queryParams]).subscribe(([params, queryParams]) => {
+            this.courseId = Number(params['courseId']);
+            this.examId = Number(params['examId']);
+            this.tutorId = Number(queryParams['tutorId']);
 
-                this.getAllLockedSubmissions();
-            });
+            this.getAllLockedSubmissions();
+        });
     }
 
     /**
