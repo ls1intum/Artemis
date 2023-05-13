@@ -88,6 +88,7 @@
         "solutionEntryError": "An error occurred while retrieving the extracted tasks from the problem statement.",
         "systemNotificationNeedsBothDates": "Both notification date and expiration date must be set.",
         "systemNotificationNeedsNotificationBeforeExpiration": "The expiration date must be after the notification date.",
-        "ltiNotSupported": "LTI is not supported on this Artemis instance"
+        "ltiNotSupported": "LTI is not supported on this Artemis instance",
+        "loadCourseUnnecessarily": " Der Kurs wurde bereits geladen und im CourseStorageService gespeichert. Bist du sicher, dass das erneute laden notwendig ist?"
     }
 }

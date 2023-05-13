@@ -88,6 +88,7 @@
         "solutionEntryError": "Fehler beim Laden der extrahierten Aufgaben aus der Aufgabenstellung.",
         "systemNotificationNeedsBothDates": "Sowohl das Mitteilungsdatum als auch das Ablaufdatum müssen gesetzt sein.",
         "systemNotificationNeedsNotificationBeforeExpiration": "Das Ablaufdatum muss nach dem Mitteilungsdatum liegen.",
-        "ltiNotSupported": "LTI wird auf dieser Artemis-Instanz nicht unterstützt"
+        "ltiNotSupported": "LTI wird auf dieser Artemis-Instanz nicht unterstützt",
+        "loadCourseUnnecessarily": "The course was already retrieved before and stored in the CourseStorageService. Are you sure retrieving the course again is necessary?"
     }
 }

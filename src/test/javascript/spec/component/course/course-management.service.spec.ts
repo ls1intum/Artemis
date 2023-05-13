@@ -26,6 +26,12 @@ import { CourseScores } from 'app/course/course-scores/course-scores';
 import { ScoresStorageService } from 'app/course/course-scores/scores-storage.service';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { Result } from 'app/entities/result.model';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
+import { AlertService } from 'app/core/util/alert.service';
+import { MockProvider } from 'ng-mocks';
+import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
+import { BehaviorSubject } from 'rxjs';
 
 describe('Course Management Service', () => {
     let courseManagementService: CourseManagementService;
@@ -34,13 +40,19 @@ describe('Course Management Service', () => {
     let httpMock: HttpTestingController;
     let courseStorageService: CourseStorageService;
     let scoresStorageService: ScoresStorageService;
+    let profileService: ProfileService;
+    let alertService: AlertService;
+
     let isAtLeastTutorInCourseSpy: jest.SpyInstance;
     let isAtLeastEditorInCourseSpy: jest.SpyInstance;
     let isAtLeastInstructorInCourseSpy: jest.SpyInstance;
     let convertExercisesDateFromServerSpy: jest.SpyInstance;
     let convertDatesForLecturesFromServerSpy: jest.SpyInstance;
     let syncGroupsSpy: jest.SpyInstance;
+    let getProfileInfoSpy: jest.SpyInstance;
+
     const resourceUrl = 'api/courses';
+
     let course: Course;
     let courseForDashboard: CourseForDashboardDTO;
     let courseScores: CourseScores;
@@ -50,6 +62,8 @@ describe('Course Management Service', () => {
     let exercises: Exercise[];
     let returnedFromService: any;
     let participations: StudentParticipation[];
+    const profileInfo = { inProduction: true } as ProfileInfo;
+    const profileInfoSubject = new BehaviorSubject<ProfileInfo>(profileInfo).asObservable();
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -59,6 +73,8 @@ describe('Course Management Service', () => {
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ProfileService, useClass: MockProfileService },
+                MockProvider(AlertService),
             ],
         });
         courseManagementService = TestBed.inject(CourseManagementService);
@@ -67,6 +83,8 @@ describe('Course Management Service', () => {
         lectureService = TestBed.inject(LectureService);
         courseStorageService = TestBed.inject(CourseStorageService);
         scoresStorageService = TestBed.inject(ScoresStorageService);
+        profileService = TestBed.inject(ProfileService);
+        alertService = TestBed.inject(AlertService);
 
         isAtLeastTutorInCourseSpy = jest.spyOn(accountService, 'isAtLeastTutorInCourse').mockReturnValue(false);
         isAtLeastEditorInCourseSpy = jest.spyOn(accountService, 'isAtLeastEditorInCourse').mockReturnValue(false);
@@ -113,6 +131,12 @@ describe('Course Management Service', () => {
         returnedFromService = { ...course } as Course;
         participations = [new StudentParticipation()];
         convertExercisesDateFromServerSpy = jest.spyOn(ExerciseService, 'convertExercisesDateFromServer').mockReturnValue(exercises);
+        getProfileInfoSpy = jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfoSubject);
+    });
+
+    afterEach(() => {
+        httpMock.verify();
+        jest.restoreAllMocks();
     });
 
     const expectDateConversionToBeCalled = (courseForConversion: Course) => {
@@ -490,8 +514,33 @@ describe('Course Management Service', () => {
         tick();
     }));
 
-    afterEach(() => {
-        httpMock.verify();
-        jest.restoreAllMocks();
+    it.each([true, false])('should warn developer about potentially unnecessary course retrieval', (hasCourseStored: boolean) => {
+        profileInfo.inProduction = false;
+        const courseStorageSpy = jest.spyOn(courseStorageService, 'getCourse').mockReturnValue(hasCourseStored ? course : undefined);
+        const alertSpy = jest.spyOn(alertService, 'warning');
+
+        courseManagementService.findOneForDashboard(course.id!);
+
+        expect(getProfileInfoSpy).toHaveBeenCalledOnce();
+        expect(courseStorageSpy).toHaveBeenCalledOnce();
+        expect(courseStorageSpy).toHaveBeenCalledWith(course.id);
+        if (hasCourseStored) {
+            expect(alertSpy).toHaveBeenCalledOnce();
+            expect(alertSpy).toHaveBeenCalledWith('error.loadCourseUnnecessarily');
+        } else {
+            expect(alertSpy).toHaveBeenCalledTimes(0);
+        }
+    });
+
+    it.each([true, false])('should not show warning in production for potentially unnecessary course retrieval', (hasCourseStored: boolean) => {
+        profileInfo.inProduction = true;
+        const courseStorageSpy = jest.spyOn(courseStorageService, 'getCourse').mockReturnValue(hasCourseStored ? course : undefined);
+        const alertSpy = jest.spyOn(alertService, 'warning');
+
+        courseManagementService.findOneForDashboard(course.id!);
+
+        expect(getProfileInfoSpy).toHaveBeenCalledOnce();
+        expect(courseStorageSpy).toHaveBeenCalledTimes(0);
+        expect(alertSpy).toHaveBeenCalledTimes(0);
     });
 });

@@ -25,6 +25,9 @@ import { CourseForDashboardDTO } from 'app/course/manage/course-for-dashboard-dt
 import { ScoresStorageService } from 'app/course/course-scores/scores-storage.service';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { ExerciseType, ScoresPerExerciseType } from 'app/entities/exercise.model';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
+import { AlertService } from 'app/core/util/alert.service';
 
 export type EntityResponseType = HttpResponse<Course>;
 export type EntityArrayResponseType = HttpResponse<Course[]>;
@@ -39,6 +42,8 @@ export class CourseManagementService {
 
     private fetchingCoursesForNotifications = false;
 
+    inProduction: boolean;
+
     constructor(
         private http: HttpClient,
         private courseStorageService: CourseStorageService,
@@ -48,6 +53,8 @@ export class CourseManagementService {
         private tutorialGroupsConfigurationService: TutorialGroupsConfigurationService,
         private tutorialGroupsService: TutorialGroupsService,
         private scoresStorageService: ScoresStorageService,
+        private profileService: ProfileService,
+        private alertService: AlertService,
     ) {}
 
     /**
@@ -160,11 +167,22 @@ export class CourseManagementService {
     }
 
     /**
-     * finds one course using a GET request. If the course was already loaded it can be retrieved using {@link CourseStorageService#getCourse} or {@link CourseStorageService#subscribeToCourseUpdates}
+     * Finds one course using a GET request.
+     * If the course was already loaded it can be retrieved using {@link CourseStorageService#getCourse} or {@link CourseStorageService#subscribeToCourseUpdates}
      * @param courseId the course to fetch
      * @param userRefresh whether this is a user-initiated refresh (default: false)
      */
     findOneForDashboard(courseId: number, userRefresh = false): Observable<EntityResponseType> {
+        if (this.inProduction === undefined) {
+            this.profileService.getProfileInfo().subscribe((profileInfo: ProfileInfo) => {
+                this.inProduction = profileInfo.inProduction;
+            });
+        }
+
+        if (!this.inProduction && this.courseStorageService.getCourse(courseId)) {
+            this.alertService.warning('error.loadCourseUnnecessarily');
+        }
+
         let params = new HttpParams();
         if (userRefresh) {
             params = params.set('refresh', String(true));
