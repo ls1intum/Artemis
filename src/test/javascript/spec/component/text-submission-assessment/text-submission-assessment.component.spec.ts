@@ -410,6 +410,10 @@ describe('TextSubmissionAssessmentComponent', () => {
         const url = [
             '/course-management',
             component.courseId,
+            'exams',
+            component.examId,
+            'exercise-groups',
+            component.exerciseGroupId,
             'text-exercises',
             component.exerciseId,
             'participations',
