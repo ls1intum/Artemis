@@ -236,17 +236,20 @@ describe('TextSubmissionAssessmentComponent', () => {
         await component.ngOnInit();
 
         component.save();
+        expect(errorStub).toHaveBeenCalledOnce();
         expect(errorStub).toHaveBeenCalledWith('artemisApp.textAssessment.error.invalidAssessments');
     });
 
-    it('should display error when submitting but assessment invalid', () => {
+    it('should display error when submitting but assessment invalid', async () => {
         component.validateFeedback();
         const alertService = TestBed.inject(AlertService);
         const errorStub = jest.spyOn(alertService, 'error');
-        component.result = getLatestSubmissionResult(submission);
+
+        await component.ngOnInit();
 
         component.submit();
 
+        expect(errorStub).toHaveBeenCalledOnce();
         expect(errorStub).toHaveBeenCalledWith('artemisApp.textAssessment.error.invalidAssessments');
     });
 
@@ -263,8 +266,12 @@ describe('TextSubmissionAssessmentComponent', () => {
         const alertService = TestBed.inject(AlertService);
         const errorStub = jest.spyOn(alertService, 'error');
 
+        // add an unreferenced feedback to make the assessment invalid
+        component.unreferencedFeedback = [new Feedback()];
+
         component.updateAssessmentAfterComplaint(assessmentAfterComplaint);
 
+        expect(errorStub).toHaveBeenCalledOnce();
         expect(errorStub).toHaveBeenCalledWith('artemisApp.textAssessment.error.invalidAssessments');
         expect(onSuccessCalled).toBeFalse();
         expect(onErrorCalled).toBeTrue();
