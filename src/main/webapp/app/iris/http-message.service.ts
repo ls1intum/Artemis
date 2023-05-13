@@ -18,7 +18,7 @@ export class IrisHttpMessageService implements OnDestroy {
     constructor(private httpClient: HttpClient, private messageStore: IrisMessageStore) {
         this.messageStore.getActionObservable().subscribe((newAction: MessageStoreAction) => {
             if (newAction.type !== ActionType.STUDENT_MESSAGE_SENT) return;
-            this.create(this.sessionId, newAction.message).subscribe((response) => {
+            this.createMessage(this.sessionId, newAction.message).subscribe((response) => {
                 if (response.body == null) throw Error('Server response does not contain proper values.');
                 newAction.message.messageId = response.body.messageId;
             });
@@ -35,7 +35,7 @@ export class IrisHttpMessageService implements OnDestroy {
      * @param {IrisClientMessageDescriptor} message
      * @return {Observable<EntityResponseType>}
      */
-    create(sessionId: number, message: IrisMessageDescriptor): Observable<EntityResponseType> {
+    createMessage(sessionId: number, message: IrisMessageDescriptor): Observable<EntityResponseType> {
         return this.httpClient.post<IrisClientMessageDescriptor>(`${this.resourceUrl}/${sessionId}/messages`, message, { observe: 'response' });
     }
 
@@ -46,5 +46,17 @@ export class IrisHttpMessageService implements OnDestroy {
      */
     getMessages(sessionId: number): Observable<EntityArrayResponseType> {
         return this.httpClient.get<IrisMessageDescriptor[]>(`${this.resourceUrl}${sessionId}/messages`, { observe: 'response' });
+    }
+
+    /**
+     * creates a rating for a message
+     * @param {number} sessionId of the session of the message that should be rated
+     * @param {number} messageId of the message that should be rated
+     * @param {boolean} helpful rating of the message
+     * @return {Observable<EntityResponseType>} an Observable of the HTTP responses
+     */
+
+    rateMessage(sessionId: number, messageId: number, helpful: boolean): Observable<EntityResponseType> {
+        return this.httpClient.put<IrisMessageDescriptor>(`${this.resourceUrl}/${sessionId}/messages/${messageId}/helpful/${helpful}`, null, { observe: 'response' });
     }
 }
