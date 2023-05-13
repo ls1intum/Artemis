@@ -5,7 +5,7 @@
     [class.border-success]="isMastered"
     [class.text-secondary]="isMastered"
 >
-    <a *ngIf="courseId && !isPrerequisite" class="stretched-link" [routerLink]="['/courses', courseId, 'learning-goals', learningGoal.id!]"></a>
+    <a *ngIf="courseId && !isPrerequisite" class="stretched-link" [routerLink]="['/courses', courseId, 'competencies', learningGoal.id!]"></a>
     <div class="col-auto d-none d-sm-block">
         <a class="exercise-row-icon">
             <fa-icon [icon]="getIcon(learningGoal.taxonomy)" size="2x" [ngbTooltip]="getIconTooltip(learningGoal.taxonomy) | artemisTranslate" container="body"></fa-icon>

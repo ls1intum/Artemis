@@ -11,7 +11,7 @@ type EntityArrayResponseType = HttpResponse<Attachment[]>;
 
 @Injectable({ providedIn: 'root' })
 export class AttachmentService {
-    public resourceUrl = SERVER_API_URL + 'api/attachments';
+    public resourceUrl = 'api/attachments';
 
     constructor(protected http: HttpClient) {}
 

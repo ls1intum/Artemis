@@ -73,7 +73,7 @@ describe('EditLearningGoalComponent', () => {
     });
 
     it('should set form data correctly', () => {
-        // mocking learning goal service
+        // mocking competency service
         const learningGoalService = TestBed.inject(LearningGoalService);
         const lectureUnit = new TextUnit();
         lectureUnit.id = 1;
