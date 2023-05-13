@@ -224,7 +224,6 @@ export class MetisConversationService implements OnDestroy {
 
         this.conversationService.checkForUnreadMessages(course.id).subscribe({
             next: (hasNewMessages) => {
-                console.log(hasNewMessages?.body);
                 if (hasNewMessages?.body !== this.hasUnreadMessages) {
                     this.hasUnreadMessages = hasNewMessages?.body ?? false;
                     this._hasUnreadMessages$.next(this.hasUnreadMessages);
