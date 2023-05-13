@@ -284,17 +284,21 @@ class ConversationIntegrationTest extends AbstractConversationTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void foo() throws Exception {
+    void unreadMessages_shouldReturnCorrectValue_NoMessage() throws Exception {
         boolean unreadMessages = request.get("/api/courses/" + exampleCourseId + "/unread-messages", HttpStatus.OK, Boolean.class);
         assertThat(unreadMessages).isFalse();
+    }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void unreadMessages_shouldReturnCorrectValue_Message() throws Exception {
         var oneToOneChat = request.postWithResponseBody("/api/courses/" + exampleCourseId + "/one-to-one-chats/", List.of(testPrefix + "tutor1"), OneToOneChatDTO.class,
                 HttpStatus.CREATED);
         this.postInConversation(oneToOneChat.getId(), "instructor1");
 
         database.changeUser(testPrefix + "tutor1");
 
-        unreadMessages = request.get("/api/courses/" + exampleCourseId + "/unread-messages", HttpStatus.OK, Boolean.class);
+        boolean unreadMessages = request.get("/api/courses/" + exampleCourseId + "/unread-messages", HttpStatus.OK, Boolean.class);
         assertThat(unreadMessages).isTrue();
     }
 

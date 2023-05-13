@@ -324,7 +324,7 @@ describe('MetisConversationService', () => {
         });
     });
 
-    it.each([false, true])('should update subscription for unread messages', (unreadMessages: boolean) => {
+    it.each([true, false])('should update subscription for unread messages', (unreadMessages: boolean) => {
         jest.spyOn(conversationService, 'checkForUnreadMessages').mockReturnValue(of(new HttpResponse<boolean>({ body: unreadMessages })));
         let numberOfSubscriptions = 0;
 
