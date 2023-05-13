@@ -7,6 +7,10 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.iris.IrisMessage;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 
+/**
+ * A service to send a message over the websocket to a specific user
+ */
+
 @Service
 public class IrisWebsocketService {
 
@@ -19,6 +23,12 @@ public class IrisWebsocketService {
     public IrisWebsocketService(WebsocketMessagingService websocketMessagingService) {
         this.websocketMessagingService = websocketMessagingService;
     }
+
+    /**
+     * sends a message over the websocket to a specific user
+     *
+     * @param irisMessage that should be send over the websocket
+     */
 
     public void sendMessage(IrisMessage irisMessage) {
         Long irisSessionId = irisMessage.getSession().getId();
