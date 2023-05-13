@@ -1,12 +1,12 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { IrisSession } from 'app/entities/iris/session.model';
+import { IrisSession } from 'app/entities/iris/iris-session.model';
 
 type EntityResponseType = HttpResponse<IrisSession>;
 
 @Injectable({ providedIn: 'root' })
-export class SessionService {
+export class IrisSessionService {
     public resourceUrl = SERVER_API_URL + 'api/iris/';
 
     constructor(protected http: HttpClient) {

@@ -1,13 +1,13 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { IrisMessage } from 'app/entities/iris/message.model';
+import { IrisMessage } from 'app/entities/iris/iris-message.model';
 
 type EntityResponseType = HttpResponse<IrisMessage>;
 type EntityArrayResponseType = HttpResponse<IrisMessage[]>;
 
 @Injectable({ providedIn: 'root' })
-export class MessageService {
+export class IrisMessageService {
     public resourceUrl = SERVER_API_URL + 'api/iris/sessions';
 
     constructor(protected http: HttpClient) {

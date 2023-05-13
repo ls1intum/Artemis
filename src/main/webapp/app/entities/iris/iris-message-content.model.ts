@@ -1,4 +1,4 @@
-import { IrisMessage } from 'app/entities/iris/message.model';
+import { IrisMessage } from 'app/entities/iris/iris-message.model';
 
 export class IrisMessageContent {
     public message?: IrisMessage;

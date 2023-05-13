@@ -1,5 +1,5 @@
-import { IrisMessage } from 'app/entities/iris/message.model';
-import { MessageService } from 'app/shared/iris/message.service';
+import { IrisMessage } from 'app/entities/iris/iris-message.model';
+import { IrisMessageService } from 'app/shared/iris/iris-message.service';
 import { Observable, ReplaySubject, map } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { User } from 'app/core/user/user.model';
@@ -14,7 +14,7 @@ export class IrisService implements OnDestroy {
     private sessionId: number;
     private subscriptionChannel?: string;
 
-    constructor(protected messageService: MessageService, protected accountService: AccountService, private jhiWebsocketService: JhiWebsocketService) {
+    constructor(protected messageService: IrisMessageService, protected accountService: AccountService, private jhiWebsocketService: JhiWebsocketService) {
         this.accountService.identity().then((user: User) => {
             this.user = user!;
         });
