@@ -2,6 +2,7 @@ import { IrisMessageStore } from 'app/iris/message-store.service';
 import { ActionType, ActiveConversationMessageLoadedAction, HistoryMessageLoadedAction, MessageStoreState, StudentMessageSentAction } from 'app/iris/message-store.model';
 import { IrisClientMessageDescriptor, IrisMessageContent, IrisMessageContentType, IrisSender, IrisServerMessageDescriptor } from 'app/entities/iris/iris.model';
 import { skip, take } from 'rxjs';
+import dayjs from 'dayjs';
 
 describe('IrisMessageStore', () => {
     const mockMessageContent: IrisMessageContent = {
@@ -13,13 +14,13 @@ describe('IrisMessageStore', () => {
         sender: IrisSender.SERVER,
         messageId: 1,
         messageContent: mockMessageContent,
-        sentDatetime: new Date(),
+        sentAt: dayjs(),
     };
 
     const mockClientMessage: IrisClientMessageDescriptor = {
         sender: IrisSender.USER,
         messageContent: mockMessageContent,
-        sentDatetime: new Date(),
+        sentAt: dayjs(),
     };
 
     let messageStore: IrisMessageStore;

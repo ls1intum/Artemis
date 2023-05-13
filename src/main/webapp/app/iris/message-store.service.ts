@@ -6,9 +6,7 @@ import { ActionType, MessageStoreAction, MessageStoreState } from 'app/iris/mess
 /**
  * Provides a store to manage message-related state data and dispatch actions.
  */
-@Injectable({
-    providedIn: 'root',
-})
+@Injectable()
 export class IrisMessageStore implements OnDestroy {
     private readonly initialState: MessageStoreState = {
         messages: [],
@@ -71,6 +69,7 @@ export class IrisMessageStore implements OnDestroy {
                     messages: [action.message, ...state.messages],
                 };
             default:
+                // @ts-ignore
                 this.exhaustiveCheck(action);
                 return state;
         }

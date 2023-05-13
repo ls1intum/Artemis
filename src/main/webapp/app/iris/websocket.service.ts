@@ -1,28 +1,34 @@
-import { IrisMessage } from 'app/entities/iris/iris-message.model';
-import { IrisMessageService } from 'app/shared/iris/iris-message.service';
-import { Observable, ReplaySubject, map } from 'rxjs';
-import { HttpResponse } from '@angular/common/http';
+import { IrisHttpMessageService } from 'app/iris/http-message.service';
+import { Observable } from 'rxjs';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { Injectable, OnDestroy } from '@angular/core';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { IrisMessageStore } from 'app/iris/message-store.service';
+import { ActiveConversationMessageLoadedAction, MessageStoreState } from 'app/iris/message-store.model';
+import { IrisMessageDescriptor, IrisSender } from 'app/entities/iris/iris.model';
 
 @Injectable()
-export class IrisService implements OnDestroy {
-    private messages$: ReplaySubject<IrisMessage[]> = new ReplaySubject<IrisMessage[]>(1);
+export class IrisWebsocketService implements OnDestroy {
     private user: User;
     private sessionId: number;
     private subscriptionChannel?: string;
 
-    constructor(protected messageService: IrisMessageService, protected accountService: AccountService, private jhiWebsocketService: JhiWebsocketService) {
+    constructor(
+        protected messageService: IrisHttpMessageService,
+        protected accountService: AccountService,
+        private jhiWebsocketService: JhiWebsocketService,
+        private messageStore: IrisMessageStore,
+    ) {
         this.accountService.identity().then((user: User) => {
             this.user = user!;
         });
     }
 
-    get messages(): Observable<IrisMessage[]> {
-        return this.messages$.asObservable();
+    get messages(): Observable<MessageStoreState> {
+        return this.messageStore.getState();
     }
+
     ngOnDestroy(): void {
         if (this.subscriptionChannel) {
             this.jhiWebsocketService.unsubscribe(this.subscriptionChannel);
@@ -32,19 +38,12 @@ export class IrisService implements OnDestroy {
     getUser(): User {
         return this.user;
     }
-    /**
-     * creates a new message by invoking the message service
-     * @param {IrisMessage} message to be created
-     * @return {Observable<IrisMessage>} created message
-     */
-    createIrisMessage(message: IrisMessage): Observable<IrisMessage> {
-        return this.messageService.createMessage(this.sessionId, message).pipe(map((res: HttpResponse<IrisMessage>) => res.body!));
-    }
+
     /**
      * Creates (and updates) the websocket channel for receiving messages in dedicated channels;
      * @param channel which the iris service should subscribe to
      */
-    createWebsocketSubscription(channel: string): void {
+    changeWebsocketSubscription(channel: string | null): void {
         // if channel subscription does not change, do nothing
         if (this.subscriptionChannel === channel) {
             return;
@@ -53,10 +52,14 @@ export class IrisService implements OnDestroy {
         if (this.subscriptionChannel) {
             this.jhiWebsocketService.unsubscribe(this.subscriptionChannel);
         }
+        if (channel == null) return;
         // create new subscription
         this.subscriptionChannel = channel;
         this.jhiWebsocketService.subscribe(this.subscriptionChannel);
-        this.jhiWebsocketService.receive(this.subscriptionChannel).subscribe();
+        this.jhiWebsocketService.receive(this.subscriptionChannel).subscribe((newMessage: IrisMessageDescriptor) => {
+            if (newMessage.sender === IrisSender.USER) return;
+            this.messageStore.dispatch(new ActiveConversationMessageLoadedAction(newMessage));
+        });
     }
 
     /**
@@ -65,6 +68,6 @@ export class IrisService implements OnDestroy {
      */
     private createSubscriptionChannel(): void {
         const channel = 'topic/iris/sessions/' + this.sessionId;
-        this.createWebsocketSubscription(channel);
+        this.changeWebsocketSubscription(channel);
     }
 }

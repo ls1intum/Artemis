@@ -7,20 +7,27 @@ export enum ActionType {
 }
 
 export class HistoryMessageLoadedAction {
-    type: ActionType.HISTORY_MESSAGE_LOADED;
-    public constructor(public readonly message: IrisServerMessageDescriptor) {}
+    type: ActionType;
+
+    public constructor(public readonly message: IrisServerMessageDescriptor) {
+        this.type = ActionType.HISTORY_MESSAGE_LOADED;
+    }
 }
 
 export class ActiveConversationMessageLoadedAction {
-    type: ActionType.ACTIVE_CONVERSATION_MESSAGE_LOADED;
+    type: ActionType;
 
-    public constructor(public readonly message: IrisServerMessageDescriptor) {}
+    public constructor(public readonly message: IrisServerMessageDescriptor) {
+        this.type = ActionType.ACTIVE_CONVERSATION_MESSAGE_LOADED;
+    }
 }
 
 export class StudentMessageSentAction {
-    type: ActionType.STUDENT_MESSAGE_SENT;
+    type: ActionType;
 
-    public constructor(public readonly message: IrisClientMessageDescriptor) {}
+    public constructor(public readonly message: IrisClientMessageDescriptor) {
+        this.type = ActionType.STUDENT_MESSAGE_SENT;
+    }
 }
 
 export type MessageStoreAction = HistoryMessageLoadedAction | ActiveConversationMessageLoadedAction | StudentMessageSentAction;

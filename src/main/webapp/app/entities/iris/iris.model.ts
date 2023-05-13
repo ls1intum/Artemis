@@ -1,7 +1,11 @@
+import dayjs from 'dayjs';
+import { Exercise } from 'app/entities/exercise.model';
+import { User } from 'app/core/user/user.model';
+
 export interface IrisConversation {
     id: number;
-    exerciseId: number;
-    studentId: number;
+    programmingExercise?: Exercise;
+    user?: User;
     latestMessageId?: string;
     messageDescriptors: IrisMessageDescriptor[];
     irisEnabled: boolean;
@@ -16,13 +20,15 @@ export interface IrisServerMessageDescriptor {
     messageId: number;
     sender: IrisSender.SERVER;
     messageContent?: IrisMessageContent;
-    sentDatetime: Date; // dayjs?
+    sentAt: dayjs.Dayjs;
+    helpful?: boolean;
 }
 
 export interface IrisClientMessageDescriptor {
     sender: IrisSender.USER;
     messageContent: IrisMessageContent;
-    sentDatetime: Date; // dayjs?
+    messageId?: number;
+    sentAt?: dayjs.Dayjs;
 }
 
 export type IrisMessageDescriptor = IrisClientMessageDescriptor | IrisServerMessageDescriptor;
