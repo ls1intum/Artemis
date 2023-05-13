@@ -39,12 +39,14 @@
                     {{
                         'artemisApp.programmingExercise.submissionPolicy.submissionsAllowed'
                             | artemisTranslate : { submissionCount: numberOfSubmissionsForSubmissionPolicy, totalSubmissions: exercise.submissionPolicy.submissionLimit }
-                    }}</span
-                >
+                    }}
+                </span>
                 <span *ngIf="exercise.submissionPolicy.type === SubmissionPolicyType.SUBMISSION_PENALTY">
-                    ({{ 'artemisApp.programmingExercise.submissionPolicy.submissionPenalty.penaltyInfoLabel' | artemisTranslate }}:
-                    {{ exercise.submissionPolicy.exceedingPenalty }}P)</span
-                >
+                    {{
+                        'artemisApp.programmingExercise.submissionPolicy.submissionPenalty.penaltyInfoLabel'
+                            | artemisTranslate : { points: exercise.submissionPolicy.exceedingPenalty }
+                    }}
+                </span>
             </ng-container>
         </div>
         <!-- prettier-ignore -->
