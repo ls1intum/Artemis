@@ -35,13 +35,20 @@ public class AuthorizationCheckService {
 
     private final CourseRepository courseRepository;
 
-    // TODO: rename to course-enrollment
+    @Deprecated(forRemoval = true)
     @Value("${artemis.user-management.course-registration.allowed-username-pattern:#{null}}")
+    private Optional<Pattern> allowedCourseRegistrationUsernamePattern;
+
+    @Value("${artemis.user-management.course-enrollment.allowed-username-pattern:#{null}}")
     private Optional<Pattern> allowedCourseEnrollmentUsernamePattern;
 
     public AuthorizationCheckService(UserRepository userRepository, CourseRepository courseRepository) {
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
+
+        if (allowedCourseEnrollmentUsernamePattern == null) {
+            allowedCourseEnrollmentUsernamePattern = allowedCourseRegistrationUsernamePattern;
+        }
     }
 
     /**
