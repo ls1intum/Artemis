@@ -8,7 +8,6 @@ import { ArtemisTestModule } from '../../test.module';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 describe('UnsavedChangesWarningComponent', () => {
-    let component: UnsavedChangesWarningComponent;
     let fixture: ComponentFixture<UnsavedChangesWarningComponent>;
     let activeModal: NgbActiveModal;
 
@@ -19,7 +18,6 @@ describe('UnsavedChangesWarningComponent', () => {
         }).compileComponents();
 
         fixture = TestBed.createComponent(UnsavedChangesWarningComponent);
-        component = fixture.componentInstance;
         activeModal = TestBed.inject(NgbActiveModal);
         fixture.detectChanges();
     });
