@@ -22,19 +22,19 @@ public class CompetencyRelation extends DomainObject {
     @Convert(converter = RelationTypeConverter.class)
     private RelationType type;
 
-    public Competency getTailLearningGoal() {
+    public Competency getTailCompetency() {
         return tailCompetency;
     }
 
-    public void setTailLearningGoal(Competency tailCompetency) {
+    public void setTailCompetency(Competency tailCompetency) {
         this.tailCompetency = tailCompetency;
     }
 
-    public Competency getHeadLearningGoal() {
+    public Competency getHeadCompetency() {
         return headCompetency;
     }
 
-    public void setHeadLearningGoal(Competency headCompetency) {
+    public void setHeadCompetency(Competency headCompetency) {
         this.headCompetency = headCompetency;
     }
 

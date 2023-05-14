@@ -181,8 +181,8 @@ public class CompetencyService {
             graph.addVertex(new Vertex(competency.getTitle()));
         }
         for (CompetencyRelation relation : relations) {
-            var headVertex = graph.vertices.stream().filter(vertex -> vertex.label.equals(relation.getHeadLearningGoal().getTitle())).findFirst().orElseThrow();
-            var tailVertex = graph.vertices.stream().filter(vertex -> vertex.label.equals(relation.getTailLearningGoal().getTitle())).findFirst().orElseThrow();
+            var headVertex = graph.vertices.stream().filter(vertex -> vertex.label.equals(relation.getHeadCompetency().getTitle())).findFirst().orElseThrow();
+            var tailVertex = graph.vertices.stream().filter(vertex -> vertex.label.equals(relation.getTailCompetency().getTitle())).findFirst().orElseThrow();
             // Only EXTENDS and ASSUMES are included in the generated graph as other relations are no problem if they are circular
             // MATCHES relations are considered in the next step by merging the edges and combining the adjacencyLists
             switch (relation.getType()) {
@@ -192,8 +192,8 @@ public class CompetencyService {
         // combine vertices that are connected through MATCHES
         for (CompetencyRelation relation : relations) {
             if (relation.getType() == CompetencyRelation.RelationType.MATCHES) {
-                var headVertex = graph.vertices.stream().filter(vertex -> vertex.label.equals(relation.getHeadLearningGoal().getTitle())).findFirst().orElseThrow();
-                var tailVertex = graph.vertices.stream().filter(vertex -> vertex.label.equals(relation.getTailLearningGoal().getTitle())).findFirst().orElseThrow();
+                var headVertex = graph.vertices.stream().filter(vertex -> vertex.label.equals(relation.getHeadCompetency().getTitle())).findFirst().orElseThrow();
+                var tailVertex = graph.vertices.stream().filter(vertex -> vertex.label.equals(relation.getTailCompetency().getTitle())).findFirst().orElseThrow();
                 if (headVertex.adjacencyList.contains(tailVertex) || tailVertex.adjacencyList.contains(headVertex)) {
                     return true;
                 }

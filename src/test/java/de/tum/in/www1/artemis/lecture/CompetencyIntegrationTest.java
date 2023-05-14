@@ -473,8 +473,8 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         Competency competency1 = database.createLearningGoal(course);
 
         var relation = new CompetencyRelation();
-        relation.setTailLearningGoal(competency);
-        relation.setHeadLearningGoal(competency1);
+        relation.setTailCompetency(competency);
+        relation.setHeadCompetency(competency1);
         relation.setType(CompetencyRelation.RelationType.EXTENDS);
         competencyRelationRepository.save(relation);
 
@@ -530,14 +530,14 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         Competency otherCompetency2 = competencyRepository.findByIdElseThrow(idOfOtherLearningGoal1);
 
         var relation1 = new CompetencyRelation();
-        relation1.setTailLearningGoal(competency);
-        relation1.setHeadLearningGoal(otherCompetency1);
+        relation1.setTailCompetency(competency);
+        relation1.setHeadCompetency(otherCompetency1);
         relation1.setType(CompetencyRelation.RelationType.EXTENDS);
         competencyRelationRepository.save(relation1);
 
         var relation2 = new CompetencyRelation();
-        relation2.setTailLearningGoal(otherCompetency1);
-        relation2.setHeadLearningGoal(otherCompetency2);
+        relation2.setTailCompetency(otherCompetency1);
+        relation2.setHeadCompetency(otherCompetency2);
         relation2.setType(CompetencyRelation.RelationType.MATCHES);
         competencyRelationRepository.save(relation2);
 
@@ -563,8 +563,8 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         Competency otherCompetency = database.createLearningGoal(course);
 
         var relation = new CompetencyRelation();
-        relation.setTailLearningGoal(competency);
-        relation.setHeadLearningGoal(otherCompetency);
+        relation.setTailCompetency(competency);
+        relation.setHeadCompetency(otherCompetency);
         relation.setType(CompetencyRelation.RelationType.EXTENDS);
         relation = competencyRelationRepository.save(relation);
 
@@ -582,8 +582,8 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         Competency otherCompetency = database.createLearningGoal(course);
 
         var relation = new CompetencyRelation();
-        relation.setTailLearningGoal(competency);
-        relation.setHeadLearningGoal(otherCompetency);
+        relation.setTailCompetency(competency);
+        relation.setHeadCompetency(otherCompetency);
         relation.setType(CompetencyRelation.RelationType.EXTENDS);
         relation = competencyRelationRepository.save(relation);
 
@@ -601,8 +601,8 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         Competency otherCompetency = database.createLearningGoal(course);
 
         var relation = new CompetencyRelation();
-        relation.setTailLearningGoal(otherCompetency); // invalid
-        relation.setHeadLearningGoal(competency);
+        relation.setTailCompetency(otherCompetency); // invalid
+        relation.setHeadCompetency(competency);
         relation.setType(CompetencyRelation.RelationType.EXTENDS);
         relation = competencyRelationRepository.save(relation);
 

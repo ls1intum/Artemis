@@ -376,8 +376,8 @@ public class CompetencyResource {
             var relationType = CompetencyRelation.RelationType.valueOf(type);
 
             var relation = new CompetencyRelation();
-            relation.setTailLearningGoal(tailCompetency);
-            relation.setHeadLearningGoal(headCompetency);
+            relation.setTailCompetency(tailCompetency);
+            relation.setHeadCompetency(headCompetency);
             relation.setType(relationType);
 
             var competencies = competencyRepository.findAllForCourse(course.getId());
@@ -413,7 +413,7 @@ public class CompetencyResource {
         checkAuthorizationForCompetency(Role.INSTRUCTOR, course, competency);
 
         var relation = competencyRelationRepository.findById(competencyRelationId).orElseThrow();
-        if (!relation.getTailLearningGoal().getId().equals(competency.getId())) {
+        if (!relation.getTailCompetency().getId().equals(competency.getId())) {
             throw new BadRequestException("The relation does not belong to the specified competency");
         }
 
