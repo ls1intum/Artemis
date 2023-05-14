@@ -46,7 +46,7 @@ public class AuthorizationCheckService {
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
 
-        if (allowedCourseEnrollmentUsernamePattern == null) {
+        if (allowedCourseEnrollmentUsernamePattern.isEmpty()) {
             allowedCourseEnrollmentUsernamePattern = allowedCourseRegistrationUsernamePattern;
         }
     }
