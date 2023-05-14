@@ -72,14 +72,14 @@ public class CompetencyService {
     public SearchResultPageDTO<Competency> getAllOnPageWithSize(final PageableSearchDTO<String> search, final User user) {
         final var pageable = PageUtil.createCompetencyPageRequest(search);
         final var searchTerm = search.getSearchTerm();
-        final Page<Competency> learningGoalPage;
+        final Page<Competency> competencyPage;
         if (authCheckService.isAdmin(user)) {
-            learningGoalPage = competencyRepository.findByTitleIgnoreCaseContainingOrCourse_TitleIgnoreCaseContaining(searchTerm, searchTerm, pageable);
+            competencyPage = competencyRepository.findByTitleIgnoreCaseContainingOrCourse_TitleIgnoreCaseContaining(searchTerm, searchTerm, pageable);
         }
         else {
-            learningGoalPage = competencyRepository.findByTitleInLectureOrCourseAndUserHasAccessToCourse(searchTerm, searchTerm, user.getGroups(), pageable);
+            competencyPage = competencyRepository.findByTitleInLectureOrCourseAndUserHasAccessToCourse(searchTerm, searchTerm, user.getGroups(), pageable);
         }
-        return new SearchResultPageDTO<>(learningGoalPage.getContent(), learningGoalPage.getTotalPages());
+        return new SearchResultPageDTO<>(competencyPage.getContent(), competencyPage.getTotalPages());
     }
 
     /**
