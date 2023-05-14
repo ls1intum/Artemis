@@ -40,7 +40,7 @@ public class Competency extends DomainObject {
 
     @ManyToOne
     @JoinColumn(name = "course_id")
-    @JsonIgnoreProperties({ "learningGoals", "prerequisites" })
+    @JsonIgnoreProperties({ "competencies", "prerequisites" })
     private Course course;
 
     @ManyToMany(mappedBy = "competencies")
@@ -48,7 +48,7 @@ public class Competency extends DomainObject {
     private Set<Exercise> exercises = new HashSet<>();
 
     @ManyToMany(mappedBy = "competencies")
-    @JsonIgnoreProperties("learningGoals")
+    @JsonIgnoreProperties("competencies")
     private Set<LectureUnit> lectureUnits = new HashSet<>();
 
     /**
@@ -56,7 +56,7 @@ public class Competency extends DomainObject {
      */
     @ManyToMany
     @JoinTable(name = "learning_goal_course", joinColumns = @JoinColumn(name = "learning_goal_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "course_id", referencedColumnName = "id"))
-    @JsonIgnoreProperties({ "learningGoals", "prerequisites" })
+    @JsonIgnoreProperties({ "competencies", "prerequisites" })
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<Course> consecutiveCourses = new HashSet<>();
 
