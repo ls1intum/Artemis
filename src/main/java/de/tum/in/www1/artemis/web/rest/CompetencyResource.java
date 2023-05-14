@@ -32,12 +32,12 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 @RestController
 @RequestMapping("/api")
-public class LearningGoalResource {
+public class CompetencyResource {
 
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
-    private final Logger log = LoggerFactory.getLogger(LearningGoalResource.class);
+    private final Logger log = LoggerFactory.getLogger(CompetencyResource.class);
 
     private static final String ENTITY_NAME = "learningGoal";
 
@@ -61,7 +61,7 @@ public class LearningGoalResource {
 
     private final LearningGoalProgressService learningGoalProgressService;
 
-    public LearningGoalResource(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository,
+    public CompetencyResource(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository,
             LearningGoalRepository learningGoalRepository, LearningGoalRelationRepository learningGoalRelationRepository, LectureUnitRepository lectureUnitRepository,
             CompetencyService competencyService, CompetencyProgressRepository competencyProgressRepository, ExerciseRepository exerciseRepository,
             LearningGoalProgressService learningGoalProgressService) {
