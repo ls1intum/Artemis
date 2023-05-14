@@ -39,7 +39,7 @@ public class CompetencyResource {
 
     private final Logger log = LoggerFactory.getLogger(CompetencyResource.class);
 
-    private static final String ENTITY_NAME = "learningGoal";
+    private static final String ENTITY_NAME = "competency";
 
     private final CourseRepository courseRepository;
 
@@ -85,7 +85,7 @@ public class CompetencyResource {
      */
     @GetMapping("/competencies/{competencyId}/title")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<String> getLearningGoalTitle(@PathVariable Long competencyId) {
+    public ResponseEntity<String> getCompetencyTitle(@PathVariable Long competencyId) {
         final var title = competencyRepository.getLearningGoalTitle(competencyId);
         return title == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(title);
     }
@@ -98,7 +98,7 @@ public class CompetencyResource {
      */
     @GetMapping("competencies")
     @PreAuthorize("hasRole('EDITOR')")
-    public ResponseEntity<SearchResultPageDTO<Competency>> getAllLearningGoalsOnPage(PageableSearchDTO<String> search) {
+    public ResponseEntity<SearchResultPageDTO<Competency>> getAllCompetenciesOnPage(PageableSearchDTO<String> search) {
         final var user = userRepository.getUserWithGroupsAndAuthorities();
         return ResponseEntity.ok(competencyService.getAllOnPageWithSize(search, user));
     }
@@ -111,7 +111,7 @@ public class CompetencyResource {
      */
     @GetMapping("/courses/{courseId}/competencies")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<List<Competency>> getLearningGoals(@PathVariable Long courseId) {
+    public ResponseEntity<List<Competency>> getCompetencies(@PathVariable Long courseId) {
         log.debug("REST request to get competencies for course with id: {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
@@ -130,23 +130,23 @@ public class CompetencyResource {
      */
     @GetMapping("/courses/{courseId}/competencies/{competencyId}")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<Competency> getLearningGoal(@PathVariable Long competencyId, @PathVariable Long courseId) {
-        log.debug("REST request to get LearningGoal : {}", competencyId);
+    public ResponseEntity<Competency> getCompetency(@PathVariable Long competencyId, @PathVariable Long courseId) {
+        log.debug("REST request to get Competency : {}", competencyId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
         var course = courseRepository.findByIdElseThrow(courseId);
-        var learningGoal = competencyRepository.findByIdWithExercisesAndLectureUnitsElseThrow(competencyId);
-        checkAuthorizationForLearningGoal(Role.STUDENT, course, learningGoal);
+        var competency = competencyRepository.findByIdWithExercisesAndLectureUnitsElseThrow(competencyId);
+        checkAuthorizationForCompetency(Role.STUDENT, course, competency);
 
-        learningGoal.setUserProgress(competencyProgressRepository.findByLearningGoalIdAndUserId(competencyId, user.getId()).map(Set::of).orElse(Set.of()));
+        competency.setUserProgress(competencyProgressRepository.findByLearningGoalIdAndUserId(competencyId, user.getId()).map(Set::of).orElse(Set.of()));
         // Set completion status and remove exercise units (redundant as we also return all exercises)
-        learningGoal.setLectureUnits(learningGoal.getLectureUnits().stream().filter(lectureUnit -> !(lectureUnit instanceof ExerciseUnit))
+        competency.setLectureUnits(competency.getLectureUnits().stream().filter(lectureUnit -> !(lectureUnit instanceof ExerciseUnit))
                 .filter(lectureUnit -> authorizationCheckService.isAllowedToSeeLectureUnit(lectureUnit, user)).map(lectureUnit -> {
                     lectureUnit.setCompleted(lectureUnit.isCompletedFor(user));
                     return lectureUnit;
                 }).collect(Collectors.toSet()));
-        learningGoal.setExercises(
-                learningGoal.getExercises().stream().filter(exercise -> authorizationCheckService.isAllowedToSeeExercise(exercise, user)).collect(Collectors.toSet()));
-        return ResponseEntity.ok().body(learningGoal);
+        competency
+                .setExercises(competency.getExercises().stream().filter(exercise -> authorizationCheckService.isAllowedToSeeExercise(exercise, user)).collect(Collectors.toSet()));
+        return ResponseEntity.ok().body(competency);
     }
 
     /**
@@ -158,30 +158,29 @@ public class CompetencyResource {
      */
     @PutMapping("/courses/{courseId}/competencies")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<Competency> updateLearningGoal(@PathVariable Long courseId, @RequestBody Competency competency) {
-        log.debug("REST request to update LearningGoal : {}", competency);
+    public ResponseEntity<Competency> updateCompetency(@PathVariable Long courseId, @RequestBody Competency competency) {
+        log.debug("REST request to update Competency : {}", competency);
         if (competency.getId() == null) {
             throw new BadRequestException();
         }
         var course = courseRepository.findByIdElseThrow(courseId);
-        var existingLearningGoal = this.competencyRepository.findByIdWithLectureUnitsElseThrow(competency.getId());
-        checkAuthorizationForLearningGoal(Role.INSTRUCTOR, course, existingLearningGoal);
+        var existingCompetency = this.competencyRepository.findByIdWithLectureUnitsElseThrow(competency.getId());
+        checkAuthorizationForCompetency(Role.INSTRUCTOR, course, existingCompetency);
 
-        existingLearningGoal.setTitle(competency.getTitle());
-        existingLearningGoal.setDescription(competency.getDescription());
-        existingLearningGoal.setTaxonomy(competency.getTaxonomy());
-        existingLearningGoal.setMasteryThreshold(competency.getMasteryThreshold());
-        var persistedLearningGoal = competencyRepository.save(existingLearningGoal);
+        existingCompetency.setTitle(competency.getTitle());
+        existingCompetency.setDescription(competency.getDescription());
+        existingCompetency.setTaxonomy(competency.getTaxonomy());
+        existingCompetency.setMasteryThreshold(competency.getMasteryThreshold());
+        var persistedCompetency = competencyRepository.save(existingCompetency);
 
-        linkLectureUnitsToLearningGoal(persistedLearningGoal, competency.getLectureUnits(), existingLearningGoal.getLectureUnits());
+        linkLectureUnitsToCompetency(persistedCompetency, competency.getLectureUnits(), existingCompetency.getLectureUnits());
 
-        if (competency.getLectureUnits().size() != existingLearningGoal.getLectureUnits().size()
-                || !existingLearningGoal.getLectureUnits().containsAll(competency.getLectureUnits())) {
+        if (competency.getLectureUnits().size() != existingCompetency.getLectureUnits().size() || !existingCompetency.getLectureUnits().containsAll(competency.getLectureUnits())) {
             log.debug("Linked lecture units changed, updating student progress for competency...");
-            competencyProgressService.updateProgressByLearningGoalAsync(persistedLearningGoal);
+            competencyProgressService.updateProgressByLearningGoalAsync(persistedCompetency);
         }
 
-        return ResponseEntity.ok(persistedLearningGoal);
+        return ResponseEntity.ok(persistedCompetency);
     }
 
     /**
@@ -194,8 +193,8 @@ public class CompetencyResource {
      */
     @PostMapping("/courses/{courseId}/competencies")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<Competency> createLearningGoal(@PathVariable Long courseId, @RequestBody Competency competency) throws URISyntaxException {
-        log.debug("REST request to create LearningGoal : {}", competency);
+    public ResponseEntity<Competency> createCompetency(@PathVariable Long courseId, @RequestBody Competency competency) throws URISyntaxException {
+        log.debug("REST request to create Competency : {}", competency);
         if (competency.getId() != null || competency.getTitle() == null || competency.getTitle().trim().isEmpty()) {
             throw new BadRequestException();
         }
@@ -209,11 +208,11 @@ public class CompetencyResource {
         competencyToCreate.setMasteryThreshold(competency.getMasteryThreshold());
         competencyToCreate.setCourse(course);
 
-        var persistedLearningGoal = competencyRepository.save(competencyToCreate);
+        var persistedCompetency = competencyRepository.save(competencyToCreate);
 
-        linkLectureUnitsToLearningGoal(persistedLearningGoal, competency.getLectureUnits(), Set.of());
+        linkLectureUnitsToCompetency(persistedCompetency, competency.getLectureUnits(), Set.of());
 
-        return ResponseEntity.created(new URI("/api/courses/" + courseId + "/competencies/" + persistedLearningGoal.getId())).body(persistedLearningGoal);
+        return ResponseEntity.created(new URI("/api/courses/" + courseId + "/competencies/" + persistedCompetency.getId())).body(persistedCompetency);
     }
 
     /**
@@ -234,7 +233,7 @@ public class CompetencyResource {
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, competencyToImport.getCourse(), null);
 
         if (competencyToImport.getCourse().getId().equals(courseId)) {
-            throw new ConflictException("The competency is already added to this course", "LearningGoal", "learningGoalCycle");
+            throw new ConflictException("The competency is already added to this course", "Competency", "competencyCycle");
         }
 
         competencyToImport.setCourse(course);
@@ -253,32 +252,32 @@ public class CompetencyResource {
      */
     @DeleteMapping("/courses/{courseId}/competencies/{competencyId}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<Void> deleteLearningGoal(@PathVariable Long competencyId, @PathVariable Long courseId) {
-        log.info("REST request to delete a LearningGoal : {}", competencyId);
+    public ResponseEntity<Void> deleteCompetency(@PathVariable Long competencyId, @PathVariable Long courseId) {
+        log.info("REST request to delete a Competency : {}", competencyId);
 
         var course = courseRepository.findByIdElseThrow(courseId);
-        var learningGoal = competencyRepository.findByIdWithExercisesAndLectureUnitsBidirectionalElseThrow(competencyId);
-        checkAuthorizationForLearningGoal(Role.INSTRUCTOR, course, learningGoal);
+        var competency = competencyRepository.findByIdWithExercisesAndLectureUnitsBidirectionalElseThrow(competencyId);
+        checkAuthorizationForCompetency(Role.INSTRUCTOR, course, competency);
 
-        var relations = competencyRelationRepository.findAllByLearningGoalId(learningGoal.getId());
+        var relations = competencyRelationRepository.findAllByLearningGoalId(competency.getId());
         if (!relations.isEmpty()) {
             throw new BadRequestException("Can not delete a competency that has active relations");
         }
 
-        competencyProgressRepository.deleteAllByLearningGoalId(learningGoal.getId());
+        competencyProgressRepository.deleteAllByLearningGoalId(competency.getId());
 
-        learningGoal.getExercises().forEach(exercise -> {
-            exercise.getLearningGoals().remove(learningGoal);
+        competency.getExercises().forEach(exercise -> {
+            exercise.getLearningGoals().remove(competency);
             exerciseRepository.save(exercise);
         });
 
-        learningGoal.getLectureUnits().forEach(lectureUnit -> {
-            lectureUnit.getLearningGoals().remove(learningGoal);
+        competency.getLectureUnits().forEach(lectureUnit -> {
+            lectureUnit.getLearningGoals().remove(competency);
             lectureUnitRepository.save(lectureUnit);
         });
 
-        competencyRepository.deleteById(learningGoal.getId());
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, learningGoal.getTitle())).build();
+        competencyRepository.deleteById(competency.getId());
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, competency.getTitle())).build();
     }
 
     /**
@@ -291,13 +290,13 @@ public class CompetencyResource {
      */
     @GetMapping("/courses/{courseId}/competencies/{competencyId}/student-progress")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<CompetencyProgress> getLearningGoalStudentProgress(@PathVariable Long courseId, @PathVariable Long competencyId,
+    public ResponseEntity<CompetencyProgress> getCompetencyStudentProgress(@PathVariable Long courseId, @PathVariable Long competencyId,
             @RequestParam(defaultValue = "false") Boolean refresh) {
         log.debug("REST request to get student progress for competency: {}", competencyId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
         var course = courseRepository.findByIdElseThrow(courseId);
-        var learningGoal = competencyRepository.findByIdElseThrow(competencyId);
-        checkAuthorizationForLearningGoal(Role.STUDENT, course, learningGoal);
+        var competency = competencyRepository.findByIdElseThrow(competencyId);
+        checkAuthorizationForCompetency(Role.STUDENT, course, competency);
 
         CompetencyProgress studentProgress;
         if (refresh) {
@@ -319,19 +318,19 @@ public class CompetencyResource {
      */
     @GetMapping("/courses/{courseId}/competencies/{competencyId}/course-progress")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<CourseCompetencyProgressDTO> getLearningGoalCourseProgress(@PathVariable Long courseId, @PathVariable Long competencyId) {
+    public ResponseEntity<CourseCompetencyProgressDTO> getCompetencyCourseProgress(@PathVariable Long courseId, @PathVariable Long competencyId) {
         log.debug("REST request to get course progress for competency: {}", competencyId);
         var course = courseRepository.findByIdElseThrow(courseId);
-        var learningGoal = competencyRepository.findByIdWithLectureUnitsAndCompletionsElseThrow(competencyId);
-        checkAuthorizationForLearningGoal(Role.INSTRUCTOR, course, learningGoal);
+        var competency = competencyRepository.findByIdWithLectureUnitsAndCompletionsElseThrow(competencyId);
+        checkAuthorizationForCompetency(Role.INSTRUCTOR, course, competency);
 
-        var numberOfStudents = competencyProgressRepository.countByLearningGoal(learningGoal.getId());
-        var numberOfMasteredStudents = competencyProgressRepository.countByLearningGoalAndProgressAndConfidenceGreaterThanEqual(learningGoal.getId(), 100.0,
-                (double) learningGoal.getMasteryThreshold());
+        var numberOfStudents = competencyProgressRepository.countByLearningGoal(competency.getId());
+        var numberOfMasteredStudents = competencyProgressRepository.countByLearningGoalAndProgressAndConfidenceGreaterThanEqual(competency.getId(), 100.0,
+                (double) competency.getMasteryThreshold());
         var averageStudentScore = RoundingUtil.roundScoreSpecifiedByCourseSettings(competencyProgressRepository.findAverageConfidenceByLearningGoalId(competencyId).orElse(0.0),
                 course);
 
-        return ResponseEntity.ok().body(new CourseCompetencyProgressDTO(learningGoal.getId(), numberOfStudents, numberOfMasteredStudents, averageStudentScore));
+        return ResponseEntity.ok().body(new CourseCompetencyProgressDTO(competency.getId(), numberOfStudents, numberOfMasteredStudents, averageStudentScore));
     }
 
     /**
@@ -343,13 +342,13 @@ public class CompetencyResource {
      */
     @GetMapping("/courses/{courseId}/competencies/{competencyId}/relations")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<Set<CompetencyRelation>> getLearningGoalRelations(@PathVariable Long competencyId, @PathVariable Long courseId) {
-        log.debug("REST request to get relations for LearningGoal : {}", competencyId);
+    public ResponseEntity<Set<CompetencyRelation>> getCompetencyRelations(@PathVariable Long competencyId, @PathVariable Long courseId) {
+        log.debug("REST request to get relations for Competency : {}", competencyId);
         var course = courseRepository.findByIdElseThrow(courseId);
-        var learningGoal = competencyRepository.findByIdElseThrow(competencyId);
-        checkAuthorizationForLearningGoal(Role.STUDENT, course, learningGoal);
+        var competency = competencyRepository.findByIdElseThrow(competencyId);
+        checkAuthorizationForCompetency(Role.STUDENT, course, competency);
 
-        var relations = competencyRelationRepository.findAllByLearningGoalId(learningGoal.getId());
+        var relations = competencyRelationRepository.findAllByLearningGoalId(competency.getId());
         return ResponseEntity.ok().body(relations);
     }
 
@@ -364,27 +363,27 @@ public class CompetencyResource {
      */
     @PostMapping("/courses/{courseId}/competencies/{tailCompetencyId}/relations/{headCompetencyId}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<CompetencyRelation> createLearningGoalRelation(@PathVariable Long courseId, @PathVariable Long tailCompetencyId, @PathVariable Long headCompetencyId,
+    public ResponseEntity<CompetencyRelation> createCompetencyRelation(@PathVariable Long courseId, @PathVariable Long tailCompetencyId, @PathVariable Long headCompetencyId,
             @RequestParam(defaultValue = "") String type) {
         log.info("REST request to create a relation between competencies {} and {}", tailCompetencyId, headCompetencyId);
         var course = courseRepository.findByIdElseThrow(courseId);
-        var tailLearningGoal = competencyRepository.findByIdElseThrow(tailCompetencyId);
-        checkAuthorizationForLearningGoal(Role.INSTRUCTOR, course, tailLearningGoal);
-        var headLearningGoal = competencyRepository.findByIdElseThrow(headCompetencyId);
-        checkAuthorizationForLearningGoal(Role.INSTRUCTOR, course, headLearningGoal);
+        var tailCompetency = competencyRepository.findByIdElseThrow(tailCompetencyId);
+        checkAuthorizationForCompetency(Role.INSTRUCTOR, course, tailCompetency);
+        var headCompetency = competencyRepository.findByIdElseThrow(headCompetencyId);
+        checkAuthorizationForCompetency(Role.INSTRUCTOR, course, headCompetency);
 
         try {
             var relationType = CompetencyRelation.RelationType.valueOf(type);
 
             var relation = new CompetencyRelation();
-            relation.setTailLearningGoal(tailLearningGoal);
-            relation.setHeadLearningGoal(headLearningGoal);
+            relation.setTailLearningGoal(tailCompetency);
+            relation.setHeadLearningGoal(headCompetency);
             relation.setType(relationType);
 
-            var learningGoals = competencyRepository.findAllForCourse(course.getId());
-            var learningGoalRelations = competencyRelationRepository.findAllByCourseId(course.getId());
-            learningGoalRelations.add(relation);
-            if (competencyService.doesCreateCircularRelation(learningGoals, learningGoalRelations)) {
+            var competencies = competencyRepository.findAllForCourse(course.getId());
+            var competencyRelations = competencyRelationRepository.findAllByCourseId(course.getId());
+            competencyRelations.add(relation);
+            if (competencyService.doesCreateCircularRelation(competencies, competencyRelations)) {
                 throw new BadRequestException("You can't define circular dependencies between competencies");
             }
 
@@ -407,14 +406,14 @@ public class CompetencyResource {
      */
     @DeleteMapping("/courses/{courseId}/competencies/{competencyId}/relations/{competencyRelationId}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<Void> removeLearningGoalRelation(@PathVariable Long competencyId, @PathVariable Long courseId, @PathVariable Long competencyRelationId) {
+    public ResponseEntity<Void> removeCompetencyRelation(@PathVariable Long competencyId, @PathVariable Long courseId, @PathVariable Long competencyRelationId) {
         log.info("REST request to remove a competency relation: {}", competencyId);
         var course = courseRepository.findByIdElseThrow(courseId);
-        var learningGoal = competencyRepository.findByIdElseThrow(competencyId);
-        checkAuthorizationForLearningGoal(Role.INSTRUCTOR, course, learningGoal);
+        var competency = competencyRepository.findByIdElseThrow(competencyId);
+        checkAuthorizationForCompetency(Role.INSTRUCTOR, course, competency);
 
         var relation = competencyRelationRepository.findById(competencyRelationId).orElseThrow();
-        if (!relation.getTailLearningGoal().getId().equals(learningGoal.getId())) {
+        if (!relation.getTailLearningGoal().getId().equals(competency.getId())) {
             throw new BadRequestException("The relation does not belong to the specified competency");
         }
 
@@ -458,17 +457,17 @@ public class CompetencyResource {
     public ResponseEntity<Competency> addPrerequisite(@PathVariable Long competencyId, @PathVariable Long courseId) {
         log.info("REST request to add a prerequisite: {}", competencyId);
         var course = courseRepository.findWithEagerCompetenciesByIdElseThrow(courseId);
-        var learningGoal = competencyRepository.findByIdWithConsecutiveCoursesElseThrow(competencyId);
+        var competency = competencyRepository.findByIdWithConsecutiveCoursesElseThrow(competencyId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, learningGoal.getCourse(), null);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, competency.getCourse(), null);
 
-        if (learningGoal.getCourse().getId().equals(courseId)) {
+        if (competency.getCourse().getId().equals(courseId)) {
             throw new ConflictException("The competency of a course can not be a prerequisite to the same course", "Competency", "competencyCycle");
         }
 
-        course.addPrerequisite(learningGoal);
+        course.addPrerequisite(competency);
         courseRepository.save(course);
-        return ResponseEntity.ok().body(learningGoal);
+        return ResponseEntity.ok().body(competency);
     }
 
     /**
@@ -483,17 +482,17 @@ public class CompetencyResource {
     public ResponseEntity<Void> removePrerequisite(@PathVariable Long competencyId, @PathVariable Long courseId) {
         log.info("REST request to remove a prerequisite: {}", competencyId);
         var course = courseRepository.findWithEagerCompetenciesByIdElseThrow(courseId);
-        var learningGoal = competencyRepository.findByIdWithConsecutiveCoursesElseThrow(competencyId);
-        if (!learningGoal.getConsecutiveCourses().stream().map(Course::getId).toList().contains(courseId)) {
+        var competency = competencyRepository.findByIdWithConsecutiveCoursesElseThrow(competencyId);
+        if (!competency.getConsecutiveCourses().stream().map(Course::getId).toList().contains(courseId)) {
             throw new ConflictException("The competency is not a prerequisite of the given course", "Competency", "prerequisiteWrongCourse");
         }
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, learningGoal.getCourse(), null);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, competency.getCourse(), null);
 
-        course.removePrerequisite(learningGoal);
+        course.removePrerequisite(competency);
         courseRepository.save(course);
 
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, learningGoal.getTitle())).build();
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, competency.getTitle())).build();
     }
 
     /**
@@ -503,7 +502,7 @@ public class CompetencyResource {
      * @param lectureUnitsToAdd    A set of lecture units to link to the specified competency
      * @param lectureUnitsToRemove A set of lecture units to unlink from the specified competency
      */
-    private void linkLectureUnitsToLearningGoal(Competency competency, Set<LectureUnit> lectureUnitsToAdd, Set<LectureUnit> lectureUnitsToRemove) {
+    private void linkLectureUnitsToCompetency(Competency competency, Set<LectureUnit> lectureUnitsToAdd, Set<LectureUnit> lectureUnitsToRemove) {
         // Remove the competency from the old lecture units
         var lectureUnitsToRemoveFromDb = lectureUnitRepository.findAllByIdWithCompetenciesBidirectional(lectureUnitsToRemove.stream().map(LectureUnit::getId).toList());
         lectureUnitRepository.saveAll(lectureUnitsToRemoveFromDb.stream().filter(lectureUnit -> !(lectureUnit instanceof ExerciseUnit)).map(lectureUnit -> {
@@ -521,8 +520,8 @@ public class CompetencyResource {
         var lectureUnitsWithoutExercises = lectureUnitsFromDb.stream().filter(lectureUnit -> !(lectureUnit instanceof ExerciseUnit)).collect(Collectors.toSet());
         var exercises = lectureUnitsFromDb.stream().filter(lectureUnit -> lectureUnit instanceof ExerciseUnit).map(lectureUnit -> ((ExerciseUnit) lectureUnit).getExercise())
                 .collect(Collectors.toSet());
-        lectureUnitsWithoutExercises.stream().map(LectureUnit::getLearningGoals).forEach(learningGoals -> learningGoals.add(competency));
-        exercises.stream().map(Exercise::getLearningGoals).forEach(learningGoals -> learningGoals.add(competency));
+        lectureUnitsWithoutExercises.stream().map(LectureUnit::getLearningGoals).forEach(competencies -> competencies.add(competency));
+        exercises.stream().map(Exercise::getLearningGoals).forEach(competencies -> competencies.add(competency));
         lectureUnitRepository.saveAll(lectureUnitsWithoutExercises);
         exerciseRepository.saveAll(exercises);
         competency.setLectureUnits(lectureUnitsToAdd);
@@ -535,7 +534,7 @@ public class CompetencyResource {
      * @param course     The course for which to check the authorization role for
      * @param competency The competency to be accessed by the user
      */
-    private void checkAuthorizationForLearningGoal(Role role, @NotNull Course course, @NotNull Competency competency) {
+    private void checkAuthorizationForCompetency(Role role, @NotNull Course course, @NotNull Competency competency) {
         if (competency.getCourse() == null) {
             throw new ConflictException("A competency must belong to a course", "Competency", "competencyNoCourse");
         }

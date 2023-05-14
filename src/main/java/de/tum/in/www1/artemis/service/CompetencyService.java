@@ -70,7 +70,7 @@ public class CompetencyService {
      * @return A wrapper object containing a list of all found competencies and the total number of pages
      */
     public SearchResultPageDTO<Competency> getAllOnPageWithSize(final PageableSearchDTO<String> search, final User user) {
-        final var pageable = PageUtil.createLearningGoalPageRequest(search);
+        final var pageable = PageUtil.createCompetencyPageRequest(search);
         final var searchTerm = search.getSearchTerm();
         final Page<Competency> learningGoalPage;
         if (authCheckService.isAdmin(user)) {

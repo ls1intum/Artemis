@@ -185,13 +185,13 @@ public class Competency extends DomainObject {
         this.lectureUnits.removeIf(lectureUnit -> lectureUnit instanceof ExerciseUnit);
     }
 
-    public enum LearningGoalSearchColumn {
+    public enum CompetencySearchColumn {
 
         ID("id"), TITLE("title"), COURSE_TITLE("course.title"), SEMESTER("course.semester");
 
         private final String mappedColumnName;
 
-        LearningGoalSearchColumn(String mappedColumnName) {
+        CompetencySearchColumn(String mappedColumnName) {
             this.mappedColumnName = mappedColumnName;
         }
 

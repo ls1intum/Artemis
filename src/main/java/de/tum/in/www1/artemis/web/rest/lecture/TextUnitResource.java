@@ -60,7 +60,7 @@ public class TextUnitResource {
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<TextUnit> getTextUnit(@PathVariable Long textUnitId, @PathVariable Long lectureId) {
         log.debug("REST request to get TextUnit : {}", textUnitId);
-        Optional<TextUnit> optionalTextUnit = textUnitRepository.findByIdWithLearningGoals(textUnitId);
+        Optional<TextUnit> optionalTextUnit = textUnitRepository.findByIdWithCompetencies(textUnitId);
         if (optionalTextUnit.isEmpty()) {
             throw new EntityNotFoundException("TextUnit");
         }
@@ -87,7 +87,7 @@ public class TextUnitResource {
             throw new BadRequestAlertException("A text unit must have an ID to be updated", ENTITY_NAME, "idNull");
         }
 
-        var textUnit = textUnitRepository.findByIdWithLearningGoalsBidirectional(textUnitForm.getId()).orElseThrow();
+        var textUnit = textUnitRepository.findByIdWithCompetenciesBidirectional(textUnitForm.getId()).orElseThrow();
 
         if (textUnit.getLecture() == null || textUnit.getLecture().getCourse() == null || !textUnit.getLecture().getId().equals(lectureId)) {
             throw new ConflictException("Input data not valid", ENTITY_NAME, "inputInvalid");

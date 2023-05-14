@@ -20,7 +20,7 @@ public interface TextUnitRepository extends JpaRepository<TextUnit, Long> {
                 LEFT JOIN FETCH tu.competencies
             WHERE tu.id = :textUnitId
             """)
-    Optional<TextUnit> findByIdWithLearningGoals(@Param("textUnitId") Long textUnitId);
+    Optional<TextUnit> findByIdWithCompetencies(@Param("textUnitId") Long textUnitId);
 
     @Query("""
             SELECT tu FROM TextUnit tu
@@ -28,6 +28,6 @@ public interface TextUnitRepository extends JpaRepository<TextUnit, Long> {
                 LEFT JOIN FETCH lg.lectureUnits
             WHERE tu.id = :textUnitId
             """)
-    Optional<TextUnit> findByIdWithLearningGoalsBidirectional(@Param("textUnitId") Long textUnitId);
+    Optional<TextUnit> findByIdWithCompetenciesBidirectional(@Param("textUnitId") Long textUnitId);
 
 }
