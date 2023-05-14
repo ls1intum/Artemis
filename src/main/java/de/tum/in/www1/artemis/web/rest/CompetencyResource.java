@@ -137,7 +137,7 @@ public class CompetencyResource {
         var competency = competencyRepository.findByIdWithExercisesAndLectureUnitsElseThrow(competencyId);
         checkAuthorizationForCompetency(Role.STUDENT, course, competency);
 
-        competency.setUserProgress(competencyProgressRepository.findByLearningGoalIdAndUserId(competencyId, user.getId()).map(Set::of).orElse(Set.of()));
+        competency.setUserProgress(competencyProgressRepository.findByCompetencyIdAndUserId(competencyId, user.getId()).map(Set::of).orElse(Set.of()));
         // Set completion status and remove exercise units (redundant as we also return all exercises)
         competency.setLectureUnits(competency.getLectureUnits().stream().filter(lectureUnit -> !(lectureUnit instanceof ExerciseUnit))
                 .filter(lectureUnit -> authorizationCheckService.isAllowedToSeeLectureUnit(lectureUnit, user)).map(lectureUnit -> {
@@ -259,7 +259,7 @@ public class CompetencyResource {
         var competency = competencyRepository.findByIdWithExercisesAndLectureUnitsBidirectionalElseThrow(competencyId);
         checkAuthorizationForCompetency(Role.INSTRUCTOR, course, competency);
 
-        var relations = competencyRelationRepository.findAllByLearningGoalId(competency.getId());
+        var relations = competencyRelationRepository.findAllByCompetencyId(competency.getId());
         if (!relations.isEmpty()) {
             throw new BadRequestException("Can not delete a competency that has active relations");
         }
@@ -303,7 +303,7 @@ public class CompetencyResource {
             studentProgress = competencyProgressService.updateLearningGoalProgress(competencyId, user);
         }
         else {
-            studentProgress = competencyProgressRepository.findEagerByLearningGoalIdAndUserId(competencyId, user.getId()).orElse(null);
+            studentProgress = competencyProgressRepository.findEagerByCompetencyIdAndUserId(competencyId, user.getId()).orElse(null);
         }
 
         return ResponseEntity.ok().body(studentProgress);
@@ -324,10 +324,10 @@ public class CompetencyResource {
         var competency = competencyRepository.findByIdWithLectureUnitsAndCompletionsElseThrow(competencyId);
         checkAuthorizationForCompetency(Role.INSTRUCTOR, course, competency);
 
-        var numberOfStudents = competencyProgressRepository.countByLearningGoal(competency.getId());
-        var numberOfMasteredStudents = competencyProgressRepository.countByLearningGoalAndProgressAndConfidenceGreaterThanEqual(competency.getId(), 100.0,
+        var numberOfStudents = competencyProgressRepository.countByCompetency(competency.getId());
+        var numberOfMasteredStudents = competencyProgressRepository.countByCompetencyAndProgressAndConfidenceGreaterThanEqual(competency.getId(), 100.0,
                 (double) competency.getMasteryThreshold());
-        var averageStudentScore = RoundingUtil.roundScoreSpecifiedByCourseSettings(competencyProgressRepository.findAverageConfidenceByLearningGoalId(competencyId).orElse(0.0),
+        var averageStudentScore = RoundingUtil.roundScoreSpecifiedByCourseSettings(competencyProgressRepository.findAverageConfidenceByCompetencyId(competencyId).orElse(0.0),
                 course);
 
         return ResponseEntity.ok().body(new CourseCompetencyProgressDTO(competency.getId(), numberOfStudents, numberOfMasteredStudents, averageStudentScore));
@@ -348,7 +348,7 @@ public class CompetencyResource {
         var competency = competencyRepository.findByIdElseThrow(competencyId);
         checkAuthorizationForCompetency(Role.STUDENT, course, competency);
 
-        var relations = competencyRelationRepository.findAllByLearningGoalId(competency.getId());
+        var relations = competencyRelationRepository.findAllByCompetencyId(competency.getId());
         return ResponseEntity.ok().body(relations);
     }
 

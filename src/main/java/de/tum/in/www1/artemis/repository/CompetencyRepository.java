@@ -15,7 +15,7 @@ import de.tum.in.www1.artemis.domain.Competency;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
- * Spring Data JPA repository for the Learning Goal entity.
+ * Spring Data JPA repository for the Competency entity.
  */
 @Repository
 public interface CompetencyRepository extends JpaRepository<Competency, Long> {
@@ -41,17 +41,17 @@ public interface CompetencyRepository extends JpaRepository<Competency, Long> {
             SELECT lg
             FROM Competency lg
                 LEFT JOIN FETCH lg.exercises ex
-            WHERE lg.id = :#{#learningGoalId}
+            WHERE lg.id = :#{#competencyId}
             """)
-    Optional<Competency> findByIdWithExercises(@Param("competencyId") long learningGoalId);
+    Optional<Competency> findByIdWithExercises(@Param("competencyId") long competencyId);
 
     @Query("""
             SELECT lg
             FROM Competency lg
                 LEFT JOIN FETCH lg.lectureUnits lu
-            WHERE lg.id = :#{#learningGoalId}
+            WHERE lg.id = :#{#competencyId}
             """)
-    Optional<Competency> findByIdWithLectureUnits(@Param("competencyId") long learningGoalId);
+    Optional<Competency> findByIdWithLectureUnits(@Param("competencyId") long competencyId);
 
     @Query("""
             SELECT lg
@@ -62,18 +62,18 @@ public interface CompetencyRepository extends JpaRepository<Competency, Long> {
                 LEFT JOIN FETCH lu.completedUsers
                 LEFT JOIN FETCH lu.lecture l
                 LEFT JOIN FETCH lu.exercise e
-            WHERE lg.id = :learningGoalId
+            WHERE lg.id = :competencyId
             """)
-    Optional<Competency> findByIdWithExercisesAndLectureUnits(@Param("competencyId") Long learningGoalId);
+    Optional<Competency> findByIdWithExercisesAndLectureUnits(@Param("competencyId") Long competencyId);
 
     @Query("""
             SELECT lg
             FROM Competency lg
                 LEFT JOIN FETCH lg.lectureUnits lu
                 LEFT JOIN FETCH lu.completedUsers
-            WHERE lg.id = :learningGoalId
+            WHERE lg.id = :competencyId
             """)
-    Optional<Competency> findByIdWithLectureUnitsAndCompletions(@Param("competencyId") Long learningGoalId);
+    Optional<Competency> findByIdWithLectureUnitsAndCompletions(@Param("competencyId") Long competencyId);
 
     @Query("""
             SELECT lg
@@ -81,9 +81,9 @@ public interface CompetencyRepository extends JpaRepository<Competency, Long> {
                 LEFT JOIN FETCH lg.exercises
                 LEFT JOIN FETCH lg.lectureUnits lu
                 LEFT JOIN FETCH lu.completedUsers
-            WHERE lg.id = :learningGoalId
+            WHERE lg.id = :competencyId
             """)
-    Optional<Competency> findByIdWithExercisesAndLectureUnitsAndCompletions(@Param("competencyId") Long learningGoalId);
+    Optional<Competency> findByIdWithExercisesAndLectureUnitsAndCompletions(@Param("competencyId") Long competencyId);
 
     @Query("""
             SELECT lg
@@ -92,17 +92,17 @@ public interface CompetencyRepository extends JpaRepository<Competency, Long> {
                 LEFT JOIN FETCH ex.competencies
                 LEFT JOIN FETCH lg.lectureUnits lu
                 LEFT JOIN FETCH lu.competencies
-            WHERE lg.id = :learningGoalId
+            WHERE lg.id = :competencyId
             """)
-    Optional<Competency> findByIdWithExercisesAndLectureUnitsBidirectional(@Param("competencyId") Long learningGoalId);
+    Optional<Competency> findByIdWithExercisesAndLectureUnitsBidirectional(@Param("competencyId") Long competencyId);
 
     @Query("""
             SELECT lg
             FROM Competency lg
                 LEFT JOIN FETCH lg.consecutiveCourses
-            WHERE lg.id = :learningGoalId
+            WHERE lg.id = :competencyId
             """)
-    Optional<Competency> findByIdWithConsecutiveCourses(@Param("competencyId") Long learningGoalId);
+    Optional<Competency> findByIdWithConsecutiveCourses(@Param("competencyId") Long competencyId);
 
     @Query("""
             SELECT pr
@@ -135,49 +135,49 @@ public interface CompetencyRepository extends JpaRepository<Competency, Long> {
     /**
      * Returns the title of the competency with the given id.
      *
-     * @param learningGoalId the id of the competency
+     * @param competencyId the id of the competency
      * @return the name/title of the competency or null if the competency does not exist
      */
     @Query("""
             SELECT lg.title
             FROM Competency lg
-            WHERE lg.id = :learningGoalId
+            WHERE lg.id = :competencyId
             """)
-    @Cacheable(cacheNames = "learningGoalTitle", key = "#learningGoalId", unless = "#result == null")
-    String getLearningGoalTitle(@Param("competencyId") Long learningGoalId);
+    @Cacheable(cacheNames = "learningGoalTitle", key = "#competencyId", unless = "#result == null")
+    String getLearningGoalTitle(@Param("competencyId") Long competencyId);
 
     @SuppressWarnings("PMD.MethodNamingConventions")
     Page<Competency> findByTitleIgnoreCaseContainingOrCourse_TitleIgnoreCaseContaining(String partialTitle, String partialCourseTitle, Pageable pageable);
 
-    default Competency findByIdWithLectureUnitsAndCompletionsElseThrow(long learningGoalId) {
-        return findByIdWithLectureUnitsAndCompletions(learningGoalId).orElseThrow(() -> new EntityNotFoundException("LearningGoal", learningGoalId));
+    default Competency findByIdWithLectureUnitsAndCompletionsElseThrow(long competencyId) {
+        return findByIdWithLectureUnitsAndCompletions(competencyId).orElseThrow(() -> new EntityNotFoundException("LearningGoal", competencyId));
     }
 
-    default Competency findByIdWithExercisesAndLectureUnitsAndCompletionsElseThrow(long learningGoalId) {
-        return findByIdWithExercisesAndLectureUnitsAndCompletions(learningGoalId).orElseThrow(() -> new EntityNotFoundException("LearningGoal", learningGoalId));
+    default Competency findByIdWithExercisesAndLectureUnitsAndCompletionsElseThrow(long competencyId) {
+        return findByIdWithExercisesAndLectureUnitsAndCompletions(competencyId).orElseThrow(() -> new EntityNotFoundException("LearningGoal", competencyId));
     }
 
-    default Competency findByIdWithExercisesAndLectureUnitsBidirectionalElseThrow(long learningGoalId) {
-        return findByIdWithExercisesAndLectureUnitsBidirectional(learningGoalId).orElseThrow(() -> new EntityNotFoundException("LearningGoal", learningGoalId));
+    default Competency findByIdWithExercisesAndLectureUnitsBidirectionalElseThrow(long competencyId) {
+        return findByIdWithExercisesAndLectureUnitsBidirectional(competencyId).orElseThrow(() -> new EntityNotFoundException("LearningGoal", competencyId));
     }
 
-    default Competency findByIdWithConsecutiveCoursesElseThrow(long learningGoalId) {
-        return findByIdWithConsecutiveCourses(learningGoalId).orElseThrow(() -> new EntityNotFoundException("LearningGoal", learningGoalId));
+    default Competency findByIdWithConsecutiveCoursesElseThrow(long competencyId) {
+        return findByIdWithConsecutiveCourses(competencyId).orElseThrow(() -> new EntityNotFoundException("LearningGoal", competencyId));
     }
 
-    default Competency findByIdElseThrow(Long learningGoalId) {
-        return findById(learningGoalId).orElseThrow(() -> new EntityNotFoundException("LearningGoal", learningGoalId));
+    default Competency findByIdElseThrow(Long competencyId) {
+        return findById(competencyId).orElseThrow(() -> new EntityNotFoundException("LearningGoal", competencyId));
     }
 
-    default Competency findByIdWithLectureUnitsElseThrow(Long learningGoalId) {
-        return findByIdWithLectureUnits(learningGoalId).orElseThrow(() -> new EntityNotFoundException("LearningGoal", learningGoalId));
+    default Competency findByIdWithLectureUnitsElseThrow(Long competencyId) {
+        return findByIdWithLectureUnits(competencyId).orElseThrow(() -> new EntityNotFoundException("LearningGoal", competencyId));
     }
 
-    default Competency findByIdWithExercisesAndLectureUnitsElseThrow(Long learningGoalId) {
-        return findByIdWithExercisesAndLectureUnits(learningGoalId).orElseThrow(() -> new EntityNotFoundException("LearningGoal", learningGoalId));
+    default Competency findByIdWithExercisesAndLectureUnitsElseThrow(Long competencyId) {
+        return findByIdWithExercisesAndLectureUnits(competencyId).orElseThrow(() -> new EntityNotFoundException("LearningGoal", competencyId));
     }
 
-    default Competency findByIdWithExercisesElseThrow(Long learningGoalId) {
-        return findByIdWithExercises(learningGoalId).orElseThrow(() -> new EntityNotFoundException("LearningGoal", learningGoalId));
+    default Competency findByIdWithExercisesElseThrow(Long competencyId) {
+        return findByIdWithExercises(competencyId).orElseThrow(() -> new EntityNotFoundException("LearningGoal", competencyId));
     }
 }
