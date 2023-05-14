@@ -102,7 +102,7 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteLectureUnit_shouldUnlinkLearningGoal() throws Exception {
         var lectureUnit = lecture1.getLectureUnits().get(0);
-        var learningGoal = database.createLearningGoal(lecture1.getCourse());
+        var learningGoal = database.createCompetency(lecture1.getCourse());
         lectureUnit.setCompetencies(Set.of(learningGoal));
         lectureRepository.save(lecture1);
 

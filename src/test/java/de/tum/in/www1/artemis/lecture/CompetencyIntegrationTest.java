@@ -470,7 +470,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     void deleteCompetency_witRelatedCompetencies_shouldReturnBadRequest() throws Exception {
         Competency competency = competencyRepository.findByIdElseThrow(idOfCompetency);
         Course course = courseRepository.findByIdElseThrow(idOfCourse);
-        Competency competency1 = database.createLearningGoal(course);
+        Competency competency1 = database.createCompetency(course);
 
         var relation = new CompetencyRelation();
         relation.setTailCompetency(competency);
@@ -499,7 +499,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createCompetencyRelation() throws Exception {
         Course course = courseRepository.findByIdElseThrow(idOfCourse);
-        Long idOfOtherCompetency = database.createLearningGoal(course).getId();
+        Long idOfOtherCompetency = database.createCompetency(course).getId();
 
         request.postWithoutResponseBody(
                 "/api/courses/" + idOfCourse + "/competencies/" + idOfCompetency + "/relations/" + idOfOtherCompetency + "?type=" + CompetencyRelation.RelationType.EXTENDS.name(),
@@ -514,7 +514,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createCompetencyRelation_shouldReturnBadRequest() throws Exception {
         Course course = courseRepository.findByIdElseThrow(idOfCourse);
-        Long idOfOtherCompetency = database.createLearningGoal(course).getId();
+        Long idOfOtherCompetency = database.createCompetency(course).getId();
 
         request.post("/api/courses/" + idOfCourse + "/competencies/" + idOfCompetency + "/relations/" + idOfOtherCompetency + "?type=" + "abc123xyz", null, HttpStatus.BAD_REQUEST);
     }
@@ -524,9 +524,9 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     void createCompetencyRelation_shouldReturnBadRequest_ForCircularRelations() throws Exception {
         Competency competency = competencyRepository.findByIdElseThrow(idOfCompetency);
         Course course = courseRepository.findByIdElseThrow(idOfCourse);
-        Long idOfOtherCompetency1 = database.createLearningGoal(course).getId();
+        Long idOfOtherCompetency1 = database.createCompetency(course).getId();
         Competency otherCompetency1 = competencyRepository.findByIdElseThrow(idOfOtherCompetency1);
-        Long idOfOtherCompetency2 = database.createLearningGoal(course).getId();
+        Long idOfOtherCompetency2 = database.createCompetency(course).getId();
         Competency otherCompetency2 = competencyRepository.findByIdElseThrow(idOfOtherCompetency1);
 
         var relation1 = new CompetencyRelation();
@@ -550,7 +550,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @WithMockUser(username = TEST_PREFIX + "student42", roles = "USER")
     void createCompetencyRelation_shouldReturnForbidden() throws Exception {
         Course course = courseRepository.findByIdElseThrow(idOfCourse);
-        Long idOfOtherCompetency = database.createLearningGoal(course).getId();
+        Long idOfOtherCompetency = database.createCompetency(course).getId();
 
         request.post(
                 "/api/courses/" + idOfCourse + "/competencies/" + idOfCompetency + "/relations/" + idOfOtherCompetency + "?type=" + CompetencyRelation.RelationType.EXTENDS.name(),
@@ -562,7 +562,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     void getCompetencyRelations() throws Exception {
         Competency competency = competencyRepository.findByIdElseThrow(idOfCompetency);
         Course course = courseRepository.findByIdElseThrow(idOfCourse);
-        Competency otherCompetency = database.createLearningGoal(course);
+        Competency otherCompetency = database.createCompetency(course);
 
         var relation = new CompetencyRelation();
         relation.setTailCompetency(competency);
@@ -581,7 +581,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     void deleteCompetencyRelation() throws Exception {
         Competency competency = competencyRepository.findByIdElseThrow(idOfCompetency);
         Course course = courseRepository.findByIdElseThrow(idOfCourse);
-        Competency otherCompetency = database.createLearningGoal(course);
+        Competency otherCompetency = database.createCompetency(course);
 
         var relation = new CompetencyRelation();
         relation.setTailCompetency(competency);
@@ -600,7 +600,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     void deleteCompetencyRelation_shouldReturnBadRequest() throws Exception {
         Competency competency = competencyRepository.findByIdElseThrow(idOfCompetency);
         Course course = courseRepository.findByIdElseThrow(idOfCourse);
-        Competency otherCompetency = database.createLearningGoal(course);
+        Competency otherCompetency = database.createCompetency(course);
 
         var relation = new CompetencyRelation();
         relation.setTailCompetency(otherCompetency); // invalid

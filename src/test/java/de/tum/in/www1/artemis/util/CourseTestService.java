@@ -494,12 +494,12 @@ public class CourseTestService {
         Set<Organization> organizations = course.getOrganizations();
 
         Set<Competency> competencies = new HashSet<>();
-        competencies.add(database.createLearningGoal(course));
+        competencies.add(database.createCompetency(course));
         course.setCompetencies(competencies);
         course = courseRepo.save(course);
 
         Set<Competency> prerequisites = new HashSet<>();
-        prerequisites.add(database.createLearningGoal(database.createCourse()));
+        prerequisites.add(database.createCompetency(database.createCourse()));
         course.setPrerequisites(prerequisites);
         course = courseRepo.save(course);
 
@@ -671,7 +671,7 @@ public class CourseTestService {
 
     // Test
     public void testGetCourseForDashboard(boolean userRefresh) throws Exception {
-        List<Course> courses = database.createCoursesWithExercisesAndLecturesAndLectureUnitsAndLearningGoals(userPrefix, true, false, numberOfTutors);
+        List<Course> courses = database.createCoursesWithExercisesAndLecturesAndLectureUnitsAndCompetencies(userPrefix, true, false, numberOfTutors);
         CourseForDashboardDTO receivedCourseForDashboard = request.get("/api/courses/" + courses.get(0).getId() + "/for-dashboard?refresh=" + userRefresh, HttpStatus.OK,
                 CourseForDashboardDTO.class);
         Course receivedCourse = receivedCourseForDashboard.course();
@@ -710,7 +710,7 @@ public class CourseTestService {
     }
 
     private Course createCourseWithRegistrationEnabled(boolean registrationEnabled) throws Exception {
-        List<Course> courses = database.createCoursesWithExercisesAndLecturesAndLectureUnitsAndLearningGoals(userPrefix, true, false, numberOfTutors);
+        List<Course> courses = database.createCoursesWithExercisesAndLecturesAndLectureUnitsAndCompetencies(userPrefix, true, false, numberOfTutors);
         Course course = courses.get(0);
         course.setRegistrationEnabled(registrationEnabled);
         courseRepo.save(course);
