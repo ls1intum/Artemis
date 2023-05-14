@@ -67,7 +67,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     @JoinTable(name = "learning_goal_exercise", joinColumns = @JoinColumn(name = "exercise_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "learning_goal_id", referencedColumnName = "id"))
     @JsonIgnoreProperties({ "exercises", "course" })
     @JsonView(QuizView.Before.class)
-    private Set<LearningGoal> learningGoals = new HashSet<>();
+    private Set<Competency> competencies = new HashSet<>();
 
     @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(name = "exercise_categories", joinColumns = @JoinColumn(name = "exercise_id"))
@@ -389,12 +389,12 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
 
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
-    public Set<LearningGoal> getLearningGoals() {
-        return learningGoals;
+    public Set<Competency> getLearningGoals() {
+        return competencies;
     }
 
-    public void setLearningGoals(Set<LearningGoal> learningGoals) {
-        this.learningGoals = learningGoals;
+    public void setLearningGoals(Set<Competency> competencies) {
+        this.competencies = competencies;
     }
 
     public Long getNumberOfParticipations() {

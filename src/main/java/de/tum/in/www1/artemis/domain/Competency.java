@@ -17,7 +17,7 @@ import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 @Entity
 @Table(name = "learning_goal")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-public class LearningGoal extends DomainObject {
+public class Competency extends DomainObject {
 
     @Column(name = "title", nullable = false)
     private String title;
@@ -43,11 +43,11 @@ public class LearningGoal extends DomainObject {
     @JsonIgnoreProperties({ "learningGoals", "prerequisites" })
     private Course course;
 
-    @ManyToMany(mappedBy = "learningGoals")
-    @JsonIgnoreProperties({ "learningGoals", "course" })
+    @ManyToMany(mappedBy = "competencies")
+    @JsonIgnoreProperties({ "competencies", "course" })
     private Set<Exercise> exercises = new HashSet<>();
 
-    @ManyToMany(mappedBy = "learningGoals")
+    @ManyToMany(mappedBy = "competencies")
     @JsonIgnoreProperties("learningGoals")
     private Set<LectureUnit> lectureUnits = new HashSet<>();
 
@@ -61,7 +61,7 @@ public class LearningGoal extends DomainObject {
     private Set<Course> consecutiveCourses = new HashSet<>();
 
     @OneToMany(mappedBy = "learningGoal", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE, orphanRemoval = true)
-    @JsonIgnoreProperties({ "user", "learningGoal" })
+    @JsonIgnoreProperties({ "user", "competency" })
     private Set<LearningGoalProgress> userProgress = new HashSet<>();
 
     public String getTitle() {

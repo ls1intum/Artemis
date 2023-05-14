@@ -116,11 +116,11 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBambooBit
         lecture = lectureRepository.findByIdWithLectureUnitsAndLearningGoalsElseThrow(lecture.getId());
         exerciseUnit = (ExerciseUnit) lecture.getLectureUnits().get(0);
         idOfExerciseUnit = exerciseUnit.getId();
-        LearningGoal learningGoal = new LearningGoal();
-        learningGoal.setTitle("ExampleLearningGoal");
-        learningGoal.setCourse(course);
-        learningGoal.addExercise(textExercise);
-        learningGoalRepository.saveAndFlush(learningGoal);
+        Competency competency = new Competency();
+        competency.setTitle("ExampleLearningGoal");
+        competency.setCourse(course);
+        competency.addExercise(textExercise);
+        learningGoalRepository.saveAndFlush(competency);
         idOfIndividualTextExercise = textExercise.getId();
         Exercise teamExercise = database.createTeamTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
         idOfTeamTextExercise = teamExercise.getId();

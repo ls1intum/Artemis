@@ -40,7 +40,7 @@ public class LearningGoalProgress implements Serializable {
     @ManyToOne
     @MapsId("learningGoalId")
     @JsonIgnore
-    private LearningGoal learningGoal;
+    private Competency learningGoal;
 
     @Column(name = "progress")
     private Double progress;
@@ -65,12 +65,12 @@ public class LearningGoalProgress implements Serializable {
         this.user = user;
     }
 
-    public LearningGoal getLearningGoal() {
+    public Competency getLearningGoal() {
         return learningGoal;
     }
 
-    public void setLearningGoal(LearningGoal learningGoal) {
-        this.learningGoal = learningGoal;
+    public void setLearningGoal(Competency competency) {
+        this.learningGoal = competency;
     }
 
     public Double getProgress() {

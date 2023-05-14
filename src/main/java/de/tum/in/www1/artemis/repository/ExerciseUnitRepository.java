@@ -27,7 +27,7 @@ public interface ExerciseUnitRepository extends JpaRepository<ExerciseUnit, Long
     @Query("""
             SELECT exerciseUnit
             FROM ExerciseUnit exerciseUnit
-            LEFT JOIN FETCH exerciseUnit.learningGoals lg
+            LEFT JOIN FETCH exerciseUnit.competencies lg
             LEFT JOIN FETCH lg.lectureUnits
             WHERE exerciseUnit.exercise.id = :#{#exerciseId}
             """)

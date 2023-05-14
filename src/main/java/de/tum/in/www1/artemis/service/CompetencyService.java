@@ -35,7 +35,7 @@ public class CompetencyService {
      * @param updateProgress Whether the competency progress should be updated or taken from the database.
      * @return A list of competencies with their lecture units (filtered for the user) and user progress.
      */
-    public Set<LearningGoal> findAllForCourse(@NotNull Course course, @NotNull User user, boolean updateProgress) {
+    public Set<Competency> findAllForCourse(@NotNull Course course, @NotNull User user, boolean updateProgress) {
         if (updateProgress) {
             // Get the competencies with the updated progress for the specified user.
             return learningGoalProgressService.getLearningGoalsAndUpdateProgressByUserInCourse(user, course);
@@ -53,10 +53,10 @@ public class CompetencyService {
      * @param user   The user that is requesting the prerequisites.
      * @return A list of prerequisites (without lecture units if student is not part of course).
      */
-    public Set<LearningGoal> findAllPrerequisitesForCourse(@NotNull Course course, @NotNull User user) {
-        Set<LearningGoal> prerequisites = learningGoalRepository.findPrerequisitesByCourseId(course.getId());
+    public Set<Competency> findAllPrerequisitesForCourse(@NotNull Course course, @NotNull User user) {
+        Set<Competency> prerequisites = learningGoalRepository.findPrerequisitesByCourseId(course.getId());
         // Remove all lecture units
-        for (LearningGoal prerequisite : prerequisites) {
+        for (Competency prerequisite : prerequisites) {
             prerequisite.setLectureUnits(Collections.emptySet());
         }
         return prerequisites;
@@ -69,10 +69,10 @@ public class CompetencyService {
      * @param user   The user for whom to fetch all available lectures
      * @return A wrapper object containing a list of all found competencies and the total number of pages
      */
-    public SearchResultPageDTO<LearningGoal> getAllOnPageWithSize(final PageableSearchDTO<String> search, final User user) {
+    public SearchResultPageDTO<Competency> getAllOnPageWithSize(final PageableSearchDTO<String> search, final User user) {
         final var pageable = PageUtil.createLearningGoalPageRequest(search);
         final var searchTerm = search.getSearchTerm();
-        final Page<LearningGoal> learningGoalPage;
+        final Page<Competency> learningGoalPage;
         if (authCheckService.isAdmin(user)) {
             learningGoalPage = learningGoalRepository.findByTitleIgnoreCaseContainingOrCourse_TitleIgnoreCaseContaining(searchTerm, searchTerm, pageable);
         }
@@ -85,11 +85,11 @@ public class CompetencyService {
     /**
      * Checks if the provided competencies and relations between them contain a cycle
      *
-     * @param learningGoals The set of competencies that get checked for cycles
-     * @param relations     The set of relations that get checked for cycles
+     * @param competencies The set of competencies that get checked for cycles
+     * @param relations    The set of relations that get checked for cycles
      * @return A boolean that states whether the provided competencies and relations contain a cycle
      */
-    public boolean doesCreateCircularRelation(Set<LearningGoal> learningGoals, Set<LearningGoalRelation> relations) {
+    public boolean doesCreateCircularRelation(Set<Competency> competencies, Set<LearningGoalRelation> relations) {
         // Inner class Vertex is only used in this method for cycle detection
         class Vertex {
 
@@ -177,8 +177,8 @@ public class CompetencyService {
         }
 
         var graph = new Graph();
-        for (LearningGoal learningGoal : learningGoals) {
-            graph.addVertex(new Vertex(learningGoal.getTitle()));
+        for (Competency competency : competencies) {
+            graph.addVertex(new Vertex(competency.getTitle()));
         }
         for (LearningGoalRelation relation : relations) {
             var headVertex = graph.vertices.stream().filter(vertex -> vertex.label.equals(relation.getHeadLearningGoal().getTitle())).findFirst().orElseThrow();

@@ -8,7 +8,7 @@ import javax.validation.constraints.NotNull;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.LearningGoal;
+import de.tum.in.www1.artemis.domain.Competency;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
@@ -76,12 +76,12 @@ public class LectureUnitService {
      * @param lectureUnit lecture unit to delete
      */
     public void removeLectureUnit(@NotNull LectureUnit lectureUnit) {
-        LectureUnit lectureUnitToDelete = lectureUnitRepository.findByIdWithLearningGoalsElseThrow(lectureUnit.getId());
+        LectureUnit lectureUnitToDelete = lectureUnitRepository.findByIdWithCompetenciesElseThrow(lectureUnit.getId());
 
         if (!(lectureUnitToDelete instanceof ExerciseUnit)) {
             // update associated competencies
-            Set<LearningGoal> learningGoals = lectureUnitToDelete.getLearningGoals();
-            learningGoalRepository.saveAll(learningGoals.stream().map(learningGoal -> {
+            Set<Competency> competencies = lectureUnitToDelete.getLearningGoals();
+            learningGoalRepository.saveAll(competencies.stream().map(learningGoal -> {
                 learningGoal = learningGoalRepository.findByIdWithLectureUnitsElseThrow(learningGoal.getId());
                 learningGoal.getLectureUnits().remove(lectureUnitToDelete);
                 return learningGoal;

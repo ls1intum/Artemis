@@ -92,13 +92,13 @@ public class LearningGoalProgressService {
     /**
      * Asynchronously update the existing progress for a specific competency
      *
-     * @param learningGoal The competency for which to update all existing student progress
+     * @param competency The competency for which to update all existing student progress
      */
     @Async
-    public void updateProgressByLearningGoalAsync(LearningGoal learningGoal) {
+    public void updateProgressByLearningGoalAsync(Competency competency) {
         SecurityUtils.setAuthorizationObject(); // required for async
-        learningGoalProgressRepository.findAllByLearningGoalId(learningGoal.getId()).stream().map(LearningGoalProgress::getUser).forEach(user -> {
-            updateLearningGoalProgress(learningGoal.getId(), user);
+        learningGoalProgressRepository.findAllByLearningGoalId(competency.getId()).stream().map(LearningGoalProgress::getUser).forEach(user -> {
+            updateLearningGoalProgress(competency.getId(), user);
         });
     }
 
@@ -109,7 +109,7 @@ public class LearningGoalProgressService {
      * @param course The course for which to fetch the competencies from
      * @return All competencies of the course with the updated progress for the user
      */
-    public Set<LearningGoal> getLearningGoalsAndUpdateProgressByUserInCourse(User user, Course course) {
+    public Set<Competency> getLearningGoalsAndUpdateProgressByUserInCourse(User user, Course course) {
         var learningGoals = learningGoalRepository.findAllForCourse(course.getId());
         learningGoals.forEach(learningGoal -> {
             var updatedProgress = updateLearningGoalProgress(learningGoal.getId(), user);
@@ -129,25 +129,25 @@ public class LearningGoalProgressService {
     public void updateProgressByLearningObject(LearningObject learningObject, @NotNull Set<User> users) {
         logger.debug("Updating competency progress for {} users.", users.size());
         try {
-            Set<LearningGoal> learningGoals;
+            Set<Competency> competencies;
             if (learningObject instanceof Exercise exercise) {
-                learningGoals = exerciseRepository.findByIdWithLearningGoals(exercise.getId()).map(Exercise::getLearningGoals).orElse(null);
+                competencies = exerciseRepository.findByIdWithLearningGoals(exercise.getId()).map(Exercise::getLearningGoals).orElse(null);
             }
             else if (learningObject instanceof LectureUnit lectureUnit) {
-                learningGoals = lectureUnitRepository.findByIdWithLearningGoals(lectureUnit.getId()).map(LectureUnit::getLearningGoals).orElse(null);
+                competencies = lectureUnitRepository.findByIdWithCompetencies(lectureUnit.getId()).map(LectureUnit::getLearningGoals).orElse(null);
             }
             else {
                 throw new IllegalArgumentException("Learning object must be either LectureUnit or Exercise");
             }
 
-            if (learningGoals == null) {
+            if (competencies == null) {
                 // Competencies couldn't be loaded, the exercise/lecture unit might have already been deleted
                 logger.debug("Competencies could not be fetched, skipping.");
                 return;
             }
 
             users.forEach(user -> {
-                learningGoals.forEach(learningGoal -> {
+                competencies.forEach(learningGoal -> {
                     updateLearningGoalProgress(learningGoal.getId(), user);
                 });
             });

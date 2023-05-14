@@ -768,12 +768,12 @@ public class DatabaseUtilService {
         return createCourseWithOrganizations("organization1", "org1", "org.org", "This is organization1", null, "^.*@matching.*$");
     }
 
-    public LearningGoal createLearningGoal(Course course) {
-        LearningGoal learningGoal = new LearningGoal();
-        learningGoal.setTitle("Example Competency");
-        learningGoal.setDescription("Magna pars studiorum, prodita quaerimus.");
-        learningGoal.setCourse(course);
-        return learningGoalRepo.save(learningGoal);
+    public Competency createLearningGoal(Course course) {
+        Competency competency = new Competency();
+        competency.setTitle("Example Competency");
+        competency.setDescription("Magna pars studiorum, prodita quaerimus.");
+        competency.setCourse(course);
+        return learningGoalRepo.save(competency);
     }
 
     public TextExercise createIndividualTextExercise(Course course, ZonedDateTime pastTimestamp, ZonedDateTime futureTimestamp, ZonedDateTime futureFutureTimestamp) {
@@ -896,10 +896,10 @@ public class DatabaseUtilService {
         }).toList();
     }
 
-    public Lecture addLearningGoalToLectureUnits(Lecture lecture, Set<LearningGoal> learningGoals) {
+    public Lecture addLearningGoalToLectureUnits(Lecture lecture, Set<Competency> competencies) {
         Lecture l = lectureRepo.findByIdWithLectureUnitsAndLearningGoalsElseThrow(lecture.getId());
         l.getLectureUnits().forEach(lectureUnit -> {
-            lectureUnit.setLearningGoals(learningGoals);
+            lectureUnit.setLearningGoals(competencies);
             lectureUnitRepository.save(lectureUnit);
         });
         return l;
