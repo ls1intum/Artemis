@@ -303,7 +303,6 @@ public class DataExportService {
     }
 
     private void createQuizAnswersExport(QuizExercise quizExercise, StudentParticipation participation, Path outputDir) throws IOException {
-        List<String> headers = new ArrayList<>(List.of("id", "question title", "submission id", "score"));
         Set<QuizQuestion> quizQuestions = quizQuestionRepository.getQuizQuestionsByExerciseId(quizExercise.getId());
         QuizSubmission quizSubmission = null;
 
@@ -429,18 +428,6 @@ public class DataExportService {
             log.warn("Cannot include modeling submission content in data export because content is null for submission with id: {}", modelingSubmission.getId());
 
         }
-    }
-
-    private void createParticipationCsvFile(StudentParticipation participation, Path outputDir) throws IOException {
-        String[] headers = new String[] { "id", "exercise ", "participating student/team", "number of submissions", "presentation score", "due date", "practice mode/test run" };
-        CSVFormat csvFormat = CSVFormat.DEFAULT.builder().setHeader(headers).build();
-        try (final CSVPrinter printer = new CSVPrinter(Files.newBufferedWriter(outputDir.resolve("participation_" + participation.getId() + CSV_FILE_EXTENSION)), csvFormat)) {
-            printer.printRecord(participation.getId(), participation.getExercise().getTitle(), participation.getParticipant().getName(), participation.getSubmissions().size(),
-                    participation.getPresentationScore(), participation.getIndividualDueDate(), participation.isTestRun());
-            printer.flush();
-
-        }
-
     }
 
     private void storeTextSubmissionContent(TextSubmission textSubmission, Path outputDir) throws IOException {

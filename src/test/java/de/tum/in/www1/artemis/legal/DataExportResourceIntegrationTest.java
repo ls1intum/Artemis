@@ -30,9 +30,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.DataExport;
-import de.tum.in.www1.artemis.domain.DataExportState;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.programmingexercise.ProgrammingExerciseTestService;
 import de.tum.in.www1.artemis.repository.DataExportRepository;
@@ -115,18 +113,22 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
     }
 
     private void prepareTestDataForDataExportCreation() throws Exception {
-        // TODO add assertion for dnd pdf file
         var userLogin = TEST_PREFIX + "student1";
         String validModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
         Course course1 = database.addCourseWithExercisesAndSubmissions(TEST_PREFIX, "", 4, 2, 1, 1, false, 1, validModel);
+        database.addQuizExerciseToCourseWithParticipationAndSubmissionForUser(course1, TEST_PREFIX + "student1");
         var programmingExercise = database.addProgrammingExerciseToCourse(course1, false);
         programmingExerciseTestService.setup(this, versionControlService, continuousIntegrationService);
         var participation = database.addStudentParticipationForProgrammingExerciseForLocalRepo(programmingExercise, userLogin,
                 programmingExerciseTestService.studentRepo.localRepoFile.toURI());
         var submission = database.createProgrammingSubmission(participation, false, "abc");
         var submission2 = database.createProgrammingSubmission(participation, false, "def");
-        database.addResultToSubmission(submission, AssessmentType.AUTOMATIC, null, 2.0, true, ZonedDateTime.now().minusHours(3));
-        database.addQuizExerciseToCourseWithParticipationAndSubmissionForUser(course1, TEST_PREFIX + "student1");
+        database.addResultToSubmission(submission, AssessmentType.AUTOMATIC, null, 2.0, true, ZonedDateTime.now().minusMinutes(1));
+        var feedback = new Feedback();
+        feedback.setCredits(1.0);
+        feedback.setDetailText("detailed feedback");
+        feedback.setText("feedback");
+        database.addFeedbackToResult(feedback, submission.getFirstResult());
         database.addSubmission(participation, submission);
         database.addSubmission(participation, submission2);
         database.addResultToSubmission(submission2, AssessmentType.AUTOMATIC, null, 3.0, true, ZonedDateTime.now().minusMinutes(2));

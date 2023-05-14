@@ -24,6 +24,9 @@ import de.tum.in.www1.artemis.domain.quiz.DragAndDropQuestion;
 import de.tum.in.www1.artemis.domain.quiz.DragAndDropSubmittedAnswer;
 import de.tum.in.www1.artemis.domain.quiz.DropLocation;
 
+/**
+ * Service for converting a DragAndDropSubmittedAnswer to a PDF file displaying the submitted answer.
+ */
 @Service
 public class DragAndDropQuizAnswerConversionService {
 
@@ -105,7 +108,9 @@ public class DragAndDropQuizAnswerConversionService {
                     }
                     else {
                         BufferedImage dragItem = ImageIO.read(new File(fileService.actualPathForPublicPath(mapping.getDragItem().getPictureFilePath())));
-                        graphics.drawImage(dragItem, dropLocationX, dropLocationY, null);
+                        Dimension scaledDimForDragItem = getScaledDimension(new Dimension(dragItem.getWidth(), dragItem.getHeight()),
+                                new Dimension(dropLocationWidth, dropLocationHeight));
+                        graphics.drawImage(dragItem, dropLocationX, dropLocationY, (int) scaledDimForDragItem.getWidth(), (int) scaledDimForDragItem.getHeight(), null);
                     }
                     // if the drop location is invalid, we already marked the spot as invalid, no need to mark it twice
                     if (mapping.getDragItem().isInvalid() && !mapping.getDropLocation().isInvalid()) {

@@ -2610,7 +2610,7 @@ public class DatabaseUtilService {
         quizSubmission.setScoreInPoints(2.0);
         var submittedAnswerMC = new MultipleChoiceSubmittedAnswer();
         MultipleChoiceQuestion multipleChoiceQuestion = (MultipleChoiceQuestion) (quizExercise.getQuizQuestions().get(0));
-        submittedAnswerMC.setSelectedOptions(Set.of(multipleChoiceQuestion.getAnswerOptions().get(0)));
+        submittedAnswerMC.setSelectedOptions(Set.of(multipleChoiceQuestion.getAnswerOptions().get(0), multipleChoiceQuestion.getAnswerOptions().get(1)));
         submittedAnswerMC.setQuizQuestion(multipleChoiceQuestion);
 
         var submittedShortAnswer = new ShortAnswerSubmittedAnswer();
@@ -2631,26 +2631,28 @@ public class DatabaseUtilService {
 
         var submittedDragAndDropAnswer = new DragAndDropSubmittedAnswer();
         DragAndDropQuestion dragAndDropQuestion = (DragAndDropQuestion) (quizExercise.getQuizQuestions().get(1));
-        var pathInFileSystem = Path.of(FilePathService.getDragAndDropBackgroundFilePath(), "DragAndDropBackground_2023-05-06T17-44-53-002_40f4080e.jpg");
-        if (Files.exists(pathInFileSystem)) {
-            Files.delete(pathInFileSystem);
+        var backgroundPathInFileSystem = Path.of(FilePathService.getDragAndDropBackgroundFilePath(), "DragAndDropBackground_2023-05-06T17-44-53-002_40f4080e.jpg");
+        var dragItemPathInFileSystem = Path.of(FilePathService.getDragItemFilePath(), "DragItem_2023-05-14T20-45-49-515_bebf2c89.jpg");
+        if (Files.exists(backgroundPathInFileSystem)) {
+            Files.delete(backgroundPathInFileSystem);
         }
-        Files.copy(new ClassPathResource("test-data/data-export/DragAndDropBackground_2023-05-06T17-44-53-002_40f4080e.jpg").getInputStream(), pathInFileSystem);
+        if (Files.exists(dragItemPathInFileSystem)) {
+            Files.delete(dragItemPathInFileSystem);
+        }
+        Files.copy(new ClassPathResource("test-data/data-export/DragAndDropBackground_2023-05-06T17-44-53-002_40f4080e.jpg").getInputStream(), backgroundPathInFileSystem);
+        Files.copy(new ClassPathResource("test-data/data-export/DragItem_2023-05-14T20-45-49-515_bebf2c89.jpg").getInputStream(), dragItemPathInFileSystem);
         dragAndDropQuestion.setBackgroundFilePath("/api/files/drag-and-drop/backgrounds/3/DragAndDropBackground_2023-05-06T17-44-53-002_40f4080e.jpg");
         submittedDragAndDropAnswer.setQuizQuestion(dragAndDropQuestion);
         dragAndDropQuestion.setExercise(quizExercise);
         DragAndDropMapping dragAndDropMapping = new DragAndDropMapping();
-        DragItem validDragItem = new DragItem();
-        validDragItem.setText("drag item");
-        dragAndDropMapping.setDragItem(validDragItem);
-        DropLocation validDropLocation = new DropLocation();
-        dragAndDropMapping.setDragItemIndex(0);
-        dragAndDropMapping.setDropLocationIndex(0);
-        validDropLocation.setPosX(100.0);
-        validDropLocation.setPosY(100.0);
-        validDropLocation.setHeight(10.0);
-        validDropLocation.setWidth(10.0);
-        dragAndDropMapping.setDropLocation(validDropLocation);
+        dragAndDropMapping.setDragItem(dragAndDropQuestion.getDragItems().get(0));
+        dragAndDropMapping.setDropLocation(dragAndDropQuestion.getDropLocations().get(0));
+        DragAndDropMapping incorrectDragAndDropMapping = new DragAndDropMapping();
+        incorrectDragAndDropMapping.setDragItem(dragAndDropQuestion.getDragItems().get(3));
+        incorrectDragAndDropMapping.setDropLocation(dragAndDropQuestion.getDropLocations().get(1));
+        DragAndDropMapping mappingWithImage = new DragAndDropMapping();
+        mappingWithImage.setDragItem(dragAndDropQuestion.getDragItems().get(4));
+        mappingWithImage.setDropLocation(dragAndDropQuestion.getDropLocations().get(3));
         dragAndDropQuestion.addCorrectMapping(dragAndDropMapping);
         studentParticipationRepo.save(studentParticipation);
         quizSubmissionRepository.save(quizSubmission);
@@ -2658,13 +2660,19 @@ public class DatabaseUtilService {
         submittedAnswerMC.setSubmission(quizSubmission);
         submittedDragAndDropAnswer.setSubmission(quizSubmission);
         shortAnswerSpotRepository.save(shortAnswerSpot);
-        dropLocationRepository.save(validDropLocation);
-        dragItemRepository.save(validDragItem);
         dragAndDropMapping.setSubmittedAnswer(submittedDragAndDropAnswer);
+        incorrectDragAndDropMapping.setSubmittedAnswer(submittedDragAndDropAnswer);
+        mappingWithImage.setSubmittedAnswer(submittedDragAndDropAnswer);
         submittedAnswerRepository.save(submittedDragAndDropAnswer);
         dragAndDropMapping.setQuestion(null);
+        incorrectDragAndDropMapping.setQuestion(null);
+        mappingWithImage.setQuestion(null);
         dragAndDropMapping = dragAndDropMappingRepository.save(dragAndDropMapping);
+        incorrectDragAndDropMapping = dragAndDropMappingRepository.save(incorrectDragAndDropMapping);
+        mappingWithImage = dragAndDropMappingRepository.save(mappingWithImage);
         dragAndDropMapping.setQuestion(dragAndDropQuestion);
+        incorrectDragAndDropMapping.setQuestion(dragAndDropQuestion);
+        mappingWithImage.setQuestion(dragAndDropQuestion);
         quizQuestionRepository.save(dragAndDropQuestion);
         submittedAnswerRepository.save(submittedAnswerMC);
         submittedAnswerRepository.save(submittedShortAnswer);
@@ -4189,6 +4197,7 @@ public class DatabaseUtilService {
         quizExercise.addQuestions(createMultipleChoiceQuestion());
         quizExercise.addQuestions(createDragAndDropQuestion());
         quizExercise.addQuestions(createShortAnswerQuestion());
+        quizExercise.addQuestions(createSingleChoiceQuestion());
         quizExercise.setMaxPoints(quizExercise.getOverallQuizPoints());
         quizExercise.setGradingInstructions(null);
     }
@@ -4256,13 +4265,20 @@ public class DatabaseUtilService {
         var dropLocation2 = new DropLocation().posX(20d).posY(20d).height(10d).width(10d);
         dropLocation2.setTempID(generateTempId());
         var dropLocation3 = new DropLocation().posX(30d).posY(30d).height(10d).width(10d);
+        dropLocation3.setInvalid(true);
         dropLocation3.setTempID(generateTempId());
+        var dropLocation4 = new DropLocation().posX(40d).posY(40d).height(10d).width(10d);
+        dropLocation4.setTempID(generateTempId());
+        var dropLocation5 = new DropLocation().posX(50d).posY(50d).height(10d).width(10d);
+        dropLocation5.setTempID(generateTempId());
         dnd.addDropLocation(dropLocation1);
         // also invoke remove once
         dnd.removeDropLocation(dropLocation1);
         dnd.addDropLocation(dropLocation1);
         dnd.addDropLocation(dropLocation2);
         dnd.addDropLocation(dropLocation3);
+        dnd.addDropLocation(dropLocation4);
+        dnd.addDropLocation(dropLocation5);
 
         var dragItem1 = new DragItem().text("D1");
         dragItem1.setTempID(generateTempId());
@@ -4270,6 +4286,10 @@ public class DatabaseUtilService {
         dragItem2.setTempID(generateTempId());
         var dragItem3 = new DragItem().text("D3");
         dragItem3.setTempID(generateTempId());
+        var dragItem4 = new DragItem().text("invalid drag item");
+        dragItem4.setTempID(generateTempId());
+        var dragItem5 = new DragItem().pictureFilePath("/api/files/drag-and-drop/drag-items/10/DragItem_2023-05-14T20-45-49-515_bebf2c89.jpg");
+        dragItem4.setInvalid(true);
         dnd.addDragItem(dragItem1);
         assertThat(dragItem1.getQuestion()).isEqualTo(dnd);
         // also invoke remove once
@@ -4277,6 +4297,8 @@ public class DatabaseUtilService {
         dnd.addDragItem(dragItem1);
         dnd.addDragItem(dragItem2);
         dnd.addDragItem(dragItem3);
+        dnd.addDragItem(dragItem4);
+        dnd.addDragItem(dragItem5);
 
         var mapping1 = new DragAndDropMapping().dragItem(dragItem1).dropLocation(dropLocation1);
         dragItem1.addMappings(mapping1);
@@ -4292,6 +4314,10 @@ public class DatabaseUtilService {
         dnd.addCorrectMapping(mapping2);
         var mapping3 = new DragAndDropMapping().dragItem(dragItem3).dropLocation(dropLocation3);
         dnd.addCorrectMapping(mapping3);
+        var mapping4 = new DragAndDropMapping().dragItem(dragItem4).dropLocation(dropLocation4);
+        dnd.addCorrectMapping(mapping4);
+        var mapping5 = new DragAndDropMapping().dragItem(dragItem5).dropLocation(dropLocation5);
+        dnd.addCorrectMapping(mapping5);
         dnd.setExplanation("Explanation");
         // invoke some util methods
         System.out.println("DnD: " + dnd);
@@ -4310,12 +4336,22 @@ public class DatabaseUtilService {
         mc.setScoringType(ScoringType.ALL_OR_NOTHING);
         mc.getAnswerOptions().add(new AnswerOption().text("A").hint("H1").explanation("E1").isCorrect(true));
         mc.getAnswerOptions().add(new AnswerOption().text("B").hint("H2").explanation("E2").isCorrect(false));
+        mc.getAnswerOptions().add(new AnswerOption().text("C").hint("H3").explanation("E3").isInvalid(true).isCorrect(false));
+        mc.getAnswerOptions().add(new AnswerOption().text("D").hint("H4").explanation("E4").isCorrect(true));
+        mc.getAnswerOptions().add(new AnswerOption().text("E").hint("H5").explanation("E5").isCorrect(false));
         mc.setExplanation("Explanation");
         // invoke some util methods
         System.out.println("MC: " + mc);
         System.out.println("MC.hashCode: " + mc.hashCode());
         mc.copyQuestionId();
         return mc;
+    }
+
+    @NotNull
+    public MultipleChoiceQuestion createSingleChoiceQuestion() {
+        var singleChoiceQuestion = createMultipleChoiceQuestion();
+        singleChoiceQuestion.setSingleChoice(true);
+        return singleChoiceQuestion;
     }
 
     /**
