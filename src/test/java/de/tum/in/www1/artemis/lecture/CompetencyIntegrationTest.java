@@ -45,7 +45,7 @@ import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 
 class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
-    private static final String TEST_PREFIX = "learninggoalintegrationtest";
+    private static final String TEST_PREFIX = "competencyintegrationtest";
 
     @Autowired
     private CourseRepository courseRepository;
