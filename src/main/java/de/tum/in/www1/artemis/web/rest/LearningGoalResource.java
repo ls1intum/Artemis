@@ -55,7 +55,7 @@ public class LearningGoalResource {
 
     private final CompetencyService competencyService;
 
-    private final LearningGoalProgressRepository learningGoalProgressRepository;
+    private final CompetencyProgressRepository competencyProgressRepository;
 
     private final ExerciseRepository exerciseRepository;
 
@@ -63,7 +63,7 @@ public class LearningGoalResource {
 
     public LearningGoalResource(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository,
             LearningGoalRepository learningGoalRepository, LearningGoalRelationRepository learningGoalRelationRepository, LectureUnitRepository lectureUnitRepository,
-            CompetencyService competencyService, LearningGoalProgressRepository learningGoalProgressRepository, ExerciseRepository exerciseRepository,
+            CompetencyService competencyService, CompetencyProgressRepository competencyProgressRepository, ExerciseRepository exerciseRepository,
             LearningGoalProgressService learningGoalProgressService) {
         this.courseRepository = courseRepository;
         this.learningGoalRelationRepository = learningGoalRelationRepository;
@@ -72,7 +72,7 @@ public class LearningGoalResource {
         this.userRepository = userRepository;
         this.learningGoalRepository = learningGoalRepository;
         this.competencyService = competencyService;
-        this.learningGoalProgressRepository = learningGoalProgressRepository;
+        this.competencyProgressRepository = competencyProgressRepository;
         this.exerciseRepository = exerciseRepository;
         this.learningGoalProgressService = learningGoalProgressService;
     }
@@ -137,7 +137,7 @@ public class LearningGoalResource {
         var learningGoal = learningGoalRepository.findByIdWithExercisesAndLectureUnitsElseThrow(competencyId);
         checkAuthorizationForLearningGoal(Role.STUDENT, course, learningGoal);
 
-        learningGoal.setUserProgress(learningGoalProgressRepository.findByLearningGoalIdAndUserId(competencyId, user.getId()).map(Set::of).orElse(Set.of()));
+        learningGoal.setUserProgress(competencyProgressRepository.findByLearningGoalIdAndUserId(competencyId, user.getId()).map(Set::of).orElse(Set.of()));
         // Set completion status and remove exercise units (redundant as we also return all exercises)
         learningGoal.setLectureUnits(learningGoal.getLectureUnits().stream().filter(lectureUnit -> !(lectureUnit instanceof ExerciseUnit))
                 .filter(lectureUnit -> authorizationCheckService.isAllowedToSeeLectureUnit(lectureUnit, user)).map(lectureUnit -> {
@@ -265,7 +265,7 @@ public class LearningGoalResource {
             throw new BadRequestException("Can not delete a competency that has active relations");
         }
 
-        learningGoalProgressRepository.deleteAllByLearningGoalId(learningGoal.getId());
+        competencyProgressRepository.deleteAllByLearningGoalId(learningGoal.getId());
 
         learningGoal.getExercises().forEach(exercise -> {
             exercise.getLearningGoals().remove(learningGoal);
@@ -304,7 +304,7 @@ public class LearningGoalResource {
             studentProgress = learningGoalProgressService.updateLearningGoalProgress(competencyId, user);
         }
         else {
-            studentProgress = learningGoalProgressRepository.findEagerByLearningGoalIdAndUserId(competencyId, user.getId()).orElse(null);
+            studentProgress = competencyProgressRepository.findEagerByLearningGoalIdAndUserId(competencyId, user.getId()).orElse(null);
         }
 
         return ResponseEntity.ok().body(studentProgress);
@@ -325,10 +325,10 @@ public class LearningGoalResource {
         var learningGoal = learningGoalRepository.findByIdWithLectureUnitsAndCompletionsElseThrow(competencyId);
         checkAuthorizationForLearningGoal(Role.INSTRUCTOR, course, learningGoal);
 
-        var numberOfStudents = learningGoalProgressRepository.countByLearningGoal(learningGoal.getId());
-        var numberOfMasteredStudents = learningGoalProgressRepository.countByLearningGoalAndProgressAndConfidenceGreaterThanEqual(learningGoal.getId(), 100.0,
+        var numberOfStudents = competencyProgressRepository.countByLearningGoal(learningGoal.getId());
+        var numberOfMasteredStudents = competencyProgressRepository.countByLearningGoalAndProgressAndConfidenceGreaterThanEqual(learningGoal.getId(), 100.0,
                 (double) learningGoal.getMasteryThreshold());
-        var averageStudentScore = RoundingUtil.roundScoreSpecifiedByCourseSettings(learningGoalProgressRepository.findAverageConfidenceByLearningGoalId(competencyId).orElse(0.0),
+        var averageStudentScore = RoundingUtil.roundScoreSpecifiedByCourseSettings(competencyProgressRepository.findAverageConfidenceByLearningGoalId(competencyId).orElse(0.0),
                 course);
 
         return ResponseEntity.ok().body(new CourseLearningGoalProgressDTO(learningGoal.getId(), numberOfStudents, numberOfMasteredStudents, averageStudentScore));

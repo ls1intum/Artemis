@@ -13,7 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import de.tum.in.www1.artemis.domain.CompetencyProgress;
 
 @Repository
-public interface LearningGoalProgressRepository extends JpaRepository<CompetencyProgress, Long> {
+public interface CompetencyProgressRepository extends JpaRepository<CompetencyProgress, Long> {
 
     @Transactional // ok because of delete
     @Modifying

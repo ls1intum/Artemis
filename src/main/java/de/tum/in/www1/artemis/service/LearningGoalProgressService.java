@@ -32,7 +32,7 @@ public class LearningGoalProgressService {
 
     private final LearningGoalRepository learningGoalRepository;
 
-    private final LearningGoalProgressRepository learningGoalProgressRepository;
+    private final CompetencyProgressRepository competencyProgressRepository;
 
     private final StudentScoreRepository studentScoreRepository;
 
@@ -44,11 +44,11 @@ public class LearningGoalProgressService {
 
     private final UserRepository userRepository;
 
-    public LearningGoalProgressService(LearningGoalRepository learningGoalRepository, LearningGoalProgressRepository learningGoalProgressRepository,
+    public LearningGoalProgressService(LearningGoalRepository learningGoalRepository, CompetencyProgressRepository competencyProgressRepository,
             StudentScoreRepository studentScoreRepository, TeamScoreRepository teamScoreRepository, ExerciseRepository exerciseRepository,
             LectureUnitRepository lectureUnitRepository, UserRepository userRepository) {
         this.learningGoalRepository = learningGoalRepository;
-        this.learningGoalProgressRepository = learningGoalProgressRepository;
+        this.competencyProgressRepository = competencyProgressRepository;
         this.studentScoreRepository = studentScoreRepository;
         this.teamScoreRepository = teamScoreRepository;
         this.exerciseRepository = exerciseRepository;
@@ -97,7 +97,7 @@ public class LearningGoalProgressService {
     @Async
     public void updateProgressByLearningGoalAsync(Competency competency) {
         SecurityUtils.setAuthorizationObject(); // required for async
-        learningGoalProgressRepository.findAllByLearningGoalId(competency.getId()).stream().map(CompetencyProgress::getUser).forEach(user -> {
+        competencyProgressRepository.findAllByLearningGoalId(competency.getId()).stream().map(CompetencyProgress::getUser).forEach(user -> {
             updateLearningGoalProgress(competency.getId(), user);
         });
     }
@@ -172,7 +172,7 @@ public class LearningGoalProgressService {
             return null;
         }
 
-        var learningGoalProgress = learningGoalProgressRepository.findEagerByLearningGoalIdAndUserId(learningGoalId, user.getId());
+        var learningGoalProgress = competencyProgressRepository.findEagerByLearningGoalIdAndUserId(learningGoalId, user.getId());
 
         if (learningGoalProgress.isPresent()) {
             var lastModified = learningGoalProgress.get().getLastModifiedDate();
@@ -207,7 +207,7 @@ public class LearningGoalProgressService {
         studentProgress.setConfidence(confidence);
 
         try {
-            learningGoalProgressRepository.save(studentProgress);
+            competencyProgressRepository.save(studentProgress);
         }
         catch (DataIntegrityViolationException e) {
             // In rare instances of initially creating a progress entity, async updates might run in parallel.
