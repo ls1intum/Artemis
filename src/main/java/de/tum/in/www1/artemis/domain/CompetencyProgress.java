@@ -65,11 +65,11 @@ public class CompetencyProgress implements Serializable {
         this.user = user;
     }
 
-    public Competency getLearningGoal() {
+    public Competency getCompetency() {
         return learningGoal;
     }
 
-    public void setLearningGoal(Competency competency) {
+    public void setCompetency(Competency competency) {
         this.learningGoal = competency;
     }
 

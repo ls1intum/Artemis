@@ -177,7 +177,7 @@ public class CompetencyResource {
 
         if (competency.getLectureUnits().size() != existingCompetency.getLectureUnits().size() || !existingCompetency.getLectureUnits().containsAll(competency.getLectureUnits())) {
             log.debug("Linked lecture units changed, updating student progress for competency...");
-            competencyProgressService.updateProgressByLearningGoalAsync(persistedCompetency);
+            competencyProgressService.updateProgressByCompetencyAsync(persistedCompetency);
         }
 
         return ResponseEntity.ok(persistedCompetency);
@@ -300,7 +300,7 @@ public class CompetencyResource {
 
         CompetencyProgress studentProgress;
         if (refresh) {
-            studentProgress = competencyProgressService.updateLearningGoalProgress(competencyId, user);
+            studentProgress = competencyProgressService.updateCompetencyProgress(competencyId, user);
         }
         else {
             studentProgress = competencyProgressRepository.findEagerByCompetencyIdAndUserId(competencyId, user.getId()).orElse(null);

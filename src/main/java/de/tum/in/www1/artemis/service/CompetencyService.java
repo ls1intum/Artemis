@@ -38,7 +38,7 @@ public class CompetencyService {
     public Set<Competency> findAllForCourse(@NotNull Course course, @NotNull User user, boolean updateProgress) {
         if (updateProgress) {
             // Get the competencies with the updated progress for the specified user.
-            return competencyProgressService.getLearningGoalsAndUpdateProgressByUserInCourse(user, course);
+            return competencyProgressService.getCompetenciesAndUpdateProgressByUserInCourse(user, course);
         }
         else {
             // Fetch the competencies with the user progress from the database.
