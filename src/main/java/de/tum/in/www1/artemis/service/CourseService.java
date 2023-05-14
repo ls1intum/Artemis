@@ -246,7 +246,7 @@ public class CourseService {
      * @param refresh  if the user requested an explicit refresh
      * @return the course including exercises, lectures, exams, competencies and tutorial groups (filtered for given user)
      */
-    public Course findOneWithExercisesAndLecturesAndExamsAndLearningGoalsAndTutorialGroupsForUser(Long courseId, User user, boolean refresh) {
+    public Course findOneWithExercisesAndLecturesAndExamsAndCompetenciesAndTutorialGroupsForUser(Long courseId, User user, boolean refresh) {
         Course course = courseRepository.findByIdWithLecturesElseThrow(courseId);
         // Load exercises with categories separately because this is faster than loading them with lectures and exam above (the query would become too complex)
         course.setExercises(exerciseRepository.findByCourseIdWithCategories(course.getId()));
@@ -346,7 +346,7 @@ public class CourseService {
 
         deleteExercisesOfCourse(course);
         deleteLecturesOfCourse(course);
-        deleteLearningGoalsOfCourse(course);
+        deleteCompetenciesOfCourse(course);
         deleteConversationsOfCourse(course);
         deleteNotificationsOfCourse(course);
         deleteDefaultGroups(course);
@@ -419,7 +419,7 @@ public class CourseService {
         }
     }
 
-    private void deleteLearningGoalsOfCourse(Course course) {
+    private void deleteCompetenciesOfCourse(Course course) {
         for (Competency competency : course.getCompetencies()) {
             competencyRepository.deleteById(competency.getId());
         }
