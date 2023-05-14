@@ -19,12 +19,12 @@ public class CompetencyService {
 
     private final AuthorizationCheckService authCheckService;
 
-    private final LearningGoalProgressService learningGoalProgressService;
+    private final CompetencyProgressService competencyProgressService;
 
-    public CompetencyService(CompetencyRepository competencyRepository, AuthorizationCheckService authCheckService, LearningGoalProgressService learningGoalProgressService) {
+    public CompetencyService(CompetencyRepository competencyRepository, AuthorizationCheckService authCheckService, CompetencyProgressService competencyProgressService) {
         this.competencyRepository = competencyRepository;
         this.authCheckService = authCheckService;
-        this.learningGoalProgressService = learningGoalProgressService;
+        this.competencyProgressService = competencyProgressService;
     }
 
     /**
@@ -38,7 +38,7 @@ public class CompetencyService {
     public Set<Competency> findAllForCourse(@NotNull Course course, @NotNull User user, boolean updateProgress) {
         if (updateProgress) {
             // Get the competencies with the updated progress for the specified user.
-            return learningGoalProgressService.getLearningGoalsAndUpdateProgressByUserInCourse(user, course);
+            return competencyProgressService.getLearningGoalsAndUpdateProgressByUserInCourse(user, course);
         }
         else {
             // Fetch the competencies with the user progress from the database.

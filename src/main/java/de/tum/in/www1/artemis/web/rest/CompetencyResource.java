@@ -21,8 +21,8 @@ import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.CompetencyProgressService;
 import de.tum.in.www1.artemis.service.CompetencyService;
-import de.tum.in.www1.artemis.service.LearningGoalProgressService;
 import de.tum.in.www1.artemis.service.util.RoundingUtil;
 import de.tum.in.www1.artemis.web.rest.dto.CourseLearningGoalProgressDTO;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
@@ -59,12 +59,12 @@ public class CompetencyResource {
 
     private final ExerciseRepository exerciseRepository;
 
-    private final LearningGoalProgressService learningGoalProgressService;
+    private final CompetencyProgressService competencyProgressService;
 
     public CompetencyResource(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository,
             CompetencyRepository competencyRepository, CompetencyRelationRepository competencyRelationRepository, LectureUnitRepository lectureUnitRepository,
             CompetencyService competencyService, CompetencyProgressRepository competencyProgressRepository, ExerciseRepository exerciseRepository,
-            LearningGoalProgressService learningGoalProgressService) {
+            CompetencyProgressService competencyProgressService) {
         this.courseRepository = courseRepository;
         this.competencyRelationRepository = competencyRelationRepository;
         this.lectureUnitRepository = lectureUnitRepository;
@@ -74,7 +74,7 @@ public class CompetencyResource {
         this.competencyService = competencyService;
         this.competencyProgressRepository = competencyProgressRepository;
         this.exerciseRepository = exerciseRepository;
-        this.learningGoalProgressService = learningGoalProgressService;
+        this.competencyProgressService = competencyProgressService;
     }
 
     /**
@@ -178,7 +178,7 @@ public class CompetencyResource {
         if (competency.getLectureUnits().size() != existingLearningGoal.getLectureUnits().size()
                 || !existingLearningGoal.getLectureUnits().containsAll(competency.getLectureUnits())) {
             log.debug("Linked lecture units changed, updating student progress for competency...");
-            learningGoalProgressService.updateProgressByLearningGoalAsync(persistedLearningGoal);
+            competencyProgressService.updateProgressByLearningGoalAsync(persistedLearningGoal);
         }
 
         return ResponseEntity.ok(persistedLearningGoal);
@@ -301,7 +301,7 @@ public class CompetencyResource {
 
         CompetencyProgress studentProgress;
         if (refresh) {
-            studentProgress = learningGoalProgressService.updateLearningGoalProgress(competencyId, user);
+            studentProgress = competencyProgressService.updateLearningGoalProgress(competencyId, user);
         }
         else {
             studentProgress = competencyProgressRepository.findEagerByLearningGoalIdAndUserId(competencyId, user.getId()).orElse(null);

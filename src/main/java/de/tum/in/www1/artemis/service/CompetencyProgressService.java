@@ -26,9 +26,9 @@ import de.tum.in.www1.artemis.service.util.RoundingUtil;
  * Service for calculating the progress of a student in a competency.
  */
 @Service
-public class LearningGoalProgressService {
+public class CompetencyProgressService {
 
-    private final Logger logger = LoggerFactory.getLogger(LearningGoalProgressService.class);
+    private final Logger logger = LoggerFactory.getLogger(CompetencyProgressService.class);
 
     private final CompetencyRepository competencyRepository;
 
@@ -44,7 +44,7 @@ public class LearningGoalProgressService {
 
     private final UserRepository userRepository;
 
-    public LearningGoalProgressService(CompetencyRepository competencyRepository, CompetencyProgressRepository competencyProgressRepository,
+    public CompetencyProgressService(CompetencyRepository competencyRepository, CompetencyProgressRepository competencyProgressRepository,
             StudentScoreRepository studentScoreRepository, TeamScoreRepository teamScoreRepository, ExerciseRepository exerciseRepository,
             LectureUnitRepository lectureUnitRepository, UserRepository userRepository) {
         this.competencyRepository = competencyRepository;
