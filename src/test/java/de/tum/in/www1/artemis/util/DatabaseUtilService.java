@@ -897,7 +897,7 @@ public class DatabaseUtilService {
     }
 
     public Lecture addLearningGoalToLectureUnits(Lecture lecture, Set<Competency> competencies) {
-        Lecture l = lectureRepo.findByIdWithLectureUnitsAndLearningGoalsElseThrow(lecture.getId());
+        Lecture l = lectureRepo.findByIdWithLectureUnitsAndCompetenciesElseThrow(lecture.getId());
         l.getLectureUnits().forEach(lectureUnit -> {
             lectureUnit.setCompetencies(competencies);
             lectureUnitRepository.save(lectureUnit);

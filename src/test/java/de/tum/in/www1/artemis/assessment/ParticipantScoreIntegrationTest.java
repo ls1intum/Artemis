@@ -113,7 +113,7 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBambooBit
         TextExercise textExercise = database.createIndividualTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
         ExerciseUnit exerciseUnit = database.createExerciseUnit(textExercise);
         database.addLectureUnitsToLecture(lecture, Set.of(exerciseUnit));
-        lecture = lectureRepository.findByIdWithLectureUnitsAndLearningGoalsElseThrow(lecture.getId());
+        lecture = lectureRepository.findByIdWithLectureUnitsAndCompetenciesElseThrow(lecture.getId());
         exerciseUnit = (ExerciseUnit) lecture.getLectureUnits().get(0);
         idOfExerciseUnit = exerciseUnit.getId();
         Competency competency = new Competency();

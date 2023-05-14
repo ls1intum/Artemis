@@ -212,7 +212,7 @@ public class LectureResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Lecture> getLectureWithDetails(@PathVariable Long lectureId) {
         log.debug("REST request to get lecture {} with details", lectureId);
-        Lecture lecture = lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoalsAndCompletionsElseThrow(lectureId);
+        Lecture lecture = lectureRepository.findByIdWithPostsAndLectureUnitsAndCompetenciesAndCompletionsElseThrow(lectureId);
         Course course = lecture.getCourse();
         if (course == null) {
             return ResponseEntity.badRequest().build();

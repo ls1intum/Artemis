@@ -51,7 +51,7 @@ public interface LectureRepository extends JpaRepository<Lecture, Long> {
             LEFT JOIN FETCH exercise.competencies
             WHERE lecture.id = :#{#lectureId}
             """)
-    Optional<Lecture> findByIdWithPostsAndLectureUnitsAndLearningGoalsAndCompletions(@Param("lectureId") Long lectureId);
+    Optional<Lecture> findByIdWithPostsAndLectureUnitsAndCompetenciesAndCompletions(@Param("lectureId") Long lectureId);
 
     @Query("""
             SELECT lecture
@@ -62,7 +62,7 @@ public interface LectureRepository extends JpaRepository<Lecture, Long> {
             LEFT JOIN FETCH exercise.competencies
             WHERE lecture.id = :#{#lectureId}
             """)
-    Optional<Lecture> findByIdWithLectureUnitsAndLearningGoals(@Param("lectureId") Long lectureId);
+    Optional<Lecture> findByIdWithLectureUnitsAndCompetencies(@Param("lectureId") Long lectureId);
 
     @Query("""
             SELECT lecture
@@ -113,13 +113,13 @@ public interface LectureRepository extends JpaRepository<Lecture, Long> {
     }
 
     @NotNull
-    default Lecture findByIdWithLectureUnitsAndLearningGoalsElseThrow(Long lectureId) {
-        return findByIdWithLectureUnitsAndLearningGoals(lectureId).orElseThrow(() -> new EntityNotFoundException("Lecture", lectureId));
+    default Lecture findByIdWithLectureUnitsAndCompetenciesElseThrow(Long lectureId) {
+        return findByIdWithLectureUnitsAndCompetencies(lectureId).orElseThrow(() -> new EntityNotFoundException("Lecture", lectureId));
     }
 
     @NotNull
-    default Lecture findByIdWithPostsAndLectureUnitsAndLearningGoalsAndCompletionsElseThrow(Long lectureId) {
-        return findByIdWithPostsAndLectureUnitsAndLearningGoalsAndCompletions(lectureId).orElseThrow(() -> new EntityNotFoundException("Lecture", lectureId));
+    default Lecture findByIdWithPostsAndLectureUnitsAndCompetenciesAndCompletionsElseThrow(Long lectureId) {
+        return findByIdWithPostsAndLectureUnitsAndCompetenciesAndCompletions(lectureId).orElseThrow(() -> new EntityNotFoundException("Lecture", lectureId));
     }
 
     @NotNull
