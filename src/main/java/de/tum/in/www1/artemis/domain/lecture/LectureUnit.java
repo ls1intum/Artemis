@@ -93,7 +93,7 @@ public abstract class LectureUnit extends DomainObject implements LearningObject
         return competencies;
     }
 
-    public void setLearningGoals(Set<Competency> competencies) {
+    public void setCompetencies(Set<Competency> competencies) {
         this.competencies = competencies;
     }
 

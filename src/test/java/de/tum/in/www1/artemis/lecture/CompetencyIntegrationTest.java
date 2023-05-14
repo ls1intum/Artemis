@@ -208,7 +208,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
         TextUnit textUnit = new TextUnit();
         textUnit.setName("TextUnitOfLectureOne");
-        textUnit.setLearningGoals(Set.of(learningGoal));
+        textUnit.setCompetencies(Set.of(learningGoal));
         textUnit = textUnitRepository.save(textUnit);
         idOfTextUnitOfLectureOne = textUnit.getId();
 
