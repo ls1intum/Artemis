@@ -62,7 +62,7 @@ public class Competency extends DomainObject {
 
     @OneToMany(mappedBy = "learningGoal", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE, orphanRemoval = true)
     @JsonIgnoreProperties({ "user", "competency" })
-    private Set<LearningGoalProgress> userProgress = new HashSet<>();
+    private Set<CompetencyProgress> userProgress = new HashSet<>();
 
     public String getTitle() {
         return title;
@@ -168,11 +168,11 @@ public class Competency extends DomainObject {
         this.consecutiveCourses = consecutiveCourses;
     }
 
-    public Set<LearningGoalProgress> getUserProgress() {
+    public Set<CompetencyProgress> getUserProgress() {
         return userProgress;
     }
 
-    public void setUserProgress(Set<LearningGoalProgress> userProgress) {
+    public void setUserProgress(Set<CompetencyProgress> userProgress) {
         this.userProgress = userProgress;
     }
 

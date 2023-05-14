@@ -97,7 +97,7 @@ public class LearningGoalProgressService {
     @Async
     public void updateProgressByLearningGoalAsync(Competency competency) {
         SecurityUtils.setAuthorizationObject(); // required for async
-        learningGoalProgressRepository.findAllByLearningGoalId(competency.getId()).stream().map(LearningGoalProgress::getUser).forEach(user -> {
+        learningGoalProgressRepository.findAllByLearningGoalId(competency.getId()).stream().map(CompetencyProgress::getUser).forEach(user -> {
             updateLearningGoalProgress(competency.getId(), user);
         });
     }
@@ -164,7 +164,7 @@ public class LearningGoalProgressService {
      * @param user           The user for which the progress should be updated
      * @return The updated competency progress, which is also persisted to the database
      */
-    public LearningGoalProgress updateLearningGoalProgress(Long learningGoalId, User user) {
+    public CompetencyProgress updateLearningGoalProgress(Long learningGoalId, User user) {
         var learningGoal = learningGoalRepository.findByIdWithExercisesAndLectureUnitsAndCompletions(learningGoalId).orElse(null);
 
         if (user == null || learningGoal == null) {
@@ -182,7 +182,7 @@ public class LearningGoalProgressService {
             }
         }
 
-        var studentProgress = learningGoalProgress.orElse(new LearningGoalProgress());
+        var studentProgress = learningGoalProgress.orElse(new CompetencyProgress());
         List<LearningObject> learningObjects = new ArrayList<>();
 
         List<LectureUnit> allLectureUnits = learningGoal.getLectureUnits().stream().filter(LectureUnit::isVisibleToStudents).toList();

@@ -701,17 +701,17 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
         await().pollDelay(Duration.ofSeconds(2)).atMost(Duration.ofSeconds(15)).until(() -> participantScoreScheduleService.isIdle());
 
-        LearningGoalProgress studentLearningGoalProgress1 = request.get("/api/courses/" + idOfCourse + "/competencies/" + idOfLearningGoal + "/student-progress?refresh=true",
-                HttpStatus.OK, LearningGoalProgress.class);
+        CompetencyProgress studentCompetencyProgress1 = request.get("/api/courses/" + idOfCourse + "/competencies/" + idOfLearningGoal + "/student-progress?refresh=true",
+                HttpStatus.OK, CompetencyProgress.class);
 
-        assertThat(studentLearningGoalProgress1.getProgress()).isEqualTo(50.0);
-        assertThat(studentLearningGoalProgress1.getConfidence()).isEqualTo(85.0);
+        assertThat(studentCompetencyProgress1.getProgress()).isEqualTo(50.0);
+        assertThat(studentCompetencyProgress1.getConfidence()).isEqualTo(85.0);
 
-        LearningGoalProgress studentLearningGoalProgress2 = request.get("/api/courses/" + idOfCourse + "/competencies/" + idOfLearningGoal + "/student-progress?refresh=false",
-                HttpStatus.OK, LearningGoalProgress.class);
+        CompetencyProgress studentCompetencyProgress2 = request.get("/api/courses/" + idOfCourse + "/competencies/" + idOfLearningGoal + "/student-progress?refresh=false",
+                HttpStatus.OK, CompetencyProgress.class);
 
-        assertThat(studentLearningGoalProgress2.getProgress()).isEqualTo(50.0);
-        assertThat(studentLearningGoalProgress2.getConfidence()).isEqualTo(85.0);
+        assertThat(studentCompetencyProgress2.getProgress()).isEqualTo(50.0);
+        assertThat(studentCompetencyProgress2.getConfidence()).isEqualTo(85.0);
     }
 
     private void cleanUpInitialParticipations() {

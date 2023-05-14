@@ -23,7 +23,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @Table(name = "learning_goal_user")
 @EntityListeners(AuditingEntityListener.class)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class LearningGoalProgress implements Serializable {
+public class CompetencyProgress implements Serializable {
 
     /**
      * The primary key of the association, composited through {@link LearningGoalUserId}.
@@ -101,7 +101,7 @@ public class LearningGoalProgress implements Serializable {
         if (obj == null || getClass() != obj.getClass()) {
             return false;
         }
-        LearningGoalProgress that = (LearningGoalProgress) obj;
+        CompetencyProgress that = (CompetencyProgress) obj;
         return getId().equals(that.getId());
     }
 

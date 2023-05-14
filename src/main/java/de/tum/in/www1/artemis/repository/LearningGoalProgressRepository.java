@@ -10,10 +10,10 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
-import de.tum.in.www1.artemis.domain.LearningGoalProgress;
+import de.tum.in.www1.artemis.domain.CompetencyProgress;
 
 @Repository
-public interface LearningGoalProgressRepository extends JpaRepository<LearningGoalProgress, Long> {
+public interface LearningGoalProgressRepository extends JpaRepository<CompetencyProgress, Long> {
 
     @Transactional // ok because of delete
     @Modifying
@@ -26,46 +26,46 @@ public interface LearningGoalProgressRepository extends JpaRepository<LearningGo
 
     @Query("""
             SELECT lgp
-            FROM LearningGoalProgress lgp
+            FROM CompetencyProgress lgp
             WHERE lgp.learningGoal.id = :learningGoalId
             """)
-    List<LearningGoalProgress> findAllByLearningGoalId(@Param("learningGoalId") Long learningGoalId);
+    List<CompetencyProgress> findAllByLearningGoalId(@Param("learningGoalId") Long learningGoalId);
 
     @Query("""
             SELECT lgp
-            FROM LearningGoalProgress lgp
+            FROM CompetencyProgress lgp
             WHERE lgp.learningGoal.id = :learningGoalId
                 AND lgp.user.id = :userId
             """)
-    Optional<LearningGoalProgress> findByLearningGoalIdAndUserId(@Param("learningGoalId") Long learningGoalId, @Param("userId") Long userId);
+    Optional<CompetencyProgress> findByLearningGoalIdAndUserId(@Param("learningGoalId") Long learningGoalId, @Param("userId") Long userId);
 
     @Query("""
             SELECT lgp
-            FROM LearningGoalProgress lgp
+            FROM CompetencyProgress lgp
                 LEFT JOIN FETCH lgp.user
                 LEFT JOIN FETCH lgp.learningGoal
             WHERE lgp.learningGoal.id = :learningGoalId
                 AND lgp.user.id = :userId
             """)
-    Optional<LearningGoalProgress> findEagerByLearningGoalIdAndUserId(@Param("learningGoalId") Long learningGoalId, @Param("userId") Long userId);
+    Optional<CompetencyProgress> findEagerByLearningGoalIdAndUserId(@Param("learningGoalId") Long learningGoalId, @Param("userId") Long userId);
 
     @Query("""
             SELECT AVG(lgp.confidence)
-            FROM LearningGoalProgress lgp
+            FROM CompetencyProgress lgp
             WHERE lgp.learningGoal.id = :learningGoalId
             """)
     Optional<Double> findAverageConfidenceByLearningGoalId(@Param("learningGoalId") Long learningGoalId);
 
     @Query("""
             SELECT count(lgp)
-            FROM LearningGoalProgress lgp
+            FROM CompetencyProgress lgp
             WHERE lgp.learningGoal.id = :learningGoalId
             """)
     Long countByLearningGoal(@Param("learningGoalId") Long learningGoalId);
 
     @Query("""
             SELECT count(lgp)
-            FROM LearningGoalProgress lgp
+            FROM CompetencyProgress lgp
             WHERE lgp.learningGoal.id = :learningGoalId
                 AND lgp.progress >= :progress
                 AND lgp.confidence >= :confidence

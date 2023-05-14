@@ -291,7 +291,7 @@ public class LearningGoalResource {
      */
     @GetMapping("/courses/{courseId}/competencies/{competencyId}/student-progress")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<LearningGoalProgress> getLearningGoalStudentProgress(@PathVariable Long courseId, @PathVariable Long competencyId,
+    public ResponseEntity<CompetencyProgress> getLearningGoalStudentProgress(@PathVariable Long courseId, @PathVariable Long competencyId,
             @RequestParam(defaultValue = "false") Boolean refresh) {
         log.debug("REST request to get student progress for competency: {}", competencyId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
@@ -299,7 +299,7 @@ public class LearningGoalResource {
         var learningGoal = learningGoalRepository.findByIdElseThrow(competencyId);
         checkAuthorizationForLearningGoal(Role.STUDENT, course, learningGoal);
 
-        LearningGoalProgress studentProgress;
+        CompetencyProgress studentProgress;
         if (refresh) {
             studentProgress = learningGoalProgressService.updateLearningGoalProgress(competencyId, user);
         }
