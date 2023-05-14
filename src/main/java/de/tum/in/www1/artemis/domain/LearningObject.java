@@ -24,5 +24,5 @@ public interface LearningObject {
 
     Long getId();
 
-    Set<Competency> getLearningGoals();
+    Set<Competency> getCompetencies();
 }

@@ -131,10 +131,10 @@ public class CompetencyProgressService {
         try {
             Set<Competency> competencies;
             if (learningObject instanceof Exercise exercise) {
-                competencies = exerciseRepository.findByIdWithLearningGoals(exercise.getId()).map(Exercise::getLearningGoals).orElse(null);
+                competencies = exerciseRepository.findByIdWithLearningGoals(exercise.getId()).map(Exercise::getCompetencies).orElse(null);
             }
             else if (learningObject instanceof LectureUnit lectureUnit) {
-                competencies = lectureUnitRepository.findByIdWithCompetencies(lectureUnit.getId()).map(LectureUnit::getLearningGoals).orElse(null);
+                competencies = lectureUnitRepository.findByIdWithCompetencies(lectureUnit.getId()).map(LectureUnit::getCompetencies).orElse(null);
             }
             else {
                 throw new IllegalArgumentException("Learning object must be either LectureUnit or Exercise");

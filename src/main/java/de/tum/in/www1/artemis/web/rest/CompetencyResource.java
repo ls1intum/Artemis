@@ -267,12 +267,12 @@ public class CompetencyResource {
         competencyProgressRepository.deleteAllByLearningGoalId(competency.getId());
 
         competency.getExercises().forEach(exercise -> {
-            exercise.getLearningGoals().remove(competency);
+            exercise.getCompetencies().remove(competency);
             exerciseRepository.save(exercise);
         });
 
         competency.getLectureUnits().forEach(lectureUnit -> {
-            lectureUnit.getLearningGoals().remove(competency);
+            lectureUnit.getCompetencies().remove(competency);
             lectureUnitRepository.save(lectureUnit);
         });
 
@@ -506,12 +506,12 @@ public class CompetencyResource {
         // Remove the competency from the old lecture units
         var lectureUnitsToRemoveFromDb = lectureUnitRepository.findAllByIdWithCompetenciesBidirectional(lectureUnitsToRemove.stream().map(LectureUnit::getId).toList());
         lectureUnitRepository.saveAll(lectureUnitsToRemoveFromDb.stream().filter(lectureUnit -> !(lectureUnit instanceof ExerciseUnit)).map(lectureUnit -> {
-            lectureUnit.getLearningGoals().remove(competency);
+            lectureUnit.getCompetencies().remove(competency);
             return lectureUnit;
         }).collect(Collectors.toSet()));
         exerciseRepository.saveAll(lectureUnitsToRemoveFromDb.stream().filter(lectureUnit -> lectureUnit instanceof ExerciseUnit)
                 .map(lectureUnit -> ((ExerciseUnit) lectureUnit).getExercise()).map(exercise -> {
-                    exercise.getLearningGoals().remove(competency);
+                    exercise.getCompetencies().remove(competency);
                     return exercise;
                 }).collect(Collectors.toSet()));
 
@@ -520,8 +520,8 @@ public class CompetencyResource {
         var lectureUnitsWithoutExercises = lectureUnitsFromDb.stream().filter(lectureUnit -> !(lectureUnit instanceof ExerciseUnit)).collect(Collectors.toSet());
         var exercises = lectureUnitsFromDb.stream().filter(lectureUnit -> lectureUnit instanceof ExerciseUnit).map(lectureUnit -> ((ExerciseUnit) lectureUnit).getExercise())
                 .collect(Collectors.toSet());
-        lectureUnitsWithoutExercises.stream().map(LectureUnit::getLearningGoals).forEach(competencies -> competencies.add(competency));
-        exercises.stream().map(Exercise::getLearningGoals).forEach(competencies -> competencies.add(competency));
+        lectureUnitsWithoutExercises.stream().map(LectureUnit::getCompetencies).forEach(competencies -> competencies.add(competency));
+        exercises.stream().map(Exercise::getCompetencies).forEach(competencies -> competencies.add(competency));
         lectureUnitRepository.saveAll(lectureUnitsWithoutExercises);
         exerciseRepository.saveAll(exercises);
         competency.setLectureUnits(lectureUnitsToAdd);

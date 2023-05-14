@@ -80,7 +80,7 @@ public class LectureUnitService {
 
         if (!(lectureUnitToDelete instanceof ExerciseUnit)) {
             // update associated competencies
-            Set<Competency> competencies = lectureUnitToDelete.getLearningGoals();
+            Set<Competency> competencies = lectureUnitToDelete.getCompetencies();
             competencyRepository.saveAll(competencies.stream().map(learningGoal -> {
                 learningGoal = competencyRepository.findByIdWithLectureUnitsElseThrow(learningGoal.getId());
                 learningGoal.getLectureUnits().remove(lectureUnitToDelete);

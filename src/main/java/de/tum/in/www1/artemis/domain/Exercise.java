@@ -389,11 +389,11 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
 
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
-    public Set<Competency> getLearningGoals() {
+    public Set<Competency> getCompetencies() {
         return competencies;
     }
 
-    public void setLearningGoals(Set<Competency> competencies) {
+    public void setCompetencies(Set<Competency> competencies) {
         this.competencies = competencies;
     }
 

@@ -114,12 +114,12 @@ public class Competency extends DomainObject {
 
     public void addExercise(Exercise exercise) {
         this.exercises.add(exercise);
-        exercise.getLearningGoals().add(this);
+        exercise.getCompetencies().add(this);
     }
 
     public void removeExercise(Exercise exercise) {
         this.exercises.remove(exercise);
-        exercise.getLearningGoals().remove(this);
+        exercise.getCompetencies().remove(this);
     }
 
     public Set<LectureUnit> getLectureUnits() {
@@ -142,7 +142,7 @@ public class Competency extends DomainObject {
             throw new IllegalArgumentException("ExerciseUnits can not be connected to competencies");
         }
         this.lectureUnits.add(lectureUnit);
-        lectureUnit.getLearningGoals().add(this);
+        lectureUnit.getCompetencies().add(this);
     }
 
     /**
@@ -157,7 +157,7 @@ public class Competency extends DomainObject {
             throw new IllegalArgumentException("ExerciseUnits can not be disconnected from competencies");
         }
         this.lectureUnits.remove(lectureUnit);
-        lectureUnit.getLearningGoals().remove(this);
+        lectureUnit.getCompetencies().remove(this);
     }
 
     public Set<Course> getConsecutiveCourses() {

@@ -89,7 +89,7 @@ public abstract class LectureUnit extends DomainObject implements LearningObject
         this.releaseDate = releaseDate;
     }
 
-    public Set<Competency> getLearningGoals() {
+    public Set<Competency> getCompetencies() {
         return competencies;
     }
 
