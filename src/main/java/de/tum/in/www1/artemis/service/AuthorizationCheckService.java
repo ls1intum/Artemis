@@ -264,7 +264,7 @@ public class AuthorizationCheckService {
      * or ALLOWED if the user is allowed to disenroll from the course.
      */
     private enum DisenrollmentAuthorization {
-        ALLOWED, DISENROLLMENT_STATUS, ONLINE
+        ALLOWED, DISENROLLMENT_STATUS, DISENROLLMENT_PERIOD, ONLINE
     }
 
     /**
@@ -279,8 +279,11 @@ public class AuthorizationCheckService {
      *         or the reason why the user is not allowed to self register for the course otherwise
      */
     public DisenrollmentAuthorization getUserDisenrollmentAuthorizationForCourse(User user, Course course) {
-        if (!course.disenrollmentIsActive()) {
+        if (!course.isDisenrollmentEnabled()) {
             return DisenrollmentAuthorization.DISENROLLMENT_STATUS;
+        }
+        if (!course.disenrollmentIsActive()) {
+            return DisenrollmentAuthorization.DISENROLLMENT_PERIOD;
         }
         if (course.isOnlineCourse()) {
             return DisenrollmentAuthorization.ONLINE;
@@ -299,7 +302,7 @@ public class AuthorizationCheckService {
     public void checkUserAllowedToSelfDisenrollFromCourseElseThrow(User user, Course course) throws AccessForbiddenException {
         DisenrollmentAuthorization auth = getUserDisenrollmentAuthorizationForCourse(user, course);
         switch (auth) {
-            case DISENROLLMENT_STATUS -> throw new AccessForbiddenException("The course does currently not allow disenrollment.");
+            case DISENROLLMENT_STATUS, DISENROLLMENT_PERIOD -> throw new AccessForbiddenException("The course does currently not allow disenrollment.");
             case ONLINE -> throw new AccessForbiddenException("Online courses cannot be disenrolled from.");
         }
     }
