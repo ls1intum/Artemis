@@ -131,7 +131,7 @@ public class ExerciseDeletionService {
         }
 
         // delete all exercise units linking to the exercise
-        List<ExerciseUnit> exerciseUnits = this.exerciseUnitRepository.findByIdWithLearningGoalsBidirectional(exerciseId);
+        List<ExerciseUnit> exerciseUnits = this.exerciseUnitRepository.findByIdWithCompetenciesBidirectional(exerciseId);
         for (ExerciseUnit exerciseUnit : exerciseUnits) {
             lectureUnitService.removeLectureUnit(exerciseUnit);
         }
