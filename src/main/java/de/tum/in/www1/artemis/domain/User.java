@@ -339,11 +339,11 @@ public class User extends AbstractAuditingEntity implements Participant {
         this.completedLectureUnits = completedLectureUnits;
     }
 
-    public Set<CompetencyProgress> getLearningGoalProgress() {
+    public Set<CompetencyProgress> getCompetencyProgresses() {
         return competencyProgresses;
     }
 
-    public void setLearningGoalProgress(Set<CompetencyProgress> competencyProgresses) {
+    public void setCompetencyProgresses(Set<CompetencyProgress> competencyProgresses) {
         this.competencyProgresses = competencyProgresses;
     }
 
