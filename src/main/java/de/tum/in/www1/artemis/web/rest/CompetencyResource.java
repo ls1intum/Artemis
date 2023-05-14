@@ -24,7 +24,7 @@ import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.CompetencyProgressService;
 import de.tum.in.www1.artemis.service.CompetencyService;
 import de.tum.in.www1.artemis.service.util.RoundingUtil;
-import de.tum.in.www1.artemis.web.rest.dto.CourseLearningGoalProgressDTO;
+import de.tum.in.www1.artemis.web.rest.dto.CourseCompetencyProgressDTO;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
@@ -319,7 +319,7 @@ public class CompetencyResource {
      */
     @GetMapping("/courses/{courseId}/competencies/{competencyId}/course-progress")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<CourseLearningGoalProgressDTO> getLearningGoalCourseProgress(@PathVariable Long courseId, @PathVariable Long competencyId) {
+    public ResponseEntity<CourseCompetencyProgressDTO> getLearningGoalCourseProgress(@PathVariable Long courseId, @PathVariable Long competencyId) {
         log.debug("REST request to get course progress for competency: {}", competencyId);
         var course = courseRepository.findByIdElseThrow(courseId);
         var learningGoal = competencyRepository.findByIdWithLectureUnitsAndCompletionsElseThrow(competencyId);
@@ -331,7 +331,7 @@ public class CompetencyResource {
         var averageStudentScore = RoundingUtil.roundScoreSpecifiedByCourseSettings(competencyProgressRepository.findAverageConfidenceByLearningGoalId(competencyId).orElse(0.0),
                 course);
 
-        return ResponseEntity.ok().body(new CourseLearningGoalProgressDTO(learningGoal.getId(), numberOfStudents, numberOfMasteredStudents, averageStudentScore));
+        return ResponseEntity.ok().body(new CourseCompetencyProgressDTO(learningGoal.getId(), numberOfStudents, numberOfMasteredStudents, averageStudentScore));
     }
 
     /**

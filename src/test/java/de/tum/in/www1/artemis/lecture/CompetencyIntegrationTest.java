@@ -40,7 +40,7 @@ import de.tum.in.www1.artemis.service.ModelAssessmentKnowledgeService;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.TextAssessmentKnowledgeService;
 import de.tum.in.www1.artemis.util.ModelFactory;
-import de.tum.in.www1.artemis.web.rest.dto.CourseLearningGoalProgressDTO;
+import de.tum.in.www1.artemis.web.rest.dto.CourseCompetencyProgressDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 
 class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -372,7 +372,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     private void testAllPreAuthorize() throws Exception {
         request.put("/api/courses/" + idOfCourse + "/competencies", new Competency(), HttpStatus.FORBIDDEN);
         request.post("/api/courses/" + idOfCourse + "/competencies", new Competency(), HttpStatus.FORBIDDEN);
-        request.get("/api/courses/" + idOfCourse + "/competencies/" + idOfLearningGoal + "/course-progress", HttpStatus.FORBIDDEN, CourseLearningGoalProgressDTO.class);
+        request.get("/api/courses/" + idOfCourse + "/competencies/" + idOfLearningGoal + "/course-progress", HttpStatus.FORBIDDEN, CourseCompetencyProgressDTO.class);
         request.delete("/api/courses/" + idOfCourse + "/competencies/" + idOfLearningGoal, HttpStatus.FORBIDDEN);
     }
 
@@ -643,8 +643,8 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
         await().pollDelay(Duration.ofSeconds(2)).atMost(Duration.ofSeconds(15)).until(() -> participantScoreScheduleService.isIdle());
 
-        CourseLearningGoalProgressDTO courseLearningGoalProgress = request.get("/api/courses/" + idOfCourse + "/competencies/" + idOfLearningGoal + "/course-progress",
-                HttpStatus.OK, CourseLearningGoalProgressDTO.class);
+        CourseCompetencyProgressDTO courseLearningGoalProgress = request.get("/api/courses/" + idOfCourse + "/competencies/" + idOfLearningGoal + "/course-progress", HttpStatus.OK,
+                CourseCompetencyProgressDTO.class);
 
         assertThat(courseLearningGoalProgress.averageStudentScore()).isEqualTo(31.5);
     }
@@ -677,8 +677,8 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
         await().pollDelay(Duration.ofSeconds(2)).atMost(Duration.ofSeconds(15)).until(() -> participantScoreScheduleService.isIdle());
 
-        CourseLearningGoalProgressDTO courseLearningGoalProgress = request.get("/api/courses/" + idOfCourse + "/competencies/" + idOfLearningGoal + "/course-progress",
-                HttpStatus.OK, CourseLearningGoalProgressDTO.class);
+        CourseCompetencyProgressDTO courseLearningGoalProgress = request.get("/api/courses/" + idOfCourse + "/competencies/" + idOfLearningGoal + "/course-progress", HttpStatus.OK,
+                CourseCompetencyProgressDTO.class);
 
         assertThat(courseLearningGoalProgress.averageStudentScore()).isEqualTo(46.3);
     }

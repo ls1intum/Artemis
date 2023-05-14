@@ -21,7 +21,7 @@ public interface CompetencyRelationRepository extends JpaRepository<CompetencyRe
             WHERE relation.headCompetency.id = :#{#learningGoalId}
             OR relation.tailCompetency.id = :#{#learningGoalId}
             """)
-    Set<CompetencyRelation> findAllByLearningGoalId(@Param("learningGoalId") Long learningGoalId);
+    Set<CompetencyRelation> findAllByLearningGoalId(@Param("competencyId") Long learningGoalId);
 
     @Query("""
             SELECT relation

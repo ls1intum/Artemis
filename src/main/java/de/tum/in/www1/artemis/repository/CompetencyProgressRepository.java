@@ -29,7 +29,7 @@ public interface CompetencyProgressRepository extends JpaRepository<CompetencyPr
             FROM CompetencyProgress lgp
             WHERE lgp.learningGoal.id = :learningGoalId
             """)
-    List<CompetencyProgress> findAllByLearningGoalId(@Param("learningGoalId") Long learningGoalId);
+    List<CompetencyProgress> findAllByLearningGoalId(@Param("competencyId") Long learningGoalId);
 
     @Query("""
             SELECT lgp
@@ -37,7 +37,7 @@ public interface CompetencyProgressRepository extends JpaRepository<CompetencyPr
             WHERE lgp.learningGoal.id = :learningGoalId
                 AND lgp.user.id = :userId
             """)
-    Optional<CompetencyProgress> findByLearningGoalIdAndUserId(@Param("learningGoalId") Long learningGoalId, @Param("userId") Long userId);
+    Optional<CompetencyProgress> findByLearningGoalIdAndUserId(@Param("competencyId") Long learningGoalId, @Param("userId") Long userId);
 
     @Query("""
             SELECT lgp
@@ -47,21 +47,21 @@ public interface CompetencyProgressRepository extends JpaRepository<CompetencyPr
             WHERE lgp.learningGoal.id = :learningGoalId
                 AND lgp.user.id = :userId
             """)
-    Optional<CompetencyProgress> findEagerByLearningGoalIdAndUserId(@Param("learningGoalId") Long learningGoalId, @Param("userId") Long userId);
+    Optional<CompetencyProgress> findEagerByLearningGoalIdAndUserId(@Param("competencyId") Long learningGoalId, @Param("userId") Long userId);
 
     @Query("""
             SELECT AVG(lgp.confidence)
             FROM CompetencyProgress lgp
             WHERE lgp.learningGoal.id = :learningGoalId
             """)
-    Optional<Double> findAverageConfidenceByLearningGoalId(@Param("learningGoalId") Long learningGoalId);
+    Optional<Double> findAverageConfidenceByLearningGoalId(@Param("competencyId") Long learningGoalId);
 
     @Query("""
             SELECT count(lgp)
             FROM CompetencyProgress lgp
             WHERE lgp.learningGoal.id = :learningGoalId
             """)
-    Long countByLearningGoal(@Param("learningGoalId") Long learningGoalId);
+    Long countByLearningGoal(@Param("competencyId") Long learningGoalId);
 
     @Query("""
             SELECT count(lgp)
@@ -70,7 +70,7 @@ public interface CompetencyProgressRepository extends JpaRepository<CompetencyPr
                 AND lgp.progress >= :progress
                 AND lgp.confidence >= :confidence
             """)
-    Long countByLearningGoalAndProgressAndConfidenceGreaterThanEqual(@Param("learningGoalId") Long learningGoalId, @Param("progress") Double progress,
+    Long countByLearningGoalAndProgressAndConfidenceGreaterThanEqual(@Param("competencyId") Long learningGoalId, @Param("progress") Double progress,
             @Param("confidence") Double confidence);
 
 }

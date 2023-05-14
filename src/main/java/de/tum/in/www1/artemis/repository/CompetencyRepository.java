@@ -43,7 +43,7 @@ public interface CompetencyRepository extends JpaRepository<Competency, Long> {
                 LEFT JOIN FETCH lg.exercises ex
             WHERE lg.id = :#{#learningGoalId}
             """)
-    Optional<Competency> findByIdWithExercises(@Param("learningGoalId") long learningGoalId);
+    Optional<Competency> findByIdWithExercises(@Param("competencyId") long learningGoalId);
 
     @Query("""
             SELECT lg
@@ -51,7 +51,7 @@ public interface CompetencyRepository extends JpaRepository<Competency, Long> {
                 LEFT JOIN FETCH lg.lectureUnits lu
             WHERE lg.id = :#{#learningGoalId}
             """)
-    Optional<Competency> findByIdWithLectureUnits(@Param("learningGoalId") long learningGoalId);
+    Optional<Competency> findByIdWithLectureUnits(@Param("competencyId") long learningGoalId);
 
     @Query("""
             SELECT lg
@@ -64,7 +64,7 @@ public interface CompetencyRepository extends JpaRepository<Competency, Long> {
                 LEFT JOIN FETCH lu.exercise e
             WHERE lg.id = :learningGoalId
             """)
-    Optional<Competency> findByIdWithExercisesAndLectureUnits(@Param("learningGoalId") Long learningGoalId);
+    Optional<Competency> findByIdWithExercisesAndLectureUnits(@Param("competencyId") Long learningGoalId);
 
     @Query("""
             SELECT lg
@@ -73,7 +73,7 @@ public interface CompetencyRepository extends JpaRepository<Competency, Long> {
                 LEFT JOIN FETCH lu.completedUsers
             WHERE lg.id = :learningGoalId
             """)
-    Optional<Competency> findByIdWithLectureUnitsAndCompletions(@Param("learningGoalId") Long learningGoalId);
+    Optional<Competency> findByIdWithLectureUnitsAndCompletions(@Param("competencyId") Long learningGoalId);
 
     @Query("""
             SELECT lg
@@ -83,7 +83,7 @@ public interface CompetencyRepository extends JpaRepository<Competency, Long> {
                 LEFT JOIN FETCH lu.completedUsers
             WHERE lg.id = :learningGoalId
             """)
-    Optional<Competency> findByIdWithExercisesAndLectureUnitsAndCompletions(@Param("learningGoalId") Long learningGoalId);
+    Optional<Competency> findByIdWithExercisesAndLectureUnitsAndCompletions(@Param("competencyId") Long learningGoalId);
 
     @Query("""
             SELECT lg
@@ -94,7 +94,7 @@ public interface CompetencyRepository extends JpaRepository<Competency, Long> {
                 LEFT JOIN FETCH lu.competencies
             WHERE lg.id = :learningGoalId
             """)
-    Optional<Competency> findByIdWithExercisesAndLectureUnitsBidirectional(@Param("learningGoalId") Long learningGoalId);
+    Optional<Competency> findByIdWithExercisesAndLectureUnitsBidirectional(@Param("competencyId") Long learningGoalId);
 
     @Query("""
             SELECT lg
@@ -102,7 +102,7 @@ public interface CompetencyRepository extends JpaRepository<Competency, Long> {
                 LEFT JOIN FETCH lg.consecutiveCourses
             WHERE lg.id = :learningGoalId
             """)
-    Optional<Competency> findByIdWithConsecutiveCourses(@Param("learningGoalId") Long learningGoalId);
+    Optional<Competency> findByIdWithConsecutiveCourses(@Param("competencyId") Long learningGoalId);
 
     @Query("""
             SELECT pr
@@ -144,7 +144,7 @@ public interface CompetencyRepository extends JpaRepository<Competency, Long> {
             WHERE lg.id = :learningGoalId
             """)
     @Cacheable(cacheNames = "learningGoalTitle", key = "#learningGoalId", unless = "#result == null")
-    String getLearningGoalTitle(@Param("learningGoalId") Long learningGoalId);
+    String getLearningGoalTitle(@Param("competencyId") Long learningGoalId);
 
     @SuppressWarnings("PMD.MethodNamingConventions")
     Page<Competency> findByTitleIgnoreCaseContainingOrCourse_TitleIgnoreCaseContaining(String partialTitle, String partialCourseTitle, Pageable pageable);
