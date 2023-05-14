@@ -271,7 +271,7 @@ public class AuthorizationCheckService {
      * Checks if the user is allowed to disenroll from the given course.
      * Returns `DisenrollmentAuthorization.ALLOWED` if the user is allowed to disenroll from the course,
      * or the reason why the user is not allowed to disenroll from the course otherwise.
-     * See also: {@link #checkUserAllowedToSelfDisenrollForCourseElseThrow(User, Course)}
+     * See also: {@link #checkUserAllowedToSelfDisenrollFromCourseElseThrow(User, Course)}
      *
      * @param user   The user that wants to self register
      * @param course The course to which the user wants to self register
