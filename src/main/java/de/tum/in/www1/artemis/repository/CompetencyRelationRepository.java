@@ -13,7 +13,7 @@ import de.tum.in.www1.artemis.domain.LearningGoalRelation;
  * Spring Data JPA repository for the Learning Goal Relation entity.
  */
 @Repository
-public interface LearningGoalRelationRepository extends JpaRepository<LearningGoalRelation, Long> {
+public interface CompetencyRelationRepository extends JpaRepository<LearningGoalRelation, Long> {
 
     @Query("""
             SELECT relation

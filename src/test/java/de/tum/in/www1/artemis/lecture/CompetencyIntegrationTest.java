@@ -78,7 +78,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     private LearningGoalRepository learningGoalRepository;
 
     @Autowired
-    private LearningGoalRelationRepository learningGoalRelationRepository;
+    private CompetencyRelationRepository competencyRelationRepository;
 
     @Autowired
     private LectureUnitRepository lectureUnitRepository;
@@ -476,7 +476,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         relation.setTailLearningGoal(competency);
         relation.setHeadLearningGoal(competency1);
         relation.setType(LearningGoalRelation.RelationType.EXTENDS);
-        learningGoalRelationRepository.save(relation);
+        competencyRelationRepository.save(relation);
 
         // Should return bad request, as the competency still has relations
         request.delete("/api/courses/" + idOfCourse + "/competencies/" + idOfLearningGoal, HttpStatus.BAD_REQUEST);
@@ -504,7 +504,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         request.postWithoutResponseBody("/api/courses/" + idOfCourse + "/competencies/" + idOfLearningGoal + "/relations/" + idOfOtherLearningGoal + "?type="
                 + LearningGoalRelation.RelationType.EXTENDS.name(), HttpStatus.OK, new LinkedMultiValueMap<>());
 
-        var relations = learningGoalRelationRepository.findAllByLearningGoalId(idOfLearningGoal);
+        var relations = competencyRelationRepository.findAllByLearningGoalId(idOfLearningGoal);
         assertThat(relations).hasSize(1);
         assertThat(relations.stream().findFirst().get().getType()).isEqualTo(LearningGoalRelation.RelationType.EXTENDS);
     }
@@ -533,13 +533,13 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         relation1.setTailLearningGoal(competency);
         relation1.setHeadLearningGoal(otherCompetency1);
         relation1.setType(LearningGoalRelation.RelationType.EXTENDS);
-        learningGoalRelationRepository.save(relation1);
+        competencyRelationRepository.save(relation1);
 
         var relation2 = new LearningGoalRelation();
         relation2.setTailLearningGoal(otherCompetency1);
         relation2.setHeadLearningGoal(otherCompetency2);
         relation2.setType(LearningGoalRelation.RelationType.MATCHES);
-        learningGoalRelationRepository.save(relation2);
+        competencyRelationRepository.save(relation2);
 
         request.post("/api/courses/" + idOfCourse + "/competencies/" + idOfOtherLearningGoal2 + "/relations/" + idOfLearningGoal + "?type="
                 + LearningGoalRelation.RelationType.ASSUMES.name(), null, HttpStatus.BAD_REQUEST);
@@ -566,7 +566,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         relation.setTailLearningGoal(competency);
         relation.setHeadLearningGoal(otherCompetency);
         relation.setType(LearningGoalRelation.RelationType.EXTENDS);
-        relation = learningGoalRelationRepository.save(relation);
+        relation = competencyRelationRepository.save(relation);
 
         var relations = request.getList("/api/courses/" + idOfCourse + "/competencies/" + idOfLearningGoal + "/relations", HttpStatus.OK, LearningGoalRelation.class);
 
@@ -585,11 +585,11 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         relation.setTailLearningGoal(competency);
         relation.setHeadLearningGoal(otherCompetency);
         relation.setType(LearningGoalRelation.RelationType.EXTENDS);
-        relation = learningGoalRelationRepository.save(relation);
+        relation = competencyRelationRepository.save(relation);
 
         request.delete("/api/courses/" + idOfCourse + "/competencies/" + idOfLearningGoal + "/relations/" + relation.getId(), HttpStatus.OK);
 
-        var relations = learningGoalRelationRepository.findAllByLearningGoalId(idOfLearningGoal);
+        var relations = competencyRelationRepository.findAllByLearningGoalId(idOfLearningGoal);
         assertThat(relations).isEmpty();
     }
 
@@ -604,7 +604,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         relation.setTailLearningGoal(otherCompetency); // invalid
         relation.setHeadLearningGoal(competency);
         relation.setType(LearningGoalRelation.RelationType.EXTENDS);
-        relation = learningGoalRelationRepository.save(relation);
+        relation = competencyRelationRepository.save(relation);
 
         request.delete("/api/courses/" + idOfCourse + "/competencies/" + idOfLearningGoal + "/relations/" + relation.getId(), HttpStatus.BAD_REQUEST);
     }

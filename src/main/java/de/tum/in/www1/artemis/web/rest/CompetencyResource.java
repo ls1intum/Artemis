@@ -49,7 +49,7 @@ public class CompetencyResource {
 
     private final LearningGoalRepository learningGoalRepository;
 
-    private final LearningGoalRelationRepository learningGoalRelationRepository;
+    private final CompetencyRelationRepository competencyRelationRepository;
 
     private final LectureUnitRepository lectureUnitRepository;
 
@@ -62,11 +62,11 @@ public class CompetencyResource {
     private final LearningGoalProgressService learningGoalProgressService;
 
     public CompetencyResource(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository,
-            LearningGoalRepository learningGoalRepository, LearningGoalRelationRepository learningGoalRelationRepository, LectureUnitRepository lectureUnitRepository,
+            LearningGoalRepository learningGoalRepository, CompetencyRelationRepository competencyRelationRepository, LectureUnitRepository lectureUnitRepository,
             CompetencyService competencyService, CompetencyProgressRepository competencyProgressRepository, ExerciseRepository exerciseRepository,
             LearningGoalProgressService learningGoalProgressService) {
         this.courseRepository = courseRepository;
-        this.learningGoalRelationRepository = learningGoalRelationRepository;
+        this.competencyRelationRepository = competencyRelationRepository;
         this.lectureUnitRepository = lectureUnitRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.userRepository = userRepository;
@@ -260,7 +260,7 @@ public class CompetencyResource {
         var learningGoal = learningGoalRepository.findByIdWithExercisesAndLectureUnitsBidirectionalElseThrow(competencyId);
         checkAuthorizationForLearningGoal(Role.INSTRUCTOR, course, learningGoal);
 
-        var relations = learningGoalRelationRepository.findAllByLearningGoalId(learningGoal.getId());
+        var relations = competencyRelationRepository.findAllByLearningGoalId(learningGoal.getId());
         if (!relations.isEmpty()) {
             throw new BadRequestException("Can not delete a competency that has active relations");
         }
@@ -349,7 +349,7 @@ public class CompetencyResource {
         var learningGoal = learningGoalRepository.findByIdElseThrow(competencyId);
         checkAuthorizationForLearningGoal(Role.STUDENT, course, learningGoal);
 
-        var relations = learningGoalRelationRepository.findAllByLearningGoalId(learningGoal.getId());
+        var relations = competencyRelationRepository.findAllByLearningGoalId(learningGoal.getId());
         return ResponseEntity.ok().body(relations);
     }
 
@@ -382,13 +382,13 @@ public class CompetencyResource {
             relation.setType(relationType);
 
             var learningGoals = learningGoalRepository.findAllForCourse(course.getId());
-            var learningGoalRelations = learningGoalRelationRepository.findAllByCourseId(course.getId());
+            var learningGoalRelations = competencyRelationRepository.findAllByCourseId(course.getId());
             learningGoalRelations.add(relation);
             if (competencyService.doesCreateCircularRelation(learningGoals, learningGoalRelations)) {
                 throw new BadRequestException("You can't define circular dependencies between competencies");
             }
 
-            learningGoalRelationRepository.save(relation);
+            competencyRelationRepository.save(relation);
 
             return ResponseEntity.ok().body(relation);
         }
@@ -413,12 +413,12 @@ public class CompetencyResource {
         var learningGoal = learningGoalRepository.findByIdElseThrow(competencyId);
         checkAuthorizationForLearningGoal(Role.INSTRUCTOR, course, learningGoal);
 
-        var relation = learningGoalRelationRepository.findById(competencyRelationId).orElseThrow();
+        var relation = competencyRelationRepository.findById(competencyRelationId).orElseThrow();
         if (!relation.getTailLearningGoal().getId().equals(learningGoal.getId())) {
             throw new BadRequestException("The relation does not belong to the specified competency");
         }
 
-        learningGoalRelationRepository.delete(relation);
+        competencyRelationRepository.delete(relation);
 
         return ResponseEntity.ok().build();
     }
