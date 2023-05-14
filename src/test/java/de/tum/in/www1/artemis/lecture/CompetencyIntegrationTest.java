@@ -504,7 +504,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         request.postWithoutResponseBody("/api/courses/" + idOfCourse + "/competencies/" + idOfLearningGoal + "/relations/" + idOfOtherLearningGoal + "?type="
                 + CompetencyRelation.RelationType.EXTENDS.name(), HttpStatus.OK, new LinkedMultiValueMap<>());
 
-        var relations = competencyRelationRepository.findAllByLearningGoalId(idOfLearningGoal);
+        var relations = competencyRelationRepository.findAllByCompetencyId(idOfLearningGoal);
         assertThat(relations).hasSize(1);
         assertThat(relations.stream().findFirst().get().getType()).isEqualTo(CompetencyRelation.RelationType.EXTENDS);
     }
@@ -589,7 +589,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
         request.delete("/api/courses/" + idOfCourse + "/competencies/" + idOfLearningGoal + "/relations/" + relation.getId(), HttpStatus.OK);
 
-        var relations = competencyRelationRepository.findAllByLearningGoalId(idOfLearningGoal);
+        var relations = competencyRelationRepository.findAllByCompetencyId(idOfLearningGoal);
         assertThat(relations).isEmpty();
     }
 

@@ -10,7 +10,7 @@ import org.springframework.stereotype.Repository;
 import de.tum.in.www1.artemis.domain.CompetencyRelation;
 
 /**
- * Spring Data JPA repository for the Learning Goal Relation entity.
+ * Spring Data JPA repository for the Competency Relation entity.
  */
 @Repository
 public interface CompetencyRelationRepository extends JpaRepository<CompetencyRelation, Long> {
@@ -18,10 +18,10 @@ public interface CompetencyRelationRepository extends JpaRepository<CompetencyRe
     @Query("""
             SELECT relation
             FROM CompetencyRelation relation
-            WHERE relation.headCompetency.id = :#{#learningGoalId}
-            OR relation.tailCompetency.id = :#{#learningGoalId}
+            WHERE relation.headCompetency.id = :#{#competencyId}
+            OR relation.tailCompetency.id = :#{#competencyId}
             """)
-    Set<CompetencyRelation> findAllByLearningGoalId(@Param("competencyId") Long learningGoalId);
+    Set<CompetencyRelation> findAllByCompetencyId(@Param("competencyId") Long competencyId);
 
     @Query("""
             SELECT relation
