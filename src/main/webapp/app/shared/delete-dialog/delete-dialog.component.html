@@ -25,7 +25,7 @@
             </div>
         </div>
         <div class="form-group" *ngIf="deleteConfirmationText && (!requireConfirmationOnlyForAdditionalChecks || isAnyAdditionalCheckSelected)">
-            <label for="confirm-exercise-name" class="text-danger" [jhiTranslate]="deleteConfirmationText">Please type in the name to confirm</label>
+            <label for="confirm-exercise-name" [ngClass]="warningTextColor" [jhiTranslate]="deleteConfirmationText">Please type in the name to confirm</label>
             <input id="confirm-exercise-name" type="text" class="form-control" name="confirmExerciseName" [(ngModel)]="confirmEntityName" />
         </div>
     </div>

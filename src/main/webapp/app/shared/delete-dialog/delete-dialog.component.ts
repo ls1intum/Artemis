@@ -38,6 +38,7 @@ export class DeleteDialogComponent implements OnInit, OnDestroy {
     faSpinner = faSpinner;
     faTimes = faTimes;
     faCheck = faCheck;
+    warningTextColor: string;
 
     constructor(private activeModal: NgbActiveModal, private alertService: AlertService) {}
 
@@ -57,6 +58,11 @@ export class DeleteDialogComponent implements OnInit, OnDestroy {
             this.additionalChecksValues = mapValues(this.additionalChecks, () => false);
         }
         this.useFaCheckIcon = this.buttonType !== ButtonType.ERROR;
+        if (ButtonType.ERROR !== this.buttonType) {
+            this.warningTextColor = 'text-default';
+        } else {
+            this.warningTextColor = 'text-danger';
+        }
     }
 
     /**
