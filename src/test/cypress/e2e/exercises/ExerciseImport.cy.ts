@@ -14,7 +14,7 @@ import {
     textExerciseCreation,
     textExerciseEditor,
 } from '../../support/artemis';
-import { convertCourseAfterMultiPart } from '../../support/requests/CourseManagementRequests';
+import { convertModelAfterMultiPart } from '../../support/requests/CourseManagementRequests';
 import { admin, instructor, studentOne } from '../../support/users';
 import multipleChoiceQuizTemplate from '../../fixtures/exercise/quiz/multiple_choice/template.json';
 import partiallySuccessful from '../../fixtures/exercise/programming/partially_successful/submission.json';
@@ -36,7 +36,7 @@ describe('Import exercises', () => {
     before('Setup course with exercises', () => {
         cy.login(admin);
         courseManagementRequest.createCourse(true).then((response) => {
-            course = convertCourseAfterMultiPart(response);
+            course = convertModelAfterMultiPart(response);
             courseManagementRequest.addInstructorToCourse(course, instructor);
             courseManagementRequest.createTextExercise({ course }).then((response) => {
                 textExercise = response.body;
@@ -51,7 +51,7 @@ describe('Import exercises', () => {
                 programmingExercise = response.body;
             });
             courseManagementRequest.createCourse(true).then((response) => {
-                secondCourse = convertCourseAfterMultiPart(response);
+                secondCourse = convertModelAfterMultiPart(response);
                 courseManagementRequest.addStudentToCourse(secondCourse, studentOne);
                 courseManagementRequest.addInstructorToCourse(secondCourse, instructor);
             });
