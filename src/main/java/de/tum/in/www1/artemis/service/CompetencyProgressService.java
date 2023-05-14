@@ -131,7 +131,7 @@ public class CompetencyProgressService {
         try {
             Set<Competency> competencies;
             if (learningObject instanceof Exercise exercise) {
-                competencies = exerciseRepository.findByIdWithLearningGoals(exercise.getId()).map(Exercise::getCompetencies).orElse(null);
+                competencies = exerciseRepository.findByIdWithCompetencies(exercise.getId()).map(Exercise::getCompetencies).orElse(null);
             }
             else if (learningObject instanceof LectureUnit lectureUnit) {
                 competencies = lectureUnitRepository.findByIdWithCompetencies(lectureUnit.getId()).map(LectureUnit::getCompetencies).orElse(null);
