@@ -1,0 +1,23 @@
+<div class="container">
+    <!-- chat box -->
+    <div class="chat-widget">
+        <!-- client -->
+        <div class="client">
+            <div class="chat-header">
+                <h2>Iris</h2>
+            </div>
+        </div>
+
+        <!-- main chat section -->
+        <div class="chat-body">
+            <div *ngFor="let message of IrisMessages" class="client-chat">{{ message }}</div>
+            <div *ngFor="let message of userMessages" class="my-chat">{{ message }}</div>
+        </div>
+
+        <!-- input field section -->
+        <div class="chat-input">
+            <input [(ngModel)]="newMessage" type="text" placeholder="Enter Message" />
+            <button (click)="onSend()" class="send-btn">Send</button>
+        </div>
+    </div>
+</div>

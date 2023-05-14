@@ -1,9 +1,6 @@
 .chatbot-button {
-    position: absolute;
-    left: 0;
-    right: 50px;
-    bottom: -350px;
-    display: flex;
-    justify-content: right;
-    align-items: flex-end;
+    position: fixed;
+    bottom: 20px; /* adjust this value to move the button up or down */
+    right: 20px;
+    z-index: 9999;
 }
