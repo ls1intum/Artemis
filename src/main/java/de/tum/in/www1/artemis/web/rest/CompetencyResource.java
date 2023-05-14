@@ -86,7 +86,7 @@ public class CompetencyResource {
     @GetMapping("/competencies/{competencyId}/title")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<String> getCompetencyTitle(@PathVariable Long competencyId) {
-        final var title = competencyRepository.getLearningGoalTitle(competencyId);
+        final var title = competencyRepository.getCompetencyTitle(competencyId);
         return title == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(title);
     }
 

@@ -143,8 +143,8 @@ public interface CompetencyRepository extends JpaRepository<Competency, Long> {
             FROM Competency lg
             WHERE lg.id = :competencyId
             """)
-    @Cacheable(cacheNames = "learningGoalTitle", key = "#competencyId", unless = "#result == null")
-    String getLearningGoalTitle(@Param("competencyId") Long competencyId);
+    @Cacheable(cacheNames = "competencyTitle", key = "#competencyId", unless = "#result == null")
+    String getCompetencyTitle(@Param("competencyId") Long competencyId);
 
     @SuppressWarnings("PMD.MethodNamingConventions")
     Page<Competency> findByTitleIgnoreCaseContainingOrCourse_TitleIgnoreCaseContaining(String partialTitle, String partialCourseTitle, Pageable pageable);
