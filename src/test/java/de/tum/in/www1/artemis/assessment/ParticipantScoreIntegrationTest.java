@@ -68,7 +68,7 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBambooBit
     private LectureRepository lectureRepository;
 
     @Autowired
-    private LearningGoalRepository learningGoalRepository;
+    private CompetencyRepository competencyRepository;
 
     @Autowired
     private LectureUnitRepository lectureUnitRepository;
@@ -120,7 +120,7 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBambooBit
         competency.setTitle("ExampleLearningGoal");
         competency.setCourse(course);
         competency.addExercise(textExercise);
-        learningGoalRepository.saveAndFlush(competency);
+        competencyRepository.saveAndFlush(competency);
         idOfIndividualTextExercise = textExercise.getId();
         Exercise teamExercise = database.createTeamTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
         idOfTeamTextExercise = teamExercise.getId();

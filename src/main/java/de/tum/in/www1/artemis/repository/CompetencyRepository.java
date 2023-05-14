@@ -18,7 +18,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
  * Spring Data JPA repository for the Learning Goal entity.
  */
 @Repository
-public interface LearningGoalRepository extends JpaRepository<Competency, Long> {
+public interface CompetencyRepository extends JpaRepository<Competency, Long> {
 
     @Query("""
             SELECT lg

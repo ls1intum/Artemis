@@ -15,14 +15,14 @@ import de.tum.in.www1.artemis.web.rest.util.PageUtil;
 @Service
 public class CompetencyService {
 
-    private final LearningGoalRepository learningGoalRepository;
+    private final CompetencyRepository competencyRepository;
 
     private final AuthorizationCheckService authCheckService;
 
     private final LearningGoalProgressService learningGoalProgressService;
 
-    public CompetencyService(LearningGoalRepository learningGoalRepository, AuthorizationCheckService authCheckService, LearningGoalProgressService learningGoalProgressService) {
-        this.learningGoalRepository = learningGoalRepository;
+    public CompetencyService(CompetencyRepository competencyRepository, AuthorizationCheckService authCheckService, LearningGoalProgressService learningGoalProgressService) {
+        this.competencyRepository = competencyRepository;
         this.authCheckService = authCheckService;
         this.learningGoalProgressService = learningGoalProgressService;
     }
@@ -42,7 +42,7 @@ public class CompetencyService {
         }
         else {
             // Fetch the competencies with the user progress from the database.
-            return learningGoalRepository.findAllForCourseWithProgressForUser(course.getId(), user.getId());
+            return competencyRepository.findAllForCourseWithProgressForUser(course.getId(), user.getId());
         }
     }
 
@@ -54,7 +54,7 @@ public class CompetencyService {
      * @return A list of prerequisites (without lecture units if student is not part of course).
      */
     public Set<Competency> findAllPrerequisitesForCourse(@NotNull Course course, @NotNull User user) {
-        Set<Competency> prerequisites = learningGoalRepository.findPrerequisitesByCourseId(course.getId());
+        Set<Competency> prerequisites = competencyRepository.findPrerequisitesByCourseId(course.getId());
         // Remove all lecture units
         for (Competency prerequisite : prerequisites) {
             prerequisite.setLectureUnits(Collections.emptySet());
@@ -74,10 +74,10 @@ public class CompetencyService {
         final var searchTerm = search.getSearchTerm();
         final Page<Competency> learningGoalPage;
         if (authCheckService.isAdmin(user)) {
-            learningGoalPage = learningGoalRepository.findByTitleIgnoreCaseContainingOrCourse_TitleIgnoreCaseContaining(searchTerm, searchTerm, pageable);
+            learningGoalPage = competencyRepository.findByTitleIgnoreCaseContainingOrCourse_TitleIgnoreCaseContaining(searchTerm, searchTerm, pageable);
         }
         else {
-            learningGoalPage = learningGoalRepository.findByTitleInLectureOrCourseAndUserHasAccessToCourse(searchTerm, searchTerm, user.getGroups(), pageable);
+            learningGoalPage = competencyRepository.findByTitleInLectureOrCourseAndUserHasAccessToCourse(searchTerm, searchTerm, user.getGroups(), pageable);
         }
         return new SearchResultPageDTO<>(learningGoalPage.getContent(), learningGoalPage.getTotalPages());
     }

@@ -14,7 +14,7 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnitCompletion;
-import de.tum.in.www1.artemis.repository.LearningGoalRepository;
+import de.tum.in.www1.artemis.repository.CompetencyRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.LectureUnitCompletionRepository;
 import de.tum.in.www1.artemis.repository.LectureUnitRepository;
@@ -26,15 +26,15 @@ public class LectureUnitService {
 
     private final LectureRepository lectureRepository;
 
-    private final LearningGoalRepository learningGoalRepository;
+    private final CompetencyRepository competencyRepository;
 
     private final LectureUnitCompletionRepository lectureUnitCompletionRepository;
 
-    public LectureUnitService(LectureUnitRepository lectureUnitRepository, LectureRepository lectureRepository, LearningGoalRepository learningGoalRepository,
+    public LectureUnitService(LectureUnitRepository lectureUnitRepository, LectureRepository lectureRepository, CompetencyRepository competencyRepository,
             LectureUnitCompletionRepository lectureUnitCompletionRepository) {
         this.lectureUnitRepository = lectureUnitRepository;
         this.lectureRepository = lectureRepository;
-        this.learningGoalRepository = learningGoalRepository;
+        this.competencyRepository = competencyRepository;
         this.lectureUnitCompletionRepository = lectureUnitCompletionRepository;
     }
 
@@ -81,8 +81,8 @@ public class LectureUnitService {
         if (!(lectureUnitToDelete instanceof ExerciseUnit)) {
             // update associated competencies
             Set<Competency> competencies = lectureUnitToDelete.getLearningGoals();
-            learningGoalRepository.saveAll(competencies.stream().map(learningGoal -> {
-                learningGoal = learningGoalRepository.findByIdWithLectureUnitsElseThrow(learningGoal.getId());
+            competencyRepository.saveAll(competencies.stream().map(learningGoal -> {
+                learningGoal = competencyRepository.findByIdWithLectureUnitsElseThrow(learningGoal.getId());
                 learningGoal.getLectureUnits().remove(lectureUnitToDelete);
                 return learningGoal;
             }).toList());

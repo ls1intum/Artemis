@@ -30,7 +30,7 @@ public class LearningGoalProgressService {
 
     private final Logger logger = LoggerFactory.getLogger(LearningGoalProgressService.class);
 
-    private final LearningGoalRepository learningGoalRepository;
+    private final CompetencyRepository competencyRepository;
 
     private final CompetencyProgressRepository competencyProgressRepository;
 
@@ -44,10 +44,10 @@ public class LearningGoalProgressService {
 
     private final UserRepository userRepository;
 
-    public LearningGoalProgressService(LearningGoalRepository learningGoalRepository, CompetencyProgressRepository competencyProgressRepository,
+    public LearningGoalProgressService(CompetencyRepository competencyRepository, CompetencyProgressRepository competencyProgressRepository,
             StudentScoreRepository studentScoreRepository, TeamScoreRepository teamScoreRepository, ExerciseRepository exerciseRepository,
             LectureUnitRepository lectureUnitRepository, UserRepository userRepository) {
-        this.learningGoalRepository = learningGoalRepository;
+        this.competencyRepository = competencyRepository;
         this.competencyProgressRepository = competencyProgressRepository;
         this.studentScoreRepository = studentScoreRepository;
         this.teamScoreRepository = teamScoreRepository;
@@ -110,7 +110,7 @@ public class LearningGoalProgressService {
      * @return All competencies of the course with the updated progress for the user
      */
     public Set<Competency> getLearningGoalsAndUpdateProgressByUserInCourse(User user, Course course) {
-        var learningGoals = learningGoalRepository.findAllForCourse(course.getId());
+        var learningGoals = competencyRepository.findAllForCourse(course.getId());
         learningGoals.forEach(learningGoal -> {
             var updatedProgress = updateLearningGoalProgress(learningGoal.getId(), user);
             if (updatedProgress != null) {
@@ -165,7 +165,7 @@ public class LearningGoalProgressService {
      * @return The updated competency progress, which is also persisted to the database
      */
     public CompetencyProgress updateLearningGoalProgress(Long learningGoalId, User user) {
-        var learningGoal = learningGoalRepository.findByIdWithExercisesAndLectureUnitsAndCompletions(learningGoalId).orElse(null);
+        var learningGoal = competencyRepository.findByIdWithExercisesAndLectureUnitsAndCompletions(learningGoalId).orElse(null);
 
         if (user == null || learningGoal == null) {
             logger.debug("User or competency no longer exist, skipping.");

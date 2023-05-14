@@ -128,7 +128,7 @@ public class DatabaseUtilService {
     private LectureRepository lectureRepo;
 
     @Autowired
-    private LearningGoalRepository learningGoalRepo;
+    private CompetencyRepository competencyRepo;
 
     @Autowired
     private ExerciseRepository exerciseRepo;
@@ -773,7 +773,7 @@ public class DatabaseUtilService {
         competency.setTitle("Example Competency");
         competency.setDescription("Magna pars studiorum, prodita quaerimus.");
         competency.setCourse(course);
-        return learningGoalRepo.save(competency);
+        return competencyRepo.save(competency);
     }
 
     public TextExercise createIndividualTextExercise(Course course, ZonedDateTime pastTimestamp, ZonedDateTime futureTimestamp, ZonedDateTime futureFutureTimestamp) {

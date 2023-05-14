@@ -108,7 +108,7 @@ public class CourseService {
 
     private final CompetencyService competencyService;
 
-    private final LearningGoalRepository learningGoalRepository;
+    private final CompetencyRepository competencyRepository;
 
     private final GradingScaleRepository gradingScaleRepository;
 
@@ -149,7 +149,7 @@ public class CourseService {
     public CourseService(Environment env, ArtemisAuthenticationProvider artemisAuthenticationProvider, CourseRepository courseRepository, ExerciseService exerciseService,
             ExerciseDeletionService exerciseDeletionService, AuthorizationCheckService authCheckService, UserRepository userRepository, LectureService lectureService,
             GroupNotificationRepository groupNotificationRepository, ExerciseGroupRepository exerciseGroupRepository, AuditEventRepository auditEventRepository,
-            UserService userService, ExamDeletionService examDeletionService, LearningGoalRepository learningGoalRepository, GroupNotificationService groupNotificationService,
+            UserService userService, ExamDeletionService examDeletionService, CompetencyRepository competencyRepository, GroupNotificationService groupNotificationService,
             ExamRepository examRepository, CourseExamExportService courseExamExportService, CompetencyService competencyService, GradingScaleRepository gradingScaleRepository,
             StatisticsRepository statisticsRepository, StudentParticipationRepository studentParticipationRepository, TutorLeaderboardService tutorLeaderboardService,
             RatingRepository ratingRepository, ComplaintService complaintService, ComplaintRepository complaintRepository, ResultRepository resultRepository,
@@ -170,7 +170,7 @@ public class CourseService {
         this.auditEventRepository = auditEventRepository;
         this.userService = userService;
         this.examDeletionService = examDeletionService;
-        this.learningGoalRepository = learningGoalRepository;
+        this.competencyRepository = competencyRepository;
         this.groupNotificationService = groupNotificationService;
         this.examRepository = examRepository;
         this.courseExamExportService = courseExamExportService;
@@ -421,7 +421,7 @@ public class CourseService {
 
     private void deleteLearningGoalsOfCourse(Course course) {
         for (Competency competency : course.getCompetencies()) {
-            learningGoalRepository.deleteById(competency.getId());
+            competencyRepository.deleteById(competency.getId());
         }
     }
 

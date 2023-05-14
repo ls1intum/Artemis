@@ -75,7 +75,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     private ExerciseUnitRepository exerciseUnitRepository;
 
     @Autowired
-    private LearningGoalRepository learningGoalRepository;
+    private CompetencyRepository competencyRepository;
 
     @Autowired
     private CompetencyRelationRepository competencyRelationRepository;
@@ -157,7 +157,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         createPrerequisite();
         createLectureOne(course);
         createLectureTwo(course);
-        var learningGoal = learningGoalRepository.findByIdElseThrow(idOfLearningGoal);
+        var learningGoal = competencyRepository.findByIdElseThrow(idOfLearningGoal);
         textExercise = createTextExercise(pastTimestamp, pastTimestamp, pastTimestamp, Set.of(learningGoal));
         createParticipationSubmissionAndResult(idOfTextExercise, student1, 10.0, 0.0, 50, true);
         modelingExercise = createModelingExercise(pastTimestamp, pastTimestamp, pastTimestamp, Set.of(learningGoal));
@@ -184,19 +184,19 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         competency.setDescription("This is an example learning goal");
         competency.setTaxonomy(LearningGoalTaxonomy.UNDERSTAND);
         competency.setCourse(course);
-        competency = learningGoalRepository.save(competency);
+        competency = competencyRepository.save(competency);
         idOfLearningGoal = competency.getId();
 
         Competency otherCompetency = new Competency();
         otherCompetency.setTitle("Detailed sub learning goal");
         otherCompetency.setDescription("A communi observantia non est recedendum.");
         otherCompetency.setCourse(course);
-        learningGoalRepository.save(otherCompetency);
+        competencyRepository.save(otherCompetency);
     }
 
     private void createPrerequisite() {
         // Add the first competency as a prerequisite to the other course
-        Competency competency = learningGoalRepository.findByIdWithConsecutiveCourses(idOfLearningGoal).get();
+        Competency competency = competencyRepository.findByIdWithConsecutiveCourses(idOfLearningGoal).get();
         Course course2 = courseRepository.findWithEagerCompetenciesById(idOfCourseTwo).get();
         course2.addPrerequisite(competency);
         courseRepository.save(course2);
@@ -204,7 +204,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
     private void creatingLectureUnitsOfLectureOne() {
         // creating lecture units for lecture one
-        var learningGoal = learningGoalRepository.findById(idOfLearningGoal).get();
+        var learningGoal = competencyRepository.findById(idOfLearningGoal).get();
 
         TextUnit textUnit = new TextUnit();
         textUnit.setName("TextUnitOfLectureOne");
@@ -397,7 +397,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getTitle_ForLearningGoal() throws Exception {
-        var learningGoal = learningGoalRepository.findById(idOfLearningGoal).get();
+        var learningGoal = competencyRepository.findById(idOfLearningGoal).get();
         String title = request.get("/api/competencies/" + idOfLearningGoal + "/title", HttpStatus.OK, String.class);
         assertThat(title).isEqualTo(learningGoal.getTitle());
     }
@@ -444,7 +444,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         newCompetency.setDescription("Description");
         newCompetency.setCourse(course);
         newCompetency.setLectureUnits(new HashSet<>(List.of(unreleasedLectureUnit)));
-        learningGoalRepository.save(newCompetency);
+        competencyRepository.save(newCompetency);
 
         List<Competency> learningGoalsOfCourse = request.getList("/api/courses/" + idOfCourse + "/competencies", HttpStatus.OK, Competency.class);
 
@@ -468,7 +468,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteLearningGoal_witRelatedGoals_shouldReturnBadRequest() throws Exception {
-        Competency competency = learningGoalRepository.findByIdElseThrow(idOfLearningGoal);
+        Competency competency = competencyRepository.findByIdElseThrow(idOfLearningGoal);
         Course course = courseRepository.findByIdElseThrow(idOfCourse);
         Competency competency1 = database.createLearningGoal(course);
 
@@ -522,12 +522,12 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createLearningGoalRelation_shouldReturnBadRequest_ForCircularRelations() throws Exception {
-        Competency competency = learningGoalRepository.findByIdElseThrow(idOfLearningGoal);
+        Competency competency = competencyRepository.findByIdElseThrow(idOfLearningGoal);
         Course course = courseRepository.findByIdElseThrow(idOfCourse);
         Long idOfOtherLearningGoal1 = database.createLearningGoal(course).getId();
-        Competency otherCompetency1 = learningGoalRepository.findByIdElseThrow(idOfOtherLearningGoal1);
+        Competency otherCompetency1 = competencyRepository.findByIdElseThrow(idOfOtherLearningGoal1);
         Long idOfOtherLearningGoal2 = database.createLearningGoal(course).getId();
-        Competency otherCompetency2 = learningGoalRepository.findByIdElseThrow(idOfOtherLearningGoal1);
+        Competency otherCompetency2 = competencyRepository.findByIdElseThrow(idOfOtherLearningGoal1);
 
         var relation1 = new LearningGoalRelation();
         relation1.setTailLearningGoal(competency);
@@ -558,7 +558,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getLearningGoalRelations() throws Exception {
-        Competency competency = learningGoalRepository.findByIdElseThrow(idOfLearningGoal);
+        Competency competency = competencyRepository.findByIdElseThrow(idOfLearningGoal);
         Course course = courseRepository.findByIdElseThrow(idOfCourse);
         Competency otherCompetency = database.createLearningGoal(course);
 
@@ -577,7 +577,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteLearningGoalRelation() throws Exception {
-        Competency competency = learningGoalRepository.findByIdElseThrow(idOfLearningGoal);
+        Competency competency = competencyRepository.findByIdElseThrow(idOfLearningGoal);
         Course course = courseRepository.findByIdElseThrow(idOfCourse);
         Competency otherCompetency = database.createLearningGoal(course);
 
@@ -596,7 +596,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteLearningGoalRelation_shouldReturnBadRequest() throws Exception {
-        Competency competency = learningGoalRepository.findByIdElseThrow(idOfLearningGoal);
+        Competency competency = competencyRepository.findByIdElseThrow(idOfLearningGoal);
         Course course = courseRepository.findByIdElseThrow(idOfCourse);
         Competency otherCompetency = database.createLearningGoal(course);
 
@@ -724,7 +724,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateLearningGoal_asInstructor_shouldUpdateLearningGoal() throws Exception {
-        Competency existingCompetency = learningGoalRepository.findByIdWithLectureUnitsAndCompletionsElseThrow(idOfLearningGoal);
+        Competency existingCompetency = competencyRepository.findByIdWithLectureUnitsAndCompletionsElseThrow(idOfLearningGoal);
         LectureUnit textLectureUnit = lectureUnitRepository.findByIdWithCompetenciesBidirectionalElseThrow(idOfTextUnitOfLectureOne);
         existingCompetency.setTitle("Updated");
         existingCompetency.removeLectureUnit(textLectureUnit);
@@ -740,7 +740,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateLearningGoal_asInstructor_badRequest() throws Exception {
-        Competency existingCompetency = learningGoalRepository.findByIdElseThrow(idOfLearningGoal);
+        Competency existingCompetency = competencyRepository.findByIdElseThrow(idOfLearningGoal);
         existingCompetency.setId(null);
         request.putWithResponseBody("/api/courses/" + idOfCourse + "/competencies", existingCompetency, Competency.class, HttpStatus.BAD_REQUEST);
     }
@@ -784,11 +784,11 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importLearningGoal_asInstructor_shouldImportLearningGoal() throws Exception {
-        var existingLearningGoal = learningGoalRepository.findByIdElseThrow(idOfLearningGoal);
+        var existingLearningGoal = competencyRepository.findByIdElseThrow(idOfLearningGoal);
         var importedLearningGoal = request.postWithResponseBody("/api/courses/" + idOfCourseTwo + "/competencies/import", existingLearningGoal, Competency.class,
                 HttpStatus.CREATED);
 
-        assertThat(learningGoalRepository.findById(importedLearningGoal.getId())).isNotEmpty();
+        assertThat(competencyRepository.findById(importedLearningGoal.getId())).isNotEmpty();
         assertThat(importedLearningGoal.getTitle()).isEqualTo(existingLearningGoal.getTitle());
         assertThat(importedLearningGoal.getDescription()).isEqualTo(existingLearningGoal.getDescription());
         assertThat(importedLearningGoal.getMasteryThreshold()).isEqualTo(existingLearningGoal.getMasteryThreshold());
@@ -818,7 +818,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testInstructorGetsResultsFromOwningCoursesNotEmpty() throws Exception {
-        Competency competency = learningGoalRepository.findById(idOfLearningGoal).get();
+        Competency competency = competencyRepository.findById(idOfLearningGoal).get();
         final var search = database.configureSearch(competency.getTitle());
         final var result = request.get("/api/competencies/", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(search));
         assertThat(result.getResultsOnPage()).hasSize(1);
@@ -827,7 +827,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testAdminGetsResultsFromAllCourses() throws Exception {
-        Competency competency = learningGoalRepository.findById(idOfLearningGoal).get();
+        Competency competency = competencyRepository.findById(idOfLearningGoal).get();
         final var search = database.configureSearch(competency.getTitle());
         final var result = request.get("/api/competencies/", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(search));
         assertThat(result.getResultsOnPage()).hasSize(1);
@@ -836,7 +836,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getPrerequisites() throws Exception {
-        Competency competency = learningGoalRepository.findById(idOfLearningGoal).get();
+        Competency competency = competencyRepository.findById(idOfLearningGoal).get();
         List<Competency> prerequisites = request.getList("/api/courses/" + idOfCourseTwo + "/prerequisites", HttpStatus.OK, Competency.class);
         assertThat(prerequisites).containsExactly(competency);
     }
@@ -849,7 +849,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         competency.setTitle("LearningGoalTwo");
         competency.setDescription("This is an example learning goal");
         competency.setCourse(courseTwo);
-        competency = learningGoalRepository.save(competency);
+        competency = competencyRepository.save(competency);
 
         Competency prerequisite = request.postWithResponseBody("/api/courses/" + idOfCourse + "/prerequisites/" + competency.getId(), competency, Competency.class, HttpStatus.OK);
 
@@ -867,7 +867,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void removePrerequisite() throws Exception {
-        Competency competency = learningGoalRepository.findById(idOfLearningGoal).get();
+        Competency competency = competencyRepository.findById(idOfLearningGoal).get();
         request.delete("/api/courses/" + idOfCourseTwo + "/prerequisites/" + idOfLearningGoal, HttpStatus.OK);
 
         Course course = courseRepository.findWithEagerCompetenciesById(idOfCourseTwo).orElseThrow();
@@ -890,7 +890,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void addPrerequisite_doNotAllowCycle() throws Exception {
         // Test that a competency of a course can not be a prerequisite to the same course
-        Competency competency = learningGoalRepository.findById(idOfLearningGoal).get();
+        Competency competency = competencyRepository.findById(idOfLearningGoal).get();
         request.postWithResponseBody("/api/courses/" + idOfCourse + "/prerequisites/" + idOfLearningGoal, competency, Competency.class, HttpStatus.CONFLICT);
     }
 
