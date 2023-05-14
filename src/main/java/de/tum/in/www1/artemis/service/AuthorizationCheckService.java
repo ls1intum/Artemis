@@ -260,6 +260,51 @@ public class AuthorizationCheckService {
     }
 
     /**
+     * An enum that represents the different reasons why a user is not allowed to disenroll from a course,
+     * or ALLOWED if the user is allowed to disenroll from the course.
+     */
+    private enum DisenrollmentAuthorization {
+        ALLOWED, DISENROLLMENT_STATUS, ONLINE
+    }
+
+    /**
+     * Checks if the user is allowed to disenroll from the given course.
+     * Returns `DisenrollmentAuthorization.ALLOWED` if the user is allowed to disenroll from the course,
+     * or the reason why the user is not allowed to disenroll from the course otherwise.
+     * See also: {@link #checkUserAllowedToSelfDisenrollForCourseElseThrow(User, Course)}
+     *
+     * @param user   The user that wants to self register
+     * @param course The course to which the user wants to self register
+     * @return `RegistrationAuthorization.ALLOWED` if the user is allowed to self register for the course,
+     *         or the reason why the user is not allowed to self register for the course otherwise
+     */
+    public DisenrollmentAuthorization getUserDisenrollmentAuthorizationForCourse(User user, Course course) {
+        if (!course.disenrollmentIsActive()) {
+            return DisenrollmentAuthorization.DISENROLLMENT_STATUS;
+        }
+        if (course.isOnlineCourse()) {
+            return DisenrollmentAuthorization.ONLINE;
+        }
+        return DisenrollmentAuthorization.ALLOWED;
+    }
+
+    /**
+     * Checks if the user is allowed to disenroll from the given course.
+     * Throws an AccessForbiddenException if the user is not allowed to disenroll from the course.
+     * See also: {@link #getUserDisenrollmentAuthorizationForCourse(User, Course)}
+     *
+     * @param user   The user that wants to disenroll
+     * @param course The course from which the user wants to disenroll
+     */
+    public void checkUserAllowedToSelfDisenrollFromCourseElseThrow(User user, Course course) throws AccessForbiddenException {
+        DisenrollmentAuthorization auth = getUserDisenrollmentAuthorizationForCourse(user, course);
+        switch (auth) {
+            case DISENROLLMENT_STATUS -> throw new AccessForbiddenException("The course does currently not allow disenrollment.");
+            case ONLINE -> throw new AccessForbiddenException("Online courses cannot be disenrolled from.");
+        }
+    }
+
+    /**
      * checks if the passed user is at least a teaching assistant in the given course
      *
      * @param course the course that needs to be checked

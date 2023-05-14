@@ -87,9 +87,7 @@ public class AdminCourseResource {
         course.validateComplaintsAndRequestMoreFeedbackConfig();
         course.validateOnlineCourseAndRegistrationEnabled();
         course.validateAccuracyOfScores();
-        if (!course.isValidStartAndEndDate()) {
-            throw new BadRequestAlertException("For Courses, the start date has to be before the end date", Course.ENTITY_NAME, "invalidCourseStartDate", true);
-        }
+        course.validateStartAndEndDate();
 
         if (course.isOnlineCourse()) {
             onlineCourseConfigurationService.createOnlineCourseConfiguration(course);

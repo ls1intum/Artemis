@@ -84,6 +84,18 @@ public class Course extends DomainObject {
     @JsonView(QuizView.Before.class)
     private ZonedDateTime endDate;
 
+    @Column(name = "enrollment_start_date")
+    @JsonView(QuizView.Before.class)
+    private ZonedDateTime enrollmentStartDate;
+
+    @Column(name = "enrollment_end_date")
+    @JsonView(QuizView.Before.class)
+    private ZonedDateTime enrollmentEndDate;
+
+    @Column(name = "disenrollment_end_date")
+    @JsonView(QuizView.Before.class)
+    private ZonedDateTime disenrollmentEndDate;
+
     @Column(name = "semester")
     @JsonView(QuizView.Before.class)
     private String semester;
@@ -331,6 +343,47 @@ public class Course extends DomainObject {
     public boolean isActive() {
         ZonedDateTime now = ZonedDateTime.now();
         return (getStartDate() == null || getStartDate().isBefore(now)) && (getEndDate() == null || getEndDate().isAfter(now));
+    }
+
+    public ZonedDateTime getEnrollmentStartDate() {
+        return enrollmentStartDate;
+    }
+
+    public void setEnrollmentStartDate(ZonedDateTime enrollmentStartDate) {
+        this.enrollmentStartDate = enrollmentStartDate;
+    }
+
+    public ZonedDateTime getEnrollmentEndDate() {
+        return enrollmentEndDate;
+    }
+
+    public void setEnrollmentEndDate(ZonedDateTime enrollmentEndDate) {
+        this.enrollmentEndDate = enrollmentEndDate;
+    }
+
+    public ZonedDateTime getDisenrollmentEndDate() {
+        return disenrollmentEndDate;
+    }
+
+    public void setDisenrollmentEndDate(ZonedDateTime disenrollmentEndDate) {
+        this.disenrollmentEndDate = disenrollmentEndDate;
+    }
+
+    /**
+     * Determine whether the current date is within the disenrollment period (after start, before end).
+     * <p>
+     * The disenrollment period starts with the enrollment start date and ends with the disenrollment end date if present,
+     * otherwise the course end date will be used as the end of the period.
+     *
+     * @return true if the current date is within the disenrollment period, false otherwise
+     */
+    @JsonIgnore
+    public boolean disenrollmentIsActive() {
+        ZonedDateTime now = ZonedDateTime.now();
+        final boolean startCondition = getEnrollmentStartDate() == null || getEnrollmentStartDate().isBefore(now);
+        final boolean endCondition = (getDisenrollmentEndDate() == null && getEndDate() == null) || (getDisenrollmentEndDate() == null && getEndDate().isAfter(now))
+                || getDisenrollmentEndDate().isAfter(now);
+        return startCondition && endCondition;
     }
 
     public String getSemester() {
@@ -794,6 +847,81 @@ public class Course extends DomainObject {
     @JsonIgnore
     public boolean isValidStartAndEndDate() {
         return getStartDate() == null || getEndDate() == null || this.getEndDate().isAfter(this.getStartDate());
+    }
+
+    /**
+     * Validates if the start and end dates of the course fulfill all rquirements.
+     */
+    public void validateStartAndEndDate() {
+        if (getStartDate() != null && getEndDate() != null && !getStartDate().isBefore(getEndDate())) {
+            throw new BadRequestAlertException("For Courses, the start date has to be before the end date", ENTITY_NAME, "invalidCourseStartDate", true);
+        }
+    }
+
+    /**
+     * Validates if the start and end date to enroll in the course fulfill all requirements.
+     * <p>
+     * The enrollment period is considered valid if
+     * <ul>
+     * <li>start and end date of the course are set and valid ({@link #validateStartAndEndDate()})</li>
+     * <li>start and end date of the enrollment period are in the correct order,</li>
+     * <li>and the start and end date of the enrollment is before the end date of the course.</li>
+     * </ul>
+     *
+     * @throws BadRequestAlertException
+     */
+    public void validateEnrollmentStartAndEndDate() {
+        if (getEnrollmentStartDate() == null || getEnrollmentEndDate() == null) {
+            return;
+        }
+        final String errorKey = "enrollmentPeriodInvalid";
+        if (!getEnrollmentStartDate().isBefore(getEnrollmentEndDate())) {
+            throw new BadRequestAlertException("Enrollment start date must be before the end date.", ENTITY_NAME, errorKey, true);
+        }
+
+        if (getStartDate() == null || getEndDate() == null) {
+            throw new BadRequestAlertException("Enrollment can not be set if the course has no assigned start and end date.", ENTITY_NAME, errorKey, true);
+        }
+
+        validateStartAndEndDate();
+
+        if (!getEnrollmentEndDate().isBefore(getEndDate())) {
+            throw new BadRequestAlertException("Enrollment end date has to be before the end date of the course.", ENTITY_NAME, errorKey, true);
+        }
+    }
+
+    /**
+     * Validates if the end date to disenroll from the course fulfills all requirements.
+     * <p>
+     * The disenrollment end date is considered valid if
+     * <ul>
+     * <li>start and end date of the enrollment period are set and valid ({@link #validateEnrollmentStartAndEndDate()})</li>
+     * <li>the enrollment period ends before the disenrollment end date,</li>
+     * <li>and the end date for disenrollment is not after the end date of the course.</li>
+     * </ul>
+     *
+     * @throws BadRequestAlertException
+     */
+    public void validateDisenrollmentEndDate() {
+        if (getDisenrollmentEndDate() == null) {
+            return;
+        }
+
+        validateEnrollmentStartAndEndDate();
+
+        final String errorKey = "disenrollmentEndDateInvalid";
+
+        if (getEnrollmentStartDate() == null || getEnrollmentEndDate() == null) {
+            throw new BadRequestAlertException("Disenrollment end date requires a configured enrollment period.", ENTITY_NAME, errorKey, true);
+        }
+
+        if (!getEnrollmentEndDate().isBefore(getDisenrollmentEndDate())) {
+            throw new BadRequestAlertException("End date for enrollment must be before the end date to disenroll.", ENTITY_NAME, errorKey, true);
+        }
+
+        if (getDisenrollmentEndDate().isAfter(getEndDate())) {
+            throw new BadRequestAlertException("End date for enrollment can not be after the end date of the course.", ENTITY_NAME, errorKey, true);
+        }
     }
 
     /**

@@ -207,9 +207,7 @@ public class CourseResource {
         courseUpdate.validateOnlineCourseAndRegistrationEnabled();
         courseUpdate.validateShortName();
         courseUpdate.validateAccuracyOfScores();
-        if (!courseUpdate.isValidStartAndEndDate()) {
-            throw new BadRequestAlertException("For Courses, the start date has to be before the end date", Course.ENTITY_NAME, "invalidCourseStartDate", true);
-        }
+        courseUpdate.validateStartAndEndDate();
 
         if (file != null) {
             String pathString = fileService.handleSaveFile(file, false, false);
@@ -295,6 +293,25 @@ public class CourseResource {
         User user = userRepository.getUserWithGroupsAndAuthoritiesAndOrganizations();
         log.debug("REST request to register {} for Course {}", user.getName(), course.getTitle());
         courseService.registerUserForCourseOrThrow(user, course);
+        return ResponseEntity.ok(user);
+    }
+
+    /**
+     * POST /courses/{courseId}/disenroll : Disenroll from an existing course. This method disenrolls the current user for the given course id in case the student is currently
+     * enrolled.
+     * The user is removed from the course student group in the Authentication System and the course student group is removed from the user's groups in the Artemis
+     * database.
+     *
+     * @param courseId to find the course
+     * @return response entity for user who has been disenrolled from the course
+     */
+    @PostMapping("courses/{courseId}/disenroll")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<User> disenrollForCourse(@PathVariable Long courseId) {
+        Course course = courseRepository.findWithEagerOrganizationsElseThrow(courseId);
+        User user = userRepository.getUserWithGroupsAndAuthoritiesAndOrganizations();
+        log.debug("REST request to disenroll {} for Course {}", user.getName(), course.getTitle());
+        courseService.disenrollUserForCourseOrThrow(user, course);
         return ResponseEntity.ok(user);
     }
 
