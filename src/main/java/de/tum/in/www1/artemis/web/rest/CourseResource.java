@@ -208,6 +208,8 @@ public class CourseResource {
         courseUpdate.validateShortName();
         courseUpdate.validateAccuracyOfScores();
         courseUpdate.validateStartAndEndDate();
+        courseUpdate.validateEnrollmentStartAndEndDate();
+        courseUpdate.validateDisenrollmentEndDate();
 
         if (file != null) {
             String pathString = fileService.handleSaveFile(file, false, false);
