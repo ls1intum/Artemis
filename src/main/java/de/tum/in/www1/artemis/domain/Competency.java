@@ -34,9 +34,9 @@ public class Competency extends DomainObject {
      * @see <a href="https://en.wikipedia.org/wiki/Bloom%27s_taxonomy">Wikipedia</a>
      */
     @Column(name = "taxonomy")
-    @Convert(converter = LearningGoalTaxonomy.TaxonomyConverter.class)
+    @Convert(converter = CompetencyTaxonomy.TaxonomyConverter.class)
     @JsonInclude
-    private LearningGoalTaxonomy taxonomy;
+    private CompetencyTaxonomy taxonomy;
 
     @ManyToOne
     @JoinColumn(name = "course_id")
@@ -88,11 +88,11 @@ public class Competency extends DomainObject {
         this.masteryThreshold = masteryThreshold;
     }
 
-    public LearningGoalTaxonomy getTaxonomy() {
+    public CompetencyTaxonomy getTaxonomy() {
         return taxonomy;
     }
 
-    public void setTaxonomy(LearningGoalTaxonomy taxonomy) {
+    public void setTaxonomy(CompetencyTaxonomy taxonomy) {
         this.taxonomy = taxonomy;
     }
 

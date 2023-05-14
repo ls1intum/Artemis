@@ -182,7 +182,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         Competency competency = new Competency();
         competency.setTitle("LearningGoal" + new Random().nextInt());
         competency.setDescription("This is an example learning goal");
-        competency.setTaxonomy(LearningGoalTaxonomy.UNDERSTAND);
+        competency.setTaxonomy(CompetencyTaxonomy.UNDERSTAND);
         competency.setCourse(course);
         competency = competencyRepository.save(competency);
         idOfLearningGoal = competency.getId();
