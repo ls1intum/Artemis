@@ -117,7 +117,7 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBambooBit
         exerciseUnit = (ExerciseUnit) lecture.getLectureUnits().get(0);
         idOfExerciseUnit = exerciseUnit.getId();
         Competency competency = new Competency();
-        competency.setTitle("ExampleLearningGoal");
+        competency.setTitle("ExampleCompetency");
         competency.setCourse(course);
         competency.addExercise(textExercise);
         competencyRepository.saveAndFlush(competency);
