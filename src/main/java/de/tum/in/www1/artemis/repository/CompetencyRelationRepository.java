@@ -7,30 +7,30 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import de.tum.in.www1.artemis.domain.LearningGoalRelation;
+import de.tum.in.www1.artemis.domain.CompetencyRelation;
 
 /**
  * Spring Data JPA repository for the Learning Goal Relation entity.
  */
 @Repository
-public interface CompetencyRelationRepository extends JpaRepository<LearningGoalRelation, Long> {
+public interface CompetencyRelationRepository extends JpaRepository<CompetencyRelation, Long> {
 
     @Query("""
             SELECT relation
-            FROM LearningGoalRelation relation
+            FROM CompetencyRelation relation
             WHERE relation.headCompetency.id = :#{#learningGoalId}
             OR relation.tailCompetency.id = :#{#learningGoalId}
             """)
-    Set<LearningGoalRelation> findAllByLearningGoalId(@Param("learningGoalId") Long learningGoalId);
+    Set<CompetencyRelation> findAllByLearningGoalId(@Param("learningGoalId") Long learningGoalId);
 
     @Query("""
             SELECT relation
-            FROM LearningGoalRelation relation
+            FROM CompetencyRelation relation
             LEFT JOIN FETCH relation.headCompetency
             LEFT JOIN FETCH relation.tailCompetency
             WHERE relation.headCompetency.course.id = :#{#courseId}
             AND relation.tailCompetency.course.id = :#{#courseId}
             """)
-    Set<LearningGoalRelation> findAllByCourseId(@Param("courseId") Long courseId);
+    Set<CompetencyRelation> findAllByCourseId(@Param("courseId") Long courseId);
 
 }

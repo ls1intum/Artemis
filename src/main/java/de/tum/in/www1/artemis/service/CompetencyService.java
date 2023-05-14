@@ -89,7 +89,7 @@ public class CompetencyService {
      * @param relations    The set of relations that get checked for cycles
      * @return A boolean that states whether the provided competencies and relations contain a cycle
      */
-    public boolean doesCreateCircularRelation(Set<Competency> competencies, Set<LearningGoalRelation> relations) {
+    public boolean doesCreateCircularRelation(Set<Competency> competencies, Set<CompetencyRelation> relations) {
         // Inner class Vertex is only used in this method for cycle detection
         class Vertex {
 
@@ -180,7 +180,7 @@ public class CompetencyService {
         for (Competency competency : competencies) {
             graph.addVertex(new Vertex(competency.getTitle()));
         }
-        for (LearningGoalRelation relation : relations) {
+        for (CompetencyRelation relation : relations) {
             var headVertex = graph.vertices.stream().filter(vertex -> vertex.label.equals(relation.getHeadLearningGoal().getTitle())).findFirst().orElseThrow();
             var tailVertex = graph.vertices.stream().filter(vertex -> vertex.label.equals(relation.getTailLearningGoal().getTitle())).findFirst().orElseThrow();
             // Only EXTENDS and ASSUMES are included in the generated graph as other relations are no problem if they are circular
@@ -190,8 +190,8 @@ public class CompetencyService {
             }
         }
         // combine vertices that are connected through MATCHES
-        for (LearningGoalRelation relation : relations) {
-            if (relation.getType() == LearningGoalRelation.RelationType.MATCHES) {
+        for (CompetencyRelation relation : relations) {
+            if (relation.getType() == CompetencyRelation.RelationType.MATCHES) {
                 var headVertex = graph.vertices.stream().filter(vertex -> vertex.label.equals(relation.getHeadLearningGoal().getTitle())).findFirst().orElseThrow();
                 var tailVertex = graph.vertices.stream().filter(vertex -> vertex.label.equals(relation.getTailLearningGoal().getTitle())).findFirst().orElseThrow();
                 if (headVertex.adjacencyList.contains(tailVertex) || tailVertex.adjacencyList.contains(headVertex)) {

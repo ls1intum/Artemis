@@ -8,7 +8,7 @@ import javax.persistence.*;
  */
 @Entity
 @Table(name = "learning_goal_relation")
-public class LearningGoalRelation extends DomainObject {
+public class CompetencyRelation extends DomainObject {
 
     @ManyToOne
     @JoinColumn(name = "tail_learning_goal_id")

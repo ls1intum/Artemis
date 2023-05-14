@@ -343,7 +343,7 @@ public class CompetencyResource {
      */
     @GetMapping("/courses/{courseId}/competencies/{competencyId}/relations")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<Set<LearningGoalRelation>> getLearningGoalRelations(@PathVariable Long competencyId, @PathVariable Long courseId) {
+    public ResponseEntity<Set<CompetencyRelation>> getLearningGoalRelations(@PathVariable Long competencyId, @PathVariable Long courseId) {
         log.debug("REST request to get relations for LearningGoal : {}", competencyId);
         var course = courseRepository.findByIdElseThrow(courseId);
         var learningGoal = competencyRepository.findByIdElseThrow(competencyId);
@@ -364,7 +364,7 @@ public class CompetencyResource {
      */
     @PostMapping("/courses/{courseId}/competencies/{tailCompetencyId}/relations/{headCompetencyId}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<LearningGoalRelation> createLearningGoalRelation(@PathVariable Long courseId, @PathVariable Long tailCompetencyId, @PathVariable Long headCompetencyId,
+    public ResponseEntity<CompetencyRelation> createLearningGoalRelation(@PathVariable Long courseId, @PathVariable Long tailCompetencyId, @PathVariable Long headCompetencyId,
             @RequestParam(defaultValue = "") String type) {
         log.info("REST request to create a relation between competencies {} and {}", tailCompetencyId, headCompetencyId);
         var course = courseRepository.findByIdElseThrow(courseId);
@@ -374,9 +374,9 @@ public class CompetencyResource {
         checkAuthorizationForLearningGoal(Role.INSTRUCTOR, course, headLearningGoal);
 
         try {
-            var relationType = LearningGoalRelation.RelationType.valueOf(type);
+            var relationType = CompetencyRelation.RelationType.valueOf(type);
 
-            var relation = new LearningGoalRelation();
+            var relation = new CompetencyRelation();
             relation.setTailLearningGoal(tailLearningGoal);
             relation.setHeadLearningGoal(headLearningGoal);
             relation.setType(relationType);
