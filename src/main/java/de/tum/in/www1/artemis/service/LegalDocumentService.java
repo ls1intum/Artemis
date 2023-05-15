@@ -140,7 +140,7 @@ public class LegalDocumentService {
             legalDocumentText = Files.readString(getLegalDocumentPath(language, type));
         }
         catch (IOException e) {
-            log.error("Could not read {} file for language {}:{}", type, language, e.getMessage());
+            log.error("Could not read {} file for language {}:{}", type, language, e);
             throw new InternalServerErrorException("Could not read " + type + " file for language " + language);
         }
         return type == LegalDocumentType.PRIVACY_STATEMENT ? new PrivacyStatement(legalDocumentText, language) : new Imprint(legalDocumentText, language);
@@ -160,7 +160,7 @@ public class LegalDocumentService {
             return legalDocument;
         }
         catch (IOException e) {
-            log.error("Could not update {} file for language {}: {} ", legalDocument.getType(), legalDocument.getLanguage(), e.getMessage());
+            log.error("Could not update {} file for language {}: {} ", legalDocument.getType(), legalDocument.getLanguage(), e);
             throw new InternalServerErrorException("Could not update " + legalDocument.getType() + " file for language " + legalDocument.getLanguage());
         }
     }
