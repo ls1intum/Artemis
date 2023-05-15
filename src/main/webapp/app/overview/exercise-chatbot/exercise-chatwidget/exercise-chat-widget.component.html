@@ -22,7 +22,7 @@
 
         <!-- input field section -->
         <div class="chat-input">
-            <input [(ngModel)]="newMessage" type="text" placeholder=" Write a message..." />
+            <input [(ngModel)]="newMessage" type="text" (keyup.enter)="onSend()" placeholder=" Write a message..." />
             <button (click)="onSend()" class="send-btn">
                 <fa-icon [icon]="faPaperPlane"></fa-icon>
             </button>
