@@ -7,9 +7,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.ZonedDateTime;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import javax.validation.ConstraintViolation;
@@ -20,6 +18,8 @@ import javax.validation.ValidatorFactory;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -89,6 +89,14 @@ class MessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
 
     private ValidatorFactory validatorFactory;
 
+    private static final int NUMBER_OF_POSTS = 5;
+
+    private static final int HIGHER_PAGE_SIZE = NUMBER_OF_POSTS + 10;
+
+    private static final int LOWER_PAGE_SIZE = NUMBER_OF_POSTS - 2;
+
+    private static final int EQUAL_PAGE_SIZE = NUMBER_OF_POSTS;
+
     @BeforeEach
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void initTestCase() {
@@ -145,19 +153,27 @@ class MessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
         verify(messagingTemplate, times(2)).convertAndSendToUser(anyString(), anyString(), any(PostDTO.class));
     }
 
-    @Test
+    @ParameterizedTest
+    @ValueSource(ints = { HIGHER_PAGE_SIZE, LOWER_PAGE_SIZE, EQUAL_PAGE_SIZE })
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testFindMessagesWithPageSize() throws Exception {
-        Post postToSave = createPostWithOneToOneChat(TEST_PREFIX);
+    void testFindMessagesWithPageSizeHigherThenMessagesCount(int pageSize) {
 
-        Post createdPost = request.postWithResponseBody("/api/courses/" + courseId + "/messages", postToSave, Post.class, HttpStatus.CREATED);
-        checkCreatedMessagePost(postToSave, createdPost);
-        assertThat(createdPost.getConversation().getId()).isNotNull();
+        var student1 = userRepository.findOneWithGroupsAndAuthoritiesByLogin(TEST_PREFIX + "student1").get();
+        var student2 = userRepository.findOneWithGroupsAndAuthoritiesByLogin(TEST_PREFIX + "student2").get();
+        List<Post> posts = database.createPostsWithAnswersAndReactionsWithConversation(course, student1, student2, NUMBER_OF_POSTS, TEST_PREFIX);
+
+        for (Post post : posts) {
+            assertThat(post.getConversation().getId()).isNotNull();
+        }
 
         PostContextFilter postContextFilter = new PostContextFilter();
-        postContextFilter.setConversationId(createdPost.getConversation().getId());
-        // TODO: test will fail because the page size is 1 and there is one message in the conversation
-        assertThat(conversationMessageRepository.findMessages(postContextFilter, Pageable.ofSize(1))).hasSize(1);
+        postContextFilter.setConversationId(posts.get(0).getConversation().getId());
+        if (pageSize == LOWER_PAGE_SIZE) {
+            assertThat(conversationMessageRepository.findMessages(postContextFilter, Pageable.ofSize(pageSize))).hasSize(LOWER_PAGE_SIZE);
+        }
+        else {
+            assertThat(conversationMessageRepository.findMessages(postContextFilter, Pageable.ofSize(pageSize))).hasSize(NUMBER_OF_POSTS);
+        }
     }
 
     @Test
