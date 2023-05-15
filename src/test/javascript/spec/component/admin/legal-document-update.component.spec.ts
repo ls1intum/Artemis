@@ -10,7 +10,7 @@ import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-edi
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { MockLanguageHelper } from '../../helpers/mocks/service/mock-translate.service';
-import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbModalRef, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ModePickerComponent } from 'app/exercises/shared/mode-picker/mode-picker.component';
 import { LegalDocumentService } from 'app/shared/service/legal-document.service';
 import { LegalDocument, LegalDocumentLanguage, LegalDocumentType } from 'app/entities/legal-document.model';
@@ -41,7 +41,10 @@ describe('LegalDocumentUpdateComponent', () => {
             providers: [
                 { provide: JhiLanguageHelper, useClass: MockLanguageHelper },
                 { provide: NgbModal, useClass: MockNgbModalService },
-                { provide: ActivatedRoute, useValue: new MockActivatedRoute({}) },
+                {
+                    provide: ActivatedRoute,
+                    useValue: new MockActivatedRoute({}),
+                },
             ],
         }).compileComponents();
 
@@ -55,8 +58,12 @@ describe('LegalDocumentUpdateComponent', () => {
         fixture.detectChanges();
     });
 
-    it('should show warning on language change with unsaved changes', () => {
-        const open = jest.spyOn(modalService, 'open');
+    it('should show warning on language change with unsaved changes', async () => {
+        const mockReturnValue = {
+            result: Promise.resolve({ type: LegalDocumentType.IMPRINT } as LegalDocument),
+            componentInstance: {},
+        } as NgbModalRef;
+        const open = jest.spyOn(modalService, 'open').mockReturnValue(mockReturnValue);
         component.unsavedChanges = true;
         component.currentLanguage = LegalDocumentLanguage.ENGLISH;
         component.onLanguageChange(LegalDocumentLanguage.GERMAN);
