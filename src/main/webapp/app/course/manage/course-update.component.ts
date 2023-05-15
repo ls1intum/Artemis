@@ -192,9 +192,13 @@ export class CourseUpdateComponent implements OnInit {
                     validators: [Validators.required, Validators.min(0)],
                 }),
                 registrationEnabled: new FormControl(this.course.registrationEnabled),
+                enrollmentStartDate: new FormControl(this.course.enrollmentStartDate),
+                enrollmentEndDate: new FormControl(this.course.enrollmentEndDate),
                 registrationConfirmationMessage: new FormControl(this.course.registrationConfirmationMessage, {
                     validators: [Validators.maxLength(2000)],
                 }),
+                disenrollmentEnabled: new FormControl(this.course.disenrollmentEnabled),
+                disenrollmentEndDate: new FormControl(this.course.disenrollmentEndDate),
                 presentationScore: new FormControl({ value: this.course.presentationScore, disabled: this.course.presentationScore === 0 }, [
                     Validators.min(1),
                     regexValidator(this.presentationScorePattern),
@@ -395,8 +399,20 @@ export class CourseUpdateComponent implements OnInit {
         if (this.course.registrationEnabled) {
             // online course cannot be activated if registration enabled is set
             this.courseForm.controls['onlineCourse'].setValue(false);
+        } else {
+            if (this.course.disenrollmentEnabled) {
+                this.changeDisenrollmentEnabled();
+            }
         }
         this.courseForm.controls['registrationEnabled'].setValue(this.course.registrationEnabled);
+    }
+
+    /**
+     * Enable or disable student course disenrollment
+     */
+    changeDisenrollmentEnabled() {
+        this.course.disenrollmentEnabled = !this.course.disenrollmentEnabled;
+        this.courseForm.controls['disenrollmentEnabled'].setValue(this.course.disenrollmentEnabled);
     }
 
     /**
@@ -523,6 +539,44 @@ export class CourseUpdateComponent implements OnInit {
             return true;
         }
         return dayjs(this.course.startDate).isBefore(this.course.endDate);
+    }
+
+    /**
+     * Returns whether the enrollment start and end dates are valid
+     * @return true if the dates are valid
+     */
+    get isValidEnrollmentPeriod(): boolean {
+        // allow instructors to set enrollment dates later
+        if (!this.course.enrollmentStartDate || !this.course.enrollmentEndDate) {
+            return true;
+        }
+
+        // enrollment period requires configured start and end date of the course
+        if (this.atLeastOneDateNotExisting()) {
+            return false;
+        }
+
+        return (
+            dayjs(this.course.enrollmentStartDate).isBefore(this.course.enrollmentEndDate) &&
+            !dayjs(this.course.enrollmentStartDate).isAfter(this.course.startDate) &&
+            !dayjs(this.course.enrollmentEndDate).isAfter(this.course.endDate)
+        );
+    }
+
+    /**
+     * Returns whether the disenrollment end date is valid or not
+     * @return true if the date is valid
+     */
+    get isValidDisenrollmentEndDate(): boolean {
+        // allow instructors to set disenrollment end date later
+        if (!this.course.disenrollmentEndDate) {
+            return true;
+        }
+        // course start and end dates are required to configure disenrollment end date
+        if (this.atLeastOneDateNotExisting() || !this.course.enrollmentStartDate || !this.course.enrollmentEndDate) {
+            return false;
+        }
+        return dayjs(this.course.enrollmentEndDate).isBefore(this.course.disenrollmentEndDate) && dayjs(this.course.disenrollmentEndDate).isBefore(this.course.startDate);
     }
 
     /**

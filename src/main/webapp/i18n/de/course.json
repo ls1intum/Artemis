@@ -96,7 +96,14 @@
                 "title": "Kursregistrierung für Studierende aktiviert",
                 "description": "Aktiviere diese Checkbox, damit sich Studierende selbständig im Kurs registrieren können, sofern dieser aktiv ist (zwischen Start und Ende des Kurses). Du kannst optional eine Nachricht eingeben, die Studierende bei der Registrierung bestätigen müssen."
             },
+            "enrollmentStartDate": "Einschreibungs Start",
+            "enrollmentEndDate": "Einschreibungs Ende",
             "registrationConfirmationMessage": "Nachricht zur Bestätigung der Registrierung",
+            "disenrollmentEnabled": {
+                "title": "Kursauschreibung für Studierende aktiviert",
+                "description": "Aktiviere diese Checkbox, damit sich Studierende selbstständig vom Kurs ausschreiben können. Du kannst das späteste Datum zur Ausschreibung einstellen, andernfalls ist es den Studenten bis zum Ende des Kurses möglich sich auszuschreiben."
+            },
+            "disenrollmentEndDate": "Spätestes Datum zur Ausschreibung",
             "exercises": "Aufgaben",
             "programmingExercises": "Programmieraufgaben",
             "quizExercises": "Quizaufgaben",
@@ -150,6 +157,15 @@
                 },
                 "endDate": {
                     "invalid": "Muss nach dem Startdatum des Kurses liegen"
+                },
+                "enrollmentStartDate": {
+                    "invalid": "Kann nicht nach dem Startdatum des Kurses liegen und muss vor dem Einschreibungsende liegen"
+                },
+                "enrollmentEndDate": {
+                    "invalid": "Kann nicht nach dem Enddatum des Kurses liegen und muss nach dem Einschreibungsbeginn liegen"
+                },
+                "disenrollmentEndDate": {
+                    "invalid": "Muss nach dem Enddatum zur Einschreibung und vor dem Enddatum des Kurses liegen"
                 },
                 "invalidForm": "Bitte alle verpflichtenden Felder ausfüllen."
             },

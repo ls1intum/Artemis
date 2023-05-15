@@ -96,7 +96,14 @@
                 "title": "Student Course Registration Enabled",
                 "description": "Activate this checkbox to allow students to register independently in the course if it is active (between start and end of the course). You can optionally enter a message that students have to confirm during registration."
             },
+            "enrollmentStartDate": "Enrollment Start",
+            "enrollmentEndDate": "Enrollment End",
             "registrationConfirmationMessage": "Registration Confirmation Message",
+            "disenrollmentEnabled": {
+                "title": "Student Course Disenrollment Enabled",
+                "description": "Activate this checkbox to allow students to disenroll independently in the course. You can specify the latest date for disenrollment, otherwise the students can do so until the end of the course."
+            },
+            "disenrollmentEndDate": "Latest date to disenroll",
             "exercises": "Exercises",
             "programmingExercises": "Programming Exercises",
             "quizExercises": "Quiz Exercises",
@@ -150,6 +157,15 @@
                 },
                 "endDate": {
                     "invalid": "Must be after the start date of the course"
+                },
+                "enrollmentStartDate": {
+                    "invalid": "Can't be after the start date of the course and must be before the enrollment end date"
+                },
+                "enrollmentEndDate": {
+                    "invalid": "Can't be after the end date of the course and must be after the enrollment start date"
+                },
+                "disenrollmentEndDate": {
+                    "invalid": "Must be after enrollment end date and before the end date of the course"
                 },
                 "invalidForm": "Please fill in all required fields."
             },

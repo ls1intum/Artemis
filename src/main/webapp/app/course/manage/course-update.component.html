@@ -351,6 +351,7 @@
                     <fa-icon [icon]="faQuestionCircle" class="text-secondary" ngbTooltip="{{ 'artemisApp.course.onlineCourse.description' | artemisTranslate }}"></fa-icon>
                 </div>
 
+                <!-- enrollment -->
                 <div class="form-check" *ngIf="!this.course.onlineCourse">
                     <input
                         type="checkbox"
@@ -363,6 +364,28 @@
                     <label class="form-control-label" jhiTranslate="artemisApp.course.registrationEnabled.title" for="field_registrationEnabled">Registration Enabled</label>
                     <fa-icon [icon]="faQuestionCircle" class="text-secondary" ngbTooltip="{{ 'artemisApp.course.registrationEnabled.description' | artemisTranslate }}"></fa-icon>
                 </div>
+                <div class="d-flex" *ngIf="course.registrationEnabled">
+                    <div class="form-group flex-grow-1">
+                        <jhi-date-time-picker
+                            id="field_enrollmentStartDate"
+                            labelName="{{ 'artemisApp.course.enrollmentStartDate' | artemisTranslate }}"
+                            formControlName="enrollmentStartDate"
+                            [(ngModel)]="course.enrollmentStartDate"
+                            [error]="!isValidEnrollmentPeriod"
+                        ></jhi-date-time-picker>
+                        <span *ngIf="!isValidEnrollmentPeriod" class="invalid-feedback"> {{ 'artemisApp.course.form.enrollmentStartDate.invalid' | artemisTranslate }}</span>
+                    </div>
+                    <div class="form-group flex-grow-1 ms-3">
+                        <jhi-date-time-picker
+                            id="field_enrollmentEndDate"
+                            labelName="{{ 'artemisApp.course.enrollmentEndDate' | artemisTranslate }}"
+                            formControlName="enrollmentEndDate"
+                            [(ngModel)]="course.enrollmentEndDate"
+                            [error]="!isValidEnrollmentPeriod"
+                        ></jhi-date-time-picker>
+                        <span *ngIf="!isValidEnrollmentPeriod" class="invalid-feedback"> {{ 'artemisApp.course.form.enrollmentEndDate.invalid' | artemisTranslate }}</span>
+                    </div>
+                </div>
                 <div class="form-group" id="field_registrationConfirmationMessage" *ngIf="course.registrationEnabled">
                     <label class="form-control-label" jhiTranslate="artemisApp.course.registrationConfirmationMessage" for="field_registrationConfirmationMessage"
                         >Registration Confirmation Message</label
@@ -374,6 +397,31 @@
                     >
                     </jhi-markdown-editor>
                 </div>
+
+                <!-- disenrollment -->
+                <div class="form-check" *ngIf="this.course.registrationEnabled">
+                    <input
+                        type="checkbox"
+                        class="form-check-input"
+                        name="disenrollmentEnabled"
+                        id="field_disenrollmentEnabled"
+                        [checked]="course.disenrollmentEnabled"
+                        (change)="this.changeDisenrollmentEnabled()"
+                    />
+                    <label class="form-control-label" jhiTranslate="artemisApp.course.disenrollmentEnabled.title" for="field_disenrollmentEnabled">Disenrollment Enabled</label>
+                    <fa-icon [icon]="faQuestionCircle" class="text-secondary" ngbTooltip="{{ 'artemisApp.course.disenrollmentEnabled.description' | artemisTranslate }}"></fa-icon>
+                </div>
+                <div class="form-group" *ngIf="course.disenrollmentEnabled">
+                    <jhi-date-time-picker
+                        id="field_disenrollmentEndDate"
+                        labelName="{{ 'artemisApp.course.disenrollmentEndDate' | artemisTranslate }}"
+                        formControlName="disenrollmentEndDate"
+                        [(ngModel)]="course.disenrollmentEndDate"
+                        [error]="!isValidDisenrollmentEndDate"
+                    ></jhi-date-time-picker>
+                    <span *ngIf="!isValidDisenrollmentEndDate" class="invalid-feedback"> {{ 'artemisApp.course.form.disenrollmentEndDate.invalid' | artemisTranslate }}</span>
+                </div>
+
                 <div class="form-check">
                     <input
                         id="changePresentationScoreInput"
