@@ -171,7 +171,7 @@ public class ConversationService {
      * @param role             the role of the user
      */
     public void registerUserToDefaultChannels(User userToAddToGroup, String group, Role role) {
-        final List<String> channelNames = Arrays.stream(DefaultChannelType.values()).toList().stream().map(DefaultChannelType::getName).toList();
+        final Set<String> channelNames = Arrays.stream(DefaultChannelType.values()).map(DefaultChannelType::getName).collect(Collectors.toSet());
 
         List<Course> courses = switch (role) {
             case STUDENT -> courseRepository.findCoursesByStudentGroupName(group);

@@ -11,11 +11,13 @@ import org.springframework.util.StringUtils;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.DefaultChannelType;
 import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
-import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
+import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.metis.conversation.errors.ChannelNameDuplicateException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.ChannelDTO;
@@ -32,16 +34,16 @@ public class ChannelService {
 
     private final ChannelRepository channelRepository;
 
-    private final UserRepository userRepository;
-
     private final ConversationService conversationService;
 
-    public ChannelService(ConversationParticipantRepository conversationParticipantRepository, ChannelRepository channelRepository, UserRepository userRepository,
-            ConversationService conversationService) {
+    private final CourseRepository courseRepository;
+
+    public ChannelService(ConversationParticipantRepository conversationParticipantRepository, ChannelRepository channelRepository, ConversationService conversationService,
+            CourseRepository courseRepository) {
         this.conversationParticipantRepository = conversationParticipantRepository;
         this.channelRepository = channelRepository;
-        this.userRepository = userRepository;
         this.conversationService = conversationService;
+        this.courseRepository = courseRepository;
     }
 
     /**
@@ -155,6 +157,30 @@ public class ChannelService {
         usersToRegister.addAll(conversationService.findUsersInDatabase(usersLoginsToRegister));
         conversationService.registerUsersToConversation(course, usersToRegister, channel, Optional.empty());
         return usersToRegister;
+    }
+
+    /**
+     * Add user to default channels of courses with the same group. This is used when a user is added to a group.
+     *
+     * @param userToAddToGroup the user to be added
+     * @param group            the group of the user
+     * @param role             the role of the user
+     */
+    public void registerUserToDefaultChannels(User userToAddToGroup, String group, Role role) {
+        final Set<String> channelNames = Arrays.stream(DefaultChannelType.values()).map(DefaultChannelType::getName).collect(Collectors.toSet());
+
+        List<Course> courses = switch (role) {
+            case STUDENT -> courseRepository.findCoursesByStudentGroupName(group);
+            case TEACHING_ASSISTANT -> courseRepository.findCoursesByTeachingAssistantGroupName(group);
+            case INSTRUCTOR -> courseRepository.findCoursesByInstructorGroupName(group);
+            default -> List.of();
+        };
+
+        for (Course c : courses) {
+            channelRepository.findChannelsByCourseId(c.getId()).stream().filter(channel -> channelNames.contains(channel.getName())).forEach(channel -> {
+                conversationService.registerUsersToConversation(c, Set.of(userToAddToGroup), channel, Optional.empty());
+            });
+        }
     }
 
     /**
