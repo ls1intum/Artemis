@@ -39,7 +39,7 @@ class IrisWebsocketTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
 
     @BeforeEach
     void initTestCase() {
-        database.addUsers(TEST_PREFIX, 2, 0, 0, 0);
+        database.addUsers(TEST_PREFIX, 1, 0, 0, 0);
 
         final Course course = database.addCourseWithOneProgrammingExerciseAndTestCases();
         exercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
@@ -52,7 +52,7 @@ class IrisWebsocketTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
         var message = new IrisMessage();
         message.setSession(irisSession);
         message.setSentAt(ZonedDateTime.now());
-        message.setContent(List.of(createMockContent(message), createMockContent(message), createMockContent(message)));
+        message.setContent(List.of(createMockContent(message), createMockContent(message)));
         irisWebsocketService.sendMessage(message);
         verify(websocketMessagingService, times(1)).sendMessageToUser(eq(TEST_PREFIX + "student1"), eq("/topic/iris/sessions/" + irisSession.getId()), eq(message));
     }
