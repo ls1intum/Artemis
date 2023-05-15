@@ -21,86 +21,86 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 public interface CompetencyRepository extends JpaRepository<Competency, Long> {
 
     @Query("""
-            SELECT lg
-            FROM Competency lg
-            LEFT JOIN FETCH lg.userProgress progress
-                WHERE lg.course.id = :courseId
+            SELECT c
+            FROM Competency c
+            LEFT JOIN FETCH c.userProgress progress
+                WHERE c.course.id = :courseId
             """)
     Set<Competency> findAllForCourse(@Param("courseId") Long courseId);
 
     @Query("""
-            SELECT lg
-            FROM Competency lg
-                LEFT JOIN FETCH lg.userProgress progress
-            WHERE lg.course.id = :courseId
+            SELECT c
+            FROM Competency c
+                LEFT JOIN FETCH c.userProgress progress
+            WHERE c.course.id = :courseId
                 AND (progress IS NULL OR progress.user.id = :userId)
             """)
     Set<Competency> findAllForCourseWithProgressForUser(@Param("courseId") Long courseId, @Param("userId") Long userId);
 
     @Query("""
-            SELECT lg
-            FROM Competency lg
-                LEFT JOIN FETCH lg.exercises ex
-            WHERE lg.id = :#{#competencyId}
+            SELECT c
+            FROM Competency c
+                LEFT JOIN FETCH c.exercises ex
+            WHERE c.id = :#{#competencyId}
             """)
     Optional<Competency> findByIdWithExercises(@Param("competencyId") long competencyId);
 
     @Query("""
-            SELECT lg
-            FROM Competency lg
-                LEFT JOIN FETCH lg.lectureUnits lu
-            WHERE lg.id = :#{#competencyId}
+            SELECT c
+            FROM Competency c
+                LEFT JOIN FETCH c.lectureUnits lu
+            WHERE c.id = :#{#competencyId}
             """)
     Optional<Competency> findByIdWithLectureUnits(@Param("competencyId") long competencyId);
 
     @Query("""
-            SELECT lg
-            FROM Competency lg
-                LEFT JOIN FETCH lg.userProgress
-                LEFT JOIN FETCH lg.exercises
-                LEFT JOIN FETCH lg.lectureUnits lu
+            SELECT c
+            FROM Competency c
+                LEFT JOIN FETCH c.userProgress
+                LEFT JOIN FETCH c.exercises
+                LEFT JOIN FETCH c.lectureUnits lu
                 LEFT JOIN FETCH lu.completedUsers
                 LEFT JOIN FETCH lu.lecture l
                 LEFT JOIN FETCH lu.exercise e
-            WHERE lg.id = :competencyId
+            WHERE c.id = :competencyId
             """)
     Optional<Competency> findByIdWithExercisesAndLectureUnits(@Param("competencyId") Long competencyId);
 
     @Query("""
-            SELECT lg
-            FROM Competency lg
-                LEFT JOIN FETCH lg.lectureUnits lu
+            SELECT c
+            FROM Competency c
+                LEFT JOIN FETCH c.lectureUnits lu
                 LEFT JOIN FETCH lu.completedUsers
-            WHERE lg.id = :competencyId
+            WHERE c.id = :competencyId
             """)
     Optional<Competency> findByIdWithLectureUnitsAndCompletions(@Param("competencyId") Long competencyId);
 
     @Query("""
-            SELECT lg
-            FROM Competency lg
-                LEFT JOIN FETCH lg.exercises
-                LEFT JOIN FETCH lg.lectureUnits lu
+            SELECT c
+            FROM Competency c
+                LEFT JOIN FETCH c.exercises
+                LEFT JOIN FETCH c.lectureUnits lu
                 LEFT JOIN FETCH lu.completedUsers
-            WHERE lg.id = :competencyId
+            WHERE c.id = :competencyId
             """)
     Optional<Competency> findByIdWithExercisesAndLectureUnitsAndCompletions(@Param("competencyId") Long competencyId);
 
     @Query("""
-            SELECT lg
-            FROM Competency lg
-                LEFT JOIN FETCH lg.exercises ex
+            SELECT c
+            FROM Competency c
+                LEFT JOIN FETCH c.exercises ex
                 LEFT JOIN FETCH ex.competencies
-                LEFT JOIN FETCH lg.lectureUnits lu
+                LEFT JOIN FETCH c.lectureUnits lu
                 LEFT JOIN FETCH lu.competencies
-            WHERE lg.id = :competencyId
+            WHERE c.id = :competencyId
             """)
     Optional<Competency> findByIdWithExercisesAndLectureUnitsBidirectional(@Param("competencyId") Long competencyId);
 
     @Query("""
-            SELECT lg
-            FROM Competency lg
-                LEFT JOIN FETCH lg.consecutiveCourses
-            WHERE lg.id = :competencyId
+            SELECT c
+            FROM Competency c
+                LEFT JOIN FETCH c.consecutiveCourses
+            WHERE c.id = :competencyId
             """)
     Optional<Competency> findByIdWithConsecutiveCourses(@Param("competencyId") Long competencyId);
 
@@ -124,10 +124,10 @@ public interface CompetencyRepository extends JpaRepository<Competency, Long> {
      * @return Page with search results
      */
     @Query("""
-            SELECT lg
-            FROM Competency lg
-            WHERE (lg.course.instructorGroupName IN :groups OR lg.course.editorGroupName IN :groups)
-                AND (lg.title LIKE %:partialTitle% OR lg.course.title LIKE %:partialCourseTitle%)
+            SELECT c
+            FROM Competency c
+            WHERE (c.course.instructorGroupName IN :groups OR c.course.editorGroupName IN :groups)
+                AND (c.title LIKE %:partialTitle% OR c.course.title LIKE %:partialCourseTitle%)
             """)
     Page<Competency> findByTitleInLectureOrCourseAndUserHasAccessToCourse(@Param("partialTitle") String partialTitle, @Param("partialCourseTitle") String partialCourseTitle,
             @Param("groups") Set<String> groups, Pageable pageable);
@@ -139,9 +139,9 @@ public interface CompetencyRepository extends JpaRepository<Competency, Long> {
      * @return the name/title of the competency or null if the competency does not exist
      */
     @Query("""
-            SELECT lg.title
-            FROM Competency lg
-            WHERE lg.id = :competencyId
+            SELECT c.title
+            FROM Competency c
+            WHERE c.id = :competencyId
             """)
     @Cacheable(cacheNames = "competencyTitle", key = "#competencyId", unless = "#result == null")
     String getCompetencyTitle(@Param("competencyId") Long competencyId);
