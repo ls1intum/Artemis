@@ -175,7 +175,7 @@
                 labelName="{{ 'artemisApp.exercise.exampleSolutionPublicationDate' | artemisTranslate }}"
                 [(ngModel)]="fileUploadExercise.exampleSolutionPublicationDate"
                 [error]="fileUploadExercise.exampleSolutionPublicationDateError!"
-                (valueValidity)="setIsInvalidExamplePublicationDateAndValidateDates($event)"
+                (valueValidity)="setIsInvalidExampleSolutionDateAndValidateDates($event)"
             ></jhi-date-time-picker>
             <span *ngIf="fileUploadExercise.exampleSolutionPublicationDateError" class="invalid-feedback">{{
                 'artemisApp.exercise.exampleSolutionPublicationDateError' | artemisTranslate

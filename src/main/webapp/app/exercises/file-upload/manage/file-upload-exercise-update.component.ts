@@ -181,27 +181,27 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
 
     setIsInvalidReleaseDateAndValidateDates(isInvalidDate: boolean) {
         this.fileUploadExercise.isInvalidReleaseDate = isInvalidDate;
-        this.exerciseService.validateDates(this.fileUploadExercise);
+        this.validateDates();
     }
 
     setIsInvalidStartDateAndValidateDates(isInvalidDate: boolean) {
         this.fileUploadExercise.isInvalidStartDate = isInvalidDate;
-        this.exerciseService.validateDates(this.fileUploadExercise);
+        this.validateDates();
     }
 
     setIsInvalidDueDateAndValidateDates(isInvalidDate: boolean) {
         this.fileUploadExercise.isInvalidDueDate = isInvalidDate;
-        this.exerciseService.validateDates(this.fileUploadExercise);
+        this.validateDates();
     }
 
     setIsInvalidAssessmentDueDateAndValidateDates(isInvalidDate: boolean) {
         this.fileUploadExercise.isInvalidAssessmentDueDate = isInvalidDate;
-        this.exerciseService.validateDates(this.fileUploadExercise);
+        this.validateDates();
     }
 
-    setIsInvalidExamplePublicationDateAndValidateDates(isInvalidDate: boolean) {
+    setIsInvalidExampleSolutionDateAndValidateDates(isInvalidDate: boolean) {
         this.fileUploadExercise.isInvalidExampleSolutionDate = isInvalidDate;
-        this.exerciseService.validateDates(this.fileUploadExercise);
+        this.validateDates();
     }
 
     /**

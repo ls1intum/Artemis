@@ -112,6 +112,53 @@ describe('ModelingExercise Management Update Component', () => {
         });
     });
 
+    describe('should set invalid dates correctly', () => {
+        const modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, new Course(), undefined);
+
+        beforeEach(() => {
+            comp.modelingExercise = modelingExercise;
+        });
+
+        it('should set invalid release and start date', () => {
+            const validateDatesSpy = jest.spyOn(comp, 'validateDates');
+            //false per default
+            expect(comp.modelingExercise.isInvalidReleaseDate).toBeFalse();
+            expect(comp.modelingExercise.isInvalidStartDate).toBeFalse();
+
+            comp.setIsInvalidReleaseDateAndValidateDates(true);
+            comp.setIsInvalidStartDateAndValidateDates(true);
+
+            expect(comp.modelingExercise.isInvalidReleaseDate).toBeTrue();
+            expect(comp.modelingExercise.isInvalidStartDate).toBeTrue();
+            expect(validateDatesSpy).toHaveBeenCalledTimes(2);
+        });
+
+        it('should set invalid due and assessment due date', () => {
+            const validateDatesSpy = jest.spyOn(comp, 'validateDates');
+            //false per default
+            expect(comp.modelingExercise.isInvalidDueDate).toBeFalse();
+            expect(comp.modelingExercise.isInvalidAssessmentDueDate).toBeFalse();
+
+            comp.setIsInvalidDueDateAndValidateDates(true);
+            comp.setIsInvalidAssessmentDueDateAndValidateDates(true);
+
+            expect(comp.modelingExercise.isInvalidDueDate).toBeTrue();
+            expect(comp.modelingExercise.isInvalidAssessmentDueDate).toBeTrue();
+            expect(validateDatesSpy).toHaveBeenCalledTimes(2);
+        });
+
+        it('should set invalid solution publication date', () => {
+            const validateDatesSpy = jest.spyOn(comp, 'validateDates');
+            //false per default
+            expect(comp.modelingExercise.isInvalidExampleSolutionDate).toBeFalse();
+
+            comp.setIsInvalidExampleSolutionDateAndValidateDates(true);
+
+            expect(comp.modelingExercise.isInvalidExampleSolutionDate).toBeTrue();
+            expect(validateDatesSpy).toHaveBeenCalledOnce();
+        });
+    });
+
     describe('ngOnInit in import mode: Course to Course', () => {
         const course = new Course();
         course.id = 123;

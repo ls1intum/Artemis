@@ -190,27 +190,27 @@ export class ModelingExerciseUpdateComponent implements OnInit {
 
     setIsInvalidReleaseDateAndValidateDates(isInvalidDate: boolean) {
         this.modelingExercise.isInvalidReleaseDate = isInvalidDate;
-        this.exerciseService.validateDates(this.modelingExercise);
+        this.validateDates();
     }
 
     setIsInvalidStartDateAndValidateDates(isInvalidDate: boolean) {
         this.modelingExercise.isInvalidStartDate = isInvalidDate;
-        this.exerciseService.validateDates(this.modelingExercise);
+        this.validateDates();
     }
 
     setIsInvalidDueDateAndValidateDates(isInvalidDate: boolean) {
         this.modelingExercise.isInvalidDueDate = isInvalidDate;
-        this.exerciseService.validateDates(this.modelingExercise);
+        this.validateDates();
     }
 
     setIsInvalidAssessmentDueDateAndValidateDates(isInvalidDate: boolean) {
         this.modelingExercise.isInvalidAssessmentDueDate = isInvalidDate;
-        this.exerciseService.validateDates(this.modelingExercise);
+        this.validateDates();
     }
 
     setIsInvalidExampleSolutionDateAndValidateDates(isInvalidDate: boolean) {
         this.modelingExercise.isInvalidExampleSolutionDate = isInvalidDate;
-        this.exerciseService.validateDates(this.modelingExercise);
+        this.validateDates();
     }
 
     save() {

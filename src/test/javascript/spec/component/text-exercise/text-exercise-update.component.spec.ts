@@ -167,6 +167,53 @@ describe('TextExercise Management Update Component', () => {
         }));
     });
 
+    describe('should set invalid dates correctly', () => {
+        const textExercise = new TextExercise(new Course(), undefined);
+
+        beforeEach(() => {
+            comp.textExercise = textExercise;
+        });
+
+        it('should set invalid release and start date', () => {
+            const validateDatesSpy = jest.spyOn(comp, 'validateDates');
+            //false per default
+            expect(comp.textExercise.isInvalidReleaseDate).toBeFalse();
+            expect(comp.textExercise.isInvalidStartDate).toBeFalse();
+
+            comp.setIsInvalidReleaseDateAndValidateDates(true);
+            comp.setIsInvalidStartDateAndValidateDates(true);
+
+            expect(comp.textExercise.isInvalidReleaseDate).toBeTrue();
+            expect(comp.textExercise.isInvalidStartDate).toBeTrue();
+            expect(validateDatesSpy).toHaveBeenCalledTimes(2);
+        });
+
+        it('should set invalid due and assessment due date', () => {
+            const validateDatesSpy = jest.spyOn(comp, 'validateDates');
+            //false per default
+            expect(comp.textExercise.isInvalidDueDate).toBeFalse();
+            expect(comp.textExercise.isInvalidAssessmentDueDate).toBeFalse();
+
+            comp.setIsInvalidDueDateAndValidateDates(true);
+            comp.setIsInvalidAssessmentDueDateAndValidateDates(true);
+
+            expect(comp.textExercise.isInvalidDueDate).toBeTrue();
+            expect(comp.textExercise.isInvalidAssessmentDueDate).toBeTrue();
+            expect(validateDatesSpy).toHaveBeenCalledTimes(2);
+        });
+
+        it('should set invalid solution publication date', () => {
+            const validateDatesSpy = jest.spyOn(comp, 'validateDates');
+            //false per default
+            expect(comp.textExercise.isInvalidExampleSolutionDate).toBeFalse();
+
+            comp.setIsInvalidExampleSolutionDateAndValidateDates(true);
+
+            expect(comp.textExercise.isInvalidExampleSolutionDate).toBeTrue();
+            expect(validateDatesSpy).toHaveBeenCalledOnce();
+        });
+    });
+
     describe('ngOnInit in import mode: Course to Course', () => {
         const textExercise = new TextExercise(new Course(), undefined);
         textExercise.id = 1;

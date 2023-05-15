@@ -101,6 +101,53 @@ describe('FileUploadExercise Management Update Component', () => {
         });
     });
 
+    describe('should set invalid dates correctly', () => {
+        const fileUploadExercise = new FileUploadExercise(new Course(), undefined);
+
+        beforeEach(() => {
+            comp.fileUploadExercise = fileUploadExercise;
+        });
+
+        it('should set invalid release and start date', () => {
+            const validateDatesSpy = jest.spyOn(comp, 'validateDates');
+            //false per default
+            expect(comp.fileUploadExercise.isInvalidReleaseDate).toBeFalse();
+            expect(comp.fileUploadExercise.isInvalidStartDate).toBeFalse();
+
+            comp.setIsInvalidReleaseDateAndValidateDates(true);
+            comp.setIsInvalidStartDateAndValidateDates(true);
+
+            expect(comp.fileUploadExercise.isInvalidReleaseDate).toBeTrue();
+            expect(comp.fileUploadExercise.isInvalidStartDate).toBeTrue();
+            expect(validateDatesSpy).toHaveBeenCalledTimes(2);
+        });
+
+        it('should set invalid due and assessment due date', () => {
+            const validateDatesSpy = jest.spyOn(comp, 'validateDates');
+            //false per default
+            expect(comp.fileUploadExercise.isInvalidDueDate).toBeFalse();
+            expect(comp.fileUploadExercise.isInvalidAssessmentDueDate).toBeFalse();
+
+            comp.setIsInvalidDueDateAndValidateDates(true);
+            comp.setIsInvalidAssessmentDueDateAndValidateDates(true);
+
+            expect(comp.fileUploadExercise.isInvalidDueDate).toBeTrue();
+            expect(comp.fileUploadExercise.isInvalidAssessmentDueDate).toBeTrue();
+            expect(validateDatesSpy).toHaveBeenCalledTimes(2);
+        });
+
+        it('should set invalid solution publication date', () => {
+            const validateDatesSpy = jest.spyOn(comp, 'validateDates');
+            //false per default
+            expect(comp.fileUploadExercise.isInvalidExampleSolutionDate).toBeFalse();
+
+            comp.setIsInvalidExampleSolutionDateAndValidateDates(true);
+
+            expect(comp.fileUploadExercise.isInvalidExampleSolutionDate).toBeTrue();
+            expect(validateDatesSpy).toHaveBeenCalledOnce();
+        });
+    });
+
     describe('ngOnInit with given exerciseGroup', () => {
         const fileUploadExercise = new FileUploadExercise(undefined, new ExerciseGroup());
 

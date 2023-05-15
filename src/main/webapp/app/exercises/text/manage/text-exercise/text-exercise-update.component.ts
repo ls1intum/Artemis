@@ -171,27 +171,27 @@ export class TextExerciseUpdateComponent implements OnInit {
 
     setIsInvalidReleaseDateAndValidateDates(isInvalidDate: boolean) {
         this.textExercise.isInvalidReleaseDate = isInvalidDate;
-        this.exerciseService.validateDates(this.textExercise);
+        this.validateDates();
     }
 
     setIsInvalidStartDateAndValidateDates(isInvalidDate: boolean) {
         this.textExercise.isInvalidStartDate = isInvalidDate;
-        this.exerciseService.validateDates(this.textExercise);
+        this.validateDates();
     }
 
     setIsInvalidDueDateAndValidateDates(isInvalidDate: boolean) {
         this.textExercise.isInvalidDueDate = isInvalidDate;
-        this.exerciseService.validateDates(this.textExercise);
+        this.validateDates();
     }
 
     setIsInvalidAssessmentDueDateAndValidateDates(isInvalidDate: boolean) {
         this.textExercise.isInvalidAssessmentDueDate = isInvalidDate;
-        this.exerciseService.validateDates(this.textExercise);
+        this.validateDates();
     }
 
     setIsInvalidExampleSolutionDateAndValidateDates(isInvalidDate: boolean) {
         this.textExercise.isInvalidExampleSolutionDate = isInvalidDate;
-        this.exerciseService.validateDates(this.textExercise);
+        this.validateDates();
     }
 
     /**
