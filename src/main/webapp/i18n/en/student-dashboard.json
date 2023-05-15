@@ -199,7 +199,9 @@
                 "complaintDue": "Complaint due:",
                 "complaintDueTooltip": "You can write a complain until {{date}}.",
                 "complaintPossible": "Complaint possible:",
-                "complaintPossibleTooltip": "After receiving an assessment, you will have {{days}} days to file a complaint."
+                "complaintPossibleTooltip": "After receiving an assessment, you will have {{days}} days to file a complaint.",
+                "chatInputMessage": "Write a message...",
+                "chatPopUpMessage": "After you accept the regulations, your chat with IrisBot will start. Please decline if you do not wish to chat."
             }
         }
     }
