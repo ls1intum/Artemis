@@ -100,10 +100,10 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void deleteLectureUnit_shouldUnlinkLearningGoal() throws Exception {
+    void deleteLectureUnit_shouldUnlinkCompetency() throws Exception {
         var lectureUnit = lecture1.getLectureUnits().get(0);
-        var learningGoal = database.createCompetency(lecture1.getCourse());
-        lectureUnit.setCompetencies(Set.of(learningGoal));
+        var competency = database.createCompetency(lecture1.getCourse());
+        lectureUnit.setCompetencies(Set.of(competency));
         lectureRepository.save(lecture1);
 
         var lecture = lectureRepository.findByIdWithLectureUnitsAndCompetenciesElseThrow(lecture1.getId());
