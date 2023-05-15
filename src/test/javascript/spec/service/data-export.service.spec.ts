@@ -13,7 +13,7 @@ import { AccountService } from 'app/core/auth/account.service';
 
 describe('DataExportService', () => {
     let service: DataExportService;
-    const resourceUrl = SERVER_API_URL + 'api';
+    const resourceUrl = 'api/';
     let httpMock: HttpTestingController;
     let accountService: AccountService;
 
