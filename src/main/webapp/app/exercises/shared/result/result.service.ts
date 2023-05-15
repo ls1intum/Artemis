@@ -39,9 +39,9 @@ export interface IResultService {
 
 @Injectable({ providedIn: 'root' })
 export class ResultService implements IResultService {
-    private exerciseResourceUrl = SERVER_API_URL + 'api/exercises';
-    private resultResourceUrl = SERVER_API_URL + 'api/results';
-    private participationResourceUrl = SERVER_API_URL + 'api/participations';
+    private exerciseResourceUrl = 'api/exercises';
+    private resultResourceUrl = 'api/results';
+    private participationResourceUrl = 'api/participations';
 
     private readonly maxValueProgrammingResultInts = 255; // Size of tinyInt in SQL, that is used to store these values
 

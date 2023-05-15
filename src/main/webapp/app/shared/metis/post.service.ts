@@ -13,7 +13,7 @@ type EntityArrayResponseType = HttpResponse<Post[]>;
 
 @Injectable({ providedIn: 'root' })
 export class PostService extends PostingService<Post> {
-    public resourceUrl = SERVER_API_URL + 'api/courses/';
+    public resourceUrl = 'api/courses/';
 
     constructor(protected http: HttpClient) {
         super();

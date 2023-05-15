@@ -110,7 +110,7 @@ public class AdminCourseResource {
 
         Course createdCourse = courseRepository.save(course);
 
-        Arrays.stream(DefaultChannelType.values()).toList().forEach(channelType -> this.createDefaultChannel(createdCourse, channelType));
+        Arrays.stream(DefaultChannelType.values()).forEach(channelType -> createDefaultChannel(createdCourse, channelType));
 
         return ResponseEntity.created(new URI("/api/courses/" + createdCourse.getId())).body(createdCourse);
     }
@@ -148,7 +148,7 @@ public class AdminCourseResource {
         channelToCreate.setIsAnnouncementChannel(channelType.equals(DefaultChannelType.ANNOUNCEMENT));
         channelToCreate.setIsArchived(false);
         channelToCreate.setDescription(null);
-        Channel createdChannel = channelService.createChannel(course, channelToCreate, Optional.of(userRepository.getUserWithGroupsAndAuthorities()));
+        Channel createdChannel = channelService.createChannel(course, channelToCreate, Optional.empty());
         channelService.registerUsersToChannel(true, true, true, List.of(), course, createdChannel);
     }
 }

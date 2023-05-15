@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.enumeration.DefaultChannelType;
 import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
@@ -171,30 +170,6 @@ public class ConversationService {
             conversationParticipantRepository.saveAll(newConversationParticipants);
             broadcastOnConversationMembershipChannel(course, MetisCrudAction.CREATE, conversation, usersToBeRegistered);
             broadcastOnConversationMembershipChannel(course, MetisCrudAction.UPDATE, conversation, existingUsers);
-        }
-    }
-
-    /**
-     * Add user to default channels of courses with the same group. This is used when a user is added to a group.
-     *
-     * @param userToAddToGroup the user to be added
-     * @param group            the group of the user
-     * @param role             the role of the user
-     */
-    public void registerUserToDefaultChannels(User userToAddToGroup, String group, Role role) {
-        final List<String> channelNames = Arrays.stream(DefaultChannelType.values()).toList().stream().map(DefaultChannelType::getName).toList();
-
-        List<Course> courses = switch (role) {
-            case STUDENT -> courseRepository.findCoursesByStudentGroupName(group);
-            case TEACHING_ASSISTANT -> courseRepository.findCoursesByTeachingAssistantGroupName(group);
-            case INSTRUCTOR -> courseRepository.findCoursesByInstructorGroupName(group);
-            default -> List.of();
-        };
-
-        for (Course c : courses) {
-            channelRepository.findChannelsByCourseId(c.getId()).stream().filter(channel -> channelNames.contains(channel.getName())).forEach(channel -> {
-                registerUsersToConversation(c, Set.of(userToAddToGroup), channel, Optional.empty());
-            });
         }
     }
 
