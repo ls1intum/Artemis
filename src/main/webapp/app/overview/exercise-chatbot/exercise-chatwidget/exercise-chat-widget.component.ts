@@ -11,7 +11,7 @@ import { MatDialog } from '@angular/material/dialog';
 })
 export class ExerciseChatWidgetComponent {
     messages: string[] = [];
-    IrisMessages: string[] = ['Hey! How can I help you?'];
+    irisMessages: string[] = ['Hey! How can I help you?'];
     userMessages: string[] = [];
     newMessage = '';
     @Output() chatWidgetClosed = new EventEmitter<void>();
