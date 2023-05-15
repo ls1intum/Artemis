@@ -22,6 +22,12 @@
     padding: 10px;
 }
 
+.header-icon {
+    border: none;
+    background: transparent;
+    color: grey;
+}
+
 .chat-body {
     height: calc(100% - 100px);
     overflow-y: scroll;

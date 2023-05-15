@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { faPaperPlane } from '@fortawesome/free-solid-svg-icons';
 import { faCompress } from '@fortawesome/free-solid-svg-icons';
 import { faXmark } from '@fortawesome/free-solid-svg-icons';
+import { MatDialog } from '@angular/material/dialog';
 
 @Component({
     selector: 'jhi-exercise-chat-widget',
@@ -10,9 +11,11 @@ import { faXmark } from '@fortawesome/free-solid-svg-icons';
 })
 export class ExerciseChatWidgetComponent {
     messages: string[] = [];
-    IrisMessages: string[] = ['Hey! how can I help you?'];
+    IrisMessages: string[] = ['Hey! How can I help you?'];
     userMessages: string[] = [];
     newMessage = '';
+
+    constructor(private dialog: MatDialog) {}
 
     // Icons
     faPaperPlane = faPaperPlane;
@@ -24,5 +27,9 @@ export class ExerciseChatWidgetComponent {
             this.userMessages.push(this.newMessage);
             this.newMessage = '';
         }
+    }
+
+    closeChat() {
+        const dialogRef = this.dialog.closeAll();
     }
 }
