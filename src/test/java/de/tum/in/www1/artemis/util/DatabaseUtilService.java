@@ -4058,6 +4058,11 @@ public class DatabaseUtilService {
         return quizExercise;
     }
 
+    /**
+     * initializes a quiz with all different types of questions
+     *
+     * @param quizExercise to be initialized
+     */
     private void initializeQuizExercise(QuizExercise quizExercise) {
         quizExercise.addQuestions(createMultipleChoiceQuestion());
         quizExercise.addQuestions(createDragAndDropQuestion());
@@ -4170,6 +4175,7 @@ public class DatabaseUtilService {
         System.out.println("DnD: " + dnd);
         System.out.println("DnD.hashCode: " + dnd.hashCode());
         dnd.copyQuestionId();
+
         return dnd;
     }
 

@@ -129,6 +129,7 @@ public class ModelFactory {
 
     public static QuizExercise generateQuizExerciseForExam(ExerciseGroup exerciseGroup) {
         var quizExercise = (QuizExercise) populateExerciseForExam(new QuizExercise(), exerciseGroup);
+
         quizExercise.setProblemStatement(null);
         quizExercise.setGradingInstructions(null);
         quizExercise.setPresentationScoreEnabled(false);
@@ -148,6 +149,7 @@ public class ModelFactory {
             }
         }
         quizExercise.setRandomizeQuestionOrder(true);
+
         return quizExercise;
     }
 
