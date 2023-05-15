@@ -122,17 +122,16 @@ public class LegalDocumentService {
      */
     private LegalDocument getLegalDocument(Language language, LegalDocumentType type) {
         // if it doesn't exist for one language, try to return the other language, and only throw an exception if it doesn't exist for both languages
-        if (getLegalDocumentPathIfExists(Language.GERMAN, type).isEmpty() && getLegalDocumentPathIfExists(Language.ENGLISH, type).isEmpty()) {
+        Language alternativeLanguage = language == Language.GERMAN ? Language.ENGLISH : Language.GERMAN;
+        if (getLegalDocumentPathIfExists(language, type).isPresent()) {
+            return readLegalDocument(language, type);
+        }
+        else if (getLegalDocumentPathIfExists(alternativeLanguage, type).isPresent()) {
+            return readLegalDocument(alternativeLanguage, type);
+        }
+        else {
             throw new BadRequestAlertException("Could not find " + type + " file for any language", "legalDocument", "noLegalDocumentFile");
         }
-        else if (language == Language.GERMAN && getLegalDocumentPathIfExists(language, type).isEmpty()) {
-            language = Language.ENGLISH;
-        }
-        else if (language == Language.ENGLISH && getLegalDocumentPathIfExists(language, type).isEmpty()) {
-            language = Language.GERMAN;
-        }
-
-        return readLegalDocument(language, type);
     }
 
     private LegalDocument readLegalDocument(Language language, LegalDocumentType type) {
@@ -142,6 +141,7 @@ public class LegalDocumentService {
         }
         catch (IOException e) {
             log.error("Could not read {} file for language {}", type, language);
+            e.printStackTrace();
             throw new InternalServerErrorException("Could not read " + type + " file for language " + language);
         }
         return type == LegalDocumentType.PRIVACY_STATEMENT ? new PrivacyStatement(legalDocumentText, language) : new Imprint(legalDocumentText, language);
@@ -162,6 +162,7 @@ public class LegalDocumentService {
         }
         catch (IOException e) {
             log.error("Could not update {} file for language {}", legalDocument.getType(), legalDocument.getLanguage());
+            e.printStackTrace();
             throw new InternalServerErrorException("Could not update " + legalDocument.getType() + " file for language " + legalDocument.getLanguage());
         }
     }
