@@ -4351,6 +4351,8 @@ public class DatabaseUtilService {
     public MultipleChoiceQuestion createSingleChoiceQuestion() {
         var singleChoiceQuestion = createMultipleChoiceQuestion();
         singleChoiceQuestion.setSingleChoice(true);
+        // only one answer option must be correct
+        singleChoiceQuestion.getAnswerOptions().get(3).setIsCorrect(false);
         return singleChoiceQuestion;
     }
 
