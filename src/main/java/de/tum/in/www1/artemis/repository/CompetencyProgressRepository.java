@@ -17,57 +17,58 @@ public interface CompetencyProgressRepository extends JpaRepository<CompetencyPr
 
     @Transactional // ok because of delete
     @Modifying
-    void deleteAllByLearningGoalId(Long learningGoalId);
+    @Query("DELETE FROM CompetencyProgress cp WHERE cp.learningGoal.id = :learningGoalId")
+    void deleteAllByCompetencyId(Long learningGoalId);
 
     @Transactional // ok because of delete
     @Modifying
     void deleteAllByUserId(Long userId);
 
     @Query("""
-            SELECT lgp
-            FROM CompetencyProgress lgp
-            WHERE lgp.learningGoal.id = :competencyId
+            SELECT cp
+            FROM CompetencyProgress cp
+            WHERE cp.learningGoal.id = :competencyId
             """)
     List<CompetencyProgress> findAllByCompetencyId(@Param("competencyId") Long competencyId);
 
     @Query("""
-            SELECT lgp
-            FROM CompetencyProgress lgp
-            WHERE lgp.learningGoal.id = :competencyId
-                AND lgp.user.id = :userId
+            SELECT cp
+            FROM CompetencyProgress cp
+            WHERE cp.learningGoal.id = :competencyId
+                AND cp.user.id = :userId
             """)
     Optional<CompetencyProgress> findByCompetencyIdAndUserId(@Param("competencyId") Long competencyId, @Param("userId") Long userId);
 
     @Query("""
-            SELECT lgp
-            FROM CompetencyProgress lgp
-                LEFT JOIN FETCH lgp.user
-                LEFT JOIN FETCH lgp.learningGoal
-            WHERE lgp.learningGoal.id = :competencyId
-                AND lgp.user.id = :userId
+            SELECT cp
+            FROM CompetencyProgress cp
+                LEFT JOIN FETCH cp.user
+                LEFT JOIN FETCH cp.learningGoal
+            WHERE cp.learningGoal.id = :competencyId
+                AND cp.user.id = :userId
             """)
     Optional<CompetencyProgress> findEagerByCompetencyIdAndUserId(@Param("competencyId") Long competencyId, @Param("userId") Long userId);
 
     @Query("""
-            SELECT AVG(lgp.confidence)
-            FROM CompetencyProgress lgp
-            WHERE lgp.learningGoal.id = :competencyId
+            SELECT AVG(cp.confidence)
+            FROM CompetencyProgress cp
+            WHERE cp.learningGoal.id = :competencyId
             """)
     Optional<Double> findAverageConfidenceByCompetencyId(@Param("competencyId") Long competencyId);
 
     @Query("""
-            SELECT count(lgp)
-            FROM CompetencyProgress lgp
-            WHERE lgp.learningGoal.id = :competencyId
+            SELECT count(cp)
+            FROM CompetencyProgress cp
+            WHERE cp.learningGoal.id = :competencyId
             """)
     Long countByCompetency(@Param("competencyId") Long competencyId);
 
     @Query("""
-            SELECT count(lgp)
-            FROM CompetencyProgress lgp
-            WHERE lgp.learningGoal.id = :competencyId
-                AND lgp.progress >= :progress
-                AND lgp.confidence >= :confidence
+            SELECT count(cp)
+            FROM CompetencyProgress cp
+            WHERE cp.learningGoal.id = :competencyId
+                AND cp.progress >= :progress
+                AND cp.confidence >= :confidence
             """)
     Long countByCompetencyAndProgressAndConfidenceGreaterThanEqual(@Param("competencyId") Long competencyId, @Param("progress") Double progress,
             @Param("confidence") Double confidence);

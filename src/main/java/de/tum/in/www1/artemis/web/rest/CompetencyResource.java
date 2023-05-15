@@ -264,7 +264,7 @@ public class CompetencyResource {
             throw new BadRequestException("Can not delete a competency that has active relations");
         }
 
-        competencyProgressRepository.deleteAllByLearningGoalId(competency.getId());
+        competencyProgressRepository.deleteAllByCompetencyId(competency.getId());
 
         competency.getExercises().forEach(exercise -> {
             exercise.getCompetencies().remove(competency);
