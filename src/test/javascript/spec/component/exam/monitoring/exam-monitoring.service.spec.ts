@@ -9,7 +9,7 @@ import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { MockWebsocketService } from '../../../helpers/mocks/service/mock-websocket.service';
 import { EXAM_MONITORING_UPDATE_URL, ExamMonitoringService } from 'app/exam/monitoring/exam-monitoring.service';
 import { createActions } from './exam-monitoring-helper';
-import * as Sentry from '@sentry/browser';
+import * as Sentry from '@sentry/angular-ivy';
 import { CaptureContext } from '@sentry/types';
 import { BehaviorSubject, of } from 'rxjs';
 import { ExamActionService } from 'app/exam/monitoring/exam-action.service';
@@ -219,6 +219,6 @@ describe('ExamMonitoringService', () => {
     // url
     it('should get correct exam monitoring update url', () => {
         // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
-        expect(EXAM_MONITORING_UPDATE_URL(exam.course?.id!, exam.id!)).toBe(`${SERVER_API_URL}/api/courses/${exam.course?.id!}/exams/${exam.id!}/statistics`);
+        expect(EXAM_MONITORING_UPDATE_URL(exam.course?.id!, exam.id!)).toBe(`api/courses/${exam.course?.id!}/exams/${exam.id!}/statistics`);
     });
 });

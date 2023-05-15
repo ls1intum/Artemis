@@ -189,7 +189,7 @@ export const areManualResultsAllowed = (exercise: Exercise): boolean => {
         return !exercise.dueDate || dayjs().isAfter(exercise.dueDate);
     } else {
         const relevantDueDate = (exercise as ProgrammingExercise).buildAndTestStudentSubmissionsAfterDueDate ?? exercise.dueDate;
-        return exercise.assessmentType !== AssessmentType.AUTOMATIC && !!relevantDueDate && dayjs().isAfter(relevantDueDate);
+        return exercise.assessmentType !== AssessmentType.AUTOMATIC && (!relevantDueDate || dayjs().isAfter(relevantDueDate));
     }
 };
 

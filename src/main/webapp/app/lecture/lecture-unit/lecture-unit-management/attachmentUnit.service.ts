@@ -11,7 +11,7 @@ type EntityResponseType = HttpResponse<AttachmentUnit>;
     providedIn: 'root',
 })
 export class AttachmentUnitService {
-    private resourceURL = SERVER_API_URL + 'api';
+    private resourceURL = 'api';
 
     constructor(private httpClient: HttpClient, private lectureUnitService: LectureUnitService) {}
 

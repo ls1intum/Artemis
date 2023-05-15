@@ -9,7 +9,7 @@ type EntityResponseType = HttpResponse<TutorialGroupsConfiguration>;
 
 @Injectable({ providedIn: 'root' })
 export class TutorialGroupsConfigurationService {
-    private resourceURL = SERVER_API_URL + 'api';
+    private resourceURL = 'api';
 
     constructor(private httpClient: HttpClient) {}
 
