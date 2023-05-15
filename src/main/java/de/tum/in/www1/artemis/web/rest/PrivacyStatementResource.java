@@ -4,8 +4,8 @@ import javax.ws.rs.BadRequestException;
 
 import org.springframework.web.bind.annotation.*;
 
-import de.tum.in.www1.artemis.domain.LegalDocumentLanguage;
 import de.tum.in.www1.artemis.domain.PrivacyStatement;
+import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.security.annotations.EnforceAdmin;
 import de.tum.in.www1.artemis.service.LegalDocumentService;
 
@@ -30,11 +30,11 @@ public class PrivacyStatementResource {
      * @return the privacy statement
      */
     @GetMapping("privacy-statement")
-    public PrivacyStatement getPrivacyStatement(@RequestParam(value = "language") String language) {
-        if (!LegalDocumentLanguage.isValidShortName(language)) {
+    public PrivacyStatement getPrivacyStatement(@RequestParam("language") String language) {
+        if (!Language.isValidShortName(language)) {
             throw new BadRequestException("Language not supported");
         }
-        return legalDocumentService.getPrivacyStatement(LegalDocumentLanguage.fromLanguageShortName(language));
+        return legalDocumentService.getPrivacyStatement(Language.fromLanguageShortName(language));
     }
 
     /**
@@ -47,10 +47,10 @@ public class PrivacyStatementResource {
     @GetMapping("privacy-statement-for-update")
     @EnforceAdmin
     public PrivacyStatement getPrivacyStatementForUpdate(@RequestParam("language") String language) {
-        if (!LegalDocumentLanguage.isValidShortName(language)) {
+        if (!Language.isValidShortName(language)) {
             throw new BadRequestException("Language not supported");
         }
-        return legalDocumentService.getPrivacyStatementForUpdate(LegalDocumentLanguage.fromLanguageShortName(language));
+        return legalDocumentService.getPrivacyStatementForUpdate(Language.fromLanguageShortName(language));
     }
 
     /**

@@ -1,19 +1,22 @@
 package de.tum.in.www1.artemis.domain;
 
+import de.tum.in.www1.artemis.domain.enumeration.Language;
+import de.tum.in.www1.artemis.domain.enumeration.LegalDocumentType;
+
 public class LegalDocument {
 
     private final LegalDocumentType type;
 
     private String text;
 
-    private final LegalDocumentLanguage language;
+    private final Language language;
 
-    public LegalDocument(LegalDocumentType type, LegalDocumentLanguage language) {
+    public LegalDocument(LegalDocumentType type, Language language) {
         this.type = type;
         this.language = language;
     }
 
-    public LegalDocument(LegalDocumentType type, String text, LegalDocumentLanguage language) {
+    public LegalDocument(LegalDocumentType type, String text, Language language) {
         this.type = type;
         this.text = text;
         this.language = language;
@@ -31,7 +34,7 @@ public class LegalDocument {
         return text;
     }
 
-    public LegalDocumentLanguage getLanguage() {
+    public Language getLanguage() {
         return language;
     }
 }

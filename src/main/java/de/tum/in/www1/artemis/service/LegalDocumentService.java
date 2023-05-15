@@ -13,9 +13,9 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Imprint;
 import de.tum.in.www1.artemis.domain.LegalDocument;
-import de.tum.in.www1.artemis.domain.LegalDocumentLanguage;
-import de.tum.in.www1.artemis.domain.LegalDocumentType;
 import de.tum.in.www1.artemis.domain.PrivacyStatement;
+import de.tum.in.www1.artemis.domain.enumeration.Language;
+import de.tum.in.www1.artemis.domain.enumeration.LegalDocumentType;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
@@ -38,7 +38,7 @@ public class LegalDocumentService {
      * @param language the language of the privacy statement
      * @return the privacy statement that should be updated
      */
-    public PrivacyStatement getPrivacyStatementForUpdate(LegalDocumentLanguage language) {
+    public PrivacyStatement getPrivacyStatementForUpdate(Language language) {
         return (PrivacyStatement) getLegalDocumentForUpdate(language, LegalDocumentType.PRIVACY_STATEMENT);
     }
 
@@ -48,7 +48,7 @@ public class LegalDocumentService {
      * @param language the language of the imprint
      * @return the imprint that should be updated
      */
-    public Imprint getImprintForUpdate(LegalDocumentLanguage language) {
+    public Imprint getImprintForUpdate(Language language) {
         return (Imprint) getLegalDocumentForUpdate(language, LegalDocumentType.IMPRINT);
     }
 
@@ -58,7 +58,7 @@ public class LegalDocumentService {
      * @param language the language of the imprint
      * @return the imprint to view
      */
-    public Imprint getImprint(LegalDocumentLanguage language) {
+    public Imprint getImprint(Language language) {
         return (Imprint) getLegalDocument(language, LegalDocumentType.IMPRINT);
     }
 
@@ -68,7 +68,7 @@ public class LegalDocumentService {
      * @param language the language of the privacy statement
      * @return the privacy statement to view
      */
-    public PrivacyStatement getPrivacyStatement(LegalDocumentLanguage language) {
+    public PrivacyStatement getPrivacyStatement(Language language) {
         return (PrivacyStatement) getLegalDocument(language, LegalDocumentType.PRIVACY_STATEMENT);
     }
 
@@ -100,7 +100,7 @@ public class LegalDocumentService {
      * @param type     the type of the legal document
      * @return the legal document with the given language and type
      */
-    private LegalDocument getLegalDocumentForUpdate(LegalDocumentLanguage language, LegalDocumentType type) {
+    private LegalDocument getLegalDocumentForUpdate(Language language, LegalDocumentType type) {
         if (getLegalDocumentPathIfExists(language, type).isEmpty()) {
             return switch (type) {
                 case PRIVACY_STATEMENT -> new PrivacyStatement("", language);
@@ -109,7 +109,6 @@ public class LegalDocumentService {
 
         }
         return readLegalDocument(language, type);
-
     }
 
     /**
@@ -121,23 +120,22 @@ public class LegalDocumentService {
      * @param type     the type of the legal document
      * @return the legal document with the given language and type
      */
-    private LegalDocument getLegalDocument(LegalDocumentLanguage language, LegalDocumentType type) {
+    private LegalDocument getLegalDocument(Language language, LegalDocumentType type) {
         // if it doesn't exist for one language, try to return the other language, and only throw an exception if it doesn't exist for both languages
-        if (getLegalDocumentPathIfExists(LegalDocumentLanguage.GERMAN, type).isEmpty() && getLegalDocumentPathIfExists(LegalDocumentLanguage.ENGLISH, type).isEmpty()) {
+        if (getLegalDocumentPathIfExists(Language.GERMAN, type).isEmpty() && getLegalDocumentPathIfExists(Language.ENGLISH, type).isEmpty()) {
             throw new BadRequestAlertException("Could not find " + type + " file for any language", "legalDocument", "noLegalDocumentFile");
         }
-        else if (language == LegalDocumentLanguage.GERMAN && getLegalDocumentPathIfExists(language, type).isEmpty()) {
-            language = LegalDocumentLanguage.ENGLISH;
+        else if (language == Language.GERMAN && getLegalDocumentPathIfExists(language, type).isEmpty()) {
+            language = Language.ENGLISH;
         }
-        else if (language == LegalDocumentLanguage.ENGLISH && getLegalDocumentPathIfExists(language, type).isEmpty()) {
-            language = LegalDocumentLanguage.GERMAN;
+        else if (language == Language.ENGLISH && getLegalDocumentPathIfExists(language, type).isEmpty()) {
+            language = Language.GERMAN;
         }
 
         return readLegalDocument(language, type);
-
     }
 
-    private LegalDocument readLegalDocument(LegalDocumentLanguage language, LegalDocumentType type) {
+    private LegalDocument readLegalDocument(Language language, LegalDocumentType type) {
         String legalDocumentText;
         try {
             legalDocumentText = Files.readString(getLegalDocumentPath(language, type));
@@ -166,10 +164,9 @@ public class LegalDocumentService {
             log.error("Could not update {} file for language {}", legalDocument.getType(), legalDocument.getLanguage());
             throw new InternalServerErrorException("Could not update " + legalDocument.getType() + " file for language " + legalDocument.getLanguage());
         }
-
     }
 
-    private Optional<Path> getLegalDocumentPathIfExists(LegalDocumentLanguage language, LegalDocumentType type) {
+    private Optional<Path> getLegalDocumentPathIfExists(Language language, LegalDocumentType type) {
         var filePath = getLegalDocumentPath(language, type);
         if (Files.exists(filePath)) {
             return Optional.of(filePath);
@@ -177,7 +174,7 @@ public class LegalDocumentService {
         return Optional.empty();
     }
 
-    private Path getLegalDocumentPath(LegalDocumentLanguage language, LegalDocumentType type) {
+    private Path getLegalDocumentPath(Language language, LegalDocumentType type) {
         return legalDocumentsBasePath.resolve(type.getFileBaseName() + language.getShortName() + LEGAL_DOCUMENTS_FILE_EXTENSION);
     }
 

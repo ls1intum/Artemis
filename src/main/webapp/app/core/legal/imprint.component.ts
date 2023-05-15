@@ -28,9 +28,7 @@ export class ImprintComponent implements AfterViewInit, OnInit, OnDestroy {
     }
 
     ngOnDestroy() {
-        if (this.languageChangeSubscription) {
-            this.languageChangeSubscription.unsubscribe();
-        }
+        this.languageChangeSubscription?.unsubscribe();
     }
 
     /**

@@ -20,7 +20,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.domain.Imprint;
-import de.tum.in.www1.artemis.domain.LegalDocumentLanguage;
+import de.tum.in.www1.artemis.domain.enumeration.Language;
 import net.minidev.json.JSONObject;
 
 @ExtendWith(MockitoExtension.class)
@@ -60,7 +60,7 @@ class ImprintResourceIntegrationTest extends AbstractSpringIntegrationBambooBitb
             mockedFiles.when(
                     () -> Files.writeString(argThat(path -> path.toString().contains("_de")), anyString(), eq(StandardOpenOption.CREATE), eq(StandardOpenOption.TRUNCATE_EXISTING)))
                     .thenThrow(new IOException());
-            request.putWithResponseBody("/api/imprint", new Imprint("text", LegalDocumentLanguage.GERMAN), Imprint.class, HttpStatus.INTERNAL_SERVER_ERROR);
+            request.putWithResponseBody("/api/imprint", new Imprint("text", Language.GERMAN), Imprint.class, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -71,19 +71,19 @@ class ImprintResourceIntegrationTest extends AbstractSpringIntegrationBambooBitb
         try (MockedStatic<Files> mockedFiles = mockStatic(Files.class)) {
             mockedFiles.when(() -> Files.exists(any(Path.class))).thenReturn(false);
 
-            response = request.putWithResponseBody("/api/imprint", new Imprint("updatedText", LegalDocumentLanguage.GERMAN), Imprint.class, HttpStatus.OK);
+            response = request.putWithResponseBody("/api/imprint", new Imprint("updatedText", Language.GERMAN), Imprint.class, HttpStatus.OK);
             mockedFiles.verify(() -> Files.createDirectories(any()));
             mockedFiles.verify(() -> Files.writeString(argThat(path -> path.toString().contains("_de")), anyString(), eq(StandardOpenOption.CREATE),
                     eq(StandardOpenOption.TRUNCATE_EXISTING)));
         }
         assertThat(response.getText()).isEqualTo("updatedText");
-        assertThat(response.getLanguage()).isEqualTo(LegalDocumentLanguage.GERMAN);
+        assertThat(response.getLanguage()).isEqualTo(Language.GERMAN);
     }
 
     // no mock user as anonymous access should be allowed
     @ParameterizedTest
-    @EnumSource(value = LegalDocumentLanguage.class, names = { "GERMAN", "ENGLISH" })
-    void testGetImprintReturnsOtherLanguageIfFirstLanguageNotFound(LegalDocumentLanguage language) throws Exception {
+    @EnumSource(value = Language.class, names = { "GERMAN", "ENGLISH" })
+    void testGetImprintReturnsOtherLanguageIfFirstLanguageNotFound(Language language) throws Exception {
         Imprint response;
         try (MockedStatic<Files> mockedFiles = mockStatic(Files.class)) {
             if ("de".equals(language.getShortName())) {
@@ -100,11 +100,11 @@ class ImprintResourceIntegrationTest extends AbstractSpringIntegrationBambooBitb
             response = request.get("/api/imprint?language=" + language.getShortName(), HttpStatus.OK, Imprint.class);
         }
         if ("de".equals(language.getShortName())) {
-            assertThat(response.getLanguage()).isEqualTo(LegalDocumentLanguage.ENGLISH);
+            assertThat(response.getLanguage()).isEqualTo(Language.ENGLISH);
             assertThat(response.getText()).isEqualTo("Imprint");
         }
         else {
-            assertThat(response.getLanguage()).isEqualTo(LegalDocumentLanguage.GERMAN);
+            assertThat(response.getLanguage()).isEqualTo(Language.GERMAN);
             assertThat(response.getText()).isEqualTo("Impressum");
         }
     }
@@ -140,16 +140,16 @@ class ImprintResourceIntegrationTest extends AbstractSpringIntegrationBambooBitb
             response = request.get("/api/imprint-for-update?language=de", HttpStatus.OK, Imprint.class);
         }
         assertThat(response.getText()).isEqualTo("");
-        assertThat(response.getLanguage()).isEqualTo(LegalDocumentLanguage.GERMAN);
+        assertThat(response.getLanguage()).isEqualTo(Language.GERMAN);
     }
 
     @ParameterizedTest
-    @EnumSource(value = LegalDocumentLanguage.class, names = { "GERMAN", "ENGLISH" })
-    void testGetImprintReturnsCorrectFileContent(LegalDocumentLanguage language) throws Exception {
+    @EnumSource(value = Language.class, names = { "GERMAN", "ENGLISH" })
+    void testGetImprintReturnsCorrectFileContent(Language language) throws Exception {
         Imprint response;
         try (MockedStatic<Files> mockedFiles = mockStatic(Files.class)) {
             mockedFiles.when(() -> Files.exists(any())).thenReturn(true);
-            if (language == LegalDocumentLanguage.ENGLISH) {
+            if (language == Language.ENGLISH) {
                 mockedFiles.when(() -> Files.readString(argThat(path -> path.toString().contains("_en")))).thenReturn("Imprint");
             }
             else {
@@ -159,7 +159,7 @@ class ImprintResourceIntegrationTest extends AbstractSpringIntegrationBambooBitb
         }
 
         assertThat(response.getLanguage()).isEqualTo(language);
-        if (language == LegalDocumentLanguage.ENGLISH) {
+        if (language == Language.ENGLISH) {
             assertThat(response.getText()).isEqualTo("Imprint");
         }
         else {
@@ -168,9 +168,9 @@ class ImprintResourceIntegrationTest extends AbstractSpringIntegrationBambooBitb
     }
 
     @ParameterizedTest
-    @EnumSource(value = LegalDocumentLanguage.class, names = { "GERMAN", "ENGLISH" })
+    @EnumSource(value = Language.class, names = { "GERMAN", "ENGLISH" })
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
-    void testGetImprintForUpdateReturnsCorrectFileContent(LegalDocumentLanguage language) throws Exception {
+    void testGetImprintForUpdateReturnsCorrectFileContent(Language language) throws Exception {
         Imprint response;
         try (MockedStatic<Files> mockedFiles = mockStatic(Files.class)) {
             mockedFiles.when(() -> Files.exists(any())).thenReturn(true);
@@ -195,14 +195,14 @@ class ImprintResourceIntegrationTest extends AbstractSpringIntegrationBambooBitb
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateImprint_instructorAccessForbidden() throws Exception {
-        request.put("/api/imprint", new Imprint(LegalDocumentLanguage.GERMAN), HttpStatus.FORBIDDEN);
+        request.put("/api/imprint", new Imprint(Language.GERMAN), HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void testUpdateImprint_writesFile_ReturnsUpdatedFileContent() throws Exception {
         Imprint response;
-        Imprint requestBody = new Imprint(LegalDocumentLanguage.GERMAN);
+        Imprint requestBody = new Imprint(Language.GERMAN);
         requestBody.setText("Impressum");
         try (MockedStatic<Files> mockedFiles = mockStatic(Files.class)) {
             mockedFiles.when(() -> Files.exists(any())).thenReturn(true);
@@ -211,7 +211,7 @@ class ImprintResourceIntegrationTest extends AbstractSpringIntegrationBambooBitb
                     eq(StandardOpenOption.TRUNCATE_EXISTING)));
 
         }
-        assertThat(response.getLanguage()).isEqualTo(LegalDocumentLanguage.GERMAN);
+        assertThat(response.getLanguage()).isEqualTo(Language.GERMAN);
         assertThat(response.getText()).isEqualTo("Impressum");
 
     }
@@ -228,7 +228,7 @@ class ImprintResourceIntegrationTest extends AbstractSpringIntegrationBambooBitb
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void testUpdateImprint_blankTextBadRequest() throws Exception {
-        Imprint requestBody = new Imprint(LegalDocumentLanguage.GERMAN);
+        Imprint requestBody = new Imprint(Language.GERMAN);
         requestBody.setText("           ");
         request.put("/api/imprint", requestBody, HttpStatus.BAD_REQUEST);
     }

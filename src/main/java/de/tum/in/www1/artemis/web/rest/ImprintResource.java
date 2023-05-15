@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.in.www1.artemis.domain.Imprint;
-import de.tum.in.www1.artemis.domain.LegalDocumentLanguage;
+import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.security.annotations.EnforceAdmin;
 import de.tum.in.www1.artemis.service.LegalDocumentService;
 
@@ -36,10 +36,10 @@ public class ImprintResource {
      */
     @GetMapping("imprint")
     public Imprint getImprint(@RequestParam("language") String language) {
-        if (!LegalDocumentLanguage.isValidShortName(language)) {
+        if (!Language.isValidShortName(language)) {
             throw new BadRequestException("Language not supported");
         }
-        return legalDocumentService.getImprint(LegalDocumentLanguage.fromLanguageShortName(language));
+        return legalDocumentService.getImprint(Language.fromLanguageShortName(language));
     }
 
     /**
@@ -52,10 +52,10 @@ public class ImprintResource {
     @GetMapping("imprint-for-update")
     @EnforceAdmin
     public Imprint getImprintForUpdate(@RequestParam("language") String language) {
-        if (!LegalDocumentLanguage.isValidShortName(language)) {
+        if (!Language.isValidShortName(language)) {
             throw new BadRequestException("Language not supported");
         }
-        return legalDocumentService.getImprintForUpdate(LegalDocumentLanguage.fromLanguageShortName(language));
+        return legalDocumentService.getImprintForUpdate(Language.fromLanguageShortName(language));
     }
 
     /**
