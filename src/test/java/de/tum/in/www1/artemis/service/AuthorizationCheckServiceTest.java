@@ -121,4 +121,97 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationBambooBitbu
             assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> authCheckService.checkUserAllowedToSelfRegisterForCourseElseThrow(this.student1, course));
         }
     }
+
+    @Nested
+    @Component
+    class IsUserAllowedToSelfDisenrollFromCourseTest {
+
+        @Autowired
+        private AuthorizationCheckService authCheckService;
+
+        @Autowired
+        private CourseRepository courseRepository;
+
+        private User student;
+
+        private Course getCourseForSelfDisenrollmentAllowedTest() {
+            var course = database.createCourse();
+            course.setDisenrollmentEnabled(true);
+            course.setEnrollmentStartDate(ZonedDateTime.now().minusDays(2));
+            course.setEnrollmentEndDate(ZonedDateTime.now().plusDays(2));
+            course.setDisenrollmentEndDate(ZonedDateTime.now().plusDays(4));
+            course.setEndDate(ZonedDateTime.now().plusDays(6));
+            course.setStudentGroupName("test-students");
+            return course;
+        }
+
+        @BeforeEach
+        void setUp() {
+            this.student = database.getUserByLogin(TEST_PREFIX + "student1");
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testIsUserAllowedToSelfDisenrollFromCourseForDisenrollmentEndSetAndAllowed() {
+            Course course = getCourseForSelfDisenrollmentAllowedTest();
+            courseRepository.save(course);
+            assertThatCode(() -> authCheckService.checkUserAllowedToSelfDisenrollFromCourseElseThrow(student, course)).doesNotThrowAnyException();
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testIsUserAllowedToSelfDisenrollFromCourseForDisenrollmentEndNotSetAndAllowed() {
+            Course course = getCourseForSelfDisenrollmentAllowedTest();
+            course.setDisenrollmentEndDate(null);
+            courseRepository.save(course);
+            assertThatCode(() -> authCheckService.checkUserAllowedToSelfDisenrollFromCourseElseThrow(student, course)).doesNotThrowAnyException();
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testIsUserAllowedToSelfDisenrollFromCourseForDisenrollmentDisabled() {
+            Course course = getCourseForSelfDisenrollmentAllowedTest();
+            course.setDisenrollmentEnabled(false);
+            courseRepository.save(course);
+            assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> authCheckService.checkUserAllowedToSelfDisenrollFromCourseElseThrow(student, course));
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testIsUserAllowedToSelfDisenrollFromCourseForWrongDisenrollmentStartDate() {
+            Course course = getCourseForSelfDisenrollmentAllowedTest();
+            // disenrollment period starts with enrollment period
+            course.setEnrollmentStartDate(ZonedDateTime.now().plusDays(1));
+            courseRepository.save(course);
+            assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> authCheckService.checkUserAllowedToSelfDisenrollFromCourseElseThrow(student, course));
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testIsUserAllowedToSelfDisenrollFromCourseForWrongDisenrollmentEndDate() {
+            Course course = getCourseForSelfDisenrollmentAllowedTest();
+            course.setEnrollmentEndDate(ZonedDateTime.now().minusDays(1));
+            courseRepository.save(course);
+            assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> authCheckService.checkUserAllowedToSelfDisenrollFromCourseElseThrow(student, course));
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testIsUserAllowedToSelfDisenrollFromCourseForWrongEndDate() {
+            Course course = getCourseForSelfDisenrollmentAllowedTest();
+            course.setEnrollmentEndDate(null);
+            course.setEndDate(ZonedDateTime.now().minusDays(1));
+            courseRepository.save(course);
+            assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> authCheckService.checkUserAllowedToSelfDisenrollFromCourseElseThrow(student, course));
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testIsUserAllowedToSelfDisenrollFromOnlineCourse() {
+            Course course = getCourseForSelfDisenrollmentAllowedTest();
+            course.setOnlineCourse(true);
+            courseRepository.save(course);
+            assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> authCheckService.checkUserAllowedToSelfDisenrollFromCourseElseThrow(this.student, course));
+        }
+    }
 }
