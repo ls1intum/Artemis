@@ -110,7 +110,7 @@ public class AdminCourseResource {
 
         Course createdCourse = courseRepository.save(course);
 
-        Arrays.stream(DefaultChannelType.values()).toList().forEach(channelType -> this.createChannel(createdCourse, channelType));
+        Arrays.stream(DefaultChannelType.values()).forEach(channelType -> this.createChannel(createdCourse, channelType));
 
         return ResponseEntity.created(new URI("/api/courses/" + createdCourse.getId())).body(createdCourse);
     }
