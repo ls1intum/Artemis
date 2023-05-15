@@ -673,8 +673,10 @@ public class Course extends DomainObject {
         return "Course{" + "id=" + getId() + ", title='" + getTitle() + "'" + ", description='" + getDescription() + "'" + ", shortName='" + getShortName() + "'"
                 + ", studentGroupName='" + getStudentGroupName() + "'" + ", teachingAssistantGroupName='" + getTeachingAssistantGroupName() + "'" + ", editorGroupName='"
                 + getEditorGroupName() + "'" + ", instructorGroupName='" + getInstructorGroupName() + "'" + ", startDate='" + getStartDate() + "'" + ", endDate='" + getEndDate()
-                + "'" + ", semester='" + getSemester() + "'" + "'" + ", onlineCourse='" + isOnlineCourse() + "'" + ", color='" + getColor() + "'" + ", courseIcon='"
-                + getCourseIcon() + "'" + ", registrationEnabled='" + isRegistrationEnabled() + "'" + "'" + ", presentationScore='" + getPresentationScore() + "}";
+                + "'" + ", enrollmentStartDate='" + getEnrollmentStartDate() + "'" + ", enrollmentEndDate='" + getEnrollmentEndDate() + "'" + ", disenrollmentEndDate='"
+                + getDisenrollmentEndDate() + "'" + ", semester='" + getSemester() + "'" + "'" + ", onlineCourse='" + isOnlineCourse() + "'" + ", color='" + getColor() + "'"
+                + ", courseIcon='" + getCourseIcon() + "'" + ", registrationEnabled='" + isRegistrationEnabled() + "'" + ", disenrollmentEnabled='" + isDisenrollmentEnabled() + "'"
+                + ", presentationScore='" + getPresentationScore() + "'" + "}";
     }
 
     public void setNumberOfInstructors(Long numberOfInstructors) {
