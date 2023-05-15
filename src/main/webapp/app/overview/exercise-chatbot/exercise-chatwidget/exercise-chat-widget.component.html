@@ -16,8 +16,10 @@
 
         <!-- input field section -->
         <div class="chat-input">
-            <input [(ngModel)]="newMessage" type="text" placeholder="Enter Message" />
-            <button (click)="onSend()" class="send-btn">Send</button>
+            <input [(ngModel)]="newMessage" type="text" placeholder=" Write a message..." />
+            <button (click)="onSend()" class="send-btn">
+                <fa-icon [icon]="faPaperPlane"></fa-icon>
+            </button>
         </div>
     </div>
 </div>

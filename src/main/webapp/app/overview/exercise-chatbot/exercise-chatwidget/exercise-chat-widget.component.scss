@@ -4,63 +4,69 @@
 
 .chat-widget {
     position: fixed;
-    bottom: 20px;
-    right: 20px;
+    bottom: 130px;
+    right: 50px;
     width: 300px;
     height: 400px;
     background-color: white;
-    border: 1px solid black;
 }
 
 .chat-header {
     height: 50px;
-    background-color: gray;
+    background-color: #212529;
     color: white;
     font-weight: bold;
-    font-family: sans-serif;
+    font-family: Arial;
     padding: 10px;
+    text-align: center;
 }
 
 .chat-body {
     height: calc(100% - 100px);
     overflow-y: scroll;
     padding: 10px;
+    border: 1px solid lightgray;
+    display: flex;
+    flex-direction: column;
 }
 
 .client-chat {
+    width: fit-content;
     background-color: #f2f2f2;
-    color: grey;
+    color: dimgrey;
     padding: 10px;
     border-radius: 10px;
     margin-bottom: 10px;
 }
 
 .my-chat {
-    background-color: #4caf50;
-    color: darkolivegreen;
+    width: fit-content;
+    margin-left: auto;
+    background-color: #b7dfb9;
+    color: dimgrey;
     padding: 10px;
     border-radius: 10px;
     margin-bottom: 10px;
-    align-self: flex-end;
+    //align-self: flex-end;
 }
 
 .chat-input {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 10px;
+    padding: 7px;
 }
 
 .chat-input input {
     flex: 1;
     margin-right: 10px;
-    padding: 10px;
-    border: none;
+    padding: 5px;
+    border: 1px solid lightgray;
     border-radius: 20px;
 }
 
 .send-btn {
-    padding: 10px;
+    padding: 5px 10px 5px 10px;
     border: none;
     border-radius: 20px;
     background-color: #4caf50;

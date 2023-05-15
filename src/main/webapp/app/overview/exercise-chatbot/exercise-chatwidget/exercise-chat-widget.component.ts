@@ -1,15 +1,19 @@
 import { Component } from '@angular/core';
+import { faPaperPlane } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
-    selector: 'jhi-exercise-chatwidget',
-    templateUrl: './exercise-chatwidget.component.html',
-    styleUrls: ['./exercise-chatwidget.component.scss'],
+    selector: 'jhi-exercise-chat-widget',
+    templateUrl: './exercise-chat-widget.component.html',
+    styleUrls: ['./exercise-chat-widget.component.scss'],
 })
-export class ExerciseChatwidgetComponent {
+export class ExerciseChatWidgetComponent {
     messages: string[] = [];
     IrisMessages: string[] = ['Hey! how can I help you?'];
     userMessages: string[] = [];
     newMessage = '';
+
+    // Icons
+    faPaperPlane = faPaperPlane;
 
     onSend(): void {
         if (this.newMessage) {
