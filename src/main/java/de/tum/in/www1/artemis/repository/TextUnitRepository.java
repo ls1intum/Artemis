@@ -24,8 +24,8 @@ public interface TextUnitRepository extends JpaRepository<TextUnit, Long> {
 
     @Query("""
             SELECT tu FROM TextUnit tu
-                LEFT JOIN FETCH tu.competencies lg
-                LEFT JOIN FETCH lg.lectureUnits
+                LEFT JOIN FETCH tu.competencies c
+                LEFT JOIN FETCH c.lectureUnits
             WHERE tu.id = :textUnitId
             """)
     Optional<TextUnit> findByIdWithCompetenciesBidirectional(@Param("textUnitId") Long textUnitId);

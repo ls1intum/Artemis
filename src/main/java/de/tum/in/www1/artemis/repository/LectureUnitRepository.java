@@ -30,8 +30,8 @@ public interface LectureUnitRepository extends JpaRepository<LectureUnit, Long> 
     @Query("""
             SELECT lu
             FROM LectureUnit lu
-                LEFT JOIN FETCH lu.competencies lg
-                LEFT JOIN FETCH lg.lectureUnits
+                LEFT JOIN FETCH lu.competencies c
+                LEFT JOIN FETCH c.lectureUnits
                 LEFT JOIN FETCH lu.exercise ex
                 LEFT JOIN FETCH ex.competencies
             WHERE lu.id = :lectureUnitId
@@ -41,8 +41,8 @@ public interface LectureUnitRepository extends JpaRepository<LectureUnit, Long> 
     @Query("""
             SELECT lu
             FROM LectureUnit lu
-                LEFT JOIN FETCH lu.competencies lg
-                LEFT JOIN FETCH lg.lectureUnits
+                LEFT JOIN FETCH lu.competencies c
+                LEFT JOIN FETCH c.lectureUnits
                 LEFT JOIN FETCH lu.exercise ex
                 LEFT JOIN FETCH ex.competencies
             WHERE lu.id IN :lectureUnitIds
