@@ -314,7 +314,7 @@ public class ParticipantScoreScheduleService {
                 updateParticipantScore(score);
             }
 
-            // Update the progress for learning goals linked to this exercise
+            // Update the progress for competencies linked to this exercise
             learningGoalProgressService.updateProgressByLearningObject(score.getExercise(), score.getParticipant().getParticipants());
         }
         catch (Exception e) {

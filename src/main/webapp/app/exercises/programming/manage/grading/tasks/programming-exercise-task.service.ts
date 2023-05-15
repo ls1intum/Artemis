@@ -26,7 +26,7 @@ export class ProgrammingExerciseTaskService {
 
     ignoreInactive = true;
 
-    public resourceUrl = `${SERVER_API_URL}api/programming-exercises`;
+    public resourceUrl = 'api/programming-exercises';
 
     constructor(private http: HttpClient, private alertService: AlertService, private gradingService: ProgrammingExerciseGradingService) {}
 

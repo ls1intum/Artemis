@@ -44,7 +44,7 @@ export interface IProgrammingExerciseSolutionEntryService {
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExerciseSolutionEntryService implements IProgrammingExerciseSolutionEntryService {
-    public resourceUrl = SERVER_API_URL + 'api/programming-exercises';
+    public resourceUrl = 'api/programming-exercises';
 
     constructor(protected http: HttpClient) {}
 

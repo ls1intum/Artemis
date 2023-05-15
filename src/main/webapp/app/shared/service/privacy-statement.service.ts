@@ -10,18 +10,18 @@ export class PrivacyStatementService {
     constructor(private http: HttpClient) {}
 
     getPrivacyStatement(language: PrivacyStatementLanguage): Observable<PrivacyStatement> {
-        return this.http.get<PrivacyStatement>(SERVER_API_URL + 'api/privacy-statement', {
+        return this.http.get<PrivacyStatement>('api/privacy-statement', {
             params: new HttpParams().set('language', language),
         });
     }
 
     getPrivacyStatementForUpdate(language: PrivacyStatementLanguage): Observable<PrivacyStatement> {
-        return this.http.get<PrivacyStatement>(SERVER_API_URL + 'api/privacy-statement-for-update', {
+        return this.http.get<PrivacyStatement>('api/privacy-statement-for-update', {
             params: new HttpParams().set('language', language),
         });
     }
 
     updatePrivacyStatement(privacyStatement: PrivacyStatement): Observable<PrivacyStatement> {
-        return this.http.put<PrivacyStatement>(SERVER_API_URL + 'api/privacy-statement', privacyStatement);
+        return this.http.put<PrivacyStatement>('api/privacy-statement', privacyStatement);
     }
 }
