@@ -22,7 +22,6 @@ export class ProgrammingExerciseProblemComponent {
     @Input() templateParticipationResultLoaded: boolean;
     @Input() hasUnsavedChanges: boolean;
     @Input() rerenderSubject: Observable<void>;
-    @Input() sequentialTestRunsAllowed: boolean;
     @Input() checkoutSolutionRepositoryAllowed: boolean;
     @Input() publishBuildPlanUrlAllowed: boolean;
     @Input() testwiseCoverageAnalysisSupported: boolean;

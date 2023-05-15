@@ -83,29 +83,6 @@
     </div>
 </div>
 
-<!-- It would be very complicated to change the sequential test run feature after an exercise is created, which is why it can only be activated if the exercise was not yet created.-->
-<div class="form-group mb-0" *ngIf="infrastructureStepInputs.sequentialTestRunsAllowed">
-    <div class="form-check">
-        <label class="form-check-label" for="field_sequentialTestRuns">
-            <input
-                class="form-check-input"
-                type="checkbox"
-                name="sequentialTestRuns"
-                id="field_sequentialTestRuns"
-                [disabled]="
-                    !!infrastructureStepInputs.programmingExercise.id ||
-                    !!infrastructureStepInputs.programmingExercise.staticCodeAnalysisEnabled ||
-                    !!infrastructureStepInputs.programmingExercise.testwiseCoverageEnabled
-                "
-                [(ngModel)]="infrastructureStepInputs.programmingExercise.sequentialTestRuns"
-                checked
-            />
-            <span jhiTranslate="artemisApp.programmingExercise.sequentialTestRuns.title">Differentiate Test Case Execution</span>
-            <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.sequentialTestRuns.description"></jhi-help-icon>
-        </label>
-    </div>
-</div>
-
 <!-- Setting whether the solution repository should be checked out is only supported for Haskell exercises and is only available for new exercises -->
 <div
     class="form-group mb-0"
@@ -210,29 +187,6 @@
                 checked
             />
             <span jhiTranslate="artemisApp.programmingExercise.publishBuildPlanUrl">Publish Build Plan Url</span>
-        </label>
-    </div>
-</div>
-
-<div class="form-group mb-0" *ngIf="infrastructureStepInputs.testwiseCoverageAnalysisSupported">
-    <div class="form-check">
-        <label class="form-check-label" for="field_testwiseCoverageEnabled">
-            <input
-                class="form-check-input"
-                type="checkbox"
-                name="testwiseCoverageEnabled"
-                id="field_testwiseCoverageEnabled"
-                [disabled]="!!infrastructureStepInputs.programmingExercise.sequentialTestRuns || !!infrastructureStepInputs.programmingExercise.id"
-                [(ngModel)]="infrastructureStepInputs.programmingExercise.testwiseCoverageEnabled"
-                checked
-            />
-            <span jhiTranslate="artemisApp.programmingExercise.recordTestwiseCoverage">Record Testwise Coverage</span>
-            <fa-icon
-                [icon]="faQuestionCircle"
-                class="text-secondary"
-                placement="auto"
-                ngbTooltip="{{ 'artemisApp.programmingExercise.recordTestwiseCoverageTooltip' | artemisTranslate }}"
-            ></fa-icon>
         </label>
     </div>
 </div>

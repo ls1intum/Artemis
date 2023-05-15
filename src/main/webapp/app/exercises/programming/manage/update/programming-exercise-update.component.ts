@@ -1022,6 +1022,8 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
 
     getGradingStepInputs(): GradingStepInputs {
         return {
+            sequentialTestRunsAllowed: this.sequentialTestRunsAllowed,
+            testwiseCoverageAnalysisSupported: this.testwiseCoverageAnalysisSupported,
             staticCodeAnalysisAllowed: this.staticCodeAnalysisAllowed,
             onStaticCodeAnalysisChanged: this.staticCodeAnalysisChanged,
             maxPenaltyPattern: this.maxPenaltyPattern,
@@ -1034,7 +1036,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             templateParticipationResultLoaded: this.templateParticipationResultLoaded,
             hasUnsavedChanges: this.hasUnsavedChanges,
             rerenderSubject: this.rerenderSubject.asObservable(),
-            sequentialTestRunsAllowed: this.sequentialTestRunsAllowed,
             checkoutSolutionRepositoryAllowed: this.checkoutSolutionRepositoryAllowed,
             validIdeSelection: this.validIdeSelection,
             inProductionEnvironment: this.inProductionEnvironment,
@@ -1061,8 +1062,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             recreateBuildPlans: this.recreateBuildPlans,
             refreshAuxiliaryRepositoryChecks: this.refreshAuxiliaryRepositoryChecks,
             selectedProjectType: this.selectedProjectType,
-            sequentialTestRunsAllowed: this.sequentialTestRunsAllowed,
-            testwiseCoverageAnalysisSupported: this.testwiseCoverageAnalysisSupported,
             updateCheckoutDirectory: this.updateCheckoutDirectory,
             updateRepositoryName: this.updateRepositoryName,
             updateTemplate: this.updateTemplate,

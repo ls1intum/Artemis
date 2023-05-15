@@ -41,6 +41,8 @@ export type GradingStepInputs = {
     staticCodeAnalysisAllowed: boolean;
     onStaticCodeAnalysisChanged: () => void;
     maxPenaltyPattern: string;
+    sequentialTestRunsAllowed: boolean;
+    testwiseCoverageAnalysisSupported: boolean;
 };
 
 export type ProblemStepInputs = {
@@ -48,7 +50,6 @@ export type ProblemStepInputs = {
     templateParticipationResultLoaded: boolean;
     hasUnsavedChanges: boolean;
     rerenderSubject: Observable<void>;
-    sequentialTestRunsAllowed: boolean;
     checkoutSolutionRepositoryAllowed: boolean;
     validIdeSelection: () => boolean | undefined;
     inProductionEnvironment: boolean;
@@ -76,8 +77,6 @@ export type InfrastructureStepInputs = {
     recreateBuildPlans: boolean;
     refreshAuxiliaryRepositoryChecks: () => void;
     selectedProjectType: ProjectType;
-    sequentialTestRunsAllowed: boolean;
-    testwiseCoverageAnalysisSupported: boolean;
     updateCheckoutDirectory: (editedAuxiliaryRepository: AuxiliaryRepository) => (newValue: any) => string | undefined;
     updateRepositoryName: (auxiliaryRepository: AuxiliaryRepository) => (newValue: any) => string | undefined;
     updateTemplate: boolean;
