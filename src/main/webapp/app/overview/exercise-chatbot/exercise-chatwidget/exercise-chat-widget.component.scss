@@ -12,13 +12,14 @@
 }
 
 .chat-header {
+    display: flex;
+    justify-content: space-between;
     height: 50px;
     background-color: #212529;
     color: white;
     font-weight: bold;
     font-family: Arial;
     padding: 10px;
-    text-align: center;
 }
 
 .chat-body {
