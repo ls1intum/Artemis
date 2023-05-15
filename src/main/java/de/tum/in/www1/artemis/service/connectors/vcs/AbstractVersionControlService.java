@@ -7,6 +7,7 @@ import java.nio.file.Path;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -163,6 +164,9 @@ public abstract class AbstractVersionControlService implements VersionControlSer
     @Override
     public String getOrRetrieveBranchOfExercise(ProgrammingExercise programmingExercise) {
         if (programmingExercise.getBranch() == null) {
+            if (!Hibernate.isInitialized(programmingExercise.getTemplateParticipation())) {
+                programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationByIdElseThrow(programmingExercise.getId());
+            }
             String branch = getDefaultBranchOfRepository(programmingExercise.getVcsTemplateRepositoryUrl());
             programmingExercise.setBranch(branch);
             programmingExerciseRepository.save(programmingExercise);
