@@ -123,6 +123,7 @@ describe('Programming exercise assessment', () => {
                 const now = dayjs();
                 if (now.isBefore(dueDate)) {
                     cy.wait(dueDate.diff(now, 'ms'));
+                    courseManagementRequest.lockRepositoriesAndParticipations(exercise.id!);
                 }
             });
     }
