@@ -190,7 +190,7 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationBambooBitbu
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void testIsUserAllowedToSelfDisenrollFromCourseForWrongDisenrollmentEndDate() {
             Course course = getCourseForSelfDisenrollmentAllowedTest();
-            course.setEnrollmentEndDate(ZonedDateTime.now().minusDays(1));
+            course.setDisenrollmentEndDate(ZonedDateTime.now().minusDays(1));
             courseRepository.save(course);
             assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> authCheckService.checkUserAllowedToSelfDisenrollFromCourseElseThrow(student, course));
         }
@@ -199,7 +199,7 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationBambooBitbu
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void testIsUserAllowedToSelfDisenrollFromCourseForWrongEndDate() {
             Course course = getCourseForSelfDisenrollmentAllowedTest();
-            course.setEnrollmentEndDate(null);
+            course.setDisenrollmentEndDate(null);
             course.setEndDate(ZonedDateTime.now().minusDays(1));
             courseRepository.save(course);
             assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> authCheckService.checkUserAllowedToSelfDisenrollFromCourseElseThrow(student, course));
