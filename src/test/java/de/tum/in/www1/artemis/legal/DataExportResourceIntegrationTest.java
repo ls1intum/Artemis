@@ -51,8 +51,8 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
 
     private static final String FILE_FORMAT_ZIP = ".zip";
 
-    @Value("${artemis.data-export-path}")
-    Path dataExportPath;
+    @Value("${artemis.repo-download-clone-path}")
+    private Path repoDownloadClonePath;
 
     @Autowired
     private DataExportRepository dataExportRepository;
@@ -78,8 +78,8 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @BeforeEach
     void initTestCase() throws IOException {
-        database.addUsers(TEST_PREFIX, 5, 5, 5, 1);
-        database.adjustUserGroupsToCustomGroups(TEST_PREFIX, "", 5, 5, 5, 1);
+        database.addUsers(TEST_PREFIX, 5, 4, 1, 1);
+        database.adjustUserGroupsToCustomGroups(TEST_PREFIX, "", 5, 4, 1, 1);
         // we cannot directly return the input stream using mockito because then the stream is closed when the method is invoked more than once
         var byteArray = new ClassPathResource("test-data/data-export/apollon_conversion.pdf").getInputStream().readAllBytes();
         when(apollonConversionService.convertModel(anyString())).thenReturn(new ByteArrayInputStream(byteArray));
@@ -115,10 +115,13 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
     private void prepareTestDataForDataExportCreation() throws Exception {
         var userLogin = TEST_PREFIX + "student1";
         String validModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
+        if (!Files.exists(repoDownloadClonePath)) {
+            Files.createDirectory(repoDownloadClonePath);
+        }
         Course course1 = database.addCourseWithExercisesAndSubmissions(TEST_PREFIX, "", 4, 2, 1, 1, false, 1, validModel);
         database.addQuizExerciseToCourseWithParticipationAndSubmissionForUser(course1, TEST_PREFIX + "student1");
-        var programmingExercise = database.addProgrammingExerciseToCourse(course1, false);
         programmingExerciseTestService.setup(this, versionControlService, continuousIntegrationService);
+        var programmingExercise = database.addProgrammingExerciseToCourse(course1, false);
         var participation = database.addStudentParticipationForProgrammingExerciseForLocalRepo(programmingExercise, userLogin,
                 programmingExerciseTestService.studentRepo.localRepoFile.toURI());
         var submission = database.createProgrammingSubmission(participation, false, "abc");
