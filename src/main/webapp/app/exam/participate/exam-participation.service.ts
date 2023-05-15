@@ -302,7 +302,6 @@ export class ExamParticipationService {
 
     getExerciseButtonTooltip(exercise: Exercise): ButtonTooltipType {
         const submission = ExamParticipationService.getSubmissionForExercise(exercise);
-        const participation = submission!.participation as ProgrammingExerciseStudentParticipation;
         // The submission might not yet exist for this exercise.
         // When the participant navigates to the exercise the submissions are created.
         // Until then show, that the exercise is synced
@@ -313,6 +312,7 @@ export class ExamParticipationService {
             return submission.isSynced ? 'synced' : 'notSynced';
         }
         // programming exercise
+        const participation = submission.participation as ProgrammingExerciseStudentParticipation;
         if (submission.submitted && submission.isSynced) {
             if (participation.locked) {
                 return 'submittedSubmissionLimitReached';
