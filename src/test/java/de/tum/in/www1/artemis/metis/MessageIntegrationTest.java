@@ -147,6 +147,21 @@ class MessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testFindMessagesWithPageSize() throws Exception {
+        Post postToSave = createPostWithOneToOneChat(TEST_PREFIX);
+
+        Post createdPost = request.postWithResponseBody("/api/courses/" + courseId + "/messages", postToSave, Post.class, HttpStatus.CREATED);
+        checkCreatedMessagePost(postToSave, createdPost);
+        assertThat(createdPost.getConversation().getId()).isNotNull();
+
+        PostContextFilter postContextFilter = new PostContextFilter();
+        postContextFilter.setConversationId(createdPost.getConversation().getId());
+        // TODO: test will fail because the page size is 1 and there is one message in the conversation
+        assertThat(conversationMessageRepository.findMessages(postContextFilter, Pageable.ofSize(1))).hasSize(1);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testMessagingNotAllowedIfCommunicationOnlySetting() throws Exception {
         messagingFeatureDisabledTest(CourseInformationSharingConfiguration.COMMUNICATION_ONLY);
     }
