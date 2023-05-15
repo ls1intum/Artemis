@@ -127,7 +127,7 @@ export class EntityTitleService {
                 break;
         }
 
-        this.http.get(`${SERVER_API_URL}${resourceUrl}/${ids[0]}/title`, { observe: 'response', responseType: 'text' }).subscribe((response: HttpResponse<string>) => {
+        this.http.get(`${resourceUrl}/${ids[0]}/title`, { observe: 'response', responseType: 'text' }).subscribe((response: HttpResponse<string>) => {
             if (response.body) {
                 this.setTitle(type, ids, response.body);
             }

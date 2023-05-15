@@ -5,7 +5,7 @@ import { SafeHtml } from '@angular/platform-browser';
 
 @Injectable({ providedIn: 'root' })
 export class StaticContentService {
-    private readonly staticContentUrl = SERVER_API_URL + 'public/content/';
+    private readonly staticContentUrl = 'public/content/';
 
     constructor(private http: HttpClient) {}
 

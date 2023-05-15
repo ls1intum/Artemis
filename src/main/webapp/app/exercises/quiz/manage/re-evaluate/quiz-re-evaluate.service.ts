@@ -5,7 +5,7 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 
 @Injectable({ providedIn: 'root' })
 export class QuizReEvaluateService {
-    private resourceUrl = SERVER_API_URL + 'api/quiz-exercises/';
+    private resourceUrl = 'api/quiz-exercises/';
 
     constructor(private http: HttpClient) {}
 
