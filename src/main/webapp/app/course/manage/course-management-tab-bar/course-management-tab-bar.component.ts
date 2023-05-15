@@ -24,6 +24,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { CourseAdminService } from 'app/course/manage/course-admin.service';
+import { ProfileToggle } from 'app/shared/profile-toggle/profile-toggle.service';
 
 @Component({
     selector: 'jhi-course-management-tab-bar',
@@ -33,6 +34,7 @@ import { CourseAdminService } from 'app/course/manage/course-admin.service';
 export class CourseManagementTabBarComponent implements OnInit, OnDestroy {
     readonly FeatureToggle = FeatureToggle;
     readonly ButtonSize = ButtonSize;
+    readonly ProfileToggle = ProfileToggle;
 
     course?: Course;
 

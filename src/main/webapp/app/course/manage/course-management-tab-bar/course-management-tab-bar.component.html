@@ -11,6 +11,7 @@
         </a>
         <a
             *ngIf="course.isAtLeastEditor"
+            [jhiProfileToggleHide]="ProfileToggle.LECTURE"
             [routerLink]="['/course-management', course.id, 'lectures']"
             class="tab-item btn btn-primary btn-md ms-1"
             id="lectures"
