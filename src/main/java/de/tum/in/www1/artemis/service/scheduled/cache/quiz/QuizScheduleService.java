@@ -409,7 +409,7 @@ public class QuizScheduleService {
      * 4. Send out new Statistics to instructors (WEBSOCKET SEND)
      */
     public void processCachedQuizSubmissions() {
-        log.info("Process cached quiz submissions");
+        log.debug("Process cached quiz submissions");
         // global try-catch for error logging
         try {
             for (Cache cache : quizCache.getAllCaches()) {

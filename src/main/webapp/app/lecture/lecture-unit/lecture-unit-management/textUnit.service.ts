@@ -11,7 +11,7 @@ type EntityResponseType = HttpResponse<TextUnit>;
     providedIn: 'root',
 })
 export class TextUnitService {
-    private resourceURL = SERVER_API_URL + 'api';
+    private resourceURL = 'api';
 
     constructor(private httpClient: HttpClient, private lectureUnitService: LectureUnitService) {}
 

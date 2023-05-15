@@ -32,12 +32,19 @@ export type ProgrammingExerciseTestCaseStateDTO = {
     buildAndTestStudentSubmissionsAfterDueDate?: dayjs.Dayjs;
 };
 
+export type ProgrammingExerciseResetOptions = {
+    deleteBuildPlans: boolean;
+    deleteRepositories: boolean;
+    deleteParticipationsSubmissionsAndResults: boolean;
+    recreateBuildPlans: boolean;
+};
+
 // TODO: we should use a proper enum here
 export type ProgrammingExerciseInstructorRepositoryType = 'TEMPLATE' | 'SOLUTION' | 'TESTS' | 'AUXILIARY';
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExerciseService {
-    public resourceUrl = SERVER_API_URL + 'api/programming-exercises';
+    public resourceUrl = 'api/programming-exercises';
 
     constructor(private http: HttpClient, private exerciseService: ExerciseService) {}
 
@@ -63,11 +70,18 @@ export class ProgrammingExerciseService {
     }
 
     /**
-     * Recreates the BASE and SOLUTION build plan for this exercise
-     * @param exerciseId of the programming exercise for which the build plans should be recreated
+     * Resets a programming exercise with the given exerciseId by performing a set of operations
+     * as specified in the ProgrammingExerciseResetOptions. The available operations include:
+     * 1. Recreating the BASE and SOLUTION build plans for the exercise.
+     * 2. Deleting all student participations associated with the exercise.
+     * 3. Deleting student build plans (except BASE/SOLUTION) and optionally git repositories of all exercise student participations.
+     *
+     * @param { number } exerciseId - Id of the programming exercise that should be reset.
+     * @param { ProgrammingExerciseResetOptions } options - Configuration options specifying which operations to perform during the exercise reset.
+     * @returns { Observable<string> } - An Observable that returns a string response.
      */
-    recreateBuildPlans(exerciseId: number): Observable<string> {
-        return this.http.put<string>(`${this.resourceUrl}/${exerciseId}/recreate-build-plans`, { responseType: 'text' });
+    reset(exerciseId: number, options: ProgrammingExerciseResetOptions): Observable<string> {
+        return this.http.put(`${this.resourceUrl}/${exerciseId}/reset`, options, { responseType: 'text' });
     }
 
     /**

@@ -85,7 +85,7 @@ export class CreateLearningGoalComponent implements OnInit {
             )
             .subscribe({
                 next: () => {
-                    // currently at /course-management/{courseId}/goal-management/create, going back to /course-management/{courseId}/goal-management/
+                    // currently at /course-management/{courseId}/competency-management/create, going back to /course-management/{courseId}/competency-management/
                     this.router.navigate(['../'], { relativeTo: this.activatedRoute });
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
