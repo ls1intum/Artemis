@@ -224,7 +224,8 @@ export const getTextColorClass = (result: Result | undefined, templateStatus: Re
         return 'text-success';
     }
 
-    if (result.score >= MIN_SCORE_GREEN) {
+    const hasCodeIssues = (result.codeIssueCount ?? 0) > 0;
+    if (result.score >= MIN_SCORE_GREEN && !hasCodeIssues) {
         return 'text-success';
     }
 

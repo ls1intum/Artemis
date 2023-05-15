@@ -21,6 +21,8 @@ import { ParticipationType } from 'app/entities/participation/participation.mode
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ResultTemplateStatus } from 'app/exercises/shared/result/result.utils';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import dayjs from 'dayjs/esm';
+import { MIN_SCORE_ORANGE } from 'app/app.constants';
 
 describe('ResultComponent', () => {
     let fixture: ComponentFixture<ResultComponent>;
@@ -88,6 +90,38 @@ describe('ResultComponent', () => {
         expect(component.textColorClass).toBe('text-secondary');
         expect(component.resultIconClass).toEqual(faQuestionCircle);
         expect(component.resultString).toBe('artemisApp.result.resultString.programmingShort (artemisApp.result.preliminary)');
+    });
+
+    it.each([
+        // apply when result would be green otherwise
+        { issues: undefined, score: 100, color: 'text-success' },
+        { issues: 0, score: 100, color: 'text-success' },
+        { issues: 1, score: 100, color: 'result-orange' },
+        // score takes precedence, ignore issue count
+        { issues: undefined, score: MIN_SCORE_ORANGE - 10, color: 'text-danger' },
+        { issues: 0, score: MIN_SCORE_ORANGE - 10, color: 'text-danger' },
+        { issues: 1, score: MIN_SCORE_ORANGE - 10, color: 'text-danger' },
+        { issues: undefined, score: MIN_SCORE_ORANGE, color: 'result-orange' },
+        { issues: 0, score: MIN_SCORE_ORANGE, color: 'result-orange' },
+        { issues: 1, score: MIN_SCORE_ORANGE, color: 'result-orange' },
+    ])('should respect code issues when setting the color (%s)', ({ issues, score, color }) => {
+        const submission: Submission = { id: 1 };
+        const result: Result = {
+            id: 3,
+            submission,
+            score: score,
+            testCaseCount: 2,
+            codeIssueCount: issues,
+            completionDate: dayjs().subtract(2, 'minutes'),
+        };
+        const participation = cloneDeep(programmingParticipation);
+        result.participation = participation;
+        participation.results = [result];
+
+        component.participation = participation;
+        fixture.detectChanges();
+
+        expect(component.textColorClass).toBe(color);
     });
 
     it('should set results for modeling exercise', () => {
