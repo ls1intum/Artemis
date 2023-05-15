@@ -98,8 +98,14 @@ const routes: Routes = [
         ArtemisFeedbackModule,
         ExerciseChatbotModule,
     ],
-    declarations: [CourseExerciseDetailsComponent, OrionCourseExerciseDetailsComponent, LtiInitializerComponent, LtiInitializerModalComponent, ProblemStatementComponent, ExerciseChatbotComponent],
+    declarations: [
+        CourseExerciseDetailsComponent,
+        OrionCourseExerciseDetailsComponent,
+        LtiInitializerComponent,
+        LtiInitializerModalComponent,
+        ProblemStatementComponent,
+        ExerciseChatbotComponent,
+    ],
     exports: [CourseExerciseDetailsComponent, OrionCourseExerciseDetailsComponent, ExerciseChatbotComponent],
-  
 })
 export class CourseExerciseDetailsModule {}
