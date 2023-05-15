@@ -95,17 +95,11 @@ const routes: Routes = [
         SubmissionResultStatusModule,
         ArtemisProgrammingExerciseManagementModule,
         ArtemisExerciseHintParticipationModule,
-        ExerciseChatbotModule,
         ArtemisFeedbackModule,
+        ExerciseChatbotModule,
     ],
-    declarations: [
-        CourseExerciseDetailsComponent,
-        OrionCourseExerciseDetailsComponent,
-        LtiInitializerComponent,
-        LtiInitializerModalComponent,
-        ExerciseChatbotComponent,
-        ProblemStatementComponent,
-    ],
+    declarations: [CourseExerciseDetailsComponent, OrionCourseExerciseDetailsComponent, LtiInitializerComponent, LtiInitializerModalComponent, ProblemStatementComponent, ExerciseChatbotComponent],
     exports: [CourseExerciseDetailsComponent, OrionCourseExerciseDetailsComponent, ExerciseChatbotComponent],
+
 })
 export class CourseExerciseDetailsModule {}
