@@ -3976,6 +3976,14 @@ public class DatabaseUtilService {
         return quizExercise;
     }
 
+    public void emptyOutQuizExercise(QuizExercise quizExercise) {
+        quizExercise.setReleaseDate(null);
+        quizExercise.setCourse(null);
+        quizExercise.setDueDate(null);
+        quizExercise.setAssessmentDueDate(null);
+        quizExercise.setQuizBatches(new HashSet<>());
+    }
+
     /**
      * Creates a new quiz that gets saved in the QuizExercise repository.
      *
