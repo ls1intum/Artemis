@@ -198,8 +198,11 @@
                 "complaintDueTooltip": "Du kannst eine Beschwerde bis {{date}} einreichen.",
                 "complaintPossible": "Beschwerde möglich:",
                 "complaintPossibleTooltip": "Nach Erhalt einer Bewertung wirst du {{days}} Tage zum Einreichen einer Beschwerde haben.",
-                "chatInputMessage": "Verfasse eine Nachricht...",
-                "chatPopUpMessage": "Nachdem Sie die Bestimmungen akzeptiert haben, beginnt Ihr Chat mit IrisBot. Bitte lehnen Sie ab, wenn Sie nicht chatten möchten."
+                "chatWelcome": "Willkommen",
+                "chatPopUpMessage": "Nachdem Sie die Bestimmungen akzeptiert haben, beginnt Ihr Chat mit IrisBot. Bitte lehnen Sie ab, wenn Sie nicht chatten möchten.",
+                "chatInputMessage": "Schreiben Sie eine Nachricht...",
+                "chatAccept": "Akzeptieren",
+                "chatDecline": "Ablehnen"
             }
         }
     }
