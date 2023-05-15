@@ -206,7 +206,7 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
 
                     for (const learningGoalProgressResponse of learningGoalProgressResponses) {
                         const courseLearningGoalProgress: CourseLearningGoalProgress = learningGoalProgressResponse.body!;
-                        this.learningGoals.find((lg) => lg.id === courseLearningGoalProgress.learningGoalId)!.courseProgress = courseLearningGoalProgress;
+                        this.learningGoals.find((lg) => lg.id === courseLearningGoalProgress.competencyId)!.courseProgress = courseLearningGoalProgress;
                     }
                 },
                 error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),

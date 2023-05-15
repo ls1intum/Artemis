@@ -47,7 +47,7 @@ export class LearningGoalProgress {
 }
 
 export class CourseLearningGoalProgress {
-    learningGoalId?: number;
+    competencyId?: number;
     numberOfStudents?: number;
     numberOfMasteredStudents?: number;
     averageStudentScore?: number;

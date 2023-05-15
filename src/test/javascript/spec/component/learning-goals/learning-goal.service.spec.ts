@@ -40,7 +40,7 @@ describe('LearningGoalService', () => {
 
         defaultLearningGoals = [{ id: 0, title: 'title', description: 'description' } as LearningGoal];
         defaultLearningGoalProgress = { progress: 20, confidence: 50 } as LearningGoalProgress;
-        defaultLearningGoalCourseProgress = { learningGoalId: 0, numberOfStudents: 8, numberOfMasteredStudents: 5, averageStudentScore: 90 } as CourseLearningGoalProgress;
+        defaultLearningGoalCourseProgress = { competencyId: 0, numberOfStudents: 8, numberOfMasteredStudents: 5, averageStudentScore: 90 } as CourseLearningGoalProgress;
     });
 
     afterEach(() => {
