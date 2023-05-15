@@ -118,9 +118,9 @@ class ExerciseScoresChartIntegrationTest extends AbstractSpringIntegrationBamboo
         assertThat(teamTextExercise.averageScoreAchieved).isEqualTo(70.0);
         assertThat(teamTextExercise.maxScoreAchieved).isEqualTo(90.0);
 
-        assertThat(individualTextExerciseWithoutParticipants.scoreOfStudent).isEqualTo(0.0);
-        assertThat(individualTextExerciseWithoutParticipants.averageScoreAchieved).isEqualTo(0.0);
-        assertThat(individualTextExerciseWithoutParticipants.maxScoreAchieved).isEqualTo(0.0);
+        assertThat(individualTextExerciseWithoutParticipants.scoreOfStudent).isZero();
+        assertThat(individualTextExerciseWithoutParticipants.averageScoreAchieved).isZero();
+        assertThat(individualTextExerciseWithoutParticipants.maxScoreAchieved).isZero();
     }
 
     private String getEndpointUrl(long courseId) {

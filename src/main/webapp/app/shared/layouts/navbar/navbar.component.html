@@ -74,7 +74,7 @@
 <nav class="navbar navbar-dark jh-navbar" [class.expanded]="!isCollapsed">
     <div class="jh-logo-container">
         <a class="navbar-brand" routerLink="/" (click)="collapseNavbar()">
-            <img [src]="SERVER_API_URL + 'public/images/logo.png'" height="30" alt="" />
+            <img [src]="'public/images/logo.png'" height="30" alt="" />
             <div jhiTranslate="global.title" class="navbar-title">Artemis</div>
             <ng-template #gitInfo>
                 <div>
@@ -190,6 +190,12 @@
                         <a class="dropdown-item" routerLink="admin/metrics" routerLinkActive="active" (click)="collapseNavbar()">
                             <fa-icon [icon]="faTachometerAlt" [fixedWidth]="true"></fa-icon>
                             <span jhiTranslate="global.menu.admin.metrics">Metrics</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" routerLink="admin/privacy-statement" routerLinkActive="active" (click)="collapseNavbar()">
+                            <fa-icon [icon]="faLock" [fixedWidth]="true"></fa-icon>
+                            <span jhiTranslate="global.menu.admin.privacyStatement">Privacy statement</span>
                         </a>
                     </li>
                     <li>

@@ -16,7 +16,7 @@ import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { isResultPreliminary } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
-import { captureException } from '@sentry/browser';
+import { captureException } from '@sentry/angular-ivy';
 import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
 
@@ -39,9 +39,9 @@ export interface IResultService {
 
 @Injectable({ providedIn: 'root' })
 export class ResultService implements IResultService {
-    private exerciseResourceUrl = SERVER_API_URL + 'api/exercises';
-    private resultResourceUrl = SERVER_API_URL + 'api/results';
-    private participationResourceUrl = SERVER_API_URL + 'api/participations';
+    private exerciseResourceUrl = 'api/exercises';
+    private resultResourceUrl = 'api/results';
+    private participationResourceUrl = 'api/participations';
 
     private readonly maxValueProgrammingResultInts = 255; // Size of tinyInt in SQL, that is used to store these values
 

@@ -13,7 +13,7 @@ import { JhiMainComponent } from 'app/shared/layouts/main/main.component';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisCoursesModule } from 'app/overview/courses.module';
 import { FooterComponent } from 'app/shared/layouts/footer/footer.component';
-import { ArtemisLegalModule } from 'app/core/legal/legal.module';
+import { ArtemisImprintModule } from 'app/core/legal/imprint.module';
 import { ActiveMenuDirective } from 'app/shared/layouts/navbar/active-menu.directive';
 import { ErrorComponent } from 'app/shared/layouts/error/error.component';
 import { ArtemisCoreModule } from 'app/core/core.module';
@@ -39,7 +39,7 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
         ArtemisHomeModule,
         ArtemisAppRoutingModule,
         GuidedTourModule,
-        ArtemisLegalModule,
+        ArtemisImprintModule,
         ArtemisCoursesModule,
         ArtemisSystemNotificationModule,
         ArtemisComplaintsModule,

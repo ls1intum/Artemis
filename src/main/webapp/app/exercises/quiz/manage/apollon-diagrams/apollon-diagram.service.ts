@@ -10,7 +10,7 @@ export type EntityResponseType = HttpResponse<ApollonDiagram>;
 
 @Injectable({ providedIn: 'root' })
 export class ApollonDiagramService {
-    private resourceUrl = SERVER_API_URL + 'api';
+    private resourceUrl = 'api';
 
     constructor(private http: HttpClient, private entityTitleService: EntityTitleService) {}
 

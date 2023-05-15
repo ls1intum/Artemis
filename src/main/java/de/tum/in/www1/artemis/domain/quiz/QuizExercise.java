@@ -37,7 +37,7 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 @Entity
 @DiscriminatorValue(value = "Q")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class QuizExercise extends Exercise {
+public class QuizExercise extends Exercise implements QuizConfiguration {
 
     @Column(name = "randomize_question_order")
     @JsonView(QuizView.Before.class)
@@ -341,15 +341,15 @@ public class QuizExercise extends Exercise {
     }
 
     @Override
-    public StudentParticipation findRelevantParticipation(List<StudentParticipation> participations) {
+    public List<StudentParticipation> findRelevantParticipation(List<StudentParticipation> participations) {
         for (StudentParticipation participation : participations) {
             if (participation.getExercise() != null && participation.getExercise().equals(this)) {
                 // in quiz exercises we don't care about the InitializationState
                 // => return the first participation we find
-                return participation;
+                return List.of(participation);
             }
         }
-        return null;
+        return Collections.emptyList();
     }
 
     @Override
@@ -546,109 +546,6 @@ public class QuizExercise extends Exercise {
     }
 
     /**
-     * Recreate missing pointers from children to parents that were removed by @JSONIgnore
-     */
-    public void reconnectJSONIgnoreAttributes() {
-        // iterate through quizQuestions to add missing pointer back to quizExercise
-        // Note: This is necessary because of the @IgnoreJSON in question and answerOption
-        // that prevents infinite recursive JSON serialization.
-        for (QuizQuestion quizQuestion : getQuizQuestions()) {
-            if (quizQuestion.getId() != null) {
-                quizQuestion.setExercise(this);
-                // reconnect QuestionStatistics
-                if (quizQuestion.getQuizQuestionStatistic() != null) {
-                    quizQuestion.getQuizQuestionStatistic().setQuizQuestion(quizQuestion);
-                }
-                // do the same for answerOptions (if quizQuestion is multiple choice)
-                if (quizQuestion instanceof MultipleChoiceQuestion mcQuestion) {
-                    MultipleChoiceQuestionStatistic mcStatistic = (MultipleChoiceQuestionStatistic) mcQuestion.getQuizQuestionStatistic();
-                    // reconnect answerCounters
-                    for (AnswerCounter answerCounter : mcStatistic.getAnswerCounters()) {
-                        if (answerCounter.getId() != null) {
-                            answerCounter.setMultipleChoiceQuestionStatistic(mcStatistic);
-                        }
-                    }
-                    // reconnect answerOptions
-                    for (AnswerOption answerOption : mcQuestion.getAnswerOptions()) {
-                        if (answerOption.getId() != null) {
-                            answerOption.setQuestion(mcQuestion);
-                        }
-                    }
-                }
-                if (quizQuestion instanceof DragAndDropQuestion dragAndDropQuestion) {
-                    DragAndDropQuestionStatistic dragAndDropStatistic = (DragAndDropQuestionStatistic) dragAndDropQuestion.getQuizQuestionStatistic();
-                    // reconnect dropLocations
-                    for (DropLocation dropLocation : dragAndDropQuestion.getDropLocations()) {
-                        if (dropLocation.getId() != null) {
-                            dropLocation.setQuestion(dragAndDropQuestion);
-                        }
-                    }
-                    // reconnect dragItems
-                    for (DragItem dragItem : dragAndDropQuestion.getDragItems()) {
-                        if (dragItem.getId() != null) {
-                            dragItem.setQuestion(dragAndDropQuestion);
-                        }
-                    }
-                    // reconnect correctMappings
-                    for (DragAndDropMapping mapping : dragAndDropQuestion.getCorrectMappings()) {
-                        if (mapping.getId() != null) {
-                            mapping.setQuestion(dragAndDropQuestion);
-                        }
-                    }
-                    // reconnect dropLocationCounters
-                    for (DropLocationCounter dropLocationCounter : dragAndDropStatistic.getDropLocationCounters()) {
-                        if (dropLocationCounter.getId() != null) {
-                            dropLocationCounter.setDragAndDropQuestionStatistic(dragAndDropStatistic);
-                            dropLocationCounter.getDropLocation().setQuestion(dragAndDropQuestion);
-                        }
-                    }
-                }
-                if (quizQuestion instanceof ShortAnswerQuestion shortAnswerQuestion) {
-                    ShortAnswerQuestionStatistic shortAnswerStatistic = (ShortAnswerQuestionStatistic) shortAnswerQuestion.getQuizQuestionStatistic();
-                    // reconnect spots
-                    for (ShortAnswerSpot spot : shortAnswerQuestion.getSpots()) {
-                        if (spot.getId() != null) {
-                            spot.setQuestion(shortAnswerQuestion);
-                        }
-                    }
-                    // reconnect solutions
-                    for (ShortAnswerSolution solution : shortAnswerQuestion.getSolutions()) {
-                        if (solution.getId() != null) {
-                            solution.setQuestion(shortAnswerQuestion);
-                        }
-                    }
-                    // reconnect correctMappings
-                    for (ShortAnswerMapping mapping : shortAnswerQuestion.getCorrectMappings()) {
-                        if (mapping.getId() != null) {
-                            mapping.setQuestion(shortAnswerQuestion);
-                        }
-                    }
-                    // reconnect spotCounters
-                    for (ShortAnswerSpotCounter shortAnswerSpotCounter : shortAnswerStatistic.getShortAnswerSpotCounters()) {
-                        if (shortAnswerSpotCounter.getId() != null) {
-                            shortAnswerSpotCounter.setShortAnswerQuestionStatistic(shortAnswerStatistic);
-                            shortAnswerSpotCounter.getSpot().setQuestion(shortAnswerQuestion);
-                        }
-                    }
-                }
-            }
-        }
-
-        // reconnect pointCounters
-        for (PointCounter pointCounter : getQuizPointStatistic().getPointCounters()) {
-            if (pointCounter.getId() != null) {
-                pointCounter.setQuizPointStatistic(getQuizPointStatistic());
-            }
-        }
-
-        if (getQuizBatches() != null) {
-            for (QuizBatch quizBatch : getQuizBatches()) {
-                quizBatch.setQuizExercise(this);
-            }
-        }
-    }
-
-    /**
      * add Result to all Statistics of the given QuizExercise
      *
      * @param result         the result which will be added
@@ -717,6 +614,32 @@ public class QuizExercise extends Exercise {
                 throw new BadRequestAlertException("Start time must not be before release date!", getTitle(), "noValidDates");
             }
         });
+    }
+
+    @Override
+    public void setQuestionParent(QuizQuestion quizQuestion) {
+        quizQuestion.setExercise(this);
+    }
+
+    /**
+     * Recreate missing pointers from children to parents that were removed by @JSONIgnore
+     */
+    public void reconnectJSONIgnoreAttributes() {
+        QuizConfiguration.super.reconnectJSONIgnoreAttributes();
+
+        // reconnect pointCounters
+        for (PointCounter pointCounter : getQuizPointStatistic().getPointCounters()) {
+            if (pointCounter.getId() != null) {
+                pointCounter.setQuizPointStatistic(getQuizPointStatistic());
+            }
+        }
+
+        // reconnect quizBatches
+        if (getQuizBatches() != null) {
+            for (QuizBatch quizBatch : getQuizBatches()) {
+                quizBatch.setQuizExercise(this);
+            }
+        }
     }
 
     @Override

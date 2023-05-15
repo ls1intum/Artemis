@@ -219,7 +219,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     }
 
     /**
-     * Fetch the course from the server including all exercises, lectures, exams and learning goals
+     * Fetch the course from the server including all exercises, lectures, exams and competencies
      * @param refresh Whether this is a force refresh (displays loader animation)
      */
     loadCourse(refresh = false): Observable<void> {
@@ -308,7 +308,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     }
 
     /**
-     * Check if the course has any learning goals or prerequisites
+     * Check if the course has any competencies or prerequisites
      */
     hasLearningGoals(): boolean {
         return !!(this.course?.learningGoals?.length || this.course?.prerequisites?.length);

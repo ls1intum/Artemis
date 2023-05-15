@@ -250,6 +250,12 @@ class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetCoursesForDashboardPracticeRepositories() throws Exception {
+        courseTestService.testGetCoursesForDashboardPracticeRepositories();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetAllCoursesForDashboard() throws Exception {
         courseTestService.testGetAllCoursesForDashboard();
     }
