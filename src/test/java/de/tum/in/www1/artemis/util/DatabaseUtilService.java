@@ -2595,7 +2595,7 @@ public class DatabaseUtilService {
     }
 
     public QuizExercise addQuizExerciseToCourseWithParticipationAndSubmissionForUser(Course course, String login) throws IOException {
-        QuizExercise quizExercise = createAndSaveQuiz(course, futureTimestamp, futureFutureTimestamp, QuizMode.SYNCHRONIZED);
+        QuizExercise quizExercise = createAndSaveQuizWithAllQuestionTypes(course, futureTimestamp, futureFutureTimestamp, QuizMode.SYNCHRONIZED);
         quizExercise.setTitle("quiz");
         quizExercise.setDuration(120);
         assertThat(quizExercise.getQuizQuestions()).isNotEmpty();
@@ -4106,8 +4106,9 @@ public class DatabaseUtilService {
         return quizExercise;
     }
 
-    public QuizExercise createAndSaveQuiz(Course course, ZonedDateTime releaseDate, ZonedDateTime dueDate, QuizMode quizMode) {
-        var quizExercise = createQuiz(course, releaseDate, dueDate, quizMode);
+    public QuizExercise createAndSaveQuizWithAllQuestionTypes(Course course, ZonedDateTime releaseDate, ZonedDateTime dueDate, QuizMode quizMode) {
+        QuizExercise quizExercise = ModelFactory.generateQuizExercise(releaseDate, dueDate, quizMode, course);
+        initializeQuizExerciseWithAllQuestionTypes(quizExercise);
         return quizExerciseRepository.save(quizExercise);
     }
 
@@ -4197,9 +4198,16 @@ public class DatabaseUtilService {
         quizExercise.addQuestions(createMultipleChoiceQuestion());
         quizExercise.addQuestions(createDragAndDropQuestion());
         quizExercise.addQuestions(createShortAnswerQuestion());
-        quizExercise.addQuestions(createSingleChoiceQuestion());
+
         quizExercise.setMaxPoints(quizExercise.getOverallQuizPoints());
         quizExercise.setGradingInstructions(null);
+    }
+
+    private void initializeQuizExerciseWithAllQuestionTypes(QuizExercise quizExercise) {
+        quizExercise.addQuestions(createMultipleChoiceQuestionWithAllTypesOfAnswerOptions());
+        quizExercise.addQuestions(createDragAndDropQuestionWithAllTypesOfMappings());
+        quizExercise.addQuestions(createShortAnswerQuestion());
+        quizExercise.addQuestions(createSingleChoiceQuestion());
     }
 
     @NotNull
@@ -4265,6 +4273,59 @@ public class DatabaseUtilService {
         var dropLocation2 = new DropLocation().posX(20d).posY(20d).height(10d).width(10d);
         dropLocation2.setTempID(generateTempId());
         var dropLocation3 = new DropLocation().posX(30d).posY(30d).height(10d).width(10d);
+        dropLocation3.setTempID(generateTempId());
+        dnd.addDropLocation(dropLocation1);
+        // also invoke remove once
+        dnd.removeDropLocation(dropLocation1);
+        dnd.addDropLocation(dropLocation1);
+        dnd.addDropLocation(dropLocation2);
+        dnd.addDropLocation(dropLocation3);
+
+        var dragItem1 = new DragItem().text("D1");
+        dragItem1.setTempID(generateTempId());
+        var dragItem2 = new DragItem().text("D2");
+        dragItem2.setTempID(generateTempId());
+        var dragItem3 = new DragItem().text("D3");
+        dragItem3.setTempID(generateTempId());
+        dnd.addDragItem(dragItem1);
+        assertThat(dragItem1.getQuestion()).isEqualTo(dnd);
+        // also invoke remove once
+        dnd.removeDragItem(dragItem1);
+        dnd.addDragItem(dragItem1);
+        dnd.addDragItem(dragItem2);
+        dnd.addDragItem(dragItem3);
+
+        var mapping1 = new DragAndDropMapping().dragItem(dragItem1).dropLocation(dropLocation1);
+        dragItem1.addMappings(mapping1);
+        // also invoke remove
+        dragItem1.removeMappings(mapping1);
+        dragItem1.addMappings(mapping1);
+        assertThat(dragItem1.getMappings()).isNotEmpty();
+
+        dnd.addCorrectMapping(mapping1);
+        dnd.removeCorrectMapping(mapping1);
+        dnd.addCorrectMapping(mapping1);
+        var mapping2 = new DragAndDropMapping().dragItem(dragItem2).dropLocation(dropLocation2);
+        dnd.addCorrectMapping(mapping2);
+        var mapping3 = new DragAndDropMapping().dragItem(dragItem3).dropLocation(dropLocation3);
+        dnd.addCorrectMapping(mapping3);
+        dnd.setExplanation("Explanation");
+        // invoke some util methods
+        System.out.println("DnD: " + dnd);
+        System.out.println("DnD.hashCode: " + dnd.hashCode());
+        dnd.copyQuestionId();
+        return dnd;
+    }
+
+    public DragAndDropQuestion createDragAndDropQuestionWithAllTypesOfMappings() {
+        DragAndDropQuestion dnd = (DragAndDropQuestion) new DragAndDropQuestion().title("DnD").score(3).text("Q2");
+        dnd.setScoringType(ScoringType.PROPORTIONAL_WITH_PENALTY);
+
+        var dropLocation1 = new DropLocation().posX(10d).posY(10d).height(10d).width(10d);
+        dropLocation1.setTempID(generateTempId());
+        var dropLocation2 = new DropLocation().posX(20d).posY(20d).height(10d).width(10d);
+        dropLocation2.setTempID(generateTempId());
+        var dropLocation3 = new DropLocation().posX(30d).posY(30d).height(10d).width(10d);
         dropLocation3.setInvalid(true);
         dropLocation3.setTempID(generateTempId());
         var dropLocation4 = new DropLocation().posX(40d).posY(40d).height(10d).width(10d);
@@ -4322,7 +4383,6 @@ public class DatabaseUtilService {
         // invoke some util methods
         System.out.println("DnD: " + dnd);
         System.out.println("DnD.hashCode: " + dnd.hashCode());
-        dnd.copyQuestionId();
         return dnd;
     }
 
@@ -4336,9 +4396,6 @@ public class DatabaseUtilService {
         mc.setScoringType(ScoringType.ALL_OR_NOTHING);
         mc.getAnswerOptions().add(new AnswerOption().text("A").hint("H1").explanation("E1").isCorrect(true));
         mc.getAnswerOptions().add(new AnswerOption().text("B").hint("H2").explanation("E2").isCorrect(false));
-        mc.getAnswerOptions().add(new AnswerOption().text("C").hint("H3").explanation("E3").isInvalid(true).isCorrect(false));
-        mc.getAnswerOptions().add(new AnswerOption().text("D").hint("H4").explanation("E4").isCorrect(true));
-        mc.getAnswerOptions().add(new AnswerOption().text("E").hint("H5").explanation("E5").isCorrect(false));
         mc.setExplanation("Explanation");
         // invoke some util methods
         System.out.println("MC: " + mc);
@@ -4348,11 +4405,21 @@ public class DatabaseUtilService {
     }
 
     @NotNull
+    public MultipleChoiceQuestion createMultipleChoiceQuestionWithAllTypesOfAnswerOptions() {
+        MultipleChoiceQuestion mc = (MultipleChoiceQuestion) new MultipleChoiceQuestion().title("MC").score(4).text("Q1");
+        mc.setScoringType(ScoringType.ALL_OR_NOTHING);
+        mc.getAnswerOptions().add(new AnswerOption().text("A").hint("H1").explanation("E1").isCorrect(true));
+        mc.getAnswerOptions().add(new AnswerOption().text("B").hint("H2").explanation("E2").isCorrect(false));
+        mc.getAnswerOptions().add(new AnswerOption().text("C").hint("H3").explanation("E3").isInvalid(true).isCorrect(false));
+        mc.getAnswerOptions().add(new AnswerOption().text("D").hint("H4").explanation("E4").isCorrect(true));
+        mc.getAnswerOptions().add(new AnswerOption().text("E").hint("H5").explanation("E5").isCorrect(false));
+        return mc;
+    }
+
+    @NotNull
     public MultipleChoiceQuestion createSingleChoiceQuestion() {
         var singleChoiceQuestion = createMultipleChoiceQuestion();
         singleChoiceQuestion.setSingleChoice(true);
-        // only one answer option must be correct
-        singleChoiceQuestion.getAnswerOptions().get(3).setIsCorrect(false);
         return singleChoiceQuestion;
     }
 
