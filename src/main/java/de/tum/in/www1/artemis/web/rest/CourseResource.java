@@ -412,9 +412,9 @@ public class CourseResource {
     /**
      * GET /courses/{courseId}/for-dashboard
      *
-     * @param courseId the courseId for which exercises, lectures, exams and learning goals should be fetched
+     * @param courseId the courseId for which exercises, lectures, exams and competencies should be fetched
      * @param refresh  if true, this request was initiated by the user clicking on a refresh button
-     * @return a DTO containing a course with all exercises, lectures, exams, learning goals, etc. visible to the user as well as the total scores for the course, the scores per
+     * @return a DTO containing a course with all exercises, lectures, exams, competencies, etc. visible to the user as well as the total scores for the course, the scores per
      *         exercise type for each exercise, and the participation result for each participation.
      */
     // TODO: we should rename this into courses/{courseId}/details
@@ -442,7 +442,7 @@ public class CourseResource {
             }
         }
 
-        courseService.fetchParticipationsWithSubmissionsAndResultsForCourses(List.of(course), user);
+        courseService.fetchParticipationsWithSubmissionsAndResultsForCourses(List.of(course), user, true);
         courseService.fetchPlagiarismCasesForCourseExercises(course.getExercises(), user.getId());
         CourseForDashboardDTO courseForDashboardDTO = courseScoreCalculationService.getScoresAndParticipationResults(course, user.getId());
         logDuration(List.of(course), user, timeNanoStart);
@@ -465,7 +465,7 @@ public class CourseResource {
                 "REST request to get all courses the user {} has access to with exams, lectures, exercises, participations, submissions and results + the calculated scores the user achieved in each of those courses",
                 user.getLogin());
         List<Course> courses = courseService.findAllActiveWithExercisesAndLecturesAndExamsForUser(user);
-        courseService.fetchParticipationsWithSubmissionsAndResultsForCourses(courses, user);
+        courseService.fetchParticipationsWithSubmissionsAndResultsForCourses(courses, user, false);
         courseService.fetchPlagiarismCasesForCourseExercises(courses.stream().flatMap(course -> course.getExercises().stream()).collect(Collectors.toSet()), user.getId());
         List<CourseForDashboardDTO> coursesForDashboard = new ArrayList<>();
         for (Course course : courses) {
