@@ -59,7 +59,7 @@ describe('Programming exercise assessment', () => {
             // Wait until the assessment due date is over
             const now = dayjs();
             if (now.isBefore(assessmentDueDate)) {
-                cy.wait(assessmentDueDate.diff(now, 'ms') + 5000);
+                cy.wait(assessmentDueDate.diff(now, 'ms'));
             }
         });
     }
@@ -122,7 +122,7 @@ describe('Programming exercise assessment', () => {
                 // Wait until the due date is in the past
                 const now = dayjs();
                 if (now.isBefore(dueDate)) {
-                    cy.wait(dueDate.diff(now, 'ms'));
+                    cy.wait(dueDate.diff(now, 'ms') + 5000);
                 }
             });
     }

@@ -8,14 +8,15 @@ import { catchError, map, tap } from 'rxjs/operators';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { Exam } from 'app/entities/exam.model';
 import dayjs from 'dayjs/esm';
-import { getLatestSubmissionResult } from 'app/entities/submission.model';
+import { Submission, getLatestSubmissionResult } from 'app/entities/submission.model';
 import { cloneDeep } from 'lodash-es';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
 import { captureException } from '@sentry/angular-ivy';
+import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 
-export type ButtonTooltipType = 'submitted' | 'notSubmitted' | 'synced' | 'notSynced' | 'notSavedOrSubmitted';
+export type ButtonTooltipType = 'submitted' | 'submittedSubmissionLimitReached' | 'notSubmitted' | 'synced' | 'notSynced' | 'notSavedOrSubmitted';
 
 @Injectable({ providedIn: 'root' })
 export class ExamParticipationService {
@@ -291,12 +292,17 @@ export class ExamParticipationService {
     public static getSubmissionForExercise(exercise: Exercise) {
         if (exercise && exercise.studentParticipations && exercise.studentParticipations.length > 0 && exercise.studentParticipations[0].submissions) {
             // NOTE: using "submissions[0]" might not work for programming exercises with multiple submissions, it is better to always take the last submission
-            return exercise.studentParticipations[0].submissions.last();
+            const submission: Submission | undefined = exercise.studentParticipations[0].submissions.last();
+            if (submission) {
+                submission.participation = exercise.studentParticipations[0];
+            }
+            return submission;
         }
     }
 
     getExerciseButtonTooltip(exercise: Exercise): ButtonTooltipType {
         const submission = ExamParticipationService.getSubmissionForExercise(exercise);
+        const participation = submission!.participation as ProgrammingExerciseStudentParticipation;
         // The submission might not yet exist for this exercise.
         // When the participant navigates to the exercise the submissions are created.
         // Until then show, that the exercise is synced
@@ -308,6 +314,9 @@ export class ExamParticipationService {
         }
         // programming exercise
         if (submission.submitted && submission.isSynced) {
+            if (participation.locked) {
+                return 'submittedSubmissionLimitReached';
+            }
             return 'submitted'; // You have submitted an exercise. You can submit again
         } else if (!submission.submitted && submission.isSynced) {
             return 'notSubmitted'; // starting point
