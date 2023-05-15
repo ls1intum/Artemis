@@ -14,11 +14,12 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.enumeration.DefaultChannelType;
+import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.security.Role;
@@ -42,12 +43,15 @@ public class ChannelService {
 
     private final CourseRepository courseRepository;
 
+    private final UserRepository userRepository;
+
     public ChannelService(ConversationParticipantRepository conversationParticipantRepository, ChannelRepository channelRepository, ConversationService conversationService,
-            CourseRepository courseRepository) {
+            CourseRepository courseRepository, UserRepository userRepository) {
         this.conversationParticipantRepository = conversationParticipantRepository;
         this.channelRepository = channelRepository;
         this.conversationService = conversationService;
         this.courseRepository = courseRepository;
+        this.userRepository = userRepository;
     }
 
     /**
