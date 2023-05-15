@@ -150,34 +150,34 @@ public interface CompetencyRepository extends JpaRepository<Competency, Long> {
     Page<Competency> findByTitleIgnoreCaseContainingOrCourse_TitleIgnoreCaseContaining(String partialTitle, String partialCourseTitle, Pageable pageable);
 
     default Competency findByIdWithLectureUnitsAndCompletionsElseThrow(long competencyId) {
-        return findByIdWithLectureUnitsAndCompletions(competencyId).orElseThrow(() -> new EntityNotFoundException("LearningGoal", competencyId));
+        return findByIdWithLectureUnitsAndCompletions(competencyId).orElseThrow(() -> new EntityNotFoundException("Competency", competencyId));
     }
 
     default Competency findByIdWithExercisesAndLectureUnitsAndCompletionsElseThrow(long competencyId) {
-        return findByIdWithExercisesAndLectureUnitsAndCompletions(competencyId).orElseThrow(() -> new EntityNotFoundException("LearningGoal", competencyId));
+        return findByIdWithExercisesAndLectureUnitsAndCompletions(competencyId).orElseThrow(() -> new EntityNotFoundException("Competency", competencyId));
     }
 
     default Competency findByIdWithExercisesAndLectureUnitsBidirectionalElseThrow(long competencyId) {
-        return findByIdWithExercisesAndLectureUnitsBidirectional(competencyId).orElseThrow(() -> new EntityNotFoundException("LearningGoal", competencyId));
+        return findByIdWithExercisesAndLectureUnitsBidirectional(competencyId).orElseThrow(() -> new EntityNotFoundException("Competency", competencyId));
     }
 
     default Competency findByIdWithConsecutiveCoursesElseThrow(long competencyId) {
-        return findByIdWithConsecutiveCourses(competencyId).orElseThrow(() -> new EntityNotFoundException("LearningGoal", competencyId));
+        return findByIdWithConsecutiveCourses(competencyId).orElseThrow(() -> new EntityNotFoundException("Competency", competencyId));
     }
 
     default Competency findByIdElseThrow(Long competencyId) {
-        return findById(competencyId).orElseThrow(() -> new EntityNotFoundException("LearningGoal", competencyId));
+        return findById(competencyId).orElseThrow(() -> new EntityNotFoundException("Competency", competencyId));
     }
 
     default Competency findByIdWithLectureUnitsElseThrow(Long competencyId) {
-        return findByIdWithLectureUnits(competencyId).orElseThrow(() -> new EntityNotFoundException("LearningGoal", competencyId));
+        return findByIdWithLectureUnits(competencyId).orElseThrow(() -> new EntityNotFoundException("Competency", competencyId));
     }
 
     default Competency findByIdWithExercisesAndLectureUnitsElseThrow(Long competencyId) {
-        return findByIdWithExercisesAndLectureUnits(competencyId).orElseThrow(() -> new EntityNotFoundException("LearningGoal", competencyId));
+        return findByIdWithExercisesAndLectureUnits(competencyId).orElseThrow(() -> new EntityNotFoundException("Competency", competencyId));
     }
 
     default Competency findByIdWithExercisesElseThrow(Long competencyId) {
-        return findByIdWithExercises(competencyId).orElseThrow(() -> new EntityNotFoundException("LearningGoal", competencyId));
+        return findByIdWithExercises(competencyId).orElseThrow(() -> new EntityNotFoundException("Competency", competencyId));
     }
 }
