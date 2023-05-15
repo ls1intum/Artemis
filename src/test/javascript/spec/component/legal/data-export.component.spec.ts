@@ -10,7 +10,7 @@ import { MockAccountService } from '../../helpers/mocks/service/mock-account.ser
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { DataExportService } from 'app/core/legal/data-export/data-export.service';
-import { Observable, of, throwError } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { DataExport } from 'app/entities/data-export.model';
 import { User } from 'app/core/user/user.model';

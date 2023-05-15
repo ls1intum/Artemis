@@ -11,6 +11,7 @@ import { SessionStorageService } from 'ngx-webstorage';
 import { of } from 'rxjs';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { PrivacyStatementLanguage } from 'app/entities/privacy-statement.model';
+import { RouterModule } from '@angular/router';
 
 describe('PrivacyComponent', () => {
     let component: PrivacyComponent;
@@ -19,7 +20,7 @@ describe('PrivacyComponent', () => {
     let languageHelper: JhiLanguageHelper;
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [ArtemisTestModule, RouterModule],
             declarations: [PrivacyComponent, MockDirective(TranslateDirective), MockPipe(HtmlForMarkdownPipe)],
             providers: [
                 { provide: JhiLanguageHelper, useClass: MockLanguageHelper },

@@ -13,7 +13,6 @@ import { AccountService } from 'app/core/auth/account.service';
 
 describe('DataExportService', () => {
     let service: DataExportService;
-    const resourceUrl = 'api/';
     let httpMock: HttpTestingController;
     let accountService: AccountService;
 
@@ -42,7 +41,7 @@ describe('DataExportService', () => {
         accountService.userIdentity = dataExport.user;
         let req;
         service.requestDataExport().subscribe((resp) => expect(resp).toEqual(dataExport));
-        req = httpMock.expectOne({ method: 'PUT', url: `${resourceUrl}/1/data-export` });
+        req = httpMock.expectOne({ method: 'PUT', url: `api/1/data-export` });
         req.flush(dataExport);
         tick();
     }));
@@ -52,7 +51,7 @@ describe('DataExportService', () => {
         user.id = 1;
         accountService.userIdentity = user;
         service.downloadDataExport(1).subscribe();
-        const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/1/data-export/1` });
+        const req = httpMock.expectOne({ method: 'GET', url: `api/1/data-export/1` });
         req.flush(new Blob());
         tick();
     }));

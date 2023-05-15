@@ -116,7 +116,7 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
         var userLogin = TEST_PREFIX + "student1";
         String validModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
         if (!Files.exists(repoDownloadClonePath)) {
-            Files.createDirectory(repoDownloadClonePath);
+            Files.createDirectories(repoDownloadClonePath);
         }
         Course course1 = database.addCourseWithExercisesAndSubmissions(TEST_PREFIX, "", 4, 2, 1, 1, false, 1, validModel);
         database.addQuizExerciseToCourseWithParticipationAndSubmissionForUser(course1, TEST_PREFIX + "student1");
