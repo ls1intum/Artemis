@@ -183,8 +183,8 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
                     this.edges = relations.map(
                         (relation): Edge => ({
                             id: `edge${relation.id}`,
-                            source: `${relation.tailLearningGoal?.id}`,
-                            target: `${relation.headLearningGoal?.id}`,
+                            source: `${relation.tailCompetency?.id}`,
+                            target: `${relation.headCompetency?.id}`,
                             label: relation.type,
                             data: {
                                 id: relation.id,
@@ -197,7 +197,7 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
                             (relation): ClusterNode => ({
                                 id: `cluster${relation.id}`,
                                 label: relation.type,
-                                childNodeIds: [`${relation.tailLearningGoal?.id}`, `${relation.headLearningGoal?.id}`],
+                                childNodeIds: [`${relation.tailCompetency?.id}`, `${relation.headCompetency?.id}`],
                                 data: {
                                     id: relation.id,
                                 },

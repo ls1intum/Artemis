@@ -152,7 +152,7 @@ describe('LearningGoalService', () => {
     }));
 
     it('should add a LearningGoal relation', fakeAsync(() => {
-        const returnedFromService = { tailLearningGoal: 1, headLearningGoal: 2, type: 'assumes' } as LearningGoalRelation;
+        const returnedFromService = { tailCompetency: 1, headCompetency: 2, type: 'assumes' } as LearningGoalRelation;
         let result: any;
         learningGoalService
             .createLearningGoalRelation(1, 2, 'assumes', 1)
