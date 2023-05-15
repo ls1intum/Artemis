@@ -1,4 +1,4 @@
-import { Injectable, OnDestroy } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable, Subscription } from 'rxjs';
 import { IrisClientMessageDescriptor, IrisMessageDescriptor } from 'app/entities/iris/iris.model';

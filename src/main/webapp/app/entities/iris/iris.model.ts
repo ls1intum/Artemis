@@ -2,7 +2,7 @@ import dayjs from 'dayjs';
 import { Exercise } from 'app/entities/exercise.model';
 import { User } from 'app/core/user/user.model';
 
-export interface IrisConversation {
+export class IrisConversation {
     id: number;
     programmingExercise?: Exercise;
     user?: User;
@@ -16,7 +16,7 @@ export enum IrisSender {
     USER = 'user',
 }
 
-export interface IrisServerMessageDescriptor {
+export class IrisServerMessageDescriptor {
     messageId: number;
     sender: IrisSender.SERVER;
     messageContent?: IrisMessageContent;
@@ -39,7 +39,7 @@ export enum IrisMessageContentType {
     IMAGE = 'image',
 }
 
-export interface IrisMessageContent {
+export class IrisMessageContent {
     type: IrisMessageContentType;
     content: string;
 }
