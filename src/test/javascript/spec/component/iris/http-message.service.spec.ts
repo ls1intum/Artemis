@@ -4,6 +4,7 @@ import { take } from 'rxjs/operators';
 import { mockClientMessage, mockConversation, mockServerMessage } from '../../helpers/sample/iris-sample-data';
 import { IrisHttpMessageService } from 'app/iris/http-message.service';
 import { IrisClientMessageDescriptor } from 'app/entities/iris/iris.model';
+import { IrisMessageStore } from 'app/iris/message-store.service';
 
 describe('HTTP Message Service', () => {
     let service: IrisHttpMessageService;
@@ -12,6 +13,7 @@ describe('HTTP Message Service', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [HttpClientTestingModule],
+            providers: [IrisMessageStore, IrisHttpMessageService],
         });
         service = TestBed.inject(IrisHttpMessageService);
         httpMock = TestBed.inject(HttpTestingController);

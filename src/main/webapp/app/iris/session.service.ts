@@ -5,8 +5,8 @@ import { IrisConversation } from 'app/entities/iris/iris.model';
 
 type EntityResponseType = HttpResponse<IrisConversation>;
 
-@Injectable({ providedIn: 'root' })
-export class SessionService {
+@Injectable()
+export class IrisSessionService {
     public resourceUrl = SERVER_API_URL + 'api/iris/';
 
     constructor(protected http: HttpClient) {

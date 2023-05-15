@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, OnDestroy } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable, Subscription } from 'rxjs';
 import { IrisClientMessageDescriptor, IrisMessageDescriptor } from 'app/entities/iris/iris.model';
@@ -8,21 +8,25 @@ import { ActionType, MessageStoreAction } from 'app/iris/message-store.model';
 type EntityResponseType = HttpResponse<IrisMessageDescriptor>;
 type EntityArrayResponseType = HttpResponse<IrisMessageDescriptor[]>;
 
-@Injectable({ providedIn: 'root' })
-export class IrisHttpMessageService {
+@Injectable()
+export class IrisHttpMessageService implements OnDestroy {
     public resourceUrl = SERVER_API_URL + 'api/iris/sessions';
     // TODO @Dmytro Polityka set the number properly
     private readonly sessionId: number;
     private readonly subscription: Subscription;
 
     constructor(private httpClient: HttpClient, private messageStore: IrisMessageStore) {
-        this.messageStore.getActionObservable().subscribe((newAction: MessageStoreAction) => {
+        this.subscription = this.messageStore.getActionObservable().subscribe((newAction: MessageStoreAction) => {
             if (newAction.type !== ActionType.STUDENT_MESSAGE_SENT) return;
             this.createMessage(this.sessionId, newAction.message).subscribe((response) => {
                 if (response.body == null) throw Error('Server response does not contain proper values.');
                 newAction.message.messageId = response.body.messageId;
             });
         });
+    }
+
+    ngOnDestroy(): void {
+        this.subscription.unsubscribe();
     }
 
     /**

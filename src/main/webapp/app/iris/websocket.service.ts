@@ -1,5 +1,5 @@
 import { IrisHttpMessageService } from 'app/iris/http-message.service';
-import { Observable } from 'rxjs';
+import { Observable, Subscription } from 'rxjs';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { Injectable, OnDestroy } from '@angular/core';
@@ -13,6 +13,7 @@ export class IrisWebsocketService implements OnDestroy {
     private user: User;
     private sessionId: number;
     private subscriptionChannel?: string;
+    private connectionStateSub: Subscription;
 
     constructor(
         protected messageService: IrisHttpMessageService,
@@ -22,6 +23,9 @@ export class IrisWebsocketService implements OnDestroy {
     ) {
         this.accountService.identity().then((user: User) => {
             this.user = user!;
+        });
+        this.connectionStateSub = this.jhiWebsocketService.connectionState.subscribe((newState) => {
+            //TODO
         });
     }
 
@@ -33,6 +37,7 @@ export class IrisWebsocketService implements OnDestroy {
         if (this.subscriptionChannel) {
             this.jhiWebsocketService.unsubscribe(this.subscriptionChannel);
         }
+        this.connectionStateSub.unsubscribe();
     }
 
     getUser(): User {

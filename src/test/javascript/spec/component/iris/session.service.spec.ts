@@ -3,17 +3,18 @@ import { HttpClientTestingModule, HttpTestingController } from '@angular/common/
 import { take } from 'rxjs/operators';
 import { irisExercise, mockConversation } from '../../helpers/sample/iris-sample-data';
 import { IrisConversation } from 'app/entities/iris/iris.model';
-import { SessionService } from 'app/iris/session.service';
+import { IrisSessionService } from 'app/iris/session.service';
 
 describe('Session Service', () => {
-    let service: SessionService;
+    let service: IrisSessionService;
     let httpMock: HttpTestingController;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [HttpClientTestingModule],
+            providers: [IrisSessionService],
         });
-        service = TestBed.inject(SessionService);
+        service = TestBed.inject(IrisSessionService);
         httpMock = TestBed.inject(HttpTestingController);
     });
 
