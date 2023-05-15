@@ -37,16 +37,16 @@ public class AuthorizationCheckService {
 
     @Deprecated(forRemoval = true)
     @Value("${artemis.user-management.course-registration.allowed-username-pattern:#{null}}")
-    private Optional<Pattern> allowedCourseRegistrationUsernamePattern;
+    private Pattern allowedCourseRegistrationUsernamePattern;
 
     @Value("${artemis.user-management.course-enrollment.allowed-username-pattern:#{null}}")
-    private Optional<Pattern> allowedCourseEnrollmentUsernamePattern;
+    private Pattern allowedCourseEnrollmentUsernamePattern;
 
     public AuthorizationCheckService(UserRepository userRepository, CourseRepository courseRepository) {
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
 
-        if (allowedCourseEnrollmentUsernamePattern.isEmpty()) {
+        if (allowedCourseEnrollmentUsernamePattern == null) {
             allowedCourseEnrollmentUsernamePattern = allowedCourseRegistrationUsernamePattern;
         }
     }
@@ -217,7 +217,7 @@ public class AuthorizationCheckService {
      *         or the reason why the user is not allowed to self enroll in the course otherwise
      */
     public EnrollmentAuthorization getUserEnrollmentAuthorizationForCourse(User user, Course course) {
-        if (allowedCourseEnrollmentUsernamePattern.isPresent() && !allowedCourseEnrollmentUsernamePattern.get().matcher(user.getLogin()).matches()) {
+        if (allowedCourseEnrollmentUsernamePattern != null && !allowedCourseEnrollmentUsernamePattern.matcher(user.getLogin()).matches()) {
             return EnrollmentAuthorization.USERNAME_PATTERN;
         }
         if (!course.isActive()) {
