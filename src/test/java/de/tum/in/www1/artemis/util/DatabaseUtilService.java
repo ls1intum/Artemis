@@ -1163,7 +1163,7 @@ public class DatabaseUtilService {
         return posts;
     }
 
-    public List<Post> createPostsWithAnswersAndReactionsWithConversation(Course course, User student1, User student2, int numberOfPosts, String userPrefix) {
+    public List<Post> createPostsWithAnswersAndReactionsAndConversation(Course course, User student1, User student2, int numberOfPosts, String userPrefix) {
         var chat = new OneToOneChat();
         chat.setCourse(course);
         chat.setCreator(student1);

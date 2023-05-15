@@ -156,14 +156,15 @@ class MessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
     @ParameterizedTest
     @ValueSource(ints = { HIGHER_PAGE_SIZE, LOWER_PAGE_SIZE, EQUAL_PAGE_SIZE })
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testFindMessagesWithPageSizeHigherThenMessagesCount(int pageSize) {
+    void testFindMessagesWithPageSizes(int pageSize) {
 
         var student1 = userRepository.findOneWithGroupsAndAuthoritiesByLogin(TEST_PREFIX + "student1").get();
         var student2 = userRepository.findOneWithGroupsAndAuthoritiesByLogin(TEST_PREFIX + "student2").get();
-        List<Post> posts = database.createPostsWithAnswersAndReactionsWithConversation(course, student1, student2, NUMBER_OF_POSTS, TEST_PREFIX);
-
+        List<Post> posts = database.createPostsWithAnswersAndReactionsAndConversation(course, student1, student2, NUMBER_OF_POSTS, TEST_PREFIX);
+        long conversationId = posts.get(0).getConversation().getId();
         for (Post post : posts) {
             assertThat(post.getConversation().getId()).isNotNull();
+            assertThat(post.getConversation().getId()).isEqualTo(conversationId);
         }
 
         PostContextFilter postContextFilter = new PostContextFilter();
