@@ -5,7 +5,7 @@ import { CachingStrategy } from 'app/shared/image/secured-image.component';
 import { faCommentDots } from '@fortawesome/free-solid-svg-icons';
 import { MatDialog } from '@angular/material/dialog';
 import { ChatbotPopupComponent } from './chatbot-popup/chatbot-popup.component';
-import { ExerciseChatwidgetComponent } from 'app/overview/exercise-chatbot/exercise-chatwidget/exercise-chatwidget.component';
+import { ExerciseChatWidgetComponent } from 'app/overview/exercise-chatbot/exercise-chatwidget/exercise-chat-widget.component';
 
 @Component({
     selector: 'jhi-exercise-chatbot',
@@ -42,7 +42,7 @@ export class ExerciseChatbotComponent implements OnChanges {
     }
 
     openChat() {
-        const dialogRef = this.dialog.open(ExerciseChatwidgetComponent);
+        const dialogRef = this.dialog.open(ExerciseChatWidgetComponent);
     }
 
     ngOnChanges() {
