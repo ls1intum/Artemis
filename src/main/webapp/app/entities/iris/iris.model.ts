@@ -24,7 +24,7 @@ export interface IrisServerMessageDescriptor {
     helpful?: boolean;
 }
 
-export interface IrisClientMessageDescriptor {
+export class IrisClientMessageDescriptor {
     sender: IrisSender.USER;
     messageContent: IrisMessageContent;
     messageId?: number;

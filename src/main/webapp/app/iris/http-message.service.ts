@@ -8,8 +8,8 @@ import { ActionType, MessageStoreAction } from 'app/iris/message-store.model';
 type EntityResponseType = HttpResponse<IrisMessageDescriptor>;
 type EntityArrayResponseType = HttpResponse<IrisMessageDescriptor[]>;
 
-@Injectable()
-export class IrisHttpMessageService implements OnDestroy {
+@Injectable({ providedIn: 'root' })
+export class IrisHttpMessageService {
     public resourceUrl = SERVER_API_URL + 'api/iris/sessions';
     // TODO @Dmytro Polityka set the number properly
     private readonly sessionId: number;
@@ -23,10 +23,6 @@ export class IrisHttpMessageService implements OnDestroy {
                 newAction.message.messageId = response.body.messageId;
             });
         });
-    }
-
-    ngOnDestroy(): void {
-        this.subscription.unsubscribe();
     }
 
     /**
