@@ -19,7 +19,7 @@ const defaultActiveProfileState: ActiveProfileToggles = Object.values(ProfileTog
 
 @Injectable({ providedIn: 'root' })
 export class ProfileToggleService {
-    private infoUrl = SERVER_API_URL + 'management/info';
+    private infoUrl = 'management/info';
 
     private readonly topic = `/topic/management/profile-toggles`;
     private subject: BehaviorSubject<ActiveProfileToggles>;
