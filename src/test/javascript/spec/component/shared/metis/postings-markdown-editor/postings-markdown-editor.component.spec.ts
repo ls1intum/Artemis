@@ -15,6 +15,7 @@ import { MockMetisService } from '../../../../helpers/mocks/service/mock-metis-s
 import { ExerciseReferenceCommand } from 'app/shared/markdown-editor/commands/courseArtifactReferenceCommands/exerciseReferenceCommand';
 import { LectureAttachmentReferenceCommand } from 'app/shared/markdown-editor/commands/courseArtifactReferenceCommands/lectureAttachmentReferenceCommand';
 import { metisAnswerPostUser2, metisPostExerciseUser1 } from '../../../../helpers/sample/metis-sample-data';
+import { ProfileToggleService } from 'app/shared/profile-toggle/profile-toggle.service';
 
 // eslint-disable-next-line @angular-eslint/directive-selector
 @Directive({ selector: 'jhi-markdown-editor' })
@@ -29,6 +30,7 @@ describe('PostingsMarkdownEditor', () => {
     let fixture: ComponentFixture<PostingMarkdownEditorComponent>;
     let debugElement: DebugElement;
     let metisService: MetisService;
+    let profileToggleService: ProfileToggleService;
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
@@ -43,6 +45,7 @@ describe('PostingsMarkdownEditor', () => {
                 component = fixture.componentInstance;
                 debugElement = fixture.debugElement;
                 metisService = TestBed.inject(MetisService);
+                profileToggleService = TestBed.inject(ProfileToggleService);
                 const mockMarkdownEditorElement = fixture.debugElement.query(By.directive(MockMarkdownEditorDirective));
                 mockMarkdownEditorDirective = mockMarkdownEditorElement.injector.get(MockMarkdownEditorDirective) as MockMarkdownEditorDirective;
                 component.ngOnInit();
@@ -62,7 +65,7 @@ describe('PostingsMarkdownEditor', () => {
             new CodeBlockCommand(),
             new LinkCommand(),
             new ExerciseReferenceCommand(metisService),
-            new LectureAttachmentReferenceCommand(metisService),
+            new LectureAttachmentReferenceCommand(metisService, profileToggleService),
         ]);
     });
 
