@@ -317,12 +317,12 @@ public class CourseScoreCalculationService {
 
         // calculate presentation points for graded presentations
         if (maxAndReachablePoints.reachablePresentationPoints > 0.0) {
-            presentationScore = calculatePresentationPointsForStudent(course, participationsOfStudent, maxAndReachablePoints.reachablePresentationPoints);
+            presentationScore = calculatePresentationPointsForStudent(course, studentId, maxAndReachablePoints.reachablePresentationPoints);
             pointsAchievedByStudentInCourse += presentationScore;
         }
         // calculate presentation score for basic presentations
         else if (course.getPresentationScore() != null && course.getPresentationScore() > 0.0) {
-            presentationScore = calculateBasicPresentationScoreForStudent(course, participationsOfStudent);
+            presentationScore = calculateBasicPresentationScoreForStudent(course, studentId);
         }
 
         double absolutePoints = roundScoreSpecifiedByCourseSettings(pointsAchievedByStudentInCourse, course);
@@ -480,17 +480,12 @@ public class CourseScoreCalculationService {
      * Counts the number of presentations for a single student, referred to as the presentationScore for basic
      * presentations.
      *
-     * @param course                the course for which the presentation score should be calculated
-     * @param studentParticipations the participations relevant for presentations of the student.
+     * @param course    the course for which the presentation score should be calculated
+     * @param studentId the student for which the presentation score should be calculated
      * @return the basic presentation score for a single student.
      */
-    private double calculateBasicPresentationScoreForStudent(Course course, List<StudentParticipation> studentParticipations) {
-        if (studentParticipations == null || studentParticipations.isEmpty()) {
-            return 0.0;
-        }
-
-        double presentationCount = studentParticipations.stream()
-                .filter(participation -> participation.getPresentationScore() != null && participation.getPresentationScore() > 0.0).count();
+    private double calculateBasicPresentationScoreForStudent(Course course, long studentId) {
+        double presentationCount = studentParticipationRepository.countNonZeroPresentationsByStudentIdAndCourseId(course.getId(), studentId);
 
         return roundScoreSpecifiedByCourseSettings(presentationCount, course);
     }
@@ -500,16 +495,11 @@ public class CourseScoreCalculationService {
      * reachable points of the course, and the presentationsWeight of the courses GradingScale.
      *
      * @param course                      the course for which the presentation score should be calculated
-     * @param studentParticipations       the participations relevant for presentations of the student.
+     * @param studentId                   the student for which the presentation points should be calculated
      * @param reachablePresentationPoints the reachable presentation points in the given course.
      * @return the presentation points for a single student.
      */
-    private double calculatePresentationPointsForStudent(Course course, List<StudentParticipation> studentParticipations, double reachablePresentationPoints) {
-        // return 0 if no participations are given
-        if (studentParticipations == null || studentParticipations.isEmpty()) {
-            return 0.0;
-        }
-
+    public double calculatePresentationPointsForStudent(Course course, long studentId, double reachablePresentationPoints) {
         // return 0 if no grading scale is set for the course
         GradingScale gradingScale = gradingScaleService.findGradingScaleByCourseId(course.getId()).orElse(null);
         if (gradingScale == null) {
@@ -522,12 +512,10 @@ public class CourseScoreCalculationService {
             return 0.0;
         }
 
-        double presentationPointSum = studentParticipations.stream().filter(participation -> participation.getPresentationScore() != null)
-                .mapToDouble(StudentParticipation::getPresentationScore).sum();
+        double presentationPointSum = studentParticipationRepository.sumPresentationScoreByStudentIdAndCourseId(course.getId(), studentId);
         double presentationPointAvg = presentationPointSum / presentationsNumber;
-        double presentationPoints = reachablePresentationPoints * presentationPointAvg / 100.0;
 
-        return roundScoreSpecifiedByCourseSettings(presentationPoints, course);
+        return reachablePresentationPoints * presentationPointAvg / 100.0;
     }
 
     /**
@@ -536,7 +524,7 @@ public class CourseScoreCalculationService {
      * @param course          the course for which the reachable presentation points should be calculated
      * @param reachablePoints the maximum points that can be currently received in the course
      */
-    private double calculateReachablePresentationPoints(Course course, double reachablePoints) {
+    public double calculateReachablePresentationPoints(Course course, double reachablePoints) {
         // return 0 if reachable points are 0
         if (reachablePoints <= 0.0) {
             return 0.0;
@@ -555,8 +543,7 @@ public class CourseScoreCalculationService {
         }
 
         double reachablePointsWithPresentation = -reachablePoints / (presentationsWeight - 100.0) * 100.0;
-        double reachablePresentationPoints = reachablePointsWithPresentation * presentationsWeight / 100.0;
 
-        return roundScoreSpecifiedByCourseSettings(reachablePresentationPoints, course);
+        return reachablePointsWithPresentation * presentationsWeight / 100.0;
     }
 }

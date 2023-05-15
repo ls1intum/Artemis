@@ -967,4 +967,32 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             GROUP BY s.id, p.id
             """)
     List<QuizSubmittedAnswerCount> findSubmittedAnswerCountForQuizzesInExam(@Param("examId") long examId);
+
+    @Query("""
+            SELECT COALESCE(SUM(p.presentationScore), 0)
+            FROM StudentParticipation p
+            WHERE p.exercise.course.id = :#{#courseId}
+                 AND p.student.id = :#{#studentId}
+                 AND p.presentationScore IS NOT NULL
+            """)
+    double sumPresentationScoreByStudentIdAndCourseId(@Param("courseId") Long courseId, @Param("studentId") Long studentId);
+
+    @Query("""
+            SELECT COUNT(p)
+            FROM StudentParticipation p
+            WHERE p.exercise.course.id = :#{#courseId}
+                 AND p.student.id = :#{#studentId}
+                 AND p.presentationScore IS NOT NULL
+            """)
+    double countAllPresentationsByStudentIdAndCourseId(@Param("courseId") Long courseId, @Param("studentId") Long studentId);
+
+    @Query("""
+            SELECT COUNT(p)
+            FROM StudentParticipation p
+            WHERE p.exercise.course.id = :#{#courseId}
+                 AND p.student.id = :#{#studentId}
+                 AND p.presentationScore IS NOT NULL
+                 AND p.presentationScore > 0.0
+            """)
+    double countNonZeroPresentationsByStudentIdAndCourseId(@Param("courseId") Long courseId, @Param("studentId") Long studentId);
 }
