@@ -169,7 +169,7 @@ public class Course extends DomainObject {
     private String registrationConfirmationMessage;
 
     @Column(name = "disenrollment_enabled")
-    private Boolean disenrollmentEnabled;
+    private boolean disenrollmentEnabled = false;
 
     @Column(name = "presentation_score")
     private Integer presentationScore;
@@ -536,11 +536,11 @@ public class Course extends DomainObject {
         this.registrationConfirmationMessage = registrationConfirmationMessage;
     }
 
-    public Boolean isDisenrollmentEnabled() {
+    public boolean isDisenrollmentEnabled() {
         return disenrollmentEnabled;
     }
 
-    public void setDisenrollmentEnabled(Boolean disenrollmentEnabled) {
+    public void setDisenrollmentEnabled(boolean disenrollmentEnabled) {
         this.disenrollmentEnabled = disenrollmentEnabled;
     }
 

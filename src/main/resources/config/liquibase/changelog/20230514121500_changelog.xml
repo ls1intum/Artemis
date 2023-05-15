@@ -13,7 +13,9 @@
             <column name="disenrollment_end_date" type="datetime(3)">
                 <constraints nullable="true"/>
             </column>
-            <column name="disenrollment_enabled" type="boolean"/>
+            <column name="disenrollment_enabled" type="boolean">
+                <constraints nullable="false"/>
+            </column>
         </addColumn>
     </changeSet>
 </databaseChangeLog>
