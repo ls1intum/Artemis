@@ -318,6 +318,9 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                 } else {
                     this.programmingExercise.projectType = ProjectType.PLAIN_MAVEN;
                 }
+            } else if (type === ProjectType.MAVEN_BLACKBOX) {
+                this.selectedProjectTypeValue = ProjectType.MAVEN_BLACKBOX;
+                this.programmingExercise.projectType = ProjectType.MAVEN_BLACKBOX;
             } else {
                 this.selectedProjectTypeValue = ProjectType.PLAIN_GRADLE;
                 if (this.withDependenciesValue) {
