@@ -1,4 +1,4 @@
-import { Component, ElementRef, EventEmitter, HostListener, Output, ViewChild } from '@angular/core';
+import { Component, ElementRef, EventEmitter, Output, ViewChild } from '@angular/core';
 import { faPaperPlane } from '@fortawesome/free-solid-svg-icons';
 import { faCompress } from '@fortawesome/free-solid-svg-icons';
 import { faXmark } from '@fortawesome/free-solid-svg-icons';
@@ -38,11 +38,6 @@ export class ExerciseChatWidgetComponent {
             const chatBodyElement: HTMLElement = this.chatBody.nativeElement;
             chatBodyElement.scrollTop = chatBodyElement.scrollHeight;
         });
-    }
-
-    @HostListener('document:click', ['$event'])
-    onDocumentClick(event: MouseEvent) {
-        this.chatWidgetClosed.emit();
     }
 
     closeChat() {
