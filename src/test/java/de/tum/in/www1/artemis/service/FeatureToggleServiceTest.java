@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -22,7 +22,7 @@ class FeatureToggleServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
     void checkReset() {
         // Verify that the test has reset the state
         // Must be extended if additional features are added
-        assertTrue(featureToggleService.isFeatureEnabled(Feature.ProgrammingExercises));
+        assertThat(featureToggleService.isFeatureEnabled(Feature.ProgrammingExercises)).isTrue();
     }
 
     @Test
@@ -30,17 +30,17 @@ class FeatureToggleServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
         Map<Feature, Boolean> featureStates = new HashMap<>();
         featureStates.put(Feature.ProgrammingExercises, true);
         featureToggleService.updateFeatureToggles(featureStates);
-        assertTrue(featureToggleService.isFeatureEnabled(Feature.ProgrammingExercises));
+        assertThat(featureToggleService.isFeatureEnabled(Feature.ProgrammingExercises)).isTrue();
     }
 
     @Test
     void testSetFeaturesDisabled() {
-        assertTrue(featureToggleService.isFeatureEnabled(Feature.ProgrammingExercises));
+        assertThat(featureToggleService.isFeatureEnabled(Feature.ProgrammingExercises)).isTrue();
 
         Map<Feature, Boolean> featureStates = new HashMap<>();
         featureStates.put(Feature.ProgrammingExercises, false);
         featureToggleService.updateFeatureToggles(featureStates);
-        assertFalse(featureToggleService.isFeatureEnabled(Feature.ProgrammingExercises));
+        assertThat(featureToggleService.isFeatureEnabled(Feature.ProgrammingExercises)).isFalse();
 
         // Reset
         featureToggleService.enableFeature(Feature.ProgrammingExercises);
@@ -48,33 +48,33 @@ class FeatureToggleServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
 
     @Test
     void testEnableDisableFeature() {
-        assertTrue(featureToggleService.isFeatureEnabled(Feature.ProgrammingExercises));
+        assertThat(featureToggleService.isFeatureEnabled(Feature.ProgrammingExercises)).isTrue();
 
         featureToggleService.disableFeature(Feature.ProgrammingExercises);
-        assertFalse(featureToggleService.isFeatureEnabled(Feature.ProgrammingExercises));
+        assertThat(featureToggleService.isFeatureEnabled(Feature.ProgrammingExercises)).isFalse();
 
         featureToggleService.enableFeature(Feature.ProgrammingExercises);
-        assertTrue(featureToggleService.isFeatureEnabled(Feature.ProgrammingExercises));
+        assertThat(featureToggleService.isFeatureEnabled(Feature.ProgrammingExercises)).isTrue();
     }
 
     @Test
     void testShouldNotEnableTwice() {
-        assertEquals(Feature.values().length, featureToggleService.enabledFeatures().size());
+        assertThat(featureToggleService.enabledFeatures()).hasSameSizeAs(Feature.values());
         featureToggleService.enableFeature(Feature.ProgrammingExercises);
 
         // Feature should not be added multiple times
-        assertEquals(Feature.values().length, featureToggleService.enabledFeatures().size());
+        assertThat(featureToggleService.enabledFeatures()).hasSameSizeAs(Feature.values().length);
     }
 
     @Test
     void testShouldNotDisableTwice() {
         featureToggleService.disableFeature(Feature.ProgrammingExercises);
 
-        assertEquals(1, featureToggleService.disabledFeatures().size());
+        assertThat(featureToggleService.disabledFeatures()).hasSize(1);
         featureToggleService.disableFeature(Feature.ProgrammingExercises);
 
         // Feature should not be added multiple times
-        assertEquals(1, featureToggleService.disabledFeatures().size());
+        assertThat(featureToggleService.disabledFeatures()).hasSize(1);
 
         // Reset
         featureToggleService.enableFeature(Feature.ProgrammingExercises);

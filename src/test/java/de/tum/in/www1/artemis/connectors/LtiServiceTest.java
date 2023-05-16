@@ -213,13 +213,13 @@ class LtiServiceTest {
 
     @Test
     void isLtiCreatedUser() {
-        assertTrue(ltiService.isLtiCreatedUser(user));
+        assertThat(ltiService.isLtiCreatedUser(user)).isTrue();
     }
 
     @Test
     void isNotLtiCreatedUser() {
         user.setGroups(new HashSet<>(Arrays.asList("students", "editors")));
 
-        assertFalse(ltiService.isLtiCreatedUser(user));
+        assertThat(ltiService.isLtiCreatedUser(user)).isFalse();
     }
 }

@@ -3005,7 +3005,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         testExam = examRepository.save(testExam);
         examRegistrationService.checkRegistrationOrRegisterStudentToTestExam(course1, testExam.getId(), student1);
         Exam testExamReloaded = examRepository.findByIdWithExamUsersElseThrow(testExam.getId());
-        assertTrue(testExamReloaded.getExamUsers().contains(examUser));
+        assertThat(testExamReloaded.getExamUsers()).contains(examUser);
     }
 
     // ExamResource - getStudentExamForTestExamForStart

@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.connectors;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -461,7 +462,7 @@ class Lti13ServiceTest {
 
         List<String> authHeaders = httpEntity.getHeaders().get("Authorization");
         assertNotNull(authHeaders, "Score publish request must contain an Authorization header");
-        assertTrue(authHeaders.contains("Bearer " + accessToken), "Score publish request must contain the corresponding Authorization Bearer token");
+        assertThat(authHeaders).as("Score publish request must contain the corresponding Authorization Bearer token").contains("Bearer " + accessToken);
 
         JSONParser jsonParser = new JSONParser(JSONParser.MODE_JSON_SIMPLE);
         JSONObject body = (JSONObject) jsonParser.parse(httpEntity.getBody());

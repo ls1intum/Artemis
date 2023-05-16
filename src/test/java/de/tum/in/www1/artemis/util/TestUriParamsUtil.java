@@ -1,9 +1,8 @@
 package de.tum.in.www1.artemis.util;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.apache.http.NameValuePair;
 
@@ -30,21 +29,19 @@ public class TestUriParamsUtil {
      * @param allowValueSubString whether or not to allow that the given value is a sub string of the actual value
      */
     public static void assertUriParamsContain(List<NameValuePair> uriParams, String name, String value, boolean allowValueSubString) {
-        List<NameValuePair> matching = uriParams.stream().filter(param -> param.getName().equals(name)).collect(Collectors.toList());
-        if (matching.isEmpty()) {
-            fail("No URI param with name '" + name + "'");
-        }
-        if (matching.size() > 1) {
-            fail("Multiple URI param with name '" + name + "'");
-        }
+        List<NameValuePair> matching = uriParams.stream().filter(param -> param.getName().equals(name)).toList();
+
+        assertThat(matching).as("No URI param with name '" + name + "'").isNotEmpty();
+        assertThat(matching).as("Multiple URI param with name '" + name + "'").hasSizeGreaterThan(1);
+
         NameValuePair param = matching.get(0);
 
         if (allowValueSubString) {
-            assertTrue(param.getValue().contains(value),
-                    "Invalid value for URI param with name '" + name + "': Actual value '" + param.getValue() + "' does not contain expected '" + value + "'");
+            assertThat(param.getValue())
+                    .as("Invalid value for URI param with name '" + name + "': Actual value '" + param.getValue() + "' does not contain expected '" + value + "'").contains(value);
             return;
         }
-        assertEquals(value, param.getValue(), "Invalid value for URI param with name '" + name + "'");
+        assertThat(param.getValue()).as("Invalid value for URI param with name '" + name + "'").isEqualTo(value);
     }
 
     /**
@@ -53,8 +50,9 @@ public class TestUriParamsUtil {
      * @param uriParams the list of URI parameters
      * @param name      the name of the URI parameter
      */
-    public static void assertUriParamsContain(List<NameValuePair> uriParams, String name) {
-        assertEquals(1L, uriParams.stream().filter(param -> param.getName().equals(name)).count(), "No URI param with name '" + name + "'");
+    public static void assertUriParamsContain(List<NameValuePair> uriParams, String name) { // todo
+        assertThat(uriParams.stream().filter(param -> param.getName().equals(name)).count()).as("No URI param with name '" + name + "'").isEqualTo(1L);
+        // uriParams.stream().filter(param -> param.getName().equals(name)).count()
     }
 
 }

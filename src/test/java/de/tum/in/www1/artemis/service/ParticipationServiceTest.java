@@ -106,7 +106,7 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsGitlabTes
         StudentParticipation studentParticipationReceived = participationService.startExerciseWithInitializationDate(modelling, participant, true, initializationDate);
 
         assertEquals(modelling, studentParticipationReceived.getExercise());
-        assertTrue(studentParticipationReceived.getStudent().isPresent());
+        assertThat(studentParticipationReceived.getStudent()).isPresent();
         assertEquals(participant, studentParticipationReceived.getStudent().get());
         assertEquals(initializationDate, studentParticipationReceived.getInitializationDate());
         assertEquals(InitializationState.INITIALIZED, studentParticipationReceived.getInitializationState());
@@ -142,12 +142,12 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsGitlabTes
         StudentParticipation studentParticipationReceived = participationService.startExercise(modelling, participant, true);
 
         assertEquals(modelling, studentParticipationReceived.getExercise());
-        assertTrue(studentParticipationReceived.getStudent().isPresent());
+        assertThat(studentParticipationReceived.getStudent()).isPresent();
         assertEquals(participant, studentParticipationReceived.getStudent().get());
         // Acceptance range, initializationDate is to be set to now()
-        assertTrue(ZonedDateTime.now().minusSeconds(10).isBefore(studentParticipationReceived.getInitializationDate()));
-        assertTrue(ZonedDateTime.now().plusSeconds(10).isAfter(studentParticipationReceived.getInitializationDate()));
-        assertEquals(InitializationState.INITIALIZED, studentParticipationReceived.getInitializationState());
+        assertThat(studentParticipationReceived.getInitializationDate()).isAfterOrEqualTo(ZonedDateTime.now().minusSeconds(10));
+        assertThat(studentParticipationReceived.getInitializationDate()).isBeforeOrEqualTo(ZonedDateTime.now().plusSeconds(10));
+        assertThat(studentParticipationReceived.getInitializationState()).isEqualTo(InitializationState.INITIALIZED);
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
@@ -163,13 +163,13 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsGitlabTes
         StudentParticipation studentParticipationReceived = participationService.startPracticeMode(programmingExercise, participant,
                 Optional.of((StudentParticipation) gradedResult.getParticipation()), useGradedParticipation);
 
-        assertTrue(studentParticipationReceived.isTestRun());
+        assertThat(studentParticipationReceived.isTestRun()).isTrue();
         assertEquals(programmingExercise, studentParticipationReceived.getExercise());
-        assertTrue(studentParticipationReceived.getStudent().isPresent());
+        assertThat(studentParticipationReceived.getStudent()).isPresent();
         assertEquals(participant, studentParticipationReceived.getStudent().get());
         // Acceptance range, initializationDate is to be set to now()
-        assertTrue(ZonedDateTime.now().minusSeconds(10).isBefore(studentParticipationReceived.getInitializationDate()));
-        assertTrue(ZonedDateTime.now().plusSeconds(10).isAfter(studentParticipationReceived.getInitializationDate()));
+        assertThat(studentParticipationReceived.getInitializationDate()).isAfterOrEqualTo(ZonedDateTime.now().minusSeconds(10));
+        assertThat(studentParticipationReceived.getInitializationDate()).isBeforeOrEqualTo(ZonedDateTime.now().plusSeconds(10));
         assertEquals(InitializationState.INITIALIZED, studentParticipationReceived.getInitializationState());
     }
 

@@ -40,9 +40,9 @@ class ExerciseLifecycleServiceTest extends AbstractSpringIntegrationBambooBitbuc
         final ScheduledFuture<?> dueFuture = exerciseLifecycleService.scheduleTask(exercise, ExerciseLifecycle.DUE, dueTrigger::setTrue);
         final ScheduledFuture<?> assessmentDueFuture = exerciseLifecycleService.scheduleTask(exercise, ExerciseLifecycle.ASSESSMENT_DUE, assessmentDueTrigger::setTrue);
 
-        assertFalse(releaseFuture.isDone());
-        assertFalse(dueFuture.isDone());
-        assertFalse(assessmentDueFuture.isDone());
+        assertThat(releaseFuture.isDone()).isFalse();
+        assertThat(dueFuture.isDone()).isFalse();
+        assertThat(assessmentDueFuture.isDone()).isFalse();
 
         await().untilAsserted(() -> {
             assertEqual(releaseTrigger, true);
@@ -50,9 +50,9 @@ class ExerciseLifecycleServiceTest extends AbstractSpringIntegrationBambooBitbuc
             assertEqual(assessmentDueTrigger, false);
         });
 
-        assertTrue(releaseFuture.isDone());
-        assertFalse(dueFuture.isDone());
-        assertFalse(assessmentDueFuture.isDone());
+        assertThat(releaseFuture.isDone()).isTrue();
+        assertThat(dueFuture.isDone()).isFalse();
+        assertThat(assessmentDueFuture.isDone()).isFalse();
 
         await().untilAsserted(() -> {
             assertEqual(releaseTrigger, true);
@@ -60,9 +60,9 @@ class ExerciseLifecycleServiceTest extends AbstractSpringIntegrationBambooBitbuc
             assertEqual(assessmentDueTrigger, false);
         });
 
-        assertTrue(releaseFuture.isDone());
-        assertTrue(dueFuture.isDone());
-        assertFalse(assessmentDueFuture.isDone());
+        assertThat(releaseFuture.isDone()).isTrue();
+        assertThat(dueFuture.isDone()).isTrue();
+        assertThat(assessmentDueFuture.isDone()).isFalse();
 
         await().untilAsserted(() -> {
             assertEqual(releaseTrigger, true);
@@ -70,13 +70,13 @@ class ExerciseLifecycleServiceTest extends AbstractSpringIntegrationBambooBitbuc
             assertEqual(assessmentDueTrigger, true);
         });
 
-        assertTrue(releaseFuture.isDone());
-        assertTrue(dueFuture.isDone());
-        assertTrue(assessmentDueFuture.isDone());
+        assertThat(releaseFuture.isDone()).isTrue();
+        assertThat(dueFuture.isDone()).isTrue();
+        assertThat(assessmentDueFuture.isDone()).isTrue();
 
-        assertFalse(releaseFuture.isCancelled());
-        assertFalse(dueFuture.isCancelled());
-        assertFalse(assessmentDueFuture.isCancelled());
+        assertThat(releaseFuture.isCancelled()).isFalse();
+        assertThat(dueFuture.isCancelled()).isFalse();
+        assertThat(assessmentDueFuture.isCancelled()).isFalse();
     }
 
     @Test
@@ -88,19 +88,19 @@ class ExerciseLifecycleServiceTest extends AbstractSpringIntegrationBambooBitbuc
 
         final ScheduledFuture<?> future = exerciseLifecycleService.scheduleTask(exercise, ExerciseLifecycle.DUE, trigger::setTrue);
 
-        assertFalse(future.isDone());
-        assertFalse(future.isCancelled());
+        assertThat(future.isDone()).isFalse();
+        assertThat(future.isCancelled()).isFalse();
         assertEqual(trigger, false);
 
         future.cancel(false);
 
-        assertTrue(future.isDone());
-        assertTrue(future.isCancelled());
+        assertThat(future.isDone()).isTrue();
+        assertThat(future.isCancelled()).isTrue();
         assertEqual(trigger, false);
 
         await().untilAsserted(() -> {
-            assertTrue(future.isDone());
-            assertTrue(future.isCancelled());
+            assertThat(future.isDone()).isTrue();
+            assertThat(future.isCancelled()).isTrue();
             assertEqual(trigger, false);
         });
     }
