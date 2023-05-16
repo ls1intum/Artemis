@@ -202,7 +202,8 @@
                 "chatPopUpMessage": "Nachdem Sie die Bestimmungen akzeptiert haben, beginnt Ihr Chat mit IrisBot. Bitte lehnen Sie ab, wenn Sie nicht chatten möchten.",
                 "chatInputMessage": "Schreiben Sie eine Nachricht...",
                 "chatAccept": "Akzeptieren",
-                "chatDecline": "Ablehnen"
+                "chatDecline": "Ablehnen",
+                "chatButtonTooltip": "Beginnen Sie mit Iris zu chatten!"
             }
         }
     }

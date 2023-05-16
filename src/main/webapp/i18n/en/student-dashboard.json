@@ -204,7 +204,8 @@
                 "chatPopUpMessage": "After you accept the regulations, your chat with IrisBot will start. Please decline if you do not wish to chat.",
                 "chatInputMessage": "Write a message...",
                 "chatAccept": "Accept",
-                "chatDecline": "Decline"
+                "chatDecline": "Decline",
+                "chatButtonTooltip": "Start chatting with Iris!"
             }
         }
     }
