@@ -576,7 +576,7 @@ export class CourseUpdateComponent implements OnInit {
         if (this.atLeastOneDateNotExisting() || !this.course.enrollmentStartDate || !this.course.enrollmentEndDate) {
             return false;
         }
-        return dayjs(this.course.enrollmentEndDate).isBefore(this.course.disenrollmentEndDate) && dayjs(this.course.disenrollmentEndDate).isBefore(this.course.startDate);
+        return dayjs(this.course.enrollmentEndDate).isBefore(this.course.disenrollmentEndDate) && dayjs(this.course.disenrollmentEndDate).isBefore(this.course.endDate);
     }
 
     /**
