@@ -296,14 +296,6 @@ public class ProgrammingExerciseRepositoryService {
 
         // Java both supports Gradle and Maven as a test template
         Path projectTemplatePath = templatePath;
-        /*
-         * if (projectType != null && projectType.isGradle()) {
-         * projectTemplatePath = projectTemplatePath.resolve("gradle");
-         * }
-         * else {
-         * projectTemplatePath = projectTemplatePath.resolve("maven");
-         * }
-         */
         if (isMavenProject(projectType)) {
             projectTemplatePath = projectTemplatePath.resolve("maven");
         }
@@ -322,6 +314,11 @@ public class ProgrammingExerciseRepositoryService {
         // These resources might override the programming language dependent resources as they are project type dependent.
         if (projectType != null) {
             setupJVMTestTemplateProjectTypeResources(resources, programmingExercise, repoLocalPath);
+        }
+
+        if (projectType == ProjectType.MAVEN_BLACKBOX) {
+            Path dejagnuLibFolderPath = repoLocalPath.resolve("dejagnu").resolve("lib");
+            fileService.replaceVariablesInFileName(dejagnuLibFolderPath.toString(), PACKAGE_NAME_FILE_PLACEHOLDER, programmingExercise.getPackageName());
         }
 
         final Map<String, Boolean> sectionsMap = new HashMap<>();
@@ -387,7 +384,9 @@ public class ProgrammingExerciseRepositoryService {
 
         setupBuildToolProjectFile(repoLocalPath, projectType, sectionsMap);
 
-        fileService.copyResources(testFileResources, resources.prefix, packagePath, false);
+        if (programmingExercise.getProjectType() != ProjectType.MAVEN_BLACKBOX) {
+            fileService.copyResources(testFileResources, resources.prefix, packagePath, false);
+        }
 
         if (projectType != null) {
             overwriteProjectTypeSpecificFiles(resources, programmingExercise, packagePath);
