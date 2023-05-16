@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -14,9 +15,11 @@ import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismResult;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismResultRepository;
+import de.tum.in.www1.artemis.service.plagiarism.PlagiarismCaseService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -50,6 +53,8 @@ public class ExerciseDeletionService {
 
     private final PlagiarismResultRepository plagiarismResultRepository;
 
+    private final PlagiarismCaseService plagiarismCaseService;
+
     private final TextAssessmentKnowledgeService textAssessmentKnowledgeService;
 
     private final ModelAssessmentKnowledgeService modelAssessmentKnowledgeService;
@@ -62,7 +67,7 @@ public class ExerciseDeletionService {
             ProgrammingExerciseService programmingExerciseService, ModelingExerciseService modelingExerciseService, QuizExerciseService quizExerciseService,
             TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionService exampleSubmissionService, StudentExamRepository studentExamRepository,
             LectureUnitService lectureUnitService, TextExerciseRepository textExerciseRepository, PlagiarismResultRepository plagiarismResultRepository,
-            TextAssessmentKnowledgeService textAssessmentKnowledgeService, ModelingExerciseRepository modelingExerciseRepository,
+            PlagiarismCaseService plagiarismCaseService, TextAssessmentKnowledgeService textAssessmentKnowledgeService, ModelingExerciseRepository modelingExerciseRepository,
             ModelAssessmentKnowledgeService modelAssessmentKnowledgeService) {
         this.exerciseRepository = exerciseRepository;
         this.participationService = participationService;
@@ -75,6 +80,7 @@ public class ExerciseDeletionService {
         this.exerciseUnitRepository = exerciseUnitRepository;
         this.lectureUnitService = lectureUnitService;
         this.plagiarismResultRepository = plagiarismResultRepository;
+        this.plagiarismCaseService = plagiarismCaseService;
         this.textAssessmentKnowledgeService = textAssessmentKnowledgeService;
         this.modelAssessmentKnowledgeService = modelAssessmentKnowledgeService;
         this.textExerciseRepository = textExerciseRepository;
@@ -135,6 +141,10 @@ public class ExerciseDeletionService {
         for (ExerciseUnit exerciseUnit : exerciseUnits) {
             lectureUnitService.removeLectureUnit(exerciseUnit);
         }
+
+        // delete all plagiarism cases and comparisons
+        plagiarismResultRepository.findAllByExerciseId(exerciseId).stream().map(PlagiarismResult::getComparisons).flatMap(Collection::stream).map(DomainObject::getId)
+                .forEach(plagiarismCaseService::removeSubmissionsInPlagiarismCasesForComparison);
 
         // delete all plagiarism results belonging to this exercise
         plagiarismResultRepository.deletePlagiarismResultsByExerciseId(exerciseId);

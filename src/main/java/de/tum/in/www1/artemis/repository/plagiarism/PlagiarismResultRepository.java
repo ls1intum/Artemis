@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.repository.plagiarism;
 
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
+import java.util.List;
 import java.util.Optional;
 
 import javax.annotation.Nullable;
@@ -22,6 +23,9 @@ public interface PlagiarismResultRepository extends JpaRepository<PlagiarismResu
 
     @EntityGraph(type = LOAD, attributePaths = { "comparisons" })
     Optional<PlagiarismResult<?>> findFirstByExerciseIdOrderByLastModifiedDateDesc(long exerciseId);
+
+    @EntityGraph(type = LOAD, attributePaths = { "comparisons" })
+    List<PlagiarismResult<?>> findAllByExerciseId(long exerciseId);
 
     @Nullable
     default PlagiarismResult<?> findFirstByExerciseIdOrderByLastModifiedDateDescOrNull(long exerciseId) {
