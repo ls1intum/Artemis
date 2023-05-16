@@ -29,11 +29,7 @@ export class ExerciseChatbotComponent {
     }
 
     openDialog() {
-        const dialogRef = this.dialog.open(ChatbotPopupComponent, {
-            data: {
-                name: 'User',
-            },
-        });
+        const dialogRef = this.dialog.open(ChatbotPopupComponent, {});
 
         dialogRef.afterClosed().subscribe((result) => {
             this.chatAccepted = result;
