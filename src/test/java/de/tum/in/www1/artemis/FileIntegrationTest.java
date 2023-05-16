@@ -243,7 +243,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         Lecture lecture = database.createCourseWithLecture(true);
 
         MockMultipartFile file = new MockMultipartFile("file", "filename2.png", "application/json", "some data".getBytes());
-        AttachmentUnit attachmentUnit = uploadAttachmentUnit(file, lecture.getId(), HttpStatus.CREATED);
+        AttachmentUnit attachmentUnit = uploadAttachmentUnit(file, HttpStatus.CREATED);
         database.addLectureUnitsToLecture(lecture, Set.of(attachmentUnit));
 
         String attachmentPath = attachmentUnit.getAttachment().getLink();
@@ -402,12 +402,12 @@ class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
             doc1.addPage(new PDPage());
             doc1.save(outputStream);
             MockMultipartFile file1 = new MockMultipartFile("file", "file.pdf", "application/json", outputStream.toByteArray());
-            unit1 = uploadAttachmentUnit(file1, lectureId, expectedStatus);
+            unit1 = uploadAttachmentUnit(file1, expectedStatus);
         }
 
         // create image file
         MockMultipartFile file2 = new MockMultipartFile("file", "filename2.png", "application/json", "some text".getBytes());
-        AttachmentUnit unit2 = uploadAttachmentUnit(file2, lectureId, expectedStatus);
+        AttachmentUnit unit2 = uploadAttachmentUnit(file2, expectedStatus);
 
         // create pdf file 3
         AttachmentUnit unit3;
@@ -416,7 +416,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
             doc2.addPage(new PDPage());
             doc2.save(outputStream);
             MockMultipartFile file3 = new MockMultipartFile("file", "filename3.pdf", "application/json", outputStream.toByteArray());
-            unit3 = uploadAttachmentUnit(file3, lectureId, expectedStatus);
+            unit3 = uploadAttachmentUnit(file3, expectedStatus);
         }
 
         lecture = database.addLectureUnitsToLecture(lecture, Set.of(unit1, unit2, unit3));
@@ -424,7 +424,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         return lecture;
     }
 
-    private AttachmentUnit uploadAttachmentUnit(MockMultipartFile file, Long lectureId, HttpStatus expectedStatus) throws Exception {
+    private AttachmentUnit uploadAttachmentUnit(MockMultipartFile file, HttpStatus expectedStatus) throws Exception {
 
         AttachmentUnit attachmentUnit = database.createAttachmentUnit(false);
 

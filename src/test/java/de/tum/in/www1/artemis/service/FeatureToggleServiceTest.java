@@ -63,7 +63,7 @@ class FeatureToggleServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
         featureToggleService.enableFeature(Feature.ProgrammingExercises);
 
         // Feature should not be added multiple times
-        assertThat(featureToggleService.enabledFeatures()).hasSameSizeAs(Feature.values().length);
+        assertThat(featureToggleService.enabledFeatures()).hasSameSizeAs(Feature.values());
     }
 
     @Test

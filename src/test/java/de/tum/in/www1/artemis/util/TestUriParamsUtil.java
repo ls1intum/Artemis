@@ -20,19 +20,19 @@ public class TestUriParamsUtil {
     }
 
     /**
-     * Asserts if a list of URI parameters contains an entry pair with the given name and value. If specified the
+     * Asserts if a list of URI parameters contains an entry pair with the given name and value. If specified, the
      * assert does not fail if the given value is a substring of the actual URI parameter value.
      *
      * @param uriParams           the list of URI parameters
      * @param name                the name of the URI parameter
      * @param value               the value of the URI parameter
-     * @param allowValueSubString whether or not to allow that the given value is a sub string of the actual value
+     * @param allowValueSubString whether to allow that the given value is a sub string of the actual value
      */
     public static void assertUriParamsContain(List<NameValuePair> uriParams, String name, String value, boolean allowValueSubString) {
         List<NameValuePair> matching = uriParams.stream().filter(param -> param.getName().equals(name)).toList();
 
         assertThat(matching).as("No URI param with name '" + name + "'").isNotEmpty();
-        assertThat(matching).as("Multiple URI param with name '" + name + "'").hasSizeGreaterThan(1);
+        assertThat(matching).as("Multiple URI param with name '" + name + "'").hasSizeLessThanOrEqualTo(1);
 
         NameValuePair param = matching.get(0);
 
@@ -50,9 +50,8 @@ public class TestUriParamsUtil {
      * @param uriParams the list of URI parameters
      * @param name      the name of the URI parameter
      */
-    public static void assertUriParamsContain(List<NameValuePair> uriParams, String name) { // todo
-        assertThat(uriParams.stream().filter(param -> param.getName().equals(name)).count()).as("No URI param with name '" + name + "'").isEqualTo(1L);
-        // uriParams.stream().filter(param -> param.getName().equals(name)).count()
+    public static void assertUriParamsContain(List<NameValuePair> uriParams, String name) {
+        assertThat(uriParams).filteredOn(param -> param.getName().equals(name)).as("No URI param with name '" + name + "'").hasSize(1);
     }
 
 }

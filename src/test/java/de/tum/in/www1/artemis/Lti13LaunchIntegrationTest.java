@@ -23,7 +23,7 @@ import de.tum.in.www1.artemis.web.rest.LtiResource;
  * LTI 1.3 Exercise Launch
  * Note that Step 1. of the OpenID Connect Third Party intiated login flow is handled entirely by spring-security-lti13
  * which does not require additional testing here.
- * Testing all possible cases of Step 3. of the OpenID Connect Third Party intiated login flow is
+ * Testing all possible cases of Step 3. of the OpenID Connect Third Party initiated login flow is
  * nearly impossible if spring-security-lti13 is not mocked. Because of that, there is not a full integration test
  * provided here.
  * However, Lti13LaunchFilter is responsible to handle this step and is tested extensively.
