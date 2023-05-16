@@ -67,10 +67,12 @@
             },
             "getInTouch": "Get in touch",
             "contributors": "Individual contributors",
-            "projectManager": "Project Manager",
             "website": "Website",
-            "administrator": "System Administrator",
-            "exerciseManagement": "Exercise Management"
+            "roles": {
+                "projectManager": "Project Manager",
+                "administrator": "System Administrator",
+                "exerciseManagement": "Exercise Management"
+            }
         }
     }
 }
