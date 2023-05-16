@@ -11,6 +11,7 @@ import { ExerciseChatWidgetComponent } from 'app/overview/exercise-chatbot/exerc
 })
 export class ExerciseChatbotComponent {
     public chatAccepted = 'false';
+    public buttonDisabled = false;
 
     // Icons
     faCommentDots = faCommentDots;
@@ -30,6 +31,12 @@ export class ExerciseChatbotComponent {
     }
 
     openChat() {
-        const dialogRef = this.dialog.open(ExerciseChatWidgetComponent);
+        if (!this.buttonDisabled) {
+            const dialogRef = this.dialog.open(ExerciseChatWidgetComponent, { position: { bottom: '0px', right: '0px' } });
+            dialogRef.componentInstance.chatWidgetClosed.subscribe(() => {
+                this.buttonDisabled = false;
+            });
+        }
+        this.buttonDisabled = true;
     }
 }

@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, EventEmitter, Output } from '@angular/core';
 import { faPaperPlane } from '@fortawesome/free-solid-svg-icons';
 import { faCompress } from '@fortawesome/free-solid-svg-icons';
 import { faXmark } from '@fortawesome/free-solid-svg-icons';
@@ -14,6 +14,7 @@ export class ExerciseChatWidgetComponent {
     IrisMessages: string[] = ['Hey! How can I help you?'];
     userMessages: string[] = [];
     newMessage = '';
+    @Output() chatWidgetClosed = new EventEmitter<void>();
 
     constructor(private dialog: MatDialog) {}
 
@@ -30,6 +31,7 @@ export class ExerciseChatWidgetComponent {
     }
 
     closeChat() {
-        const dialogRef = this.dialog.closeAll();
+        this.dialog.closeAll();
+        this.chatWidgetClosed.emit();
     }
 }
