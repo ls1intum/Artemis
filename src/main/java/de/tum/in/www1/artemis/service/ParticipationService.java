@@ -234,7 +234,7 @@ public class ParticipationService {
     }
 
     private StudentParticipation startProgrammingParticipation(ProgrammingExercise exercise, ProgrammingExerciseStudentParticipation participation, boolean setInitializationDate) {
-        // Step 1b) lock the participation, if it is for an exam. For course exercises, this is not necessary, as students can only create their participation after the start date.
+        // Step 1b) Lock the participation, if it is for an exam. For course exercises, this is not necessary, as students can only create their participation after the start date.
         if (exercise.isExamExercise()) {
             participation.setLocked(true);
         }
