@@ -49,4 +49,9 @@ public class IrisMessageContent extends DomainObject {
     public void setTextContent(@Nullable String textContent) {
         this.textContent = textContent;
     }
+
+    @Override
+    public String toString() {
+        return "IrisMessageContent{" + "message=" + message.getId() + ", textContent='" + textContent + '\'' + '}';
+    }
 }

@@ -57,4 +57,9 @@ public class IrisSession extends DomainObject {
     public List<IrisMessage> getMessages() {
         return messages;
     }
+
+    @Override
+    public String toString() {
+        return "IrisSession{" + "exercise=" + exercise.getId() + ", user=" + user.getName() + ", messages=" + messages + '}';
+    }
 }

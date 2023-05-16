@@ -87,4 +87,9 @@ public class IrisMessage extends DomainObject {
     public void setContent(List<IrisMessageContent> content) {
         this.content = content;
     }
+
+    @Override
+    public String toString() {
+        return "IrisMessage{" + "session=" + session.getId() + ", sentAt=" + sentAt + ", helpful=" + helpful + ", sender=" + sender + ", content=" + content + '}';
+    }
 }
