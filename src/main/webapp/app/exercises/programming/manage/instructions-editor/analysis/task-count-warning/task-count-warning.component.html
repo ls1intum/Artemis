@@ -13,7 +13,7 @@
 <ng-template #tasksTooltipContent>
     <div class="text-start w-100">
         <div *ngIf="numOfTasks > advisedMaxNumOfTasks" class="text-start">
-            <span>{{ 'artemisApp.programmingExercise.tasksAnalysis.numOfTasks15' | artemisTranslate : { number: numOfTasks } }}</span>
+            <span>{{ 'artemisApp.programmingExercise.tasksAnalysis.numOfTasks' | artemisTranslate : { number: numOfTasks, limit: advisedMaxNumOfTasks } }}</span>
         </div>
     </div>
 </ng-template>

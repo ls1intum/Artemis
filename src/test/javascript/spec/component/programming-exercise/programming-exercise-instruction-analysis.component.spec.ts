@@ -35,8 +35,18 @@ describe('ProgrammingExerciseInstructionInstructorAnalysis', () => {
         beforeEach(() => {
             TestBed.configureTestingModule({
                 imports: [MockDirective(NgbTooltip)],
-                declarations: [ProgrammingExerciseInstructionAnalysisComponent, TaskCountWarningComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FaIconComponent)],
-                providers: [{ provide: ProgrammingExerciseInstructionAnalysisService, useClass: MockProgrammingExerciseInstructionAnalysisService }],
+                declarations: [
+                    ProgrammingExerciseInstructionAnalysisComponent,
+                    MockComponent(TaskCountWarningComponent),
+                    MockPipe(ArtemisTranslatePipe),
+                    MockComponent(FaIconComponent),
+                ],
+                providers: [
+                    {
+                        provide: ProgrammingExerciseInstructionAnalysisService,
+                        useClass: MockProgrammingExerciseInstructionAnalysisService,
+                    },
+                ],
             })
                 .compileComponents()
                 .then(() => {
@@ -80,7 +90,12 @@ describe('ProgrammingExerciseInstructionInstructorAnalysis', () => {
             expect(comp.missingTestCases).toEqual(missingTestCases);
             expect(comp.invalidTestCases).toEqual(invalidTestCases);
 
-            triggerChanges(comp, { property: 'problemStatement', currentValue: problemStatement, previousValue: 'dolet amat', firstChange: false });
+            triggerChanges(comp, {
+                property: 'problemStatement',
+                currentValue: problemStatement,
+                previousValue: 'dolet amat',
+                firstChange: false,
+            });
             tick(500); // Update is debounced, otherwise we would send updates on every change.
             fixture.detectChanges();
 

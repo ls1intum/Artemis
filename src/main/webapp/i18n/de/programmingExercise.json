@@ -205,7 +205,7 @@
             "tasksAnalysis": {
                 "issues": "Aufgabenprobleme.",
                 "ok": "Aufgaben ok.",
-                "numOfTasks15": "Die Anzahl der Aufgaben sollte 15 nicht überschreiten. Derzeit gibt es {{number}} Aufgaben."
+                "numOfTasks": "Die Anzahl der Aufgaben sollte {{limit}} nicht überschreiten. Derzeit gibt es {{number}} Aufgaben."
             },
             "hintsAnalysis": {
                 "invalidHints": "{{number}} Hinweise wurden im Markdown der Aufgabenstellung gefunden, die nicht in der Datenbank existieren bzw. nicht dieser Programmierübung zugeordnet sind",

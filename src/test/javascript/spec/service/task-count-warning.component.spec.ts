@@ -16,7 +16,16 @@ describe('TaskCountWarningComponent', () => {
         fixture.detectChanges();
     });
 
-    it('should create', () => {
-        expect(component).toBeTruthy();
+    //query element by id
+    it('should correctly compare the number of tasks', () => {
+        component.numOfTasks = 5;
+        component.advisedMaxNumOfTasks = 15;
+        fixture.detectChanges();
+
+        const okayInformation = fixture.nativeElement.querySelector('#instruction_analysis_num-of-tasks-ok');
+        expect(okayInformation).toBeDefined();
+
+        const issueInformation = fixture.nativeElement.querySelector('#instruction_analysis_num-of-tasks-issues');
+        expect(issueInformation).toBeNull();
     });
 });
