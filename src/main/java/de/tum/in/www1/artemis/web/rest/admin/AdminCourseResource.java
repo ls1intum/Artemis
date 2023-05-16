@@ -110,7 +110,7 @@ public class AdminCourseResource {
 
         Course createdCourse = courseRepository.save(course);
 
-        Arrays.stream(DefaultChannelType.values()).forEach(channelType -> this.createChannel(createdCourse, channelType));
+        Arrays.stream(DefaultChannelType.values()).forEach(channelType -> createDefaultChannel(createdCourse, channelType));
 
         return ResponseEntity.created(new URI("/api/courses/" + createdCourse.getId())).body(createdCourse);
     }
@@ -136,18 +136,19 @@ public class AdminCourseResource {
     }
 
     /**
-     * Helper function, that creates a channel within a course
+     * Creates a default channel with the given name and adds all students, tutors and instructors as participants.
      *
      * @param course      the course, where the channel should be created
      * @param channelType the default channel type
      */
-    private void createChannel(Course course, DefaultChannelType channelType) {
-        var channelToCreate = new Channel();
+    private void createDefaultChannel(Course course, DefaultChannelType channelType) {
+        Channel channelToCreate = new Channel();
         channelToCreate.setName(channelType.getName());
         channelToCreate.setIsPublic(true);
         channelToCreate.setIsAnnouncementChannel(channelType.equals(DefaultChannelType.ANNOUNCEMENT));
         channelToCreate.setIsArchived(false);
         channelToCreate.setDescription(null);
-        channelService.createChannel(course, channelToCreate, Optional.empty());
+        Channel createdChannel = channelService.createChannel(course, channelToCreate, Optional.empty());
+        channelService.registerUsersToChannel(true, true, true, List.of(), course, createdChannel);
     }
 }

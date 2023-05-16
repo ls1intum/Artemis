@@ -53,6 +53,27 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     Course findCourseByStudentGroupName(@Param("name") String name);
 
     @Query("""
+            SELECT DISTINCT course
+            FROM Course course
+            WHERE course.instructorGroupName = :name
+            """)
+    List<Course> findCoursesByInstructorGroupName(@Param("name") String name);
+
+    @Query("""
+            SELECT DISTINCT course
+            FROM Course course
+            WHERE course.teachingAssistantGroupName = :name
+            """)
+    List<Course> findCoursesByTeachingAssistantGroupName(@Param("name") String name);
+
+    @Query("""
+            SELECT DISTINCT course
+            FROM Course course
+            WHERE course.studentGroupName = :name
+            """)
+    List<Course> findCoursesByStudentGroupName(@Param("name") String name);
+
+    @Query("""
             SELECT CASE WHEN (count(c) > 0) THEN true ELSE false END
             FROM Course c
             WHERE c.id = :#{#courseId}
