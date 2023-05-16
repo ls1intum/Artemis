@@ -48,8 +48,6 @@ export class AboutUsComponent implements OnInit {
         ['openSource', { openSourceUrl: 'https://docs.artemis.cit.tum.de/dev/open-source/' }],
     ];
 
-    readonly SERVER_API_URL = SERVER_API_URL;
-
     constructor(private route: ActivatedRoute, private profileService: ProfileService, private staticContentService: StaticContentService) {}
 
     /**

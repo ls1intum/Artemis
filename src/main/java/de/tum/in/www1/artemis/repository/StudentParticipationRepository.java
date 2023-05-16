@@ -192,6 +192,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             SELECT DISTINCT p FROM StudentParticipation p
             LEFT JOIN FETCH p.results r
             LEFT JOIN FETCH r.submission s
+            LEFT JOIN FETCH p.submissions
             WHERE p.exercise.id = :#{#exerciseId}
                 AND (r.id = (SELECT max(id) FROM p.results)
                     OR r.assessmentType <> 'AUTOMATIC'
@@ -576,6 +577,17 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             SELECT DISTINCT p FROM StudentParticipation p
             LEFT JOIN FETCH p.submissions s
             LEFT JOIN FETCH s.results r
+            WHERE p.student.id = :studentId
+                AND p.exercise in :exercises
+                AND (p.testRun = FALSE OR :includeTestRuns = TRUE)
+            """)
+    List<StudentParticipation> findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(@Param("studentId") Long studentId, @Param("exercises") List<Exercise> exercises,
+            @Param("includeTestRuns") boolean includeTestRuns);
+
+    @Query("""
+            SELECT DISTINCT p FROM StudentParticipation p
+            LEFT JOIN FETCH p.submissions s
+            LEFT JOIN FETCH s.results r
             WHERE p.testRun = FALSE
                 AND p.student.id = :#{#studentId}
                 AND p.exercise in :#{#exercises}
@@ -900,11 +912,12 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     /**
      * Gets all the participations of the user in the given exercises
      *
-     * @param user      the user to get the participations for
-     * @param exercises the exercise to get the participations for
+     * @param user            the user to get the participations for
+     * @param exercises       the exercise to get the participations for
+     * @param includeTestRuns flag that indicates whether test run participations should be included
      * @return an unmodifiable list of participations of the user in the exercises
      */
-    default List<StudentParticipation> getAllParticipationsOfUserInExercises(User user, Set<Exercise> exercises) {
+    default List<StudentParticipation> getAllParticipationsOfUserInExercises(User user, Set<Exercise> exercises, boolean includeTestRuns) {
         Map<ExerciseMode, List<Exercise>> exercisesGroupedByExerciseMode = exercises.stream().collect(Collectors.groupingBy(Exercise::getMode));
         List<Exercise> individualExercises = Objects.requireNonNullElse(exercisesGroupedByExerciseMode.get(ExerciseMode.INDIVIDUAL), List.of());
         List<Exercise> teamExercises = Objects.requireNonNullElse(exercisesGroupedByExerciseMode.get(ExerciseMode.TEAM), List.of());
@@ -917,7 +930,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
         // would lead to a SQL statement that cannot be optimized
 
         // 1st: fetch participations, submissions and results for individual exercises
-        var individualParticipations = findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(user.getId(), individualExercises);
+        var individualParticipations = findByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(user.getId(), individualExercises, includeTestRuns);
 
         // 2nd: fetch participations, submissions and results for team exercises
         var teamParticipations = findByStudentIdAndTeamExercisesWithEagerLegalSubmissionsResult(user.getId(), teamExercises);

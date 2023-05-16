@@ -186,7 +186,7 @@ describe('CoursesComponent', () => {
             const findAllForDashboardSpy = jest.spyOn(courseService, 'findAllForDashboard');
             const courseStorageServiceSpy = jest.spyOn(courseStorageService, 'setCourses');
 
-            const req = httpMock.expectOne({ method: 'GET', url: `${SERVER_API_URL}api/courses/for-dashboard` });
+            const req = httpMock.expectOne({ method: 'GET', url: `api/courses/for-dashboard` });
             component.ngOnInit();
 
             expect(findAllForDashboardSpy).toHaveBeenCalledOnce();

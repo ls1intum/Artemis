@@ -61,8 +61,6 @@ import { StudentExam } from 'app/entities/student-exam.model';
     styleUrls: ['navbar.scss'],
 })
 export class NavbarComponent implements OnInit, OnDestroy {
-    readonly SERVER_API_URL = SERVER_API_URL;
-
     inProduction: boolean;
     testServer: boolean;
     isNavbarCollapsed: boolean;
@@ -328,6 +326,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         tutorial_free_days: 'artemisApp.pages.tutorialFreePeriodsManagement.title',
         tutorial_groups_checklist: 'artemisApp.pages.checklist.title',
         create_tutorial_groups_configuration: 'artemisApp.pages.createTutorialGroupsConfiguration.title',
+        privacy_statement: 'artemisApp.privacyStatement.title',
     };
 
     studentPathBreadcrumbTranslations = {

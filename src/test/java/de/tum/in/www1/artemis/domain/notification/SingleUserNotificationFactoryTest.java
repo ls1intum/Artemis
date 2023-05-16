@@ -220,7 +220,7 @@ class SingleUserNotificationFactoryTest {
         assertThat(createdNotification.getPlaceholderValues()).as("Created notification placeholders should be equal to the expected ones").isEqualTo(expectedPlaceholderValues);
         assertThat(createdNotification.getTarget()).as("Created notification target should be equal to the expected one").isEqualTo(expectedTransientTarget.toJsonString());
         assertThat(createdNotification.getPriority()).as("Created notification priority should be equal to the expected one").isEqualTo(expectedPriority);
-        assertThat(createdNotification.getAuthor()).as("Created notification author should be equal to the expected one").isEqualTo(null);
+        assertThat(createdNotification.getAuthor()).as("Created notification author should be equal to the expected one").isNull();
     }
 
     /**
