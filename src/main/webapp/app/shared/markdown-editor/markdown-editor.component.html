@@ -84,27 +84,83 @@
                             </ng-container>
                         </div>
                     </div>
-                    <!--multi option command-->
                     <ng-container *ngFor="let command of defaultCommands | typeCheck : MultiOptionCommand">
-                        <div ngbDropdown class="dropdown">
-                            <button class="btn btn-sm dropdown-toggle" type="button" ngbDropdownToggle>
-                                {{ command.buttonTranslationString | artemisTranslate }}
+                        <div>
+                            <button mat-button [matMenuTriggerFor]="isTypeOfExerciseReferenceCommand(command) ? subMenuExercise : subMenuLecture" type="button" class="ml-1">
+                                <span>{{ command.buttonTranslationString | artemisTranslate }}</span>
+                                <fa-icon [icon]="faAngleDown" class="ms-1"></fa-icon>
                             </button>
-                            <ul class="dropdown-menu" ngbDropdownMenu>
-                                <button *ngIf="!command.getValues() || command.getValues().length === 0" [disabled]="true" ngbDropdownItem jhiTranslate="global.generic.emptyList">
+                            <mat-menu #subMenuExercise="matMenu" type="button">
+                                <button
+                                    mat-button
+                                    *ngIf="!command.getValues() || command.getValues().length === 0"
+                                    [disabled]="true"
+                                    jhiTranslate="global.generic.emptyList"
+                                    type="button"
+                                >
                                     No items available
                                 </button>
-                                <li *ngFor="let item of command.getValues()">
-                                    <button class="btn-sm" type="button" (click)="command.execute(item.id, item.type)" ngbDropdownItem>
-                                        {{ item.value }}
+                                <ng-container *ngFor="let item of command.getValues()">
+                                    <button mat-menu-item *ngIf="item.type !== 'LECTURE'" (click)="command.execute(item.id, item.type)" type="button">{{ item.value }}</button>
+                                </ng-container>
+                            </mat-menu>
+
+                            <mat-menu #subMenuLecture="matMenu" type="button">
+                                <button
+                                    mat-button
+                                    *ngIf="!command.getValues() || command.getValues().length === 0"
+                                    [disabled]="true"
+                                    jhiTranslate="global.generic.emptyList"
+                                    type="button"
+                                >
+                                    No items available
+                                </button>
+                                <ng-container *ngFor="let lecture of command.getValues()">
+                                    <button mat-menu-item *ngIf="lecture.type === 'LECTURE'" [matMenuTriggerFor]="lectureMenuUnits" type="button">
+                                        {{ lecture.value }}
                                     </button>
-                                    <ng-container *ngFor="let nestedElement of item.elements">
-                                        <button class="btn-sm nested" type="button" (click)="command.execute(item.id, nestedElement.type, nestedElement.id)" ngbDropdownItem>
-                                            {{ nestedElement.value }}
+                                    <mat-menu #lectureMenuUnits="matMenu" type="button">
+                                        <button
+                                            mat-menu-item
+                                            *ngIf="lecture.type === 'LECTURE'"
+                                            (click)="command.execute(lecture.id, lecture.type)"
+                                            type="button"
+                                            class="border-bottom"
+                                        >
+                                            {{ lecture.value }}
                                         </button>
-                                    </ng-container>
-                                </li>
-                            </ul>
+                                        <ng-container *ngFor="let unit of lecture.attachmentUnits">
+                                            <button mat-menu-item *ngIf="unit.courseArtifactType === 'ATTACHMENT_UNITS'" [matMenuTriggerFor]="lectureMenuUnitsSlide" type="button">
+                                                <span>{{ unit.value }}</span>
+                                            </button>
+                                            <mat-menu #lectureMenuUnitsSlide="matMenu" type="button">
+                                                <button mat-menu-item (click)="command.execute(lecture.id, lecture.type, undefined, unit.id)" type="button" class="border-bottom">
+                                                    {{ unit.value }}
+                                                </button>
+                                                <button
+                                                    mat-button
+                                                    *ngIf="!unit.slides || unit.slides.length === 0"
+                                                    [disabled]="true"
+                                                    jhiTranslate="global.generic.emptyList"
+                                                    type="button"
+                                                >
+                                                    No items available
+                                                </button>
+                                                <ng-container *ngFor="let slide of unit.slides">
+                                                    <button mat-menu-item (click)="command.execute(lecture.id, lecture.type, undefined, unit.id, slide.id)" type="button">
+                                                        <span>Slide {{ slide.slideNumber }}</span>
+                                                    </button>
+                                                </ng-container>
+                                            </mat-menu>
+                                        </ng-container>
+                                        <ng-container *ngFor="let attachment of lecture.elements">
+                                            <button mat-menu-item type="button" (click)="command.execute(lecture.id, attachment.type, attachment.id)">
+                                                <span>{{ attachment.value }}</span>
+                                            </button>
+                                        </ng-container>
+                                    </mat-menu>
+                                </ng-container>
+                            </mat-menu>
                         </div>
                     </ng-container>
                     <!--color picker command -->

@@ -67,8 +67,12 @@
             },
             "getInTouch": "Kontakt",
             "contributors": "Mitwirkende",
-            "projectManager": "Projekt Manager",
-            "website": "Webseite"
+            "website": "Webseite",
+            "roles": {
+                "projectManager": "Projektmanagement",
+                "administrator": "Systemadministration",
+                "exerciseManagement": "Übungsleitung"
+            }
         }
     }
 }
