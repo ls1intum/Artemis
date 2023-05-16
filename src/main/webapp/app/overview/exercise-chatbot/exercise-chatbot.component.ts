@@ -18,6 +18,16 @@ export class ExerciseChatbotComponent {
 
     constructor(private dialog: MatDialog) {}
 
+    handleButtonClick() {
+        if (this.chatAccepted === 'true') {
+            // Logic for chat accepted
+            this.openChat();
+        } else {
+            // Logic for chat not accepted
+            this.openDialog();
+        }
+    }
+
     openDialog() {
         const dialogRef = this.dialog.open(ChatbotPopupComponent, {
             data: {
