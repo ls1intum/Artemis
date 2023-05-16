@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Output } from '@angular/core';
+import { Component, ElementRef, EventEmitter, Output, ViewChild } from '@angular/core';
 import { faPaperPlane } from '@fortawesome/free-solid-svg-icons';
 import { faCompress } from '@fortawesome/free-solid-svg-icons';
 import { faXmark } from '@fortawesome/free-solid-svg-icons';
@@ -10,6 +10,7 @@ import { MatDialog } from '@angular/material/dialog';
     styleUrls: ['./exercise-chat-widget.component.scss'],
 })
 export class ExerciseChatWidgetComponent {
+    @ViewChild('chatBody') chatBody!: ElementRef;
     messages: string[] = [];
     irisMessages: string[] = ['Hey! How can I help you?'];
     userMessages: string[] = [];
@@ -28,6 +29,14 @@ export class ExerciseChatWidgetComponent {
             this.userMessages.push(this.newMessage);
             this.newMessage = '';
         }
+        this.scrollToBottom();
+    }
+
+    scrollToBottom() {
+        setTimeout(() => {
+            const chatBodyElement: HTMLElement = this.chatBody.nativeElement;
+            chatBodyElement.scrollTop = chatBodyElement.scrollHeight;
+        });
     }
 
     closeChat() {
