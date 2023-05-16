@@ -74,7 +74,7 @@ public class IrisMessageResource {
     public ResponseEntity<IrisMessage> createMessage(@PathVariable Long sessionId, @RequestBody IrisMessage message) throws URISyntaxException {
         var session = irisSessionRepository.findByIdElseThrow(sessionId);
         irisSessionService.checkHasAccessToIrisSession(session, null);
-        var savedMessage = irisMessageService.saveNewMessage(message, session, IrisMessageSender.USER);
+        var savedMessage = irisMessageService.saveMessageAndRequestAnswer(message, session, IrisMessageSender.USER);
 
         var uriString = "/api/iris/sessions/" + session.getId() + "/messages/" + savedMessage.getId();
         return ResponseEntity.created(new URI(uriString)).body(savedMessage);

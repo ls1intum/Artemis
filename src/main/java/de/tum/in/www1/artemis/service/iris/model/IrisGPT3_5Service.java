@@ -32,7 +32,7 @@ import de.tum.in.www1.artemis.service.dto.OpenAIChatResponseDTO;
  * A service which sends REST requests to the GPT-3.5 API to generate responses to Iris conversations.
  */
 @Service
-@Profile("gpt3_5")
+@Profile("iris-gpt3_5")
 public class IrisGPT3_5Service implements IrisModel {
 
     private final Logger log = LoggerFactory.getLogger(IrisGPT3_5Service.class);
@@ -109,7 +109,6 @@ public class IrisGPT3_5Service implements IrisModel {
             // TODO: Create DTO for error responses, and handle them
             OpenAIChatResponseDTO response = jsonMapper.readValue(responseBody, OpenAIChatResponseDTO.class);
             var irisMessage = convertToIrisMessage(response.getChoices().get(0).getMessage());
-
             return CompletableFuture.completedFuture(irisMessage);
         }
         catch (JsonProcessingException e) {
