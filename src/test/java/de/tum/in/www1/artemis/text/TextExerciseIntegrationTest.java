@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.text;
 
 import static de.tum.in.www1.artemis.domain.plagiarism.PlagiarismStatus.*;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -917,7 +916,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         sourceExercise = textExerciseRepository.findById(sourceExercise.getId()).get();
         assertThat(sourceExercise.getCourseViaExerciseGroupOrCourseMember().getId()).isEqualTo(course1.getId());
         assertThat(sourceExercise.getMode()).isEqualTo(ExerciseMode.INDIVIDUAL);
-        assertNull(sourceExercise.getTeamAssignmentConfig());
+        assertThat(sourceExercise.getTeamAssignmentConfig()).isNull();
         assertThat(teamRepository.findAllByExerciseIdWithEagerStudents(sourceExercise, null)).isEmpty();
     }
 
@@ -950,7 +949,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         assertThat(exerciseToBeImported.getCourseViaExerciseGroupOrCourseMember().getId()).isEqualTo(course2.getId());
         assertThat(exerciseToBeImported.getMode()).isEqualTo(ExerciseMode.INDIVIDUAL);
-        assertNull(exerciseToBeImported.getTeamAssignmentConfig());
+        assertThat(exerciseToBeImported.getTeamAssignmentConfig()).isNull();
         assertThat(teamRepository.findAllByExerciseIdWithEagerStudents(exerciseToBeImported, null)).isEmpty();
 
         sourceExercise = textExerciseRepository.findById(sourceExercise.getId()).get();

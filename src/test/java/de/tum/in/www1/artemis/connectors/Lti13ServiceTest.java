@@ -467,9 +467,9 @@ class Lti13ServiceTest {
         JSONParser jsonParser = new JSONParser(JSONParser.MODE_JSON_SIMPLE);
         JSONObject body = (JSONObject) jsonParser.parse(httpEntity.getBody());
         assertThat(body.get("userId")).as("Invalid parameter in score publish request: userId").isEqualTo(launch.getSub());
-        assertNotNull(body.get("timestamp"), "Parameter missing in score publish request: timestamp");
-        assertNotNull(body.get("activityProgress"), "Parameter missing in score publish request: activityProgress");
-        assertNotNull(body.get("gradingProgress"), "Parameter missing in score publish request: gradingProgress");
+        assertThat(body.get("timestamp")).as("Parameter missing in score publish request: timestamp").isNotNull();
+        assertThat(body.get("activityProgress")).as("Parameter missing in score publish request: activityProgress").isNotNull();
+        assertThat(body.get("gradingProgress")).as("Parameter missing in score publish request: gradingProgress").isNotNull();
 
         assertThat(body.get("comment")).as("Invalid parameter in score publish request: comment").isEqualTo("Good job. Not so good");
         assertThat(body.get("scoreGiven")).as("Invalid parameter in score publish request: scoreGiven").isEqualTo(scoreGiven);

@@ -1660,7 +1660,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         quizExercise = quizExerciseRepository.findById(quizExercise.getId()).get();
         assertThat(quizExercise.getCourseViaExerciseGroupOrCourseMember().getId()).isEqualTo(course1.getId());
         assertThat(quizExercise.getMode()).isEqualTo(ExerciseMode.INDIVIDUAL);
-        assertNull(quizExercise.getTeamAssignmentConfig());
+        assertThat(quizExercise.getTeamAssignmentConfig()).isNull();
         assertThat(teamRepository.findAllByExerciseIdWithEagerStudents(quizExercise, null)).isEmpty();
     }
 
@@ -1697,7 +1697,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         assertThat(changedQuiz.getCourseViaExerciseGroupOrCourseMember().getId()).isEqualTo(course2.getId());
         assertThat(changedQuiz.getMode()).isEqualTo(ExerciseMode.INDIVIDUAL);
-        assertNull(changedQuiz.getTeamAssignmentConfig());
+        assertThat(changedQuiz.getTeamAssignmentConfig()).isNull();
         assertThat(teamRepository.findAllByExerciseIdWithEagerStudents(changedQuiz, null)).isEmpty();
 
         quizExercise = quizExerciseRepository.findById(quizExercise.getId()).get();
@@ -1764,7 +1764,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         question.setExplanation("0".repeat(validityThreshold));
 
         QuizExercise response = request.postWithResponseBody("/api/quiz-exercises/", quizExercise, QuizExercise.class, HttpStatus.CREATED);
-        assertNotNull(response);
+        assertThat(response).isNotNull();
     }
 
     /**
@@ -1795,7 +1795,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         question.getAnswerOptions().get(0).setExplanation("0".repeat(validityThreshold));
 
         QuizExercise response = request.postWithResponseBody("/api/quiz-exercises/", quizExercise, QuizExercise.class, HttpStatus.CREATED);
-        assertNotNull(response);
+        assertThat(response).isNotNull();
     }
 
     /**

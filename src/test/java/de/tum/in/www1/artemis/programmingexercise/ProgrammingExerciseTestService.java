@@ -741,7 +741,7 @@ public class ProgrammingExerciseTestService {
 
         sourceExercise = database.loadProgrammingExerciseWithEagerReferences(sourceExercise);
         assertThat(sourceExercise.getMode()).isEqualTo(ExerciseMode.INDIVIDUAL);
-        assertNull(sourceExercise.getTeamAssignmentConfig());
+        assertThat(sourceExercise.getTeamAssignmentConfig()).isNull();
         assertThat(teamRepository.findAllByExerciseIdWithEagerStudents(sourceExercise, null)).isEmpty();
     }
 
@@ -777,7 +777,7 @@ public class ProgrammingExerciseTestService {
                 ProgrammingExercise.class, HttpStatus.OK);
 
         assertThat(exerciseToBeImported.getMode()).isEqualTo(ExerciseMode.INDIVIDUAL);
-        assertNull(exerciseToBeImported.getTeamAssignmentConfig());
+        assertThat(exerciseToBeImported.getTeamAssignmentConfig()).isNull();
         assertThat(teamRepository.findAllByExerciseIdWithEagerStudents(exerciseToBeImported, null)).isEmpty();
 
         sourceExercise = database.loadProgrammingExerciseWithEagerReferences(sourceExercise);

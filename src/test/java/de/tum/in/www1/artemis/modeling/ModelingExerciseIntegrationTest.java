@@ -701,7 +701,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
 
         assertThat(exerciseToBeImported.getCourseViaExerciseGroupOrCourseMember().getId()).isEqualTo(course2.getId());
         assertThat(exerciseToBeImported.getMode()).isEqualTo(ExerciseMode.INDIVIDUAL);
-        assertNull(exerciseToBeImported.getTeamAssignmentConfig());
+        assertThat(exerciseToBeImported.getTeamAssignmentConfig()).isNull();
         assertThat(teamRepository.findAllByExerciseIdWithEagerStudents(exerciseToBeImported, null)).isEmpty();
 
         sourceExercise = modelingExerciseRepository.findById(sourceExercise.getId()).get();

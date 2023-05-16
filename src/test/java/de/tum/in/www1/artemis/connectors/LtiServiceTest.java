@@ -102,7 +102,7 @@ class LtiServiceTest {
         String initialize = uriComponents.getQueryParams().getFirst("initialize");
         String ltiSuccessLoginRequired = uriComponents.getQueryParams().getFirst("ltiSuccessLoginRequired");
         assertThat(initialize).isEmpty();
-        assertNull(ltiSuccessLoginRequired);
+        assertThat(ltiSuccessLoginRequired).isNull();
     }
 
     @Test
@@ -124,7 +124,7 @@ class LtiServiceTest {
         String initialize = uriComponents.getQueryParams().getFirst("initialize");
         String ltiSuccessLoginRequired = uriComponents.getQueryParams().getFirst("ltiSuccessLoginRequired");
         assertThat(ltiSuccessLoginRequired).isEqualTo(user.getLogin());
-        assertNull(initialize);
+        assertThat(initialize).isNull();
     }
 
     @Test

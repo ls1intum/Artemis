@@ -108,7 +108,7 @@ class Lti13TokenRetrieverTest {
 
         String token = lti13TokenRetriever.getToken(clientRegistration, Scopes.AGS_SCORE);
 
-        assertNull(token);
+        assertThat(token).isNull();
         verifyNoInteractions(restTemplate);
     }
 
@@ -124,7 +124,7 @@ class Lti13TokenRetrieverTest {
         verify(oAuth2JWKSService, times(1)).getJWK(clientRegistration.getRegistrationId());
         verify(restTemplate, times(1)).exchange(any(), eq(String.class));
 
-        assertNull(token);
+        assertThat(token).isNull();
     }
 
     @Test
@@ -140,7 +140,7 @@ class Lti13TokenRetrieverTest {
         verify(oAuth2JWKSService, times(1)).getJWK(clientRegistration.getRegistrationId());
         verify(restTemplate, times(1)).exchange(any(), eq(String.class));
 
-        assertNull(token);
+        assertThat(token).isNull();
     }
 
     @Test
