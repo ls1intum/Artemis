@@ -616,7 +616,7 @@ export class CourseManagementRequests {
 
     lockRepositoriesAndParticipations(exerciseId: number) {
         return cy.request({
-            url: EXERCISE_BASE + exerciseId + '/lock-all-repositories',
+            url: PROGRAMMING_EXERCISE_BASE + exerciseId + '/lock-all-repositories',
             method: PUT,
         });
     }
