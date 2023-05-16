@@ -1,14 +1,11 @@
 package de.tum.in.www1.artemis.lecture;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-
-import javax.validation.constraints.NotNull;
 
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
@@ -17,20 +14,16 @@ import org.apache.pdfbox.pdmodel.font.PDType1Font;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
 import de.tum.in.www1.artemis.repository.AttachmentUnitRepository;
+import de.tum.in.www1.artemis.repository.SlideRepository;
+import de.tum.in.www1.artemis.util.RequestUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.LectureUnitInformationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.LectureUnitSplitDTO;
 
@@ -41,12 +34,15 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationBambooBitb
     @Autowired
     private AttachmentUnitRepository attachmentUnitRepository;
 
+    @Autowired
+    private SlideRepository slideRepository;
+
+    @Autowired
+    private RequestUtilService request;
+
     private LectureUnitInformationDTO lectureUnitSplits;
 
     private Lecture lecture1;
-
-    @Autowired
-    private ObjectMapper mapper;
 
     @BeforeEach
     void initTestCase() {
@@ -58,6 +54,8 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationBambooBitb
         database.createAndSaveUser(TEST_PREFIX + "student42");
         database.createAndSaveUser(TEST_PREFIX + "tutor42");
         database.createAndSaveUser(TEST_PREFIX + "instructor42");
+
+        slideRepository.deleteAll();
     }
 
     @Test
@@ -81,9 +79,11 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationBambooBitb
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void splitLectureFile_asInstructor_shouldGetUnitsInformation() throws Exception {
-        // TODO: move code of the next 3 lines into RequestUtilService and simply invoke request.postWithMultipartFile() --> potentially create a customized version
-        var createResult = request.getMvc().perform(buildGetSplitInformation()).andExpect(status().isOk()).andReturn();
-        LectureUnitInformationDTO lectureUnitSplitInfo = mapper.readValue(createResult.getResponse().getContentAsString(), LectureUnitInformationDTO.class);
+        var filePart = createLectureFile(true);
+
+        LectureUnitInformationDTO lectureUnitSplitInfo = request.postWithMultipartFile("/api/lectures/" + lecture1.getId() + "/process-units", null, "process-units", filePart,
+                LectureUnitInformationDTO.class, HttpStatus.OK);
+
         assertThat(lectureUnitSplitInfo.units()).hasSize(2);
         assertThat(lectureUnitSplitInfo.numberOfPages()).isEqualTo(20);
     }
@@ -91,21 +91,21 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationBambooBitb
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void splitLectureFile_asInstructor_shouldCreateAttachmentUnits() throws Exception {
-        // TODO: move code of the next 3 lines into RequestUtilService and simply invoke request.postWithMultipartFile() --> potentially create a customized version
-        var splitResult = request.getMvc().perform(buildGetSplitInformation()).andExpect(status().isOk()).andReturn();
-        LectureUnitInformationDTO lectureUnitSplitInfo = mapper.readValue(splitResult.getResponse().getContentAsString(), LectureUnitInformationDTO.class);
+        var filePart = createLectureFile(true);
+
+        LectureUnitInformationDTO lectureUnitSplitInfo = request.postWithMultipartFile("/api/lectures/" + lecture1.getId() + "/process-units", null, "process-units", filePart,
+                LectureUnitInformationDTO.class, HttpStatus.OK);
 
         assertThat(lectureUnitSplitInfo.units()).hasSize(2);
         assertThat(lectureUnitSplitInfo.numberOfPages()).isEqualTo(20);
 
         lectureUnitSplitInfo = new LectureUnitInformationDTO(lectureUnitSplitInfo.units(), lectureUnitSplitInfo.numberOfPages(), false);
 
-        // TODO: move code of the next 3 lines into RequestUtilService and simply invoke request.postWithMultipartFile() --> potentially create a customized version
-        var createUnitsResult = request.getMvc().perform(buildSplitAndCreateAttachmentUnits(lectureUnitSplitInfo)).andExpect(status().isOk()).andReturn();
-        List<AttachmentUnit> attachmentUnits = mapper.readValue(createUnitsResult.getResponse().getContentAsString(),
-                mapper.getTypeFactory().constructCollectionType(List.class, AttachmentUnit.class));
+        List<AttachmentUnit> attachmentUnits = List.of(request.postWithMultipartFile("/api/lectures/" + lecture1.getId() + "/attachment-units/split", lectureUnitSplitInfo,
+                "lectureUnitInformationDTO", filePart, AttachmentUnit[].class, HttpStatus.OK));
 
         assertThat(attachmentUnits).hasSize(2);
+        assertThat(slideRepository.findAll()).hasSize(20); // 20 slides should be created for 2 attachment units
 
         List<Long> attachmentUnitIds = attachmentUnits.stream().map(AttachmentUnit::getId).toList();
         List<AttachmentUnit> attachmentUnitList = attachmentUnitRepository.findAllById(attachmentUnitIds);
@@ -116,19 +116,42 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void splitLectureFile_asInstructor_shouldThrowError() throws Exception {
+        var filePartWord = createLectureFile(false);
+        // if trying to process not the right pdf file then it should throw server error
+        request.postWithMultipartFile("/api/lectures/" + lecture1.getId() + "/process-units", null, "process-units", filePartWord, LectureUnitInformationDTO.class,
+                HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void splitLectureFile_asInstructor_createAttachmentUnits_shouldThrowError() throws Exception {
+        var filePartPDF = createLectureFile(true);
+        var filePartWord = createLectureFile(false);
+
+        LectureUnitInformationDTO lectureUnitSplitInfo = request.postWithMultipartFile("/api/lectures/" + lecture1.getId() + "/process-units", null, "process-units", filePartPDF,
+                LectureUnitInformationDTO.class, HttpStatus.OK);
+
+        // if trying to create multiple units with not the right pdf file then it should throw error
+        request.postWithMultipartFile("/api/lectures/" + lecture1.getId() + "/attachment-units/split", lectureUnitSplitInfo, "lectureUnitInformationDTO", filePartWord,
+                AttachmentUnit[].class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void splitLectureFile_asInstructor_shouldCreateAttachmentUnits_and_removeBreakSlides() throws Exception {
-        // TODO: move code of the next 3 lines into RequestUtilService and simply invoke request.postWithMultipartFile() --> potentially create a customized version
-        var splitResult = request.getMvc().perform(buildGetSplitInformation()).andExpect(status().isOk()).andReturn();
-        LectureUnitInformationDTO lectureUnitSplitInfo = mapper.readValue(splitResult.getResponse().getContentAsString(), LectureUnitInformationDTO.class);
+        var filePart = createLectureFile(true);
+
+        LectureUnitInformationDTO lectureUnitSplitInfo = request.postWithMultipartFile("/api/lectures/" + lecture1.getId() + "/process-units", null, "process-units", filePart,
+                LectureUnitInformationDTO.class, HttpStatus.OK);
         assertThat(lectureUnitSplitInfo.units()).hasSize(2);
         assertThat(lectureUnitSplitInfo.numberOfPages()).isEqualTo(20);
         lectureUnitSplitInfo = new LectureUnitInformationDTO(lectureUnitSplitInfo.units(), lectureUnitSplitInfo.numberOfPages(), true);
 
-        // TODO: move code of the next 3 lines into RequestUtilService and simply invoke request.postWithMultipartFile() --> potentially create a customized version
-        var createUnitsResult = request.getMvc().perform(buildSplitAndCreateAttachmentUnits(lectureUnitSplitInfo)).andExpect(status().isOk()).andReturn();
-        List<AttachmentUnit> attachmentUnits = mapper.readValue(createUnitsResult.getResponse().getContentAsString(),
-                mapper.getTypeFactory().constructCollectionType(List.class, AttachmentUnit.class));
+        List<AttachmentUnit> attachmentUnits = List.of(request.postWithMultipartFile("/api/lectures/" + lecture1.getId() + "/attachment-units/split", lectureUnitSplitInfo,
+                "lectureUnitInformationDTO", filePart, AttachmentUnit[].class, HttpStatus.OK));
         assertThat(attachmentUnits).hasSize(2);
+        assertThat(slideRepository.findAll()).hasSize(19); // 19 slides should be created for 2 attachment units (1 break slide is removed)
 
         List<Long> attachmentUnitIds = attachmentUnits.stream().map(AttachmentUnit::getId).toList();
         List<AttachmentUnit> attachmentUnitList = attachmentUnitRepository.findAllById(attachmentUnitIds);
@@ -145,80 +168,67 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationBambooBitb
     }
 
     private void testAllPreAuthorize() throws Exception {
-        // TODO: move code of the next 3 lines into RequestUtilService and simply invoke request.postWithMultipartFile() --> potentially create a customized version
-        request.getMvc().perform(buildSplitAndCreateAttachmentUnits(lectureUnitSplits)).andExpect(status().isForbidden());
-        request.getMvc().perform(buildGetSplitInformation()).andExpect(status().isForbidden());
-    }
-
-    private MockHttpServletRequestBuilder buildSplitAndCreateAttachmentUnits(@NotNull LectureUnitInformationDTO lectureUnitInformationDTO) throws Exception {
-        var lectureUnitSplitPart = new MockMultipartFile("lectureUnitInformationDTO", "", MediaType.APPLICATION_JSON_VALUE,
-                mapper.writeValueAsString(lectureUnitInformationDTO).getBytes());
-        var filePart = createLecturePdf();
-
-        return MockMvcRequestBuilders.multipart(HttpMethod.POST, "/api/lectures/" + lecture1.getId() + "/attachment-units/split").file(lectureUnitSplitPart).file(filePart)
-                .contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
-    }
-
-    private MockHttpServletRequestBuilder buildGetSplitInformation() throws IOException {
-        var filePart = createLecturePdf();
-
-        return MockMvcRequestBuilders.multipart(HttpMethod.POST, "/api/lectures/" + lecture1.getId() + "/process-units").file(filePart)
-                .contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
+        request.postWithMultipartFile("/api/lectures/" + lecture1.getId() + "/process-units", null, "process-units", createLectureFile(true), LectureUnitInformationDTO.class,
+                HttpStatus.FORBIDDEN);
+        request.postWithMultipartFile("/api/lectures/" + lecture1.getId() + "/attachment-units/split", lectureUnitSplits, "lectureUnitInformationDTO", createLectureFile(true),
+                AttachmentUnit[].class, HttpStatus.FORBIDDEN);
     }
 
     /**
-     * Generates a lecture pdf file with 20 pages and with 2 slides that contain Outline
+     * Generates a lecture file with 20 pages and with 2 slides that contain Outline
      *
+     * @param shouldBePDF true if the file should be PDF, false if it should be word doc
      * @return MockMultipartFile lecture file
-     * @throws IOException
      */
-    private MockMultipartFile createLecturePdf() throws IOException {
+    private MockMultipartFile createLectureFile(boolean shouldBePDF) throws IOException {
 
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream(); PDDocument document = new PDDocument()) {
+            if (shouldBePDF) {
+                for (int i = 1; i <= 20; i++) {
+                    document.addPage(new PDPage());
+                    PDPageContentStream contentStream = new PDPageContentStream(document, document.getPage(i - 1));
 
-            for (int i = 1; i <= 20; i++) {
-                document.addPage(new PDPage());
-                PDPageContentStream contentStream = new PDPageContentStream(document, document.getPage(i - 1));
+                    if (i == 6 || i == 13) {
+                        contentStream.beginText();
+                        contentStream.setFont(PDType1Font.TIMES_ROMAN, 12);
+                        contentStream.newLineAtOffset(25, -15);
+                        contentStream.showText("itp20..");
+                        contentStream.newLineAtOffset(25, 500);
+                        contentStream.showText("Break");
+                        contentStream.newLineAtOffset(0, -15);
+                        contentStream.showText("Have fun");
+                        contentStream.close();
+                        continue;
+                    }
 
-                if (i == 6 || i == 13) {
+                    if (i == 7 || i == 14) {
+                        contentStream.beginText();
+                        contentStream.setFont(PDType1Font.TIMES_ROMAN, 12);
+                        contentStream.newLineAtOffset(25, -15);
+                        contentStream.showText("itp20..");
+                        contentStream.newLineAtOffset(25, 500);
+                        contentStream.showText("Outline");
+                        contentStream.newLineAtOffset(0, -15);
+                        contentStream.showText("First Unit");
+                        contentStream.newLineAtOffset(0, -15);
+                        contentStream.showText("Second Unit");
+                        contentStream.endText();
+                        contentStream.close();
+                        continue;
+                    }
                     contentStream.beginText();
                     contentStream.setFont(PDType1Font.TIMES_ROMAN, 12);
-                    contentStream.newLineAtOffset(25, -15);
-                    contentStream.showText("itp20..");
                     contentStream.newLineAtOffset(25, 500);
-                    contentStream.showText("Break");
-                    contentStream.newLineAtOffset(0, -15);
-                    contentStream.showText("Have fun");
-                    contentStream.close();
-                    continue;
-                }
-
-                if (i == 7 || i == 14) {
-                    contentStream.beginText();
-                    contentStream.setFont(PDType1Font.TIMES_ROMAN, 12);
-                    contentStream.newLineAtOffset(25, -15);
-                    contentStream.showText("itp20..");
-                    contentStream.newLineAtOffset(25, 500);
-                    contentStream.showText("Outline");
-                    contentStream.newLineAtOffset(0, -15);
-                    contentStream.showText("First Unit");
-                    contentStream.newLineAtOffset(0, -15);
-                    contentStream.showText("Second Unit");
+                    String text = "This is the sample document";
+                    contentStream.showText(text);
                     contentStream.endText();
                     contentStream.close();
-                    continue;
                 }
-                contentStream.beginText();
-                contentStream.setFont(PDType1Font.TIMES_ROMAN, 12);
-                contentStream.newLineAtOffset(25, 500);
-                String text = "This is the sample document";
-                contentStream.showText(text);
-                contentStream.endText();
-                contentStream.close();
+                document.save(outputStream);
+                document.close();
+                return new MockMultipartFile("file", "lectureFile.pdf", "application/json", outputStream.toByteArray());
             }
-            document.save(outputStream);
-            document.close();
-            return new MockMultipartFile("file", "lectureFile.pdf", "application/json", outputStream.toByteArray());
+            return new MockMultipartFile("file", "lectureFileWord.doc", "application/msword", outputStream.toByteArray());
         }
     }
 

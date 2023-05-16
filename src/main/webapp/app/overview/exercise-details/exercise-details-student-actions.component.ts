@@ -32,16 +32,13 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     readonly FeatureToggle = FeatureToggle;
     readonly ExerciseType = ExerciseType;
     readonly InitializationState = InitializationState;
-    readonly dayjs = dayjs;
 
     @Input() @HostBinding('class.col') equalColumns = true;
     @Input() @HostBinding('class.col-auto') smallColumns = false;
 
     @Input() exercise: Exercise;
     @Input() courseId: number;
-    @Input() actionsOnly: boolean;
     @Input() smallButtons: boolean;
-    @Input() showResult: boolean;
     @Input() examMode: boolean;
 
     // extension points, see shared/extension-point
@@ -53,6 +50,9 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     practiceParticipation?: StudentParticipation;
     programmingExercise?: ProgrammingExercise;
     isTeamAvailable: boolean;
+    hasRatedGradedResult: boolean;
+    beforeDueDate: boolean;
+    editorLabel?: string;
     localVCEnabled = false;
 
     // Icons
@@ -84,7 +84,15 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
             this.profileService.getProfileInfo().subscribe((profileInfo: ProfileInfo) => {
                 this.localVCEnabled = profileInfo.activeProfiles?.includes(PROFILE_LOCALVC);
             });
+        } else if (this.exercise.type === ExerciseType.MODELING) {
+            this.editorLabel = 'openModelingEditor';
+        } else if (this.exercise.type === ExerciseType.TEXT) {
+            this.editorLabel = 'openTextEditor';
+        } else if (this.exercise.type === ExerciseType.FILE_UPLOAD) {
+            this.editorLabel = 'uploadFile';
         }
+
+        this.beforeDueDate = !this.exercise.dueDate || dayjs().isBefore(this.exercise.dueDate);
     }
 
     /**
@@ -109,10 +117,13 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
         const studentParticipations = this.exercise.studentParticipations ?? [];
         this.gradedParticipation = this.participationService.getSpecificStudentParticipation(studentParticipations, false);
         this.practiceParticipation = this.participationService.getSpecificStudentParticipation(studentParticipations, true);
+
+        this.hasRatedGradedResult = !!this.gradedParticipation?.results?.some((result) => result.rated === true);
     }
 
     /**
-     * Starting an exercise is not possible in the exam or if it's a team exercise and the student is not yet assigned a team, otherwise see exercise.utils -> isStartExerciseAvailable
+     * Starting an exercise is not possible in the exam or if it's a team exercise and the student is not yet assigned a team, otherwise see exercise.utils ->
+     * isStartExerciseAvailable
      */
     isStartExerciseAvailable(): boolean {
         const individualExerciseOrTeamAssigned = !!(!this.exercise.teamMode || this.exercise.studentAssignedTeamId);
@@ -134,10 +145,6 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     }
 
     startExercise() {
-        if (this.exercise.type === ExerciseType.QUIZ) {
-            // Start the quiz
-            return this.router.navigate(['/courses', this.courseId, 'quiz-exercises', this.exercise.id, 'live']);
-        }
         this.exercise.loading = true;
         this.courseExerciseService
             .startExercise(this.exercise.id!)
