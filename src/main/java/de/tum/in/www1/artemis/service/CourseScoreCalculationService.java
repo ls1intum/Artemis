@@ -41,12 +41,15 @@ public class CourseScoreCalculationService {
 
     private final GradingScaleService gradingScaleService;
 
+    private final PresentationCalculationService presentationCalculationService;
+
     public CourseScoreCalculationService(StudentParticipationRepository studentParticipationRepository, ExerciseRepository exerciseRepository,
-            PlagiarismCaseRepository plagiarismCaseRepository, GradingScaleService gradingScaleService) {
+            PlagiarismCaseRepository plagiarismCaseRepository, GradingScaleService gradingScaleService, PresentationCalculationService presentationCalculationService) {
         this.studentParticipationRepository = studentParticipationRepository;
         this.exerciseRepository = exerciseRepository;
         this.plagiarismCaseRepository = plagiarismCaseRepository;
         this.gradingScaleService = gradingScaleService;
+        this.presentationCalculationService = presentationCalculationService;
     }
 
     record MaxAndReachablePoints(double maxPoints, double reachablePoints, double reachablePresentationPoints) {
@@ -89,7 +92,8 @@ public class CourseScoreCalculationService {
         }
 
         if (course != null) {
-            reachablePresentationPoints = calculateReachablePresentationPoints(course, reachableMaxPoints);
+            GradingScale gradingScale = gradingScaleService.findGradingScaleByCourseId(course.getId()).orElse(null);
+            reachablePresentationPoints = presentationCalculationService.calculateReachablePresentationPoints(gradingScale, reachableMaxPoints);
             maxPoints += reachablePresentationPoints;
             reachableMaxPoints += reachablePresentationPoints;
         }
@@ -317,12 +321,13 @@ public class CourseScoreCalculationService {
 
         // calculate presentation points for graded presentations
         if (maxAndReachablePoints.reachablePresentationPoints > 0.0) {
-            presentationScore = calculatePresentationPointsForStudent(course, studentId, maxAndReachablePoints.reachablePresentationPoints);
+            GradingScale gradingScale = gradingScaleService.findGradingScaleByCourseId(course.getId()).orElse(null);
+            presentationScore = presentationCalculationService.calculatePresentationPointsForStudentId(gradingScale, studentId, maxAndReachablePoints.reachablePresentationPoints);
             pointsAchievedByStudentInCourse += presentationScore;
         }
         // calculate presentation score for basic presentations
         else if (course.getPresentationScore() != null && course.getPresentationScore() > 0.0) {
-            presentationScore = calculateBasicPresentationScoreForStudent(course, studentId);
+            presentationScore = presentationCalculationService.calculateBasicPresentationScoreForStudent(course, studentId);
         }
 
         double absolutePoints = roundScoreSpecifiedByCourseSettings(pointsAchievedByStudentInCourse, course);
@@ -474,76 +479,5 @@ public class CourseScoreCalculationService {
         }
         var studentVerdictsFromExercises = plagiarismCasesForSingleStudent.stream().map(PlagiarismCase::getVerdict).toList();
         return PlagiarismVerdict.findMostSevereVerdict(studentVerdictsFromExercises);
-    }
-
-    /**
-     * Counts the number of presentations for a single student, referred to as the presentationScore for basic
-     * presentations.
-     *
-     * @param course    the course for which the presentation score should be calculated
-     * @param studentId the student for which the presentation score should be calculated
-     * @return the basic presentation score for a single student.
-     */
-    private double calculateBasicPresentationScoreForStudent(Course course, long studentId) {
-        double presentationCount = studentParticipationRepository.countNonZeroPresentationsByStudentIdAndCourseId(course.getId(), studentId);
-
-        return roundScoreSpecifiedByCourseSettings(presentationCount, course);
-    }
-
-    /**
-     * Calculates the points for presentations for a single student given the participation list of the student, the
-     * reachable points of the course, and the presentationsWeight of the courses GradingScale.
-     *
-     * @param course                      the course for which the presentation score should be calculated
-     * @param studentId                   the student for which the presentation points should be calculated
-     * @param reachablePresentationPoints the reachable presentation points in the given course.
-     * @return the presentation points for a single student.
-     */
-    public double calculatePresentationPointsForStudent(Course course, long studentId, double reachablePresentationPoints) {
-        // return 0 if no grading scale is set for the course
-        GradingScale gradingScale = gradingScaleService.findGradingScaleByCourseId(course.getId()).orElse(null);
-        if (gradingScale == null) {
-            return 0.0;
-        }
-
-        // return 0 if the grading scale is not configured for graded presentations
-        int presentationsNumber = gradingScale.getPresentationsNumber() == null ? 0 : gradingScale.getPresentationsNumber();
-        if (presentationsNumber <= 0) {
-            return 0.0;
-        }
-
-        double presentationPointSum = studentParticipationRepository.sumPresentationScoreByStudentIdAndCourseId(course.getId(), studentId);
-        double presentationPointAvg = presentationPointSum / presentationsNumber;
-
-        return reachablePresentationPoints * presentationPointAvg / 100.0;
-    }
-
-    /**
-     * Calculates the reachable presentation points for a course.
-     *
-     * @param course          the course for which the reachable presentation points should be calculated
-     * @param reachablePoints the maximum points that can be currently received in the course
-     */
-    public double calculateReachablePresentationPoints(Course course, double reachablePoints) {
-        // return 0 if reachable points are 0
-        if (reachablePoints <= 0.0) {
-            return 0.0;
-        }
-
-        // return 0 if no grading scale is set for the course
-        GradingScale gradingScale = gradingScaleService.findGradingScaleByCourseId(course.getId()).orElse(null);
-        if (gradingScale == null) {
-            return 0.0;
-        }
-
-        // return 0 if the grading scale is not configured for graded presentations
-        double presentationsWeight = gradingScale.getPresentationsWeight() == null ? 0.0 : gradingScale.getPresentationsWeight();
-        if (presentationsWeight <= 0.0) {
-            return 0.0;
-        }
-
-        double reachablePointsWithPresentation = -reachablePoints / (presentationsWeight - 100.0) * 100.0;
-
-        return reachablePointsWithPresentation * presentationsWeight / 100.0;
     }
 }

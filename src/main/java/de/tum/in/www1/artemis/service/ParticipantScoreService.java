@@ -24,14 +24,17 @@ public class ParticipantScoreService {
 
     private final TeamScoreRepository teamScoreRepository;
 
-    private final CourseScoreCalculationService courseScoreCalculationService;
+    private final GradingScaleService gradingScaleService;
+
+    private final PresentationCalculationService presentationCalculationService;
 
     public ParticipantScoreService(UserRepository userRepository, StudentScoreRepository studentScoreRepository, TeamScoreRepository teamScoreRepository,
-            CourseScoreCalculationService courseScoreCalculationService) {
+            GradingScaleService gradingScaleService, PresentationCalculationService presentationCalculationService) {
         this.userRepository = userRepository;
         this.studentScoreRepository = studentScoreRepository;
         this.teamScoreRepository = teamScoreRepository;
-        this.courseScoreCalculationService = courseScoreCalculationService;
+        this.gradingScaleService = gradingScaleService;
+        this.presentationCalculationService = presentationCalculationService;
     }
 
     /**
@@ -57,7 +60,7 @@ public class ParticipantScoreService {
 
         Set<User> registeredUsers = exam.getRegisteredUsers();
 
-        return calculateScores(includedExercises, registeredUsers, (double) exam.getExamMaxPoints(), 0.0);
+        return calculateScores(includedExercises, registeredUsers, (double) exam.getExamMaxPoints(), 0.0, null);
     }
 
     /**
@@ -91,13 +94,15 @@ public class ParticipantScoreService {
         // this is the denominator when we calculate the achieved score of a student
         double regularAchievablePoints = exercisesToConsider.stream().filter(exercise -> exercise.getIncludedInOverallScore() == IncludedInOverallScore.INCLUDED_COMPLETELY)
                 .map(Exercise::getMaxPoints).reduce(0.0, Double::sum);
-        double achievablePresentationPoints = courseScoreCalculationService.calculateReachablePresentationPoints(course, regularAchievablePoints);
+        GradingScale gradingScale = gradingScaleService.findGradingScaleByCourseId(course.getId()).orElse(null);
+        double achievablePresentationPoints = presentationCalculationService.calculateReachablePresentationPoints(gradingScale, regularAchievablePoints);
         regularAchievablePoints += achievablePresentationPoints;
 
-        return calculateScores(exercisesToConsider, usersOfCourse, regularAchievablePoints, achievablePresentationPoints);
+        return calculateScores(exercisesToConsider, usersOfCourse, regularAchievablePoints, achievablePresentationPoints, gradingScale);
     }
 
-    private List<ScoreDTO> calculateScores(Set<Exercise> exercises, Set<User> users, Double scoreCalculationDenominator, double achievablePresentationPoints) {
+    private List<ScoreDTO> calculateScores(Set<Exercise> exercises, Set<User> users, Double scoreCalculationDenominator, double achievablePresentationPoints,
+            GradingScale gradingScale) {
         // 0.0 means we can not reasonably calculate the achieved points / scores
         if (scoreCalculationDenominator.equals(0.0)) {
             return List.of();
@@ -139,7 +144,7 @@ public class ParticipantScoreService {
 
         // calculating achieved score
         for (ScoreDTO scoreDTO : userIdToScores.values()) {
-            scoreDTO.pointsAchieved += courseScoreCalculationService.calculatePresentationPointsForStudent(course, scoreDTO.studentId, achievablePresentationPoints);
+            scoreDTO.pointsAchieved += presentationCalculationService.calculatePresentationPointsForStudentId(gradingScale, scoreDTO.studentId, achievablePresentationPoints);
             scoreDTO.scoreAchieved = roundScoreSpecifiedByCourseSettings((scoreDTO.pointsAchieved / scoreCalculationDenominator) * 100.0, course);
             // sending this for debugging purposes to find out why the scores' calculation could be wrong
             scoreDTO.regularPointsAchievable = scoreCalculationDenominator;
