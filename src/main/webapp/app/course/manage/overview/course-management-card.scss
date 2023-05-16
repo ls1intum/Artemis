@@ -6,13 +6,10 @@
     }
 
     .card-heading {
-        opacity: 1;
-        filter: alpha(opacity = 100);
-        transition: 0.5s;
+        transition: 0.15s;
 
         &:hover {
-            opacity: 0.75;
-            filter: alpha(opacity = 100);
+            background-color: rgba(62, 137, 204, 0.8) !important;
         }
         position: relative;
         opacity: 1;
@@ -79,7 +76,7 @@
                     padding-right: 7px;
 
                     a {
-                        color: white;
+                        color: white !important;
                     }
                 }
             }
