@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
-import static org.junit.jupiter.api.Assertions.*;
 
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;

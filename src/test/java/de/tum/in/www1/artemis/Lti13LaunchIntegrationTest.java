@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis;
 
 import static de.tum.in.www1.artemis.util.TestUriParamsUtil.assertUriParamsContain;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
 
 import java.net.URI;
 import java.nio.charset.StandardCharsets;

@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.modeling;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.verify;
 
 import java.time.ZonedDateTime;
