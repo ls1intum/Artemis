@@ -1055,7 +1055,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         // Update the exam -> ok
         exam1.setTitle("Best exam ever");
         var returnedExam = request.putWithResponseBody("/api/courses/" + course1.getId() + "/exams", exam1, Exam.class, HttpStatus.OK);
-        assertEquals(exam1, returnedExam);
+        assertThat(returnedExam).isEqualTo(exam1);
         verify(instanceMessageSendService, never()).sendProgrammingExerciseSchedule(any());
     }
 
@@ -2005,7 +2005,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
             exercise.setStudentParticipations(new HashSet<>(participations));
             participationCounter += exercise.getStudentParticipations().size();
         }
-        assertEquals(participationCounter, noGeneratedParticipations);
+        assertThat(noGeneratedParticipations).isEqualTo(participationCounter);
 
         if (withSecondCorrectionAndStarted) {
             exercisesInExam.forEach(exercise -> exercise.setSecondCorrectionEnabled(true));
@@ -2013,8 +2013,8 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         }
 
         // Scores used for all exercise results
-        Double correctionResultScore = 60D;
-        Double resultScore = 75D;
+        double correctionResultScore = 60D;
+        double resultScore = 75D;
 
         // Assign results to participations and submissions
         for (var exercise : exercisesInExam) {
@@ -2129,8 +2129,9 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
             // Assume that all exercises in a group have the same max score
             Double groupMaxScoreFromExam = originalExerciseGroup.getExercises().stream().findAny().get().getMaxPoints();
             assertThat(exerciseGroupDTO.maxPoints()).isEqualTo(originalExerciseGroup.getExercises().stream().findAny().get().getMaxPoints());
-            assertEquals(exerciseGroupDTO.maxPoints(), groupMaxScoreFromExam, EPSILON);
+            assertThat(groupMaxScoreFromExam).isEqualTo(exerciseGroupDTO.maxPoints(), withPrecision(EPSILON));
 
+            // EPSILON
             // Compare exercise information
             long noOfExerciseGroupParticipations = 0;
             for (var originalExercise : originalExerciseGroup.getExercises()) {
@@ -2170,14 +2171,14 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
             var calculatedOverallPoints = calculateOverallPoints(resultScore, studentExamOfUser);
 
-            assertEquals(studentResult.overallPointsAchieved(), calculatedOverallPoints, EPSILON);
+            assertThat(studentResult.overallPointsAchieved()).isEqualTo(calculatedOverallPoints, withPrecision(EPSILON));
 
             double expectedPointsAchievedInFirstCorrection = withSecondCorrectionAndStarted ? calculateOverallPoints(correctionResultScore, studentExamOfUser) : 0.0;
-            assertEquals(studentResult.overallPointsAchievedInFirstCorrection(), expectedPointsAchievedInFirstCorrection, EPSILON);
+            assertThat(studentResult.overallPointsAchievedInFirstCorrection()).isEqualTo(expectedPointsAchievedInFirstCorrection, withPrecision(EPSILON));
 
             // Calculate overall score achieved
             var calculatedOverallScore = calculatedOverallPoints / examScores.maxPoints() * 100;
-            assertEquals(studentResult.overallScoreAchieved(), calculatedOverallScore, EPSILON);
+            assertThat(studentResult.overallScoreAchieved()).isEqualTo(calculatedOverallScore, withPrecision(EPSILON));
 
             assertThat(studentResult.overallGrade()).isNotNull();
             assertThat(studentResult.hasPassed()).isNotNull();
@@ -2235,7 +2236,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
                     assertThat(exerciseResult.hasNonEmptySubmission()).isFalse();
                 }
                 // TODO: create a test where hasNonEmptySubmission() is false for a quiz
-                assertEquals(exerciseResult.achievedPoints(), originalExercise.getMaxPoints() * resultScore / 100, EPSILON);
+                assertThat(exerciseResult.achievedPoints()).isEqualTo(originalExercise.getMaxPoints() * resultScore / 100, withPrecision(EPSILON));
             }
         }
 
@@ -2696,7 +2697,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
             exercise.setStudentParticipations(new HashSet<>(participations));
             participationCounter += exercise.getStudentParticipations().size();
         }
-        assertEquals(participationCounter, noGeneratedParticipations);
+        assertThat(noGeneratedParticipations).isEqualTo(participationCounter);
 
         log.debug("testGetStatsForExamAssessmentDashboard: step 6 done");
 
@@ -3053,7 +3054,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetExamForImportWithExercises_successful() throws Exception {
         Exam received = request.get("/api/exams/" + exam2.getId(), HttpStatus.OK, Exam.class);
-        assertEquals(exam2, received);
+        assertThat(received).isEqualTo(exam2);
     }
 
     @Test

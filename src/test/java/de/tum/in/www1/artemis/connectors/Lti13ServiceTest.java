@@ -241,7 +241,7 @@ class Lti13ServiceTest {
 
         String username = lti13Service.createUsernameFromLaunchRequest(oidcIdToken, onlineCourseConfiguration);
 
-        assertEquals("prefix_john", username);
+        assertThat(username).isEqualTo("prefix_john");
     }
 
     @Test
@@ -252,7 +252,7 @@ class Lti13ServiceTest {
 
         String username = lti13Service.createUsernameFromLaunchRequest(oidcIdToken, onlineCourseConfiguration);
 
-        assertEquals("prefix_jonsnow", username);
+        assertThat(username).isEqualTo("prefix_jonsnow");
     }
 
     @Test
@@ -264,7 +264,7 @@ class Lti13ServiceTest {
 
         String username = lti13Service.createUsernameFromLaunchRequest(oidcIdToken, onlineCourseConfiguration);
 
-        assertEquals("prefix_jon.snow", username);
+        assertThat(username).isEqualTo("prefix_jon.snow");
     }
 
     @Test
@@ -276,7 +276,7 @@ class Lti13ServiceTest {
 
         String username = lti13Service.createUsernameFromLaunchRequest(oidcIdToken, onlineCourseConfiguration);
 
-        assertEquals("prefix_jon.snow", username);
+        assertThat(username).isEqualTo("prefix_jon.snow");
     }
 
     @Test
@@ -466,16 +466,16 @@ class Lti13ServiceTest {
 
         JSONParser jsonParser = new JSONParser(JSONParser.MODE_JSON_SIMPLE);
         JSONObject body = (JSONObject) jsonParser.parse(httpEntity.getBody());
-        assertEquals(launch.getSub(), body.get("userId"), "Invalid parameter in score publish request: userId");
+        assertThat(body.get("userId")).as("Invalid parameter in score publish request: userId").isEqualTo(launch.getSub());
         assertNotNull(body.get("timestamp"), "Parameter missing in score publish request: timestamp");
         assertNotNull(body.get("activityProgress"), "Parameter missing in score publish request: activityProgress");
         assertNotNull(body.get("gradingProgress"), "Parameter missing in score publish request: gradingProgress");
 
-        assertEquals("Good job. Not so good", body.get("comment"), "Invalid parameter in score publish request: comment");
-        assertEquals(scoreGiven, body.get("scoreGiven"), "Invalid parameter in score publish request: scoreGiven");
-        assertEquals(100d, body.get("scoreMaximum"), "Invalid parameter in score publish request: scoreMaximum");
+        assertThat(body.get("comment")).as("Invalid parameter in score publish request: comment").isEqualTo("Good job. Not so good");
+        assertThat(body.get("scoreGiven")).as("Invalid parameter in score publish request: scoreGiven").isEqualTo(scoreGiven);
+        assertThat(body.get("scoreMaximum")).as("Invalid parameter in score publish request: scoreMaximum").isEqualTo(100d);
 
-        assertEquals(urlCapture.getValue(), launch.getScoreLineItemUrl() + "/scores", "Score publish request was sent to a wrong URI");
+        assertThat(launch.getScoreLineItemUrl() + "/scores").as("Score publish request was sent to a wrong URI").isEqualTo(urlCapture.getValue());
     }
 
     private State getValidStateForNewResult(Result result) {

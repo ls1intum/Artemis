@@ -734,15 +734,15 @@ public class ProgrammingExerciseTestService {
 
         exerciseToBeImported = request.postWithResponseBody(ROOT + IMPORT.replace("{sourceExerciseId}", sourceExercise.getId().toString()), exerciseToBeImported,
                 ProgrammingExercise.class, HttpStatus.OK);
-        assertEquals(TEAM, exerciseToBeImported.getMode());
-        assertEquals(teamAssignmentConfig.getMinTeamSize(), exerciseToBeImported.getTeamAssignmentConfig().getMinTeamSize());
-        assertEquals(teamAssignmentConfig.getMaxTeamSize(), exerciseToBeImported.getTeamAssignmentConfig().getMaxTeamSize());
-        assertEquals(0, teamRepository.findAllByExerciseIdWithEagerStudents(exerciseToBeImported, null).size());
+        assertThat(exerciseToBeImported.getMode()).isEqualTo(TEAM);
+        assertThat(exerciseToBeImported.getTeamAssignmentConfig().getMinTeamSize()).isEqualTo(teamAssignmentConfig.getMinTeamSize());
+        assertThat(exerciseToBeImported.getTeamAssignmentConfig().getMaxTeamSize()).isEqualTo(teamAssignmentConfig.getMaxTeamSize());
+        assertThat(teamRepository.findAllByExerciseIdWithEagerStudents(exerciseToBeImported, null)).isEmpty();
 
         sourceExercise = database.loadProgrammingExerciseWithEagerReferences(sourceExercise);
-        assertEquals(ExerciseMode.INDIVIDUAL, sourceExercise.getMode());
+        assertThat(sourceExercise.getMode()).isEqualTo(ExerciseMode.INDIVIDUAL);
         assertNull(sourceExercise.getTeamAssignmentConfig());
-        assertEquals(0, teamRepository.findAllByExerciseIdWithEagerStudents(sourceExercise, null).size());
+        assertThat(teamRepository.findAllByExerciseIdWithEagerStudents(sourceExercise, null)).isEmpty();
     }
 
     // TEST
@@ -776,13 +776,13 @@ public class ProgrammingExerciseTestService {
         exerciseToBeImported = request.postWithResponseBody(ROOT + IMPORT.replace("{sourceExerciseId}", sourceExercise.getId().toString()), exerciseToBeImported,
                 ProgrammingExercise.class, HttpStatus.OK);
 
-        assertEquals(ExerciseMode.INDIVIDUAL, exerciseToBeImported.getMode());
+        assertThat(exerciseToBeImported.getMode()).isEqualTo(ExerciseMode.INDIVIDUAL);
         assertNull(exerciseToBeImported.getTeamAssignmentConfig());
-        assertEquals(0, teamRepository.findAllByExerciseIdWithEagerStudents(exerciseToBeImported, null).size());
+        assertThat(teamRepository.findAllByExerciseIdWithEagerStudents(exerciseToBeImported, null)).isEmpty();
 
         sourceExercise = database.loadProgrammingExerciseWithEagerReferences(sourceExercise);
-        assertEquals(TEAM, sourceExercise.getMode());
-        assertEquals(1, teamRepository.findAllByExerciseIdWithEagerStudents(sourceExercise, null).size());
+        assertThat(sourceExercise.getMode()).isEqualTo(TEAM);
+        assertThat(teamRepository.findAllByExerciseIdWithEagerStudents(sourceExercise, null)).hasSize(1);
     }
 
     // TEST
@@ -1959,7 +1959,7 @@ public class ProgrammingExerciseTestService {
     void testGetProgrammingExercise_exampleSolutionVisibility(boolean isStudent, String username) throws Exception {
 
         if (isStudent) {
-            assertEquals(userPrefix + studentLogin, username, "The setup is done according to studentLogin value, another username may not work as expected");
+            assertThat(username).as("The setup is done according to studentLogin value, another username may not work as expected").isEqualTo(userPrefix + studentLogin);
         }
 
         // Utility function to avoid duplication

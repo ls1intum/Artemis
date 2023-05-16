@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis;
 
 import static de.tum.in.www1.artemis.util.TestUriParamsUtil.assertUriParamsContain;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.net.URI;
@@ -43,7 +44,7 @@ class Lti13LaunchIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
 
         URI header = request.postForm(CustomLti13Configurer.LTI13_LOGIN_REDIRECT_PROXY_PATH, body, HttpStatus.FOUND);
 
-        assertEquals(LtiResource.LOGIN_REDIRECT_CLIENT_PATH, header.getPath());
+        assertThat(header.getPath()).isEqualTo(LtiResource.LOGIN_REDIRECT_CLIENT_PATH);
 
         List<NameValuePair> params = URLEncodedUtils.parse(header, StandardCharsets.UTF_8);
         assertUriParamsContain(params, "id_token", idToken);

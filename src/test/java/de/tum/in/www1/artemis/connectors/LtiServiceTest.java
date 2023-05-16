@@ -101,7 +101,7 @@ class LtiServiceTest {
 
         String initialize = uriComponents.getQueryParams().getFirst("initialize");
         String ltiSuccessLoginRequired = uriComponents.getQueryParams().getFirst("ltiSuccessLoginRequired");
-        assertEquals("", initialize);
+        assertThat(initialize).isEmpty();
         assertNull(ltiSuccessLoginRequired);
     }
 
@@ -123,7 +123,7 @@ class LtiServiceTest {
 
         String initialize = uriComponents.getQueryParams().getFirst("initialize");
         String ltiSuccessLoginRequired = uriComponents.getQueryParams().getFirst("ltiSuccessLoginRequired");
-        assertEquals(user.getLogin(), ltiSuccessLoginRequired);
+        assertThat(ltiSuccessLoginRequired).isEqualTo(user.getLogin());
         assertNull(initialize);
     }
 
@@ -149,7 +149,7 @@ class LtiServiceTest {
 
         ltiService.authenticateLtiUser("useremail@tum.de", "username", "firstname", "lastname", onlineCourseConfiguration.isRequireExistingUser());
 
-        assertEquals(auth, SecurityContextHolder.getContext().getAuthentication());
+        assertThat(SecurityContextHolder.getContext().getAuthentication()).isEqualTo(auth);
     }
 
     @Test
@@ -164,7 +164,7 @@ class LtiServiceTest {
         ltiService.authenticateLtiUser("email", "username", "firstname", "lastname", onlineCourseConfiguration.isRequireExistingUser());
 
         auth = SecurityContextHolder.getContext().getAuthentication();
-        assertEquals(user.getLogin(), auth.getPrincipal());
+        assertThat(auth.getPrincipal()).isEqualTo(user.getLogin());
     }
 
     @Test
@@ -185,7 +185,7 @@ class LtiServiceTest {
         ltiService.authenticateLtiUser("email", "username", "firstname", "lastname", onlineCourseConfiguration.isRequireExistingUser());
 
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        assertEquals(user.getLogin(), auth.getPrincipal());
+        assertThat(auth.getPrincipal()).isEqualTo(user.getLogin());
     }
 
     @Test
@@ -198,7 +198,7 @@ class LtiServiceTest {
         ltiService.authenticateLtiUser("email", "username", "firstname", "lastname", onlineCourseConfiguration.isRequireExistingUser());
 
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        assertEquals(user.getLogin(), auth.getPrincipal());
+        assertThat(auth.getPrincipal()).isEqualTo(user.getLogin());
         assertThat(user.getGroups()).contains(LtiService.LTI_GROUP_NAME);
     }
 

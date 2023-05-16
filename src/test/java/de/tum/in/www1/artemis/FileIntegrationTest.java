@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.ByteArrayOutputStream;
 import java.nio.file.Path;
@@ -377,7 +376,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         assertThat(receivedFile).isNotEmpty();
         try (PDDocument mergedDoc = PDDocument.load(receivedFile)) {
-            assertEquals(expectedPages, mergedDoc.getNumberOfPages());
+            assertThat(mergedDoc.getNumberOfPages()).isEqualTo(expectedPages);
         }
     }
 
@@ -426,7 +425,6 @@ class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     }
 
     private AttachmentUnit uploadAttachmentUnit(MockMultipartFile file, Long lectureId, HttpStatus expectedStatus) throws Exception {
-        Lecture lecture = lectureRepo.findByIdWithLectureUnits(lectureId).get();
 
         AttachmentUnit attachmentUnit = database.createAttachmentUnit(false);
 
