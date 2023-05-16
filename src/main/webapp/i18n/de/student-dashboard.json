@@ -88,6 +88,9 @@
                     "file-uploadTotal": "Aufgaben mit Datei-Upload insgesamt:",
                     "startDate": "Start:",
                     "endDate": "Ende:",
+                    "enrollmentStartDate": "Einschreibungsstart:",
+                    "enrollmentEndDate": "Einschreibungsende:",
+                    "disenrollmentEndDate": "Ausschreibungsende:",
                     "upcomingDeadlines": "Bevorstehende Termine:",
                     "noUpcomingExercises": "Aktuell gibt es keine anstehenden Übungen."
                 }

@@ -90,6 +90,9 @@
                     "file-uploadTotal": "Total File Upload Exercises:",
                     "startDate": "Start Date:",
                     "endDate": "End Date:",
+                    "enrollmentStartDate": "Enrollment Start Date:",
+                    "enrollmentEndDate": "Enrollment End Date:",
+                    "disenrollmentEndDate": "Disenrollment End Date:",
                     "upcomingDeadlines": "Upcoming Deadlines:",
                     "noUpcomingExercises": "There are no upcoming exercises."
                 }

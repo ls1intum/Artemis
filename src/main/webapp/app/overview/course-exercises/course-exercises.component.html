@@ -181,6 +181,18 @@
                 <div class="col-8">{{ 'artemisApp.courseOverview.exerciseList.details.endDate' | artemisTranslate }}</div>
                 <div class="col-4" style="text-align: end">{{ course?.endDate | artemisDate }}</div>
             </div>
+            <div class="row" *ngIf="course?.registrationEnabled && course?.enrollmentStartDate">
+                <div class="col-8">{{ 'artemisApp.courseOverview.exerciseList.details.enrollmentStartDate' | artemisTranslate }}</div>
+                <div class="col-4" style="text-align: end">{{ course?.enrollmentStartDate | artemisDate }}</div>
+            </div>
+            <div class="row" *ngIf="course?.registrationEnabled && course?.enrollmentEndDate">
+                <div class="col-8">{{ 'artemisApp.courseOverview.exerciseList.details.enrollmentEndDate' | artemisTranslate }}</div>
+                <div class="col-4" style="text-align: end">{{ course?.enrollmentEndDate | artemisDate }}</div>
+            </div>
+            <div class="row" *ngIf="course?.disenrollmentEnabled && course?.disenrollmentEndDate">
+                <div class="col-8">{{ 'artemisApp.courseOverview.exerciseList.details.disenrollmentEndDate' | artemisTranslate }}</div>
+                <div class="col-4" style="text-align: end">{{ course?.enrollmentEndDate | artemisDate }}</div>
+            </div>
         </jhi-side-panel>
         <div class="guided-tour exercise-panel mt-3">
             <jhi-side-panel [panelHeader]="'artemisApp.courseOverview.exerciseList.details.upcomingDeadlines' | artemisTranslate">
