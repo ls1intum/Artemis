@@ -20,36 +20,16 @@ import de.tum.in.www1.artemis.repository.iris.IrisSessionRepository;
 @Service
 public class IrisMessageService {
 
-    private final IrisSessionService irisSessionService;
-
     private final IrisSessionRepository irisSessionRepository;
 
     private final IrisMessageRepository irisMessageRepository;
 
     private final IrisMessageContentRepository irisMessageContentRepository;
 
-    public IrisMessageService(IrisSessionService irisSessionService, IrisSessionRepository irisSessionRepository, IrisMessageRepository irisMessageRepository,
-            IrisMessageContentRepository irisMessageContentRepository) {
-        this.irisSessionService = irisSessionService;
+    public IrisMessageService(IrisSessionRepository irisSessionRepository, IrisMessageRepository irisMessageRepository, IrisMessageContentRepository irisMessageContentRepository) {
         this.irisSessionRepository = irisSessionRepository;
         this.irisMessageRepository = irisMessageRepository;
         this.irisMessageContentRepository = irisMessageContentRepository;
-    }
-
-    /**
-     * Saves a new message to the database. The message must have a session and a sender.
-     * This method ensures that the message is saved in the session and the contents are saved.
-     * Also triggers a request for an answer from an LLM.
-     *
-     * @param message The message to save
-     * @param session The session the message belongs to
-     * @param sender  The sender of the message
-     * @return The saved message
-     */
-    public IrisMessage saveMessageAndRequestAnswer(IrisMessage message, IrisSession session, IrisMessageSender sender) {
-        var irisMessage = saveMessage(message, session, sender);
-        irisSessionService.requestMessageFromIris(session);
-        return irisMessage;
     }
 
     /**

@@ -76,6 +76,6 @@ public class IrisSessionService {
 
     public void requestMessageFromIris(IrisSession session) {
         // TODO: Future: Switch between different session types
-        irisChatService.sendToLLM(session);
+        irisChatService.requestAndHandleResponse(session);
     }
 }

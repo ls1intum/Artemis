@@ -1,10 +1,7 @@
 package de.tum.in.www1.artemis.service.iris;
 
-import java.util.concurrent.ExecutionException;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.iris.IrisMessageSender;
@@ -23,29 +20,32 @@ public class IrisChatService {
 
     private final IrisMessageService irisMessageService;
 
+    private final IrisWebsocketService irisWebsocketService;
+
     private final IrisSessionRepository irisSessionRepository;
 
-    public IrisChatService(IrisModelService irisModelService, IrisMessageService irisMessageService, IrisSessionRepository irisSessionRepository) {
+    public IrisChatService(IrisModelService irisModelService, IrisMessageService irisMessageService, IrisWebsocketService irisWebsocketService,
+            IrisSessionRepository irisSessionRepository) {
         this.irisModelService = irisModelService;
         this.irisMessageService = irisMessageService;
+        this.irisWebsocketService = irisWebsocketService;
         this.irisSessionRepository = irisSessionRepository;
     }
 
-    @Async
-    public void sendToLLM(IrisSession session) {
+    public void requestAndHandleResponse(IrisSession session) {
         var fullSession = irisSessionRepository.findByIdWithMessagesAndContents(session.getId());
-        try {
-            var irisMessageOptional = irisModelService.getResponse(fullSession).get();
-            if (irisMessageOptional.isPresent()) {
+        irisModelService.requestResponse(fullSession).handleAsync((irisMessageOptional, throwable) -> {
+            if (throwable != null) {
+                log.error("Error while getting response from Iris model", throwable);
+            }
+            else if (irisMessageOptional.isPresent()) {
                 var irisMessage = irisMessageService.saveMessage(irisMessageOptional.get(), fullSession, IrisMessageSender.LLM);
-                // TODO: Send over websocket
+                irisWebsocketService.sendMessage(irisMessage);
             }
             else {
                 log.error("No response from Iris model");
             }
-        }
-        catch (InterruptedException | ExecutionException e) {
-            log.error("Error while getting response from Iris model", e);
-        }
+            return null;
+        });
     }
 }
