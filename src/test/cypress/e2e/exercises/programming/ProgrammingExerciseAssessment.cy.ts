@@ -125,8 +125,5 @@ describe('Programming exercise assessment', () => {
                     cy.wait(dueDate.diff(now, 'ms'));
                 }
             });
-        // Lock the repository and participation manually
-        cy.login(instructor);
-        courseManagementRequest.lockRepositoriesAndParticipations(exercise.id!);
     }
 });

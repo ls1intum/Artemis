@@ -614,13 +614,6 @@ export class CourseManagementRequests {
         });
     }
 
-    lockRepositoriesAndParticipations(exerciseId: number) {
-        return cy.request({
-            url: PROGRAMMING_EXERCISE_BASE + exerciseId + '/lock-all-repositories',
-            method: PUT,
-        });
-    }
-
     updateTextExerciseDueDate(exercise: TextExercise, due = day()) {
         exercise.dueDate = due;
         return this.updateExercise(exercise, EXERCISE_TYPE.Text);
