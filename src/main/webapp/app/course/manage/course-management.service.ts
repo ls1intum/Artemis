@@ -526,6 +526,9 @@ export class CourseManagementService {
         return Object.assign({}, course, {
             startDate: convertDateFromClient(course.startDate),
             endDate: convertDateFromClient(course.endDate),
+            enrollmentStartDate: convertDateFromClient(course.enrollmentStartDate),
+            enrollmentEndDate: convertDateFromClient(course.enrollmentEndDate),
+            disenrollmentEndDate: convertDateFromClient(course.disenrollmentEndDate),
         });
     }
 

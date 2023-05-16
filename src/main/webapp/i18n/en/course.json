@@ -165,7 +165,7 @@
                     "invalid": "Can't be after the end date of the course and must be after the enrollment start date"
                 },
                 "disenrollmentEndDate": {
-                    "invalid": "Must be after enrollment end date and before the end date of the course"
+                    "invalid": "Must be after enrollment end date and can not be after the end date of the course"
                 },
                 "invalidForm": "Please fill in all required fields."
             },

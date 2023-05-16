@@ -165,7 +165,7 @@
                     "invalid": "Kann nicht nach dem Enddatum des Kurses liegen und muss nach dem Einschreibungsbeginn liegen"
                 },
                 "disenrollmentEndDate": {
-                    "invalid": "Muss nach dem Enddatum zur Einschreibung und vor dem Enddatum des Kurses liegen"
+                    "invalid": "Muss nach dem Enddatum zur Einschreibung liegen und kann nicht nach dem Enddatum des Kurses liegen"
                 },
                 "invalidForm": "Bitte alle verpflichtenden Felder ausfüllen."
             },
