@@ -38,7 +38,7 @@ describe('Header Course Component', () => {
         component.ngOnChanges();
         expect(component.enableShowMore).toBeTrue();
         expect(component.longDescriptionShown).toBeFalse();
-        expect(component.courseDescription).toBe('a'.repeat(384) + '…');
+        expect(component.courseDescription).toBe('a'.repeat(564) + '…');
 
         component.toggleCourseDescription();
 
@@ -48,7 +48,7 @@ describe('Header Course Component', () => {
         component.toggleCourseDescription();
 
         expect(component.longDescriptionShown).toBeFalse();
-        expect(component.courseDescription).toBe('a'.repeat(384) + '…');
+        expect(component.courseDescription).toBe('a'.repeat(564) + '…');
     });
 
     it('should not enable show more for course with short description', () => {
@@ -62,7 +62,7 @@ describe('Header Course Component', () => {
         window['innerWidth'] = 100;
         component.onResize();
         expect(component.enableShowMore).toBeTrue();
-        expect(component.courseDescription).toBe('a'.repeat(20) + '…');
+        expect(component.courseDescription).toBe('a'.repeat(29) + '…');
 
         component.toggleCourseDescription();
         expect(component.enableShowMore).toBeTrue();

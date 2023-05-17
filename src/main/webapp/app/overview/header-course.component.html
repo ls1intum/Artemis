@@ -3,14 +3,19 @@
         <div class="col general-info">
             <h3 id="course-header-title" class="fw-medium" [class.mb-0]="!courseDescription">{{ course.title }}</h3>
             <ng-container *ngIf="courseDescription">
-                <h5 id="course-header-description" class="fw-medium">{{ courseDescription }}</h5>
+                <h6 id="course-header-description" class="fw-normal">{{ courseDescription }}</h6>
                 <h6 class="fw-medium show-more" role="button" *ngIf="enableShowMore" (click)="toggleCourseDescription()">
                     {{ 'artemisApp.courseOverview.' + (longDescriptionShown ? 'showLess' : 'showMore') | artemisTranslate }}
                 </h6>
             </ng-container>
         </div>
         <div class="col-auto d-none d-lg-flex justify-content-end course-icon" *ngIf="course.courseIcon">
-            <jhi-secured-image [src]="course.courseIcon" [cachingStrategy]="CachingStrategy.LOCAL_STORAGE" [alt]="'artemisApp.courseOverview.noCourseIcon' | artemisTranslate">
+            <jhi-secured-image
+                class="d-flex justify-content-center align-items-center"
+                [src]="course.courseIcon"
+                [cachingStrategy]="CachingStrategy.LOCAL_STORAGE"
+                [alt]="'artemisApp.courseOverview.noCourseIcon' | artemisTranslate"
+            >
             </jhi-secured-image>
         </div>
     </div>

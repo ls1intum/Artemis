@@ -1,6 +1,5 @@
 import { Component, ContentChild, Input, OnDestroy, OnInit, TemplateRef } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { ExerciseType } from 'app/entities/exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseService } from './services/programming-exercise.service';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -37,7 +36,6 @@ import {
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
-import { ExerciseImportWrapperComponent } from 'app/exercises/shared/import/exercise-import-wrapper/exercise-import-wrapper.component';
 
 @Component({
     selector: 'jhi-programming-exercise',
@@ -54,7 +52,6 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
     allChecked = false;
 
     // extension points, see shared/extension-point
-    @ContentChild('overrideGenerateAndImportButton') overrideGenerateAndImportButton: TemplateRef<any>;
     @ContentChild('overrideRepositoryAndBuildPlan') overrideRepositoryAndBuildPlan: TemplateRef<any>;
     @ContentChild('overrideButtons') overrideButtons: TemplateRef<any>;
     private buildPlanLinkTemplate: string;
@@ -168,23 +165,6 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
     sortRows() {
         this.sortService.sortByProperty(this.programmingExercises, this.predicate, this.reverse);
         this.applyFilter();
-    }
-
-    openImportModal() {
-        const modalRef = this.modalService.open(ExerciseImportWrapperComponent, { size: 'lg', backdrop: 'static' });
-        modalRef.componentInstance.exerciseType = ExerciseType.PROGRAMMING;
-        modalRef.result.then((result: ProgrammingExercise) => {
-            //when the file is uploaded we set the id to undefined.
-            if (result.id === undefined) {
-                this.router.navigate(['course-management', this.courseId, 'programming-exercises', 'import-from-file'], {
-                    state: {
-                        programmingExerciseForImportFromFile: result,
-                    },
-                });
-            } else {
-                this.router.navigate(['course-management', this.courseId, 'programming-exercises', 'import', result.id]);
-            }
-        });
     }
 
     toggleProgrammingExercise(programmingExercise: ProgrammingExercise) {

@@ -22,6 +22,7 @@ import { NonProgrammingExerciseDetailCommonActionsModule } from 'app/exercises/s
 import { ExampleSubmissionsModule } from 'app/exercises/shared/example-submission/example-submissions.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ExerciseCategoriesModule } from 'app/shared/exercise-categories/exercise-categories.module';
+import { ModelingExerciseCreateButtonsComponent } from 'app/exercises/modeling/manage/modeling-exercise-create-buttons.component';
 
 @NgModule({
     imports: [
@@ -46,7 +47,7 @@ import { ExerciseCategoriesModule } from 'app/shared/exercise-categories/exercis
         ArtemisSharedComponentModule,
         ExerciseCategoriesModule,
     ],
-    declarations: [ModelingExerciseComponent, ModelingExerciseDetailComponent, ModelingExerciseUpdateComponent],
-    exports: [ModelingExerciseComponent],
+    declarations: [ModelingExerciseComponent, ModelingExerciseCreateButtonsComponent, ModelingExerciseDetailComponent, ModelingExerciseUpdateComponent],
+    exports: [ModelingExerciseComponent, ModelingExerciseCreateButtonsComponent],
 })
 export class ArtemisModelingExerciseModule {}

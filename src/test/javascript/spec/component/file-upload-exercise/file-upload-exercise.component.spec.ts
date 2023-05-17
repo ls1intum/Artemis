@@ -98,18 +98,6 @@ describe('FileUploadExercise Management Component', () => {
         expect(fileUploadExerciseService.delete).toHaveBeenCalledWith(456);
         expect(fileUploadExerciseService.delete).toHaveBeenCalledOnce();
     });
-    it('should open import modal', () => {
-        const mockReturnValue = {
-            result: Promise.resolve({ id: 456 } as FileUploadExercise),
-            componentInstance: {},
-        } as NgbModalRef;
-        jest.spyOn(modalService, 'open').mockReturnValue(mockReturnValue);
-
-        comp.openImportModal();
-        expect(modalService.open).toHaveBeenCalledWith(ExerciseImportWrapperComponent, { size: 'lg', backdrop: 'static' });
-        expect(modalService.open).toHaveBeenCalledOnce();
-        expect(mockReturnValue.componentInstance.exerciseType).toEqual(ExerciseType.FILE_UPLOAD);
-    });
 
     it('should return exercise id', () => {
         expect(comp.trackId(0, fileUploadExercise)).toBe(456);

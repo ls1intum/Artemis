@@ -31,6 +31,7 @@ import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { FitTextModule } from 'app/exercises/quiz/shared/fit-text/fit-text.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ExerciseCategoriesModule } from 'app/shared/exercise-categories/exercise-categories.module';
+import { QuizExerciseCreateButtonsComponent } from 'app/exercises/quiz/manage/quiz-exercise-create-buttons.component';
 
 const ENTITY_STATES = [...quizManagementRoute];
 
@@ -56,6 +57,7 @@ const ENTITY_STATES = [...quizManagementRoute];
     ],
     declarations: [
         QuizExerciseComponent,
+        QuizExerciseCreateButtonsComponent,
         QuizConfirmImportInvalidQuestionsModalComponent,
         QuizExerciseDetailComponent,
         MultipleChoiceQuestionEditComponent,
@@ -70,6 +72,6 @@ const ENTITY_STATES = [...quizManagementRoute];
         QuizExerciseExportComponent,
         MatchPercentageInfoModalComponent,
     ],
-    exports: [QuizExerciseComponent],
+    exports: [QuizExerciseComponent, QuizExerciseCreateButtonsComponent],
 })
 export class ArtemisQuizManagementModule {}

@@ -103,19 +103,6 @@ describe('QuizExercise Management Component', () => {
         expect(exerciseService.reset).toHaveBeenCalledOnce();
     });
 
-    it('should open import modal', () => {
-        const mockReturnValue = {
-            result: Promise.resolve({ id: 456 } as QuizExercise),
-            componentInstance: {},
-        } as NgbModalRef;
-        jest.spyOn(modalService, 'open').mockReturnValue(mockReturnValue);
-
-        comp.openImportModal();
-        expect(modalService.open).toHaveBeenCalledWith(ExerciseImportWrapperComponent, { size: 'lg', backdrop: 'static' });
-        expect(modalService.open).toHaveBeenCalledOnce();
-        expect(mockReturnValue.componentInstance.exerciseType).toEqual(ExerciseType.QUIZ);
-    });
-
     it('should open quiz for practice', () => {
         const headers = new HttpHeaders().append('link', 'link;link');
         jest.spyOn(quizExerciseService, 'openForPractice').mockReturnValue(

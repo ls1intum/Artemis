@@ -1,11 +1,10 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { ExerciseType } from 'app/entities/exercise.model';
 import { of } from 'rxjs';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisTestModule } from '../../test.module';
 import { ModelingExerciseComponent } from 'app/exercises/modeling/manage/modeling-exercise.component';
 import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
@@ -18,7 +17,6 @@ import { EventManager } from 'app/core/util/event-manager.service';
 import { ExerciseFilter } from 'app/entities/exercise-filter.model';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
-import { ExerciseImportWrapperComponent } from 'app/exercises/shared/import/exercise-import-wrapper/exercise-import-wrapper.component';
 
 describe('ModelingExercise Management Component', () => {
     let comp: ModelingExerciseComponent;
@@ -103,19 +101,6 @@ describe('ModelingExercise Management Component', () => {
         comp.deleteModelingExercise(456);
         expect(modelingExerciseService.delete).toHaveBeenCalledWith(456);
         expect(modelingExerciseService.delete).toHaveBeenCalledOnce();
-    });
-
-    it('should open import modal', () => {
-        const mockReturnValue = {
-            result: Promise.resolve({ id: 456 } as ModelingExercise),
-            componentInstance: {},
-        } as NgbModalRef;
-        jest.spyOn(modalService, 'open').mockReturnValue(mockReturnValue);
-
-        comp.openImportModal();
-        expect(modalService.open).toHaveBeenCalledWith(ExerciseImportWrapperComponent, { size: 'lg', backdrop: 'static' });
-        expect(modalService.open).toHaveBeenCalledOnce();
-        expect(mockReturnValue.componentInstance.exerciseType).toEqual(ExerciseType.MODELING);
     });
 
     it('should return exercise id', () => {
