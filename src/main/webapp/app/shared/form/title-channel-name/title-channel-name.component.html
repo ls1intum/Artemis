@@ -1,7 +1,17 @@
 <div>
     <div class="form-group">
-        <label class="form-control-label" jhiTranslate="artemisApp.lecture.title" for="field_title">Title</label>
-        <input required [minlength]="minTitleLength" type="text" class="form-control" name="title" id="field_title" [ngModel]="title" (ngModelChange)="updateTitle($event)" />
+        <label *ngIf="!isProgrammingExercise" class="form-control-label" jhiTranslate="artemisApp.lecture.title" for="field_title">Title</label>
+        <input
+            required
+            [minlength]="minTitleLength"
+            [pattern]="pattern"
+            type="text"
+            class="form-control"
+            name="title"
+            id="field_title"
+            [ngModel]="title"
+            (ngModelChange)="updateTitle($event)"
+        />
     </div>
     <div *ngIf="channelName !== undefined" class="form-group">
         <label class="form-control-label" jhiTranslate="artemisApp.lecture.channelName" for="field_channel_name">Channel Name</label>

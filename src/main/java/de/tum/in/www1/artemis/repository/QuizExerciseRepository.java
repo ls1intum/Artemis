@@ -51,7 +51,8 @@ public interface QuizExerciseRepository extends JpaRepository<QuizExercise, Long
     @EntityGraph(type = LOAD, attributePaths = { "quizQuestions", "quizPointStatistic", "quizQuestions.quizQuestionStatistic", "categories", "quizBatches" })
     Optional<QuizExercise> findWithEagerQuestionsAndStatisticsById(Long quizExerciseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "quizQuestions", "quizPointStatistic", "quizQuestions.quizQuestionStatistic", "categories", "learningGoals", "quizBatches" })
+    @EntityGraph(type = LOAD, attributePaths = { "quizQuestions", "quizPointStatistic", "quizQuestions.quizQuestionStatistic", "categories", "channel", "learningGoals",
+            "quizBatches" })
     Optional<QuizExercise> findWithEagerQuestionsAndStatisticsAndLearningGoalsById(Long quizExerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "quizQuestions" })

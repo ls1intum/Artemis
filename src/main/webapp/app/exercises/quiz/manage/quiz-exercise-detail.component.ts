@@ -45,6 +45,7 @@ import { QuizExerciseValidationDirective } from 'app/exercises/quiz/manage/quiz-
 import { faExclamationCircle, faPlus, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { isQuizEditable } from 'app/exercises/quiz/shared/quiz-manage-util.service';
+import { Channel } from 'app/entities/metis/conversation/channel.model';
 
 @Component({
     selector: 'jhi-quiz-exercise-detail',
@@ -92,6 +93,7 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
     dndFilterEnabled: boolean;
     mcqFilterEnabled: boolean;
     shortAnswerFilterEnabled: boolean;
+    channelName: string | undefined;
 
     /** Duration object **/
     duration = new Duration(0, 0);
@@ -240,8 +242,18 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
     init(): void {
         if (!this.quizExercise) {
             this.quizExercise = this.initializeNewQuizExercise();
+            if (!this.isExamMode) {
+                if (this.quizExercise.id == undefined && this.quizExercise.channel == undefined) {
+                    this.quizExercise.channel = new Channel();
+                    this.quizExercise.channel.name = '';
+                }
+                this.channelName = this.quizExercise.channel.name;
+            }
         } else {
             this.quizExercise.isEditable = isQuizEditable(this.quizExercise);
+            if (!this.isExamMode) {
+                this.channelName = this.quizExercise?.channel?.name;
+            }
         }
 
         if (this.isImport || this.isExamMode) {
@@ -848,6 +860,8 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
         Exercise.sanitize(this.quizExercise);
 
         this.isSaving = true;
+        this.quizExercise.channel.name = this.channelName;
+
         this.parseAllQuestions();
         if (this.quizExercise.id !== undefined) {
             if (this.isImport) {

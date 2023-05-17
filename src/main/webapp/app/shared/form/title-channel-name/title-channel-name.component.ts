@@ -8,6 +8,8 @@ export class TitleChannelNameComponent implements OnInit {
     @Input() title: string | undefined;
     @Input() channelName: string | undefined;
     @Input() channelNamePrefix: string;
+    @Input() pattern: string;
+    @Input() isProgrammingExercise: boolean;
 
     @Input() minTitleLength: number;
 

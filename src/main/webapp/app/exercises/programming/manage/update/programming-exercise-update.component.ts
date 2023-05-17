@@ -29,6 +29,7 @@ import { SubmissionPolicyType } from 'app/entities/submission-policy.model';
 import { faBan, faExclamationCircle, faHandshakeAngle, faQuestionCircle, faSave } from '@fortawesome/free-solid-svg-icons';
 import { ModePickerOption } from 'app/exercises/shared/mode-picker/mode-picker.component';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
+import { Channel } from 'app/entities/metis/conversation/channel.model';
 
 @Component({
     selector: 'jhi-programming-exercise-update',
@@ -361,6 +362,13 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         this.notificationText = undefined;
         this.activatedRoute.data.subscribe(({ programmingExercise }) => {
             this.programmingExercise = programmingExercise;
+            // if (!this.isExamMode) {
+            //     if (this.programmingExercise.id == undefined && this.programmingExercise.channel == undefined) {
+            //         this.programmingExercise.channel = new Channel();
+            //         this.programmingExercise.channel.name = '';
+            //     }
+            // }
+            // this.channelName = this.programmingExercise.channel.name;
             this.backupExercise = cloneDeep(this.programmingExercise);
             this.selectedProgrammingLanguageValue = this.programmingExercise.programmingLanguage!;
             if (this.programmingExercise.projectType === ProjectType.MAVEN_MAVEN) {
@@ -569,6 +577,13 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         Exercise.sanitize(this.programmingExercise);
 
         this.isSaving = true;
+
+        if (!this.isExamMode) {
+            console.log('Saving exercise for course');
+            console.log(this.programmingExercise);
+            // console.log(this.channelName);
+            // this.programmingExercise.channel.name = this.channelName;
+        }
 
         if (this.exerciseService.hasExampleSolutionPublicationDateWarning(this.programmingExercise)) {
             this.alertService.addAlert({

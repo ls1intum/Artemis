@@ -48,6 +48,7 @@ export class TextExerciseUpdateComponent implements OnInit {
     exerciseCategories: ExerciseCategory[];
     existingCategories: ExerciseCategory[];
     notificationText?: string;
+    channelName: string | undefined;
 
     domainCommandsProblemStatement = [new KatexCommand()];
     domainCommandsSampleSolution = [new KatexCommand()];
@@ -57,7 +58,6 @@ export class TextExerciseUpdateComponent implements OnInit {
     // Icons
     faSave = faSave;
     faBan = faBan;
-    channelName: string | undefined;
 
     constructor(
         private alertService: AlertService,

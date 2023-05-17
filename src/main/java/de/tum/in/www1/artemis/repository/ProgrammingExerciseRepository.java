@@ -57,8 +57,8 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
             "submissionPolicy" })
     Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(Long exerciseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "teamAssignmentConfig", "categories", "learningGoals", "auxiliaryRepositories",
-            "submissionPolicy" })
+    @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "teamAssignmentConfig", "categories", "channel", "learningGoals",
+            "auxiliaryRepositories", "submissionPolicy" })
     Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndLearningGoalsById(Long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "auxiliaryRepositories" })
