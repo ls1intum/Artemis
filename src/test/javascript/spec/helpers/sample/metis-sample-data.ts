@@ -10,11 +10,15 @@ import dayjs from 'dayjs/esm';
 import { Attachment } from 'app/entities/attachment.model';
 import { ConversationParticipant } from 'app/entities/metis/conversation/conversation-participant.model';
 import { Conversation } from 'app/entities/metis/conversation/conversation.model';
+import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
+import { Slide } from 'app/entities/lecture-unit/slide.model';
 
-export const metisAttachment = { id: 1, name: 'Metis Attachment', link: 'directory/Metis-Attachment.pdf' } as Attachment;
-
+export const metisSlide1 = { id: 1, slideNumber: 1, slideImagePath: 'directory/attachments/slides/Metis-Slide-1.png' } as Slide;
+export const metisAttachment = { id: 1, name: 'Metis Attachment', link: 'directory/attachments/Metis-Attachment.pdf' } as Attachment;
+export const metisAttachmentUnit = { id: 1, name: 'Metis Attachment Unit', attachment: metisAttachment, slides: [metisSlide1] } as AttachmentUnit;
 export const metisLecture = { id: 1, title: 'Metis  Lecture', attachments: [metisAttachment] } as Lecture;
-export const metisLecture2 = { id: 1, title: 'Second Metis  Lecture' } as Lecture;
+export const metisLecture2 = { id: 2, title: 'Second Metis  Lecture' } as Lecture;
+export const metisLecture3 = { id: 3, title: 'Third Metis  Lecture 3', attachments: [metisAttachment], lectureUnits: [metisAttachmentUnit] } as Lecture;
 
 export const metisExercise = { id: 1, title: 'Metis  Exercise', type: ExerciseType.TEXT } as Exercise;
 export const metisExercise2 = { id: 1, title: 'Second Metis  Exercise', type: ExerciseType.TEXT } as Exercise;
@@ -33,7 +37,7 @@ export const metisCourse = {
     id: 1,
     title: 'Metis Course',
     exercises: [metisExercise, metisExercise2],
-    lectures: [metisLecture, metisLecture2],
+    lectures: [metisLecture, metisLecture2, metisLecture3],
     courseInformationSharingConfiguration: CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING,
     groups: ['metisTutors', 'metisStudents', 'metisInstructors'],
 } as Course;
