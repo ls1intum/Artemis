@@ -2612,22 +2612,22 @@ public class DatabaseUtilService {
         MultipleChoiceQuestion multipleChoiceQuestion = (MultipleChoiceQuestion) (quizExercise.getQuizQuestions().get(0));
         submittedAnswerMC.setSelectedOptions(Set.of(multipleChoiceQuestion.getAnswerOptions().get(0), multipleChoiceQuestion.getAnswerOptions().get(1)));
         submittedAnswerMC.setQuizQuestion(multipleChoiceQuestion);
-
         var submittedShortAnswer = new ShortAnswerSubmittedAnswer();
         ShortAnswerQuestion shortAnswerQuestion = (ShortAnswerQuestion) (quizExercise.getQuizQuestions().get(2));
         submittedShortAnswer.setQuizQuestion(shortAnswerQuestion);
-        ShortAnswerSubmittedText shortAnswerSubmittedText = new ShortAnswerSubmittedText();
+        ShortAnswerSubmittedText shortAnswerSubmittedText1 = new ShortAnswerSubmittedText();
+        ShortAnswerSubmittedText shortAnswerSubmittedText2 = new ShortAnswerSubmittedText();
         shortAnswerQuestion.setExercise(quizExercise);
-        shortAnswerSubmittedText.setText("my text");
-        shortAnswerSubmittedText.setSubmittedAnswer(submittedShortAnswer);
-        submittedShortAnswer.addSubmittedTexts(shortAnswerSubmittedText);
-        ShortAnswerSpot shortAnswerSpot = new ShortAnswerSpot();
-        shortAnswerSpot.setSpotNr(1);
-        shortAnswerSubmittedText.setSpot(shortAnswerSpot);
-        ShortAnswerMapping mapping = new ShortAnswerMapping();
-        mapping.setQuestion(shortAnswerQuestion);
-        mapping.setShortAnswerSpotIndex(1);
-        shortAnswerQuestion.addCorrectMapping(mapping);
+        shortAnswerSubmittedText1.setText("my text");
+        shortAnswerSubmittedText1.setIsCorrect(false);
+        shortAnswerSubmittedText2.setText("is");
+        shortAnswerSubmittedText2.setIsCorrect(true);
+        shortAnswerSubmittedText1.setSubmittedAnswer(submittedShortAnswer);
+        shortAnswerSubmittedText2.setSubmittedAnswer(submittedShortAnswer);
+        submittedShortAnswer.addSubmittedTexts(shortAnswerSubmittedText1);
+        submittedShortAnswer.addSubmittedTexts(shortAnswerSubmittedText2);
+        shortAnswerSubmittedText1.setSpot(shortAnswerQuestion.getSpots().get(1));
+        shortAnswerSubmittedText2.setSpot(shortAnswerQuestion.getSpots().get(0));
 
         var submittedDragAndDropAnswer = new DragAndDropSubmittedAnswer();
         DragAndDropQuestion dragAndDropQuestion = (DragAndDropQuestion) (quizExercise.getQuizQuestions().get(1));
@@ -2659,7 +2659,6 @@ public class DatabaseUtilService {
         submittedShortAnswer.setSubmission(quizSubmission);
         submittedAnswerMC.setSubmission(quizSubmission);
         submittedDragAndDropAnswer.setSubmission(quizSubmission);
-        shortAnswerSpotRepository.save(shortAnswerSpot);
         dragAndDropMapping.setSubmittedAnswer(submittedDragAndDropAnswer);
         incorrectDragAndDropMapping.setSubmittedAnswer(submittedDragAndDropAnswer);
         mappingWithImage.setSubmittedAnswer(submittedDragAndDropAnswer);
@@ -4206,8 +4205,14 @@ public class DatabaseUtilService {
     private void initializeQuizExerciseWithAllQuestionTypes(QuizExercise quizExercise) {
         quizExercise.addQuestions(createMultipleChoiceQuestionWithAllTypesOfAnswerOptions());
         quizExercise.addQuestions(createDragAndDropQuestionWithAllTypesOfMappings());
-        quizExercise.addQuestions(createShortAnswerQuestion());
+        quizExercise.addQuestions(createShortAnswerQuestionWithRealisticText());
         quizExercise.addQuestions(createSingleChoiceQuestion());
+    }
+
+    private ShortAnswerQuestion createShortAnswerQuestionWithRealisticText() {
+        var shortAnswerQuestion = createShortAnswerQuestion();
+        shortAnswerQuestion.setText("This [-spot1] a [-spot 2] answer text");
+        return shortAnswerQuestion;
     }
 
     @NotNull

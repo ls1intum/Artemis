@@ -5,9 +5,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -304,9 +304,8 @@ public class DataExportService {
 
     private void createQuizAnswersExport(QuizExercise quizExercise, StudentParticipation participation, Path outputDir) throws IOException {
         Set<QuizQuestion> quizQuestions = quizQuestionRepository.getQuizQuestionsByExerciseId(quizExercise.getId());
-        QuizSubmission quizSubmission = null;
+        QuizSubmission quizSubmission;
 
-        // collect necessary information for csv headers
         for (var submission : participation.getSubmissions()) {
             quizSubmission = quizSubmissionRepository.findWithEagerSubmittedAnswersById(submission.getId());
             List<String> multipleChoiceQuestionsSubmissions = new ArrayList<>();
@@ -369,12 +368,46 @@ public class DataExportService {
     }
 
     private String createExportForShortAnswerQuestion(ShortAnswerSubmittedAnswer shortAnswerSubmittedAnswer) {
-        // TODO short answer question export
         StringBuilder stringBuilder = new StringBuilder();
         ShortAnswerQuestion question = (ShortAnswerQuestion) shortAnswerSubmittedAnswer.getQuizQuestion();
         stringBuilder.append("Short Answer Question: ").append(question.getTitle()).append("\n");
         stringBuilder.append("Your score: ").append(shortAnswerSubmittedAnswer.getScoreInPoints()).append("\n");
+        return replaceSpotWithSubmittedAnswer(shortAnswerSubmittedAnswer, stringBuilder);
+    }
+
+    private String replaceSpotWithSubmittedAnswer(ShortAnswerSubmittedAnswer shortAnswerSubmittedAnswer, StringBuilder stringBuilder) {
+
+        var spotToSubmittedTextMap = buildMapFromSpotsToSubmittedAnswers(shortAnswerSubmittedAnswer);
+        stringBuilder.append("Your answer: ").append("\n");
+        stringBuilder.append(shortAnswerSubmittedAnswer.getQuizQuestion().getText());
+        for (Map.Entry<String, ShortAnswerSubmittedText> entry : spotToSubmittedTextMap.entrySet()) {
+            Pattern pattern = Pattern.compile(entry.getKey());
+            Matcher matcher = pattern.matcher(stringBuilder);
+            while (matcher.find()) {
+                int start = matcher.start();
+                int end = matcher.end();
+                String replacement;
+                if (entry.getValue().isIsCorrect()) {
+                    replacement = entry.getValue().getText() + " (Correct)";
+                }
+                else {
+                    replacement = entry.getValue().getText() + " (Incorrect)";
+                }
+                stringBuilder.replace(start, end, replacement);
+                matcher = pattern.matcher(stringBuilder);
+            }
+        }
         return stringBuilder.toString();
+    }
+
+    private Map<String, ShortAnswerSubmittedText> buildMapFromSpotsToSubmittedAnswers(ShortAnswerSubmittedAnswer shortAnswerSubmittedAnswer) {
+        Map<String, ShortAnswerSubmittedText> spotsToSubmittedAnswers = new HashMap<>();
+        for (var submittedText : shortAnswerSubmittedAnswer.getSubmittedTexts()) {
+            int spotNr = submittedText.getSpot().getSpotNr();
+            spotsToSubmittedAnswers.put("\\[-spot\\s*" + spotNr + "\\]", submittedText);
+
+        }
+        return spotsToSubmittedAnswers;
     }
 
     private void createCommunicationExport(List<Post> posts, List<AnswerPost> answerPosts, List<Reaction> reactions, long courseId, Path courseDir) throws IOException {
