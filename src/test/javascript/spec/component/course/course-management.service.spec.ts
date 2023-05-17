@@ -528,7 +528,7 @@ describe('Course Management Service', () => {
             expect(alertSpy).toHaveBeenCalledOnce();
             expect(alertSpy).toHaveBeenCalledWith('error.loadCourseUnnecessarily');
         } else {
-            expect(alertSpy).toHaveBeenCalledTimes(0);
+            expect(alertSpy).not.toHaveBeenCalled();
         }
     });
 
@@ -540,7 +540,7 @@ describe('Course Management Service', () => {
         courseManagementService.findOneForDashboard(course.id!);
 
         expect(getProfileInfoSpy).toHaveBeenCalledOnce();
-        expect(courseStorageSpy).toHaveBeenCalledTimes(0);
-        expect(alertSpy).toHaveBeenCalledTimes(0);
+        expect(courseStorageSpy).not.toHaveBeenCalled();
+        expect(alertSpy).not.toHaveBeenCalled();
     });
 });
