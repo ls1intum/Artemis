@@ -59,7 +59,7 @@ artemis:
                 java:
                     # possible overrides: maven, gradle
                     default: "ls1tum/artemis-maven-template:java17-16"
-                    maven_blackbox: ""
+                    maven_blackbox: "registry.git.fim.uni-passau.de/artemis/artemis-docker-images/dejagnu:20"
                 kotlin:
                     # possible overrides: maven, gradle
                     default: "ls1tum/artemis-maven-template:java17-16"

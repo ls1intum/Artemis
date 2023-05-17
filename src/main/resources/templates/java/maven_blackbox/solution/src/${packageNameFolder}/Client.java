@@ -1,3 +1,5 @@
+package ${packageName};
+
 import ${packageName}.input.Command;
 import ${packageName}.input.CommandParser;
 import ${packageName}.input.InvalidCommandException;
