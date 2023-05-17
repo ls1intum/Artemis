@@ -16,6 +16,8 @@ import { ExerciseReferenceCommand } from 'app/shared/markdown-editor/commands/co
 import { LectureAttachmentReferenceCommand } from 'app/shared/markdown-editor/commands/courseArtifactReferenceCommands/lectureAttachmentReferenceCommand';
 import { metisAnswerPostUser2, metisPostExerciseUser1 } from '../../../../helpers/sample/metis-sample-data';
 import { ProfileToggleService } from 'app/shared/profile-toggle/profile-toggle.service';
+import { MockHttpService } from '../../../../helpers/mocks/service/mock-http.service';
+import { HttpClient } from '@angular/common/http';
 
 // eslint-disable-next-line @angular-eslint/directive-selector
 @Directive({ selector: 'jhi-markdown-editor' })
@@ -34,7 +36,10 @@ describe('PostingsMarkdownEditor', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            providers: [{ provide: MetisService, useClass: MockMetisService }],
+            providers: [
+                { provide: MetisService, useClass: MockMetisService },
+                { provide: HttpClient, useClass: MockHttpService },
+            ],
             declarations: [PostingMarkdownEditorComponent, MockMarkdownEditorDirective],
             schemas: [CUSTOM_ELEMENTS_SCHEMA], // required because we mock the nested MarkdownEditorComponent
         })
@@ -45,6 +50,7 @@ describe('PostingsMarkdownEditor', () => {
                 component = fixture.componentInstance;
                 debugElement = fixture.debugElement;
                 metisService = TestBed.inject(MetisService);
+                // TODO: Test the toggle correctly
                 profileToggleService = TestBed.inject(ProfileToggleService);
                 const mockMarkdownEditorElement = fixture.debugElement.query(By.directive(MockMarkdownEditorDirective));
                 mockMarkdownEditorDirective = mockMarkdownEditorElement.injector.get(MockMarkdownEditorDirective) as MockMarkdownEditorDirective;

@@ -15,6 +15,7 @@ import { PieChartModule } from '@swimlane/ngx-charts';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ScoresStorageService } from 'app/course/course-scores/scores-storage.service';
 import { CourseScores } from 'app/course/course-scores/course-scores';
+import { ProfileToggleHideDirective } from 'app/shared/profile-toggle/profile-toggle-hide.directive';
 
 describe('CourseCardComponent', () => {
     let fixture: ComponentFixture<CourseCardComponent>;
@@ -41,6 +42,7 @@ describe('CourseCardComponent', () => {
                 MockRouterLinkDirective,
                 MockComponent(SecuredImageComponent),
                 MockDirective(TranslateDirective),
+                MockDirective(ProfileToggleHideDirective),
             ],
         })
             .compileComponents()

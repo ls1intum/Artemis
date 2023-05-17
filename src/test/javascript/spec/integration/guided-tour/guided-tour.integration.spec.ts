@@ -43,6 +43,7 @@ import { JhiConnectionWarningComponent } from 'app/shared/connection-warning/con
 import { NgbCollapse, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { NgbDropdownMocksModule } from '../../helpers/mocks/directive/ngbDropdownMocks.module';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
+import { ProfileToggleHideDirective } from 'app/shared/profile-toggle/profile-toggle-hide.directive';
 
 describe('Guided tour integration', () => {
     const user = { id: 1 } as User;
@@ -95,6 +96,7 @@ describe('Guided tour integration', () => {
                 MockDirective(ActiveMenuDirective),
                 MockDirective(TranslateDirective),
                 MockComponent(JhiConnectionWarningComponent),
+                MockDirective(ProfileToggleHideDirective),
             ],
             providers: [
                 { provide: AccountService, useClass: MockAccountService },

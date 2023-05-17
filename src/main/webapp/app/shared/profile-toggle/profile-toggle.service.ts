@@ -12,6 +12,7 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
  */
 export enum ProfileToggle {
     LECTURE = 'lecture',
+    DECOUPLING = 'decoupling',
 }
 export type ActiveProfileToggles = Array<ProfileToggle>;
 
@@ -91,7 +92,15 @@ export class ProfileToggleService {
      */
     getProfileTogglesActive(profiles: ProfileToggle[]): Observable<boolean> {
         return this.subject.asObservable().pipe(
-            map((activeProfiles) => profiles.every((profile) => activeProfiles.includes(profile))),
+            tap((activeProfiles) => console.log(activeProfiles)),
+            map((activeProfiles) => {
+                if (activeProfiles.includes(ProfileToggle.DECOUPLING)) {
+                    // If the 'Decoupling' proxy-profile is set -> Decoupling is activated -> Apply logic
+                    return profiles.every((profile) => activeProfiles.includes(profile));
+                }
+                // If the 'Decoupling' profile is not present -> No separation of logic -> Always allowed
+                return true;
+            }),
             distinctUntilChanged(),
         );
     }

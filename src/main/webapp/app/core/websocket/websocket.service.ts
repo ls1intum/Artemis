@@ -54,6 +54,8 @@ export interface IWebsocketService {
      */
     disableReconnect(): void;
 
+    onWebSocketConnected(): Subject<void>;
+
     /**
      * Get updates on current connection status
      */

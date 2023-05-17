@@ -1,4 +1,4 @@
-import { Observable, of } from 'rxjs';
+import { Observable, Subject, of } from 'rxjs';
 import { ConnectionState, IWebsocketService } from 'app/core/websocket/websocket.service';
 
 export class MockWebsocketService implements IWebsocketService {
@@ -23,6 +23,10 @@ export class MockWebsocketService implements IWebsocketService {
     }
 
     unsubscribe(): void {}
+
+    onWebSocketConnected(): Subject<void> {
+        return new Subject<void>();
+    }
 
     state = of(new ConnectionState(true, true, false));
     get connectionState(): Observable<ConnectionState> {
