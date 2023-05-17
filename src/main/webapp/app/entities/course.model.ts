@@ -52,7 +52,7 @@ export class Course implements BaseEntity {
     public endDate?: dayjs.Dayjs;
     public enrollmentStartDate?: dayjs.Dayjs;
     public enrollmentEndDate?: dayjs.Dayjs;
-    public disenrollmentEndDate?: dayjs.Dayjs;
+    public unenrollmentEndDate?: dayjs.Dayjs;
     public semester?: string;
     public testCourse?: boolean;
     public language?: Language;
@@ -62,7 +62,7 @@ export class Course implements BaseEntity {
     public onlineCourse?: boolean;
     public registrationEnabled?: boolean;
     public registrationConfirmationMessage?: string;
-    public disenrollmentEnabled?: boolean;
+    public unenrollmentEnabled?: boolean;
     public presentationScore?: number;
     public maxComplaints?: number;
     public maxTeamComplaints?: number;

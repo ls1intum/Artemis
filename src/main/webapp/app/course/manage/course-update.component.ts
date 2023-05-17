@@ -197,8 +197,8 @@ export class CourseUpdateComponent implements OnInit {
                 registrationConfirmationMessage: new FormControl(this.course.registrationConfirmationMessage, {
                     validators: [Validators.maxLength(2000)],
                 }),
-                disenrollmentEnabled: new FormControl(this.course.disenrollmentEnabled),
-                disenrollmentEndDate: new FormControl(this.course.disenrollmentEndDate),
+                unenrollmentEnabled: new FormControl(this.course.unenrollmentEnabled),
+                unenrollmentEndDate: new FormControl(this.course.unenrollmentEndDate),
                 presentationScore: new FormControl({ value: this.course.presentationScore, disabled: this.course.presentationScore === 0 }, [
                     Validators.min(1),
                     regexValidator(this.presentationScorePattern),
@@ -400,19 +400,19 @@ export class CourseUpdateComponent implements OnInit {
             // online course cannot be activated if registration enabled is set
             this.courseForm.controls['onlineCourse'].setValue(false);
         } else {
-            if (this.course.disenrollmentEnabled) {
-                this.changeDisenrollmentEnabled();
+            if (this.course.unenrollmentEnabled) {
+                this.changeUnenrollmentEnabled();
             }
         }
         this.courseForm.controls['registrationEnabled'].setValue(this.course.registrationEnabled);
     }
 
     /**
-     * Enable or disable student course disenrollment
+     * Enable or disable student course unenrollment
      */
-    changeDisenrollmentEnabled() {
-        this.course.disenrollmentEnabled = !this.course.disenrollmentEnabled;
-        this.courseForm.controls['disenrollmentEnabled'].setValue(this.course.disenrollmentEnabled);
+    changeUnenrollmentEnabled() {
+        this.course.unenrollmentEnabled = !this.course.unenrollmentEnabled;
+        this.courseForm.controls['unenrollmentEnabled'].setValue(this.course.unenrollmentEnabled);
     }
 
     /**
@@ -564,19 +564,19 @@ export class CourseUpdateComponent implements OnInit {
     }
 
     /**
-     * Returns whether the disenrollment end date is valid or not
+     * Returns whether the unenrollment end date is valid or not
      * @return true if the date is valid
      */
-    get isValidDisenrollmentEndDate(): boolean {
-        // allow instructors to set disenrollment end date later
-        if (!this.course.disenrollmentEndDate) {
+    get isValidUnenrollmentEndDate(): boolean {
+        // allow instructors to set unenrollment end date later
+        if (!this.course.unenrollmentEndDate) {
             return true;
         }
-        // course start and end dates are required to configure disenrollment end date
+        // course start and end dates are required to configure unenrollment end date
         if (this.atLeastOneDateNotExisting() || !this.course.enrollmentStartDate || !this.course.enrollmentEndDate) {
             return false;
         }
-        return dayjs(this.course.enrollmentEndDate).isBefore(this.course.disenrollmentEndDate) && !dayjs(this.course.disenrollmentEndDate).isAfter(this.course.endDate);
+        return dayjs(this.course.enrollmentEndDate).isBefore(this.course.unenrollmentEndDate) && !dayjs(this.course.unenrollmentEndDate).isAfter(this.course.endDate);
     }
 
     /**
@@ -589,7 +589,7 @@ export class CourseUpdateComponent implements OnInit {
     }
 
     get isValidConfiguration(): boolean {
-        return this.isValidDate && this.isValidEnrollmentPeriod && this.isValidDisenrollmentEndDate;
+        return this.isValidDate && this.isValidEnrollmentPeriod && this.isValidUnenrollmentEndDate;
     }
 
     /**

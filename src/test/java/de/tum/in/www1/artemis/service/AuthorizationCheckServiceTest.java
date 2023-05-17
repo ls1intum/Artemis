@@ -124,7 +124,7 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationBambooBitbu
 
     @Nested
     @Component
-    class IsUserAllowedToSelfDisenrollFromCourseTest {
+    class IsUserAllowedToSelfUnenrollFromCourseTest {
 
         @Autowired
         private AuthorizationCheckService authCheckService;
@@ -134,12 +134,12 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationBambooBitbu
 
         private User student;
 
-        private Course getCourseForSelfDisenrollmentAllowedTest() {
+        private Course getCourseForSelfUnenrollmentAllowedTest() {
             var course = database.createCourse();
-            course.setDisenrollmentEnabled(true);
+            course.setUnenrollmentEnabled(true);
             course.setEnrollmentStartDate(ZonedDateTime.now().minusDays(2));
             course.setEnrollmentEndDate(ZonedDateTime.now().plusDays(2));
-            course.setDisenrollmentEndDate(ZonedDateTime.now().plusDays(4));
+            course.setUnenrollmentEndDate(ZonedDateTime.now().plusDays(4));
             course.setEndDate(ZonedDateTime.now().plusDays(6));
             course.setStudentGroupName("test-students");
             return course;
@@ -152,66 +152,66 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationBambooBitbu
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-        void testIsUserAllowedToSelfDisenrollFromCourseForDisenrollmentEndSetAndAllowed() {
-            Course course = getCourseForSelfDisenrollmentAllowedTest();
+        void testIsUserAllowedToSelfUnenrollFromCourseForUnenrollmentEndSetAndAllowed() {
+            Course course = getCourseForSelfUnenrollmentAllowedTest();
             courseRepository.save(course);
-            assertThatCode(() -> authCheckService.checkUserAllowedToSelfDisenrollFromCourseElseThrow(student, course)).doesNotThrowAnyException();
+            assertThatCode(() -> authCheckService.checkUserAllowedToSelfUnenrollFromCourseElseThrow(student, course)).doesNotThrowAnyException();
         }
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-        void testIsUserAllowedToSelfDisenrollFromCourseForDisenrollmentEndNotSetAndAllowed() {
-            Course course = getCourseForSelfDisenrollmentAllowedTest();
-            course.setDisenrollmentEndDate(null);
+        void testIsUserAllowedToSelfUnenrollFromCourseForUnenrollmentEndNotSetAndAllowed() {
+            Course course = getCourseForSelfUnenrollmentAllowedTest();
+            course.setUnenrollmentEndDate(null);
             courseRepository.save(course);
-            assertThatCode(() -> authCheckService.checkUserAllowedToSelfDisenrollFromCourseElseThrow(student, course)).doesNotThrowAnyException();
+            assertThatCode(() -> authCheckService.checkUserAllowedToSelfUnenrollFromCourseElseThrow(student, course)).doesNotThrowAnyException();
         }
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-        void testIsUserAllowedToSelfDisenrollFromCourseForDisenrollmentDisabled() {
-            Course course = getCourseForSelfDisenrollmentAllowedTest();
-            course.setDisenrollmentEnabled(false);
+        void testIsUserAllowedToSelfUnenrollFromCourseForUnenrollmentDisabled() {
+            Course course = getCourseForSelfUnenrollmentAllowedTest();
+            course.setUnenrollmentEnabled(false);
             courseRepository.save(course);
-            assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> authCheckService.checkUserAllowedToSelfDisenrollFromCourseElseThrow(student, course));
+            assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> authCheckService.checkUserAllowedToSelfUnenrollFromCourseElseThrow(student, course));
         }
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-        void testIsUserAllowedToSelfDisenrollFromCourseForWrongDisenrollmentStartDate() {
-            Course course = getCourseForSelfDisenrollmentAllowedTest();
-            // disenrollment period starts with enrollment period
+        void testIsUserAllowedToSelfUnenrollFromCourseForWrongUnenrollmentStartDate() {
+            Course course = getCourseForSelfUnenrollmentAllowedTest();
+            // unenrollment period starts with enrollment period
             course.setEnrollmentStartDate(ZonedDateTime.now().plusDays(1));
             courseRepository.save(course);
-            assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> authCheckService.checkUserAllowedToSelfDisenrollFromCourseElseThrow(student, course));
+            assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> authCheckService.checkUserAllowedToSelfUnenrollFromCourseElseThrow(student, course));
         }
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-        void testIsUserAllowedToSelfDisenrollFromCourseForWrongDisenrollmentEndDate() {
-            Course course = getCourseForSelfDisenrollmentAllowedTest();
-            course.setDisenrollmentEndDate(ZonedDateTime.now().minusDays(1));
+        void testIsUserAllowedToSelfUnenrollFromCourseForWrongUnenrollmentEndDate() {
+            Course course = getCourseForSelfUnenrollmentAllowedTest();
+            course.setUnenrollmentEndDate(ZonedDateTime.now().minusDays(1));
             courseRepository.save(course);
-            assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> authCheckService.checkUserAllowedToSelfDisenrollFromCourseElseThrow(student, course));
+            assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> authCheckService.checkUserAllowedToSelfUnenrollFromCourseElseThrow(student, course));
         }
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-        void testIsUserAllowedToSelfDisenrollFromCourseForWrongEndDate() {
-            Course course = getCourseForSelfDisenrollmentAllowedTest();
-            course.setDisenrollmentEndDate(null);
+        void testIsUserAllowedToSelfUnenrollFromCourseForWrongEndDate() {
+            Course course = getCourseForSelfUnenrollmentAllowedTest();
+            course.setUnenrollmentEndDate(null);
             course.setEndDate(ZonedDateTime.now().minusDays(1));
             courseRepository.save(course);
-            assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> authCheckService.checkUserAllowedToSelfDisenrollFromCourseElseThrow(student, course));
+            assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> authCheckService.checkUserAllowedToSelfUnenrollFromCourseElseThrow(student, course));
         }
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-        void testIsUserAllowedToSelfDisenrollFromOnlineCourse() {
-            Course course = getCourseForSelfDisenrollmentAllowedTest();
+        void testIsUserAllowedToSelfUnenrollFromOnlineCourse() {
+            Course course = getCourseForSelfUnenrollmentAllowedTest();
             course.setOnlineCourse(true);
             courseRepository.save(course);
-            assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> authCheckService.checkUserAllowedToSelfDisenrollFromCourseElseThrow(this.student, course));
+            assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> authCheckService.checkUserAllowedToSelfUnenrollFromCourseElseThrow(this.student, course));
         }
     }
 }

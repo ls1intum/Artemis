@@ -92,9 +92,9 @@ public class Course extends DomainObject {
     @JsonView(QuizView.Before.class)
     private ZonedDateTime enrollmentEndDate;
 
-    @Column(name = "disenrollment_end_date")
+    @Column(name = "unenrollment_end_date")
     @JsonView(QuizView.Before.class)
-    private ZonedDateTime disenrollmentEndDate;
+    private ZonedDateTime unenrollmentEndDate;
 
     @Column(name = "semester")
     @JsonView(QuizView.Before.class)
@@ -168,8 +168,8 @@ public class Course extends DomainObject {
     @Column(name = "registration_confirmation_message")
     private String registrationConfirmationMessage;
 
-    @Column(name = "disenrollment_enabled")
-    private boolean disenrollmentEnabled = false;
+    @Column(name = "unenrollment_enabled")
+    private boolean unenrollmentEnabled = false;
 
     @Column(name = "presentation_score")
     private Integer presentationScore;
@@ -364,28 +364,28 @@ public class Course extends DomainObject {
         this.enrollmentEndDate = enrollmentEndDate;
     }
 
-    public ZonedDateTime getDisenrollmentEndDate() {
-        return disenrollmentEndDate;
+    public ZonedDateTime getUnenrollmentEndDate() {
+        return unenrollmentEndDate;
     }
 
-    public void setDisenrollmentEndDate(ZonedDateTime disenrollmentEndDate) {
-        this.disenrollmentEndDate = disenrollmentEndDate;
+    public void setUnenrollmentEndDate(ZonedDateTime unenrollmentEndDate) {
+        this.unenrollmentEndDate = unenrollmentEndDate;
     }
 
     /**
-     * Determine whether the current date is within the disenrollment period (after start, before end).
+     * Determine whether the current date is within the unenrollment period (after start, before end).
      * <p>
-     * The disenrollment period starts with the enrollment start date and ends with the disenrollment end date if present,
+     * The unenrollment period starts with the enrollment start date and ends with the unenrollment end date if present,
      * otherwise the course end date will be used as the end of the period.
      *
-     * @return true if the current date is within the disenrollment period, false otherwise
+     * @return true if the current date is within the unenrollment period, false otherwise
      */
     @JsonIgnore
-    public boolean disenrollmentIsActive() {
+    public boolean unenrollmentIsActive() {
         ZonedDateTime now = ZonedDateTime.now();
         final boolean startCondition = getEnrollmentStartDate() == null || getEnrollmentStartDate().isBefore(now);
-        final boolean endCondition = (getDisenrollmentEndDate() == null && getEndDate() == null) || (getDisenrollmentEndDate() == null && getEndDate().isAfter(now))
-                || (getDisenrollmentEndDate() != null && getDisenrollmentEndDate().isAfter(now));
+        final boolean endCondition = (getUnenrollmentEndDate() == null && getEndDate() == null) || (getUnenrollmentEndDate() == null && getEndDate().isAfter(now))
+                || (getUnenrollmentEndDate() != null && getUnenrollmentEndDate().isAfter(now));
         return startCondition && endCondition;
     }
 
@@ -536,12 +536,12 @@ public class Course extends DomainObject {
         this.registrationConfirmationMessage = registrationConfirmationMessage;
     }
 
-    public boolean isDisenrollmentEnabled() {
-        return disenrollmentEnabled;
+    public boolean isUnenrollmentEnabled() {
+        return unenrollmentEnabled;
     }
 
-    public void setDisenrollmentEnabled(boolean disenrollmentEnabled) {
-        this.disenrollmentEnabled = disenrollmentEnabled;
+    public void setUnenrollmentEnabled(boolean unenrollmentEnabled) {
+        this.unenrollmentEnabled = unenrollmentEnabled;
     }
 
     public Integer getPresentationScore() {
@@ -673,9 +673,9 @@ public class Course extends DomainObject {
         return "Course{" + "id=" + getId() + ", title='" + getTitle() + "'" + ", description='" + getDescription() + "'" + ", shortName='" + getShortName() + "'"
                 + ", studentGroupName='" + getStudentGroupName() + "'" + ", teachingAssistantGroupName='" + getTeachingAssistantGroupName() + "'" + ", editorGroupName='"
                 + getEditorGroupName() + "'" + ", instructorGroupName='" + getInstructorGroupName() + "'" + ", startDate='" + getStartDate() + "'" + ", endDate='" + getEndDate()
-                + "'" + ", enrollmentStartDate='" + getEnrollmentStartDate() + "'" + ", enrollmentEndDate='" + getEnrollmentEndDate() + "'" + ", disenrollmentEndDate='"
-                + getDisenrollmentEndDate() + "'" + ", semester='" + getSemester() + "'" + "'" + ", onlineCourse='" + isOnlineCourse() + "'" + ", color='" + getColor() + "'"
-                + ", courseIcon='" + getCourseIcon() + "'" + ", registrationEnabled='" + isRegistrationEnabled() + "'" + ", disenrollmentEnabled='" + isDisenrollmentEnabled() + "'"
+                + "'" + ", enrollmentStartDate='" + getEnrollmentStartDate() + "'" + ", enrollmentEndDate='" + getEnrollmentEndDate() + "'" + ", unenrollmentEndDate='"
+                + getUnenrollmentEndDate() + "'" + ", semester='" + getSemester() + "'" + "'" + ", onlineCourse='" + isOnlineCourse() + "'" + ", color='" + getColor() + "'"
+                + ", courseIcon='" + getCourseIcon() + "'" + ", registrationEnabled='" + isRegistrationEnabled() + "'" + ", unenrollmentEnabled='" + isUnenrollmentEnabled() + "'"
                 + ", presentationScore='" + getPresentationScore() + "'" + "}";
     }
 
@@ -908,35 +908,35 @@ public class Course extends DomainObject {
     }
 
     /**
-     * Validates if the end date to disenroll from the course fulfills all requirements.
+     * Validates if the end date to unenroll from the course fulfills all requirements.
      * <p>
-     * The disenrollment end date is considered valid if
+     * The unenrollment end date is considered valid if
      * <ul>
      * <li>start and end date of the enrollment period are set and valid ({@link #validateEnrollmentStartAndEndDate()})</li>
-     * <li>the enrollment period ends before the disenrollment end date,</li>
-     * <li>and the end date for disenrollment is not after the end date of the course.</li>
+     * <li>the enrollment period ends before the unenrollment end date,</li>
+     * <li>and the end date for unenrollment is not after the end date of the course.</li>
      * </ul>
      *
      * @throws BadRequestAlertException
      */
-    public void validateDisenrollmentEndDate() {
-        if (getDisenrollmentEndDate() == null) {
+    public void validateUnenrollmentEndDate() {
+        if (getUnenrollmentEndDate() == null) {
             return;
         }
 
         validateEnrollmentStartAndEndDate();
 
-        final String errorKey = "disenrollmentEndDateInvalid";
+        final String errorKey = "unenrollmentEndDateInvalid";
 
         if (getEnrollmentStartDate() == null || getEnrollmentEndDate() == null) {
-            throw new BadRequestAlertException("Disenrollment end date requires a configured enrollment period.", ENTITY_NAME, errorKey, true);
+            throw new BadRequestAlertException("Unenrollment end date requires a configured enrollment period.", ENTITY_NAME, errorKey, true);
         }
 
-        if (!getEnrollmentEndDate().isBefore(getDisenrollmentEndDate())) {
-            throw new BadRequestAlertException("End date for enrollment must be before the end date to disenroll.", ENTITY_NAME, errorKey, true);
+        if (!getEnrollmentEndDate().isBefore(getUnenrollmentEndDate())) {
+            throw new BadRequestAlertException("End date for enrollment must be before the end date to unenroll.", ENTITY_NAME, errorKey, true);
         }
 
-        if (getDisenrollmentEndDate().isAfter(getEndDate())) {
+        if (getUnenrollmentEndDate().isAfter(getEndDate())) {
             throw new BadRequestAlertException("End date for enrollment can not be after the end date of the course.", ENTITY_NAME, errorKey, true);
         }
     }

@@ -99,11 +99,11 @@
             "enrollmentStartDate": "Enrollment Start",
             "enrollmentEndDate": "Enrollment End",
             "registrationConfirmationMessage": "Registration Confirmation Message",
-            "disenrollmentEnabled": {
-                "title": "Student Course Disenrollment Enabled",
-                "description": "Activate this checkbox to allow students to disenroll independently in the course. You can specify the latest date for disenrollment, otherwise the students can do so until the end of the course."
+            "unenrollmentEnabled": {
+                "title": "Student Course Unenrollment Enabled",
+                "description": "Activate this checkbox to allow students to unenroll independently in the course. You can specify the latest date for unenrollment, otherwise the students can do so until the end of the course."
             },
-            "disenrollmentEndDate": "Latest date to disenroll",
+            "unenrollmentEndDate": "Latest date to unenroll",
             "exercises": "Exercises",
             "programmingExercises": "Programming Exercises",
             "quizExercises": "Quiz Exercises",
@@ -164,7 +164,7 @@
                 "enrollmentEndDate": {
                     "invalid": "Can't be after the end date of the course and must be after the enrollment start date"
                 },
-                "disenrollmentEndDate": {
+                "unenrollmentEndDate": {
                     "invalid": "Must be after enrollment end date and can not be after the end date of the course"
                 },
                 "invalidForm": "Please fill in all required fields."

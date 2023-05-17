@@ -492,17 +492,17 @@ public class CourseService {
     }
 
     /**
-     * Disenroll a user from a course by removing them from the student group of the course
+     * Unenroll a user from a course by removing them from the student group of the course
      *
      * @param user   The user that should get removed from the course
      * @param course The course from which the user should be removed from
      */
-    public void disenrollUserForCourseOrThrow(User user, Course course) {
-        authCheckService.checkUserAllowedToSelfDisenrollFromCourseElseThrow(user, course);
+    public void unenrollUserForCourseOrThrow(User user, Course course) {
+        authCheckService.checkUserAllowedToSelfUnenrollFromCourseElseThrow(user, course);
         userService.removeUserFromGroup(user, course.getStudentGroupName());
-        final var auditEvent = new AuditEvent(user.getLogin(), Constants.DISENROLL_FROM_COURSE, "course=" + course.getTitle());
+        final var auditEvent = new AuditEvent(user.getLogin(), Constants.UNENROLL_FROM_COURSE, "course=" + course.getTitle());
         auditEventRepository.add(auditEvent);
-        log.info("User {} has successfully disenrolled from course {}", user.getLogin(), course.getTitle());
+        log.info("User {} has successfully unenrolled from course {}", user.getLogin(), course.getTitle());
     }
 
     /**

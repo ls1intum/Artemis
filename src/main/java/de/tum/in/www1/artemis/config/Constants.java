@@ -164,7 +164,7 @@ public final class Constants {
 
     public static final String REGISTER_FOR_COURSE = "REGISTER_FOR_COURSE";
 
-    public static final String DISENROLL_FROM_COURSE = "DISENROLL_FROM_COURSE";
+    public static final String UNENROLL_FROM_COURSE = "UNENROLL_FROM_COURSE";
 
     public static final String DELETE_EXERCISE = "DELETE_EXERCISE";
 

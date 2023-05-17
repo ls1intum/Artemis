@@ -209,7 +209,7 @@ public class CourseResource {
         courseUpdate.validateAccuracyOfScores();
         courseUpdate.validateStartAndEndDate();
         courseUpdate.validateEnrollmentStartAndEndDate();
-        courseUpdate.validateDisenrollmentEndDate();
+        courseUpdate.validateUnenrollmentEndDate();
 
         if (file != null) {
             String pathString = fileService.handleSaveFile(file, false, false);
@@ -299,21 +299,21 @@ public class CourseResource {
     }
 
     /**
-     * POST /courses/{courseId}/disenroll : Disenroll from an existing course. This method disenrolls the current user for the given course id in case the student is currently
+     * POST /courses/{courseId}/unenroll : Unenroll from an existing course. This method unenrolls the current user for the given course id in case the student is currently
      * enrolled.
      * The user is removed from the course student group in the Authentication System and the course student group is removed from the user's groups in the Artemis
      * database.
      *
      * @param courseId to find the course
-     * @return response entity for user who has been disenrolled from the course
+     * @return response entity for user who has been unenrolled from the course
      */
-    @PostMapping("courses/{courseId}/disenroll")
+    @PostMapping("courses/{courseId}/unenroll")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<User> disenrollForCourse(@PathVariable Long courseId) {
+    public ResponseEntity<User> unenrollForCourse(@PathVariable Long courseId) {
         Course course = courseRepository.findWithEagerOrganizationsElseThrow(courseId);
         User user = userRepository.getUserWithGroupsAndAuthoritiesAndOrganizations();
-        log.debug("REST request to disenroll {} for Course {}", user.getName(), course.getTitle());
-        courseService.disenrollUserForCourseOrThrow(user, course);
+        log.debug("REST request to unenroll {} for Course {}", user.getName(), course.getTitle());
+        courseService.unenrollUserForCourseOrThrow(user, course);
         return ResponseEntity.ok(user);
     }
 

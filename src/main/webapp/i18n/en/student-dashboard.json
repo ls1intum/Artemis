@@ -92,8 +92,8 @@
                     "endDate": "End Date:",
                     "enrollmentStartDate": "Enrollment Start Date:",
                     "enrollmentEndDate": "Enrollment End Date:",
-                    "disenrollmentEndDate": "Disenrollment End Date:",
-                    "disenrollmentButton": "Disenroll",
+                    "unenrollmentEndDate": "Unenrollment End Date:",
+                    "unenrollmentButton": "Unenroll",
                     "upcomingDeadlines": "Upcoming Deadlines:",
                     "noUpcomingExercises": "There are no upcoming exercises."
                 }
