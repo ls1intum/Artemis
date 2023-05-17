@@ -995,4 +995,12 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                  AND p.presentationScore > 0.0
             """)
     double countNonZeroPresentationsByStudentIdAndCourseId(@Param("courseId") Long courseId, @Param("studentId") Long studentId);
+
+    @Query("""
+            SELECT COALESCE(AVG(p.presentationScore), 0)
+            FROM StudentParticipation p
+            WHERE p.exercise.course.id = :#{#courseId}
+                 AND p.presentationScore IS NOT NULL
+            """)
+    double getAvgPresentationScoreByCourseId(@Param("courseId") Long courseId);
 }

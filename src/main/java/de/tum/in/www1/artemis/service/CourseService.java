@@ -136,6 +136,8 @@ public class CourseService {
 
     private final ParticipantScoreRepository participantScoreRepository;
 
+    private final PresentationCalculationService presentationCalculationService;
+
     private final TutorialGroupRepository tutorialGroupRepository;
 
     private final TutorialGroupService tutorialGroupService;
@@ -154,8 +156,8 @@ public class CourseService {
             StatisticsRepository statisticsRepository, StudentParticipationRepository studentParticipationRepository, TutorLeaderboardService tutorLeaderboardService,
             RatingRepository ratingRepository, ComplaintService complaintService, ComplaintRepository complaintRepository, ResultRepository resultRepository,
             ComplaintResponseRepository complaintResponseRepository, SubmissionRepository submissionRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            ExerciseRepository exerciseRepository, ParticipantScoreRepository participantScoreRepository, TutorialGroupRepository tutorialGroupRepository,
-            TutorialGroupService tutorialGroupService, TutorialGroupsConfigurationRepository tutorialGroupsConfigurationRepository,
+            ExerciseRepository exerciseRepository, ParticipantScoreRepository participantScoreRepository, PresentationCalculationService presentationCalculationService,
+            TutorialGroupRepository tutorialGroupRepository, TutorialGroupService tutorialGroupService, TutorialGroupsConfigurationRepository tutorialGroupsConfigurationRepository,
             PlagiarismCaseRepository plagiarismCaseRepository, ConversationRepository conversationRepository) {
         this.env = env;
         this.artemisAuthenticationProvider = artemisAuthenticationProvider;
@@ -188,6 +190,7 @@ public class CourseService {
         this.resultRepository = resultRepository;
         this.exerciseRepository = exerciseRepository;
         this.participantScoreRepository = participantScoreRepository;
+        this.presentationCalculationService = presentationCalculationService;
         this.tutorialGroupRepository = tutorialGroupRepository;
         this.tutorialGroupService = tutorialGroupService;
         this.tutorialGroupsConfigurationRepository = tutorialGroupsConfigurationRepository;
@@ -584,7 +587,7 @@ public class CourseService {
      * @param course the course for with the details should be calculated
      * @return The DTO for the course management detail view
      */
-    public CourseManagementDetailViewDTO getStatsForDetailView(Course course) {
+    public CourseManagementDetailViewDTO getStatsForDetailView(Course course, GradingScale gradingScale) {
 
         Set<Exercise> exercises = exerciseRepository.findAllExercisesByCourseId(course.getId());
         // For the average score we need to only consider scores which are included completely or as bonus
@@ -593,6 +596,17 @@ public class CourseService {
         Double averageScoreForCourse = participantScoreRepository.findAvgScore(includedExercises);
         averageScoreForCourse = averageScoreForCourse != null ? averageScoreForCourse : 0.0;
         double currentMaxAverageScore = includedExercises.stream().map(Exercise::getMaxPoints).mapToDouble(Double::doubleValue).sum();
+
+        // calculate scores taking presentation points into account, if a grading scale is present and set for graded presentations
+        if (gradingScale != null && gradingScale.getCourse().equals(course) && gradingScale.getPresentationsNumber() != null) {
+            double maxBaseScore = includedExercises.stream().filter(e -> !e.getIncludedInOverallScore().equals(IncludedInOverallScore.INCLUDED_AS_BONUS))
+                    .map(Exercise::getMaxPoints).mapToDouble(Double::doubleValue).sum();
+            currentMaxAverageScore += presentationCalculationService.calculateReachablePresentationPoints(gradingScale, maxBaseScore);
+
+            double avgPresentationScore = studentParticipationRepository.getAvgPresentationScoreByCourseId(course.getId());
+            averageScoreForCourse = gradingScale.getPresentationsWeight() / 100.0 * avgPresentationScore
+                    + (100.0 - gradingScale.getPresentationsWeight()) / 100.0 * averageScoreForCourse;
+        }
 
         Set<Long> exerciseIds = exercises.stream().map(Exercise::getId).collect(Collectors.toSet());
 

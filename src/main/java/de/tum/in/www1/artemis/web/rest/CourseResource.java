@@ -470,6 +470,7 @@ public class CourseResource {
         List<Course> courses = courseService.findAllActiveWithExercisesAndLecturesAndExamsForUser(user);
         courseService.fetchParticipationsWithSubmissionsAndResultsForCourses(courses, user, false);
         courseService.fetchPlagiarismCasesForCourseExercises(courses.stream().flatMap(course -> course.getExercises().stream()).collect(Collectors.toSet()), user.getId());
+        // TODO: fetch all GradingScales with one db call
         List<CourseForDashboardDTO> coursesForDashboard = new ArrayList<>();
         for (Course course : courses) {
             CourseForDashboardDTO courseForDashboardDTO = courseScoreCalculationService.getScoresAndParticipationResults(course, user.getId());
@@ -1111,7 +1112,8 @@ public class CourseResource {
     public ResponseEntity<CourseManagementDetailViewDTO> getCourseDTOForDetailView(@PathVariable Long courseId) {
         Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
-        CourseManagementDetailViewDTO managementDetailViewDTO = courseService.getStatsForDetailView(course);
+        GradingScale gradingScale = gradingScaleService.findGradingScaleByCourseId(courseId).orElse(null);
+        CourseManagementDetailViewDTO managementDetailViewDTO = courseService.getStatsForDetailView(course, gradingScale);
         return ResponseEntity.ok(managementDetailViewDTO);
     }
 
