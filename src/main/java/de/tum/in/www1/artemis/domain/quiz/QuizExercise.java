@@ -39,6 +39,12 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class QuizExercise extends Exercise implements QuizConfiguration {
 
+    // used to distinguish the type when used in collections (e.g. SearchResultPageDTO --> resultsOnPage)
+    @JsonView(QuizView.Before.class)
+    public String getType() {
+        return "quiz";
+    }
+
     @Column(name = "randomize_question_order")
     @JsonView(QuizView.Before.class)
     private Boolean randomizeQuestionOrder;
@@ -152,11 +158,6 @@ public class QuizExercise extends Exercise implements QuizConfiguration {
 
     public void setQuizMode(QuizMode quizMode) {
         this.quizMode = quizMode;
-    }
-
-    @JsonView(QuizView.Before.class)
-    public String getType() {
-        return "quiz";
     }
 
     /**

@@ -41,6 +41,11 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ProgrammingExercise extends Exercise {
 
+    // used to distinguish the type when used in collections (e.g. SearchResultPageDTO --> resultsOnPage)
+    public String getType() {
+        return "programming";
+    }
+
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExercise.class);
 
     @Column(name = "test_repository_url")

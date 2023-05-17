@@ -16,6 +16,11 @@ import de.tum.in.www1.artemis.domain.enumeration.ExerciseType;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class FileUploadExercise extends Exercise {
 
+    // used to distinguish the type when used in collections (e.g. SearchResultPageDTO --> resultsOnPage)
+    public String getType() {
+        return "fileUpload";
+    }
+
     @Column(name = "example_solution")
     private String exampleSolution;
 

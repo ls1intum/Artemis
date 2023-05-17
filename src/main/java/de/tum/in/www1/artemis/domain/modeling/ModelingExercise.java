@@ -22,6 +22,11 @@ import de.tum.in.www1.artemis.domain.enumeration.ExerciseType;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ModelingExercise extends Exercise {
 
+    // used to distinguish the type when used in collections (e.g. SearchResultPageDTO --> resultsOnPage)
+    public String getType() {
+        return "modeling";
+    }
+
     @Enumerated(EnumType.STRING)
     @Column(name = "diagram_type")
     private DiagramType diagramType;
