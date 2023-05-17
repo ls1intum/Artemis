@@ -27,11 +27,11 @@ export class LearningGoalsPopoverComponent implements OnInit {
         if (this.courseId) {
             switch (this.navigateTo) {
                 case 'courseLearningGoals': {
-                    this.navigationArray = ['/courses', `${this.courseId}`, 'learning-goals'];
+                    this.navigationArray = ['/courses', `${this.courseId}`, 'competencies'];
                     break;
                 }
                 case 'learningGoalManagement': {
-                    this.navigationArray = ['/course-management', `${this.courseId}`, 'goal-management'];
+                    this.navigationArray = ['/course-management', `${this.courseId}`, 'competency-management'];
                     break;
                 }
             }

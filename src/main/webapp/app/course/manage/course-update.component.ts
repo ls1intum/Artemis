@@ -26,6 +26,7 @@ import { ProgrammingLanguage } from 'app/entities/programming-exercise.model';
 import { CourseAdminService } from 'app/course/manage/course-admin.service';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { AccountService } from 'app/core/auth/account.service';
+import { EventManager } from 'app/core/util/event-manager.service';
 
 @Component({
     selector: 'jhi-course-update',
@@ -64,8 +65,8 @@ export class CourseUpdateComponent implements OnInit {
     faQuestionCircle = faQuestionCircle;
     faExclamationTriangle = faExclamationTriangle;
 
-    communicationEnabled = false;
-    messagingEnabled = false;
+    communicationEnabled = true;
+    messagingEnabled = true;
 
     // NOTE: These constants are used to define the maximum length of complaints and complaint responses.
     // This is the maximum value allowed in our database. These values must be the same as in Constants.java
@@ -75,6 +76,7 @@ export class CourseUpdateComponent implements OnInit {
     tutorialGroupsFeatureActivated = false;
 
     constructor(
+        private eventManager: EventManager,
         private courseManagementService: CourseManagementService,
         private courseAdminService: CourseAdminService,
         private activatedRoute: ActivatedRoute,
@@ -305,6 +307,14 @@ export class CourseUpdateComponent implements OnInit {
      */
     private onSaveSuccess(updatedCourse: Course | null) {
         this.isSaving = false;
+
+        if (this.course != updatedCourse) {
+            this.eventManager.broadcast({
+                name: 'courseModification',
+                content: 'Changed a course',
+            });
+        }
+
         this.router.navigate(['course-management', updatedCourse?.id?.toString()]);
     }
 

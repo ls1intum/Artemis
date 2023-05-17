@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.metis;
 
 import java.util.Objects;
+import java.util.Set;
 
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
@@ -20,6 +21,7 @@ import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.metis.conversation.ConversationService;
 import de.tum.in.www1.artemis.service.metis.conversation.auth.ChannelAuthorizationService;
+import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.MetisCrudAction;
@@ -38,16 +40,19 @@ public class AnswerMessageService extends PostingService {
 
     private final ChannelAuthorizationService channelAuthorizationService;
 
+    private final SingleUserNotificationService singleUserNotificationService;
+
     @SuppressWarnings("PMD.ExcessiveParameterList")
-    public AnswerMessageService(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository,
-            AnswerPostRepository answerPostRepository, ConversationMessageRepository conversationMessageRepository, ConversationService conversationService,
-            ExerciseRepository exerciseRepository, LectureRepository lectureRepository, SimpMessageSendingOperations messagingTemplate,
+    public AnswerMessageService(SingleUserNotificationService singleUserNotificationService, CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService,
+            UserRepository userRepository, AnswerPostRepository answerPostRepository, ConversationMessageRepository conversationMessageRepository,
+            ConversationService conversationService, ExerciseRepository exerciseRepository, LectureRepository lectureRepository, SimpMessageSendingOperations messagingTemplate,
             ConversationParticipantRepository conversationParticipantRepository, ChannelAuthorizationService channelAuthorizationService) {
         super(courseRepository, userRepository, exerciseRepository, lectureRepository, authorizationCheckService, messagingTemplate, conversationParticipantRepository);
         this.answerPostRepository = answerPostRepository;
         this.conversationMessageRepository = conversationMessageRepository;
         this.conversationService = conversationService;
         this.channelAuthorizationService = channelAuthorizationService;
+        this.singleUserNotificationService = singleUserNotificationService;
     }
 
     /**
@@ -84,7 +89,12 @@ public class AnswerMessageService extends PostingService {
         AnswerPost savedAnswerMessage = answerPostRepository.save(answerMessage);
         savedAnswerMessage.getPost().setConversation(conversation);
         this.preparePostAndBroadcast(savedAnswerMessage, course);
-
+        Set<User> usersInvolved = conversationMessageRepository.findUsersWhoRepliedInMessage(post.getId());
+        // do not notify the author of the post if they are not part of the conversation (e.g. if they left or have been removed from the conversation)
+        if (conversationService.isMember(post.getConversation().getId(), post.getAuthor().getId())) {
+            usersInvolved.add(post.getAuthor());
+        }
+        usersInvolved.forEach(userInvolved -> singleUserNotificationService.notifyUserAboutNewMessageReply(savedAnswerMessage, userInvolved, user));
         return savedAnswerMessage;
     }
 

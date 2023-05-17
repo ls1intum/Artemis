@@ -8,10 +8,11 @@ import { of } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { SortDirective } from 'app/shared/sort/sort.directive';
-import { PrerequisiteImportComponent, TableColumn } from 'app/course/learning-goals/learning-goal-management/prerequisite-import.component';
+import { PrerequisiteImportComponent } from 'app/course/learning-goals/learning-goal-management/prerequisite-import.component';
 import { LearningGoalPagingService } from 'app/course/learning-goals/learning-goal-paging.service';
 import { LearningGoal } from 'app/entities/learningGoal.model';
 import { NgbPagination } from '@ng-bootstrap/ng-bootstrap';
+import { TableColumn } from 'app/shared/import/import-component';
 
 describe('PrerequisiteImportComponent', () => {
     let fixture: ComponentFixture<PrerequisiteImportComponent>;

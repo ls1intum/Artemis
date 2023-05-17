@@ -15,9 +15,9 @@ export class ExerciseResultPage {
         cy.contains(`${percentage}%`).should('be.visible');
     }
 
-    clickViewSubmission() {
+    clickOpenExercise(exerciseId: number) {
         cy.intercept(GET, BASE_API + 'results/*/rating').as('getResults');
-        cy.get('#view-submission').click();
+        cy.get('#open-exercise-' + exerciseId).click();
         return cy.wait('@getResults');
     }
 

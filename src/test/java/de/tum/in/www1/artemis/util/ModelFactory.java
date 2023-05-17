@@ -721,7 +721,7 @@ public class ModelFactory {
     }
 
     /**
-     * Generates a test eam (test exams have no student review dates)
+     * Generates a test exam (test exams have no student review dates)
      *
      * @param course the associated course
      * @return the created exam

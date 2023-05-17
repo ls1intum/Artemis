@@ -20,17 +20,37 @@
                 "studentRepos": "Additionally delete all student repositories (Be careful: this can NOT be undone!). Before you activate this option, we recommend that you archive the exercise first!",
                 "baseReposBuildPlans": "Additionally delete template, solution, test, and auxiliary repos and build plans (Be careful: this can NOT be undone!). Before you activate this option, we recommend that you back up these build plans and repos first!"
             },
-            "cleanup": {
-                "successMessage": "Cleanup was successful. All build plans have been deleted. Students may resume participating.",
-                "successMessageWithRepositories": "Cleanup was successful. All build plans and repositories have been deleted. All participation has been marked as Finished."
-            },
             "reset": {
-                "question": "Are you sure you want to reset the exercise <strong>{{ title }}</strong>? This action can NOT be undone! <br> This means that all participation, existing results, student repositories and student build plans will be deleted."
+                "pleaseSelectOperations": "Please select the operations you want to perform on <strong>{{ title }}</strong>:",
+                "deleteBuildPlans": {
+                    "title": "Delete student build plans (on {{ ciPlatform }}).",
+                    "info": "The build plans will be automatically recreated when students submit again."
+                },
+                "deleteRepositories": {
+                    "title": "Delete student repositories (on {{ vcPlatform }}).",
+                    "warning": "Before you activate this option, we recommend that you archive the exercise first."
+                },
+                "deleteParticipationsSubmissionsAndResults": "Delete all student participations, submissions and results (on Artemis).",
+                "artefactsWarning": "Deleting student participations, submissions, and results without removing the associated repositories and build plans may lead to undeleted artifacts on {{ vcPlatform }} and {{ ciPlatform }}. Please carefully review if this is the desired action before proceeding.",
+                "recreateBuildPlans": "Recreate the exercise build plans (BASE and SOLUTION) again from the latest exercise template, overwriting any previous changes.",
+                "question": "<strong>Warning:</strong> This action can <strong>NOT</strong> be undone!<br>To confirm your selection, please type in the name of the exercise: <strong>{{ title }}</strong>",
+                "successMessage": "Reset operation was successful.",
+                "errorMessage": "Reset operation failed."
             },
             "detail": {
                 "title": "Programming Exercise",
                 "showTemplateSubmissions": "Show Template Submissions",
                 "showSolutionSubmissions": "Show Solution Submissions"
+            },
+            "importFromFile": {
+                "title": "Import Programming Exercise from File",
+                "description": "The file must be a zip file containing the exercise configuration in JSON format at the root level and a zip file for each of the repositories (template, solution, tests). You can get such a file by exporting a programming exercise.",
+                "uploadForImport": "Upload Programming Exercise for Import",
+                "fileTooBigError": "The file {{ fileName }} is too large. The maximum file size is 20 MB.",
+                "fileTypeNotSupportedError": "The file type is not supported. Please select a file with the extension .zip.",
+                "noExerciseDetailsJsonAtRootLevel": "The zip file does not contain a .json file at the root level with the exercise details.",
+                "notSupportedProgrammingLanguage": "The programming language {{ programmingLanguage }} is not yet supported for the import from file.",
+                "GccNotSupportedForC": "The project type is not yet supported for the import from file."
             },
             "wizardMode": {
                 "steps": {
@@ -189,6 +209,8 @@
                 "shortTitle": "Grading",
                 "save": "Save",
                 "reset": "Reset",
+                "expandAll": "Expand all",
+                "collapseAll": "Collapse all",
                 "status": {
                     "unsavedChanges": "Unsaved changes",
                     "unsavedTestCaseChanges": "Unsaved test cases",
@@ -245,7 +267,7 @@
                     }
                 },
                 "gradingTableHeader": {
-                    "testName": "Test Name",
+                    "testName": "<b>Task</b> / Test",
                     "weight": "Weight",
                     "bonusMultiplier": "Bonus Multiplier",
                     "bonusPoints": "Bonus Points",
@@ -255,13 +277,14 @@
                     "passedPercent": "Passed %"
                 },
                 "help": {
+                    "name": "Task names are written in bold whereas Test names are normal. Task or test name depending on whether the row is a task or test.",
                     "state": "Determines whether issues in this category should be shown to the students and used for grading.",
                     "penalty": "Penalty points given on each detected issue of this category.",
                     "maxPenalty": "Maximum applied penalty for one student across all issues of this category.",
                     "detectedIssues": "Shows the number of students grouped by number of detected issues in a category, starting at 1 issue. The bars turn red when surpassing the threshold defined by the maxPenalty of the respective category.",
-                    "weight": "The weighting of a test case determines the points a student receives for passing the test case. The number of points a test case awards is proportional to its weight and calculated as a fraction of the total exercise points.",
-                    "bonusMultiplier": "This multiplies the points given for passing a test case without affecting the fractions of other test cases. Multipliers greater than 1 can result in student scores greater than 100%.",
-                    "bonusPoints": "Bonus points added on top of the regular points for passing a test case. Setting bonus points can result in student scores greater than 100%.",
+                    "weight": "Weight: The weighting of a test case determines the points a student receives for passing the test case. The number of points a test case awards is proportional to its weight and calculated as a fraction of the total exercise points.",
+                    "bonusMultiplier": "Bonus multiplier: This multiplies the points given for passing a test case without affecting the fractions of other test cases. Multipliers greater than 1 can result in student scores greater than 100%.",
+                    "bonusPoints": "Bonus points: Additional points added on top of the regular points for passing a test case. Setting bonus points can result in student scores greater than 100%.",
                     "visibility": "Feedback and points for test cases marked as ‘After Due Date’ only become visible to students after the due date has passed. Tests with visibility ‘Never’ do not influence the student score.",
                     "points": "The amount of points the student gets for passing this test. This value is rounded according to the course settings.",
                     "type": "The type of the test case determines if the test case has been generated from the test.json (STRUCTURAL), or has been written manually (BEHAVIORAL)."

@@ -39,10 +39,13 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.notification.GroupNotification;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
 import de.tum.in.www1.artemis.domain.statistics.StatisticsEntry;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.exception.GroupAlreadyExistsException;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.metis.conversation.ConversationRepository;
+import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupsConfigurationRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
@@ -139,6 +142,10 @@ public class CourseService {
 
     private final TutorialGroupsConfigurationRepository tutorialGroupsConfigurationRepository;
 
+    private final PlagiarismCaseRepository plagiarismCaseRepository;
+
+    private final ConversationRepository conversationRepository;
+
     public CourseService(Environment env, ArtemisAuthenticationProvider artemisAuthenticationProvider, CourseRepository courseRepository, ExerciseService exerciseService,
             ExerciseDeletionService exerciseDeletionService, AuthorizationCheckService authCheckService, UserRepository userRepository, LectureService lectureService,
             GroupNotificationRepository groupNotificationRepository, ExerciseGroupRepository exerciseGroupRepository, AuditEventRepository auditEventRepository,
@@ -148,7 +155,8 @@ public class CourseService {
             RatingRepository ratingRepository, ComplaintService complaintService, ComplaintRepository complaintRepository, ResultRepository resultRepository,
             ComplaintResponseRepository complaintResponseRepository, SubmissionRepository submissionRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             ExerciseRepository exerciseRepository, ParticipantScoreRepository participantScoreRepository, TutorialGroupRepository tutorialGroupRepository,
-            TutorialGroupService tutorialGroupService, TutorialGroupsConfigurationRepository tutorialGroupsConfigurationRepository) {
+            TutorialGroupService tutorialGroupService, TutorialGroupsConfigurationRepository tutorialGroupsConfigurationRepository,
+            PlagiarismCaseRepository plagiarismCaseRepository, ConversationRepository conversationRepository) {
         this.env = env;
         this.artemisAuthenticationProvider = artemisAuthenticationProvider;
         this.courseRepository = courseRepository;
@@ -183,17 +191,20 @@ public class CourseService {
         this.tutorialGroupRepository = tutorialGroupRepository;
         this.tutorialGroupService = tutorialGroupService;
         this.tutorialGroupsConfigurationRepository = tutorialGroupsConfigurationRepository;
+        this.plagiarismCaseRepository = plagiarismCaseRepository;
+        this.conversationRepository = conversationRepository;
     }
 
     /**
      * Note: The number of courses should not change
      *
-     * @param courses the courses for which the participations should be fetched
-     * @param user    the user for which the participations should be fetched
+     * @param courses         the courses for which the participations should be fetched
+     * @param user            the user for which the participations should be fetched
+     * @param includeTestRuns flag that indicates whether test run participations should be included
      */
-    public void fetchParticipationsWithSubmissionsAndResultsForCourses(List<Course> courses, User user) {
+    public void fetchParticipationsWithSubmissionsAndResultsForCourses(List<Course> courses, User user, boolean includeTestRuns) {
         Set<Exercise> exercises = courses.stream().flatMap(course -> course.getExercises().stream()).collect(Collectors.toSet());
-        List<StudentParticipation> participationsOfUserInExercises = studentParticipationRepository.getAllParticipationsOfUserInExercises(user, exercises);
+        List<StudentParticipation> participationsOfUserInExercises = studentParticipationRepository.getAllParticipationsOfUserInExercises(user, exercises, includeTestRuns);
         if (participationsOfUserInExercises.isEmpty()) {
             return;
         }
@@ -211,12 +222,29 @@ public class CourseService {
     }
 
     /**
-     * Get one course with exercises, lectures, exams, learning goals and tutorial groups (filtered for given user)
+     * Add plagiarism cases to each exercise.
+     *
+     * @param exercises the course exercises for which the plagiarism cases should be fetched.
+     * @param userId    the user for which the plagiarism cases should be fetched.
+     */
+    public void fetchPlagiarismCasesForCourseExercises(Set<Exercise> exercises, Long userId) {
+        Set<Long> exerciseIds = exercises.stream().map(Exercise::getId).collect(Collectors.toSet());
+        List<PlagiarismCase> plagiarismCasesOfUserInCourseExercises = plagiarismCaseRepository.findByStudentIdAndExerciseIds(userId, exerciseIds);
+        for (Exercise exercise : exercises) {
+            // Add plagiarism cases to each exercise.
+            Set<PlagiarismCase> plagiarismCasesForExercise = plagiarismCasesOfUserInCourseExercises.stream()
+                    .filter(plagiarismCase -> plagiarismCase.getExercise().getId().equals(exercise.getId())).collect(Collectors.toSet());
+            exercise.setPlagiarismCases(plagiarismCasesForExercise);
+        }
+    }
+
+    /**
+     * Get one course with exercises, lectures, exams, competencies and tutorial groups (filtered for given user)
      *
      * @param courseId the course to fetch
      * @param user     the user entity
      * @param refresh  if the user requested an explicit refresh
-     * @return the course including exercises, lectures, exams, learning goals and tutorial groups (filtered for given user)
+     * @return the course including exercises, lectures, exams, competencies and tutorial groups (filtered for given user)
      */
     public Course findOneWithExercisesAndLecturesAndExamsAndLearningGoalsAndTutorialGroupsForUser(Long courseId, User user, boolean refresh) {
         Course course = courseRepository.findByIdWithLecturesElseThrow(courseId);
@@ -319,6 +347,7 @@ public class CourseService {
         deleteExercisesOfCourse(course);
         deleteLecturesOfCourse(course);
         deleteLearningGoalsOfCourse(course);
+        deleteConversationsOfCourse(course);
         deleteNotificationsOfCourse(course);
         deleteDefaultGroups(course);
         deleteExamsOfCourse(course);
@@ -335,7 +364,12 @@ public class CourseService {
             }
         });
         tutorialGroupRepository.saveAll(tutorialGroups);
-        this.tutorialGroupRepository.deleteAllByCourse(course);
+        tutorialGroupRepository.deleteAllByCourse(course);
+    }
+
+    private void deleteConversationsOfCourse(Course course) {
+        // Posts and Conversation Participants should be automatically deleted due to cascade
+        conversationRepository.deleteAllByCourseId(course.getId());
     }
 
     private void deleteGradingScaleOfCourse(Course course) {

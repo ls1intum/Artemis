@@ -106,7 +106,8 @@ public interface StaticCodeAnalysisCategoryRepository extends JpaRepository<Stat
                         // remove the penalty of the issue
                         issue.setPenalty(null);
                     }
-                    feedback.setDetailText(mapper.writeValueAsString(issue));
+                    // the feedback is already pre-truncated to fit, it should not be shortened further
+                    feedback.setDetailTextTruncated(mapper.writeValueAsString(issue));
                 }
             }
             catch (JsonProcessingException exception) {

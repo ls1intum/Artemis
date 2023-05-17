@@ -32,11 +32,11 @@ export enum ConversationMemberSearchFilter {
 }
 @Injectable({ providedIn: 'root' })
 export class ConversationService {
-    public resourceUrl = SERVER_API_URL + '/api/courses/';
+    public resourceUrl = '/api/courses/';
 
     constructor(protected http: HttpClient, protected translationService: TranslateService, protected accountService: AccountService) {}
 
-    getConversationName = (conversation: ConversationDto | undefined, showLogin = false): string => {
+    getConversationName(conversation: ConversationDto | undefined, showLogin = false): string {
         if (!conversation) {
             return '';
         }
@@ -72,7 +72,7 @@ export class ConversationService {
         } else {
             return '';
         }
-    };
+    }
 
     searchMembersOfConversation(
         courseId: number,

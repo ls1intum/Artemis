@@ -26,7 +26,7 @@ export class ProgrammingExerciseTaskService {
 
     ignoreInactive = true;
 
-    public resourceUrl = `${SERVER_API_URL}api/programming-exercises`;
+    public resourceUrl = 'api/programming-exercises';
 
     constructor(private http: HttpClient, private alertService: AlertService, private gradingService: ProgrammingExerciseGradingService) {}
 
@@ -152,7 +152,6 @@ export class ProgrammingExerciseTaskService {
 
         this.tasks = this.tasks // configureTestCases needs tasks to be set be to be able to use the testCases getter
             .map(this.configureTestCases)
-            .map(this.initializeTask)
             .map(this.addGradingStats);
 
         this.setCurrentTasks();
@@ -171,6 +170,9 @@ export class ProgrammingExerciseTaskService {
         } else {
             this.currentTasks = tasksCopy;
         }
+
+        // Initialize tasks after filtering of inactive test cases
+        this.currentTasks.forEach(this.initializeTask);
     };
 
     private getTasksByExercise = (exercise: Exercise): Observable<ProgrammingExerciseServerSideTask[]> => {

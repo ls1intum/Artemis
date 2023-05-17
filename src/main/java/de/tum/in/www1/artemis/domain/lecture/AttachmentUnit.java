@@ -1,6 +1,8 @@
 package de.tum.in.www1.artemis.domain.lecture;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.persistence.*;
 
@@ -21,6 +23,10 @@ public class AttachmentUnit extends LectureUnit {
     @OneToOne(mappedBy = "attachmentUnit", cascade = CascadeType.REMOVE, orphanRemoval = true)
     @JsonIgnoreProperties(value = "attachmentUnit", allowSetters = true)
     private Attachment attachment;
+
+    @OneToMany(mappedBy = "attachmentUnit", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonIgnoreProperties("attachmentUnit")
+    private List<Slide> slides = new ArrayList<>();
 
     @Override
     public boolean isVisibleToStudents() {
@@ -46,6 +52,14 @@ public class AttachmentUnit extends LectureUnit {
 
     public void setAttachment(Attachment attachment) {
         this.attachment = attachment;
+    }
+
+    public List<Slide> getSlides() {
+        return slides;
+    }
+
+    public void setSlides(List<Slide> slides) {
+        this.slides = slides;
     }
 
     @Override
