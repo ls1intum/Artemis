@@ -12,11 +12,6 @@ export class ModelingEditor {
      * Adds a Modeling Component to the Example Solution
      * */
     addComponentToModel(exerciseID: number, componentNumber: number, scrollBehavior: scrollBehaviorOptions = 'center', x?: number, y?: number) {
-        // Close all alerts that might cover the element to be dragged.
-        if (Cypress.$('jhi-close-circle').length > 0) {
-            cy.get('jhi-close-circle').click({ multiple: true });
-        }
-
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore https://github.com/4teamwork/cypress-drag-drop/issues/103
         getExercise(exerciseID)
