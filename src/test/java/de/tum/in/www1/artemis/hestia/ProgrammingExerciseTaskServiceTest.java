@@ -1,7 +1,9 @@
 package de.tum.in.www1.artemis.hestia;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.in;
 
+import java.util.Arrays;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -171,6 +173,39 @@ class ProgrammingExerciseTaskServiceTest extends AbstractSpringIntegrationBamboo
         assertThat(programmingExerciseTaskRepository.findByExerciseId(programmingExercise.getId())).hasSize(1);
         assertThat(programmingExerciseTaskRepository.findById(task.getId())).isEmpty();
         assertThat(codeHintRepository.findByExerciseId(programmingExercise.getId())).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void getTasksWithoutInactiveFiltersOutInactive() {
+        var testCases = Arrays.stream(new String[] {
+                "testClass[BubbleSort]",
+                "testParametrized(Parameter1, 2)[1]" })
+            .map(name -> {
+                var testCase = new ProgrammingExerciseTestCase();
+                testCase.setExercise(programmingExercise);
+                testCase.setTestName(name);
+                testCase.setActive(true);
+                return testCase;
+            }).toList();
+
+        programmingExerciseTestCaseRepository.saveAll(testCases);
+
+        var inactiveTestCase = new ProgrammingExerciseTestCase();
+        inactiveTestCase.setExercise(programmingExercise);
+        inactiveTestCase.setTestName( "testWithBraces()" );
+        inactiveTestCase.setActive(false);
+        programmingExerciseTestCaseRepository.save(inactiveTestCase);
+
+        updateProblemStatement("""
+                [task][Task 1](testClass[BubbleSort],testWithBraces(),testParametrized(Parameter1, 2)[1])
+                """);
+
+        var actualTasks = programmingExerciseTaskRepository.findByExerciseId(programmingExercise.getId());
+        assertThat(actualTasks).hasSize(1);
+        final var actualTask = actualTasks.stream().findAny().orElseThrow().getId();
+        var actualTaskWithTestCases = programmingExerciseTaskRepository.findByIdWithTestCaseAndSolutionEntriesElseThrow(actualTask);
+        assertThat(actualTaskWithTestCases.getTestCases().stream().anyMatch(test -> !test.isActive())).isFalse();
     }
 
     @Test
