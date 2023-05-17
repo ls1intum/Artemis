@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { faCommentDots } from '@fortawesome/free-solid-svg-icons';
-import { MatDialog, MatDialogConfig } from '@angular/material/dialog';
+import { MatDialog } from '@angular/material/dialog';
 import { ChatbotPopupComponent } from './chatbot-popup/chatbot-popup.component';
 import { ExerciseChatWidgetComponent } from 'app/overview/exercise-chatbot/exercise-chatwidget/exercise-chat-widget.component';
 
@@ -20,10 +20,8 @@ export class ExerciseChatbotComponent {
 
     handleButtonClick() {
         if (this.chatAccepted === 'true') {
-            // Logic for chat accepted
             this.openChat();
         } else {
-            // Logic for chat not accepted
             this.openDialog();
         }
     }
@@ -41,8 +39,11 @@ export class ExerciseChatbotComponent {
 
     openChat() {
         if (!this.buttonDisabled) {
-            const dialogRef = this.dialog.open(ExerciseChatWidgetComponent, { hasBackdrop: false, position: { bottom: '0px', right: '0px' } });
-            dialogRef.componentInstance.chatWidgetClosed.subscribe(() => {
+            const dialogRef = this.dialog.open(ExerciseChatWidgetComponent, {
+                backdropClass: 'cdk-overlay-transparent-backdrop',
+                position: { bottom: '0px', right: '0px' },
+            });
+            dialogRef.afterClosed().subscribe(() => {
                 this.buttonDisabled = false;
             });
         }
