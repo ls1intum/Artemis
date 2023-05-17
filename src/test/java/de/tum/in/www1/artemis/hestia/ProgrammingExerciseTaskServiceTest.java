@@ -178,34 +178,39 @@ class ProgrammingExerciseTaskServiceTest extends AbstractSpringIntegrationBamboo
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void getTasksWithoutInactiveFiltersOutInactive() {
-        var testCases = Arrays.stream(new String[] {
-                "testClass[BubbleSort]",
-                "testParametrized(Parameter1, 2)[1]" })
-            .map(name -> {
-                var testCase = new ProgrammingExerciseTestCase();
-                testCase.setExercise(programmingExercise);
-                testCase.setTestName(name);
-                testCase.setActive(true);
-                return testCase;
-            }).toList();
+        programmingExercise = programmingExerciseRepository
+            .findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipationsAndAuxRepos(programmingExercise.getId()).orElseThrow();
+        programmingExerciseTestCaseRepository.deleteAll(programmingExercise.getTestCases());
 
-        programmingExerciseTestCaseRepository.saveAll(testCases);
+        String[] testCaseNames = new String[] { "testClass[BubbleSort]", "testParametrized(Parameter1, 2)[1]" };
+        for (var name : testCaseNames) {
+            var testCase = new ProgrammingExerciseTestCase();
+            testCase.setExercise(programmingExercise);
+            testCase.setTestName(name);
+            testCase.setActive(true);
+            programmingExerciseTestCaseRepository.save(testCase);
+        }
 
-        var inactiveTestCase = new ProgrammingExerciseTestCase();
-        inactiveTestCase.setExercise(programmingExercise);
-        inactiveTestCase.setTestName( "testWithBraces()" );
-        inactiveTestCase.setActive(false);
-        programmingExerciseTestCaseRepository.save(inactiveTestCase);
+        var testCase = new ProgrammingExerciseTestCase();
+        testCase.setExercise(programmingExercise);
+        testCase.setTestName( "testWithBraces()");
+        testCase.setActive(false);
+        programmingExerciseTestCaseRepository.save(testCase);
+
+        programmingExercise = programmingExerciseRepository
+            .findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipationsAndAuxRepos(programmingExercise.getId()).orElseThrow();
 
         updateProblemStatement("""
                 [task][Task 1](testClass[BubbleSort],testWithBraces(),testParametrized(Parameter1, 2)[1])
                 """);
 
-        var actualTasks = programmingExerciseTaskRepository.findByExerciseId(programmingExercise.getId());
+        var actualTasks = programmingExerciseTaskService.getTasksWithoutInactive(programmingExercise.getId());
         assertThat(actualTasks).hasSize(1);
-        final var actualTask = actualTasks.stream().findAny().orElseThrow().getId();
-        var actualTaskWithTestCases = programmingExerciseTaskRepository.findByIdWithTestCaseAndSolutionEntriesElseThrow(actualTask);
-        assertThat(actualTaskWithTestCases.getTestCases().stream().anyMatch(test -> !test.isActive())).isFalse();
+
+        var actualTestCases = actualTasks.stream().findFirst().get().getTestCases();
+        assertThat(actualTestCases).allMatch(ProgrammingExerciseTestCase::isActive);
+        assertThat(actualTestCases).hasSize(2);
+
     }
 
     @Test
