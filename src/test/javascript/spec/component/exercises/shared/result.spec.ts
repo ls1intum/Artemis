@@ -22,7 +22,7 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ResultTemplateStatus } from 'app/exercises/shared/result/result.utils';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import dayjs from 'dayjs/esm';
-import { MIN_SCORE_ORANGE } from 'app/app.constants';
+import { MIN_SCORE_GREEN, MIN_SCORE_ORANGE } from 'app/app.constants';
 
 describe('ResultComponent', () => {
     let fixture: ComponentFixture<ResultComponent>;
@@ -97,6 +97,12 @@ describe('ResultComponent', () => {
         { issues: undefined, score: 100, color: 'text-success' },
         { issues: 0, score: 100, color: 'text-success' },
         { issues: 1, score: 100, color: 'result-orange' },
+        { issues: undefined, score: MIN_SCORE_GREEN, color: 'text-success' },
+        { issues: 0, score: MIN_SCORE_GREEN, color: 'text-success' },
+        { issues: 1, score: MIN_SCORE_GREEN, color: 'result-orange' },
+        { issues: undefined, score: 120, color: 'text-success' },
+        { issues: 0, score: 120, color: 'text-success' },
+        { issues: 1, score: 120, color: 'result-orange' },
         // score takes precedence, ignore issue count
         { issues: undefined, score: MIN_SCORE_ORANGE - 10, color: 'text-danger' },
         { issues: 0, score: MIN_SCORE_ORANGE - 10, color: 'text-danger' },
