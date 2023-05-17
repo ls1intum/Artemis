@@ -16,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.env.Environment;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -53,6 +54,8 @@ public class ParticipantScoreScheduleService {
 
     private final Logger logger = LoggerFactory.getLogger(ParticipantScoreScheduleService.class);
 
+    private final Environment environment;
+
     private final TaskScheduler scheduler;
 
     private final Map<Integer, ScheduledFuture<?>> scheduledTasks = new ConcurrentHashMap<>();
@@ -81,9 +84,10 @@ public class ParticipantScoreScheduleService {
      */
     private final AtomicBoolean isRunning = new AtomicBoolean(false);
 
-    public ParticipantScoreScheduleService(@Qualifier("taskScheduler") TaskScheduler scheduler, LearningGoalProgressService learningGoalProgressService,
+    public ParticipantScoreScheduleService(Environment environment, @Qualifier("taskScheduler") TaskScheduler scheduler, LearningGoalProgressService learningGoalProgressService,
             ParticipantScoreRepository participantScoreRepository, StudentScoreRepository studentScoreRepository, TeamScoreRepository teamScoreRepository,
             ExerciseRepository exerciseRepository, ResultRepository resultRepository, UserRepository userRepository, TeamRepository teamRepository) {
+        this.environment = environment;
         this.scheduler = scheduler;
         this.learningGoalProgressService = learningGoalProgressService;
         this.participantScoreRepository = participantScoreRepository;
@@ -112,6 +116,9 @@ public class ParticipantScoreScheduleService {
      */
     @PostConstruct
     public void startup() {
+        if (Set.of(environment.getActiveProfiles()).contains("cypress")) {
+            return;
+        }
         isRunning.set(true);
         try {
             // this should never prevent the application start of Artemis
