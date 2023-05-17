@@ -121,13 +121,16 @@ public class ProgrammingExerciseTaskService {
     }
 
     /**
-     * Gets all tasks of an exercise
+     * Gets all tasks of an exercise excluding inactive test cases
      *
      * @param exerciseId of the programming exercise
      * @return Set of all tasks and its test cases
      */
-    public Set<ProgrammingExerciseTask> getTasks(long exerciseId) {
-        return programmingExerciseTaskRepository.findByExerciseIdWithTestCaseAndSolutionEntriesElseThrow(exerciseId);
+    public Set<ProgrammingExerciseTask> getTasksWithoutInactive(long exerciseId) {
+        return programmingExerciseTaskRepository.findByExerciseIdWithTestCaseAndSolutionEntriesElseThrow(exerciseId)
+            .stream()
+            .peek(task -> task.setTestCases(task.getTestCases().stream().filter(ProgrammingExerciseTestCase::isActive).collect(Collectors.toSet())))
+            .collect(Collectors.toSet());
     }
 
     /**
@@ -138,7 +141,7 @@ public class ProgrammingExerciseTaskService {
      * @return Set of all tasks including one for not manually assigned tests
      */
     public Set<ProgrammingExerciseTask> getTasksWithUnassignedTestCases(long exerciseId) {
-        Set<ProgrammingExerciseTask> tasks = getTasks(exerciseId);
+        Set<ProgrammingExerciseTask> tasks = programmingExerciseTaskRepository.findByExerciseIdWithTestCaseAndSolutionEntriesElseThrow(exerciseId);
 
         Set<ProgrammingExerciseTestCase> testsWithTasks = tasks.stream().flatMap(task -> task.getTestCases().stream()).collect(Collectors.toSet());
 
@@ -171,7 +174,7 @@ public class ProgrammingExerciseTaskService {
             return tasks;
         }
         var matcher = taskPatternForProblemStatementMarkdown.matcher(problemStatement);
-        var testCases = programmingExerciseTestCaseRepository.findByExerciseIdAndActive(exercise.getId(), true);
+        var testCases = programmingExerciseTestCaseRepository.findByExerciseId(exercise.getId());
         while (matcher.find()) {
             var taskName = matcher.group("name");
             var capturedTestCaseNames = matcher.group("tests");
