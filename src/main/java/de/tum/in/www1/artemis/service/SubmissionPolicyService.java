@@ -314,7 +314,7 @@ public class SubmissionPolicyService {
     public int getParticipationSubmissionCount(Participation participation, boolean withSubmissionCompensation) {
         long participationId = participation.getId();
 
-        // The newest result is not yet stored in the database. Therefore, we have to add one additional submission if the latest submission does not have a result yes, since it
+        // The newest result is not yet stored in the database. Therefore, we have to add one additional submission if the latest submission does not have a result yet, since it
         // is currently getting one
         int submissionCompensation = 0;
         if (withSubmissionCompensation) {
