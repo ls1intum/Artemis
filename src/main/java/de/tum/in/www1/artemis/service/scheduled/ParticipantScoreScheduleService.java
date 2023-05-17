@@ -116,9 +116,13 @@ public class ParticipantScoreScheduleService {
      */
     @PostConstruct
     public void startup() {
+        // The cypress tests require the "scheduling" profile for the messaging to work, but we don't want to run the scheduled tasks for participant scores during the tests as
+        // this causes flaky behaviour when deleting results.
+        // When the "cypress" profile is active, do not start up the ParticipantScoreScheduleService.
         if (Set.of(environment.getActiveProfiles()).contains("cypress")) {
             return;
         }
+
         isRunning.set(true);
         try {
             // this should never prevent the application start of Artemis

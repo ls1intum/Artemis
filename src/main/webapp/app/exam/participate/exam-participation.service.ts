@@ -15,6 +15,7 @@ import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
 import { captureException } from '@sentry/angular-ivy';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 
 export type ButtonTooltipType = 'submitted' | 'submittedSubmissionLimitReached' | 'notSubmitted' | 'synced' | 'notSynced' | 'notSavedOrSubmitted';
 
@@ -289,15 +290,25 @@ export class ExamParticipationService {
         return studentExam;
     }
 
-    public static getSubmissionForExercise(exercise: Exercise) {
-        if (exercise && exercise.studentParticipations && exercise.studentParticipations.length > 0 && exercise.studentParticipations[0].submissions) {
-            // NOTE: using "submissions[0]" might not work for programming exercises with multiple submissions, it is better to always take the last submission
-            const submission: Submission | undefined = exercise.studentParticipations[0].submissions.last();
-            if (submission) {
-                submission.participation = exercise.studentParticipations[0];
-            }
-            return submission;
+    public static getSubmissionForExercise(exercise: Exercise): Submission | undefined {
+        if (!(exercise && exercise.studentParticipations && exercise.studentParticipations.length > 0)) {
+            return undefined;
         }
+
+        const participation: StudentParticipation = exercise.studentParticipations[0];
+
+        if (!participation.submissions) {
+            return undefined;
+        }
+
+        // NOTE: using "submissions[0]" might not work for programming exercises with multiple submissions, it is better to always take the last submission
+        const submission: Submission | undefined = participation.submissions.last();
+        if (submission) {
+            // Set the participation of the submission.
+            submission.participation = participation;
+        }
+
+        return submission;
     }
 
     getExerciseButtonTooltip(exercise: Exercise): ButtonTooltipType {
