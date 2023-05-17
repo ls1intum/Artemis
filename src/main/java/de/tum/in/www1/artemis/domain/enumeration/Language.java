@@ -5,7 +5,13 @@ package de.tum.in.www1.artemis.domain.enumeration;
  */
 public enum Language {
 
-    ENGLISH, GERMAN;
+    ENGLISH("en"), GERMAN("de");
+
+    private final String shortName;
+
+    Language(String shortName) {
+        this.shortName = shortName;
+    }
 
     /**
      * Returns the language of for a given language short name.
@@ -14,24 +20,24 @@ public enum Language {
      * @return the language that matches the given short name
      */
     public static Language fromLanguageShortName(String languageShortName) {
-        return switch (languageShortName) {
-            case "de" -> GERMAN;
-            case "en" -> ENGLISH;
-            default -> throw new IllegalArgumentException("Language not supported");
-        };
+        for (Language language : Language.values()) {
+            if (language.getShortName().equals(languageShortName)) {
+                return language;
+            }
+        }
+        throw new IllegalArgumentException("Language not supported");
     }
 
-    public static boolean isValidShortName(String language) {
-        return switch (language.toLowerCase()) {
-            case "de", "en" -> true;
-            default -> false;
-        };
+    public static boolean isValidShortName(String languageShortName) {
+        for (Language language : Language.values()) {
+            if (language.getShortName().equals(languageShortName)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public String getShortName() {
-        return switch (this) {
-            case GERMAN -> "de";
-            case ENGLISH -> "en";
-        };
+        return this.shortName;
     }
 }
