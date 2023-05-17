@@ -115,13 +115,12 @@ public class ConversationResource extends ConversationManagementResource {
      */
     @GetMapping("/{courseId}/unread-messages")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<Boolean> switchHiddenStatus(@PathVariable Long courseId) {
+    public ResponseEntity<Boolean> hasUnreadMessages(@PathVariable Long courseId) {
         checkMessagingEnabledElseThrow(courseId);
 
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, courseRepository.findByIdElseThrow(courseId), requestingUser);
-        var conversations = conversationService.getConversationsOfUser(courseId, requestingUser);
-        return ResponseEntity.ok(conversations.stream().anyMatch(conversation -> conversation.getUnreadMessagesCount() > 0));
+        return ResponseEntity.ok(conversationService.userHasUnreadMessages(courseId, requestingUser));
     }
 
     /**
