@@ -40,7 +40,7 @@ export class ExerciseChatbotComponent {
     openChat() {
         if (!this.buttonDisabled) {
             const dialogRef = this.dialog.open(ExerciseChatWidgetComponent, {
-                backdropClass: 'cdk-overlay-transparent-backdrop',
+                hasBackdrop: false,
                 position: { bottom: '0px', right: '0px' },
             });
             dialogRef.afterClosed().subscribe(() => {
