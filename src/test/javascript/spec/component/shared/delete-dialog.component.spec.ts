@@ -55,7 +55,8 @@ describe('DeleteDialogComponent', () => {
         expect(closeButton).not.toBeNull();
         closeButton.nativeElement.click();
         expect(closeSpy).toHaveBeenCalledOnce();
-
+        expect(comp.warningTextColor).toBe('text-danger');
+        expect(comp.useFaCheckIcon).toBeFalse();
         const cancelButton = fixture.debugElement.query(By.css('.btn.btn-secondary'));
         expect(cancelButton).not.toBeNull();
         cancelButton.nativeElement.click();

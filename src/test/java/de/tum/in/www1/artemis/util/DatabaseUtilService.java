@@ -351,19 +351,7 @@ public class DatabaseUtilService {
     private SubmittedAnswerRepository submittedAnswerRepository;
 
     @Autowired
-    private ShortAnswerSpotRepository shortAnswerSpotRepository;
-
-    @Autowired
-    private ShortAnswerMappingRepository shortAnswerMappingRepository;
-
-    @Autowired
     private DragAndDropMappingRepository dragAndDropMappingRepository;
-
-    @Autowired
-    private DropLocationRepository dropLocationRepository;
-
-    @Autowired
-    private DragItemRepository dragItemRepository;
 
     @Autowired
     private QuizQuestionRepository quizQuestionRepository;
