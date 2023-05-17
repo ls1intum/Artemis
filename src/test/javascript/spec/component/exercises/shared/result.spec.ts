@@ -92,44 +92,6 @@ describe('ResultComponent', () => {
         expect(component.resultString).toBe('artemisApp.result.resultString.programmingShort (artemisApp.result.preliminary)');
     });
 
-    it.each([
-        // apply when result would be green otherwise
-        { issues: undefined, score: 100, color: 'text-success' },
-        { issues: 0, score: 100, color: 'text-success' },
-        { issues: 1, score: 100, color: 'result-orange' },
-        { issues: undefined, score: MIN_SCORE_GREEN, color: 'text-success' },
-        { issues: 0, score: MIN_SCORE_GREEN, color: 'text-success' },
-        { issues: 1, score: MIN_SCORE_GREEN, color: 'result-orange' },
-        { issues: undefined, score: 120, color: 'text-success' },
-        { issues: 0, score: 120, color: 'text-success' },
-        { issues: 1, score: 120, color: 'result-orange' },
-        // score takes precedence, ignore issue count
-        { issues: undefined, score: MIN_SCORE_ORANGE - 10, color: 'text-danger' },
-        { issues: 0, score: MIN_SCORE_ORANGE - 10, color: 'text-danger' },
-        { issues: 1, score: MIN_SCORE_ORANGE - 10, color: 'text-danger' },
-        { issues: undefined, score: MIN_SCORE_ORANGE, color: 'result-orange' },
-        { issues: 0, score: MIN_SCORE_ORANGE, color: 'result-orange' },
-        { issues: 1, score: MIN_SCORE_ORANGE, color: 'result-orange' },
-    ])('should respect code issues when setting the color (%s)', ({ issues, score, color }) => {
-        const submission: Submission = { id: 1 };
-        const result: Result = {
-            id: 3,
-            submission,
-            score: score,
-            testCaseCount: 2,
-            codeIssueCount: issues,
-            completionDate: dayjs().subtract(2, 'minutes'),
-        };
-        const participation = cloneDeep(programmingParticipation);
-        result.participation = participation;
-        participation.results = [result];
-
-        component.participation = participation;
-        fixture.detectChanges();
-
-        expect(component.textColorClass).toBe(color);
-    });
-
     it('should set results for modeling exercise', () => {
         const submission1: Submission = { id: 1 };
         const result1: Result = { id: 1, submission: submission1, score: 1 };
@@ -147,5 +109,44 @@ describe('ResultComponent', () => {
         expect(component.resultIconClass).toEqual(faTimesCircle);
         expect(component.resultString).toBe('artemisApp.result.resultString.short');
         expect(component.templateStatus).toBe(ResultTemplateStatus.HAS_RESULT);
+    });
+
+    it.each([
+        // never show icon in long format, the text already contains the relevant information
+        { short: false, score: MIN_SCORE_ORANGE - 3, codeIssues: 1, iconShown: false },
+        { short: false, score: MIN_SCORE_ORANGE, codeIssues: 1, iconShown: false },
+        { short: false, score: MIN_SCORE_GREEN, codeIssues: 2, iconShown: false },
+        // show independent of score
+        { short: true, score: MIN_SCORE_ORANGE - 3, codeIssues: 1, iconShown: true },
+        { short: true, score: MIN_SCORE_ORANGE, codeIssues: 1, iconShown: true },
+        { short: true, score: MIN_SCORE_GREEN, codeIssues: 2, iconShown: true },
+        // show only if code issues exist
+        { short: true, score: MIN_SCORE_GREEN, codeIssues: undefined, iconShown: false },
+        { short: true, score: MIN_SCORE_GREEN, codeIssues: 0, iconShown: false },
+        { short: true, score: MIN_SCORE_GREEN, codeIssues: 10, iconShown: true },
+    ])('should show a warning icon if code issues exist (%s)', ({ short, score, codeIssues, iconShown }) => {
+        const submission: Submission = { id: 1 };
+        const result: Result = {
+            id: 3,
+            submission,
+            score,
+            testCaseCount: 2,
+            codeIssueCount: codeIssues,
+            completionDate: dayjs().subtract(2, 'minutes'),
+        };
+        const participation = cloneDeep(programmingParticipation);
+        result.participation = participation;
+        participation.results = [result];
+
+        component.short = short;
+        component.participation = participation;
+        fixture.detectChanges();
+
+        const warningIcon = fixture.debugElement.nativeElement.querySelector('#code-issue-warnings-icon');
+        if (iconShown) {
+            expect(warningIcon).toBeDefined();
+        } else {
+            expect(warningIcon).toBeNull();
+        }
     });
 });
