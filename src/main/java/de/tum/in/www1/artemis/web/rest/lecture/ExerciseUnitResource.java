@@ -26,7 +26,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 @RestController
 @RequestMapping("/api")
 @Profile("!decoupling || lecture") // TODO: Remove !decoupling
-@Tag(name = "lecture")
 public class ExerciseUnitResource {
 
     private final Logger log = LoggerFactory.getLogger(ExerciseUnitResource.class);

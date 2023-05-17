@@ -27,7 +27,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 @RestController
 @RequestMapping("/api")
 @Profile("!decoupling || lecture") // TODO: Remove !decoupling
-@Tag(name = "lecture")
 public class TextUnitResource {
 
     @Value("${jhipster.clientApp.name}")
