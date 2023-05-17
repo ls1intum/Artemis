@@ -91,6 +91,7 @@
                     "enrollmentStartDate": "Einschreibungsstart:",
                     "enrollmentEndDate": "Einschreibungsende:",
                     "disenrollmentEndDate": "Ausschreibungsende:",
+                    "disenrollmentButton": "Ausschreiben",
                     "upcomingDeadlines": "Bevorstehende Termine:",
                     "noUpcomingExercises": "Aktuell gibt es keine anstehenden Übungen."
                 }

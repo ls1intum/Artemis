@@ -93,6 +93,7 @@
                     "enrollmentStartDate": "Enrollment Start Date:",
                     "enrollmentEndDate": "Enrollment End Date:",
                     "disenrollmentEndDate": "Disenrollment End Date:",
+                    "disenrollmentButton": "Disenroll",
                     "upcomingDeadlines": "Upcoming Deadlines:",
                     "noUpcomingExercises": "There are no upcoming exercises."
                 }
