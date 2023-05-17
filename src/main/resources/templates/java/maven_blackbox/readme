@@ -9,12 +9,18 @@ In this exercise, we want to implement sorting algorithms and control the progra
 First, there has to be a way for the user to communicate with the program.
 The `Client` class should handle the user input. The following commands need to be supported by your implementation:
 
-`add date1 date2 ...`: Adds at least one date, but should also support multiple dates.
-`sort`:                Sorts the previously entered dates.
-`clear`:               Clears the list of dates.
-`help`:                Prints a dialog to the console that briefly explains the supported commands.
-`print`:               Prints the current list of dates to the console.
-`quit`:                Terminates the program.
+`add date1 date2 ...`
+Adds at least one date, but should also support multiple dates.
+`sort`
+Sorts the previously entered dates.
+`clear`
+Clears the list of dates.
+`help`
+Prints a dialog to the console that briefly explains the supported commands.
+`print`
+Prints the current list of dates to the console.
+`quit`
+Terminates the program.
 
 Using a `BufferedReader` might be a good starting point.
 
