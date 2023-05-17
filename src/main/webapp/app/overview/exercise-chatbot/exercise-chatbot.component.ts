@@ -1,8 +1,9 @@
 import { Component } from '@angular/core';
 import { faCommentDots } from '@fortawesome/free-solid-svg-icons';
-import { MatDialog } from '@angular/material/dialog';
+import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { ChatbotPopupComponent } from './chatbot-popup/chatbot-popup.component';
 import { ExerciseChatWidgetComponent } from 'app/overview/exercise-chatbot/exercise-chatwidget/exercise-chat-widget.component';
+import { NavigationStart, Router } from '@angular/router';
 
 @Component({
     selector: 'jhi-exercise-chatbot',
@@ -12,11 +13,20 @@ import { ExerciseChatWidgetComponent } from 'app/overview/exercise-chatbot/exerc
 export class ExerciseChatbotComponent {
     public chatAccepted = 'false';
     public buttonDisabled = false;
+    private dialogRef: MatDialogRef<ExerciseChatWidgetComponent> | null = null;
 
     // Icons
     faCommentDots = faCommentDots;
 
-    constructor(private dialog: MatDialog) {}
+    constructor(private dialog: MatDialog, private router: Router) {
+        this.router.events.subscribe((event) => {
+            if (event instanceof NavigationStart) {
+                if (this.dialogRef) {
+                    this.dialogRef.close();
+                }
+            }
+        });
+    }
 
     handleButtonClick() {
         if (this.chatAccepted === 'true') {
@@ -39,11 +49,11 @@ export class ExerciseChatbotComponent {
 
     openChat() {
         if (!this.buttonDisabled) {
-            const dialogRef = this.dialog.open(ExerciseChatWidgetComponent, {
+            this.dialogRef = this.dialog.open(ExerciseChatWidgetComponent, {
                 hasBackdrop: false,
                 position: { bottom: '0px', right: '0px' },
             });
-            dialogRef.afterClosed().subscribe(() => {
+            this.dialogRef.afterClosed().subscribe(() => {
                 this.buttonDisabled = false;
             });
         }
