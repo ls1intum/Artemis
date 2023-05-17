@@ -16,7 +16,6 @@ export class ExerciseChatWidgetComponent {
     irisMessages: string[] = ['Hey! How can I help you?'];
     userMessages: string[] = [];
     newMessage = '';
-    @Output() chatWidgetClosed = new EventEmitter<void>();
 
     constructor(private dialog: MatDialog) {}
 
@@ -42,6 +41,5 @@ export class ExerciseChatWidgetComponent {
 
     closeChat() {
         this.dialog.closeAll();
-        this.chatWidgetClosed.emit();
     }
 }
