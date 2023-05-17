@@ -93,13 +93,16 @@ public class TextExerciseResource {
 
     private final CourseRepository courseRepository;
 
+    private final TextClusterRepository textClusterRepository;
+
     public TextExerciseResource(TextExerciseRepository textExerciseRepository, TextExerciseService textExerciseService, FeedbackRepository feedbackRepository,
             ExerciseDeletionService exerciseDeletionService, PlagiarismResultRepository plagiarismResultRepository, UserRepository userRepository,
             AuthorizationCheckService authCheckService, CourseService courseService, StudentParticipationRepository studentParticipationRepository,
             ParticipationRepository participationRepository, ResultRepository resultRepository, TextExerciseImportService textExerciseImportService,
             TextSubmissionExportService textSubmissionExportService, ExampleSubmissionRepository exampleSubmissionRepository, ExerciseService exerciseService,
             GradingCriterionRepository gradingCriterionRepository, TextBlockRepository textBlockRepository, GroupNotificationScheduleService groupNotificationScheduleService,
-            InstanceMessageSendService instanceMessageSendService, TextPlagiarismDetectionService textPlagiarismDetectionService, CourseRepository courseRepository) {
+            InstanceMessageSendService instanceMessageSendService, TextPlagiarismDetectionService textPlagiarismDetectionService, CourseRepository courseRepository,
+            TextClusterRepository textClusterRepository) {
         this.feedbackRepository = feedbackRepository;
         this.exerciseDeletionService = exerciseDeletionService;
         this.plagiarismResultRepository = plagiarismResultRepository;
@@ -121,6 +124,7 @@ public class TextExerciseResource {
         this.instanceMessageSendService = instanceMessageSendService;
         this.textPlagiarismDetectionService = textPlagiarismDetectionService;
         this.courseRepository = courseRepository;
+        this.textClusterRepository = textClusterRepository;
     }
 
     /**
@@ -263,7 +267,7 @@ public class TextExerciseResource {
     }
 
     /**
-     * DELETE /text-exercises/:id : delete the "id" textExercise.
+     * DELETE /text-exercises/:exerciseId : delete the "exerciseId" textExercise.
      *
      * @param exerciseId the id of the textExercise to delete
      * @return the ResponseEntity with status 200 (OK)
@@ -275,8 +279,7 @@ public class TextExerciseResource {
         var textExercise = textExerciseRepository.findByIdElseThrow(exerciseId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, textExercise, user);
-        instanceMessageSendService.sendTextExerciseScheduleCancel(textExercise.getId());
-        // note: we use the exercise service here, because this one makes sure to clean up all lazy references correctly.
+        // NOTE: we use the exerciseDeletionService here, because this one makes sure to clean up all lazy references correctly.
         exerciseService.logDeletion(textExercise, textExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         exerciseDeletionService.delete(exerciseId, false, false);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, textExercise.getTitle())).build();

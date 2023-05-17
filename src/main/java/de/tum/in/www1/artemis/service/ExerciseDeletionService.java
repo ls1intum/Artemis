@@ -50,15 +50,15 @@ public class ExerciseDeletionService {
 
     private final PlagiarismResultRepository plagiarismResultRepository;
 
-    private final TextExerciseRepository textExerciseRepository;
+    private final TextExerciseService textExerciseService;
 
-    private final ModelingExerciseRepository modelingExerciseRepository;
+    private final TextClusterRepository textClusterRepository;
 
     public ExerciseDeletionService(ExerciseRepository exerciseRepository, ExerciseUnitRepository exerciseUnitRepository, ParticipationService participationService,
             ProgrammingExerciseService programmingExerciseService, ModelingExerciseService modelingExerciseService, QuizExerciseService quizExerciseService,
             TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionService exampleSubmissionService, StudentExamRepository studentExamRepository,
-            LectureUnitService lectureUnitService, TextExerciseRepository textExerciseRepository, PlagiarismResultRepository plagiarismResultRepository,
-            ModelingExerciseRepository modelingExerciseRepository) {
+            LectureUnitService lectureUnitService, PlagiarismResultRepository plagiarismResultRepository, TextExerciseService textExerciseService,
+            TextClusterRepository textClusterRepository) {
         this.exerciseRepository = exerciseRepository;
         this.participationService = participationService;
         this.programmingExerciseService = programmingExerciseService;
@@ -70,8 +70,8 @@ public class ExerciseDeletionService {
         this.exerciseUnitRepository = exerciseUnitRepository;
         this.lectureUnitService = lectureUnitService;
         this.plagiarismResultRepository = plagiarismResultRepository;
-        this.textExerciseRepository = textExerciseRepository;
-        this.modelingExerciseRepository = modelingExerciseRepository;
+        this.textExerciseService = textExerciseService;
+        this.textClusterRepository = textClusterRepository;
     }
 
     /**
@@ -121,6 +121,12 @@ public class ExerciseDeletionService {
 
             modelingExerciseService.deleteClustersAndElements(modelingExercise);
             modelingExerciseService.cancelScheduledOperations(exerciseId);
+        }
+
+        if (exercise instanceof TextExercise) {
+            log.info("Deleting clusters, blocks and cancel scheduled operations of exercise {}", exercise.getId());
+            textClusterRepository.deleteByExercise_Id(exerciseId);
+            textExerciseService.cancelScheduledOperations(exerciseId);
         }
 
         // delete all exercise units linking to the exercise

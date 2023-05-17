@@ -21,6 +21,8 @@ public class TextExercise extends Exercise {
     @Column(name = "example_solution")
     private String exampleSolution;
 
+    // TODO: we should add a OneToMany to TextCluster with delete cascade
+
     public String getExampleSolution() {
         return exampleSolution;
     }

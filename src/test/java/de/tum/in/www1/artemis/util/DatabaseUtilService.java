@@ -4473,7 +4473,7 @@ public class DatabaseUtilService {
             fail("Invalid grading scale parameters");
         }
         GradingScale gradingScale = new GradingScale();
-        Set<GradeStep> gradeSteps = new LinkedHashSet<>();
+        Set<GradeStep> gradeSteps = new HashSet<>();
         double currentLowerBoundPercentage = 0.0;
         for (int i = 0; i < gradeStepCount; i++) {
             GradeStep gradeStep = new GradeStep();

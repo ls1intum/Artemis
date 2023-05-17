@@ -35,7 +35,6 @@ import de.tum.in.www1.artemis.util.ExerciseIntegrationTestUtils;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.QuizUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.QuizBatchJoinDTO;
-import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.websocket.QuizSubmissionWebsocketService;
 
 class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -828,8 +827,8 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         var exerciseId = exercise.getId();
 
         final var searchTerm = database.configureSearch(exerciseId.toString());
-        final var searchResult = request.get("/api/quiz-exercises", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(searchTerm));
-        assertThat(searchResult.getResultsOnPage().stream().filter(result -> ((int) ((LinkedHashMap<String, ?>) result).get("id")) == exerciseId.intValue())).hasSize(1);
+        final var searchResult = request.getSearchResult("/api/quiz-exercises", HttpStatus.OK, QuizExercise.class, database.searchMapping(searchTerm));
+        assertThat(searchResult.getResultsOnPage().stream().filter(quizExercise -> (Objects.equals(quizExercise.getId(), exerciseId)))).hasSize(1);
     }
 
     @Test
