@@ -186,7 +186,7 @@ public class AttachmentUnitResource {
             }
             List<AttachmentUnit> savedAttachmentUnits = lectureUnitProcessingService.splitAndSaveUnits(lectureUnitInformationDTO, file, lecture);
             savedAttachmentUnits.forEach(attachmentUnitService::prepareAttachmentUnitForClient);
-            savedAttachmentUnits.forEach(learningGoalProgressService::updateProgressByLearningObjectAsync);
+            savedAttachmentUnits.forEach(competencyProgressService::updateProgressByLearningObjectAsync);
             return ResponseEntity.ok().body(savedAttachmentUnits);
         }
         catch (IOException e) {
