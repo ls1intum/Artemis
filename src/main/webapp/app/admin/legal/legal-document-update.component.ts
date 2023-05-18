@@ -8,7 +8,6 @@ import { LegalDocument, LegalDocumentLanguage, LegalDocumentType } from 'app/ent
 import { ActivatedRoute } from '@angular/router';
 import { Observable, tap } from 'rxjs';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
-import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 
 @Component({
@@ -160,6 +159,7 @@ export class LegalDocumentUpdateComponent implements OnInit, AfterContentChecked
         if (this.languageChangeInPreview) {
             this.languageChangeInPreview = false;
             this.markdownEditor.aceEditorContainer.getEditor().setValue(this.legalDocument.text);
+            this.markdownEditor.aceEditorContainer.getEditor().clearSelection();
         }
     }
 }

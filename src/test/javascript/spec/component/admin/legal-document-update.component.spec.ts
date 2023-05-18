@@ -153,7 +153,7 @@ describe('LegalDocumentUpdateComponent', () => {
         setupRoutes(LegalDocumentType.PRIVACY_STATEMENT);
         const returnValue = new PrivacyStatement(LegalDocumentLanguage.GERMAN);
         returnValue.text = 'new content';
-        const updateTextOnEditSelect = jest.spyOn(component, 'updateTextIfLanguageChangedInPreview').mockReturnValue(of(returnValue));
+        const updateTextOnEditSelect = jest.spyOn(component, 'updateTextIfLanguageChangedInPreview').mockImplementation();
         component.markdownEditor.markdown = 'text';
         component.markdownEditor.previewMode = true;
         component.unsavedChanges = false;
