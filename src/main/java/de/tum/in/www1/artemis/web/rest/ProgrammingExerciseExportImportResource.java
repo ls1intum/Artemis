@@ -41,6 +41,7 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseTaskRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.ConsistencyCheckService;
 import de.tum.in.www1.artemis.service.CourseService;
 import de.tum.in.www1.artemis.service.SubmissionPolicyService;
 import de.tum.in.www1.artemis.service.exam.ExamAccessService;
@@ -48,10 +49,7 @@ import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.service.programming.*;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryExportOptionsDTO;
-import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
-import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
-import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
+import de.tum.in.www1.artemis.web.rest.errors.*;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 /**
@@ -94,12 +92,14 @@ public class ProgrammingExerciseExportImportResource {
 
     private final ProgrammingExerciseImportFromFileService programmingExerciseImportFromFileService;
 
+    private final ConsistencyCheckService consistencyCheckService;
+
     public ProgrammingExerciseExportImportResource(ProgrammingExerciseRepository programmingExerciseRepository, UserRepository userRepository,
             AuthorizationCheckService authCheckService, CourseService courseService, ProgrammingExerciseImportService programmingExerciseImportService,
             ProgrammingExerciseExportService programmingExerciseExportService, Optional<ProgrammingLanguageFeatureService> programmingLanguageFeatureService,
             AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, SubmissionPolicyService submissionPolicyService,
             ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, ExamAccessService examAccessService, CourseRepository courseRepository,
-            ProgrammingExerciseImportFromFileService programmingExerciseImportFromFileService) {
+            ProgrammingExerciseImportFromFileService programmingExerciseImportFromFileService, ConsistencyCheckService consistencyCheckService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.userRepository = userRepository;
         this.courseService = courseService;
@@ -113,6 +113,7 @@ public class ProgrammingExerciseExportImportResource {
         this.examAccessService = examAccessService;
         this.courseRepository = courseRepository;
         this.programmingExerciseImportFromFileService = programmingExerciseImportFromFileService;
+        this.consistencyCheckService = consistencyCheckService;
     }
 
     /**
@@ -170,6 +171,12 @@ public class ProgrammingExerciseExportImportResource {
         final var originalProgrammingExercise = programmingExerciseRepository
                 .findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipationsAndAuxRepos(sourceExerciseId)
                 .orElseThrow(() -> new EntityNotFoundException("ProgrammingExercise", sourceExerciseId));
+
+        var consistencyErrors = consistencyCheckService.checkConsistencyOfProgrammingExercise(originalProgrammingExercise);
+        if (!consistencyErrors.isEmpty()) {
+            // TODO: send error message to client and handle it accordingly
+            throw new ConflictException("The source exercise is inconsistent", ENTITY_NAME, "sourceExerciseInconsistent");
+        }
 
         // Fetching the tasks separately, as putting it in the query above leads to Hibernate duplicating the tasks.
         var templateTasks = programmingExerciseTaskRepository.findByExerciseIdWithTestCases(originalProgrammingExercise.getId());
