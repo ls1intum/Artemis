@@ -55,7 +55,7 @@ public class DataExportService {
 
     private final Logger log = LoggerFactory.getLogger(DataExportService.class);
 
-    @Value("${artemis.data-export-path}")
+    @Value("${artemis.data-export-path:./data-exports}")
     private Path dataExportPath;
 
     @Value("${artemis.repo-download-clone-path}")
