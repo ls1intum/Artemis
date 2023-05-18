@@ -85,32 +85,45 @@ public class SubmissionService {
     public void checkSubmissionAllowanceElseThrow(Exercise exercise, Submission submission, User currentUser) {
         // Fetch course from database to make sure client didn't change groups
         final var courseId = exercise.getCourseViaExerciseGroupOrCourseMember().getId();
+        log.info("course id: " + courseId);
         final var course = courseRepository.findByIdElseThrow(courseId);
+        log.info("course: " + course);
         if (!authCheckService.isAtLeastStudentInCourse(course, currentUser)) {
+            log.info("user is not at least student in course");
             throw new AccessForbiddenException();
         }
+        log.info("user is at least student in course");
 
         // Fetch the submission with the corresponding participation if the id is set (on update) and check that the
         // user of the participation is the same as the user who executes this call (or student in the team).
         // This prevents injecting submissions to other users.
         if (submission.getId() != null) {
+            log.info("submission id is not null");
             Optional<Submission> existingSubmission = submissionRepository.findById(submission.getId());
+            log.info("existing submission: " + existingSubmission);
             if (existingSubmission.isEmpty()) {
+                log.info("existing submission is empty");
                 throw new AccessForbiddenException();
             }
 
             StudentParticipation participation = (StudentParticipation) existingSubmission.get().getParticipation();
+            log.info("participation from existing submission: " + participation);
             if (participation != null) {
                 Optional<User> user = participation.getStudent();
+                log.info("user from participation: " + user);
                 if (user.isPresent() && !user.get().equals(currentUser)) {
+                    log.info("user is not present or not equal to current user: " + currentUser);
                     throw new AccessForbiddenException();
                 }
 
                 Optional<Team> team = participation.getTeam();
+                log.info("team from participation: " + team);
                 if (team.isPresent() && !authCheckService.isStudentInTeam(course, team.get().getShortName(), currentUser)) {
+                    log.info("team is not present and current user is not student in team");
                     throw new AccessForbiddenException();
                 }
             }
+            log.info("participation is null");
         }
     }
 
@@ -260,23 +273,30 @@ public class SubmissionService {
     public void hideDetails(Submission submission, User user) {
         // do not send old submissions or old results to the client
         if (submission.getParticipation() != null) {
+            log.info("hideDetails for user " + user.getLogin() + " in exercise " + submission.getParticipation().getExercise().getTitle());
             submission.getParticipation().setSubmissions(null);
             submission.getParticipation().setResults(null);
 
             Exercise exercise = submission.getParticipation().getExercise();
             if (exercise != null) {
+                log.info("exercise is not null: " + exercise);
                 // make sure that sensitive information is not sent to the client for students
                 if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
+                    log.info("user is not at least TA: " + user);
                     exercise.filterSensitiveInformation();
+                    log.info("filtered sensitive information from exercise");
                     submission.setResults(new ArrayList<>());
                 }
                 // remove information about the student or team from the submission for tutors to ensure a double-blind assessment
                 if (!authCheckService.isAtLeastInstructorForExercise(exercise, user)) {
+                    log.info("user is not at least instructor: " + user);
                     StudentParticipation studentParticipation = (StudentParticipation) submission.getParticipation();
 
                     // the student himself is allowed to see the participant (i.e. himself or his team) of his participation
                     if (!authCheckService.isOwnerOfParticipation(studentParticipation, user)) {
+                        log.info("user is not owner of participation: " + user);
                         studentParticipation.filterSensitiveInformation();
+                        log.info("filtered sensitive information from student participation");
                     }
                 }
             }

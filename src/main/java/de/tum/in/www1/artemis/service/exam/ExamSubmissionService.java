@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -25,6 +27,8 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
 public class ExamSubmissionService {
+
+    private final Logger log = LoggerFactory.getLogger(ExamSubmissionService.class);
 
     private final StudentExamRepository studentExamRepository;
 
@@ -52,6 +56,7 @@ public class ExamSubmissionService {
         if (!isAllowedToSubmitDuringExam(exercise, user, false)) {
             throw new AccessForbiddenException("Submission not allowed for " + user.getLogin() + " for exercise " + exercise.getId() + " in the exam.");
         }
+        log.info("is allowed to submit during exam");
     }
 
     /**
@@ -69,32 +74,44 @@ public class ExamSubmissionService {
         if (exercise.isExamExercise()) {
             // Get the student exam if it was not passed to the function
             Exam exam = exercise.getExerciseGroup().getExam();
+            log.info("exam: " + exam);
             // Step 1: Find real exam
             Optional<StudentExam> optionalStudentExam = studentExamRepository.findWithExercisesByUserIdAndExamId(user.getId(), exam.getId());
+            log.info("optional student exam: " + optionalStudentExam);
             if (optionalStudentExam.isEmpty()) {
                 // Step 2: Find latest (=the highest id) unsubmitted test exam
                 optionalStudentExam = studentExamRepository.findUnsubmittedStudentExamsForTestExamsWithExercisesByExamIdAndUserId(exam.getId(), user.getId()).stream()
                         .max(Comparator.comparing(StudentExam::getId));
+                log.info("student exam was empty, found latest unsubmitted test exam: " + optionalStudentExam);
             }
             if (optionalStudentExam.isEmpty()) {
+                log.info("student exam is still empty");
                 // Step 3: We check for test exams here for performance issues as this will not be the case for all students who are participating in the exam
                 // isAllowedToSubmitDuringExam is called everytime an exercise is saved (e.g. auto save every 30 seconds for every student) therefore it is best to limit
                 // unnecessary database calls
                 if (!isExamTestRunSubmission(exercise, user, exam)) {
+                    log.info("is not an exam test run submission");
                     throw new EntityNotFoundException("Student exam with for userId \"" + user.getId() + "\" and examId \"" + exam.getId() + "\" does not exist");
                 }
                 return true;
             }
             StudentExam studentExam = optionalStudentExam.get();
+            log.info("student exam: " + studentExam);
             // Check that the current user is allowed to submit to this exercise
             if (!studentExam.getExercises().contains(exercise)) {
+                log.info("student exam does not contain exercise " + exercise);
                 return false;
             }
 
+            log.info("student exam contains exercise " + exercise);
+
             // if the student exam was already submitted, the user cannot save anymore
             if (Boolean.TRUE.equals(studentExam.isSubmitted()) || studentExam.getSubmissionDate() != null) {
+                log.info("student exam was already submitted or submission date is not null");
                 return false;
             }
+
+            log.info("student exam was not submitted and submission date is null");
 
             // Check that the submission is in time
             return isSubmissionInTime(exercise, studentExam, withGracePeriod);
@@ -140,18 +157,26 @@ public class ExamSubmissionService {
     public Submission preventMultipleSubmissions(Exercise exercise, Submission submission, User user) {
         // Return immediately if it is not an exam submissions or if it is a programming exercise
         if (!exercise.isExamExercise() || exercise instanceof ProgrammingExercise) {
+            log.info("is not an exam exercise or is a programming exercise");
             return submission;
         }
+        log.info("is an exam exercise and not a programming exercise");
 
         List<StudentParticipation> participations = participationService.findByExerciseAndStudentIdWithEagerSubmissions(exercise, user.getId());
+        log.info("participations: " + participations);
         if (!participations.isEmpty()) {
+            log.info("participations is not empty");
             Set<Submission> submissions = participations.get(0).getSubmissions();
+            log.info("submissions: " + submissions);
             if (!submissions.isEmpty()) {
+                log.info("submissions is not empty");
                 Submission existingSubmission = submissions.iterator().next();
+                log.info("existing submission: " + existingSubmission);
                 // Instead of creating a new submission, we want to overwrite the already existing submission. Therefore
                 // we set the id of the received submission to the id of the existing submission. When repository.save()
                 // is invoked the existing submission will be updated.
                 submission.setId(existingSubmission.getId());
+                log.info("set the id on the submission: " + existingSubmission.getId());
             }
         }
 
@@ -162,7 +187,9 @@ public class ExamSubmissionService {
         // The attributes of the exam (e.g. startDate) are missing. Therefore we need to load it.
         Exam exam = examRepository.findByIdElseThrow(exercise.getExerciseGroup().getExam().getId());
         ZonedDateTime calculatedEndDate = withGracePeriod ? exam.getEndDate().plusSeconds(exam.getGracePeriod()) : exam.getEndDate();
+        log.info("calculated end date: " + calculatedEndDate);
         if (studentExam.getWorkingTime() != null && studentExam.getWorkingTime() > 0) {
+            log.info("student exam has working time");
             calculatedEndDate = withGracePeriod ? studentExam.getIndividualEndDateWithGracePeriod() : studentExam.getIndividualEndDate();
         }
         return exam.getStartDate().isBefore(ZonedDateTime.now()) && calculatedEndDate.isAfter(ZonedDateTime.now());

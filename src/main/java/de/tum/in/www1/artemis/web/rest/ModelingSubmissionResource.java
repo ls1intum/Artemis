@@ -85,7 +85,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
     @PostMapping("/exercises/{exerciseId}/modeling-submissions")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<ModelingSubmission> createModelingSubmission(@PathVariable long exerciseId, @Valid @RequestBody ModelingSubmission modelingSubmission) {
-        log.debug("REST request to create modeling submission: {}", modelingSubmission.getModel());
+        log.info("REST request to create modeling submission: {}", modelingSubmission.getModel());
         if (modelingSubmission.getId() != null) {
             throw new BadRequestAlertException("A new modeling submission cannot already have an ID", ENTITY_NAME, "idExists");
         }
@@ -116,17 +116,23 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
     private ResponseEntity<ModelingSubmission> handleModelingSubmission(Long exerciseId, ModelingSubmission modelingSubmission) {
         long start = System.currentTimeMillis();
         final var user = userRepository.getUserWithGroupsAndAuthorities();
+        log.info("user: " + user.getLogin());
         final var exercise = modelingExerciseRepository.findByIdElseThrow(exerciseId);
+        log.info("exercise: " + exercise);
 
         // Apply further checks if it is an exam submission
         examSubmissionService.checkSubmissionAllowanceElseThrow(exercise, user);
+        log.info("submission allowed");
 
         // Prevent multiple submissions (currently only for exam submissions)
         modelingSubmission = (ModelingSubmission) examSubmissionService.preventMultipleSubmissions(exercise, modelingSubmission, user);
+        log.info("modelingSubmission: " + modelingSubmission);
         // Check if the user is allowed to submit
         modelingSubmissionService.checkSubmissionAllowanceElseThrow(exercise, modelingSubmission, user);
+        log.info("user is allowed to submit");
 
         modelingSubmission = modelingSubmissionService.handleModelingSubmission(modelingSubmission, exercise, user);
+        log.info("modelingSubmission handled");
         modelingSubmissionService.hideDetails(modelingSubmission, user);
         long end = System.currentTimeMillis();
         log.info("save took {}ms for exercise {} and user {}", end - start, exerciseId, user.getLogin());
