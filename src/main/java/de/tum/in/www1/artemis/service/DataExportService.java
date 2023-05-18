@@ -273,7 +273,7 @@ public class DataExportService {
                 .filter(studentParticipation -> studentParticipation instanceof ProgrammingExerciseStudentParticipation)
                 .map(studentParticipation -> (ProgrammingExerciseStudentParticipation) studentParticipation).toList();
         List<String> exportRepoErrors = new ArrayList<>();
-        var tempRepoWorkingDir = Files.createTempDirectory(repoClonePath, "repo");
+        var tempRepoWorkingDir = fileService.createDirectory(repoClonePath.resolve(fileService.getUniquePathString("repo")));
         programmingExerciseExportService.exportStudentRepositories(programmingExercise, listOfProgrammingExerciseParticipations, repositoryExportOptions, tempRepoWorkingDir,
                 exerciseDir, exportRepoErrors);
         // we use this directory only to clone the repository and don't do this in our current directory because the current directory is part of the final data export

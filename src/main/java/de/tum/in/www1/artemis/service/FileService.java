@@ -1055,14 +1055,15 @@ public class FileService implements DisposableBean {
      *
      * @param path the original path, e.g. /opt/artemis/repos-download
      */
-    public void createDirectory(Path path) {
+    public Path createDirectory(Path path) {
         try {
-            Files.createDirectories(path);
+            return Files.createDirectories(path);
         }
         catch (IOException e) {
             var error = "Failed to create temporary directory at path " + path + " : " + e.getMessage();
             log.info(error);
         }
+        return null;
     }
 
     /**
