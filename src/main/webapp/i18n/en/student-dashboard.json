@@ -100,7 +100,8 @@
                         "reenrollmentNotPossible": "The course does not allow you to enroll again. This is an irreversible action.",
                         "reenrollmentPossible": "If you change your mind, the course will allow you to enroll again until:",
                         "cancelButton": "Cancel",
-                        "acceptButton": "Yes, I want to unenroll."
+                        "acceptButton": "Yes, I want to unenroll.",
+                        "unenrollmentSuccessful": "Unenrollment successful"
                     },
                     "upcomingDeadlines": "Upcoming Deadlines:",
                     "noUpcomingExercises": "There are no upcoming exercises."

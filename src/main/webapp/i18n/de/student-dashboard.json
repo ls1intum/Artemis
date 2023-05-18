@@ -98,7 +98,8 @@
                         "reenrollmentNotPossible": "Der Kurs erlaubt dir nicht, dich erneut einzuschreiben. Dies ist eine endgültige Entscheidung.",
                         "reenrollmentPossible": "Wenn du deine Meinung ändern möchtest, erlaubt dir der Kurs dich bis zu folgendem Datum erneut anzumelden:",
                         "cancelButton": "Abbruch",
-                        "acceptButton": "Ja, ich möchte mich ausschreiben."
+                        "acceptButton": "Ja, ich möchte mich ausschreiben.",
+                        "unenrollmentSuccessful": "Ausschreibung erfolgreich"
                     },
                     "upcomingDeadlines": "Bevorstehende Termine:",
                     "noUpcomingExercises": "Aktuell gibt es keine anstehenden Übungen."

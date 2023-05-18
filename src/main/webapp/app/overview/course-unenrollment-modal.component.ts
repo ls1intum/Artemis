@@ -45,7 +45,7 @@ export class CourseUnenrollmentModalComponent {
         this.close();
         this.courseService.unenrollFromCourse(this.course.id!).subscribe({
             next: () => {
-                this.alertService.success('artemisApp.studentDashboard.register.registerSuccessful');
+                this.alertService.success('artemisApp.courseOverview.exerciseList.details.unenrollmentModal.unenrollmentSuccessful');
                 this.router.navigate(['/']);
             },
             error: (error: string) => {
