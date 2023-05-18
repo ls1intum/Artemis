@@ -1,9 +1,8 @@
-import { Component, ViewChild } from '@angular/core';
+import { Component } from '@angular/core';
 import { Router } from '@angular/router';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { faCheck, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faXmark } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
-import { CourseExercisesComponent } from 'app/overview/course-exercises/course-exercises.component';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { AlertService } from 'app/core/util/alert.service';
@@ -13,14 +12,10 @@ import { AlertService } from 'app/core/util/alert.service';
     templateUrl: './course-unenrollment-modal.component.html',
 })
 export class CourseUnenrollmentModalComponent {
-    @ViewChild(CourseExercisesComponent)
-    examExerciseImportComponent: CourseExercisesComponent;
+    public course: Course;
 
     // Icons
-    faCheck = faCheck;
     faXmark = faXmark;
-
-    public course: Course;
 
     constructor(private activeModal: NgbActiveModal, private courseService: CourseManagementService, private alertService: AlertService, private router: Router) {}
 
