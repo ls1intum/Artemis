@@ -30,16 +30,32 @@ export const cartesianProduct = (a: any[], b: any[], ...c: any[][]): any[] => {
  * @param val The object you want to stringify
  */
 export const stringifyCircular = (val: any): string => {
-    const seen = new WeakSet();
-    return JSON.stringify(val, (key, value) => {
-        if (typeof value === 'object' && value !== null) {
-            if (seen.has(value)) {
-                return;
-            }
-            seen.add(value);
-        }
-        return value;
-    });
+    const circularRemoved = removeCircularReference(val);
+    return JSON.stringify(circularRemoved);
+    // const seen = new WeakSet();
+    // return JSON.stringify(circularRemoved, (key, value) => {
+    //     if (typeof value === 'object' && value !== null) {
+    //         if (seen.has(value)) {
+    //             return;
+    //         }
+    //         seen.add(value);
+    //     }
+    //     return value;
+    // });
+};
+
+const removeCircularReference = (obj: any, seenObjects: WeakSet<object> = new WeakSet()) => {
+    if (typeof obj !== 'object' || obj === null) {
+        return obj;
+    }
+    if (seenObjects.has(obj)) {
+        return undefined;
+    }
+    seenObjects.add(obj);
+    for (const key in obj) {
+        obj[key] = removeCircularReference(obj[key], seenObjects);
+    }
+    return obj;
 };
 
 /**
