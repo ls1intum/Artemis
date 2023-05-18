@@ -1,42 +1,25 @@
-import { Injectable, OnDestroy } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Observable, Subscription } from 'rxjs';
-import { IrisClientMessageDescriptor, IrisMessageDescriptor } from 'app/entities/iris/iris.model';
-import { IrisMessageStore } from 'app/iris/message-store.service';
-import { ActionType, MessageStoreAction } from 'app/iris/message-store.model';
+import { Observable } from 'rxjs';
+import { IrisClientMessage, IrisMessage } from 'app/entities/iris/iris.model';
 
-type EntityResponseType = HttpResponse<IrisMessageDescriptor>;
-type EntityArrayResponseType = HttpResponse<IrisMessageDescriptor[]>;
+type EntityResponseType = HttpResponse<IrisMessage>;
+type EntityArrayResponseType = HttpResponse<IrisMessage[]>;
 
-@Injectable()
-export class IrisHttpMessageService implements OnDestroy {
-    public resourceUrl = SERVER_API_URL + 'api/iris/sessions';
-    // TODO @Dmytro Polityka set the number properly
-    private readonly sessionId: number;
-    private readonly subscription: Subscription;
+@Injectable({ providedIn: 'root' })
+export class IrisHttpMessageService {
+    public resourceUrl = 'api/iris/sessions';
 
-    constructor(private httpClient: HttpClient, private messageStore: IrisMessageStore) {
-        this.subscription = this.messageStore.getActionObservable().subscribe((newAction: MessageStoreAction) => {
-            if (newAction.type !== ActionType.STUDENT_MESSAGE_SENT) return;
-            this.createMessage(this.sessionId, newAction.message).subscribe((response) => {
-                if (response.body == null) throw Error('Server response does not contain proper values.');
-                newAction.message.messageId = response.body.messageId;
-            });
-        });
-    }
-
-    ngOnDestroy(): void {
-        this.subscription.unsubscribe();
-    }
+    constructor(private httpClient: HttpClient) {}
 
     /**
      * creates a message for a session
      * @param {number} sessionId
-     * @param {IrisClientMessageDescriptor} message
+     * @param {IrisClientMessage} message
      * @return {Observable<EntityResponseType>}
      */
-    createMessage(sessionId: number, message: IrisMessageDescriptor): Observable<EntityResponseType> {
-        return this.httpClient.post<IrisClientMessageDescriptor>(`${this.resourceUrl}/${sessionId}/messages`, message, { observe: 'response' });
+    createMessage(sessionId: number, message: IrisMessage): Observable<EntityResponseType> {
+        return this.httpClient.post<IrisClientMessage>(`${this.resourceUrl}/${sessionId}/messages`, message, { observe: 'response' });
     }
 
     /**
@@ -45,7 +28,7 @@ export class IrisHttpMessageService implements OnDestroy {
      * @return {Observable<EntityArrayResponseType>}
      */
     getMessages(sessionId: number): Observable<EntityArrayResponseType> {
-        return this.httpClient.get<IrisMessageDescriptor[]>(`${this.resourceUrl}${sessionId}/messages`, { observe: 'response' });
+        return this.httpClient.get<IrisMessage[]>(`${this.resourceUrl}${sessionId}/messages`, { observe: 'response' });
     }
 
     /**
@@ -55,8 +38,7 @@ export class IrisHttpMessageService implements OnDestroy {
      * @param {boolean} helpful rating of the message
      * @return {Observable<EntityResponseType>} an Observable of the HTTP responses
      */
-
     rateMessage(sessionId: number, messageId: number, helpful: boolean): Observable<EntityResponseType> {
-        return this.httpClient.put<IrisMessageDescriptor>(`${this.resourceUrl}/${sessionId}/messages/${messageId}/helpful/${helpful}`, null, { observe: 'response' });
+        return this.httpClient.put<IrisMessage>(`${this.resourceUrl}/${sessionId}/messages/${messageId}/helpful/${helpful}`, null, { observe: 'response' });
     }
 }

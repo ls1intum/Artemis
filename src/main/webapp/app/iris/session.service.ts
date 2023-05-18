@@ -1,13 +1,13 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { IrisConversation } from 'app/entities/iris/iris.model';
+import { IrisSession } from 'app/entities/iris/iris.model';
 
-type EntityResponseType = HttpResponse<IrisConversation>;
+type EntityResponseType = HttpResponse<IrisSession>;
 
 @Injectable()
 export class IrisSessionService {
-    public resourceUrl = SERVER_API_URL + 'api/iris/';
+    public resourceUrl = 'api/iris/';
 
     constructor(protected http: HttpClient) {
         this.http = http;
@@ -19,16 +19,16 @@ export class IrisSessionService {
      * @return {Observable<EntityResponseType>} an Observable of the HTTP response
      */
     getCurrentSession(exerciseId: number): Observable<EntityResponseType> {
-        return this.http.get<IrisConversation>(`${this.resourceUrl}/programming-exercises/${exerciseId}/sessions`, { observe: 'response' });
+        return this.http.get<IrisSession>(`${this.resourceUrl}/programming-exercises/${exerciseId}/sessions`, { observe: 'response' });
     }
 
     /**
      * creates a session for a programming exercise
      * @param {number} exerciseId of the session in which the message should be created
-     * @param {IrisConversation} session the iris session to be created
+     * @param {IrisSession} session the iris session to be created
      * @return {Observable<EntityResponseType>} an Observable of the HTTP responses
      */
-    createSessionForProgrammingExercise(exerciseId: number, session: IrisConversation): Observable<EntityResponseType> {
-        return this.http.post<IrisConversation>(`${this.resourceUrl}/programming-exercises/${exerciseId}/sessions`, session, { observe: 'response' });
+    createSessionForProgrammingExercise(exerciseId: number, session: IrisSession): Observable<EntityResponseType> {
+        return this.http.post<IrisSession>(`${this.resourceUrl}/programming-exercises/${exerciseId}/sessions`, session, { observe: 'response' });
     }
 }

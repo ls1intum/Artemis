@@ -1,30 +1,30 @@
-import { IrisClientMessageDescriptor, IrisConversation, IrisMessageContent, IrisMessageContentType, IrisSender, IrisServerMessageDescriptor } from 'app/entities/iris/iris.model';
+import { IrisClientMessage, IrisMessageContent, IrisMessageContentType, IrisSender, IrisServerMessage, IrisSession } from 'app/entities/iris/iris.model';
 import dayjs from 'dayjs';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { ExerciseType } from 'app/entities/exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 
 export const mockMessageContent = {
-    content: 'Hello, world!',
+    textContent: 'Hello, world!',
     type: IrisMessageContentType.TEXT,
 } as IrisMessageContent;
 
-export const irisExercise = { id: 1, title: 'Metis  Exercise', type: ExerciseType.TEXT } as Exercise;
+export const irisExercise = { id: 1, title: 'Metis  Exercise', type: ExerciseType.PROGRAMMING } as ProgrammingExercise;
 
 export const mockServerMessage = {
     sender: IrisSender.SERVER,
-    messageId: 1,
-    messageContent: mockMessageContent,
+    id: 1,
+    content: [mockMessageContent],
     sentAt: dayjs(),
-} as IrisServerMessageDescriptor;
+} as IrisServerMessage;
 
 export const mockClientMessage = {
     sender: IrisSender.USER,
-    messageContent: mockMessageContent,
+    content: mockMessageContent,
     sentAt: dayjs(),
-} as IrisClientMessageDescriptor;
+} as IrisClientMessage;
 
 export const mockConversation = {
     id: 1,
-    programmingExercise: irisExercise,
-    messageDescriptors: [mockClientMessage, mockServerMessage],
-    irisEnabled: true,
-} as IrisConversation;
+    exercise: irisExercise,
+    messages: [mockClientMessage, mockServerMessage],
+} as IrisSession;

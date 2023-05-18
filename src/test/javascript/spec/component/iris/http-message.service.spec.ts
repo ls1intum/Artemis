@@ -3,8 +3,7 @@ import { HttpClientTestingModule, HttpTestingController } from '@angular/common/
 import { take } from 'rxjs/operators';
 import { mockClientMessage, mockConversation, mockServerMessage } from '../../helpers/sample/iris-sample-data';
 import { IrisHttpMessageService } from 'app/iris/http-message.service';
-import { IrisClientMessageDescriptor } from 'app/entities/iris/iris.model';
-import { IrisMessageStore } from 'app/iris/message-store.service';
+import { IrisClientMessage } from 'app/entities/iris/iris.model';
 
 describe('HTTP Message Service', () => {
     let service: IrisHttpMessageService;
@@ -13,7 +12,7 @@ describe('HTTP Message Service', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [HttpClientTestingModule],
-            providers: [IrisMessageStore, IrisHttpMessageService],
+            providers: [IrisHttpMessageService],
         });
         service = TestBed.inject(IrisHttpMessageService);
         httpMock = TestBed.inject(HttpTestingController);
@@ -24,7 +23,7 @@ describe('HTTP Message Service', () => {
             const returnedFromService = { ...mockClientMessage };
             const expected = { ...returnedFromService };
             service
-                .createMessage(2, new IrisClientMessageDescriptor())
+                .createMessage(2, new IrisClientMessage())
                 .pipe(take(1))
                 .subscribe((resp) => expect(resp.body).toEqual(expected));
             const req = httpMock.expectOne({ method: 'POST' });
@@ -48,7 +47,7 @@ describe('HTTP Message Service', () => {
             const returnedFromService = { ...mockServerMessage, helpful: true };
             const expected = returnedFromService;
             service
-                .rateMessage(mockConversation.id, mockServerMessage.messageId, true)
+                .rateMessage(mockConversation.id, mockServerMessage.id, true)
                 .pipe(take(1))
                 .subscribe((resp) => expect(resp.body).toEqual(expected));
             const req = httpMock.expectOne({ method: 'PUT' });

@@ -1,32 +1,27 @@
 import { IrisMessageStore } from 'app/iris/message-store.service';
-import { ActionType, ActiveConversationMessageLoadedAction, HistoryMessageLoadedAction, MessageStoreState, StudentMessageSentAction } from 'app/iris/message-store.model';
-import { IrisClientMessageDescriptor, IrisMessageContent, IrisMessageContentType, IrisSender, IrisServerMessageDescriptor } from 'app/entities/iris/iris.model';
+import {
+    ActionType,
+    ActiveConversationMessageLoadedAction,
+    HistoryMessageLoadedAction,
+    MessageStoreState,
+    SessionIdReceivedAction,
+    StudentMessageSentAction,
+} from 'app/iris/message-store.model';
 import { skip, take } from 'rxjs';
-import dayjs from 'dayjs';
+import { TestBed } from '@angular/core/testing';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { mockClientMessage, mockServerMessage } from '../../helpers/sample/iris-sample-data';
 
 describe('IrisMessageStore', () => {
-    const mockMessageContent: IrisMessageContent = {
-        content: 'Hello, world!',
-        type: IrisMessageContentType.TEXT,
-    };
-
-    const mockServerMessage: IrisServerMessageDescriptor = {
-        sender: IrisSender.SERVER,
-        messageId: 1,
-        messageContent: mockMessageContent,
-        sentAt: dayjs(),
-    };
-
-    const mockClientMessage: IrisClientMessageDescriptor = {
-        sender: IrisSender.USER,
-        messageContent: mockMessageContent,
-        sentAt: dayjs(),
-    };
-
     let messageStore: IrisMessageStore;
 
     beforeEach(() => {
-        messageStore = new IrisMessageStore();
+        TestBed.configureTestingModule({
+            imports: [HttpClientTestingModule],
+            providers: [IrisMessageStore],
+        });
+        messageStore = TestBed.inject(IrisMessageStore);
+        messageStore.dispatch(new SessionIdReceivedAction(0));
     });
 
     it('should dispatch and handle HistoryMessageLoadedAction', async () => {
@@ -122,5 +117,21 @@ describe('IrisMessageStore', () => {
         const state3 = (await promise3) as MessageStoreState;
 
         expect(state3.messages).toEqual([action3.message, action2.message, action1.message]);
+    });
+
+    it('should not dispatch new message actions with an empty session id', async () => {
+        messageStore.dispatch(new SessionIdReceivedAction(null));
+
+        const action: ActiveConversationMessageLoadedAction = {
+            type: ActionType.ACTIVE_CONVERSATION_MESSAGE_LOADED,
+            message: mockServerMessage,
+        };
+
+        const youAreTryingToAppendMessagesToAConversationWithAnEmptySessionId = 'You are trying to append messages to a conversation with an empty session id!';
+        try {
+            messageStore.dispatch(action);
+        } catch (error) {
+            expect(error.message).toBe(youAreTryingToAppendMessagesToAConversationWithAnEmptySessionId);
+        }
     });
 });

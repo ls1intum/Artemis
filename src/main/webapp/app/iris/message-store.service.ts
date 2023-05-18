@@ -1,7 +1,15 @@
 import { Injectable, OnDestroy } from '@angular/core';
 import { BehaviorSubject, Observable, Subject, Subscription } from 'rxjs';
 import { tap } from 'rxjs/operators';
-import { ActionType, MessageStoreAction, MessageStoreState } from 'app/iris/message-store.model';
+import {
+    MessageStoreAction,
+    MessageStoreState,
+    isActiveConversationMessageLoadedAction,
+    isHistoryMessageLoadedAction,
+    isSessionIdReceivedAction,
+    isStudentMessageSentAction,
+} from 'app/iris/message-store.model';
+import { IrisHttpMessageService } from 'app/iris/http-message.service';
 
 /**
  * Provides a store to manage message-related state data and dispatch actions.
@@ -10,17 +18,18 @@ import { ActionType, MessageStoreAction, MessageStoreState } from 'app/iris/mess
 export class IrisMessageStore implements OnDestroy {
     private readonly initialState: MessageStoreState = {
         messages: [],
+        sessionId: null,
     };
 
     private readonly action = new Subject<MessageStoreAction>();
     private readonly state = new BehaviorSubject<MessageStoreState>(this.initialState);
     private readonly subscription: Subscription;
 
-    constructor() {
+    constructor(private httpMessageService: IrisHttpMessageService) {
         this.subscription = this.action
             .pipe(
                 tap((action: MessageStoreAction) => {
-                    this.state.next(IrisMessageStore.storeReducer(this.state.getValue(), action));
+                    this.state.next(this.storeReducer(this.state.getValue(), action));
                 }),
             )
             .subscribe();
@@ -57,21 +66,36 @@ export class IrisMessageStore implements OnDestroy {
     }
 
     private static exhaustiveCheck(action: never): void {
-        console.debug('You forgot to implement a case of MessageStoreAction: ' + action);
+        console.debug('You forgot to handle a case of MessageStoreAction: ' + action);
     }
 
-    private static storeReducer(state: MessageStoreState, action: MessageStoreAction): MessageStoreState {
-        switch (action.type) {
-            case ActionType.HISTORY_MESSAGE_LOADED:
-            case ActionType.ACTIVE_CONVERSATION_MESSAGE_LOADED:
-            case ActionType.STUDENT_MESSAGE_SENT:
-                return {
-                    messages: [action.message, ...state.messages],
-                };
-            default:
-                // @ts-ignore
-                this.exhaustiveCheck(action);
-                return state;
+    private storeReducer(state: MessageStoreState, action: MessageStoreAction): MessageStoreState {
+        if (state.sessionId == null && !isSessionIdReceivedAction(action)) {
+            throw new Error('You are trying to append messages to a conversation with an empty session id!');
         }
+
+        if (isHistoryMessageLoadedAction(action) || isActiveConversationMessageLoadedAction(action)) {
+            return {
+                messages: [action.message, ...state.messages],
+                sessionId: state.sessionId,
+            };
+        }
+        if (isSessionIdReceivedAction(action)) {
+            return {
+                messages: [],
+                sessionId: action.sessionId,
+            };
+        }
+        if (isStudentMessageSentAction(action)) {
+            // if sessionId is null then we have either an error or another action type
+            this.httpMessageService.createMessage(<number>state.sessionId, action.message);
+            return {
+                messages: [action.message, ...state.messages],
+                sessionId: state.sessionId,
+            };
+        }
+
+        IrisMessageStore.exhaustiveCheck(action);
+        return state;
     }
 }

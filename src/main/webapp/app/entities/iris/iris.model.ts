@@ -1,45 +1,42 @@
 import dayjs from 'dayjs';
-import { Exercise } from 'app/entities/exercise.model';
 import { User } from 'app/core/user/user.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 
-export class IrisConversation {
+export class IrisSession {
     id: number;
-    programmingExercise?: Exercise;
+    exercise?: ProgrammingExercise;
     user?: User;
-    latestMessageId?: string;
-    messageDescriptors: IrisMessageDescriptor[];
-    irisEnabled: boolean;
+    messages: IrisMessage[];
 }
 
 export enum IrisSender {
     SERVER = 'server',
     USER = 'user',
+    SYSTEM = 'system',
 }
 
-export class IrisServerMessageDescriptor {
-    messageId: number;
+export class IrisServerMessage {
+    id: number;
     sender: IrisSender.SERVER;
-    messageContent?: IrisMessageContent;
+    content: IrisMessageContent[];
     sentAt: dayjs.Dayjs;
     helpful?: boolean;
 }
 
-export class IrisClientMessageDescriptor {
+export class IrisClientMessage {
+    id?: number;
     sender: IrisSender.USER;
-    messageContent: IrisMessageContent;
-    messageId?: number;
+    content: IrisMessageContent;
     sentAt?: dayjs.Dayjs;
 }
 
-export type IrisMessageDescriptor = IrisClientMessageDescriptor | IrisServerMessageDescriptor;
+export type IrisMessage = IrisClientMessage | IrisServerMessage;
 
 export enum IrisMessageContentType {
-    SOURCE_CODE = 'source-code',
     TEXT = 'text',
-    IMAGE = 'image',
 }
 
 export class IrisMessageContent {
-    type: IrisMessageContentType;
-    content: string;
+    type: IrisMessageContentType.TEXT;
+    textContent: string;
 }
