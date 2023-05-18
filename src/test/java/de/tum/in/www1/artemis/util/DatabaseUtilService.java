@@ -4003,6 +4003,26 @@ public class DatabaseUtilService {
         return quizExercise;
     }
 
+    public QuizExercise createAndSaveTeamQuiz(ZonedDateTime releaseDate, ZonedDateTime dueDate, QuizMode quizMode, int minTeamSize, int maxTeamSize) {
+        QuizExercise quizExercise = createQuiz(releaseDate, dueDate, quizMode);
+        setupTeamExercise(quizExercise, minTeamSize, maxTeamSize);
+        quizExerciseRepository.save(quizExercise);
+
+        Team team = new Team();
+        team.setShortName("team");
+        teamRepo.save(quizExercise, team);
+        return quizExercise;
+    }
+
+    public void setupTeamExercise(QuizExercise quiz, int minTeamSize, int maxTeamSize) {
+        var teamAssignmentConfig = new TeamAssignmentConfig();
+        teamAssignmentConfig.setExercise(quiz);
+        teamAssignmentConfig.setMinTeamSize(minTeamSize);
+        teamAssignmentConfig.setMaxTeamSize(maxTeamSize);
+        quiz.setMode(ExerciseMode.TEAM);
+        quiz.setTeamAssignmentConfig(teamAssignmentConfig);
+    }
+
     // todo: put together
     public QuizExercise createQuiz(ZonedDateTime releaseDate, ZonedDateTime dueDate, QuizMode quizMode) {
         Course course = createAndSaveCourse(null, releaseDate == null ? null : releaseDate.minusDays(1), dueDate == null ? null : dueDate.plusDays(1), Set.of());
