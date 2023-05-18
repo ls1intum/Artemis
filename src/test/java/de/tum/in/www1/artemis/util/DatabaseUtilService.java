@@ -311,6 +311,9 @@ public class DatabaseUtilService {
     private TutorialGroupRepository tutorialGroupRepository;
 
     @Autowired
+    private SlideRepository slideRepository;
+
+    @Autowired
     private TutorialGroupRegistrationRepository tutorialGroupRegistrationRepository;
 
     @Autowired
@@ -928,6 +931,25 @@ public class DatabaseUtilService {
         attachmentOfAttachmentUnit.setAttachmentUnit(attachmentUnit);
         attachmentOfAttachmentUnit = attachmentRepository.save(attachmentOfAttachmentUnit);
         attachmentUnit.setAttachment(attachmentOfAttachmentUnit);
+        return attachmentUnitRepository.save(attachmentUnit);
+    }
+
+    public AttachmentUnit createAttachmentUnitWithSlides(int numberOfSlides) {
+        ZonedDateTime started = ZonedDateTime.now().minusDays(5);
+        Attachment attachmentOfAttachmentUnit = ModelFactory.generateAttachment(started);
+        AttachmentUnit attachmentUnit = new AttachmentUnit();
+        attachmentUnit.setDescription("Lorem Ipsum");
+        attachmentUnit = attachmentUnitRepository.save(attachmentUnit);
+        attachmentOfAttachmentUnit.setAttachmentUnit(attachmentUnit);
+        attachmentOfAttachmentUnit = attachmentRepository.save(attachmentOfAttachmentUnit);
+        attachmentUnit.setAttachment(attachmentOfAttachmentUnit);
+        for (int i = 1; i <= numberOfSlides; i++) {
+            Slide slide = new Slide();
+            slide.setSlideNumber(i);
+            slide.setSlideImagePath("path/to/slide" + i + ".png");
+            slide.setAttachmentUnit(attachmentUnit);
+            slideRepository.save(slide);
+        }
         return attachmentUnitRepository.save(attachmentUnit);
     }
 
