@@ -45,12 +45,16 @@ import { ResultService } from 'app/exercises/shared/result/result.service';
 import { MAX_RESULT_HISTORY_LENGTH } from 'app/overview/result-history/result-history.component';
 import { Course, isCommunicationEnabled } from 'app/entities/course.model';
 import { ExerciseCacheService } from 'app/exercises/shared/exercise/exercise-cache.service';
+import { IrisMessageStore } from 'app/iris/message-store.service';
+import { IrisSessionService } from 'app/iris/session.service';
+import { IrisSession } from 'app/entities/iris/iris.model';
+import { SessionIdReceivedAction } from 'app/iris/message-store.model';
 
 @Component({
     selector: 'jhi-course-exercise-details',
     templateUrl: './course-exercise-details.component.html',
     styleUrls: ['../course-overview.scss', '../tab-bar/tab-bar.scss'],
-    providers: [ExerciseCacheService],
+    providers: [ExerciseCacheService, IrisMessageStore],
 })
 export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     readonly AssessmentType = AssessmentType;
@@ -136,6 +140,8 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         private plagiarismCaseService: PlagiarismCasesService,
         private exerciseHintService: ExerciseHintService,
         private courseService: CourseManagementService,
+        private messageStore: IrisMessageStore,
+        private sessionService: IrisSessionService,
     ) {}
 
     ngOnInit() {
@@ -189,6 +195,9 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         });
         this.plagiarismCaseService.getPlagiarismCaseInfoForStudent(this.courseId, this.exerciseId).subscribe((res: HttpResponse<PlagiarismCaseInfo>) => {
             this.plagiarismCaseInfo = res.body ?? undefined;
+        });
+        this.sessionService.getCurrentSession(this.exerciseId).subscribe((session: HttpResponse<IrisSession>) => {
+            this.messageStore.dispatch(new SessionIdReceivedAction(session.body!.id));
         });
     }
 
