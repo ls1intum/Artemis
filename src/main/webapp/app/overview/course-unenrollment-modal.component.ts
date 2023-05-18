@@ -20,7 +20,7 @@ export class CourseUnenrollmentModalComponent {
     faCheck = faCheck;
     faXmark = faXmark;
 
-    public course?: Course;
+    public course: Course;
 
     constructor(private activeModal: NgbActiveModal, private courseService: CourseManagementService, private alertService: AlertService, private router: Router) {}
 
@@ -28,7 +28,7 @@ export class CourseUnenrollmentModalComponent {
      * Returns true if the student will be able to enroll again, otherwise false.
      */
     get canEnrollAgain() {
-        return this.course?.registrationEnabled && dayjs().isBefore(this.course?.enrollmentEndDate);
+        return this.course.registrationEnabled && dayjs().isBefore(this.course.enrollmentEndDate);
     }
 
     /**
@@ -43,7 +43,7 @@ export class CourseUnenrollmentModalComponent {
      */
     onUnenroll(): void {
         this.close();
-        this.courseService.unenrollFromCourse(this.course?.id!).subscribe({
+        this.courseService.unenrollFromCourse(this.course.id!).subscribe({
             next: () => {
                 this.alertService.success('artemisApp.studentDashboard.register.registerSuccessful');
                 this.router.navigate(['/']);
