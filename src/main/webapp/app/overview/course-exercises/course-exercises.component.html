@@ -193,7 +193,7 @@
                 <div class="col-8">{{ 'artemisApp.courseOverview.exerciseList.details.unenrollmentEndDate' | artemisTranslate }}</div>
                 <div class="col-4" style="text-align: end">{{ course?.unenrollmentEndDate | artemisDate }}</div>
             </div>
-            <div class="row" *ngIf="course?.unenrollmentEnabled && course?.unenrollmentEndDate">
+            <div class="row" *ngIf="canUnenroll">
                 <div class="col" style="text-align: end">
                     <button class="btn btn-danger" id="course-unenrollment-button" (click)="onUnenroll()">
                         <fa-icon [icon]="faXmark"></fa-icon>
