@@ -90,7 +90,13 @@ export class ExamParticipation {
     }
 
     clickSaveAndContinue() {
-        cy.get('#save').click();
+        cy.get('#save').then(($saveButton) => {
+            // Close all alert messages that might block the save button.
+            if (Cypress.$('jhi-close-circle').length > 0) {
+                cy.get('jhi-close-circle').click({ multiple: true });
+            }
+            $saveButton.click();
+        });
     }
 
     checkExerciseTitle(exerciseID: number, title: string) {
