@@ -584,7 +584,8 @@ public class CourseService {
     /**
      * Fetches Course Management Detail View data from repository and returns a DTO
      *
-     * @param course the course for with the details should be calculated
+     * @param course       the course for with the details should be calculated
+     * @param gradingScale the grading scale for the course
      * @return The DTO for the course management detail view
      */
     public CourseManagementDetailViewDTO getStatsForDetailView(Course course, GradingScale gradingScale) {

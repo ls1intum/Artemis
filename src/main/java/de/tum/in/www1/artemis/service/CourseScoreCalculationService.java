@@ -184,8 +184,9 @@ public class CourseScoreCalculationService {
      * Get all the items needed for the CourseForDashboardDTO.
      * This includes scoresPerExerciseType and participationResults.
      *
-     * @param course the course to calculate the items for.
-     * @param userId the id of the students whose scores in the course will be calculated.
+     * @param course       the course to calculate the items for.
+     * @param gradingScale the grading scale with the presentation configuration to use for calculating the presentation points.
+     * @param userId       the id of the students whose scores in the course will be calculated.
      * @return the CourseForDashboardDTO containing all the mentioned items.
      */
     public CourseForDashboardDTO getScoresAndParticipationResults(Course course, GradingScale gradingScale, long userId) {
@@ -285,6 +286,7 @@ public class CourseScoreCalculationService {
      * and takes the effects of related plagiarism verdicts on the grade into account.
      *
      * @param course                  the course the scores are calculated for.
+     * @param gradingScale            the grading scale of the course.
      * @param studentId               the id of the student who has participated in the course exercises.
      * @param participationsOfStudent should be non-empty. The exercise participations of the given student.
      * @param maxAndReachablePoints   max points and max reachable points in the given course.

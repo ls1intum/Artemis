@@ -115,6 +115,7 @@ public class PresentationPointsCalculationService {
      *
      * @param gradingScale        the grading scale for which the reachable presentation points should be calculated
      * @param baseReachablePoints the maximum points that can be received in the course without presentation points
+     * @return the reachable presentation points for the course
      */
     public double calculateReachablePresentationPoints(GradingScale gradingScale, double baseReachablePoints) {
         // return 0 if reachable points are 0
