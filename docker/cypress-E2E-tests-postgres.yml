@@ -41,6 +41,9 @@ services:
         extends:
             file: ./cypress.yml
             service: artemis-cypress
+        depends_on:
+            artemis-app:
+                condition: service_healthy
 
 networks:
     artemis:

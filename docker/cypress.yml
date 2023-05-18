@@ -7,9 +7,6 @@ services:
         # Cypress image with node and chrome browser installed (Cypress installation needs to be done separately because we require additional dependencies)
         image: docker.io/cypress/browsers:node18.12.0-chrome107
         pull_policy: always
-        depends_on:
-            artemis-app:
-                condition: service_healthy
         environment:
             CYPRESS_baseUrl: "https://artemis-nginx"
             CYPRESS_video: "${bamboo_cypress_video_enabled}"
