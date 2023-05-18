@@ -2378,7 +2378,6 @@ public class DatabaseUtilService {
         return exerciseRepo.save(fileUploadExercise);
     }
 
-    // todo: oof, work
     public ExerciseGroup addExerciseGroupWithExamAndCourse(boolean mandatory) {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         Exam exam = ModelFactory.generateExam(course);
@@ -2401,6 +2400,16 @@ public class DatabaseUtilService {
 
         assertThat(examDB.getCourse().getId()).as("exam and course are linked correctly").isEqualTo(courseDB.getId());
         assertThat(exerciseGroupDB.getExam().getId()).as("exerciseGroup and exam are linked correctly").isEqualTo(examDB.getId());
+
+        return exerciseGroup;
+    }
+
+    // TODO: javadoc
+    public ExerciseGroup createAndSaveExerciseGroup(boolean mandatory) {
+        Course course = createAndSaveCourse(1L, pastTimestamp, futureFutureTimestamp, Set.of());
+        Exam exam = ModelFactory.generateExam(course);
+        ExerciseGroup exerciseGroup = ModelFactory.generateExerciseGroup(mandatory, exam);
+        examRepository.save(exam);
 
         return exerciseGroup;
     }
