@@ -3,7 +3,6 @@ import { faCommentDots } from '@fortawesome/free-solid-svg-icons';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { ChatbotPopupComponent } from './chatbot-popup/chatbot-popup.component';
 import { ExerciseChatWidgetComponent } from 'app/overview/exercise-chatbot/exercise-chatwidget/exercise-chat-widget.component';
-import { NavigationStart, Router } from '@angular/router';
 
 @Component({
     selector: 'jhi-exercise-chatbot',
@@ -18,14 +17,12 @@ export class ExerciseChatbotComponent {
     // Icons
     faCommentDots = faCommentDots;
 
-    constructor(private dialog: MatDialog, private router: Router) {
-        this.router.events.subscribe((event) => {
-            if (event instanceof NavigationStart) {
-                if (this.dialogRef) {
-                    this.dialogRef.close();
-                }
-            }
-        });
+    constructor(private dialog: MatDialog) {}
+
+    ngOnDestroy() {
+        if (this.dialogRef) {
+            this.dialogRef.close();
+        }
     }
 
     handleButtonClick() {
