@@ -4025,11 +4025,17 @@ public class DatabaseUtilService {
      * @return quiz that was created
      */
     public QuizExercise createAndSaveQuiz(ZonedDateTime releaseDate, ZonedDateTime dueDate, QuizMode quizMode) {
+        QuizExercise quizExercise = createQuiz(releaseDate, dueDate, quizMode);
+        quizExerciseRepository.save(quizExercise);
+
+        return quizExercise;
+    }
+
+    public QuizExercise createQuiz(ZonedDateTime releaseDate, ZonedDateTime dueDate, QuizMode quizMode) {
         Course course = createAndSaveCourse(null, releaseDate == null ? null : releaseDate.minusDays(1), dueDate == null ? null : dueDate.plusDays(1), Set.of());
 
         QuizExercise quizExercise = ModelFactory.generateQuizExercise(releaseDate, dueDate, quizMode, course);
         initializeQuizExercise(quizExercise);
-        quizExerciseRepository.save(quizExercise);
 
         return quizExercise;
     }
@@ -4042,6 +4048,7 @@ public class DatabaseUtilService {
         Team team = new Team();
         team.setShortName("team");
         teamRepo.save(quizExercise, team);
+
         return quizExercise;
     }
 
@@ -4052,16 +4059,6 @@ public class DatabaseUtilService {
         teamAssignmentConfig.setMaxTeamSize(maxTeamSize);
         quiz.setMode(ExerciseMode.TEAM);
         quiz.setTeamAssignmentConfig(teamAssignmentConfig);
-    }
-
-    // todo: put together
-    public QuizExercise createQuiz(ZonedDateTime releaseDate, ZonedDateTime dueDate, QuizMode quizMode) {
-        Course course = createAndSaveCourse(null, releaseDate == null ? null : releaseDate.minusDays(1), dueDate == null ? null : dueDate.plusDays(1), Set.of());
-
-        QuizExercise quizExercise = ModelFactory.generateQuizExercise(releaseDate, dueDate, quizMode, course);
-        initializeQuizExercise(quizExercise);
-
-        return quizExercise;
     }
 
     /**
@@ -4097,6 +4094,7 @@ public class DatabaseUtilService {
 
         QuizExercise quizExercise = ModelFactory.generateQuizExerciseForExam(exerciseGroup);
         initializeQuizExercise(quizExercise);
+
         quizExerciseRepository.save(quizExercise);
 
         return quizExercise;
@@ -4113,11 +4111,9 @@ public class DatabaseUtilService {
         userRepo.save(user);
     }
 
-    @NotNull
-    public QuizExercise createQuizWithQuizBatchedExercises(Course course, ZonedDateTime releaseDate, ZonedDateTime dueDate, QuizMode quizMode) {
-        QuizExercise quizExerciseWithQuizBatches = ModelFactory.generateQuizExerciseWithQuizBatches(releaseDate, dueDate, quizMode, course);
-        initializeQuizExercise(quizExerciseWithQuizBatches);
-        return quizExerciseWithQuizBatches;
+    public void renameAndSaveQuiz(QuizExercise quizExercise, String newTitle) {
+        quizExercise.setTitle(newTitle);
+        quizExerciseRepository.save(quizExercise);
     }
 
     @NotNull
