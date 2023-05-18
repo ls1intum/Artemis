@@ -3,7 +3,7 @@
 # ----------------------------------------------------------------------------------------------------------------------
 
 services:
-    postgresql:
+    postgres:
         extends:
             file: ./postgresql.yml
             service: postgresql
