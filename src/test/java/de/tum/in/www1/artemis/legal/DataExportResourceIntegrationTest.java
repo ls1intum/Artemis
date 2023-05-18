@@ -35,6 +35,7 @@ import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.programmingexercise.ProgrammingExerciseTestService;
 import de.tum.in.www1.artemis.repository.DataExportRepository;
 import de.tum.in.www1.artemis.repository.ExamRepository;
+import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.DataExportService;
 import de.tum.in.www1.artemis.service.connectors.apollon.ApollonConversionService;
@@ -72,6 +73,9 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @Autowired
     private ExamRepository examRepository;
+
+    @Autowired
+    private StudentExamRepository studentExamRepository;
 
     @MockBean
     private ApollonConversionService apollonConversionService;
@@ -160,9 +164,15 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
         var studentExam = database.addStudentExamWithUser(exam, userForExport);
         studentExam = database.addExercisesWithParticipationsAndSubmissionsToStudentExam(exam, studentExam, validModel,
                 programmingExerciseTestService.studentRepo.localRepoFile.toURI());
-        var programmingExercise = studentExam.getExercises().get(4);
-        database.addResultToSubmission(submission2, AssessmentType.AUTOMATIC, null, 3.0, true, ZonedDateTime.now().minusMinutes(2));
+        studentExam = studentExamRepository.findWithExercisesParticipationsSubmissionsResultsAndFeedbacksByUserIdAndExamId(userForExport.getId(), exam.getId()).get();
 
+        var submission = studentExam.getExercises().get(0).getStudentParticipations().iterator().next().getSubmissions().iterator().next();
+        database.addResultToSubmission(submission, AssessmentType.AUTOMATIC, null, 3.0, true, ZonedDateTime.now().minusMinutes(2));
+        var feedback = new Feedback();
+        feedback.setCredits(1.0);
+        feedback.setDetailText("detailed feedback");
+        feedback.setText("feedback");
+        database.addFeedbackToResult(feedback, submission.getFirstResult());
         Repository studentRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(programmingExerciseTestService.studentRepo.localRepoFile.toPath(), null);
         doReturn(studentRepository).when(gitService).getOrCheckoutRepository(any(), anyString(), anyBoolean());
     }

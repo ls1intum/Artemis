@@ -157,11 +157,12 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
                 LEFT JOIN FETCH e.studentParticipations sp
                 LEFT JOIN FETCH sp.submissions s
                 LEFT JOIN FETCH s.results r
+                LEFT JOIN FETCH r.feedbacks f
             WHERE se.exam.id = :examId
             	AND se.user.id = sp.student.id
                 AND se.user.id = :userId
             """)
-    Optional<StudentExam> findWithExercisesParticipationsSubmissionsResultsByUserIdAndExamId(@Param("userId") long userId, @Param("examId") long examId);
+    Optional<StudentExam> findWithExercisesParticipationsSubmissionsResultsAndFeedbacksByUserIdAndExamId(@Param("userId") long userId, @Param("examId") long examId);
 
     @Query("""
             SELECT DISTINCT se

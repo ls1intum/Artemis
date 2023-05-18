@@ -221,7 +221,7 @@ public class DataExportService {
 
     private void createExportForExams(long userId, Set<Exam> exams, Path courseWorkingDir) throws IOException {
         for (var exam : exams) {
-            Optional<StudentExam> studentExam = studentExamRepository.findWithExercisesParticipationsSubmissionsResultsByUserIdAndExamId(userId, exam.getId());
+            Optional<StudentExam> studentExam = studentExamRepository.findWithExercisesParticipationsSubmissionsResultsAndFeedbacksByUserIdAndExamId(userId, exam.getId());
             if (studentExam.isPresent()) {
                 var examWorkingDir = Files.createDirectory(courseWorkingDir.resolve("exam_" + exam.getId()));
                 createStudentExamExport(studentExam.get(), examWorkingDir);
