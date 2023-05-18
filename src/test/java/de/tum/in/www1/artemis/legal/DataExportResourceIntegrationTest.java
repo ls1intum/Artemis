@@ -32,6 +32,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.programmingexercise.ProgrammingExerciseTestService;
 import de.tum.in.www1.artemis.repository.DataExportRepository;
 import de.tum.in.www1.artemis.repository.ExamRepository;
@@ -154,7 +155,7 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
         doReturn(studentRepository).when(gitService).getOrCheckoutRepository(eq(participation.getVcsRepositoryUrl()), anyString(), anyBoolean());
     }
 
-    private void prepareExamDataForDataExportCreation() throws Exception {
+    private Exam prepareExamDataForDataExportCreation() throws Exception {
         String validModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
         var userForExport = userRepository.findOneByLogin(TEST_PREFIX + "student1").get();
         var course = database.createCourseWithCustomStudentUserGroupWithExamAndExerciseGroupAndExercises(userForExport, TEST_PREFIX + "student", true);
@@ -175,6 +176,17 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
         database.addFeedbackToResult(feedback, submission.getFirstResult());
         Repository studentRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(programmingExerciseTestService.studentRepo.localRepoFile.toPath(), null);
         doReturn(studentRepository).when(gitService).getOrCheckoutRepository(any(), anyString(), anyBoolean());
+        return exam;
+    }
+
+    private void prepareExamDataWithResultPublicationDateInTheFuture() throws Exception {
+        var exam = prepareExamDataForDataExportCreation();
+        exam.setPublishResultsDate(ZonedDateTime.now().plusDays(1));
+        examRepository.save(exam);
+    }
+
+    private void assertNoResultsFile(Path exerciseDirPath) {
+        assertThat(exerciseDirPath).isDirectoryNotContaining(path -> path.getFileName().toString().endsWith(FILE_FORMAT_TXT) && path.getFileName().toString().contains("result"));
     }
 
     private void assertCorrectContentForExercise(Path exerciseDirPath) {
@@ -237,6 +249,20 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationBambooB
         var examDirPath = getCourseOrExamDirectoryPath(courseDirPath);
         getExerciseDirectoryPaths(examDirPath).forEach(this::assertCorrectContentForExercise);
 
+    }
+
+    @Test
+    void resultsPublicationDateInTheFuture_noResultsLeaked() throws Exception {
+        prepareExamDataWithResultPublicationDateInTheFuture();
+        var userForExport = userRepository.findOneByLogin(TEST_PREFIX + "student1").get();
+        var dataExport = request.putWithResponseBody("/api/" + userForExport.getId() + "/data-export", null, DataExport.class, HttpStatus.OK);
+        var dataExportFromDb = dataExportRepository.findByIdElseThrow(dataExport.getId());
+        zipFileTestUtilService.extractZipFileRecursively(dataExportFromDb.getFilePath());
+        Path extractedZipDirPath = Path.of(dataExportFromDb.getFilePath().substring(0, dataExportFromDb.getFilePath().length() - 4));
+        var courseDirPath = getCourseOrExamDirectoryPath(extractedZipDirPath);
+        assertThat(courseDirPath).isDirectoryContaining(path -> path.getFileName().toString().startsWith("exam"));
+        var examDirPath = getCourseOrExamDirectoryPath(courseDirPath);
+        getExerciseDirectoryPaths(examDirPath).forEach(this::assertNoResultsFile);
     }
 
     @Test

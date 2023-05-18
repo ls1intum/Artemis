@@ -339,8 +339,9 @@ public class DataExportService {
                 else if (submission instanceof QuizSubmission) {
                     createQuizAnswersExport((QuizExercise) exercise, participation, exerciseDir);
                 }
-
-                createResultsTxtFile(submission, exerciseDir);
+                if (exercise.isExamExercise() && exercise.getExamViaExerciseGroupOrCourseMember().resultsPublished()) {
+                    createResultsTxtFile(submission, exerciseDir);
+                }
             }
         }
     }
