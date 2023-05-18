@@ -12,7 +12,7 @@ import {
 import { IrisHttpMessageService } from 'app/iris/http-message.service';
 
 /**
- * Provides a store to manage message-related state data and dispatch actions.
+ * Provides a component level store to manage message-related state data and dispatch actions.
  */
 @Injectable()
 export class IrisMessageStore implements OnDestroy {

@@ -5,7 +5,10 @@ import { IrisSession } from 'app/entities/iris/iris.model';
 
 type EntityResponseType = HttpResponse<IrisSession>;
 
-@Injectable()
+/**
+ * Provides a singleton instance of http client to manage IRIS sessions
+ */
+@Injectable({ providedIn: 'root' })
 export class IrisSessionService {
     public resourceUrl = 'api/iris/';
 

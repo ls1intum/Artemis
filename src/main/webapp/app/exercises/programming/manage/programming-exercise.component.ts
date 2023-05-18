@@ -38,12 +38,10 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 import { ExerciseImportWrapperComponent } from 'app/exercises/shared/import/exercise-import-wrapper/exercise-import-wrapper.component';
-import { IrisMessageStore } from 'app/iris/message-store.service';
 
 @Component({
     selector: 'jhi-programming-exercise',
     templateUrl: './programming-exercise.component.html',
-    providers: [IrisMessageStore],
 })
 export class ProgrammingExerciseComponent extends ExerciseComponent implements OnInit, OnDestroy {
     @Input() programmingExercises: ProgrammingExercise[];
@@ -86,7 +84,6 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
         private router: Router,
         private sortService: SortService,
         private profileService: ProfileService,
-        private irisMessageStore: IrisMessageStore,
         courseService: CourseManagementService,
         translateService: TranslateService,
         eventManager: EventManager,

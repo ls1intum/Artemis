@@ -6,6 +6,9 @@ import { IrisClientMessage, IrisMessage } from 'app/entities/iris/iris.model';
 type EntityResponseType = HttpResponse<IrisMessage>;
 type EntityArrayResponseType = HttpResponse<IrisMessage[]>;
 
+/**
+ * Provides a singleton instance of http client to perform CRUD operations.
+ */
 @Injectable({ providedIn: 'root' })
 export class IrisHttpMessageService {
     public resourceUrl = 'api/iris/sessions';
