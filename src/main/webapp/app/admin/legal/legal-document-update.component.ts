@@ -104,7 +104,6 @@ export class LegalDocumentUpdateComponent implements OnInit, AfterContentChecked
     }
 
     checkUnsavedChanges(content: string) {
-        this.markdownEditor.markdown = content;
         this.unsavedChanges = content !== this.legalDocument.text;
     }
 
@@ -112,7 +111,6 @@ export class LegalDocumentUpdateComponent implements OnInit, AfterContentChecked
         if (this.unsavedChanges) {
             this.showWarning(legalDocumentLanguage);
         } else {
-            this.unsavedChanges = false;
             this.markdownEditor.markdown = '';
             this.currentLanguage = legalDocumentLanguage;
             this.getLegalDocumentForUpdate(this.legalDocumentType, legalDocumentLanguage).subscribe((document) => {
