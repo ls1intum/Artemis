@@ -14,6 +14,8 @@ Artemis supports native mobile applications available for both `Android <https:/
 
 The mobile applications have been designed to be compatible with all Artemis instances. Therefore, users of all Artemis instances can use the mobile application provided by us. Nevertheless, it is possible to fork our implementations and to release your own versions of the native applications.
 
+Below, we only explain the functionalities of the native applications that differ or are not present in the web application. For all other features supported by both the native applications and the web application, please refer to their associated documentation.
+
 Both use native user interface components and are adapted to their associated operating system. Therefore, they can differ in their usage. For these reasons, we explain both systems separately in the following.
 
 Android Application
@@ -71,7 +73,17 @@ Users may receive push notifications on their Android clients. When first loggin
   .. image:: native-applications/android/initial_login_notification_configuration.png
             :width: 400
 
-When logged in, users
+When logged in, users can navigate to the application settings to change their push notification settings:
+
+  .. image:: native-applications/android/settings_push.png
+            :width: 400
+
+In this screen, users can choose which notification types to receive as push notifications, and can enable/disable push notifications for this device.
+
+  .. image:: native-applications/android/settings_push_detail.png
+            :width: 400
+
+
 Problems
 """"""""
 
