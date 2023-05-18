@@ -26,15 +26,15 @@ public class ParticipantScoreService {
 
     private final GradingScaleService gradingScaleService;
 
-    private final PresentationCalculationService presentationCalculationService;
+    private final PresentationPointsCalculationService presentationPointsCalculationService;
 
     public ParticipantScoreService(UserRepository userRepository, StudentScoreRepository studentScoreRepository, TeamScoreRepository teamScoreRepository,
-            GradingScaleService gradingScaleService, PresentationCalculationService presentationCalculationService) {
+            GradingScaleService gradingScaleService, PresentationPointsCalculationService presentationPointsCalculationService) {
         this.userRepository = userRepository;
         this.studentScoreRepository = studentScoreRepository;
         this.teamScoreRepository = teamScoreRepository;
         this.gradingScaleService = gradingScaleService;
-        this.presentationCalculationService = presentationCalculationService;
+        this.presentationPointsCalculationService = presentationPointsCalculationService;
     }
 
     /**
@@ -95,7 +95,7 @@ public class ParticipantScoreService {
         double regularAchievablePoints = exercisesToConsider.stream().filter(exercise -> exercise.getIncludedInOverallScore() == IncludedInOverallScore.INCLUDED_COMPLETELY)
                 .map(Exercise::getMaxPoints).reduce(0.0, Double::sum);
         GradingScale gradingScale = gradingScaleService.findGradingScaleByCourseId(course.getId()).orElse(null);
-        double achievablePresentationPoints = presentationCalculationService.calculateReachablePresentationPoints(gradingScale, regularAchievablePoints);
+        double achievablePresentationPoints = presentationPointsCalculationService.calculateReachablePresentationPoints(gradingScale, regularAchievablePoints);
         regularAchievablePoints += achievablePresentationPoints;
 
         return calculateScores(exercisesToConsider, usersOfCourse, regularAchievablePoints, achievablePresentationPoints, gradingScale);
@@ -142,9 +142,11 @@ public class ParticipantScoreService {
             }
         }
 
+        // add presentationPoints to ScoreDTOs
+        presentationPointsCalculationService.addPresentationPointsToScoreDTOs(gradingScale, userIdToScores.values(), achievablePresentationPoints);
+
         // calculating achieved score
         for (ScoreDTO scoreDTO : userIdToScores.values()) {
-            scoreDTO.pointsAchieved += presentationCalculationService.calculatePresentationPointsForStudentId(gradingScale, scoreDTO.studentId, achievablePresentationPoints);
             scoreDTO.scoreAchieved = roundScoreSpecifiedByCourseSettings((scoreDTO.pointsAchieved / scoreCalculationDenominator) * 100.0, course);
             // sending this for debugging purposes to find out why the scores' calculation could be wrong
             scoreDTO.regularPointsAchievable = scoreCalculationDenominator;

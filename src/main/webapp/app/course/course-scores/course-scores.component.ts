@@ -535,7 +535,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
      * Sets the grading scale
      * @param gradingScale
      */
-    private setUpGradingScale(gradingScale: GradingScale) {
+    setUpGradingScale(gradingScale: GradingScale) {
         this.gradingScaleExists = true;
         this.gradingScale = gradingScale;
         this.gradingScale.gradeSteps = this.gradingSystemService.sortGradeSteps(this.gradingScale.gradeSteps);

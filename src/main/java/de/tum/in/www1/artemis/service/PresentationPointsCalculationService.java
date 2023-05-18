@@ -1,37 +1,26 @@
 package de.tum.in.www1.artemis.service;
 
 import static de.tum.in.www1.artemis.service.util.RoundingUtil.roundScoreSpecifiedByCourseSettings;
+import static java.util.stream.Collectors.toSet;
 
-import java.util.HashMap;
+import java.util.Collection;
 import java.util.Map;
+import java.util.Set;
 
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.GradingScale;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
+import de.tum.in.www1.artemis.web.rest.dto.ScoreDTO;
 
 @Service
-public class PresentationCalculationService {
+public class PresentationPointsCalculationService {
 
     private final StudentParticipationRepository studentParticipationRepository;
 
-    public PresentationCalculationService(StudentParticipationRepository studentParticipationRepository) {
+    public PresentationPointsCalculationService(StudentParticipationRepository studentParticipationRepository) {
         this.studentParticipationRepository = studentParticipationRepository;
-    }
-
-    /**
-     * Counts the number of presentations for a single student, referred to as the presentationScore for basic
-     * presentations.
-     *
-     * @param course    the course for which the presentation score should be calculated
-     * @param studentId the student for which the presentation score should be calculated
-     * @return the basic presentation score for a single student.
-     */
-    public double calculateBasicPresentationScoreForStudent(Course course, long studentId) {
-        double presentationCount = studentParticipationRepository.countNonZeroPresentationsByStudentIdAndCourseId(course.getId(), studentId);
-
-        return roundScoreSpecifiedByCourseSettings(presentationCount, course);
     }
 
     /**
@@ -44,6 +33,11 @@ public class PresentationCalculationService {
      * @return the presentation points for a single student.
      */
     public double calculatePresentationPointsForStudentId(GradingScale gradingScale, long studentId, double reachablePresentationPoints) {
+        // return 0 if grading scale is not set
+        if (gradingScale == null) {
+            return 0.0;
+        }
+
         Course course = gradingScale.getCourse();
         if (course == null) {
             return 0.0;
@@ -52,6 +46,35 @@ public class PresentationCalculationService {
         double presentationPointSum = studentParticipationRepository.sumPresentationScoreByStudentIdAndCourseId(course.getId(), studentId);
 
         return calculatePresentationPoints(gradingScale, reachablePresentationPoints, presentationPointSum);
+    }
+
+    /**
+     * Adds the presentation points to the ScoreDTOs given the gradingScale, the reachable presentation points of the
+     * course, and the presentationsWeight of the courses GradingScale.
+     *
+     * @param gradingScale                the grading scale with the presentation configuration
+     * @param ScoreDTOs                   the ScoreDTOs to which the presentation points should be added
+     * @param reachablePresentationPoints the reachable presentation points in the given course.
+     */
+    public void addPresentationPointsToScoreDTOs(GradingScale gradingScale, Collection<ScoreDTO> ScoreDTOs, double reachablePresentationPoints) {
+        // return if grading scale is not set
+        if (gradingScale == null) {
+            return;
+        }
+
+        Course course = gradingScale.getCourse();
+        if (course == null) {
+            return;
+        }
+
+        Set<Long> studentIds = ScoreDTOs.stream().map(scoreDTO -> scoreDTO.studentId).collect(toSet());
+        Map<Long, Double> studentIdToPresentationPointSum = studentParticipationRepository.mapStudentIdToPresentationScoreSumByCourseIdAndStudentIds(course.getId(), studentIds);
+
+        ScoreDTOs.forEach(scoreDTO -> {
+            double presentationScoreSum = studentIdToPresentationPointSum.getOrDefault(scoreDTO.studentId, 0.0);
+            double presentationPoints = calculatePresentationPoints(gradingScale, reachablePresentationPoints, presentationScoreSum);
+            scoreDTO.pointsAchieved += presentationPoints;
+        });
     }
 
     /**
@@ -64,7 +87,7 @@ public class PresentationCalculationService {
      * @return the presentation points for a single student.
      */
     private double calculatePresentationPoints(GradingScale gradingScale, double reachablePresentationPoints, double presentationScoreSum) {
-        // return 0 if grading scale is not set for graded presentations
+        // return 0 if grading scale is not set
         if (gradingScale == null) {
             return 0.0;
         }
@@ -99,7 +122,7 @@ public class PresentationCalculationService {
             return 0.0;
         }
 
-        // return 0 if grading scale is not set for graded presentations
+        // return 0 if grading scale is not set
         if (gradingScale == null) {
             return 0.0;
         }
@@ -115,49 +138,5 @@ public class PresentationCalculationService {
         double reachablePresentationPoints = reachablePointsWithPresentation * presentationsWeight / 100.0;
 
         return roundScoreSpecifiedByCourseSettings(reachablePresentationPoints, course);
-    }
-
-    public Map<Long, Double> mapCourseIdToReachablePresentationPoints(Map<GradingScale, Double> gradingScaleToBaseReachablePoints) {
-        Map<Long, Double> courseIdToReachablePresentationPoints = new HashMap<>();
-
-        for (var entry : gradingScaleToBaseReachablePoints.entrySet()) {
-            if (entry.getKey() == null || entry.getValue() == null) {
-                continue;
-            }
-
-            GradingScale gradingScale = entry.getKey();
-            double baseReachablePoints = entry.getValue();
-
-            if (gradingScale.getCourse() == null) {
-                continue;
-            }
-
-            double reachablePresentationPoints = calculateReachablePresentationPoints(gradingScale, baseReachablePoints);
-            courseIdToReachablePresentationPoints.put(gradingScale.getCourse().getId(), reachablePresentationPoints);
-        }
-
-        return courseIdToReachablePresentationPoints;
-    }
-
-    public Map<Long, Double> mapCourseIdToPresentationPointsGivenStudentId(Map<GradingScale, Double> gradingScaleToBaseReachablePoints) {
-        Map<Long, Double> courseIdToReachablePresentationPoints = new HashMap<>();
-
-        for (var entry : gradingScaleToBaseReachablePoints.entrySet()) {
-            if (entry.getKey() == null || entry.getValue() == null) {
-                continue;
-            }
-
-            GradingScale gradingScale = entry.getKey();
-            double baseReachablePoints = entry.getValue();
-
-            if (gradingScale.getCourse() == null) {
-                continue;
-            }
-
-            double reachablePresentationPoints = calculateReachablePresentationPoints(gradingScale, baseReachablePoints);
-            courseIdToReachablePresentationPoints.put(gradingScale.getCourse().getId(), reachablePresentationPoints);
-        }
-
-        return courseIdToReachablePresentationPoints;
     }
 }

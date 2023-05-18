@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.repository;
 
+import static java.util.stream.Collectors.toMap;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.time.ZonedDateTime;
@@ -976,17 +977,46 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                  AND p.presentationScore IS NOT NULL
                  AND (p.student.id = :studentId OR ts.id = :studentId)
             """)
-    double sumPresentationScoreByStudentIdAndCourseId(@Param("courseId") Long courseId, @Param("studentId") Long studentId);
+    double sumPresentationScoreByStudentIdAndCourseId(@Param("courseId") long courseId, @Param("studentId") long studentId);
 
     @Query("""
-            SELECT COUNT(p)
+            SELECT COALESCE(p.student.id, ts.id) AS id, COALESCE(SUM(p.presentationScore), 0) AS presentationScoreSum
             FROM StudentParticipation p
             LEFT JOIN p.team.students ts
             WHERE p.exercise.course.id = :courseId
                  AND p.presentationScore IS NOT NULL
-                 AND (p.student.id = :studentId OR ts.id = :studentId)
+                 AND (p.student.id IN :studentIds OR ts.id IN :studentIds)
+            GROUP BY COALESCE(p.student.id, ts.id)
             """)
-    double countAllPresentationsByStudentIdAndCourseId(@Param("courseId") Long courseId, @Param("studentId") Long studentId);
+    Set<IdToPresentationScoreSum> sumPresentationScoreByStudentIdsAndCourseId(@Param("courseId") long courseId, @Param("studentIds") Set<Long> studentIds);
+
+    interface IdToPresentationScoreSum {
+
+        long getId();
+
+        double getPresentationScoreSum();
+    }
+
+    default Map<Long, Double> mapStudentIdToPresentationScoreSumByCourseIdAndStudentIds(long courseId, Set<Long> studentIds) {
+        return sumPresentationScoreByStudentIdsAndCourseId(courseId, studentIds).stream()
+                .collect(toMap(IdToPresentationScoreSum::getId, IdToPresentationScoreSum::getPresentationScoreSum));
+    }
+
+    @Query("""
+            SELECT p.exercise.course.id AS id, COALESCE(SUM(p.presentationScore), 0) AS presentationScoreSum
+            FROM StudentParticipation p
+            LEFT JOIN p.team.students ts
+            WHERE p.exercise.course.id IN :courseIds
+                 AND p.presentationScore IS NOT NULL
+                 AND (p.student.id IN :studentId OR ts.id IN :studentId)
+            GROUP BY p.exercise.course.id
+            """)
+    Set<IdToPresentationScoreSum> sumPresentationScoreByStudentIdAndCourseIds(@Param("courseIds") Set<Long> courseIds, @Param("studentId") long studentId);
+
+    default Map<Long, Double> mapCourseIdToPresentationScoreSumByCourseIdsAndStudentId(Set<Long> courseIds, long studentId) {
+        return sumPresentationScoreByStudentIdAndCourseIds(courseIds, studentId).stream()
+                .collect(toMap(IdToPresentationScoreSum::getId, IdToPresentationScoreSum::getPresentationScoreSum));
+    }
 
     @Query("""
             SELECT COUNT(p)
@@ -997,7 +1027,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                  AND (p.student.id = :studentId OR ts.id = :studentId)
                  AND p.presentationScore > 0.0
             """)
-    double countNonZeroPresentationsByStudentIdAndCourseId(@Param("courseId") Long courseId, @Param("studentId") Long studentId);
+    double countNonZeroPresentationsByStudentIdAndCourseId(@Param("courseId") long courseId, @Param("studentId") long studentId);
 
     @Query("""
             SELECT COALESCE(AVG(p.presentationScore), 0)
@@ -1005,7 +1035,6 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             LEFT JOIN p.team.students ts
             WHERE p.exercise.course.id = :courseId
                  AND p.presentationScore IS NOT NULL
-                 AND (p.student.id = :studentId OR ts.id = :studentId)
             """)
-    double getAvgPresentationScoreByCourseId(@Param("courseId") Long courseId);
+    double getAvgPresentationScoreByCourseId(@Param("courseId") long courseId);
 }

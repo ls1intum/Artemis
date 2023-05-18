@@ -2,10 +2,7 @@ package de.tum.in.www1.artemis.repository;
 
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 import javax.validation.constraints.NotNull;
 
@@ -163,6 +160,19 @@ public interface GradingScaleRepository extends JpaRepository<GradingScale, Long
                 OR gs.exam.title LIKE %:partialTitle%)
             """)
     Page<GradingScale> findWithBonusGradeTypeByTitleInCourseOrExamForAdmin(@Param("partialTitle") String partialTitle, Pageable pageable);
+
+    /**
+     * Find grading scales for courses
+     *
+     * @param courseIds the courses to which the grading scales belong
+     * @return a set of grading scales for the courses
+     */
+    @Query("""
+                SELECT gradingScale
+                FROM GradingScale gradingScale
+                WHERE gradingScale.course.id IN :courseIds
+            """)
+    Set<GradingScale> findAllByCourseIds(@Param("courseIds") Set<Long> courseIds);
 
     @EntityGraph(type = LOAD, attributePaths = "bonusFrom")
     Optional<GradingScale> findWithEagerBonusFromByBonusFromId(@Param("bonusId") Long bonusId);

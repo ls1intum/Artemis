@@ -38,13 +38,13 @@ class DatabaseQueryCountTest extends AbstractSpringIntegrationBambooBitbucketJir
             var userCourses = request.getList("/api/courses/for-dashboard", HttpStatus.OK, Course.class);
             log.info("Finish courses for dashboard call for multiple courses");
             return userCourses;
-        }).hasBeenCalledAtMostTimes(27);
+        }).hasBeenCalledAtMostTimes(18);
         // 1 DB call to get the user from the DB
         // 1 DB call to get the course with exercise, lectures
         // 1 DB call to load all exercises
         // 1 DB call to load all exams
         // 10 DB calls to get the quiz batches for active quiz exercises
-        // 10 DB calls to get the presentation configuration for each course
+        // 1 DB call to get all grading scales for presentation configurations
         // 1 DB call to get all individual student participations with submissions and results
         // 1 DB call to get all team student participations with submissions and results
         // 1 DB call to get all plagiarism cases
@@ -64,7 +64,7 @@ class DatabaseQueryCountTest extends AbstractSpringIntegrationBambooBitbucketJir
         // 1 DB call to load all prerequisite
         // 1 DB call to load all tutorial groups
         // 1 DB call to load the tutorial group configuration
-        // 1 DB call to get the presentation configuration
+        // 1 DB call to get the grading scale for presentation configuration
         // 1 DB call to get all individual student participations with submissions and results
         // 1 DB call to get all team student participations with submissions and results
         // 1 DB call to get all plagiarism cases

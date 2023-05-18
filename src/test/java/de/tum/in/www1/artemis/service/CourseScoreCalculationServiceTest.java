@@ -66,7 +66,7 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationBambooB
 
         User student = database.getUserByLogin(TEST_PREFIX + "student1");
 
-        Map<Long, BonusSourceResultDTO> bonusSourceResultDTOMap = courseScoreCalculationService.calculateCourseScoresForExamBonusSource(course.getId(), List.of(student.getId()));
+        Map<Long, BonusSourceResultDTO> bonusSourceResultDTOMap = courseScoreCalculationService.calculateCourseScoresForExamBonusSource(course, null, List.of(student.getId()));
         assertThat(bonusSourceResultDTOMap).hasSize(1);
         BonusSourceResultDTO bonusSourceResultDTO = bonusSourceResultDTOMap.get(student.getId());
         assertThat(bonusSourceResultDTO.achievedPoints()).isZero();
@@ -80,7 +80,7 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationBambooB
 
         User student = database.getUserByLogin(TEST_PREFIX + "student1");
 
-        var courseResult = courseScoreCalculationService.calculateCourseScoresForExamBonusSource(course.getId(), List.of(student.getId()));
+        var courseResult = courseScoreCalculationService.calculateCourseScoresForExamBonusSource(course, null, List.of(student.getId()));
         assertThat(courseResult).isNull();
     }
 
@@ -126,7 +126,7 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationBambooB
         assertThat(result.getScore()).isZero();
         result.score(null);
 
-        StudentScoresDTO studentScoresDTO = courseScoreCalculationService.calculateCourseScoreForStudent(course, student.getId(), studentParticipations,
+        StudentScoresDTO studentScoresDTO = courseScoreCalculationService.calculateCourseScoreForStudent(course, null, student.getId(), studentParticipations,
                 new CourseScoreCalculationService.MaxAndReachablePoints(25.0, 5.0, 0.0), List.of());
         if (withDueDate) {
             assertThat(studentScoresDTO.absoluteScore()).isEqualTo(2.1);
@@ -139,7 +139,7 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationBambooB
             assertThat(studentScoresDTO.currentRelativeScore()).isEqualTo(92.0);
         }
 
-        Map<Long, BonusSourceResultDTO> bonusSourceResultDTOMap = courseScoreCalculationService.calculateCourseScoresForExamBonusSource(course.getId(), List.of(student.getId()));
+        Map<Long, BonusSourceResultDTO> bonusSourceResultDTOMap = courseScoreCalculationService.calculateCourseScoresForExamBonusSource(course, null, List.of(student.getId()));
 
         assertThat(bonusSourceResultDTOMap).hasSize(1);
         BonusSourceResultDTO bonusSourceResultDTO = bonusSourceResultDTOMap.get(student.getId());
@@ -149,6 +149,7 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationBambooB
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getScoresAndParticipationResultsWithNotIncludedExercise() {
         var exerciseList = new ArrayList<>(course.getExercises());
         exerciseList.sort(Comparator.comparing(Exercise::getId));
@@ -161,7 +162,7 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationBambooB
 
         User student = database.getUserByLogin(TEST_PREFIX + "student1");
 
-        CourseForDashboardDTO courseForDashboard = courseScoreCalculationService.getScoresAndParticipationResults(course, student.getId());
+        CourseForDashboardDTO courseForDashboard = courseScoreCalculationService.getScoresAndParticipationResults(course, null, student.getId());
         assertThat(courseForDashboard.course()).isEqualTo(course);
         CourseScoresDTO totalCourseScores = courseForDashboard.totalScores();
         assertThat(totalCourseScores.maxPoints()).isZero();
@@ -181,7 +182,7 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationBambooB
         Course pastCourse = database.createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(TEST_PREFIX, true);
         User student = database.getUserByLogin(TEST_PREFIX + "student1");
 
-        CourseForDashboardDTO courseForDashboard = courseScoreCalculationService.getScoresAndParticipationResults(pastCourse, student.getId());
+        CourseForDashboardDTO courseForDashboard = courseScoreCalculationService.getScoresAndParticipationResults(pastCourse, null, student.getId());
         assertThat(courseForDashboard.course()).isEqualTo(pastCourse);
         CourseScoresDTO totalCourseScores = courseForDashboard.totalScores();
         assertThat(totalCourseScores.maxPoints()).isEqualTo(5.0);
@@ -210,7 +211,7 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationBambooB
     void calculateCourseScoreWithNoParticipations() {
         User student = database.getUserByLogin(TEST_PREFIX + "student1");
 
-        StudentScoresDTO studentScore = courseScoreCalculationService.calculateCourseScoreForStudent(course, student.getId(), Collections.emptyList(),
+        StudentScoresDTO studentScore = courseScoreCalculationService.calculateCourseScoreForStudent(course, null, student.getId(), Collections.emptyList(),
                 new CourseScoreCalculationService.MaxAndReachablePoints(100.00, 100.00, 0.0), Collections.emptyList());
         assertThat(studentScore.absoluteScore()).isZero();
         assertThat(studentScore.relativeScore()).isZero();

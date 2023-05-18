@@ -546,7 +546,8 @@ describe('CourseScoresComponent', () => {
         jest.spyOn(gradingSystemService, 'maxGrade').mockReturnValue('A');
         jest.spyOn(gradingSystemService, 'findMatchingGradeStep').mockReturnValue(gradeStep);
 
-        component.calculateGradingScaleInformation(gradingScale);
+        component.setUpGradingScale(gradingScale);
+        component.calculateGradingScaleInformation();
 
         expect(component.gradingScaleExists).toBeTrue();
         expect(component.gradingScale).toEqual(gradingScale);
