@@ -971,27 +971,30 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     @Query("""
             SELECT COALESCE(SUM(p.presentationScore), 0)
             FROM StudentParticipation p
-            WHERE p.exercise.course.id = :#{#courseId}
-                 AND p.student.id = :#{#studentId}
+            LEFT JOIN p.team.students ts
+            WHERE p.exercise.course.id = :courseId
                  AND p.presentationScore IS NOT NULL
+                 AND (p.student.id = :studentId OR ts.id = :studentId)
             """)
     double sumPresentationScoreByStudentIdAndCourseId(@Param("courseId") Long courseId, @Param("studentId") Long studentId);
 
     @Query("""
             SELECT COUNT(p)
             FROM StudentParticipation p
-            WHERE p.exercise.course.id = :#{#courseId}
-                 AND p.student.id = :#{#studentId}
+            LEFT JOIN p.team.students ts
+            WHERE p.exercise.course.id = :courseId
                  AND p.presentationScore IS NOT NULL
+                 AND (p.student.id = :studentId OR ts.id = :studentId)
             """)
     double countAllPresentationsByStudentIdAndCourseId(@Param("courseId") Long courseId, @Param("studentId") Long studentId);
 
     @Query("""
             SELECT COUNT(p)
             FROM StudentParticipation p
-            WHERE p.exercise.course.id = :#{#courseId}
-                 AND p.student.id = :#{#studentId}
+            LEFT JOIN p.team.students ts
+            WHERE p.exercise.course.id = :courseId
                  AND p.presentationScore IS NOT NULL
+                 AND (p.student.id = :studentId OR ts.id = :studentId)
                  AND p.presentationScore > 0.0
             """)
     double countNonZeroPresentationsByStudentIdAndCourseId(@Param("courseId") Long courseId, @Param("studentId") Long studentId);
@@ -999,8 +1002,10 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     @Query("""
             SELECT COALESCE(AVG(p.presentationScore), 0)
             FROM StudentParticipation p
-            WHERE p.exercise.course.id = :#{#courseId}
+            LEFT JOIN p.team.students ts
+            WHERE p.exercise.course.id = :courseId
                  AND p.presentationScore IS NOT NULL
+                 AND (p.student.id = :studentId OR ts.id = :studentId)
             """)
     double getAvgPresentationScoreByCourseId(@Param("courseId") Long courseId);
 }

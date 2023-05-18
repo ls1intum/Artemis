@@ -70,7 +70,7 @@ public class PresentationCalculationService {
         }
 
         // return 0 if the presentationScoreSum is 0
-        if (presentationScoreSum == 0.0) {
+        if (presentationScoreSum <= 0.0) {
             return 0.0;
         }
 
