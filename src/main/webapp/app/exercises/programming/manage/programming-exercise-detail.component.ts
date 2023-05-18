@@ -50,6 +50,7 @@ import { CodeHintService } from 'app/exercises/shared/exercise-hint/services/cod
 import { ButtonSize } from 'app/shared/components/button.component';
 import { ProgrammingLanguageFeatureService } from 'app/exercises/programming/shared/service/programming-language-feature/programming-language-feature.service';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
+import { ConsistencyCheckService } from 'app/shared/consistency-check/consistency-check.service';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',
@@ -126,6 +127,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         private codeHintService: CodeHintService,
         private router: Router,
         private programmingLanguageFeatureService: ProgrammingLanguageFeatureService,
+        private consistencyCheckService: ConsistencyCheckService,
     ) {}
 
     ngOnInit() {
@@ -207,6 +209,8 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                 });
 
                 this.setLatestCoveredLineRatio();
+
+                this.checkAndAlertInconsistencies();
 
                 this.plagiarismCheckSupported = this.programmingLanguageFeatureService.getProgrammingLanguageFeature(
                     programmingExercise.programmingLanguage,
@@ -367,6 +371,20 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     checkConsistencies(exercise: ProgrammingExercise) {
         const modalRef = this.modalService.open(ConsistencyCheckComponent, { keyboard: true, size: 'lg' });
         modalRef.componentInstance.exercisesToCheck = Array.of(exercise);
+    }
+
+    /**
+     * Executes a consistency check for this programming exercise and alerts the user if any inconsistencies are found
+     * This is only run if the user is at least an instructor in the course
+     */
+    checkAndAlertInconsistencies() {
+        if (this.programmingExercise.isAtLeastInstructor) {
+            this.consistencyCheckService.checkConsistencyForProgrammingExercise(this.programmingExercise.id!).subscribe((inconsistencies) => {
+                if (inconsistencies.length) {
+                    this.alertService.warning('artemisApp.consistencyCheck.inconsistenciesFoundAlert');
+                }
+            });
+        }
     }
 
     private onError(error: HttpErrorResponse) {

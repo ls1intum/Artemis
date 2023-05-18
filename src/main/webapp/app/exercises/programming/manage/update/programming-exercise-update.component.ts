@@ -625,11 +625,19 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     }
 
     private onSaveError(error: HttpErrorResponse) {
-        const errorMessage = error.headers.get('X-artemisApp-alert')!;
+        let errorMessage;
+        let disableTranslation = true;
+        // Workaround for conflict error, since conflict errors do not have the 'X-artemisApp-alert' header
+        if (error.status === 409 && error.error && error.error['X-artemisApp-error'] === 'error.sourceExerciseInconsistent') {
+            errorMessage = 'artemisApp.consistencyCheck.error.programmingExerciseImportFailed';
+            disableTranslation = false;
+        } else {
+            errorMessage = error.headers.get('X-artemisApp-alert')!;
+        }
         this.alertService.addAlert({
             type: AlertType.DANGER,
             message: errorMessage,
-            disableTranslation: true,
+            disableTranslation: disableTranslation,
         });
         this.isSaving = false;
         window.scrollTo(0, 0);

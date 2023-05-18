@@ -10,12 +10,15 @@
                 "VCS_PROJECT_MISSING": "Missing VCS project",
                 "TEMPLATE_REPO_MISSING": "Missing template repository",
                 "SOLUTION_REPO_MISSING": "Missing solution repository",
+                "AUXILIARY_REPO_MISSING": "Missing auxiliary repository",
                 "TEST_REPO_MISSING": "Missing test repository",
                 "TEMPLATE_BUILD_PLAN_MISSING": "Missing template build plan",
-                "SOLUTION_BUILD_PLAN_MISSING": "Missing solution build plan"
+                "SOLUTION_BUILD_PLAN_MISSING": "Missing solution build plan",
+                "programmingExerciseImportFailed": "Import of programming exercise failed. Source exercise is inconsistent."
             },
             "noInconsistencies": "No inconsistencies found",
-            "inconsistenciesFound": "Following inconsistencies have been found"
+            "inconsistenciesFound": "Following inconsistencies have been found",
+            "inconsistenciesFoundAlert": "Inconsistencies have been found in this programming exercise. Please see the consistency check for more details."
         }
     }
 }
