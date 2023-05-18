@@ -461,7 +461,7 @@ class Lti13ServiceTest {
         HttpEntity<String> httpEntity = httpEntityCapture.getValue();
 
         List<String> authHeaders = httpEntity.getHeaders().get("Authorization");
-        assertNotNull(authHeaders, "Score publish request must contain an Authorization header");
+        assertThat(authHeaders).as("Score publish request must contain an Authorization header").isNotNull();
         assertThat(authHeaders).as("Score publish request must contain the corresponding Authorization Bearer token").contains("Bearer " + accessToken);
 
         JSONParser jsonParser = new JSONParser(JSONParser.MODE_JSON_SIMPLE);
