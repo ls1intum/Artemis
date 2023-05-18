@@ -284,7 +284,6 @@ public class DataExportService {
 
     private void createSubmissionsResultsExport(Exercise exercise, Path exerciseDir) throws IOException {
         for (var participation : exercise.getStudentParticipations()) {
-            // createParticipationCsvFile(participation, exerciseDir);
             for (var submission : participation.getSubmissions()) {
                 createSubmissionCsvFile(submission, exerciseDir);
                 if (submission instanceof FileUploadSubmission) {

@@ -40,16 +40,20 @@ public class DragAndDropQuizAnswerConversionService {
         this.fileService = fileService;
     }
 
+    /**
+     * Generates a pdf file of the submitted answer for a drag and drop quiz question.
+     *
+     * @param dragAndDropSubmittedAnswer the submitted answer
+     * @param outputDir                  the directory where the pdf file will be stored
+     */
     public void convertDragAndDropQuizAnswerAndStoreAsPdf(DragAndDropSubmittedAnswer dragAndDropSubmittedAnswer, Path outputDir) throws IOException {
         DragAndDropQuestion question = (DragAndDropQuestion) dragAndDropSubmittedAnswer.getQuizQuestion();
         String backgroundFilePath = question.getBackgroundFilePath();
         BufferedImage backgroundImage = ImageIO.read(new File(fileService.actualPathForPublicPath(backgroundFilePath)));
 
         generateDragAndDropSubmittedAnswerImage(backgroundImage, dragAndDropSubmittedAnswer);
-        Path dndSubmissionPathImg = outputDir.resolve(
-                "dragAndDropQuestion_" + dragAndDropSubmittedAnswer.getQuizQuestion().getId() + "_submission_" + dragAndDropSubmittedAnswer.getSubmission().getId() + ".png");
-        Path dndSubmissionPathPdf = Path.of(dndSubmissionPathImg.toString().replace(".png", ".pdf"));
-        // ImageIO.write(backgroundImage, "PNG", dndSubmissionPathImg.toFile());
+        Path dndSubmissionPathPdf = outputDir.resolve(
+                "dragAndDropQuestion_" + dragAndDropSubmittedAnswer.getQuizQuestion().getId() + "_submission_" + dragAndDropSubmittedAnswer.getSubmission().getId() + ".pdf");
         storeSubmissionAsPdf(backgroundImage, dndSubmissionPathPdf);
     }
 
