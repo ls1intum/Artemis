@@ -8,6 +8,8 @@ import { LegalDocument, LegalDocumentLanguage, LegalDocumentType } from 'app/ent
 import { ActivatedRoute } from '@angular/router';
 import { Observable, tap } from 'rxjs';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
+import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
+import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 
 @Component({
     selector: 'jhi-privacy-statement-update-component',
@@ -39,6 +41,7 @@ export class LegalDocumentUpdateComponent implements OnInit, AfterContentChecked
     currentLanguage = this.defaultLanguage;
     unsavedChangesWarning: NgbModalRef;
     titleKey: string;
+    private languageChangeInPreview: boolean;
 
     constructor(
         private legalDocumentService: LegalDocumentService,
@@ -46,6 +49,7 @@ export class LegalDocumentUpdateComponent implements OnInit, AfterContentChecked
         private route: ActivatedRoute,
         private languageHelper: JhiLanguageHelper,
         private changeDetectorRef: ChangeDetectorRef,
+        private markdownService: ArtemisMarkdownService,
     ) {}
 
     ngOnInit() {
@@ -100,6 +104,7 @@ export class LegalDocumentUpdateComponent implements OnInit, AfterContentChecked
     }
 
     checkUnsavedChanges(content: string) {
+        this.markdownEditor.markdown = content;
         this.unsavedChanges = content !== this.legalDocument.text;
     }
 
@@ -107,10 +112,16 @@ export class LegalDocumentUpdateComponent implements OnInit, AfterContentChecked
         if (this.unsavedChanges) {
             this.showWarning(legalDocumentLanguage);
         } else {
+            this.unsavedChanges = false;
             this.markdownEditor.markdown = '';
             this.currentLanguage = legalDocumentLanguage;
             this.getLegalDocumentForUpdate(this.legalDocumentType, legalDocumentLanguage).subscribe((document) => {
                 this.legalDocument = document;
+                // if we are currently in preview mode, we need to update the preview
+                if (this.markdownEditor.previewMode) {
+                    this.markdownEditor.previewTextAsHtml = this.markdownService.safeHtmlForMarkdown(this.legalDocument.text);
+                    this.languageChangeInPreview = true;
+                }
             });
         }
     }
@@ -141,5 +152,16 @@ export class LegalDocumentUpdateComponent implements OnInit, AfterContentChecked
      * */
     ngAfterContentChecked() {
         this.changeDetectorRef.detectChanges();
+    }
+
+    /**
+     * If the language is changed while we are in the preview mode, we must set the value of the markdown editor to the text of the new legal document.
+     * We must do this when the editor is visible because otherwise the editor will only be updated if you click on it once.
+     */
+    updateTextIfLanguageChangedInPreview() {
+        if (this.languageChangeInPreview) {
+            this.languageChangeInPreview = false;
+            this.markdownEditor.aceEditorContainer.getEditor().setValue(this.legalDocument.text);
+        }
     }
 }

@@ -13,6 +13,7 @@
             [enableFileUpload]="false"
             [minHeightEditor]="700"
             class="markdown-editor"
+            (onEditSelect)="updateTextIfLanguageChangedInPreview()"
         ></jhi-markdown-editor>
         <div>
             <div *ngIf="!unsavedChanges && !isSaving">

@@ -18,6 +18,7 @@ import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-act
 import { ActivatedRoute, UrlSegment } from '@angular/router';
 import { of } from 'rxjs';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { PrivacyStatement } from 'app/entities/privacy-statement.model';
 
 describe('LegalDocumentUpdateComponent', () => {
     let component: LegalDocumentUpdateComponent;
@@ -148,6 +149,23 @@ describe('LegalDocumentUpdateComponent', () => {
             expect(component.unsavedChanges).toBeFalse();
         }),
     );
+    it('should set the value of the markdown editor when switching to the edit mode if the language is changed while in preview mode', () => {
+        setupRoutes(LegalDocumentType.PRIVACY_STATEMENT);
+        const returnValue = new PrivacyStatement(LegalDocumentLanguage.GERMAN);
+        returnValue.text = 'new content';
+        const updateTextOnEditSelect = jest.spyOn(component, 'updateTextIfLanguageChangedInPreview').mockReturnValue(of(returnValue));
+        component.markdownEditor.markdown = 'text';
+        component.markdownEditor.previewMode = true;
+        component.unsavedChanges = false;
+        component.ngOnInit();
+        const loadFile = jest.spyOn(legalDocumentService, 'getPrivacyStatementForUpdate').mockReturnValue(of(returnValue));
+        component.currentLanguage = LegalDocumentLanguage.ENGLISH;
+        component.onLanguageChange(LegalDocumentLanguage.GERMAN);
+        expect(loadFile).toHaveBeenCalledOnce();
+        expect(component.legalDocument.text).toBe('new content');
+        component.markdownEditor.onEditSelect.emit();
+        expect(updateTextOnEditSelect).toHaveBeenCalledOnce();
+    });
 
     function setupRoutes(documentType: LegalDocumentType) {
         if (documentType === LegalDocumentType.PRIVACY_STATEMENT) {
