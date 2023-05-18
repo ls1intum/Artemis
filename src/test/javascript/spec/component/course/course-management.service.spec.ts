@@ -317,6 +317,18 @@ describe('Course Management Service', () => {
         tick();
     }));
 
+    it('should unenroll from the course', fakeAsync(() => {
+        const user = new User(1, 'name');
+        courseManagementService
+            .unenrollFromCourse(course.id!)
+            .pipe(take(1))
+            .subscribe((res) => expect(res.body).toEqual(user));
+        const req = httpMock.expectOne({ method: 'POST', url: `${resourceUrl}/${course.id}/unenroll` });
+        req.flush(user);
+        expect(syncGroupsSpy).toHaveBeenCalledWith(user);
+        tick();
+    }));
+
     it('should get all courses', fakeAsync(() => {
         returnedFromService = [{ ...course }];
         const params = { testParam: 'testParamValue' };
