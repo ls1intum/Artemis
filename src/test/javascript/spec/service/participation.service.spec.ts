@@ -40,6 +40,11 @@ describe('Participation Service', () => {
     });
 
     it('should find an element', fakeAsync(() => {
+        // the find service will make the participation results and submissions
+        // empty arrays instead of undefined, so we need to adapt our expected
+        // values accordingly
+        participationDefault.results = [];
+        participationDefault.submissions = [];
         const returnedFromService = Object.assign(
             {
                 initializationDate: currentDate.toDate(),
@@ -193,6 +198,11 @@ describe('Participation Service', () => {
             initializationDate: currentDate,
             presentationScore: 1,
             exercise,
+            // the update service will make the participation results and submissions
+            // empty arrays instead of undefined, so we need to adapt our expected
+            // values accordingly
+            results: [],
+            submissions: [],
         };
 
         const expected = Object.assign({}, returnedFromService) as StudentParticipation;
