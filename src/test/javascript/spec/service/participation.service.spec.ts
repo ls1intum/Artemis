@@ -36,15 +36,10 @@ describe('Participation Service', () => {
         httpMock = TestBed.inject(HttpTestingController);
         currentDate = dayjs();
 
-        participationDefault = new StudentParticipation();
+        participationDefault = { type: 'student' } as unknown as StudentParticipation;
     });
 
     it('should find an element', fakeAsync(() => {
-        // the find service will make the participation results and submissions
-        // empty arrays instead of undefined, so we need to adapt our expected
-        // values accordingly
-        participationDefault.results = [];
-        participationDefault.submissions = [];
         const returnedFromService = Object.assign(
             {
                 initializationDate: currentDate.toDate(),
