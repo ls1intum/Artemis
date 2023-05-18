@@ -199,7 +199,7 @@
                 "complaintPossible": "Beschwerde möglich:",
                 "complaintPossibleTooltip": "Nach Erhalt einer Bewertung wirst du {{days}} Tage zum Einreichen einer Beschwerde haben.",
                 "chatWelcome": "Willkommen",
-                "chatPopUpMessage": "Nachdem Sie die Bestimmungen akzeptiert haben, beginnt Ihr Chat mit IrisBot. Bitte lehnen Sie ab, wenn Sie nicht chatten möchten.",
+                "chatPopUpMessage": "Nachdem Sie die Bestimmungen akzeptiert haben, beginnt Ihr Chat mit IrisBot und Ihre Daten werden an die Server Dritter weitergegeben. Bitte lehnen Sie ab, wenn Sie nicht chatten möchten.",
                 "chatInputMessage": "Schreiben Sie eine Nachricht...",
                 "chatAccept": "Akzeptieren",
                 "chatDecline": "Ablehnen",
