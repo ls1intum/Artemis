@@ -88,10 +88,18 @@
                     "file-uploadTotal": "Aufgaben mit Datei-Upload insgesamt:",
                     "startDate": "Start:",
                     "endDate": "Ende:",
-                    "enrollmentStartDate": "Einschreibungsstart:",
-                    "enrollmentEndDate": "Einschreibungsende:",
-                    "unenrollmentEndDate": "Ausschreibungsende:",
+                    "enrollmentStartDate": "Einschreibung von:",
+                    "enrollmentEndDate": "Einschreibung bis:",
+                    "unenrollmentEndDate": "Ausschreibung bis:",
                     "unenrollmentButton": "Ausschreiben",
+                    "unenrollmentModal": {
+                        "title": "Bestätigung der Ausschreibung aus dem Kurs",
+                        "confirmationQuestion": "Bist du dir sicher, dass du dich von folgendem Kurs ausschreiben möchtest:",
+                        "reenrollmentNotPossible": "Der Kurs erlaubt dir nicht, dich erneut einzuschreiben. Dies ist eine endgültige Entscheidung.",
+                        "reenrollmentPossible": "Wenn du deine Meinung ändern möchtest, erlaubt dir der Kurs dich bis zu folgendem Datum erneut anzumelden:",
+                        "cancelButton": "Abbruch",
+                        "acceptButton": "Ja, ich möchte mich ausschreiben."
+                    },
                     "upcomingDeadlines": "Bevorstehende Termine:",
                     "noUpcomingExercises": "Aktuell gibt es keine anstehenden Übungen."
                 }

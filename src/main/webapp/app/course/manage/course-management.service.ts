@@ -274,6 +274,22 @@ export class CourseManagementService {
     }
 
     /**
+     * unenroll from course with the provided unique identifier using a POST request
+     * NB: the body is null, because the server can identify the user anyway
+     * @param courseId - the id of the course
+     */
+    unenrollFromCourse(courseId: number): Observable<HttpResponse<User>> {
+        return this.http.post<User>(`${this.resourceUrl}/${courseId}/unenroll`, null, { observe: 'response' }).pipe(
+            map((res: HttpResponse<User>) => {
+                if (res.body != undefined) {
+                    this.accountService.syncGroups(res.body);
+                }
+                return res;
+            }),
+        );
+    }
+
+    /**
      * finds all courses using a GET request
      * @param req
      */

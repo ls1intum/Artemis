@@ -88,12 +88,20 @@
                     "programmingTotal": "Total Programming Exercises:",
                     "textTotal": "Total Text Exercises:",
                     "file-uploadTotal": "Total File Upload Exercises:",
-                    "startDate": "Start Date:",
-                    "endDate": "End Date:",
-                    "enrollmentStartDate": "Enrollment Start Date:",
-                    "enrollmentEndDate": "Enrollment End Date:",
-                    "unenrollmentEndDate": "Unenrollment End Date:",
+                    "startDate": "Start:",
+                    "endDate": "End:",
+                    "enrollmentStartDate": "Enrollment from:",
+                    "enrollmentEndDate": "Enrollment until:",
+                    "unenrollmentEndDate": "Unenrollment until:",
                     "unenrollmentButton": "Unenroll",
+                    "unenrollmentModal": {
+                        "title": "Confirm Course Unenrollment",
+                        "confirmationQuestion": "Are you sure you want to unenroll from",
+                        "reenrollmentNotPossible": "The course does not allow you to enroll again. This is an irreversible action.",
+                        "reenrollmentPossible": "If you change your mind, the course will allow you to enroll again until:",
+                        "cancelButton": "Cancel",
+                        "acceptButton": "Yes, I want to unenroll."
+                    },
                     "upcomingDeadlines": "Upcoming Deadlines:",
                     "noUpcomingExercises": "There are no upcoming exercises."
                 }
