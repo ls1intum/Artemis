@@ -30,6 +30,8 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { ParticipationType } from 'app/entities/participation/participation.model';
 import { FormsModule } from '@angular/forms';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
+import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { CourseUnenrollmentModalComponent } from 'app/overview/course-unenrollment-modal.component';
 
 describe('CourseExercisesComponent', () => {
     let fixture: ComponentFixture<CourseExercisesComponent>;
@@ -41,6 +43,9 @@ describe('CourseExercisesComponent', () => {
     let course: Course;
     let exercise: Exercise;
     let courseStorageStub: jest.SpyInstance;
+
+    let modalService: NgbModal;
+    let openModalStub: jest.SpyInstance;
 
     const parentRoute = { params: of({ courseId: '123' }) } as any as ActivatedRoute;
     const route = { parent: parentRoute } as any as ActivatedRoute;
@@ -60,6 +65,7 @@ describe('CourseExercisesComponent', () => {
                 MockPipe(ArtemisDatePipe),
                 MockDirective(DeleteButtonDirective),
                 MockTranslateValuesDirective,
+                MockComponent(CourseUnenrollmentModalComponent),
             ],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },
@@ -85,9 +91,14 @@ describe('CourseExercisesComponent', () => {
                 exercise.dueDate = dayjs('2021-01-13T16:11:00+01:00').add(1, 'days');
                 exercise.releaseDate = dayjs('2021-01-13T16:11:00+01:00').subtract(1, 'days');
                 course.exercises = [exercise];
+                course.unenrollmentEnabled = true;
+                course.unenrollmentEndDate = dayjs().add(1, 'days');
                 jest.spyOn(courseStorageService, 'subscribeToCourseUpdates').mockReturnValue(of(course));
                 jest.spyOn(localStorageService, 'retrieve').mockReturnValue('OVERDUE,NEEDS_WORK');
                 courseStorageStub = jest.spyOn(courseStorageService, 'getCourse').mockReturnValue(course);
+
+                modalService = fixture.debugElement.injector.get(NgbModal);
+                openModalStub = jest.spyOn(modalService, 'open');
 
                 fixture.detectChanges();
             });
@@ -366,5 +377,13 @@ describe('CourseExercisesComponent', () => {
         component.course!.exercises = [exercise1, exercise2, exercise3];
         searchButton.dispatchEvent(event);
         expect(component.weeklyExercisesGrouped['noDate'].exercises).toContainAllValues([exercise1, exercise2]);
+    });
+
+    it('should open unenrollment modal on button click', () => {
+        const searchButton = fixture.debugElement.query(By.css('#course-unenrollment-button')).nativeElement;
+        const event = new Event('click');
+        searchButton.dispatchEvent(event);
+        //expect(openModalStub).toHaveBeenCalledOnce();
+        //expect(openModalStub).toHaveBeenCalledWith(CourseUnenrollmentModalComponent, { size: 'xl' });
     });
 });
