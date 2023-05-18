@@ -1,9 +1,9 @@
 # ----------------------------------------------------------------------------------------------------------------------
-# Cypress Setup Postgres
+# Cypress Setup Postgresql
 # ----------------------------------------------------------------------------------------------------------------------
 
 services:
-    postgres:
+    postgresql:
         extends:
             file: ./postgresql.yml
             service: postgresql
@@ -13,7 +13,7 @@ services:
             file: ./artemis.yml
             service: artemis-app
         depends_on:
-            postgres:
+            postgresql:
                 condition: service_healthy
         env_file:
             - ./artemis/config/cypress-application-local.env
