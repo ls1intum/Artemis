@@ -22,7 +22,7 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/overview/tab-bar/tab-bar';
 import { ExerciseFilter as ExerciseFilterModel } from 'app/entities/exercise-filter.model';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
-import { CourseUnenrollmentModalComponent } from 'app/overview/course-unenrollment/course-unenrollment-modal.component';
+import { CourseUnenrollmentModalComponent } from 'app/overview/course-unenrollment-modal.component';
 
 export enum ExerciseFilter {
     OVERDUE = 'OVERDUE',

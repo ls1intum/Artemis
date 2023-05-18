@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { faCheck, faXmark } from '@fortawesome/free-solid-svg-icons';
@@ -12,7 +12,7 @@ import { AlertService } from 'app/core/util/alert.service';
     selector: 'jhi-course-unenrollment-modal',
     templateUrl: './course-unenrollment-modal.component.html',
 })
-export class CourseUnenrollmentModalComponent implements OnInit {
+export class CourseUnenrollmentModalComponent {
     @ViewChild(CourseExercisesComponent)
     examExerciseImportComponent: CourseExercisesComponent;
 
@@ -23,10 +23,6 @@ export class CourseUnenrollmentModalComponent implements OnInit {
     public course?: Course;
 
     constructor(private activeModal: NgbActiveModal, private courseService: CourseManagementService, private alertService: AlertService, private router: Router) {}
-
-    ngOnInit(): void {
-        throw new Error('Method not implemented.');
-    }
 
     /**
      * Returns true if the student will be able to enroll again, otherwise false.
