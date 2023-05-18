@@ -81,7 +81,7 @@ describe('Test exam participation', () => {
             examParticipation.checkExamTitle(examTitle);
         });
 
-        it.only('Using save and continue to navigate within exam', () => {
+        it('Using save and continue to navigate within exam', () => {
             examParticipation.startParticipation(studentTwo, course, exam);
             examNavigation.openExerciseAtIndex(0);
             for (let j = 0; j < exerciseArray.length; j++) {
