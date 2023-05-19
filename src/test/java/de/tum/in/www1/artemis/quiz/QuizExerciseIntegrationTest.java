@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.quiz;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.byLessThan;
 
+import java.security.Principal;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -17,6 +18,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
@@ -31,8 +33,10 @@ import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.QuizExerciseService;
 import de.tum.in.www1.artemis.util.ExerciseIntegrationTestUtils;
 import de.tum.in.www1.artemis.util.ModelFactory;
+import de.tum.in.www1.artemis.util.QuizUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.QuizBatchJoinDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
+import de.tum.in.www1.artemis.web.websocket.QuizSubmissionWebsocketService;
 
 class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -40,6 +44,9 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     @Autowired
     private QuizExerciseService quizExerciseService;
+
+    @Autowired
+    private QuizSubmissionWebsocketService quizSubmissionWebsocketService;
 
     @Autowired
     private StudentParticipationRepository studentParticipationRepository;
@@ -55,6 +62,9 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     @Autowired
     private SubmittedAnswerRepository submittedAnswerRepository;
+
+    @Autowired
+    private QuizUtilService quizUtilService;
 
     @Autowired
     private QuizBatchRepository quizBatchRepository;
@@ -94,6 +104,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     @BeforeEach
     void init() {
+        quizScheduleService.stopSchedule();
         database.addUsers(TEST_PREFIX, 1, 1, 1, 1);
     }
 
@@ -271,6 +282,34 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         quizExercise = database.createAndSaveQuiz(ZonedDateTime.now().plusHours(5), null, quizMode);
 
         assertThat(quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExercise.getId())).as("Exercise is created correctly").isNotNull();
+        request.delete("/api/quiz-exercises/" + quizExercise.getId(), HttpStatus.OK);
+        assertThat(quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExercise.getId())).as("Exercise is deleted correctly").isNull();
+    }
+
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @EnumSource(QuizMode.class)
+    void testDeleteQuizExerciseWithSubmittedAnswers(QuizMode quizMode) throws Exception {
+        QuizExercise quizExercise = database.createAndSaveQuiz(ZonedDateTime.now(), ZonedDateTime.now().plusMinutes(1), quizMode);
+        assertThat(quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExercise.getId())).as("Exercise is created correctly").isNotNull();
+
+        String username = TEST_PREFIX + "student1";
+        final Principal principal = () -> username;
+        QuizSubmission quizSubmission = database.generateSubmissionForThreeQuestions(quizExercise, 1, true, null);
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        quizUtilService.prepareBatchForSubmitting(quizExercise, authentication, SecurityUtils.makeAuthorizationObject(username));
+        quizSubmissionWebsocketService.saveSubmission(quizExercise.getId(), quizSubmission, principal);
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        // Quiz submissions are not yet in database
+        assertThat(quizSubmissionRepository.findByParticipation_Exercise_Id(quizExercise.getId())).isEmpty();
+
+        quizScheduleService.processCachedQuizSubmissions();
+
+        // Quiz submissions are now in database
+        assertThat(quizSubmissionRepository.findByParticipation_Exercise_Id(quizExercise.getId())).hasSize(1);
+
         request.delete("/api/quiz-exercises/" + quizExercise.getId(), HttpStatus.OK);
         assertThat(quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExercise.getId())).as("Exercise is deleted correctly").isNull();
     }
