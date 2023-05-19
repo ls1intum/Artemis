@@ -90,34 +90,25 @@ public class ModelingSubmissionService extends SubmissionService {
      */
     public ModelingSubmission handleModelingSubmission(ModelingSubmission modelingSubmission, ModelingExercise exercise, User user) {
         final var optionalParticipation = participationService.findOneByExerciseAndStudentLoginWithEagerSubmissionsAnyState(exercise, user.getLogin());
-        log.info("optional participation: " + optionalParticipation);
         if (optionalParticipation.isEmpty()) {
-            log.info("optional participation is empty");
             throw new ResponseStatusException(HttpStatus.FAILED_DEPENDENCY, "No participation found for " + user.getLogin() + " in exercise " + exercise.getId());
         }
         final var participation = optionalParticipation.get();
-        log.info("participation: " + participation);
         final var dueDate = ExerciseDateService.getDueDate(participation);
-        log.info("dueDate: " + dueDate);
         // Important: for exam exercises, we should NOT check the exercise due date, we only check if for course exercises
         if (dueDate.isPresent() && exerciseDateService.isAfterDueDate(participation) && participation.getInitializationDate().isBefore(dueDate.get())) {
-            log.info("dueDate is present and after due date and participation initialization date is before due date");
             throw new AccessForbiddenException();
         }
 
         // remove result from submission (in the unlikely case it is passed here), so that students cannot inject a result
         modelingSubmission.setResults(new ArrayList<>());
-        log.info("removed results from submission");
 
         // update submission properties
         // NOTE: from now on we always set submitted to true to prevent problems here! Except for late submissions of course exercises to prevent issues in auto-save
         if (exercise.isExamExercise() || exerciseDateService.isBeforeDueDate(participation)) {
-            log.info("exercise is exam exercise or before due date");
             modelingSubmission.setSubmitted(true);
         }
-        log.info("set submitted to true");
         modelingSubmission = save(modelingSubmission, exercise, user, participation);
-        log.info("saved modeling submission");
         return modelingSubmission;
     }
 
@@ -132,23 +123,17 @@ public class ModelingSubmissionService extends SubmissionService {
      */
     private ModelingSubmission save(ModelingSubmission modelingSubmission, ModelingExercise modelingExercise, User user, StudentParticipation participation) {
         modelingSubmission.setSubmissionDate(ZonedDateTime.now());
-        log.info("set submission date to now");
         modelingSubmission.setType(SubmissionType.MANUAL);
-        log.info("set submission type to manual");
         participation.addSubmission(modelingSubmission);
-        log.info("added submission to participation");
 
         if (participation.getInitializationState() != InitializationState.FINISHED) {
-            log.info("participation initialization state is not finished");
             participation.setInitializationState(InitializationState.FINISHED);
             studentParticipationRepository.save(participation);
-            log.info("saved participation after setting initialization state to finished");
         }
 
         // remove result from submission (in the unlikely case it is passed here), so that students cannot inject a result
         modelingSubmission.setResults(new ArrayList<>());
         modelingSubmission = modelingSubmissionRepository.save(modelingSubmission);
-        log.info("saved modeling submission after removing results from submission");
 
         // versioning of submission
         try {
@@ -157,7 +142,6 @@ public class ModelingSubmissionService extends SubmissionService {
             }
             else if (modelingExercise.isExamExercise()) {
                 submissionVersionService.saveVersionForIndividual(modelingSubmission, user);
-                log.info("saved submission version for individual");
             }
         }
         catch (Exception ex) {

@@ -833,7 +833,6 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             // Therefore don't show errors because we are redirected to the login page
             this.loggedOut = true;
         } else {
-            this.alertService.info('error when saving submission: ' + error.status + ',' + error.error + ',' + error.message);
             // show only one error for 5s - see constructor
             this.synchronizationAlert.next();
         }

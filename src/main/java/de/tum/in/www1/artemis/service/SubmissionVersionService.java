@@ -63,7 +63,6 @@ public class SubmissionVersionService {
         version.setAuthor(user);
         version.setSubmission(submission);
         version.setContent(getSubmissionContent(submission));
-        log.info("Saving version for submission {} by user {}", submission.getId(), user.getLogin());
         return submissionVersionRepository.save(version);
     }
 

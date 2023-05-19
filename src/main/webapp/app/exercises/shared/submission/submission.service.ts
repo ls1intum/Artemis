@@ -13,7 +13,6 @@ import { AccountService } from 'app/core/auth/account.service';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { convertDateFromServer } from 'app/utils/date.utils';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { cloneDeep } from 'lodash-es';
 
 export type EntityResponseType = HttpResponse<Submission>;
 export type EntityArrayResponseType = HttpResponse<Submission[]>;
@@ -195,11 +194,9 @@ export class SubmissionService {
 
     /**
      * Convert a Submission to a JSON which can be sent to the server.
-     * Do a deep clone to not accidentally change nested properties after copying.
      */
     public convert<T extends Submission>(submission: T): T {
-        return cloneDeep(submission);
-        //return Object.assign({}, submission);
+        return Object.assign({}, submission);
     }
 
     /**
