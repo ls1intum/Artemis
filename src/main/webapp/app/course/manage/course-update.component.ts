@@ -552,7 +552,7 @@ export class CourseUpdateComponent implements OnInit {
         }
 
         // enrollment period requires configured start and end date of the course
-        if (this.atLeastOneDateNotExisting()) {
+        if (this.atLeastOneDateNotExisting() || !this.isValidDate) {
             return false;
         }
 
@@ -572,10 +572,12 @@ export class CourseUpdateComponent implements OnInit {
         if (!this.course.unenrollmentEndDate) {
             return true;
         }
-        // course start and end dates are required to configure unenrollment end date
-        if (this.atLeastOneDateNotExisting() || !this.course.enrollmentStartDate || !this.course.enrollmentEndDate) {
+
+        // course enrollment period is required to configure unenrollment end date
+        if (!this.course.enrollmentStartDate || !this.course.enrollmentEndDate || !this.isValidEnrollmentPeriod) {
             return false;
         }
+
         return dayjs(this.course.enrollmentEndDate).isBefore(this.course.unenrollmentEndDate) && !dayjs(this.course.unenrollmentEndDate).isAfter(this.course.endDate);
     }
 

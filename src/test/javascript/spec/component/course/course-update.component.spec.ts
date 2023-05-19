@@ -481,6 +481,145 @@ describe('Course Management Update Component', () => {
         });
     });
 
+    describe('isValidEnrollmentPeriod', () => {
+        it('should handle valid dates', () => {
+            comp.course = new Course();
+            comp.course.startDate = dayjs().subtract(1, 'day');
+            comp.course.endDate = dayjs().add(1, 'day');
+            comp.course.enrollmentStartDate = dayjs().subtract(2, 'day');
+            comp.course.enrollmentEndDate = dayjs();
+            expect(comp.isValidEnrollmentPeriod).toBeTrue();
+        });
+
+        it('should not be valid if course start and end date are not set', () => {
+            comp.course = new Course();
+            comp.course.enrollmentStartDate = dayjs().subtract(2, 'day');
+            comp.course.enrollmentEndDate = dayjs();
+            expect(comp.isValidEnrollmentPeriod).toBeFalse();
+        });
+
+        it('should not be valid if course start date is not set', () => {
+            comp.course = new Course();
+            comp.course.endDate = dayjs().add(1, 'day');
+            comp.course.enrollmentStartDate = dayjs().subtract(2, 'day');
+            comp.course.enrollmentEndDate = dayjs();
+            expect(comp.isValidEnrollmentPeriod).toBeFalse();
+        });
+
+        it('should not be valid if course end date is not set', () => {
+            comp.course = new Course();
+            comp.course.startDate = dayjs().subtract(1, 'day');
+            comp.course.enrollmentStartDate = dayjs().subtract(2, 'day');
+            comp.course.enrollmentEndDate = dayjs();
+            expect(comp.isValidEnrollmentPeriod).toBeFalse();
+        });
+
+        it('should not be valid if course start and end date are not valid', () => {
+            comp.course = new Course();
+            comp.course.startDate = dayjs().add(1, 'day');
+            comp.course.endDate = dayjs().subtract(1, 'day');
+            comp.course.enrollmentStartDate = dayjs().subtract(2, 'day');
+            comp.course.enrollmentEndDate = dayjs();
+            expect(comp.isValidEnrollmentPeriod).toBeFalse();
+        });
+
+        it('should handle invalid enrollment end date before enrollment start date', () => {
+            comp.course = new Course();
+            comp.course.startDate = dayjs().subtract(1, 'day');
+            comp.course.endDate = dayjs().add(1, 'day');
+            comp.course.enrollmentStartDate = dayjs().subtract(2, 'day');
+            comp.course.enrollmentEndDate = dayjs().subtract(3, 'day');
+            expect(comp.isValidEnrollmentPeriod).toBeFalse();
+        });
+
+        it('should handle invalid enrollment start date after course start date', () => {
+            comp.course = new Course();
+            comp.course.startDate = dayjs().subtract(2, 'day');
+            comp.course.endDate = dayjs().add(1, 'day');
+            comp.course.enrollmentStartDate = dayjs().subtract(1, 'day');
+            comp.course.enrollmentEndDate = dayjs();
+            expect(comp.isValidEnrollmentPeriod).toBeFalse();
+        });
+
+        it('should handle invalid enrollment end date after course end date', () => {
+            comp.course = new Course();
+            comp.course.startDate = dayjs().subtract(1, 'day');
+            comp.course.endDate = dayjs().add(1, 'day');
+            comp.course.enrollmentStartDate = dayjs().subtract(2, 'day');
+            comp.course.enrollmentEndDate = dayjs().add(2, 'day');
+            expect(comp.isValidEnrollmentPeriod).toBeFalse();
+        });
+    });
+
+    describe('isValidUnenrollmentEndDate', () => {
+        it('should handle valid dates', () => {
+            comp.course = new Course();
+            comp.course.startDate = dayjs().subtract(1, 'day');
+            comp.course.endDate = dayjs().add(2, 'day');
+            comp.course.enrollmentStartDate = dayjs().subtract(2, 'day');
+            comp.course.enrollmentEndDate = dayjs();
+            comp.course.unenrollmentEndDate = dayjs().add(1, 'day');
+            expect(comp.isValidUnenrollmentEndDate).toBeTrue();
+        });
+
+        it('should not be valid if enrollment start and end date are not set', () => {
+            comp.course = new Course();
+            comp.course = new Course();
+            comp.course.startDate = dayjs().subtract(1, 'day');
+            comp.course.endDate = dayjs().add(2, 'day');
+            comp.course.unenrollmentEndDate = dayjs().add(1, 'day');
+            expect(comp.isValidUnenrollmentEndDate).toBeFalse();
+        });
+
+        it('should not be valid if enrollment start date is not set', () => {
+            comp.course = new Course();
+            comp.course.startDate = dayjs().subtract(1, 'day');
+            comp.course.endDate = dayjs().add(2, 'day');
+            comp.course.enrollmentEndDate = dayjs();
+            comp.course.unenrollmentEndDate = dayjs().add(1, 'day');
+            expect(comp.isValidUnenrollmentEndDate).toBeFalse();
+        });
+
+        it('should not be valid if enrollment end date is not set', () => {
+            comp.course = new Course();
+            comp.course.startDate = dayjs().subtract(1, 'day');
+            comp.course.endDate = dayjs().add(2, 'day');
+            comp.course.enrollmentStartDate = dayjs().subtract(2, 'day');
+            comp.course.unenrollmentEndDate = dayjs().add(1, 'day');
+            expect(comp.isValidUnenrollmentEndDate).toBeFalse();
+        });
+
+        it('should not be valid if enrollemnt start and end date are not valid', () => {
+            comp.course = new Course();
+            comp.course.startDate = dayjs().subtract(1, 'day');
+            comp.course.endDate = dayjs().add(2, 'day');
+            comp.course.enrollmentStartDate = dayjs();
+            comp.course.enrollmentEndDate = dayjs().subtract(2, 'day');
+            comp.course.unenrollmentEndDate = dayjs().add(1, 'day');
+            expect(comp.isValidUnenrollmentEndDate).toBeFalse();
+        });
+
+        it('should handle invalid unenrollment end date before enrollment end date', () => {
+            comp.course = new Course();
+            comp.course.startDate = dayjs().subtract(1, 'day');
+            comp.course.endDate = dayjs().add(2, 'day');
+            comp.course.enrollmentStartDate = dayjs().subtract(2, 'day');
+            comp.course.enrollmentEndDate = dayjs().add(1, 'day');
+            comp.course.unenrollmentEndDate = dayjs();
+            expect(comp.isValidUnenrollmentEndDate).toBeFalse();
+        });
+
+        it('should handle invalid unenrollment end date after course end date', () => {
+            comp.course = new Course();
+            comp.course.startDate = dayjs().subtract(1, 'day');
+            comp.course.endDate = dayjs().add(1, 'day');
+            comp.course.enrollmentStartDate = dayjs().subtract(2, 'day');
+            comp.course.enrollmentEndDate = dayjs();
+            comp.course.unenrollmentEndDate = dayjs().add(2, 'day');
+            expect(comp.isValidUnenrollmentEndDate).toBeFalse();
+        });
+    });
+
     describe('removeOrganizationFromCourse', () => {
         it('should remove organization from component', () => {
             const organization = new Organization();
