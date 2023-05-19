@@ -291,24 +291,22 @@ export class ExamParticipationService {
     }
 
     public static getSubmissionForExercise(exercise: Exercise): Submission | undefined {
-        if (!(exercise && exercise.studentParticipations && exercise.studentParticipations.length > 0)) {
-            return undefined;
+        const studentParticipation = ExamParticipationService.getParticipationForExercise(exercise);
+        if (studentParticipation && studentParticipation.submissions) {
+            // NOTE: using "submissions[0]" might not work for programming exercises with multiple submissions, it is better to always take the last submission
+            return studentParticipation.submissions.last();
         }
+    }
 
-        const participation: StudentParticipation = exercise.studentParticipations[0];
-
-        if (!participation.submissions) {
-            return undefined;
+    /**
+     * Get the first participation for the given exercise.
+     * @param exercise the exercise for which to get the participation
+     * @return the first participation of the given exercise
+     */
+    public static getParticipationForExercise(exercise: Exercise): StudentParticipation | undefined {
+        if (exercise && exercise.studentParticipations && exercise.studentParticipations.length > 0) {
+            return exercise.studentParticipations[0];
         }
-
-        // NOTE: using "submissions[0]" might not work for programming exercises with multiple submissions, it is better to always take the last submission
-        const submission: Submission | undefined = participation.submissions.last();
-        if (submission) {
-            // Set the participation of the submission.
-            submission.participation = participation;
-        }
-
-        return submission;
     }
 
     getExerciseButtonTooltip(exercise: Exercise): ButtonTooltipType {
@@ -322,8 +320,10 @@ export class ExamParticipationService {
         if (exercise.type !== ExerciseType.PROGRAMMING) {
             return submission.isSynced ? 'synced' : 'notSynced';
         }
-        // programming exercise
-        const participation = submission.participation as ProgrammingExerciseStudentParticipation;
+
+        // The exercise is a programming exercise
+
+        const participation = ExamParticipationService.getParticipationForExercise(exercise) as ProgrammingExerciseStudentParticipation;
         if (submission.submitted && submission.isSynced) {
             if (participation.locked) {
                 return 'submittedSubmissionLimitReached';
