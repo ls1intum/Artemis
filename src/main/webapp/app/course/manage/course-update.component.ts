@@ -413,6 +413,10 @@ export class CourseUpdateComponent implements OnInit {
     changeUnenrollmentEnabled() {
         this.course.unenrollmentEnabled = !this.course.unenrollmentEnabled;
         this.courseForm.controls['unenrollmentEnabled'].setValue(this.course.unenrollmentEnabled);
+        if (this.course.unenrollmentEnabled && !this.course.unenrollmentEndDate) {
+            this.course.unenrollmentEndDate = this.course.endDate;
+            this.courseForm.controls['unenrollmentEndDate'].setValue(this.course.unenrollmentEndDate);
+        }
     }
 
     /**
