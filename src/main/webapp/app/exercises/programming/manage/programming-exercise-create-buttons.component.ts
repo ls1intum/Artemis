@@ -1,7 +1,7 @@
 import { Component, Input } from '@angular/core';
 import { Course } from 'app/entities/course.model';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
-import { faPlus } from '@fortawesome/free-solid-svg-icons';
+import { faFileImport, faPlus } from '@fortawesome/free-solid-svg-icons';
 import { ExerciseImportWrapperComponent } from 'app/exercises/shared/import/exercise-import-wrapper/exercise-import-wrapper.component';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
@@ -19,6 +19,7 @@ export class ProgrammingExerciseCreateButtonsComponent {
     course: Course;
 
     faPlus = faPlus;
+    faFileImport = faFileImport;
 
     constructor(private router: Router, private modalService: NgbModal) {}
 

@@ -1,6 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { Course } from 'app/entities/course.model';
-import { faPlus } from '@fortawesome/free-solid-svg-icons';
+import { faFileImport, faPlus } from '@fortawesome/free-solid-svg-icons';
 import { ExerciseImportWrapperComponent } from 'app/exercises/shared/import/exercise-import-wrapper/exercise-import-wrapper.component';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -17,6 +17,7 @@ export class ExerciseCreateButtonsComponent implements OnInit {
     translationLabel: string;
 
     faPlus = faPlus;
+    faFileImport = faFileImport;
 
     constructor(private router: Router, private modalService: NgbModal) {}
 
