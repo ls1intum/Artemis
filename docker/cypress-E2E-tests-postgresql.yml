@@ -1,22 +1,23 @@
 # ----------------------------------------------------------------------------------------------------------------------
-# Cypress Setup
+# Cypress Setup Postgresql
 # ----------------------------------------------------------------------------------------------------------------------
 
 services:
-    mysql:
+    postgresql:
         extends:
-            file: ./mysql.yml
-            service: mysql
+            file: ./postgresql.yml
+            service: postgresql
 
     artemis-app:
         extends:
             file: ./artemis.yml
             service: artemis-app
         depends_on:
-            mysql:
+            postgresql:
                 condition: service_healthy
         env_file:
             - ./artemis/config/cypress-application-local.env
+            - ./artemis/config/cypress-application-postgres.env
         environment:
             SPRING_PROFILES_ACTIVE: "artemis,bamboo,bitbucket,jira,prod,docker"
 
@@ -37,36 +38,19 @@ services:
             - "54321:54321"
 
     artemis-cypress:
-        # Cypress image with node and chrome browser installed (Cypress installation needs to be done separately because we require additional dependencies)
-        image: docker.io/cypress/browsers:node18.12.0-chrome107
-        pull_policy: always
+        extends:
+            file: ./cypress.yml
+            service: artemis-cypress
         depends_on:
             artemis-app:
                 condition: service_healthy
-        environment:
-            CYPRESS_baseUrl: "https://artemis-nginx"
-            CYPRESS_video: "${bamboo_cypress_video_enabled}"
-            CYPRESS_adminUsername: "${bamboo_artemis_admin_username}"
-            CYPRESS_adminPassword: "${bamboo_artemis_admin_password}"
-            CYPRESS_username: "${bamboo_cypress_username_template}"
-            CYPRESS_password: "${bamboo_cypress_password_template}"
-            CYPRESS_allowGroupCustomization: "true"
-            CYPRESS_studentGroupName: "artemis-e2etest-students"
-            CYPRESS_tutorGroupName: "artemis-e2etest-tutors"
-            CYPRESS_editorGroupName: "artemis-e2etest-editors"
-            CYPRESS_instructorGroupName: "artemis-e2etest-instructors"
-        command: sh -c "cd /app/artemis/src/test/cypress && chmod 777 /root && npm ci && npm run cypress:run"
-        volumes:
-            - ..:/app/artemis
-        networks:
-            - artemis
 
 networks:
     artemis:
         driver: "bridge"
         name: artemis
 volumes:
-    artemis-mysql-data:
-        name: artemis-mysql-data
+    artemis-postgresql-data:
+        name: artemis-postgresql-data
     artemis-data:
         name: artemis-data
