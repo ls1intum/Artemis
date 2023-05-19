@@ -27,7 +27,6 @@ export class LectureAttachmentsComponent implements OnInit, OnDestroy {
     attachmentToBeCreated?: Attachment;
     attachmentBackup?: Attachment;
     attachmentFile?: File;
-    isUploadingAttachment: boolean;
     isDownloadingAttachmentLink?: string;
     notificationText?: string;
     erroredFile?: File;
@@ -97,31 +96,49 @@ export class LectureAttachmentsComponent implements OnInit, OnDestroy {
 
     saveAttachment() {
         if (!this.attachmentToBeCreated) {
-            return this.addAttachment();
+            return;
         }
         this.attachmentToBeCreated.version!++;
         this.attachmentToBeCreated.uploadDate = dayjs();
+
+        if (!this.attachmentFile && !this.attachmentToBeCreated.id) {
+            return;
+        }
 
         if (this.attachmentToBeCreated.id) {
             const requestOptions = {} as any;
             if (this.notificationText) {
                 requestOptions.notificationText = this.notificationText;
             }
-            this.attachmentService.update(this.attachmentToBeCreated, requestOptions).subscribe((attachmentRes: HttpResponse<Attachment>) => {
-                this.attachmentToBeCreated = undefined;
-                this.attachmentBackup = undefined;
-                this.notificationText = undefined;
-                this.attachments = this.attachments.map((el) => {
-                    return el.id === attachmentRes.body!.id ? attachmentRes.body! : el;
-                });
+            this.attachmentService.update(this.attachmentToBeCreated.id, this.attachmentToBeCreated, this.attachmentFile, requestOptions).subscribe({
+                next: (attachmentRes: HttpResponse<Attachment>) => {
+                    this.attachmentToBeCreated = undefined;
+                    this.attachmentBackup = undefined;
+                    this.notificationText = undefined;
+                    this.attachments = this.attachments.map((el) => {
+                        return el.id === attachmentRes.body!.id ? attachmentRes.body! : el;
+                    });
+                },
+                error: (error: HttpErrorResponse) => this.handleFailedUpload(error),
             });
         } else {
-            this.attachmentService.create(this.attachmentToBeCreated!).subscribe((attachmentRes: HttpResponse<Attachment>) => {
-                this.attachments.push(attachmentRes.body!);
-                this.attachmentToBeCreated = undefined;
-                this.attachmentBackup = undefined;
+            this.attachmentService.create(this.attachmentToBeCreated!, this.attachmentFile!).subscribe({
+                next: (attachmentRes: HttpResponse<Attachment>) => {
+                    this.attachments.push(attachmentRes.body!);
+                    this.attachmentToBeCreated = undefined;
+                    this.attachmentBackup = undefined;
+                },
+                error: (error: HttpErrorResponse) => this.handleFailedUpload(error),
             });
         }
+    }
+
+    handleFailedUpload(error: HttpErrorResponse) {
+        this.errorMessage = error.message;
+        this.erroredFile = this.attachmentFile;
+        this.fileInput.nativeElement.value = '';
+        this.attachmentFile = undefined;
+        this.resetAttachment();
     }
 
     editAttachment(attachment: Attachment) {
@@ -190,35 +207,10 @@ export class LectureAttachmentsComponent implements OnInit, OnDestroy {
      * @desc Upload the selected file and add it to the attachment
      */
     uploadLectureAttachmentAndSave(): void {
-        const file = this.attachmentFile;
-
-        if (!file && this.attachmentToBeCreated!.link) {
-            return this.saveAttachment();
-        }
-
-        if (!this.attachmentToBeCreated!.name || !file) {
+        if (!this.attachmentToBeCreated!.name || !this.attachmentFile) {
             return;
         }
 
-        this.isUploadingAttachment = true;
-        this.erroredFile = undefined;
-        this.errorMessage = undefined;
-        this.fileUploaderService.uploadFile(file, file.name, { keepFileName: true }).then(
-            (result) => {
-                this.attachmentToBeCreated!.link = result.path;
-                this.isUploadingAttachment = false;
-                this.attachmentFile = undefined;
-                this.saveAttachment();
-            },
-            (error) => {
-                this.errorMessage = error.message;
-                this.erroredFile = file;
-                this.fileInput.nativeElement.value = '';
-                this.attachmentToBeCreated!.link = undefined;
-                this.isUploadingAttachment = false;
-                this.attachmentFile = undefined;
-                this.resetAttachment();
-            },
-        );
+        return this.saveAttachment();
     }
 }

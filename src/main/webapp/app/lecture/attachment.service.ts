@@ -5,6 +5,7 @@ import { map } from 'rxjs/operators';
 import { createRequestOption } from 'app/shared/util/request.util';
 import { Attachment } from 'app/entities/attachment.model';
 import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
+import { objectToJsonBlob } from 'app/utils/blob-util';
 
 type EntityResponseType = HttpResponse<Attachment>;
 type EntityArrayResponseType = HttpResponse<Attachment[]>;
@@ -15,7 +16,7 @@ export class AttachmentService {
 
     constructor(protected http: HttpClient) {}
 
-    create(attachment: Attachment): Observable<EntityResponseType> {
+    create(attachment: Attachment, file: File): Observable<EntityResponseType> {
         const copy = this.convertAttachmentDatesFromClient(attachment);
         // avoid potential issues when sending the attachment to the server
         if (copy.attachmentUnit) {
@@ -27,16 +28,27 @@ export class AttachmentService {
             copy.lecture.course = undefined;
             copy.lecture.posts = undefined;
         }
+
+        const formData = new FormData();
+        formData.append('attachment', objectToJsonBlob(copy));
+        formData.append('file', file);
+
         return this.http
-            .post<Attachment>(this.resourceUrl, copy, { observe: 'response' })
+            .post<Attachment>(this.resourceUrl, formData, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.convertAttachmentResponseDatesFromServer(res)));
     }
 
-    update(attachment: Attachment, req?: any): Observable<EntityResponseType> {
+    update(attachmentId: number, attachment: Attachment, file?: File, req?: any): Observable<EntityResponseType> {
         const options = createRequestOption(req);
         const copy = this.convertAttachmentDatesFromClient(attachment);
+
+        const formData = new FormData();
+        formData.append('attachment', objectToJsonBlob(copy));
+        if (file) {
+            formData.append('file', file);
+        }
         return this.http
-            .put<Attachment>(this.resourceUrl, copy, { params: options, observe: 'response' })
+            .put<Attachment>(this.resourceUrl + '/' + attachmentId, formData, { params: options, observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.convertAttachmentResponseDatesFromServer(res)));
     }
 
