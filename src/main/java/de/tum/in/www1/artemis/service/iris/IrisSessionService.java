@@ -56,6 +56,18 @@ public class IrisSessionService {
     }
 
     /**
+     * Checks if the programming exercise for which an Iris operation was requested has Iris activated.
+     * An Iris operation can be performed if the programming exercise has Iris activated.
+     *
+     * @param programmingExercise The programming exercise to check
+     */
+    public void checkIrisActivated(ProgrammingExercise programmingExercise) {
+        if (programmingExercise.getIrisActivated() == null || Boolean.FALSE.equals(programmingExercise.getIrisActivated())) {
+            throw new AccessForbiddenException("Iris not activated for Programming Exercise: " + programmingExercise.getId());
+        }
+    }
+
+    /**
      * Creates a new Iris session for the given exercise and user.
      * If a session already exists, a BadRequestException is thrown.
      *
