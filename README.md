@@ -88,6 +88,36 @@ If needed, you can configure self service [user registration](https://docs.artem
 
 Please read the guide on [how to contribute](CONTRIBUTING.md) to Artemis.
 
+Once the PR is ready to merge, notifiy the responsible feature maintainer:
+
+<details>
+  <summary>Feature Maintainers</summary>
+  
+| Feature                        | Maintainer                                                                                      |
+| ------------------------------ | ----------------------------------------------------------------------------------------------- |
+| Programming exercises          | [@mtze](https://github.com/mtze)                                                                |
+| Ares                           | [@MarkusPaulsen](https://github.com/MarkusPaulsen)                                              |
+| Quiz exercises                 | [@Santia-go](https://github.com/Santia-go)                                                      |
+| Modeling exercises (+ Apollon) | [@krusche](https://github.com/krusche)                                                          |
+| Text exercises                 | [@maximiliansoelch](https://github.com/maximiliansoelch)                                        |
+| File upload exercises          | [@maximiliansoelch](https://github.com/maximiliansoelch)                                        |
+| Exam mode                      | [@krusche](https://github.com/krusche)                                                          |
+| Grading                        | [@maximiliansoelch](https://github.com/maximiliansoelch)                                        |
+| Assessment                     | [@maximiliansoelch](https://github.com/maximiliansoelch)                                        |
+| Communication                  | [@bassner](https://github.com/bassner)                                                          |
+| Notifications                  | [@mtze](https://github.com/mtze) [@bassner](https://github.com/bassner)                         |
+| Team Exercises                 | [@krusche](https://github.com/krusche)                                                          |
+| Lectures                       | [@maximiliansoelch](https://github.com/maximiliansoelch) [@bassner](https://github.com/bassner) |
+| Integrated Markdown Editor     | [@maximiliansoelch](https://github.com/maximiliansoelch) [@bassner](https://github.com/bassner) |
+| Plagiarism checks              | [@MarkusPaulsen](https://github.com/MarkusPaulsen)                                              |
+| Learning analytics             | [@bassner](https://github.com/bassner)                                                          |
+| Tutorial Groups                | [@Santia-go](https://github.com/Santia-go)                                                      |
+| Usability + Performance        | [@bassner](https://github.com/bassner)                                                          |
+| Infrastructure                 | [@mtze](https://github.com/mtze)                                                                |
+| Mobile apps (iOS + Android)    | [@krusche](https://github.com/krusche) [@maximiliansoelch](https://github.com/maximiliansoelch) |
+    
+</details>
+
 ### Building for production
 
 To build and optimize the Artemis application for production, run:
