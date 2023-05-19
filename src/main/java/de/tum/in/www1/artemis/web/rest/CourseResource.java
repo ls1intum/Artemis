@@ -36,7 +36,10 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.TutorParticipationRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.OAuth2JWKSService;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.*;
@@ -53,11 +56,7 @@ import de.tum.in.www1.artemis.web.rest.dto.CourseForDashboardDTO;
 import de.tum.in.www1.artemis.web.rest.dto.CourseManagementDetailViewDTO;
 import de.tum.in.www1.artemis.web.rest.dto.CourseManagementOverviewStatisticsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.StatsForDashboardDTO;
-import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenAlertException;
-import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
-import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
-import de.tum.in.www1.artemis.web.rest.errors.ErrorConstants;
+import de.tum.in.www1.artemis.web.rest.errors.*;
 import tech.jhipster.web.util.PaginationUtil;
 
 /**
@@ -70,9 +69,6 @@ public class CourseResource {
     private static final String ENTITY_NAME = "course";
 
     private final Logger log = LoggerFactory.getLogger(CourseResource.class);
-
-    @Value("${artemis.course-archives-path}")
-    private String courseArchivesDirPath;
 
     private final UserRepository userRepository;
 
@@ -107,6 +103,9 @@ public class CourseResource {
     private final GradingScaleService gradingScaleService;
 
     private final CourseScoreCalculationService courseScoreCalculationService;
+
+    @Value("${artemis.course-archives-path}")
+    private String courseArchivesDirPath;
 
     public CourseResource(UserRepository userRepository, CourseService courseService, CourseRepository courseRepository, ExerciseService exerciseService,
             OAuth2JWKSService oAuth2JWKSService, OnlineCourseConfigurationService onlineCourseConfigurationService, AuthorizationCheckService authCheckService,
@@ -318,6 +317,26 @@ public class CourseResource {
             userCourses = userCourses.filter(course -> course.getEndDate() == null || course.getEndDate().isAfter(ZonedDateTime.now()));
         }
         return userCourses.toList();
+    }
+
+    /**
+     * GET /courses/groups : get all groups for all courses for administration purposes.
+     *
+     * @return the list of groups (the user has access to)
+     */
+    @GetMapping("courses/groups")
+    @PreAuthorize("hasRole('TA')")
+    public ResponseEntity<List<String>> getAllGroupsForAllCourses() {
+        log.debug("REST request to get all Groups for all Courses");
+        List<Course> courses = courseRepository.findAll();
+        List<String> groups = new ArrayList<>();
+        for (Course course : courses) {
+            groups.add(course.getInstructorGroupName());
+            groups.add(course.getEditorGroupName());
+            groups.add(course.getTeachingAssistantGroupName());
+            groups.add(course.getStudentGroupName());
+        }
+        return ResponseEntity.ok().body(groups);
     }
 
     /**
