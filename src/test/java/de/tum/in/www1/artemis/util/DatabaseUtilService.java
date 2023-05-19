@@ -2404,16 +2404,6 @@ public class DatabaseUtilService {
         return exerciseGroup;
     }
 
-    // TODO: javadoc
-    public ExerciseGroup createAndSaveExerciseGroup(boolean mandatory) {
-        Course course = createAndSaveCourse(1L, pastTimestamp, futureFutureTimestamp, Set.of());
-        Exam exam = ModelFactory.generateExam(course);
-        ExerciseGroup exerciseGroup = ModelFactory.generateExerciseGroup(mandatory, exam);
-        examRepository.save(exam);
-
-        return exerciseGroup;
-    }
-
     public ExerciseGroup addExerciseGroupWithExamWithReviewDatesAndCourse(boolean mandatory) {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         Exam exam = ModelFactory.generateExamWithStudentReviewDates(course);
@@ -4008,6 +3998,26 @@ public class DatabaseUtilService {
         return quizExercise;
     }
 
+    /**
+     * creates and saves an exam exercise group in a course that is currently active.
+     *
+     * @param mandatory if the exerciseGroup is mandatory
+     * @return exercise group created
+     */
+    public ExerciseGroup createAndSaveActiveExerciseGroup(boolean mandatory) {
+        Course course = createAndSaveCourse(1L, pastTimestamp, futureFutureTimestamp, Set.of());
+        Exam exam = ModelFactory.generateExam(course);
+        ExerciseGroup exerciseGroup = ModelFactory.generateExerciseGroup(mandatory, exam);
+        examRepository.save(exam);
+
+        return exerciseGroup;
+    }
+
+    /**
+     * important quiz fields are emptied, so it can be imported,
+     *
+     * @param quizExercise to be emptied
+     */
     public void emptyOutQuizExercise(QuizExercise quizExercise) {
         quizExercise.setReleaseDate(null);
         quizExercise.setCourse(null);
@@ -4031,6 +4041,14 @@ public class DatabaseUtilService {
         return quizExercise;
     }
 
+    /**
+     * Creates a new quiz
+     *
+     * @param releaseDate release date of the quiz, is also used to set the start date of the course
+     * @param dueDate     due date of the quiz, is also used to set the end date of the course
+     * @param quizMode    SYNCHRONIZED, BATCHED or INDIVIDUAL
+     * @return quiz that was created
+     */
     public QuizExercise createQuiz(ZonedDateTime releaseDate, ZonedDateTime dueDate, QuizMode quizMode) {
         Course course = createAndSaveCourse(null, releaseDate == null ? null : releaseDate.minusDays(1), dueDate == null ? null : dueDate.plusDays(1), Set.of());
 
@@ -4040,9 +4058,19 @@ public class DatabaseUtilService {
         return quizExercise;
     }
 
+    /**
+     * Creates a team quiz exercise with a team and saves it into the repository.
+     *
+     * @param releaseDate release date of the quiz
+     * @param dueDate     due date of the quiz
+     * @param quizMode    SYNCHRONIZED, BATCHED or INDIVIDUAL
+     * @param minTeamSize minimum number of members the team is allowed to have
+     * @param maxTeamSize maximum number of members the team is allowed to have
+     * @return exercise created
+     */
     public QuizExercise createAndSaveTeamQuiz(ZonedDateTime releaseDate, ZonedDateTime dueDate, QuizMode quizMode, int minTeamSize, int maxTeamSize) {
         QuizExercise quizExercise = createQuiz(releaseDate, dueDate, quizMode);
-        setupTeamExercise(quizExercise, minTeamSize, maxTeamSize);
+        setupTeamQuizExercise(quizExercise, minTeamSize, maxTeamSize);
         quizExerciseRepository.save(quizExercise);
 
         Team team = new Team();
@@ -4052,7 +4080,14 @@ public class DatabaseUtilService {
         return quizExercise;
     }
 
-    public void setupTeamExercise(QuizExercise quiz, int minTeamSize, int maxTeamSize) {
+    /**
+     * sets up a team quiz exercise.
+     *
+     * @param quiz        quiz exercise that should be a team exercise.
+     * @param minTeamSize minimum number of members the team is allowed to have
+     * @param maxTeamSize maximum number of members the team is allowed to have
+     */
+    public void setupTeamQuizExercise(QuizExercise quiz, int minTeamSize, int maxTeamSize) {
         var teamAssignmentConfig = new TeamAssignmentConfig();
         teamAssignmentConfig.setExercise(quiz);
         teamAssignmentConfig.setMinTeamSize(minTeamSize);
@@ -4101,7 +4136,7 @@ public class DatabaseUtilService {
     }
 
     /**
-     * Removes a user from all courses they are currently in
+     * Removes a user from all courses they are currently in.
      *
      * @param login login to find user with
      */
@@ -4111,6 +4146,12 @@ public class DatabaseUtilService {
         userRepo.save(user);
     }
 
+    /**
+     * renames the quiz with the passed title, the quiz gets saved in the repository.
+     *
+     * @param quizExercise quiz to be renamed
+     * @param newTitle     new name of the quiz
+     */
     public void renameAndSaveQuiz(QuizExercise quizExercise, String newTitle) {
         quizExercise.setTitle(newTitle);
         quizExerciseRepository.save(quizExercise);

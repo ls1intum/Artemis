@@ -115,7 +115,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createQuizExercise_setCourseAndExerciseGroup_badRequest() throws Exception {
-        ExerciseGroup exerciseGroup = database.createAndSaveExerciseGroup(true);
+        ExerciseGroup exerciseGroup = database.createAndSaveActiveExerciseGroup(true);
         quizExercise = ModelFactory.generateQuizExerciseForExam(exerciseGroup);
         quizExercise.setCourse(exerciseGroup.getExam().getCourse());
 
@@ -125,7 +125,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createQuizExercise_setNeitherCourseAndExerciseGroup_badRequest() throws Exception {
-        QuizExercise quizExercise = ModelFactory.generateQuizExerciseForExam(null);
+        quizExercise = ModelFactory.generateQuizExerciseForExam(null);
         request.postWithResponseBody("/api/quiz-exercises/", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
     }
 
@@ -215,8 +215,8 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateQuizExercise_setCourseAndExerciseGroup_badRequest() throws Exception {
-        ExerciseGroup exerciseGroup = database.createAndSaveExerciseGroup(true);
-        QuizExercise quizExercise = database.createAndSaveQuiz(ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
+        ExerciseGroup exerciseGroup = database.createAndSaveActiveExerciseGroup(true);
+        quizExercise = database.createAndSaveQuiz(ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
         quizExercise.setExerciseGroup(exerciseGroup);
 
         request.putWithResponseBody("/api/quiz-exercises/", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
@@ -225,7 +225,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateQuizExercise_setNeitherCourseAndExerciseGroup_badRequest() throws Exception {
-        QuizExercise quizExercise = database.createAndSaveQuiz(ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
+        quizExercise = database.createAndSaveQuiz(ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
         quizExercise.setCourse(null);
 
         request.putWithResponseBody("/api/quiz-exercises/", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
@@ -244,7 +244,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateQuizExercise_convertFromCourseToExamExercise_badRequest() throws Exception {
         quizExercise = database.createAndSaveQuiz(ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
-        ExerciseGroup exerciseGroup = database.createAndSaveExerciseGroup(true);
+        ExerciseGroup exerciseGroup = database.createAndSaveActiveExerciseGroup(true);
 
         quizExercise.setCourse(null);
         quizExercise.setExerciseGroup(exerciseGroup);
@@ -365,7 +365,6 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testSetQuizBatchStartTimeForNonSynchronizedQuizExercises_asStudent() throws Exception {
-        ;
         quizExercise = database.createAndSaveQuiz(ZonedDateTime.now().minusHours(5), null, QuizMode.INDIVIDUAL);
         quizExercise.setDuration(400);
         quizExercise.getQuizBatches().forEach(batch -> batch.setStartTime(ZonedDateTime.now().minusMinutes(5)));
@@ -435,29 +434,6 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         assertThat(searchResult.getResultsOnPage()).filteredOn(result -> ((int) ((LinkedHashMap<String, ?>) result).get("id")) == exerciseId).hasSize(1);
 
-    }
-
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void testCourseAndExamFiltersAsAdmin() throws Exception {
-        String randomString = setupFilterTestCase();
-        exerciseIntegrationTestUtils.testCourseAndExamFilters("/api/quiz-exercises/", randomString);
-    }
-
-    // todo: move
-    private String setupFilterTestCase() {
-        String randomString = UUID.randomUUID().toString();
-        ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
-        quizExercise = database.createQuizForExam(exerciseGroup);
-        quizExercise.setTitle(randomString + "-Morpork");
-        quizExerciseRepository.save(quizExercise);
-
-        final Course course = database.addEmptyCourse();
-        final var now = ZonedDateTime.now();
-        QuizExercise exercise = ModelFactory.generateQuizExercise(now.minusDays(1), now.minusHours(2), QuizMode.INDIVIDUAL, course);
-        exercise.setTitle(randomString);
-        quizExerciseRepository.save(exercise);
-        return randomString;
     }
 
     @Test
@@ -1059,7 +1035,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importQuizExerciseFromCourseToExam() throws Exception {
-        ExerciseGroup exerciseGroup = database.createAndSaveExerciseGroup(true);
+        ExerciseGroup exerciseGroup = database.createAndSaveActiveExerciseGroup(true);
         quizExercise = database.createAndSaveQuiz(ZonedDateTime.now().plusHours(2), null, QuizMode.SYNCHRONIZED);
 
         database.emptyOutQuizExercise(quizExercise);
@@ -1075,7 +1051,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "TA")
     void importQuizExerciseFromCourseToExam_forbidden() throws Exception {
-        ExerciseGroup exerciseGroup = database.createAndSaveExerciseGroup(true);
+        ExerciseGroup exerciseGroup = database.createAndSaveActiveExerciseGroup(true);
         quizExercise = database.createAndSaveQuiz(ZonedDateTime.now().plusHours(2), null, QuizMode.SYNCHRONIZED);
 
         database.emptyOutQuizExercise(quizExercise);
@@ -1121,7 +1097,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importQuizExerciseFromExamToExam() throws Exception {
-        ExerciseGroup exerciseGroup = database.createAndSaveExerciseGroup(true);
+        ExerciseGroup exerciseGroup = database.createAndSaveActiveExerciseGroup(true);
         quizExercise = database.createAndSaveExamQuiz(ZonedDateTime.now().plusDays(1), ZonedDateTime.now().plusDays(2));
         quizExercise.setExerciseGroup(exerciseGroup);
 
@@ -1154,7 +1130,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         assertThat(changedQuiz).isNotNull();
 
         changedQuiz.setCourse(course);
-        database.setupTeamExercise(changedQuiz, 1, 10);
+        database.setupTeamQuizExercise(changedQuiz, 1, 10);
 
         changedQuiz = request.postWithResponseBody("/api/quiz-exercises/import/" + quizExercise.getId(), changedQuiz, QuizExercise.class, HttpStatus.CREATED);
 
@@ -1357,7 +1333,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     }
 
     private QuizExercise createQuizOnServerForExam() throws Exception {
-        ExerciseGroup exerciseGroup = database.createAndSaveExerciseGroup(true);
+        ExerciseGroup exerciseGroup = database.createAndSaveActiveExerciseGroup(true);
         QuizExercise quizExercise = database.createQuizForExam(exerciseGroup);
         quizExercise.setDuration(3600);
 
