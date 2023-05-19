@@ -250,10 +250,10 @@ class FileServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
     @Test
     void testActualPathForPublicFileUploadExercisePath_shouldThrowException() {
         Exception exception = assertThrows(FilePathParsingException.class, () -> fileService.actualPathForPublicPath("asdasdfiles/file-upload-exercises"));
-        assertThat(exception.getMessage()).startsWith("Public path does not contain correct exerciseId or submissionId:");
+        assertThat(exception).hasMessageStartingWith("Public path does not contain correct exerciseId or submissionId:");
 
         exception = assertThrows(FilePathParsingException.class, () -> fileService.actualPathForPublicPath("asdasdfiles/file-asd-exercises"));
-        assertThat(exception.getMessage()).startsWith("Unknown Filepath:");
+        assertThat(exception).hasMessageStartingWith("Unknown Filepath:");
     }
 
     @Test
@@ -269,28 +269,28 @@ class FileServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
             Path actualFileUploadPath = Path.of(FilePathService.getFileUploadExercisesFilePath());
             fileService.publicPathForActualPath(actualFileUploadPath.toString(), 1L);
         });
-        assertThat(exception.getMessage()).startsWith("Unexpected String in upload file path. Exercise ID should be present here:");
+        assertThat(exception).hasMessageStartingWith("Unexpected String in upload file path. Exercise ID should be present here:");
 
         exception = assertThrows(FilePathParsingException.class, () -> fileService.publicPathForActualPath(Path.of("asdasdfiles", "file-asd-exercises").toString(), 1L));
-        assertThat(exception.getMessage()).startsWith("Unknown Filepath:");
+        assertThat(exception).hasMessageStartingWith("Unknown Filepath:");
     }
 
     @Test
     void testReplaceVariablesInFileRecursive_shouldThrowException() {
         Exception exception = assertThrows(RuntimeException.class, () -> fileService.replaceVariablesInFileRecursive("some-path", new HashMap<>()));
-        assertThat(exception.getMessage()).endsWith("should be replaced but the directory does not exist.");
+        assertThat(exception).hasMessageEndingWith("should be replaced but the directory does not exist.");
     }
 
     @Test
     void testNormalizeLineEndingsDirectory_shouldThrowException() {
         Exception exception = assertThrows(RuntimeException.class, () -> fileService.normalizeLineEndingsDirectory("some-path"));
-        assertThat(exception.getMessage()).endsWith("should be normalized but the directory does not exist.");
+        assertThat(exception).hasMessageEndingWith("should be normalized but the directory does not exist.");
     }
 
     @Test
     void testConvertToUTF8Directory_shouldThrowException() {
         Exception exception = assertThrows(RuntimeException.class, () -> fileService.convertToUTF8Directory("some-path"));
-        assertThat(exception.getMessage()).endsWith("should be converted to UTF-8 but the directory does not exist.");
+        assertThat(exception).hasMessageEndingWith("should be converted to UTF-8 but the directory does not exist.");
     }
 
     // TODO: either rework those tests or delete them

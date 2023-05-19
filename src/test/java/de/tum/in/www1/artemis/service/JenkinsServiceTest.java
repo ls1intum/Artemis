@@ -135,7 +135,7 @@ class JenkinsServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
                 () -> continuousIntegrationService.createBuildPlanForExercise(programmingExercise, TEMPLATE.getName(), exerciseRepoUrl, testsRepoUrl, solutionRepoUrl));
 
         mockedStreamUtils.close();
-        assertThat(exception.getMessage()).startsWith("Error loading template Jenkins build XML: ");
+        assertThat(exception).hasMessageStartingWith("Error loading template Jenkins build XML: ");
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
@@ -158,7 +158,7 @@ class JenkinsServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
         Exception exception = assertThrows(UnsupportedOperationException.class,
                 () -> continuousIntegrationService.createBuildPlanForExercise(finalProgrammingExercise, TEMPLATE.getName(), exerciseRepoUrl, testsRepoUrl, solutionRepoUrl));
 
-        assertThat(exception.getMessage()).endsWith("templates are not available for Jenkins.");
+        assertThat(exception).hasMessageEndingWith("templates are not available for Jenkins.");
     }
 
     @Test
@@ -175,7 +175,7 @@ class JenkinsServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
         jenkinsRequestMockProvider.mockGivePlanPermissionsThrowException(programmingExercise.getProjectKey(), programmingExercise.getProjectKey());
 
         Exception exception = assertThrows(JenkinsException.class, () -> programmingExerciseImportService.importBuildPlans(programmingExercise, programmingExercise));
-        assertThat(exception.getMessage()).startsWith("Cannot give assign permissions to plan");
+        assertThat(exception).hasMessageStartingWith("Cannot give assign permissions to plan");
     }
 
     @Test
@@ -192,7 +192,7 @@ class JenkinsServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
         jenkinsRequestMockProvider.mockGivePlanPermissionsThrowException(programmingExercise.getProjectKey(), programmingExercise.getProjectKey());
 
         Exception exception = assertThrows(JenkinsException.class, () -> programmingExerciseImportService.importBuildPlans(programmingExercise, programmingExercise));
-        assertThat(exception.getMessage()).startsWith("Cannot give assign permissions to plan");
+        assertThat(exception).hasMessageStartingWith("Cannot give assign permissions to plan");
     }
 
     @Test
@@ -248,6 +248,6 @@ class JenkinsServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
             continuousIntegrationService.updatePlanRepository(projectKey, planName, ASSIGNMENT_REPO_NAME, null, participation.getRepositoryUrl(), templateRepoUrl, "main",
                     List.of());
         });
-        assertThat(exception.getMessage()).startsWith("Error trying to configure build plan in Jenkins");
+        assertThat(exception).hasMessageStartingWith("Error trying to configure build plan in Jenkins");
     }
 }

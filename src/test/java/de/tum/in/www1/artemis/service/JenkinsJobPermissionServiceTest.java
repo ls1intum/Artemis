@@ -62,7 +62,7 @@ class JenkinsJobPermissionServiceTest extends AbstractSpringIntegrationJenkinsGi
             jenkinsJobPermissionsService.addInstructorAndEditorAndTAPermissionsToUsersForFolder(Set.of(TEST_PREFIX + "ta1"), Set.of(TEST_PREFIX + "editor1"),
                     Set.of(TEST_PREFIX + "instructor1"), folderName);
         });
-        Assertions.assertThat(exception.getMessage()).startsWith("Cannot add instructor, editor, and/or ta permissions to users for folder");
+        Assertions.assertThat(exception).hasMessageStartingWith("Cannot add instructor, editor, and/or ta permissions to users for folder");
     }
 
     @Test
@@ -80,7 +80,7 @@ class JenkinsJobPermissionServiceTest extends AbstractSpringIntegrationJenkinsGi
         Exception exception = assertThrows(IOException.class, () -> {
             jenkinsJobPermissionsService.addTeachingAssistantPermissionsToUserForFolder(taLogin, folderName);
         });
-        Assertions.assertThat(exception.getMessage()).startsWith("Cannot add ta permissions to user for folder");
+        Assertions.assertThat(exception).hasMessageStartingWith("Cannot add ta permissions to user for folder");
     }
 
     @Test
@@ -97,7 +97,7 @@ class JenkinsJobPermissionServiceTest extends AbstractSpringIntegrationJenkinsGi
         Exception exception = assertThrows(IOException.class, () -> {
             jenkinsJobPermissionsService.addPermissionsForUsersToFolder(taLogins, folderName, taPermissions);
         });
-        Assertions.assertThat(exception.getMessage()).startsWith("Cannot add permissions to users for folder:");
+        Assertions.assertThat(exception).hasMessageStartingWith("Cannot add permissions to users for folder:");
     }
 
     @Test
@@ -115,7 +115,7 @@ class JenkinsJobPermissionServiceTest extends AbstractSpringIntegrationJenkinsGi
         Exception exception = assertThrows(IOException.class, () -> {
             jenkinsJobPermissionsService.removePermissionsFromUserOfFolder(taLogin, folderName, taPermissions);
         });
-        Assertions.assertThat(exception.getMessage()).startsWith("Cannot remove permissions to user for folder:");
+        Assertions.assertThat(exception).hasMessageStartingWith("Cannot remove permissions to user for folder:");
     }
 
     @Test
@@ -133,6 +133,6 @@ class JenkinsJobPermissionServiceTest extends AbstractSpringIntegrationJenkinsGi
         Exception exception = assertThrows(IOException.class, () -> {
             jenkinsJobPermissionsService.removePermissionsFromUsersForFolder(taLogins, folderName, taPermissions);
         });
-        Assertions.assertThat(exception.getMessage()).startsWith("Cannot remove permissions to user for folder:");
+        Assertions.assertThat(exception).hasMessageStartingWith("Cannot remove permissions to user for folder:");
     }
 }
