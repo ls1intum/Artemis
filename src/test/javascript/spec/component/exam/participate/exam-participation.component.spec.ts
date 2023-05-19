@@ -467,6 +467,9 @@ describe('ExamParticipationComponent', () => {
 
         it('should correctly increase working time to next day', () => {
             jest.spyOn(websocketService, 'receive').mockReturnValue(of(9001));
+            // the following line uses the current time zone and therefore avoids a time zone flaky test
+            // (if left out, the test would pass in the German time zone and fail in most other time zones)
+            const startDate = dayjs().set('h', 23); //today at 23:00
             comp.initIndividualEndDates(startDate);
             expect(comp.studentExam.workingTime).toBe(9001);
             expect(artemisDatePipeSpy).toHaveBeenCalledWith(startDate.add(9001, 'seconds'), 'short');

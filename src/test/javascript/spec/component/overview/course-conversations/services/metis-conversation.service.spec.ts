@@ -246,7 +246,7 @@ describe('MetisConversationService', () => {
             metisConversationService.setUpConversationService(course).subscribe({
                 complete: () => {
                     const websocketDTO = new ConversationWebsocketDTO();
-                    websocketDTO.crudAction = MetisPostAction.CREATE;
+                    websocketDTO.metisCrudAction = MetisPostAction.CREATE;
                     websocketDTO.conversation = generateExampleChannelDTO({ id: 99 });
 
                     receiveMockSubject.next(websocketDTO);
@@ -264,7 +264,7 @@ describe('MetisConversationService', () => {
             metisConversationService.setUpConversationService(course).subscribe({
                 complete: () => {
                     const websocketDTO = new ConversationWebsocketDTO();
-                    websocketDTO.crudAction = MetisPostAction.UPDATE;
+                    websocketDTO.metisCrudAction = MetisPostAction.UPDATE;
                     websocketDTO.conversation = { ...channel, name: 'newtitle' } as ChannelDTO;
 
                     receiveMockSubject.next(websocketDTO);
@@ -286,7 +286,7 @@ describe('MetisConversationService', () => {
             metisConversationService.setUpConversationService(course).subscribe({
                 complete: () => {
                     const websocketDTO = new ConversationWebsocketDTO();
-                    websocketDTO.crudAction = MetisPostAction.NEW_MESSAGE;
+                    websocketDTO.metisCrudAction = MetisPostAction.NEW_MESSAGE;
                     // 1 of january 2022
                     const lastMessageDate = dayjs('2022-01-01T00:00:00.000Z');
                     websocketDTO.conversation = { ...channel, lastMessageDate } as ChannelDTO;
@@ -308,7 +308,7 @@ describe('MetisConversationService', () => {
             metisConversationService.setUpConversationService(course).subscribe({
                 complete: () => {
                     const websocketDTO = new ConversationWebsocketDTO();
-                    websocketDTO.crudAction = MetisPostAction.DELETE;
+                    websocketDTO.metisCrudAction = MetisPostAction.DELETE;
                     websocketDTO.conversation = { ...channel } as ChannelDTO;
 
                     receiveMockSubject.next(websocketDTO);

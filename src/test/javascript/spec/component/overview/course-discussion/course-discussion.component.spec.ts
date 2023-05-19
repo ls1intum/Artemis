@@ -38,6 +38,7 @@ import {
     metisExercisePosts,
     metisLecture,
     metisLecture2,
+    metisLecture3,
     metisLecturePosts,
     metisUser1,
 } from '../../../helpers/sample/metis-sample-data';
@@ -149,7 +150,7 @@ describe('CourseDiscussionComponent', () => {
         const searchInput = getElement(fixture.debugElement, 'input[name=searchText]');
         expect(searchInput.textContent).toBe('');
         const contextOptions = getElement(fixture.debugElement, 'mat-select[name=context]');
-        expect(component.lectures).toEqual([metisLecture, metisLecture2]);
+        expect(component.lectures).toEqual([metisLecture, metisLecture2, metisLecture3]);
         expect(component.exercises).toEqual([metisExercise, metisExercise2]);
         // select should provide all context options
         expect(contextOptions.textContent).toContain(metisLecture.title);

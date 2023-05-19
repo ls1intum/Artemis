@@ -1,27 +1,34 @@
-import { AfterViewInit, Component, OnInit } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { SafeHtml } from '@angular/platform-browser';
-import { StaticContentService } from 'app/shared/service/static-content.service';
-
-const privacyStatementFile = 'privacy_statement.html';
+import { PrivacyStatementService } from 'app/shared/service/privacy-statement.service';
+import { PrivacyStatementLanguage } from 'app/entities/privacy-statement.model';
+import { Subscription } from 'rxjs';
+import { JhiLanguageHelper } from 'app/core/language/language.helper';
 
 @Component({
     selector: 'jhi-privacy',
-    template: `
-        <h3 jhiTranslate="legal.privacy.title">Datenschutzerklärung</h3>
-        <div [innerHTML]="privacyStatement"></div>
-    `,
+    template: ` <div [innerHTML]="privacyStatement | htmlForMarkdown"></div> `,
 })
-export class PrivacyComponent implements AfterViewInit, OnInit {
-    privacyStatement: SafeHtml;
+export class PrivacyComponent implements AfterViewInit, OnInit, OnDestroy {
+    privacyStatement: string;
+    private languageChangeSubscription?: Subscription;
 
-    constructor(private route: ActivatedRoute, private staticContentService: StaticContentService) {}
+    constructor(private route: ActivatedRoute, private privacyStatementService: PrivacyStatementService, private languageHelper: JhiLanguageHelper) {}
 
     /**
-     * On init get the privacy statement file from the Artemis server and save it.
+     * On init get the privacy statement file from the Artemis server and set up a subscription to fetch the file again if the language was changed.
      */
     ngOnInit(): void {
-        this.staticContentService.getStaticHtmlFromArtemisServer(privacyStatementFile).subscribe((statement) => (this.privacyStatement = statement));
+        // Update the view if the language was changed
+        this.languageChangeSubscription = this.languageHelper.language.subscribe((lang) => {
+            this.privacyStatementService.getPrivacyStatement(lang as PrivacyStatementLanguage).subscribe((statement) => (this.privacyStatement = statement.text));
+        });
+    }
+
+    ngOnDestroy() {
+        if (this.languageChangeSubscription) {
+            this.languageChangeSubscription.unsubscribe();
+        }
     }
 
     /**

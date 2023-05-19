@@ -107,6 +107,7 @@
                 "logs": "Logs",
                 "audits": "Audits",
                 "apidocs": "API",
+                "privacyStatement": "Privacy Statement",
                 "database": "Database",
                 "jhipster-needle-menu-add-admin-element": "JHipster will add additional menu entries here (do not translate!)"
             },
@@ -288,6 +289,9 @@
         },
         "exportRepos": {
             "title": "Export Repositories"
+        },
+        "resetProgrammingExercise": {
+            "title": "Reset Programming Exercise"
         },
         "validation": {
             "required": "This field is required.",

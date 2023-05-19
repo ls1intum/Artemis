@@ -57,7 +57,7 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @BeforeEach
     void initTestCase() {
 
-        database.addUsers(TEST_PREFIX, 5, 5, 4, 4);
+        database.addUsers(TEST_PREFIX, 4, 4, 4, 1);
         student1 = database.getUserByLogin(TEST_PREFIX + "student1");
 
         // initialize test setup and get all existing posts with answers (four posts, one in each context, are initialized with one answer each): 4 answers in total (with author
@@ -143,7 +143,7 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         request.postWithResponseBody("/api/courses/" + courseId + "/answer-posts", answerPostToSave, AnswerPost.class, HttpStatus.BAD_REQUEST);
 
         var newAnswerPostCount = answerPostRepository.count() - answerPostCount;
-        assertThat(newAnswerPostCount).isEqualTo(0);
+        assertThat(newAnswerPostCount).isZero();
 
         // active messaging again
         persistedCourse.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
@@ -201,7 +201,7 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         var newAnswerPostCount = answerPostRepository.count() - answerPostCount;
         assertThat(postRepository.findPostByIdElseThrow(existingAnswerPostToSave.getPost().getId()).getAnswerCount())
                 .isEqualTo(existingAnswerPostToSave.getPost().getAnswerCount());
-        assertThat(newAnswerPostCount).isEqualTo(0);
+        assertThat(newAnswerPostCount).isZero();
     }
 
     // GET
@@ -668,7 +668,7 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
         request.delete("/api/courses/" + courseId + "/answer-posts/" + answerPostToNotDelete.getId(), HttpStatus.FORBIDDEN);
         var newAnswerPostCount = answerPostRepository.count() - answerPostCount;
-        assertThat(newAnswerPostCount).isEqualTo(0);
+        assertThat(newAnswerPostCount).isZero();
         // should not decrement answerCount
         assertThat(postRepository.findPostByIdElseThrow(answerPostToNotDelete.getPost().getId()).getAnswerCount()).isEqualTo(answerPostToNotDelete.getPost().getAnswerCount());
     }

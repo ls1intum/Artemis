@@ -96,7 +96,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
         validatorFactory = Validation.buildDefaultValidatorFactory();
         validator = validatorFactory.getValidator();
 
-        database.addUsers(TEST_PREFIX, 5, 5, 4, 1);
+        database.addUsers(TEST_PREFIX, 4, 4, 4, 1);
 
         // initialize test setup and get all existing posts
         // (there are 4 posts with lecture context, 4 with exercise context, 3 with course-wide context and 3 with conversation initialized): 14 posts in total
@@ -338,7 +338,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
                 .stream().filter(conversationParticipant -> !Objects.equals(conversationParticipant.getUser().getId(), postToSave1.getAuthor().getId())).findAny().orElseThrow()
                 .getUnreadMessagesCount();
 
-        assertThat(unreadMessages).isEqualTo(0);
+        assertThat(unreadMessages).isZero();
     }
 
     @Test
