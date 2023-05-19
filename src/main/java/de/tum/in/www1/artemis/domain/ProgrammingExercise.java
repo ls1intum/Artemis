@@ -138,6 +138,10 @@ public class ProgrammingExercise extends Exercise {
     @Column(name = "release_tests_with_example_solution", table = "programming_exercise_details")
     private boolean releaseTestsWithExampleSolution;
 
+    @Nullable
+    @Column(name = "iris_activated")
+    private Boolean irisActivated;
+
     /**
      * This boolean flag determines whether the solution repository should be checked out during the build (additional to the student's submission).
      * This property is only used when creating the exercise (the client sets this value when POSTing the new exercise to the server).
@@ -835,5 +839,14 @@ public class ProgrammingExercise extends Exercise {
 
     public void generateAndSetBuildPlanAccessSecret() {
         buildPlanAccessSecret = UUID.randomUUID().toString();
+    }
+
+    @Nullable
+    public Boolean getIrisActivated() {
+        return irisActivated;
+    }
+
+    public void setIrisActivated(Boolean irisActivated) {
+        this.irisActivated = irisActivated;
     }
 }
