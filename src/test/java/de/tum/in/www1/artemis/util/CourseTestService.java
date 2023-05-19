@@ -15,6 +15,8 @@ import java.time.DayOfWeek;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
@@ -29,8 +31,6 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.test.context.TestSecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
@@ -488,18 +488,17 @@ public class CourseTestService {
         mockDelegate.mockAddUserToGroupInUserManagement(instructor1, course1.getDefaultInstructorGroupName(), false);
 
         var result = request.getMvc().perform(buildCreateCourse(course1)).andExpect(status().isCreated()).andReturn();
-        SecurityContextHolder.setContext(TestSecurityContextHolder.getContext());
         course1 = objectMapper.readValue(result.getResponse().getContentAsString(), Course.class);
         assertThat(courseRepo.findByIdElseThrow(course1.getId())).isNotNull();
-
+        CountDownLatch latch1 = new CountDownLatch(1);
         request.postWithoutLocation("/api/courses/" + course1.getId() + "/students/" + userPrefix + "student1", null, HttpStatus.OK, null);
         request.postWithoutLocation("/api/courses/" + course1.getId() + "/instructors/" + userPrefix + "instructor1", null, HttpStatus.OK, null);
-
+        latch1.await(5, TimeUnit.SECONDS);
         // Check if all default channels are created
         var channels = channelRepository.findChannelsByCourseId(course1.getId());
         assertThat(channels).hasSize(DefaultChannelType.values().length);
         channels.forEach(channel -> assertThat(Arrays.stream(DefaultChannelType.values()).map(DefaultChannelType::getName)).contains(channel.getName()));
-        // Check if creator and student was added to default channels
+        // Check if newly added instructor and student was added to default channels
         channels.forEach(channel -> {
             var participants = conversationParticipantRepository.findConversationParticipantByConversationId(channel.getId());
             assertThat(participants).hasSize(2); // 1 instructor and 1 student
