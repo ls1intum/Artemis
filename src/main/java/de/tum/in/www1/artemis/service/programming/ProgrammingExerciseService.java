@@ -197,6 +197,12 @@ public class ProgrammingExerciseService {
     @Transactional // TODO: apply the transaction on a smaller scope
     // ok because we create many objects in a rather complex way and need a rollback in case of exceptions
     public ProgrammingExercise createProgrammingExercise(ProgrammingExercise programmingExercise) throws GitAPIException, IOException {
+        // We have to save the channel first before setting up the programming exercise because the channel attached to it right now doesn't have an id
+        if (programmingExercise.isCourseExercise()) {
+            Channel createdChannel = channelService.createExerciseChannel(programmingExercise, programmingExercise.getChannel().getName());
+            programmingExercise.setChannel(createdChannel);
+        }
+
         programmingExercise.generateAndSetProjectKey();
         final User exerciseCreator = userRepository.getUser();
 

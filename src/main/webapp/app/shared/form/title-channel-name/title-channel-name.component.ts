@@ -3,6 +3,7 @@ import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 @Component({
     selector: 'jhi-title-channel-name',
     templateUrl: './title-channel-name.component.html',
+    styleUrls: ['./title-channel-name.component.scss'],
 })
 export class TitleChannelNameComponent implements OnInit {
     @Input() title: string | undefined;
@@ -19,6 +20,9 @@ export class TitleChannelNameComponent implements OnInit {
     ngOnInit(): void {
         if (!this.channelNamePrefix) {
             this.channelNamePrefix = '';
+        }
+        if (this.channelName === '') {
+            this.channelName = this.channelNamePrefix;
         }
     }
 

@@ -5,7 +5,8 @@
     </div>
     <jhi-title-channel-name
         [(title)]="programmingExercise.title"
-        [(channelName)]="channelName"
+        [channelName]="channelName"
+        (channelNameChange)="updateChannelName($event)"
         channelNamePrefix="exercise-"
         [minTitleLength]="3"
         [pattern]="infoInputs.titleNamePattern"
