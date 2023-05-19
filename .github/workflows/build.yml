@@ -107,7 +107,7 @@ jobs:
       uses: actions/checkout@v3
       with:
         ref: ${{ github.event.pull_request.head.sha }}
-    - name: Git Checkout for non-PR
+    - name: Git Checkout for non-PRs
       if: ${{ github.event_name != 'pull_request' }}
       uses: actions/checkout@v3
     - name: Set up QEMU
