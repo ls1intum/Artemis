@@ -3,7 +3,6 @@ import dayjs from 'dayjs/esm';
 import { ArtemisTestModule } from '../../test.module';
 import { ActivatedRoute } from '@angular/router';
 import { By } from '@angular/platform-browser';
-import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 import { Lecture } from 'app/entities/lecture.model';
 import { Attachment, AttachmentType } from 'app/entities/attachment.model';
 import { LectureAttachmentsComponent } from 'app/lecture/lecture-attachments.component';
@@ -17,16 +16,17 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { NgModel } from '@angular/forms';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 describe('LectureAttachmentsComponent', () => {
     let comp: LectureAttachmentsComponent;
     let fixture: ComponentFixture<LectureAttachmentsComponent>;
-    let fileUploaderService: FileUploaderService;
     let attachmentService: AttachmentService;
     let attachmentServiceFindAllByLectureIdStub: jest.SpyInstance;
+    let attachmentServiceCreateStub: jest.SpyInstance;
+    let attachmentServiceUpdateStub: jest.SpyInstance;
 
     const lecture = {
         id: 4,
@@ -102,9 +102,10 @@ describe('LectureAttachmentsComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(LectureAttachmentsComponent);
                 comp = fixture.componentInstance;
-                fileUploaderService = TestBed.inject(FileUploaderService);
                 attachmentService = TestBed.inject(AttachmentService);
                 attachmentServiceFindAllByLectureIdStub = jest.spyOn(attachmentService, 'findAllByLectureId').mockReturnValue(of(new HttpResponse({ body: [...attachments] })));
+                attachmentServiceCreateStub = jest.spyOn(attachmentService, 'create').mockReturnValue(of(new HttpResponse({ body: newAttachment })));
+                attachmentServiceUpdateStub = jest.spyOn(attachmentService, 'update').mockReturnValue(of(new HttpResponse({ body: newAttachment })));
             });
     });
 
@@ -121,13 +122,11 @@ describe('LectureAttachmentsComponent', () => {
         expect(addAttachmentButton).not.toBeNull();
         addAttachmentButton.nativeElement.click();
         fixture.detectChanges();
-        const fakeFile = new File([''], 'Test-File.pdf', { type: 'application/pdf' });
-        comp.attachmentFile = fakeFile;
+        comp.attachmentFile = new File([''], 'Test-File.pdf', { type: 'application/pdf' });
         const uploadAttachmentButton = fixture.debugElement.query(By.css('#upload-attachment'));
         expect(uploadAttachmentButton).not.toBeNull();
         expect(comp.attachmentToBeCreated).not.toBeNull();
         comp.attachmentToBeCreated!.name = 'Test File Name';
-        jest.spyOn(fileUploaderService, 'uploadFile').mockReturnValue(Promise.resolve({ path: 'test' }));
         fixture.detectChanges();
         expect(uploadAttachmentButton.nativeElement.disabled).toBeFalse();
         uploadAttachmentButton.nativeElement.click();
@@ -138,6 +137,7 @@ describe('LectureAttachmentsComponent', () => {
     }));
 
     it('should not accept too large file', fakeAsync(() => {
+        attachmentServiceCreateStub.mockReturnValue(throwError(new Error('File too large')));
         fixture.detectChanges();
         const addAttachmentButton = fixture.debugElement.query(By.css('#add-attachment'));
         expect(comp.attachmentToBeCreated).toBeUndefined();
@@ -168,12 +168,9 @@ describe('LectureAttachmentsComponent', () => {
         comp.attachmentToBeCreated = undefined;
         comp.saveAttachment();
         expect(attachmentServiceFindAllByLectureIdStub).toHaveBeenCalledOnce();
-        expect(comp.attachmentToBeCreated).toEqual({
-            lecture: comp.lecture,
-            attachmentType: AttachmentType.FILE,
-            version: 0,
-            uploadDate: comp.attachmentToBeCreated!.uploadDate,
-        } as Attachment);
+        expect(attachmentServiceCreateStub).not.toHaveBeenCalled();
+        expect(attachmentServiceUpdateStub).not.toHaveBeenCalled();
+        expect(comp.attachmentToBeCreated).toBeUndefined();
     }));
 
     it('should create Attachment', fakeAsync(() => {
