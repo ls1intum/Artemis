@@ -19,6 +19,7 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
+import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
