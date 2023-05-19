@@ -30,8 +30,9 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { ParticipationType } from 'app/entities/participation/participation.model';
 import { FormsModule } from '@angular/forms';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { CourseUnenrollmentModalComponent } from 'app/overview/course-unenrollment-modal.component';
+import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 
 describe('CourseExercisesComponent', () => {
     let fixture: ComponentFixture<CourseExercisesComponent>;
@@ -68,6 +69,7 @@ describe('CourseExercisesComponent', () => {
                 MockComponent(CourseUnenrollmentModalComponent),
             ],
             providers: [
+                { provide: NgbModal, useClass: MockNgbModalService },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
