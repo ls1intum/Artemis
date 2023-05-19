@@ -43,6 +43,17 @@ public interface LectureRepository extends JpaRepository<Lecture, Long> {
     @Query("""
             SELECT lecture
             FROM Lecture lecture
+            LEFT JOIN FETCH lecture.attachments attachment
+            LEFT JOIN FETCH lecture.lectureUnits lectureUnit
+            LEFT JOIN FETCH lectureUnit.attachment luAttachment
+            LEFT JOIN FETCH lectureUnit.slides slides
+            WHERE lecture.course.id = :courseId
+            """)
+    Set<Lecture> findAllByCourseIdWithAttachmentsAndLectureUnitsAndSlides(@Param("courseId") Long courseId);
+
+    @Query("""
+            SELECT lecture
+            FROM Lecture lecture
             LEFT JOIN FETCH lecture.posts
             LEFT JOIN FETCH lecture.lectureUnits lu
             LEFT JOIN FETCH lu.completedUsers cu
@@ -71,6 +82,16 @@ public interface LectureRepository extends JpaRepository<Lecture, Long> {
             WHERE lecture.id = :#{#lectureId}
             """)
     Optional<Lecture> findByIdWithLectureUnits(@Param("lectureId") Long lectureId);
+
+    @Query("""
+            SELECT lecture
+            FROM Lecture lecture
+            LEFT JOIN FETCH lecture.lectureUnits lectureUnit
+            LEFT JOIN FETCH lectureUnit.attachment luAttachment
+            LEFT JOIN FETCH lectureUnit.slides slides
+            WHERE lecture.id = :lectureId
+            """)
+    Optional<Lecture> findByIdWithLectureUnitsAndWithSlides(@Param("lectureId") Long lectureId);
 
     @SuppressWarnings("PMD.MethodNamingConventions")
     Page<Lecture> findByTitleIgnoreCaseContainingOrCourse_TitleIgnoreCaseContaining(String partialTitle, String partialCourseTitle, Pageable pageable);
@@ -125,5 +146,10 @@ public interface LectureRepository extends JpaRepository<Lecture, Long> {
     @NotNull
     default Lecture findByIdWithLectureUnitsElseThrow(Long lectureId) {
         return findByIdWithLectureUnits(lectureId).orElseThrow(() -> new EntityNotFoundException("Lecture", lectureId));
+    }
+
+    @NotNull
+    default Lecture findByIdWithLectureUnitsAndWithSlidesElseThrow(Long lectureId) {
+        return findByIdWithLectureUnitsAndWithSlides(lectureId).orElseThrow(() -> new EntityNotFoundException("Lecture", lectureId));
     }
 }
