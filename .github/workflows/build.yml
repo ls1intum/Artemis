@@ -106,7 +106,7 @@ jobs:
       # TODO: also check releases and the develop branch
       uses: actions/checkout@v3
       with:
-        ref: ${{ github.event.pull_request.head.sha }}
+        ref: ${{ github.event.pull_request.head.ref }}
     - name: Git Checkout for non-PRs
       if: ${{ github.event_name != 'pull_request' }}
       uses: actions/checkout@v3
