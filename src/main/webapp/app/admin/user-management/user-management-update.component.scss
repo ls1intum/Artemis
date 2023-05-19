@@ -28,3 +28,9 @@
         color: var(--text-editor-color);
     }
 }
+
+::ng-deep .group-panel {
+    background-color: var(--text-editor-background);
+    color: var(--text-editor-color);
+    border: 1px solid gray;
+}

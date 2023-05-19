@@ -141,9 +141,9 @@
                 </div>
                 <div class="form-group">
                     <label class="form-control-label" jhiTranslate="artemisApp.userManagement.groups">Groups</label>
-                    <mat-form-field class="group-tag-list" appearance="outline">
+                    <mat-form-field appearance="outline" class="group-tag-list">
                         <mat-chip-grid #groupList aria-label="Group selection">
-                            <mat-chip-row *ngFor="let group of user.groups" (removed)="onGroupRemove(user, group)" class="group-tag">
+                            <mat-chip-row (removed)="onGroupRemove(user, group)" *ngFor="let group of user.groups" class="group-tag">
                                 <div class="custom-tag">
                                     {{ group }}
                                     <button matChipRemove>
@@ -152,14 +152,22 @@
                                 </div>
                             </mat-chip-row>
                             <input
-                                class="group-tag-input"
-                                [placeholder]="'artemisApp.userManagement.addGroup' | artemisTranslate"
+                                (matChipInputTokenEnd)="onGroupAdd(user, $event)"
                                 [formControl]="groupCtrl"
+                                [matAutocomplete]="auto"
                                 [matChipInputFor]="groupList"
                                 [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
-                                (matChipInputTokenEnd)="onGroupAdd(user, $event)"
+                                [placeholder]="'artemisApp.userManagement.addGroup' | artemisTranslate"
+                                class="group-tag-input"
                             />
                         </mat-chip-grid>
+                        <mat-autocomplete #auto="matAutocomplete" (optionSelected)="onSelected($event)" class="group-panel" classlist="group-panel">
+                            <ng-container *ngFor="let group of filteredGroups | async">
+                                <mat-option *ngIf="!user.groups?.includes(group)" [value]="group">
+                                    {{ group }}
+                                </mat-option>
+                            </ng-container>
+                        </mat-autocomplete>
                     </mat-form-field>
                 </div>
                 <div class="form-group">
