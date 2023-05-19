@@ -104,9 +104,7 @@ def get_client_line_coverage(username, password, key, file_name):
     line_coverage = None
     if len(coverage_divs) >= 4:
         line_coverage_strong = coverage_divs[3].find("span", {"class": "strong"})
-        match = re.search(r"\d+\.\d+", line_coverage_strong.text)
-        if match:
-            line_coverage = match.group()
+        line_coverage = line_coverage_strong.text.replace("%", "").strip()
 
     logging.debug(f"Coverage for {file_name} -> GET report -> {response.status_code} -> line coverage: {line_coverage}")
     return file_name, file_report_url, line_coverage
@@ -128,7 +126,7 @@ def get_server_line_coverage(username, password, key, file_name):
     if tfoot:
         ctr2_tds = tfoot.find_all("td", class_="ctr2")
         if ctr2_tds and len(ctr2_tds) > 0:
-            line_coverage = ctr2_tds[0].text[:-1]
+            line_coverage = ctr2_tds[0].replace("%", "").strip()
 
     logging.debug(f"Coverage for {file_name} -> GET report -> {response.status_code} -> line coverage: {line_coverage}")
     return file_name, file_report_url, line_coverage
