@@ -186,7 +186,7 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         Organization organization = database.createOrganization();
         organization = organizationRepo.save(organization);
-        User student = database.createAndSaveUser(UUID.randomUUID().toString().replace("-", ""));
+        User student = database.createAndSaveUser(TEST_PREFIX + "testAddUser");
 
         request.postWithoutLocation("/api/admin/organizations/" + organization.getId() + "/users/" + student.getLogin(), null, HttpStatus.OK, null);
         Organization updatedOrganization = request.get("/api/admin/organizations/" + organization.getId() + "/full", HttpStatus.OK, Organization.class);
@@ -202,7 +202,7 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         jiraRequestMockProvider.enableMockingOfRequests();
 
         Organization organization = database.createOrganization();
-        User student = database.createAndSaveUser(UUID.randomUUID().toString().replace("-", ""));
+        User student = database.createAndSaveUser(TEST_PREFIX + "testRemoveUser");
 
         organization.getUsers().add(student);
         organization = organizationRepo.save(organization);
