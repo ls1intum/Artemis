@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -168,12 +169,13 @@ public class ChannelService {
     }
 
     /**
-     * Add user to default channels of courses with the same group. This is used when a user is added to a group.
+     * Add user to default channels of courses with the same group asynchronously. This is used when a user is added to a group.
      *
      * @param userToAddToGroup the user to be added
      * @param group            the group of the user
      * @param role             the role of the user
      */
+    @Async
     public void registerUserToDefaultChannels(User userToAddToGroup, String group, Role role) {
         final Set<String> channelNames = Arrays.stream(DefaultChannelType.values()).map(DefaultChannelType::getName).collect(Collectors.toSet());
 
