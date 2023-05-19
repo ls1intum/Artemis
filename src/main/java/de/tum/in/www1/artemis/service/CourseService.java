@@ -198,12 +198,13 @@ public class CourseService {
     /**
      * Note: The number of courses should not change
      *
-     * @param courses the courses for which the participations should be fetched
-     * @param user    the user for which the participations should be fetched
+     * @param courses         the courses for which the participations should be fetched
+     * @param user            the user for which the participations should be fetched
+     * @param includeTestRuns flag that indicates whether test run participations should be included
      */
-    public void fetchParticipationsWithSubmissionsAndResultsForCourses(List<Course> courses, User user) {
+    public void fetchParticipationsWithSubmissionsAndResultsForCourses(List<Course> courses, User user, boolean includeTestRuns) {
         Set<Exercise> exercises = courses.stream().flatMap(course -> course.getExercises().stream()).collect(Collectors.toSet());
-        List<StudentParticipation> participationsOfUserInExercises = studentParticipationRepository.getAllParticipationsOfUserInExercises(user, exercises);
+        List<StudentParticipation> participationsOfUserInExercises = studentParticipationRepository.getAllParticipationsOfUserInExercises(user, exercises, includeTestRuns);
         if (participationsOfUserInExercises.isEmpty()) {
             return;
         }
@@ -238,12 +239,12 @@ public class CourseService {
     }
 
     /**
-     * Get one course with exercises, lectures, exams, learning goals and tutorial groups (filtered for given user)
+     * Get one course with exercises, lectures, exams, competencies and tutorial groups (filtered for given user)
      *
      * @param courseId the course to fetch
      * @param user     the user entity
      * @param refresh  if the user requested an explicit refresh
-     * @return the course including exercises, lectures, exams, learning goals and tutorial groups (filtered for given user)
+     * @return the course including exercises, lectures, exams, competencies and tutorial groups (filtered for given user)
      */
     public Course findOneWithExercisesAndLecturesAndExamsAndLearningGoalsAndTutorialGroupsForUser(Long courseId, User user, boolean refresh) {
         Course course = courseRepository.findByIdWithLecturesElseThrow(courseId);

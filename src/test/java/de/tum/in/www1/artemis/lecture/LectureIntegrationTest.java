@@ -44,13 +44,10 @@ class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
 
     private Lecture lecture1;
 
-    private final int numberOfStudents = 1;
-
-    private final int numberOfTutors = 5;
-
     @BeforeEach
     void initTestCase() throws Exception {
-        this.database.addUsers(TEST_PREFIX, numberOfStudents, numberOfTutors, 0, 1);
+        int numberOfTutors = 2;
+        database.addUsers(TEST_PREFIX, 1, numberOfTutors, 0, 1);
         List<Course> courses = this.database.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, true, numberOfTutors);
         this.course1 = this.courseRepository.findByIdWithExercisesAndLecturesElseThrow(courses.get(0).getId());
         var lecture = this.course1.getLectures().stream().findFirst().get();
@@ -153,6 +150,33 @@ class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
         assertThat(returnedLectures).hasSize(2);
         Lecture lecture = returnedLectures.stream().filter(l -> l.getId().equals(lecture1.getId())).findFirst().get();
         assertThat(lecture.getLectureUnits()).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getLectureForCourse_WithLectureUnitsWithSlides_shouldGetLecturesWithLectureUnitsWithSlides() throws Exception {
+        int numberOfSlides = 2;
+        Lecture lectureWithSlides = ModelFactory.generateLecture(ZonedDateTime.now().minusDays(5), ZonedDateTime.now().plusDays(5), course1);
+        lectureWithSlides = lectureRepository.save(lectureWithSlides);
+        AttachmentUnit attachmentUnitWithSlides = database.createAttachmentUnitWithSlides(numberOfSlides);
+        lectureWithSlides = database.addLectureUnitsToLecture(lectureWithSlides, Set.of(attachmentUnitWithSlides));
+
+        List<Lecture> returnedLectures = request.getList("/api/courses/" + course1.getId() + "/lectures-with-slides", HttpStatus.OK, Lecture.class);
+
+        final Lecture finalLectureWithSlides = lectureWithSlides;
+        Lecture filteredLecture = returnedLectures.stream().filter(lecture -> lecture.getId().equals(finalLectureWithSlides.getId())).findFirst().get();
+
+        assertThat(filteredLecture.getLectureUnits()).hasSize(1); // we only have one lecture unit which is attachmentUnitWithSlides
+        assertThat(filteredLecture.getLectureUnits()).contains(attachmentUnitWithSlides);
+        AttachmentUnit attachmentUnit = (AttachmentUnit) filteredLecture.getLectureUnits().get(0);
+        assertThat(attachmentUnit.getSlides()).hasSize(numberOfSlides);
+
+        Lecture lectureWithDetails = request.get("/api/lectures/" + lectureWithSlides.getId() + "/details-with-slides", HttpStatus.OK, Lecture.class);
+
+        assertThat(lectureWithDetails.getLectureUnits()).hasSize(1); // we only have one lecture unit which is attachmentUnitWithSlides
+        assertThat(lectureWithDetails.getLectureUnits()).contains(attachmentUnitWithSlides);
+        AttachmentUnit attachmentUnitDetails = (AttachmentUnit) lectureWithDetails.getLectureUnits().get(0);
+        assertThat(attachmentUnitDetails.getSlides()).hasSize(numberOfSlides);
     }
 
     @Test

@@ -82,7 +82,7 @@ describe('TextAssessment Service', () => {
             .pipe(take(1))
             .subscribe((resp) => (actualResponse = resp.body));
         const req = httpMock.expectOne({
-            url: `${SERVER_API_URL}api/participations/${1}/results/${6}/text-assessment`,
+            url: `api/participations/${1}/results/${6}/text-assessment`,
             method: 'PUT',
         });
         req.flush(result);
@@ -97,7 +97,7 @@ describe('TextAssessment Service', () => {
             .subscribe((resp) => (actualResponse = resp.body));
 
         const req = httpMock.expectOne({
-            url: `${SERVER_API_URL}api/exercises/${exercise.id}/example-submissions/${mockResponse.id}/example-text-assessment`,
+            url: `api/exercises/${exercise.id}/example-submissions/${mockResponse.id}/example-text-assessment`,
             method: 'PUT',
         });
         req.flush(result);
@@ -113,7 +113,7 @@ describe('TextAssessment Service', () => {
             .pipe(take(1))
             .subscribe((resp) => (actualResponse = resp.body));
         const req = httpMock.expectOne({
-            url: `${SERVER_API_URL}api/participations/${1}/results/${6}/submit-text-assessment`,
+            url: `api/participations/${1}/results/${6}/submit-text-assessment`,
             method: 'POST',
         });
         req.flush(result);
@@ -133,7 +133,7 @@ describe('TextAssessment Service', () => {
             .subscribe((resp) => (actualResponse = resp.body));
 
         const req = httpMock.expectOne({
-            url: `${SERVER_API_URL}api/participations/${1}/submissions/${mockResponse.submissions[0].id}/text-assessment-after-complaint`,
+            url: `api/participations/${1}/submissions/${mockResponse.submissions[0].id}/text-assessment-after-complaint`,
             method: 'PUT',
         });
         req.flush(result);
@@ -150,7 +150,7 @@ describe('TextAssessment Service', () => {
             .pipe(take(1))
             .subscribe((resp) => (actualResponse = resp));
         const req = httpMock.expectOne({
-            url: `${SERVER_API_URL}api/participations/${participationId}/submissions/${submissionId}/cancel-assessment`,
+            url: `api/participations/${participationId}/submissions/${submissionId}/cancel-assessment`,
             method: 'POST',
         });
         req.flush(result);
@@ -167,7 +167,7 @@ describe('TextAssessment Service', () => {
             .pipe(take(1))
             .subscribe((resp) => (actualResponse = resp));
         const req = httpMock.expectOne({
-            url: `${SERVER_API_URL}api/participations/${1}/text-submissions/${submissionId}/results/${result.id}`,
+            url: `api/participations/${1}/text-submissions/${submissionId}/results/${result.id}`,
             method: 'DELETE',
         });
         req.flush(result);
@@ -184,7 +184,7 @@ describe('TextAssessment Service', () => {
             .pipe(take(1))
             .subscribe((resp) => (actualResponse = resp));
         const req = httpMock.expectOne({
-            url: `${SERVER_API_URL}api/exercises/${exerciseId}/example-submissions/${submissionId}/example-text-assessment/feedback`,
+            url: `api/exercises/${exerciseId}/example-submissions/${submissionId}/example-text-assessment/feedback`,
             method: 'DELETE',
         });
         req.flush(result);
@@ -200,7 +200,7 @@ describe('TextAssessment Service', () => {
     it('should send feedback', async () => {
         textSubmission.atheneTextAssessmentTrackingToken = '12345';
         service.trackAssessment(textSubmission);
-        httpMock.expectOne({ url: `${SERVER_API_URL}athene-tracking/text-exercise-assessment`, method: 'POST' });
+        httpMock.expectOne({ url: 'athene-tracking/text-exercise-assessment', method: 'POST' });
     });
 
     it('should send assessment event to analytics', fakeAsync(() => {
@@ -208,7 +208,7 @@ describe('TextAssessment Service', () => {
         service.addTextAssessmentEvent(assessmentEvent).subscribe((response) => {
             expect(response.status).toBe(200);
         });
-        const mockRequest = httpMock.expectOne({ url: `${SERVER_API_URL}api/event-insights/text-assessment/events`, method: 'POST' });
+        const mockRequest = httpMock.expectOne({ url: 'api/event-insights/text-assessment/events', method: 'POST' });
         mockRequest.flush(mockResponse);
         tick();
     }));
@@ -242,7 +242,7 @@ describe('TextAssessment Service', () => {
             .subscribe((resp) => expect(resp.submissions?.[0].results?.[0].feedbacks).toEqual(result.feedbacks));
 
         const req = httpMock.expectOne({
-            url: `${SERVER_API_URL}api/participations/${participationId}/submissions/${submissionId}/for-text-assessment?correction-round=0`,
+            url: `api/participations/${participationId}/submissions/${submissionId}/for-text-assessment?correction-round=0`,
             method: 'GET',
         });
         req.flush(mockResponse);
@@ -260,7 +260,7 @@ describe('TextAssessment Service', () => {
             .subscribe((resp) => expect(resp.submissions?.[0].results?.[0].feedbacks).toEqual(result.feedbacks));
 
         const req = httpMock.expectOne({
-            url: `${SERVER_API_URL}api/participations/${participationId}/submissions/${submissionId}/for-text-assessment?resultId=6`,
+            url: `api/participations/${participationId}/submissions/${submissionId}/for-text-assessment?resultId=6`,
             method: 'GET',
         });
         req.flush(mockResponse);
@@ -299,7 +299,7 @@ describe('TextAssessment Service', () => {
             .subscribe((resp) => expect(resp).toEqual([submission]));
 
         const req = httpMock.expectOne({
-            url: `${SERVER_API_URL}api/participations/${participationId}/submissions/${submissionId}/feedback/${feedbackId}/feedback-conflicts`,
+            url: `api/participations/${participationId}/submissions/${submissionId}/feedback/${feedbackId}/feedback-conflicts`,
             method: 'GET',
         });
         req.flush(returnedFromService);
@@ -312,7 +312,7 @@ describe('TextAssessment Service', () => {
             .pipe(take(1))
             .subscribe((resp) => (actualResponse = resp));
         const req = httpMock.expectOne({
-            url: `${SERVER_API_URL}api/exercises/${exercise.id}/submissions/${mockResponse.submissions[0].id}/example-result`,
+            url: `api/exercises/${exercise.id}/submissions/${mockResponse.submissions[0].id}/example-result`,
             method: 'GET',
         });
         req.flush(mockResponse);
@@ -334,7 +334,7 @@ describe('TextAssessment Service', () => {
             .subscribe((resp) => expect(resp).toEqual(feedbackConflict));
 
         const req = httpMock.expectOne({
-            url: `${SERVER_API_URL}api/exercises/${exerciseId}/feedback-conflicts/${feedbackConflict.id}/solve`,
+            url: `api/exercises/${exerciseId}/feedback-conflicts/${feedbackConflict.id}/solve`,
             method: 'POST',
         });
         req.flush(feedbackConflict);
@@ -349,7 +349,7 @@ describe('TextAssessment Service', () => {
             .subscribe((resp) => expect(resp).toBe(responseNumberOfTutors));
 
         const req = httpMock.expectOne({
-            url: `${SERVER_API_URL}api/event-insights/text-assessment/courses/1/text-exercises/1/tutors-involved`,
+            url: `api/event-insights/text-assessment/courses/1/text-exercises/1/tutors-involved`,
             method: 'GET',
         });
         req.flush(responseNumberOfTutors);
