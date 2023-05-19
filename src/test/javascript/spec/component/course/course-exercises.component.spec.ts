@@ -385,7 +385,7 @@ describe('CourseExercisesComponent', () => {
         const searchButton = fixture.debugElement.query(By.css('#course-unenrollment-button')).nativeElement;
         const event = new Event('click');
         searchButton.dispatchEvent(event);
-        //expect(openModalStub).toHaveBeenCalledOnce();
-        //expect(openModalStub).toHaveBeenCalledWith(CourseUnenrollmentModalComponent, { size: 'xl' });
+        expect(openModalStub).toHaveBeenCalledOnce();
+        expect(openModalStub).toHaveBeenCalledWith(CourseUnenrollmentModalComponent, { size: 'xl' });
     });
 });
