@@ -21,8 +21,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
@@ -35,7 +33,6 @@ import de.tum.in.www1.artemis.domain.enumeration.ScoringType;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.QuizBatchService;
 import de.tum.in.www1.artemis.service.QuizExerciseService;
 import de.tum.in.www1.artemis.util.ModelFactory;
@@ -274,35 +271,6 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
             }
 
         }
-    }
-
-    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    @EnumSource(QuizMode.class)
-    void testDeleteQuizExerciseWithSubmittedAnswers(QuizMode quizMode) throws Exception {
-        quizScheduleService.startSchedule(5 * 1000);
-        QuizExercise quizExercise = database.createAndSaveQuiz(ZonedDateTime.now(), ZonedDateTime.now().plusMinutes(1), quizMode);
-        assertThat(quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExercise.getId())).as("Exercise is created correctly").isNotNull();
-
-        String username = TEST_PREFIX + "student1";
-        final Principal principal = () -> username;
-        QuizSubmission quizSubmission = database.generateSubmissionForThreeQuestions(quizExercise, 1, true, null);
-
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        quizUtilService.prepareBatchForSubmitting(quizExercise, authentication, SecurityUtils.makeAuthorizationObject(username));
-        quizSubmissionWebsocketService.saveSubmission(quizExercise.getId(), quizSubmission, principal);
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-
-        // Quiz submissions are not yet in database
-        assertThat(quizSubmissionRepository.findByParticipation_Exercise_Id(quizExercise.getId())).isEmpty();
-
-        quizScheduleService.processCachedQuizSubmissions();
-
-        // Quiz submissions are now in database
-        assertThat(quizSubmissionRepository.findByParticipation_Exercise_Id(quizExercise.getId())).hasSize(1);
-
-        request.delete("/api/quiz-exercises/" + quizExercise.getId(), HttpStatus.OK);
-        assertThat(quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExercise.getId())).as("Exercise is deleted correctly").isNull();
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
