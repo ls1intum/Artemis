@@ -58,7 +58,7 @@ public class IrisMessageResource {
     public ResponseEntity<List<IrisMessage>> getMessages(@PathVariable Long sessionId) {
         IrisSession irisSession = irisSessionRepository.findByIdElseThrow(sessionId);
         irisSessionService.checkHasAccessToIrisSession(irisSession, null);
-        var messages = irisMessageRepository.findAllWithContentBySessionId(sessionId);
+        var messages = irisMessageRepository.findAllExceptSystemMessagesWithContentBySessionId(sessionId);
         return ResponseEntity.ok(messages);
     }
 

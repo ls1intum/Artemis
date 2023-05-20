@@ -22,8 +22,9 @@ public interface IrisMessageRepository extends JpaRepository<IrisMessage, Long> 
             FROM IrisMessage m
             LEFT JOIN FETCH m.content
             WHERE m.session.id = :sessionId
+            AND m.sender <> 'ARTEMIS'
             """)
-    List<IrisMessage> findAllWithContentBySessionId(Long sessionId);
+    List<IrisMessage> findAllExceptSystemMessagesWithContentBySessionId(Long sessionId);
 
     @NotNull
     default IrisMessage findByIdElseThrow(long messageId) throws EntityNotFoundException {
