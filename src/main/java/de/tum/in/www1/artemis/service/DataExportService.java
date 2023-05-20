@@ -31,11 +31,13 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismVerdict;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.metis.AnswerPostRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.repository.metis.ReactionRepository;
+import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.service.connectors.apollon.ApollonConversionService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseExportService;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryExportOptionsDTO;
@@ -56,6 +58,8 @@ public class DataExportService {
     private static final String TXT_FILE_EXTENSION = ".txt";
 
     private final Logger log = LoggerFactory.getLogger(DataExportService.class);
+
+    private long userId;
 
     @Value("${artemis.data-export-path}")
     private Path dataExportPath;
@@ -83,7 +87,7 @@ public class DataExportService {
 
     private final DragAndDropQuizAnswerConversionService dragAndDropQuizAnswerConversionService;
 
-    // nullable in the constructor because otherwise the application doesn't start if the apollon profile is not set
+    // nullable in the constructor (implies optional dependency) because otherwise the application doesn't start if the apollon profile is not set.
     private final ApollonConversionService apollonConversionService;
 
     private Path workingDirectory;
@@ -98,11 +102,13 @@ public class DataExportService {
 
     private final ReactionRepository reactionRepository;
 
+    private final PlagiarismCaseRepository plagiarismCaseRepository;
+
     public DataExportService(CourseRepository courseRepository, UserRepository userRepository, AuthorizationCheckService authorizationCheckService, ZipFileService zipFileService,
             ProgrammingExerciseExportService programmingExerciseExportService, DataExportRepository dataExportRepository, QuizQuestionRepository quizQuestionRepository,
             QuizSubmissionRepository quizSubmissionRepository, ExerciseRepository exerciseRepository, DragAndDropQuizAnswerConversionService dragAndDropQuizAnswerConversionService,
             @Nullable ApollonConversionService apollonConversionService, StudentExamRepository studentExamRepository, FileService fileService, PostRepository postRepository,
-            AnswerPostRepository answerPostRepository, ReactionRepository reactionRepository) {
+            AnswerPostRepository answerPostRepository, ReactionRepository reactionRepository, PlagiarismCaseRepository plagiarismCaseRepository) {
         this.courseRepository = courseRepository;
         this.userRepository = userRepository;
         this.authorizationCheckService = authorizationCheckService;
@@ -119,6 +125,7 @@ public class DataExportService {
         this.postRepository = postRepository;
         this.answerPostRepository = answerPostRepository;
         this.reactionRepository = reactionRepository;
+        this.plagiarismCaseRepository = plagiarismCaseRepository;
     }
 
     /**
@@ -186,10 +193,11 @@ public class DataExportService {
      **/
 
     private Path createDataExport(User user) throws IOException {
+        this.userId = user.getId();
         // retrieve all posts, answer posts, reactions of the user and filter them by course later to avoid additional database calls
-        var posts = postRepository.findPostsByAuthorId(user.getId());
-        var answerPosts = answerPostRepository.findAnswerPostsByAuthorId(user.getId());
-        var reactions = reactionRepository.findReactionsByUserId(user.getId());
+        var posts = postRepository.findPostsByAuthorId(userId);
+        var answerPosts = answerPostRepository.findAnswerPostsByAuthorId(userId);
+        var reactions = reactionRepository.findReactionsByUserId(userId);
 
         var courses = courseRepository.getAllCoursesWithExamsUserIsMemberOf(authorizationCheckService.isAdmin(user), user.getGroups());
         for (var course : courses) {
@@ -339,7 +347,8 @@ public class DataExportService {
                 else if (submission instanceof QuizSubmission) {
                     createQuizAnswersExport((QuizExercise) exercise, participation, exerciseDir);
                 }
-                if (exercise.isExamExercise() && exercise.getExamViaExerciseGroupOrCourseMember().resultsPublished()) {
+                if (exercise.isExamExercise() && exercise.getExamViaExerciseGroupOrCourseMember().resultsPublished()
+                        || exercise.isCourseExercise() && exercise.isAssessmentDueDateOver()) {
                     createResultsTxtFile(submission, exerciseDir);
                 }
             }
@@ -555,6 +564,46 @@ public class DataExportService {
             Files.createDirectory(exercisePath);
         }
         createSubmissionsResultsExport(exercise, exercisePath);
+        createPlagiarismCaseInfoExport(exercise, exercisePath);
+
+    }
+
+    private void createPlagiarismCaseInfoExport(Exercise exercise, Path exercisePath) throws IOException {
+        var plagiarismCaseOptional = plagiarismCaseRepository.findByStudentIdAndExerciseIdWithPostAndAnswerPost(userId, exercise.getId());
+        List<String> headers = new ArrayList<>();
+        var dataStreamBuilder = Stream.builder();
+        if (plagiarismCaseOptional.isEmpty()) {
+            return;
+        }
+        var plagiarismCase = plagiarismCaseOptional.get();
+        if (plagiarismCase.getVerdict() != null) {
+            headers.add("Verdict");
+            headers.add("Verdict Date");
+            dataStreamBuilder.add(plagiarismCase.getVerdict());
+            dataStreamBuilder.add(plagiarismCase.getVerdictDate());
+        }
+        if (plagiarismCase.getPost() != null) {
+            headers.add("Plagiarism case announcement");
+            dataStreamBuilder.add(plagiarismCase.getPost().getContent());
+        }
+        if (!plagiarismCase.getPost().getAnswers().isEmpty()) {
+            headers.add("Plagiarism case replies");
+            dataStreamBuilder.add(plagiarismCase.getPost().getAnswers().stream().map(AnswerPost::getContent).collect(Collectors.joining("\n")));
+        }
+        if (plagiarismCase.getVerdict() == PlagiarismVerdict.POINT_DEDUCTION) {
+            dataStreamBuilder.add(plagiarismCase.getVerdictPointDeduction());
+        }
+        else if (plagiarismCase.getVerdict() == PlagiarismVerdict.WARNING) {
+            dataStreamBuilder.add(plagiarismCase.getVerdictMessage());
+        }
+        CSVFormat csvFormat = CSVFormat.DEFAULT.builder().setHeader(headers.toArray(new String[0])).build();
+
+        try (final CSVPrinter printer = new CSVPrinter(Files.newBufferedWriter(exercisePath.resolve("plagiarism_case_" + plagiarismCase.getId() + CSV_FILE_EXTENSION)),
+                csvFormat)) {
+            printer.printRecord(dataStreamBuilder.build());
+            printer.flush();
+
+        }
 
     }
 

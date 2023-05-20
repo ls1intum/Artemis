@@ -500,11 +500,13 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
             FROM Course c
             LEFT JOIN  c.exercises e
             LEFT JOIN FETCH e.studentParticipations p
+            LEFT JOIN p.team.students students
             LEFT JOIN FETCH p.submissions s
             LEFT JOIN FETCH s.results r
             LEFT JOIN FETCH r.feedbacks
             Where c.id = :courseId
-            AND p.student.id = :userId
+            AND (p.student.id = :userId
+            OR students.id = :userId)
             """)
     Set<Exercise> getAllExercisesUserParticipatedInWithEagerParticipationsSubmissionsResultsFeedbacksByCourseIdAndUserId(long courseId, long userId);
 }

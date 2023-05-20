@@ -4,9 +4,10 @@ import { Subject } from 'rxjs';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { DataExportService } from 'app/core/legal/data-export/data-export.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { HttpErrorResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
 import { downloadZipFileFromResponse } from 'app/shared/util/download.util';
+import { DataExport } from 'app/entities/data-export.model';
 
 @Component({
     selector: 'jhi-data-export',
@@ -29,13 +30,15 @@ export class DataExportComponent implements OnInit {
     constructor(private dataExportService: DataExportService, private accountService: AccountService, private alertService: AlertService) {}
 
     ngOnInit() {
-        this.currentLogin = this.accountService.userIdentity?.login;
-        this.isAdmin = this.accountService.isAdmin();
+        this.accountService.identity().then((account) => {
+            this.currentLogin = account?.login;
+            this.isAdmin = this.accountService.isAdmin();
+        });
     }
 
     requestExport() {
         this.dataExportService.requestDataExport().subscribe({
-            next: (response) => {
+            next: (response: DataExport) => {
                 this.dialogErrorSource.next('');
                 this.alertService.success('artemisApp.dataExport.requestSuccess');
                 this.canDownload = true;
@@ -49,7 +52,7 @@ export class DataExportComponent implements OnInit {
     }
 
     downloadDataExport() {
-        this.dataExportService.downloadDataExport(this.dataExportId).subscribe((response) => {
+        this.dataExportService.downloadDataExport(this.dataExportId).subscribe((response: HttpResponse<Blob>) => {
             downloadZipFileFromResponse(response);
             this.alertService.success('artemisApp.dataExport.downloadSuccess');
         });
