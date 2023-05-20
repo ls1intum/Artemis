@@ -16,10 +16,10 @@ export enum IrisSender {
 }
 
 export class IrisServerMessage {
-    id: number;
+    id?: number;
     sender: IrisSender.SERVER;
-    content: IrisMessageContent[];
-    sentAt: dayjs.Dayjs;
+    content: IrisMessageContent;
+    sentAt?: dayjs.Dayjs;
     helpful?: boolean;
 }
 

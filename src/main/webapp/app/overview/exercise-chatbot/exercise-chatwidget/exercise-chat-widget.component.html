@@ -16,8 +16,18 @@
 
         <!-- main chat section -->
         <div class="chat-body" #chatBody>
-            <div *ngFor="let message of irisMessages" class="client-chat">{{ message }}</div>
-            <div *ngFor="let message of userMessages" class="my-chat">{{ message }}</div>
+            <div *ngFor="let message of messages">
+                <div *ngIf="message.sender === SENDER_USER" class="my-chat">{{ message.content.textContent }}</div>
+                <div *ngIf="message.sender === SENDER_SERVER" class="client-chat">{{ message.content.textContent }}</div>
+                <!-- <div *ngIf="message.sender === SENDER_SERVER" class="client-chat" *ngFor="let content of message.content" class="my-chat">{{ context.textContent }}</div> -->
+            </div>
+            <div class="client-chat" *ngIf="isLoading">
+                <div class="blinking-dots">
+                    <div *ngFor="let _ of [].constructor(dots)" class="d-inline">
+                        <fa-icon [icon]="faCircle" size="xs"></fa-icon>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- input field section -->
@@ -28,7 +38,7 @@
                 (keyup.enter)="onSend()"
                 placeholder="{{ 'artemisApp.courseOverview.exerciseDetails.chatInputMessage' | artemisTranslate }}"
             />
-            <button (click)="onSend()" class="send-btn">
+            <button (click)="onSend()" class="send-btn" [disabled]="isLoading">
                 <fa-icon [icon]="faPaperPlane"></fa-icon>
             </button>
         </div>

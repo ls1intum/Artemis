@@ -78,4 +78,24 @@
     border-radius: 20px;
     background-color: #4caf50;
     color: white;
+
+    &:disabled {
+        background-color: gray;
+    }
+}
+
+@keyframes blink {
+    0% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
+.blinking-dots {
+    animation: blink 1s infinite;
 }
