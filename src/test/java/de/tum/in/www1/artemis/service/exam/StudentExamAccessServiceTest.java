@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.service.exam;
 
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.time.ZonedDateTime;
 
@@ -64,25 +64,36 @@ class StudentExamAccessServiceTest extends AbstractSpringIntegrationBambooBitbuc
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testIsAtLeastStudentInCourse() {
-        assertThrows(AccessForbiddenException.class, () -> studentExamAccessService.checkCourseAndExamAccessElseThrow(course2.getId(), exam2.getId(), student1, false, true));
-        assertThrows(AccessForbiddenException.class, () -> studentExamAccessService.checkStudentExamAccessElseThrow(course2.getId(), exam2.getId(), studentExam1.getId()));
-        assertThrows(AccessForbiddenException.class, () -> studentExamAccessService.checkStudentExamAccessElseThrow(course2.getId(), exam2.getId(), studentExam1, student1));
+        assertThatExceptionOfType(AccessForbiddenException.class)
+                .isThrownBy(() -> studentExamAccessService.checkCourseAndExamAccessElseThrow(course2.getId(), exam2.getId(), student1, false, true));
+
+        assertThatExceptionOfType(AccessForbiddenException.class)
+                .isThrownBy(() -> studentExamAccessService.checkStudentExamAccessElseThrow(course2.getId(), exam2.getId(), studentExam1.getId()));
+
+        assertThatExceptionOfType(AccessForbiddenException.class)
+                .isThrownBy(() -> studentExamAccessService.checkStudentExamAccessElseThrow(course2.getId(), exam2.getId(), studentExam1, student1));
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testExamExists() {
-        assertThrows(EntityNotFoundException.class, () -> studentExamAccessService.checkCourseAndExamAccessElseThrow(course1.getId(), -1L, student1, false, true));
-        assertThrows(EntityNotFoundException.class, () -> studentExamAccessService.checkStudentExamAccessElseThrow(course1.getId(), -1L, studentExam1.getId()));
-        assertThrows(EntityNotFoundException.class, () -> studentExamAccessService.checkStudentExamAccessElseThrow(course1.getId(), -1L, studentExam1, student1));
+        assertThatExceptionOfType(EntityNotFoundException.class)
+                .isThrownBy(() -> studentExamAccessService.checkCourseAndExamAccessElseThrow(course1.getId(), -1L, student1, false, true));
+        assertThatExceptionOfType(EntityNotFoundException.class)
+                .isThrownBy(() -> studentExamAccessService.checkStudentExamAccessElseThrow(course1.getId(), -1L, studentExam1.getId()));
+        assertThatExceptionOfType(EntityNotFoundException.class)
+                .isThrownBy(() -> studentExamAccessService.checkStudentExamAccessElseThrow(course1.getId(), -1L, studentExam1, student1));
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testExamBelongsToCourse() {
-        assertThrows(ConflictException.class, () -> studentExamAccessService.checkCourseAndExamAccessElseThrow(course1.getId(), exam2.getId(), student1, false, true));
-        assertThrows(ConflictException.class, () -> studentExamAccessService.checkStudentExamAccessElseThrow(course1.getId(), exam2.getId(), studentExam1.getId()));
-        assertThrows(ConflictException.class, () -> studentExamAccessService.checkStudentExamAccessElseThrow(course1.getId(), exam2.getId(), studentExam1, student1));
+        assertThatExceptionOfType(ConflictException.class)
+                .isThrownBy(() -> studentExamAccessService.checkCourseAndExamAccessElseThrow(course1.getId(), exam2.getId(), student1, false, true));
+        assertThatExceptionOfType(ConflictException.class)
+                .isThrownBy(() -> studentExamAccessService.checkStudentExamAccessElseThrow(course1.getId(), exam2.getId(), studentExam1.getId()));
+        assertThatExceptionOfType(ConflictException.class)
+                .isThrownBy(() -> studentExamAccessService.checkStudentExamAccessElseThrow(course1.getId(), exam2.getId(), studentExam1, student1));
     }
 
     @Test
@@ -90,11 +101,14 @@ class StudentExamAccessServiceTest extends AbstractSpringIntegrationBambooBitbuc
     void testExamIsLive() {
         // Exam is not visible.
         Exam examNotStarted = database.addExam(course1, student1, ZonedDateTime.now().plusHours(1), ZonedDateTime.now().plusHours(2), ZonedDateTime.now().plusHours(3));
-        assertThrows(AccessForbiddenException.class,
-                () -> studentExamAccessService.checkCourseAndExamAccessElseThrow(course1.getId(), examNotStarted.getId(), student1, false, true));
-        assertThrows(AccessForbiddenException.class, () -> studentExamAccessService.checkStudentExamAccessElseThrow(course1.getId(), examNotStarted.getId(), studentExam1.getId()));
-        assertThrows(AccessForbiddenException.class,
-                () -> studentExamAccessService.checkStudentExamAccessElseThrow(course1.getId(), examNotStarted.getId(), studentExam1, student1));
+        assertThatExceptionOfType(AccessForbiddenException.class)
+                .isThrownBy(() -> studentExamAccessService.checkCourseAndExamAccessElseThrow(course1.getId(), examNotStarted.getId(), student1, false, true));
+
+        assertThatExceptionOfType(AccessForbiddenException.class)
+                .isThrownBy(() -> studentExamAccessService.checkStudentExamAccessElseThrow(course1.getId(), examNotStarted.getId(), studentExam1.getId()));
+
+        assertThatExceptionOfType(AccessForbiddenException.class)
+                .isThrownBy(() -> studentExamAccessService.checkStudentExamAccessElseThrow(course1.getId(), examNotStarted.getId(), studentExam1, student1));
 
         // Exam has ended. After exam has ended, it should still be retrievable by the students to see their participation
         Exam examEnded = database.addExam(course1, student1, ZonedDateTime.now().minusHours(4), ZonedDateTime.now().minusHours(3), ZonedDateTime.now().minusHours(1));
@@ -115,25 +129,30 @@ class StudentExamAccessServiceTest extends AbstractSpringIntegrationBambooBitbuc
     void testUserIsRegisteredForExam() {
         var student2 = database.getUserByLogin(TEST_PREFIX + "student2");
         Exam examNotRegistered = database.addExam(course1, student2, ZonedDateTime.now().minusHours(4), ZonedDateTime.now().minusHours(1), ZonedDateTime.now().plusHours(1));
-        assertThrows(AccessForbiddenException.class,
-                () -> studentExamAccessService.checkCourseAndExamAccessElseThrow(course1.getId(), examNotRegistered.getId(), student1, false, true));
-        assertThrows(ConflictException.class, () -> studentExamAccessService.checkStudentExamAccessElseThrow(course1.getId(), examNotRegistered.getId(), studentExam1.getId()));
-        assertThrows(ConflictException.class, () -> studentExamAccessService.checkStudentExamAccessElseThrow(course1.getId(), examNotRegistered.getId(), studentExam1, student1));
+        assertThatExceptionOfType(AccessForbiddenException.class)
+                .isThrownBy(() -> studentExamAccessService.checkCourseAndExamAccessElseThrow(course1.getId(), examNotRegistered.getId(), student1, false, true));
+        assertThatExceptionOfType(ConflictException.class)
+                .isThrownBy(() -> studentExamAccessService.checkStudentExamAccessElseThrow(course1.getId(), examNotRegistered.getId(), studentExam1.getId()));
+        assertThatExceptionOfType(ConflictException.class)
+                .isThrownBy(() -> studentExamAccessService.checkStudentExamAccessElseThrow(course1.getId(), examNotRegistered.getId(), studentExam1, student1));
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testUserStudentExamExists() {
-        assertThrows(EntityNotFoundException.class, () -> studentExamAccessService.checkStudentExamAccessElseThrow(course1.getId(), exam1.getId(), Long.MAX_VALUE));
+        assertThatExceptionOfType(EntityNotFoundException.class)
+                .isThrownBy(() -> studentExamAccessService.checkStudentExamAccessElseThrow(course1.getId(), exam1.getId(), Long.MAX_VALUE));
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testExamIdEqualsExamOfStudentExam() {
         StudentExam studentExamNotRelatedToExam1 = database.addStudentExam(exam2);
-        assertThrows(ConflictException.class,
-                () -> studentExamAccessService.checkStudentExamAccessElseThrow(course1.getId(), exam1.getId(), studentExamNotRelatedToExam1, student1));
-        assertThrows(ConflictException.class, () -> studentExamAccessService.checkStudentExamAccessElseThrow(course1.getId(), exam1.getId(), studentExamNotRelatedToExam1.getId()));
+        assertThatExceptionOfType(ConflictException.class)
+                .isThrownBy(() -> studentExamAccessService.checkStudentExamAccessElseThrow(course1.getId(), exam1.getId(), studentExamNotRelatedToExam1, student1));
+
+        assertThatExceptionOfType(ConflictException.class)
+                .isThrownBy(() -> studentExamAccessService.checkStudentExamAccessElseThrow(course1.getId(), exam1.getId(), studentExamNotRelatedToExam1.getId()));
     }
 
     @Test
@@ -143,17 +162,17 @@ class StudentExamAccessServiceTest extends AbstractSpringIntegrationBambooBitbuc
         var student2 = database.getUserByLogin(TEST_PREFIX + "student2");
         studentExamWithOtherUser.setUser(student2);
         studentExamRepository.save(studentExamWithOtherUser);
-        assertThrows(AccessForbiddenException.class,
-                () -> studentExamAccessService.checkStudentExamAccessElseThrow(course1.getId(), exam1.getId(), studentExamWithOtherUser, student1));
-        assertThrows(AccessForbiddenException.class,
-                () -> studentExamAccessService.checkStudentExamAccessElseThrow(course1.getId(), exam1.getId(), studentExamWithOtherUser.getId()));
+        assertThatExceptionOfType(AccessForbiddenException.class)
+                .isThrownBy(() -> studentExamAccessService.checkStudentExamAccessElseThrow(course1.getId(), exam1.getId(), studentExamWithOtherUser, student1));
+        assertThatExceptionOfType(AccessForbiddenException.class)
+                .isThrownBy(() -> studentExamAccessService.checkStudentExamAccessElseThrow(course1.getId(), exam1.getId(), studentExamWithOtherUser.getId()));
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCurrentUserHasCourseAccess() {
         assertDoesNotThrow(() -> studentExamAccessService.checkCourseAccessForStudentElseThrow(course1.getId(), student1));
-        assertThrows(AccessForbiddenException.class, () -> studentExamAccessService.checkCourseAccessForStudentElseThrow(course2.getId(), student1));
+        assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> studentExamAccessService.checkCourseAccessForStudentElseThrow(course2.getId(), student1));
     }
 
 }

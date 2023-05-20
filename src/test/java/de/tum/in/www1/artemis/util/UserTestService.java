@@ -2,7 +2,7 @@ package de.tum.in.www1.artemis.util;
 
 import static de.tum.in.www1.artemis.repository.UserRepository.FILTER_WITHOUT_REG_NO;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 import java.io.IOException;
 import java.time.ZonedDateTime;
@@ -610,8 +610,8 @@ public class UserTestService {
 
     // Test
     public void createUserWithGroups() throws Exception {
-        assertThrows(EntityNotFoundException.class, () -> userRepository.findByIdWithGroupsAndAuthoritiesElseThrow(Long.MAX_VALUE));
-        assertThrows(EntityNotFoundException.class, () -> userRepository.findByIdWithGroupsAndAuthoritiesAndOrganizationsElseThrow(Long.MAX_VALUE));
+        assertThatExceptionOfType(EntityNotFoundException.class).isThrownBy(() -> userRepository.findByIdWithGroupsAndAuthoritiesElseThrow(Long.MAX_VALUE));
+        assertThatExceptionOfType(EntityNotFoundException.class).isThrownBy(() -> userRepository.findByIdWithGroupsAndAuthoritiesAndOrganizationsElseThrow(Long.MAX_VALUE));
 
         var course = database.addEmptyCourse();
         database.addProgrammingExerciseToCourse(course, false);

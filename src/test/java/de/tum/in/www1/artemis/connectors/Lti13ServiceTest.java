@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.connectors;
 
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -154,7 +156,7 @@ class Lti13ServiceTest {
         doNothing().when(ltiService).authenticateLtiUser(any(), any(), any(), any(), anyBoolean());
         doNothing().when(ltiService).onSuccessfulLtiAuthentication(any(), any());
 
-        assertThrows(IllegalArgumentException.class, () -> lti13Service.performLaunch(oidcIdToken, clientRegistrationId));
+        assertThatIllegalArgumentException().isThrownBy(() -> lti13Service.performLaunch(oidcIdToken, clientRegistrationId));
 
         verifyNoInteractions(launchRepository);
     }
@@ -164,7 +166,8 @@ class Lti13ServiceTest {
         OidcIdToken oidcIdToken = mock(OidcIdToken.class);
         doReturn("https://some-artemis-domain.org/courses/1/exercises/100000").when(oidcIdToken).getClaim(Claims.TARGET_LINK_URI);
 
-        assertThrows(BadRequestAlertException.class, () -> lti13Service.performLaunch(oidcIdToken, clientRegistrationId));
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> lti13Service.performLaunch(oidcIdToken, clientRegistrationId));
+
         verify(userRepository, never()).save(any());
     }
 
@@ -173,7 +176,8 @@ class Lti13ServiceTest {
         OidcIdToken oidcIdToken = mock(OidcIdToken.class);
         doReturn("https://some-artemis-domain.org/with/invalid/path/to/exercise/11").when(oidcIdToken).getClaim(Claims.TARGET_LINK_URI);
 
-        assertThrows(BadRequestAlertException.class, () -> lti13Service.performLaunch(oidcIdToken, clientRegistrationId));
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> lti13Service.performLaunch(oidcIdToken, clientRegistrationId));
+
         verify(userRepository, never()).save(any());
     }
 
@@ -182,7 +186,8 @@ class Lti13ServiceTest {
         OidcIdToken oidcIdToken = mock(OidcIdToken.class);
         doReturn("path").when(oidcIdToken).getClaim(Claims.TARGET_LINK_URI);
 
-        assertThrows(BadRequestAlertException.class, () -> lti13Service.performLaunch(oidcIdToken, clientRegistrationId));
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> lti13Service.performLaunch(oidcIdToken, clientRegistrationId));
+
         verify(userRepository, never()).save(any());
     }
 
@@ -193,7 +198,7 @@ class Lti13ServiceTest {
         OidcIdToken oidcIdToken = mock(OidcIdToken.class);
         doReturn(invalidPath).when(oidcIdToken).getClaim(Claims.TARGET_LINK_URI);
 
-        assertThrows(BadRequestAlertException.class, () -> lti13Service.performLaunch(oidcIdToken, clientRegistrationId));
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> lti13Service.performLaunch(oidcIdToken, clientRegistrationId));
     }
 
     @Test
@@ -212,7 +217,7 @@ class Lti13ServiceTest {
         String target = "https://some-artemis-domain.org/courses/12/exercises/123";
         doReturn(target).when(oidcIdToken).getClaim(Claims.TARGET_LINK_URI);
 
-        assertThrows(EntityNotFoundException.class, () -> lti13Service.performLaunch(oidcIdToken, clientRegistrationId));
+        assertThatExceptionOfType(EntityNotFoundException.class).isThrownBy(() -> lti13Service.performLaunch(oidcIdToken, clientRegistrationId));
     }
 
     @Test
@@ -231,7 +236,7 @@ class Lti13ServiceTest {
         OidcIdToken oidcIdToken = mock(OidcIdToken.class);
         doReturn("https://some-artemis-domain.org/courses/" + courseId + "/exercises/" + exerciseId).when(oidcIdToken).getClaim(Claims.TARGET_LINK_URI);
 
-        assertThrows(BadRequestAlertException.class, () -> lti13Service.performLaunch(oidcIdToken, clientRegistrationId));
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> lti13Service.performLaunch(oidcIdToken, clientRegistrationId));
     }
 
     @Test
