@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnDestroy } from '@angular/core';
 import { faCommentDots } from '@fortawesome/free-solid-svg-icons';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { ChatbotPopupComponent } from './chatbot-popup/chatbot-popup.component';
@@ -9,7 +9,7 @@ import { ExerciseChatWidgetComponent } from 'app/overview/exercise-chatbot/exerc
     templateUrl: './exercise-chatbot.component.html',
     styleUrls: ['./exercise-chatbot.component.scss'],
 })
-export class ExerciseChatbotComponent {
+export class ExerciseChatbotComponent implements OnDestroy {
     public chatAccepted = 'false';
     public buttonDisabled = false;
     private dialogRef: MatDialogRef<ExerciseChatWidgetComponent> | null = null;
