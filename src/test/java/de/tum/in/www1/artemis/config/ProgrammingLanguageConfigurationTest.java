@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.config;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.*;
 
 import java.util.*;
 import java.util.function.Predicate;
@@ -28,7 +27,7 @@ class ProgrammingLanguageConfigurationTest {
         defaultConfig.remove("swift");
         var config = new ProgrammingLanguageConfiguration();
 
-        assertThatThrownBy(() -> config.setImages(defaultConfig)).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("Missing: SWIFT");
+        assertThatIllegalStateException().isThrownBy(() -> config.setImages(defaultConfig)).withMessageContaining("Missing: SWIFT");
     }
 
     @Test
@@ -36,7 +35,7 @@ class ProgrammingLanguageConfigurationTest {
         defaultConfig.put("kotlin", Map.of());
         var config = new ProgrammingLanguageConfiguration();
 
-        assertThatThrownBy(() -> config.setImages(defaultConfig)).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("Missing: KOTLIN");
+        assertThatIllegalStateException().isThrownBy(() -> config.setImages(defaultConfig)).withMessageContaining("Missing: KOTLIN");
     }
 
     @Test
@@ -44,7 +43,7 @@ class ProgrammingLanguageConfigurationTest {
         defaultConfig.put("whitespace", Map.of("default", OVERRIDDEN_IMAGE_NAME));
         var config = new ProgrammingLanguageConfiguration();
 
-        assertThatThrownBy(() -> config.setImages(defaultConfig)).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("Unknown programming language: whitespace");
+        assertThatIllegalStateException().isThrownBy(() -> config.setImages(defaultConfig)).withMessageContaining("Unknown programming language: whitespace");
     }
 
     @Test
@@ -52,7 +51,7 @@ class ProgrammingLanguageConfigurationTest {
         defaultConfig.get("java").put("sbt", OVERRIDDEN_IMAGE_NAME);
         var config = new ProgrammingLanguageConfiguration();
 
-        assertThatThrownBy(() -> config.setImages(defaultConfig)).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("Unknown project type for JAVA: sbt");
+        assertThatIllegalStateException().isThrownBy(() -> config.setImages(defaultConfig)).withMessageContaining("Unknown project type for JAVA: sbt");
     }
 
     @Test

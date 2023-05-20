@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.authentication;
 
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 
 import java.util.HashMap;
 import java.util.List;
@@ -245,8 +245,8 @@ class UserSaml2IntegrationTest extends AbstractSpringIntegrationGitlabCIGitlabSa
     }
 
     private void assertStudentNotExists() {
-        assertThatThrownBy(() -> this.database.getUserByLogin(STUDENT_NAME)).isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Provided login " + STUDENT_NAME + " does not exist in database");
+        assertThatIllegalArgumentException().isThrownBy(() -> this.database.getUserByLogin(STUDENT_NAME))
+                .withMessage("Provided login " + STUDENT_NAME + " does not exist in database");
     }
 
     private void assertStudentExists() {
