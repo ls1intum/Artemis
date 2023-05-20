@@ -22,6 +22,7 @@ import { MockRouter } from '../../helpers/mocks/mock-router';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTestModule } from '../../test.module';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
+import { TitleChannelNameComponent } from 'app/shared/form/title-channel-name/title-channel-name.component';
 
 describe('LectureUpdateComponent', () => {
     let lectureUpdateWizardComponentFixture: ComponentFixture<LectureUpdateWizardComponent>;
@@ -47,6 +48,7 @@ describe('LectureUpdateComponent', () => {
             imports: [ArtemisTestModule, FormsModule, MockModule(NgbTooltipModule)],
             declarations: [
                 LectureUpdateComponent,
+                MockComponent(TitleChannelNameComponent),
                 MockComponent(LectureUpdateWizardComponent),
                 MockComponent(FormDateTimePickerComponent),
                 MockComponent(MarkdownEditorComponent),
@@ -97,6 +99,7 @@ describe('LectureUpdateComponent', () => {
 
     it('should create lecture', fakeAsync(() => {
         lectureUpdateComponent.lecture = { title: 'test1' } as Lecture;
+        lectureUpdateComponent.channelName = 'test1';
         const navigateSpy = jest.spyOn(router, 'navigate');
 
         const createSpy = jest.spyOn(lectureService, 'create').mockReturnValue(
@@ -106,6 +109,10 @@ describe('LectureUpdateComponent', () => {
                         id: 3,
                         title: 'test1',
                         course: {
+                            id: 1,
+                        },
+                        channel: {
+                            type: 'channel',
                             id: 1,
                         },
                     } as Lecture,
@@ -121,11 +128,12 @@ describe('LectureUpdateComponent', () => {
         expect(navigateSpy).toHaveBeenCalledWith(expectedPath);
 
         expect(createSpy).toHaveBeenCalledOnce();
-        expect(createSpy).toHaveBeenCalledWith({ title: 'test1' });
+        expect(createSpy).toHaveBeenCalledWith({ title: 'test1' }, 'test1');
     }));
 
     it('should create lecture in wizard mode', () => {
         lectureUpdateComponent.lecture = { title: '' } as Lecture;
+        lectureUpdateComponent.channelName = '';
         lectureUpdateComponent.isShowingWizardMode = true;
         lectureUpdateComponent.wizardComponent = lectureUpdateWizardComponent;
 
@@ -161,7 +169,7 @@ describe('LectureUpdateComponent', () => {
         lectureUpdateComponent.save();
 
         expect(createSpy).toHaveBeenCalledOnce();
-        expect(createSpy).toHaveBeenCalledWith({ title: '' });
+        expect(createSpy).toHaveBeenCalledWith({ title: '' }, '');
 
         expect(findSpy).toHaveBeenCalledOnce();
         expect(onLectureCreationSucceededSpy).toHaveBeenCalledOnce();
@@ -172,6 +180,7 @@ describe('LectureUpdateComponent', () => {
 
         lectureUpdateComponentFixture.detectChanges();
         lectureUpdateComponent.lecture = { id: 6, title: 'test1Updated' } as Lecture;
+        lectureUpdateComponent.channelName = 'test1Updated';
 
         const updateSpy = jest.spyOn(lectureService, 'update').mockReturnValue(
             of<HttpResponse<Lecture>>(
@@ -192,7 +201,7 @@ describe('LectureUpdateComponent', () => {
         lectureUpdateComponentFixture.detectChanges();
 
         expect(updateSpy).toHaveBeenCalledOnce();
-        expect(updateSpy).toHaveBeenCalledWith({ id: 6, title: 'test1Updated' });
+        expect(updateSpy).toHaveBeenCalledWith({ id: 6, title: 'test1Updated' }, 'test1Updated');
     }));
 
     it('should switch to wizard mode', fakeAsync(() => {
@@ -248,6 +257,7 @@ describe('LectureUpdateComponent', () => {
         lectureUpdateComponent.fileName = 'testFile';
         lectureUpdateComponent.processUnitMode = true;
         lectureUpdateComponent.lecture = { title: 'test1' } as Lecture;
+        lectureUpdateComponent.channelName = 'test1';
         const navigateSpy = jest.spyOn(router, 'navigate');
 
         const createSpy = jest.spyOn(lectureService, 'create').mockReturnValue(
@@ -269,7 +279,7 @@ describe('LectureUpdateComponent', () => {
         tick();
 
         expect(createSpy).toHaveBeenCalledOnce();
-        expect(createSpy).toHaveBeenCalledWith({ title: 'test1' });
+        expect(createSpy).toHaveBeenCalledWith({ title: 'test1' }, 'test1');
         expect(proceedToUnitSplitSpy).toHaveBeenCalledOnce();
         expect(lectureUpdateComponent.processUnitMode).toBeTrue();
 
@@ -301,6 +311,7 @@ describe('LectureUpdateComponent', () => {
 
         lectureUpdateComponentFixture.detectChanges();
         lectureUpdateComponent.lecture = { id: 6, title: 'test1Updated' } as Lecture;
+        lectureUpdateComponent.channelName = 'test1Updated';
 
         const setDatesSpy = jest.spyOn(lectureUpdateComponent, 'onDatesValuesChanged');
 
