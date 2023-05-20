@@ -185,8 +185,8 @@ public class IrisGPT3_5Service implements IrisModel {
     private static Map<String, String> toOpenAIFormat(IrisMessage message) {
         // @formatter:off
         return Map.of(
-                "role", toRole(message.getSender()),
-                "content", joinContents(message.getContent())
+            "role", toRole(message.getSender()),
+            "content", joinContents(message.getContent())
         );
         // @formatter:on
     }
@@ -215,5 +215,4 @@ public class IrisGPT3_5Service implements IrisModel {
     private static String joinContents(List<IrisMessageContent> messageContents) {
         return messageContents.stream().map(IrisMessageContent::getTextContent).collect(Collectors.joining("\n"));
     }
-
 }
