@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.plagiarism;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismStatus;
@@ -66,6 +67,7 @@ public class PlagiarismService {
      * @param plagiarismComparisonId the ID of the plagiarism comparison
      * @param plagiarismStatus       the status to be set
      */
+    @Transactional // Make suer there is no concurrent creation/removal of plagiarism cases
     public void updatePlagiarismComparisonStatus(long plagiarismComparisonId, PlagiarismStatus plagiarismStatus) {
         plagiarismComparisonRepository.updatePlagiarismComparisonStatus(plagiarismComparisonId, plagiarismStatus);
         if (plagiarismStatus.equals(PlagiarismStatus.CONFIRMED)) {
