@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.authentication;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 import java.util.HashMap;
 import java.util.List;
