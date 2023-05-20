@@ -26,6 +26,8 @@ import { LtiInitializerComponent } from 'app/overview/exercise-details/lti-initi
 import { LtiInitializerModalComponent } from 'app/overview/exercise-details/lti-initializer-modal.component';
 import { ArtemisProgrammingExerciseManagementModule } from 'app/exercises/programming/manage/programming-exercise-management.module';
 import { ArtemisExerciseHintParticipationModule } from 'app/exercises/shared/exercise-hint/participate/exercise-hint-participation.module';
+import { ExerciseChatbotModule } from 'app/overview/exercise-chatbot/exercise-chatbot.module';
+import { ExerciseChatbotComponent } from 'app/overview/exercise-chatbot/exercise-chatbot.component';
 import { ProblemStatementComponent } from 'app/overview/exercise-details/problem-statement/problem-statement.component';
 import { StandaloneFeedbackComponent } from 'app/exercises/shared/feedback/standalone-feedback/standalone-feedback.component';
 import { ArtemisFeedbackModule } from 'app/exercises/shared/feedback/feedback.module';
@@ -94,8 +96,16 @@ const routes: Routes = [
         ArtemisProgrammingExerciseManagementModule,
         ArtemisExerciseHintParticipationModule,
         ArtemisFeedbackModule,
+        ExerciseChatbotModule,
     ],
-    declarations: [CourseExerciseDetailsComponent, OrionCourseExerciseDetailsComponent, LtiInitializerComponent, LtiInitializerModalComponent, ProblemStatementComponent],
-    exports: [CourseExerciseDetailsComponent, OrionCourseExerciseDetailsComponent],
+    declarations: [
+        CourseExerciseDetailsComponent,
+        OrionCourseExerciseDetailsComponent,
+        LtiInitializerComponent,
+        LtiInitializerModalComponent,
+        ProblemStatementComponent,
+        ExerciseChatbotComponent,
+    ],
+    exports: [CourseExerciseDetailsComponent, OrionCourseExerciseDetailsComponent, ExerciseChatbotComponent],
 })
 export class CourseExerciseDetailsModule {}

@@ -1,0 +1,36 @@
+<div class="container">
+    <!-- chat box -->
+    <div class="chat-widget">
+        <!-- client -->
+        <div class="client">
+            <div class="chat-header">
+                <button class="header-icon">
+                    <fa-icon size="xs" [icon]="faCompress"></fa-icon>
+                </button>
+                <h2>Iris</h2>
+                <button (click)="closeChat()" class="header-icon">
+                    <fa-icon size="xs" [icon]="faXmark"></fa-icon>
+                </button>
+            </div>
+        </div>
+
+        <!-- main chat section -->
+        <div class="chat-body" #chatBody>
+            <div *ngFor="let message of irisMessages" class="client-chat">{{ message }}</div>
+            <div *ngFor="let message of userMessages" class="my-chat">{{ message }}</div>
+        </div>
+
+        <!-- input field section -->
+        <div class="chat-input">
+            <input
+                [(ngModel)]="newMessage"
+                type="text"
+                (keyup.enter)="onSend()"
+                placeholder="{{ 'artemisApp.courseOverview.exerciseDetails.chatInputMessage' | artemisTranslate }}"
+            />
+            <button (click)="onSend()" class="send-btn">
+                <fa-icon [icon]="faPaperPlane"></fa-icon>
+            </button>
+        </div>
+    </div>
+</div>
