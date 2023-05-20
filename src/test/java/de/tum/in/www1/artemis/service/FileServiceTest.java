@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
 import java.io.*;
 import java.nio.charset.Charset;
@@ -222,9 +221,7 @@ class FileServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Test
     void testManageFilesForUpdatedFilePath_shouldNotThrowException() {
-        assertDoesNotThrow(() -> {
-            fileService.manageFilesForUpdatedFilePath("oldFilePath", "newFilePath", "targetFolder", 1L, true);
-        });
+        assertThatNoException().isThrownBy(() -> fileService.manageFilesForUpdatedFilePath("oldFilePath", "newFilePath", "targetFolder", 1L, true));
     }
 
     @Test
@@ -294,7 +291,7 @@ class FileServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
     // TODO: either rework those tests or delete them
     @Test
     void testGetUniquePath_shouldNotThrowException() {
-        assertDoesNotThrow(() -> {
+        assertThatNoException().isThrownBy(() -> {
             var uniquePath = fileService.getUniquePath("some-random-path-which-does-not-exist");
             assertThat(uniquePath.toString()).isNotEmpty();
         });
@@ -303,13 +300,13 @@ class FileServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
     @Test
     void testCreateDirectory_shouldNotThrowException() {
         Path path = Path.of("some-random-path-which-does-not-exist");
-        assertDoesNotThrow(() -> fileService.createDirectory(path));
+        assertThatNoException().isThrownBy(() -> fileService.createDirectory(path));
     }
 
     @Test
     void testDeleteFiles_shouldNotThrowException() {
         Path path = Path.of("some-random-path-which-does-not-exist");
-        assertDoesNotThrow(() -> fileService.deleteFiles(List.of(path)));
+        assertThatNoException().isThrownBy(() -> fileService.deleteFiles(List.of(path)));
     }
 
     @Test

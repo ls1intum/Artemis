@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.service.exam;
 
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.assertj.core.api.Assertions.assertThatNoException;
 
 import java.time.ZonedDateTime;
 
@@ -171,7 +171,7 @@ class StudentExamAccessServiceTest extends AbstractSpringIntegrationBambooBitbuc
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCurrentUserHasCourseAccess() {
-        assertDoesNotThrow(() -> studentExamAccessService.checkCourseAccessForStudentElseThrow(course1.getId(), student1));
+        assertThatNoException().isThrownBy(() -> studentExamAccessService.checkCourseAccessForStudentElseThrow(course1.getId(), student1));
         assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> studentExamAccessService.checkCourseAccessForStudentElseThrow(course2.getId(), student1));
     }
 

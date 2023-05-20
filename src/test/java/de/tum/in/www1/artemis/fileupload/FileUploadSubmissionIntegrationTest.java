@@ -9,7 +9,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.List;
 
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -668,7 +667,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationBambo
     void testOnDeleteSubmission() {
         submittedFileUploadSubmission.setFilePath("/api/files/file-upload-exercises/769/submissions/406062/Pinguin.pdf");
         fileUploadSubmissionRepository.save(submittedFileUploadSubmission);
-        Assertions.assertDoesNotThrow(() -> submittedFileUploadSubmission.onDelete());
+        assertThatNoException().isThrownBy(() -> submittedFileUploadSubmission.onDelete());
     }
 
     @Test
