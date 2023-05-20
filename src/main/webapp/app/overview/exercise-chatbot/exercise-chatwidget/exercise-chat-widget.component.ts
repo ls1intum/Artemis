@@ -23,6 +23,7 @@ export class ExerciseChatWidgetComponent implements OnInit {
     newMessage = '';
     isLoading: boolean;
     dots = 1;
+    sessionId = 1; // TODO
 
     constructor(private dialog: MatDialog, private irisHttpMessageService: IrisHttpMessageService) {}
 
@@ -48,10 +49,10 @@ export class ExerciseChatWidgetComponent implements OnInit {
             const message = this.newUserMessage(this.newMessage);
             this.messages.push(message);
             this.newMessage = '';
-            this.irisHttpMessageService.createMessage(1, message).subscribe({
+            this.irisHttpMessageService.createMessage(this.sessionId, message).subscribe({
                 next: (res: HttpResponse<IrisServerMessage>) => {
                     this.isLoading = false;
-                    this.messages.push(this.newServerMessage('Some response'));
+                    this.messages.push(res.body!);
                 },
                 error: () => {
                     this.isLoading = false;
@@ -80,7 +81,7 @@ export class ExerciseChatWidgetComponent implements OnInit {
         };
         return {
             sender: this.SENDER_SERVER,
-            content: content,
+            content: [content],
         };
     }
 
@@ -91,7 +92,7 @@ export class ExerciseChatWidgetComponent implements OnInit {
         };
         return {
             sender: this.SENDER_USER,
-            content: content,
+            content: [content],
         };
     }
 }

@@ -10,15 +10,15 @@ export class IrisSession {
 }
 
 export enum IrisSender {
-    SERVER = 'server',
-    USER = 'user',
-    SYSTEM = 'system',
+    SERVER = 'LLM',
+    USER = 'USER',
+    SYSTEM = 'ARTEMIS',
 }
 
 export class IrisServerMessage {
     id?: number;
     sender: IrisSender.SERVER;
-    content: IrisMessageContent;
+    content: IrisMessageContent[];
     sentAt?: dayjs.Dayjs;
     helpful?: boolean;
 }
@@ -26,7 +26,7 @@ export class IrisServerMessage {
 export class IrisClientMessage {
     id?: number;
     sender: IrisSender.USER;
-    content: IrisMessageContent;
+    content: IrisMessageContent[];
     sentAt?: dayjs.Dayjs;
 }
 
