@@ -21,7 +21,7 @@ export class IrisHttpMessageService {
      * @param {IrisClientMessage} message
      * @return {Observable<EntityResponseType>}
      */
-    createMessage(sessionId: number, message: IrisMessage): Observable<EntityResponseType> {
+    createMessage(sessionId: number, message: IrisClientMessage): Observable<EntityResponseType> {
         return this.httpClient.post<IrisClientMessage>(`${this.resourceUrl}/${sessionId}/messages`, message, { observe: 'response' });
     }
 

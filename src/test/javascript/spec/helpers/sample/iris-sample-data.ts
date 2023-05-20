@@ -19,7 +19,7 @@ export const mockServerMessage = {
 
 export const mockClientMessage = {
     sender: IrisSender.USER,
-    content: mockMessageContent,
+    content: [mockMessageContent],
     sentAt: dayjs(),
 } as IrisClientMessage;
 
