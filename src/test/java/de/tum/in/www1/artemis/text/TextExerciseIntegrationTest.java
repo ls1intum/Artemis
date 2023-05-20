@@ -34,7 +34,6 @@ import de.tum.in.www1.artemis.util.*;
 import de.tum.in.www1.artemis.util.InvalidExamExerciseDatesArgumentProvider.InvalidExamExerciseDateConfiguration;
 import de.tum.in.www1.artemis.web.rest.dto.CourseForDashboardDTO;
 import de.tum.in.www1.artemis.web.rest.dto.PlagiarismComparisonStatusDTO;
-import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 
 class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -722,7 +721,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         TextExercise textExerciseServer = request.get("/api/text-exercises/" + textExercise.getId(), HttpStatus.OK, TextExercise.class);
         assertThat(textExerciseServer).as("text exercise was retrieved").isNotNull();
-        assertThat(textExercise.getId()).as("Text exercise with the right id was retrieved").isEqualTo(textExercise.getId());
+        assertThat(textExerciseServer.getId()).as("Text exercise with the right id was retrieved").isEqualTo(textExercise.getId());
     }
 
     @Test
@@ -765,7 +764,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     void testInstructorGetsOnlyResultsFromOwningCourses() throws Exception {
         database.addCourseWithOneReleasedTextExercise();
         final var search = database.configureSearch("");
-        final var result = request.get("/api/text-exercises", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(search));
+        final var result = request.getSearchResult("/api/text-exercises", HttpStatus.OK, TextExercise.class, database.searchMapping(search));
         assertThat(result.getResultsOnPage()).isNullOrEmpty();
     }
 
@@ -780,16 +779,16 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         database.addCourseWithOneReleasedTextExercise(randomString2 + "Master");
 
         final var searchText = database.configureSearch(randomString);
-        final var resultText = request.get("/api/text-exercises", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(searchText));
+        final var resultText = request.getSearchResult("/api/text-exercises", HttpStatus.OK, TextExercise.class, database.searchMapping(searchText));
         assertThat(resultText.getResultsOnPage()).hasSize(1);
 
         final var searchEssay = database.configureSearch(randomString2);
-        final var resultEssay = request.get("/api/text-exercises", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(searchEssay));
+        final var resultEssay = request.getSearchResult("/api/text-exercises", HttpStatus.OK, TextExercise.class, database.searchMapping(searchEssay));
         assertThat(resultEssay.getResultsOnPage()).hasSize(2);
 
         String randomString3 = UUID.randomUUID().toString();
         final var searchNon = database.configureSearch(randomString3);
-        final var resultNon = request.get("/api/text-exercises", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(searchNon));
+        final var resultNon = request.getSearchResult("/api/text-exercises", HttpStatus.OK, TextExercise.class, database.searchMapping(searchNon));
         assertThat(resultNon.getResultsOnPage()).isNullOrEmpty();
     }
 
@@ -835,8 +834,8 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         var exerciseId = exercise.getId();
 
         final var searchTerm = database.configureSearch(exerciseId.toString());
-        final var searchResult = request.get("/api/text-exercises", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(searchTerm));
-        assertThat(searchResult.getResultsOnPage().stream().filter(result -> ((int) ((LinkedHashMap<String, ?>) result).get("id")) == exerciseId.intValue())).hasSize(1);
+        final var searchResult = request.getSearchResult("/api/text-exercises", HttpStatus.OK, TextExercise.class, database.searchMapping(searchTerm));
+        assertThat(searchResult.getResultsOnPage().stream().filter(result -> result.getId() == exerciseId.intValue())).hasSize(1);
     }
 
     @Test
@@ -844,7 +843,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     void testInstructorGetsOnlyResultsFromOwningExams() throws Exception {
         database.addCourseExamExerciseGroupWithOneTextExercise();
         final var search = database.configureSearch("");
-        final var result = request.get("/api/text-exercises", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(search));
+        final var result = request.getSearchResult("/api/text-exercises", HttpStatus.OK, TextExercise.class, database.searchMapping(search));
         assertThat(result.getResultsOnPage()).isNullOrEmpty();
     }
 
@@ -859,16 +858,16 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         database.addCourseExamExerciseGroupWithOneTextExercise(randomString2 + "Master");
 
         final var searchText = database.configureSearch(randomString);
-        final var resultText = request.get("/api/text-exercises", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(searchText));
+        final var resultText = request.getSearchResult("/api/text-exercises", HttpStatus.OK, TextExercise.class, database.searchMapping(searchText));
         assertThat(resultText.getResultsOnPage()).hasSize(1);
 
         final var searchEssay = database.configureSearch(randomString2);
-        final var resultEssay = request.get("/api/text-exercises", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(searchEssay));
+        final var resultEssay = request.getSearchResult("/api/text-exercises", HttpStatus.OK, TextExercise.class, database.searchMapping(searchEssay));
         assertThat(resultEssay.getResultsOnPage()).hasSize(2);
 
         String randomString3 = UUID.randomUUID().toString();
         final var searchNon = database.configureSearch(randomString3);
-        final var resultNon = request.get("/api/text-exercises", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(searchNon));
+        final var resultNon = request.getSearchResult("/api/text-exercises", HttpStatus.OK, TextExercise.class, database.searchMapping(searchNon));
         assertThat(resultNon.getResultsOnPage()).isNullOrEmpty();
     }
 
@@ -883,7 +882,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         courseRepository.save(otherInstructorsCourse);
 
         final var search = database.configureSearch(randomString);
-        final var result = request.get("/api/text-exercises", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(search));
+        final var result = request.getSearchResult("/api/text-exercises", HttpStatus.OK, TextExercise.class, database.searchMapping(search));
         assertThat(result.getResultsOnPage()).hasSize(2);
     }
 
