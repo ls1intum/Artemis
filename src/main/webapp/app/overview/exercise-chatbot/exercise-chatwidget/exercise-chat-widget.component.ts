@@ -19,7 +19,7 @@ export class ExerciseChatWidgetComponent implements OnInit {
     readonly SENDER_USER = IrisSender.USER;
     readonly SENDER_SERVER = IrisSender.SERVER;
 
-    messages: IrisMessage[] = [this.newServerMessage('Hey! How can I help you?')];
+    messages: IrisMessage[] = [];
     newMessage = '';
     isLoading: boolean;
     dots = 1;
@@ -56,7 +56,7 @@ export class ExerciseChatWidgetComponent implements OnInit {
                 },
                 error: () => {
                     this.isLoading = false;
-                    this.messages.push(this.newServerMessage('Something went wrong'));
+                    // TODO: handle error
                 },
             });
         }
@@ -72,17 +72,6 @@ export class ExerciseChatWidgetComponent implements OnInit {
 
     closeChat() {
         this.dialog.closeAll();
-    }
-
-    private newServerMessage(message: string): IrisServerMessage {
-        const content: IrisMessageContent = {
-            type: IrisMessageContentType.TEXT,
-            textContent: message,
-        };
-        return {
-            sender: this.SENDER_SERVER,
-            content: [content],
-        };
     }
 
     private newUserMessage(message: string): IrisClientMessage {
