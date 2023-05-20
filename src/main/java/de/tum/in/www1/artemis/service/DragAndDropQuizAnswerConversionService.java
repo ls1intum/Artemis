@@ -101,14 +101,13 @@ public class DragAndDropQuizAnswerConversionService {
             graphics.drawRect(dropLocationX, dropLocationY, dropLocationWidth, dropLocationHeight);
 
             graphics.setColor(Color.BLACK);
-            int dropLocationMidX = dropLocationX + dropLocationWidth / 3;
             int dropLocationMidY = dropLocationY + dropLocationHeight / 2;
             Set<DragAndDropMapping> mappings = dragAndDropSubmittedAnswer.getMappings();
             for (var mapping : mappings) {
                 if (dropLocation.equals(mapping.getDropLocation())) {
                     if (mapping.getDragItem().getPictureFilePath() == null) {
                         graphics.setFont(new Font("Arial", Font.PLAIN, 20));
-                        graphics.drawString(mapping.getDragItem().getText(), dropLocationMidX, dropLocationMidY);
+                        graphics.drawString(mapping.getDragItem().getText(), dropLocationX + 2, dropLocationMidY);
                     }
                     else {
                         BufferedImage dragItem = ImageIO.read(new File(fileService.actualPathForPublicPath(mapping.getDragItem().getPictureFilePath())));

@@ -389,11 +389,14 @@ public class DataExportService {
                 int start = matcher.start();
                 int end = matcher.end();
                 String replacement;
-                if (entry.getValue().isIsCorrect()) {
+                if (entry.getValue().isIsCorrect() != null && entry.getValue().isIsCorrect()) {
                     replacement = entry.getValue().getText() + " (Correct)";
                 }
-                else {
+                else if (entry.getValue().isIsCorrect() != null && !entry.getValue().isIsCorrect()) {
                     replacement = entry.getValue().getText() + " (Incorrect)";
+                }
+                else {
+                    replacement = entry.getValue().getText();
                 }
                 stringBuilder.replace(start, end, replacement);
                 matcher = pattern.matcher(stringBuilder);
@@ -419,7 +422,7 @@ public class DataExportService {
                 .filter(reaction -> courseId == reaction.getPost().getCoursePostingBelongsTo().getId()).toList();
         var answerPostReactionsInCourse = reactions.stream().filter(reaction -> reaction.getAnswerPost() != null)
                 .filter(reaction -> courseId == reaction.getAnswerPost().getCoursePostingBelongsTo().getId()).toList();
-        String[] headers = { "content/emoji", "creation date" };
+        String[] headers = { "content/emoji", "creation date", "post content reaction/reply belongs to" };
         CSVFormat csvFormat = CSVFormat.DEFAULT.builder().setHeader(headers).build();
         try (final CSVPrinter printer = new CSVPrinter(Files.newBufferedWriter(courseDir.resolve("messages_posts_reactions" + CSV_FILE_EXTENSION)), csvFormat)) {
             printer.println();
@@ -434,17 +437,17 @@ public class DataExportService {
             printer.println();
             printer.println();
             for (var answerPost : answerPostsInCourse) {
-                printer.printRecord(answerPost.getContent(), answerPost.getCreationDate());
+                printer.printRecord(answerPost.getContent(), answerPost.getCreationDate(), answerPost.getPost().getContent());
             }
             printer.println();
             printer.print("Reactions");
             printer.println();
             printer.println();
             for (var reaction : postReactionsInCourse) {
-                printer.printRecord(reaction.getEmojiId(), reaction.getCreationDate());
+                printer.printRecord(reaction.getEmojiId(), reaction.getCreationDate(), reaction.getPost().getContent());
             }
             for (var reaction : answerPostReactionsInCourse) {
-                printer.printRecord(reaction.getEmojiId(), reaction.getCreationDate());
+                printer.printRecord(reaction.getEmojiId(), reaction.getCreationDate(), reaction.getAnswerPost().getContent());
             }
 
             printer.flush();
@@ -551,19 +554,10 @@ public class DataExportService {
 
     private Stream<?> getSubmissionStreamToPrint(Submission submission) {
         var builder = Stream.builder();
-        builder.add(submission.getId()).add(submission.getSubmissionDate()).add(submission.getType()).add(submission.getDurationInMinutes());
+        builder.add(submission.getId()).add(submission.getSubmissionDate());
         if (submission instanceof ProgrammingSubmission programmingSubmission) {
             builder.add(programmingSubmission.getCommitHash());
 
-        }
-        else if (submission instanceof TextSubmission textSubmission) {
-            builder.add(textSubmission.getText());
-        }
-        else if (submission instanceof ModelingSubmission modelingSubmission) {
-            builder.add(modelingSubmission.getModel());
-        }
-        else if (submission instanceof QuizSubmission quizSubmission) {
-            builder.add(quizSubmission.getScoreInPoints());
         }
         return builder.build();
     }
