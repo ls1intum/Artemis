@@ -99,8 +99,6 @@ public class TextExerciseResource {
 
     private final ChannelService channelService;
 
-    private final ChannelRepository channelRepository;
-
     private final ConversationService conversationService;
 
     public TextExerciseResource(TextExerciseRepository textExerciseRepository, TextExerciseService textExerciseService, FeedbackRepository feedbackRepository,
@@ -110,8 +108,7 @@ public class TextExerciseResource {
             TextSubmissionExportService textSubmissionExportService, ExampleSubmissionRepository exampleSubmissionRepository, ExerciseService exerciseService,
             GradingCriterionRepository gradingCriterionRepository, TextBlockRepository textBlockRepository, GroupNotificationScheduleService groupNotificationScheduleService,
             InstanceMessageSendService instanceMessageSendService, TextPlagiarismDetectionService textPlagiarismDetectionService, CourseRepository courseRepository,
-            TextAssessmentKnowledgeService textAssessmentKnowledgeService, ChannelService channelService, ChannelRepository channelRepository,
-            ConversationService conversationService) {
+            ChannelService channelService, ChannelRepository channelRepository, ConversationService conversationService) {
         this.feedbackRepository = feedbackRepository;
         this.exerciseDeletionService = exerciseDeletionService;
         this.plagiarismResultRepository = plagiarismResultRepository;
@@ -134,7 +131,6 @@ public class TextExerciseResource {
         this.textPlagiarismDetectionService = textPlagiarismDetectionService;
         this.courseRepository = courseRepository;
         this.channelService = channelService;
-        this.channelRepository = channelRepository;
         this.conversationService = conversationService;
     }
 

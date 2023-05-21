@@ -43,8 +43,6 @@ public class ChannelService {
 
     private final ConversationService conversationService;
 
-    private final LectureRepository lectureRepository;
-
     private final CourseRepository courseRepository;
 
     private final UserRepository userRepository;
@@ -178,7 +176,8 @@ public class ChannelService {
         registerUsersToChannel(addAllStudents, addAllTutors, addAllInstructors, usersLoginsToRegister, course, channel);
     }
 
-    /** Register users to the newly created channel
+    /**
+     * Register users to the newly created channel
      *
      * @param addAllStudents        if true, all students of the course will be added to the channel
      * @param addAllTutors          if true, all tutors of the course will be added to the channel
@@ -218,9 +217,18 @@ public class ChannelService {
         for (Course c : courses) {
             // set the security context because the async methods use multiple threads
             SecurityUtils.setAuthorizationObject();
-            channelRepository.findChannelsByCourseId(c.getId()).stream().filter(channel -> channelNames.contains(channel.getName())).forEach(channel -> {
-                conversationService.registerUsersToConversation(c, Set.of(userToAddToGroup), channel, Optional.empty());
+
+            channelRepository.findChannelsByCourseId(c.getId()).forEach(channel -> {
+                // add user to default channels
+                if (channelNames.contains(channel.getName())) {
+                    conversationService.registerUsersToConversation(c, Set.of(userToAddToGroup), channel, Optional.empty());
+                }
+                // add to exercise or lecture channel if user is not member
+                if ((channel.getLecture() != null || channel.getExercise() != null) && !conversationService.isMember(channel.getId(), userToAddToGroup.getId())) {
+                    conversationService.registerUsersToConversation(c, Set.of(userToAddToGroup), channel, Optional.empty());
+                }
             });
+
         }
     }
 

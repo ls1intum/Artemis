@@ -686,8 +686,6 @@ public class UserService {
         // e.g. Gitlab: TODO: include the role to distinguish more cases
         optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.updateVcsUser(user.getLogin(), user, Set.of(), Set.of(group)));
         optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.addUserToGroups(user.getLogin(), Set.of(group)));
-        // register user to all channels that need to be participant
-        conversationService.registerUserToChannels(user, group, role);
     }
 
     /**

@@ -18,7 +18,6 @@ export class Lecture implements BaseEntity {
     channel?: Channel;
     lectureUnits?: LectureUnit[];
     course?: Course;
-    channel: Channel;
 
     // helper attribute
     isAtLeastEditor?: boolean;

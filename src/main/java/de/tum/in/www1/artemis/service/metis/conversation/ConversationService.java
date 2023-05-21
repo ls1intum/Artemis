@@ -29,7 +29,6 @@ import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ConversationRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.GroupChatRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.OneToOneChatRepository;
-import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -172,37 +171,6 @@ public class ConversationService {
             conversationParticipantRepository.saveAll(newConversationParticipants);
             broadcastOnConversationMembershipChannel(course, MetisCrudAction.CREATE, conversation, usersToBeRegistered);
             broadcastOnConversationMembershipChannel(course, MetisCrudAction.UPDATE, conversation, existingUsers);
-        }
-    }
-
-    /**
-     * Add user to default channels of courses with the same group. This is used when a user is added to a group.
-     *
-     * @param userToAddToGroup the user to be added
-     * @param group            the group of the user
-     * @param role             the role of the user
-     */
-    public void registerUserToChannels(User userToAddToGroup, String group, Role role) {
-        final List<String> channelNames = Arrays.stream(DefaultChannelType.values()).toList().stream().map(DefaultChannelType::getName).toList();
-
-        List<Course> courses = switch (role) {
-            case STUDENT -> courseRepository.findCoursesByStudentGroupName(group);
-            case TEACHING_ASSISTANT -> courseRepository.findCoursesByTeachingAssistantGroupName(group);
-            case INSTRUCTOR -> courseRepository.findCoursesByInstructorGroupName(group);
-            default -> List.of();
-        };
-
-        for (Course c : courses) {
-            channelRepository.findChannelsByCourseId(c.getId()).forEach(channel -> {
-                // add user to default channels
-                if (channelNames.contains(channel.getName())) {
-                    registerUsersToConversation(c, Set.of(userToAddToGroup), channel, Optional.empty());
-                }
-                // add to exercise or lecture channel if user is not member
-                if ((channel.getLecture() != null || channel.getExercise() != null) && !isMember(channel.getId(), userToAddToGroup.getId())) {
-                    registerUsersToConversation(c, Set.of(userToAddToGroup), channel, Optional.empty());
-                }
-            });
         }
     }
 

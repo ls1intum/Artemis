@@ -86,8 +86,6 @@ public class ModelingExerciseResource {
 
     private final ChannelService channelService;
 
-    private final ChannelRepository channelRepository;
-
     private final ConversationService conversationService;
 
     public ModelingExerciseResource(ModelingExerciseRepository modelingExerciseRepository, UserRepository userRepository, CourseService courseService,
@@ -95,8 +93,7 @@ public class ModelingExerciseResource {
             ModelingExerciseService modelingExerciseService, ExerciseDeletionService exerciseDeletionService, PlagiarismResultRepository plagiarismResultRepository,
             ModelingExerciseImportService modelingExerciseImportService, SubmissionExportService modelingSubmissionExportService, ExerciseService exerciseService,
             GroupNotificationScheduleService groupNotificationScheduleService, GradingCriterionRepository gradingCriterionRepository,
-            ModelingPlagiarismDetectionService modelingPlagiarismDetectionService, ModelAssessmentKnowledgeService modelAssessmentKnowledgeService, ChannelService channelService,
-            ChannelRepository channelRepository, ConversationService conversationService) {
+            ModelingPlagiarismDetectionService modelingPlagiarismDetectionService, ChannelService channelService, ConversationService conversationService) {
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.courseService = courseService;
         this.modelingExerciseService = modelingExerciseService;
@@ -113,7 +110,6 @@ public class ModelingExerciseResource {
         this.gradingCriterionRepository = gradingCriterionRepository;
         this.modelingPlagiarismDetectionService = modelingPlagiarismDetectionService;
         this.channelService = channelService;
-        this.channelRepository = channelRepository;
         this.conversationService = conversationService;
     }
 

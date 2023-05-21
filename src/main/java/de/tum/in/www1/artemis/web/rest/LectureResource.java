@@ -63,13 +63,11 @@ public class LectureResource {
 
     private final ExerciseService exerciseService;
 
-    private final ChannelRepository channelRepository;
-
     private final ConversationService conversationService;
 
     public LectureResource(LectureRepository lectureRepository, LectureService lectureService, LectureImportService lectureImportService, CourseRepository courseRepository,
             UserRepository userRepository, AuthorizationCheckService authCheckService, ExerciseService exerciseService, ChannelService channelService,
-            ChannelRepository channelRepository, ConversationService conversationService) {
+            ConversationService conversationService) {
         this.lectureRepository = lectureRepository;
         this.lectureService = lectureService;
         this.lectureImportService = lectureImportService;
@@ -78,7 +76,6 @@ public class LectureResource {
         this.authCheckService = authCheckService;
         this.exerciseService = exerciseService;
         this.channelService = channelService;
-        this.channelRepository = channelRepository;
         this.conversationService = conversationService;
     }
 
@@ -99,9 +96,8 @@ public class LectureResource {
         }
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, lecture.getCourse(), null);
 
-        Channel createdChannel = channelService.createLectureChannel(lecture);
-        channelService.registerUsersToChannelAsynchronously(true, true, true, List.of(), lecture.getCourse(), createdChannel);
         Channel createdChannel = channelService.createLectureChannel(lecture, lectureDTO.channelName());
+        channelService.registerUsersToChannelAsynchronously(true, true, true, List.of(), lecture.getCourse(), createdChannel);
 
         lecture.setChannel(createdChannel);
         Lecture savedLecture = lectureRepository.save(lecture);

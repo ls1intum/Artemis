@@ -153,8 +153,4 @@ public class Channel extends Conversation {
     public void setExam(Exam exam) {
         this.exam = exam;
     }
-
-    public void setExercise(Exercise exercise) {
-        this.exercise = exercise;
-    }
 }
