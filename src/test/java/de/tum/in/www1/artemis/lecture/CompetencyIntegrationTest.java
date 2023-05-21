@@ -36,12 +36,9 @@ import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.LectureUnitService;
-import de.tum.in.www1.artemis.service.ModelAssessmentKnowledgeService;
 import de.tum.in.www1.artemis.service.ParticipationService;
-import de.tum.in.www1.artemis.service.TextAssessmentKnowledgeService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.CourseCompetencyProgressDTO;
-import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 
 class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -82,12 +79,6 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
     @Autowired
     private LectureUnitRepository lectureUnitRepository;
-
-    @Autowired
-    private TextAssessmentKnowledgeService textAssessmentKnowledgeService;
-
-    @Autowired
-    private ModelAssessmentKnowledgeService modelAssessmentKnowledgeService;
 
     @Autowired
     private ParticipantScoreRepository participantScoreRepository;
@@ -281,7 +272,6 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         TextExercise textExercise = ModelFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course);
         textExercise.setMaxPoints(10.0);
         textExercise.setBonusPoints(0.0);
-        textExercise.setKnowledge(textAssessmentKnowledgeService.createNewKnowledge());
         textExercise.setCompetencies(competencies);
         textExercise = exerciseRepository.save(textExercise);
         idOfTextExercise = textExercise.getId();
@@ -296,7 +286,6 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         ModelingExercise modelingExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram, course);
         modelingExercise.setMaxPoints(10.0);
         modelingExercise.setBonusPoints(0.0);
-        modelingExercise.setKnowledge(modelAssessmentKnowledgeService.createNewKnowledge());
         modelingExercise.setCompetencies(competencies);
         modelingExercise = exerciseRepository.save(modelingExercise);
         idOfModelingExercise = modelingExercise.getId();
@@ -312,7 +301,6 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         textExercise.setMode(ExerciseMode.TEAM);
         textExercise.setMaxPoints(10.0);
         textExercise.setBonusPoints(0.0);
-        textExercise.setKnowledge(textAssessmentKnowledgeService.createNewKnowledge());
         textExercise.setCompetencies(competencies);
         textExercise = exerciseRepository.save(textExercise);
         idOfTeamTextExercise = textExercise.getId();
@@ -812,7 +800,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @WithMockUser(username = TEST_PREFIX + "instructor42", roles = "INSTRUCTOR")
     void testInstructorGetsOnlyResultsFromOwningCourses() throws Exception {
         final var search = database.configureSearch("");
-        final var result = request.get("/api/competencies/", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(search));
+        final var result = request.getSearchResult("/api/competencies/", HttpStatus.OK, LearningGoal.class, database.searchMapping(search));
         assertThat(result.getResultsOnPage()).isNullOrEmpty();
     }
 
@@ -821,7 +809,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     void testInstructorGetsResultsFromOwningCoursesNotEmpty() throws Exception {
         Competency competency = competencyRepository.findById(idOfCompetency).get();
         final var search = database.configureSearch(competency.getTitle());
-        final var result = request.get("/api/competencies/", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(search));
+        final var result = request.getSearchResult("/api/competencies/", HttpStatus.OK, LearningGoal.class, database.searchMapping(search));
         assertThat(result.getResultsOnPage()).hasSize(1);
     }
 
@@ -830,7 +818,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     void testAdminGetsResultsFromAllCourses() throws Exception {
         Competency competency = competencyRepository.findById(idOfCompetency).get();
         final var search = database.configureSearch(competency.getTitle());
-        final var result = request.get("/api/competencies/", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(search));
+        final var result = request.getSearchResult("/api/competencies/", HttpStatus.OK, LearningGoal.class, database.searchMapping(search));
         assertThat(result.getResultsOnPage()).hasSize(1);
     }
 
