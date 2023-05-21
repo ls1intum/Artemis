@@ -47,6 +47,7 @@ import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExamUser;
 import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
+import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.Participation;
@@ -821,7 +822,21 @@ public class CourseTestService {
         for (int i = 0; i < courses.length; i++) {
             courses[i] = courseRepo.save(courses[i]);
             Exam examRegistered = ModelFactory.generateExam(courses[i]);
+            Channel channel = new Channel();
+            channel.setName(examRegistered.getTitle());
+            channel.setIsAnnouncementChannel(false);
+            channel.setIsPublic(false);
+            channel.setIsArchived(false);
+            channelRepository.save(channel);
+            examRegistered.setChannel(channel);
             Exam examUnregistered = ModelFactory.generateExam(courses[i]);
+            Channel channel1 = new Channel();
+            channel1.setName(examUnregistered.getTitle());
+            channel1.setIsAnnouncementChannel(false);
+            channel1.setIsPublic(false);
+            channel1.setIsArchived(false);
+            channelRepository.save(channel1);
+            examUnregistered.setChannel(channel1);
             Exam testExam = ModelFactory.generateTestExam(courses[i]);
             if (i == 0) {
                 examRegistered.setVisibleDate(ZonedDateTime.now().plusHours(1));
@@ -886,6 +901,14 @@ public class CourseTestService {
         programmingExercise.setReleaseDate(ZonedDateTime.now().minusDays(2));
         programmingExercise.setDueDate(ZonedDateTime.now().minusHours(2));
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().minusMinutes(90));
+        Channel channel = new Channel();
+        channel.setName(programmingExercise.getTitle());
+        channel.setIsAnnouncementChannel(false);
+        channel.setIsPublic(true);
+        channel.setIsArchived(false);
+
+        channelRepository.save(channel);
+        programmingExercise.setChannel(channel);
         programmingExerciseRepository.save(programmingExercise);
         Result gradedResult = database.addProgrammingParticipationWithResultForExercise(programmingExercise, userPrefix + "student1");
         gradedResult.completionDate(ZonedDateTime.now().minusHours(3)).assessmentType(AssessmentType.AUTOMATIC).score(42D);
