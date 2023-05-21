@@ -16,6 +16,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.lecture.*;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.util.ModelFactory;
+import de.tum.in.www1.artemis.web.rest.dto.LectureDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 
 class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -107,7 +108,8 @@ class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
         lecture.setTitle("loremIpsum");
         lecture.setCourse(course);
         lecture.setDescription("loremIpsum");
-        Lecture returnedLecture = request.postWithResponseBody("/api/lectures", lecture, Lecture.class, HttpStatus.CREATED);
+        LectureDTO lectureDTO = new LectureDTO(lecture, "test");
+        Lecture returnedLecture = request.postWithResponseBody("/api/lectures", lectureDTO, Lecture.class, HttpStatus.CREATED);
 
         assertThat(returnedLecture).isNotNull();
         assertThat(returnedLecture.getId()).isNotNull();
@@ -121,7 +123,8 @@ class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
     void createLecture_alreadyId_shouldReturnBadRequest() throws Exception {
         Lecture lecture = new Lecture();
         lecture.setId(1L);
-        request.postWithResponseBody("/api/lectures", lecture, Lecture.class, HttpStatus.BAD_REQUEST);
+        LectureDTO lectureDTO = new LectureDTO(lecture, "test");
+        request.postWithResponseBody("/api/lectures", lectureDTO, Lecture.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -130,7 +133,9 @@ class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
         Lecture originalLecture = lectureRepository.findByIdWithLectureUnits(lecture1.getId()).get();
         originalLecture.setTitle("Updated");
         originalLecture.setDescription("Updated");
-        Lecture updatedLecture = request.putWithResponseBody("/api/lectures", originalLecture, Lecture.class, HttpStatus.OK);
+        LectureDTO lectureDTO = new LectureDTO(originalLecture, "test");
+
+        Lecture updatedLecture = request.putWithResponseBody("/api/lectures", lectureDTO, Lecture.class, HttpStatus.OK);
         assertThat(updatedLecture.getTitle()).isEqualTo("Updated");
         assertThat(updatedLecture.getDescription()).isEqualTo("Updated");
     }
@@ -140,7 +145,9 @@ class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
     void updateLecture_NoId_shouldReturnBadRequest() throws Exception {
         Lecture originalLecture = lectureRepository.findByIdWithLectureUnits(lecture1.getId()).get();
         originalLecture.setId(null);
-        request.putWithResponseBody("/api/lectures", originalLecture, Lecture.class, HttpStatus.BAD_REQUEST);
+        LectureDTO lectureDTO = new LectureDTO(originalLecture, "test");
+
+        request.putWithResponseBody("/api/lectures", lectureDTO, Lecture.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test

@@ -19,6 +19,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import dayjs from 'dayjs/esm';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { Exam } from 'app/entities/exam.model';
+import { Channel } from 'app/entities/metis/conversation/channel.model';
 
 describe('FileUploadExercise Management Update Component', () => {
     let comp: FileUploadExerciseUpdateComponent;
@@ -49,6 +50,8 @@ describe('FileUploadExercise Management Update Component', () => {
         describe('new exercise', () => {
             const course = { id: 1 } as Course;
             const fileUploadExercise = new FileUploadExercise(course, undefined);
+            fileUploadExercise.channel = new Channel();
+            fileUploadExercise.channel.name = 'test';
 
             beforeEach(() => {
                 const route = TestBed.inject(ActivatedRoute);
@@ -77,6 +80,8 @@ describe('FileUploadExercise Management Update Component', () => {
             const course = { id: 1 } as Course;
             const fileUploadExercise = new FileUploadExercise(course, undefined);
             fileUploadExercise.id = 123;
+            fileUploadExercise.channel = new Channel();
+            fileUploadExercise.channel.name = 'test';
 
             beforeEach(() => {
                 const route = TestBed.inject(ActivatedRoute);
@@ -172,6 +177,8 @@ describe('FileUploadExercise Management Update Component', () => {
         fileUploadExercise.releaseDate = dayjs();
         fileUploadExercise.dueDate = dayjs();
         fileUploadExercise.assessmentDueDate = dayjs();
+        fileUploadExercise.channel = new Channel();
+        fileUploadExercise.channel.name = 'test';
         const courseId = 1;
 
         beforeEach(() => {
@@ -203,6 +210,9 @@ describe('FileUploadExercise Management Update Component', () => {
         fileUploadExercise.releaseDate = dayjs();
         fileUploadExercise.dueDate = dayjs();
         fileUploadExercise.assessmentDueDate = dayjs();
+
+        fileUploadExercise.channel = new Channel();
+        fileUploadExercise.channel.name = 'test';
         const courseId = 1;
 
         beforeEach(() => {
@@ -231,6 +241,8 @@ describe('FileUploadExercise Management Update Component', () => {
         fileUploadExercise.releaseDate = dayjs();
         fileUploadExercise.dueDate = dayjs();
         fileUploadExercise.assessmentDueDate = dayjs();
+        fileUploadExercise.channel = new Channel();
+        fileUploadExercise.channel.name = 'test';
         const groupId = 1;
 
         beforeEach(() => {
@@ -261,6 +273,8 @@ describe('FileUploadExercise Management Update Component', () => {
         fileUploadExercise.releaseDate = dayjs();
         fileUploadExercise.dueDate = dayjs();
         fileUploadExercise.assessmentDueDate = dayjs();
+        fileUploadExercise.channel = new Channel();
+        fileUploadExercise.channel.name = 'test';
         const groupId = 1;
 
         beforeEach(() => {

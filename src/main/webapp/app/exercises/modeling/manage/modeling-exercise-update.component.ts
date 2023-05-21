@@ -97,11 +97,6 @@ export class ModelingExerciseUpdateComponent implements OnInit {
         // Get the modelingExercise
         this.activatedRoute.data.subscribe(({ modelingExercise }) => {
             this.modelingExercise = modelingExercise;
-            if (this.modelingExercise.id == undefined && this.modelingExercise.channel == undefined) {
-                this.modelingExercise.channel = new Channel();
-                this.modelingExercise.channel.name = '';
-            }
-            this.channelName = this.modelingExercise.channel.name;
 
             if (this.modelingExercise.exampleSolutionModel != undefined) {
                 this.exampleSolution = JSON.parse(this.modelingExercise.exampleSolutionModel);
@@ -120,6 +115,11 @@ export class ModelingExerciseUpdateComponent implements OnInit {
                 switchMap(() => this.activatedRoute.params),
                 tap((params) => {
                     if (!this.isExamMode) {
+                        if (this.modelingExercise.id == undefined && this.modelingExercise.channel == undefined) {
+                            this.modelingExercise.channel = new Channel();
+                            this.modelingExercise.channel.name = '';
+                        }
+                        this.channelName = this.modelingExercise.channel.name;
                         this.exerciseCategories = this.modelingExercise.categories || [];
                         if (this.modelingExercise.course) {
                             this.courseService.findAllCategoriesOfCourse(this.modelingExercise.course!.id!).subscribe({
@@ -197,7 +197,9 @@ export class ModelingExerciseUpdateComponent implements OnInit {
     save() {
         this.modelingExercise.exampleSolutionModel = JSON.stringify(this.modelingEditor?.getCurrentModel());
         this.isSaving = true;
-        this.modelingExercise.channel.name = this.channelName;
+        if (!this.isExamMode && this.modelingExercise.channel !== undefined) {
+            this.modelingExercise.channel.name = this.channelName;
+        }
 
         new SaveExerciseCommand(this.modalService, this.popupService, this.modelingExerciseService, this.backupExercise, this.editType, this.alertService)
             .save(this.modelingExercise, this.isExamMode, this.notificationText)

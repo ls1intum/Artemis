@@ -85,11 +85,6 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
         this.isSaving = false;
         this.activatedRoute.data.subscribe(({ fileUploadExercise }) => {
             this.fileUploadExercise = fileUploadExercise;
-            if (this.fileUploadExercise.id == undefined && this.fileUploadExercise.channel == undefined) {
-                this.fileUploadExercise.channel = new Channel();
-                this.fileUploadExercise.channel.name = '';
-            }
-            this.channelName = this.fileUploadExercise.channel.name;
             this.backupExercise = cloneDeep(this.fileUploadExercise);
             this.examCourseId = getCourseId(fileUploadExercise);
         });
@@ -107,6 +102,13 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
                 ),
                 switchMap(() => this.activatedRoute.params),
                 tap((params) => {
+                    if (!this.isExamMode) {
+                        if (this.fileUploadExercise.id == undefined && this.fileUploadExercise.channel == undefined) {
+                            this.fileUploadExercise.channel = new Channel();
+                            this.fileUploadExercise.channel.name = '';
+                        }
+                        this.channelName = this.fileUploadExercise.channel.name;
+                    }
                     this.handleExerciseSettings();
                     this.handleImport(params);
                 }),
@@ -168,7 +170,9 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
 
     save() {
         this.isSaving = true;
-        this.fileUploadExercise.channel.name = this.channelName;
+        if (!this.isExamMode && this.fileUploadExercise.channel !== undefined) {
+            this.fileUploadExercise.channel.name = this.channelName;
+        }
 
         new SaveExerciseCommand(this.modalService, this.popupService, this.fileUploadExerciseService, this.backupExercise, this.editType, this.alertService)
             .save(this.fileUploadExercise, this.isExamMode, this.notificationText)

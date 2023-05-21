@@ -363,13 +363,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         this.notificationText = undefined;
         this.activatedRoute.data.subscribe(({ programmingExercise }) => {
             this.programmingExercise = programmingExercise;
-            if (!this.isExamMode && this.programmingExercise.course?.id) {
-                if (this.programmingExercise.id == undefined && this.programmingExercise.channel == undefined) {
-                    this.programmingExercise.channel = new Channel();
-                    this.programmingExercise.channel.name = '';
-                }
-                this.channelName = this.programmingExercise.channel.name;
-            }
             this.backupExercise = cloneDeep(this.programmingExercise);
             this.selectedProgrammingLanguageValue = this.programmingExercise.programmingLanguage!;
             if (this.programmingExercise.projectType === ProjectType.MAVEN_MAVEN) {
@@ -422,6 +415,14 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                                 });
                             });
                         }
+                    }
+
+                    if (!this.isExamMode && this.programmingExercise.course?.id) {
+                        if (this.programmingExercise.id == undefined && this.programmingExercise.channel == undefined) {
+                            this.programmingExercise.channel = new Channel();
+                            this.programmingExercise.channel.name = '';
+                        }
+                        this.channelName = this.programmingExercise.channel.name;
                     }
 
                     // Set submit button text depending on component state
@@ -549,7 +550,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     }
 
     save() {
-        if (this.programmingExercise.channel != undefined) {
+        if (!this.isExamMode && this.programmingExercise.channel !== undefined) {
             this.programmingExercise.channel.name = this.channelName;
         }
         const ref = this.popupService.checkExerciseBeforeUpdate(this.programmingExercise, this.backupExercise, this.isExamMode);

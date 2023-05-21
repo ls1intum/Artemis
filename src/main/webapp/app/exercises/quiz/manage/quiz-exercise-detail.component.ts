@@ -860,7 +860,9 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
         Exercise.sanitize(this.quizExercise);
 
         this.isSaving = true;
-        this.quizExercise.channel.name = this.channelName;
+        if (!this.isExamMode && this.quizExercise.channel !== undefined) {
+            this.quizExercise.channel.name = this.channelName;
+        }
 
         this.parseAllQuestions();
         if (this.quizExercise.id !== undefined) {

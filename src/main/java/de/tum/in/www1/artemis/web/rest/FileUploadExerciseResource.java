@@ -123,7 +123,7 @@ public class FileUploadExerciseResource {
         // Check that the user is authorized to create the exercise
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
 
-        if (fileUploadExercise.isCourseExercise()) {
+        if (fileUploadExercise.isCourseExercise() && fileUploadExercise.getChannel() != null) {
             Channel createdChannel = channelService.createExerciseChannel(fileUploadExercise, fileUploadExercise.getChannel().getName());
             fileUploadExercise.setChannel(createdChannel);
         }

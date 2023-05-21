@@ -167,7 +167,7 @@ public class TextExerciseResource {
 
         // if exercise is created from scratch we create new knowledge instance
         textExercise.setKnowledge(textAssessmentKnowledgeService.createNewKnowledge());
-        if (textExercise.isCourseExercise()) {
+        if (textExercise.isCourseExercise() && textExercise.getChannel() != null) {
             Channel createdChannel = channelService.createExerciseChannel(textExercise, textExercise.getChannel().getName());
             textExercise.setChannel(createdChannel);
         }

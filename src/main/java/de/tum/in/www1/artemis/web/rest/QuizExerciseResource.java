@@ -154,7 +154,7 @@ public class QuizExerciseResource {
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(quizExercise);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
 
-        if (quizExercise.isCourseExercise()) {
+        if (quizExercise.isCourseExercise() && quizExercise.getChannel() != null) {
             Channel createdChannel = channelService.createExerciseChannel(quizExercise, quizExercise.getChannel().getName());
             quizExercise.setChannel(createdChannel);
         }
