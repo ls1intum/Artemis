@@ -3,8 +3,6 @@ package de.tum.in.www1.artemis.web.rest.iris;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
-import java.util.Arrays;
-import java.util.Random;
 import java.util.Objects;
 
 import javax.ws.rs.BadRequestException;
@@ -18,7 +16,6 @@ import org.springframework.web.bind.annotation.*;
 import de.tum.in.www1.artemis.domain.iris.IrisMessage;
 import de.tum.in.www1.artemis.domain.iris.IrisMessageSender;
 import de.tum.in.www1.artemis.domain.iris.IrisSession;
-import de.tum.in.www1.artemis.domain.iris.IrisMessageContent;
 import de.tum.in.www1.artemis.repository.iris.IrisMessageRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisSessionRepository;
 import de.tum.in.www1.artemis.service.iris.IrisMessageService;
@@ -75,24 +72,12 @@ public class IrisMessageResource {
     @PostMapping("sessions/{sessionId}/messages")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<IrisMessage> createMessage(@PathVariable Long sessionId, @RequestBody IrisMessage message) throws URISyntaxException {
-        // HERE
-        // var session = irisSessionRepository.findByIdElseThrow(sessionId);
-        // irisSessionService.checkHasAccessToIrisSession(session, null);
-        // var savedMessage = irisMessageService.saveNewMessage(message, session, IrisMessageSender.USER);
+        var session = irisSessionRepository.findByIdElseThrow(sessionId);
+        irisSessionService.checkHasAccessToIrisSession(session, null);
+        var savedMessage = irisMessageService.saveNewMessage(message, session, IrisMessageSender.USER);
 
-        System.out.println("DEBUG");
-        var uriString = "/api/iris/sessions/" + 1 + "/messages/" + 1;
-
-        Random random = new Random();
-        int randomNumber = random.nextInt();
-
-        var content = new IrisMessageContent();
-        content.setTextContent("I have received your message. Your message is: " + message.getContent().get(0).getTextContent());
-
-        var mockMessage = new IrisMessage();
-        mockMessage.setContent(Arrays.asList(content));
-        mockMessage.setSender(IrisMessageSender.LLM);
-        return ResponseEntity.created(new URI(uriString)).body(mockMessage);
+        var uriString = "/api/iris/sessions/" + session.getId() + "/messages/" + savedMessage.getId();
+        return ResponseEntity.created(new URI(uriString)).body(savedMessage);
     }
 
     /**
