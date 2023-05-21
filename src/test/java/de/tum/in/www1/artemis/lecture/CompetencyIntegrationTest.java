@@ -800,7 +800,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @WithMockUser(username = TEST_PREFIX + "instructor42", roles = "INSTRUCTOR")
     void testInstructorGetsOnlyResultsFromOwningCourses() throws Exception {
         final var search = database.configureSearch("");
-        final var result = request.getSearchResult("/api/competencies/", HttpStatus.OK, LearningGoal.class, database.searchMapping(search));
+        final var result = request.getSearchResult("/api/competencies/", HttpStatus.OK, Competency.class, database.searchMapping(search));
         assertThat(result.getResultsOnPage()).isNullOrEmpty();
     }
 
@@ -809,7 +809,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     void testInstructorGetsResultsFromOwningCoursesNotEmpty() throws Exception {
         Competency competency = competencyRepository.findById(idOfCompetency).get();
         final var search = database.configureSearch(competency.getTitle());
-        final var result = request.getSearchResult("/api/competencies/", HttpStatus.OK, LearningGoal.class, database.searchMapping(search));
+        final var result = request.getSearchResult("/api/competencies/", HttpStatus.OK, Competency.class, database.searchMapping(search));
         assertThat(result.getResultsOnPage()).hasSize(1);
     }
 
@@ -818,7 +818,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     void testAdminGetsResultsFromAllCourses() throws Exception {
         Competency competency = competencyRepository.findById(idOfCompetency).get();
         final var search = database.configureSearch(competency.getTitle());
-        final var result = request.getSearchResult("/api/competencies/", HttpStatus.OK, LearningGoal.class, database.searchMapping(search));
+        final var result = request.getSearchResult("/api/competencies/", HttpStatus.OK, Competency.class, database.searchMapping(search));
         assertThat(result.getResultsOnPage()).hasSize(1);
     }
 
