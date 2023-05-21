@@ -36,6 +36,7 @@ describe('ExamChecklistExerciseGroupTableComponent', () => {
                         studentAssignedTeamIdComputed: false,
                         secondCorrectionEnabled: false,
                         numberOfParticipations: 23,
+                        channel: {},
                     },
                     {
                         id: 2,
@@ -45,6 +46,7 @@ describe('ExamChecklistExerciseGroupTableComponent', () => {
                         studentAssignedTeamIdComputed: false,
                         secondCorrectionEnabled: false,
                         numberOfParticipations: 22,
+                        channel: {},
                     },
                 ],
             },

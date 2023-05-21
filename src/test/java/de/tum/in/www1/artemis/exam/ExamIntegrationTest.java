@@ -1028,14 +1028,14 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     void testUpdateExam_asInstructor() throws Exception {
         // Create instead of update if no id was set
         Exam exam = ModelFactory.generateExam(course1);
-        exam.setTitle("Over 9000!");
+        exam.setTitle("Over 9000");
         long examCountBefore = examRepository.count();
         Exam createdExam = request.putWithResponseBody("/api/courses/" + course1.getId() + "/exams", exam, Exam.class, HttpStatus.CREATED);
         assertThat(exam.getEndDate()).isEqualTo(createdExam.getEndDate());
         assertThat(exam.getStartDate()).isEqualTo(createdExam.getStartDate());
         assertThat(exam.getVisibleDate()).isEqualTo(createdExam.getVisibleDate());
         // Note: ZonedDateTime has problems with comparison due to time zone differences for values saved in the database and values not saved in the database
-        assertThat(exam).usingRecursiveComparison().ignoringFields("id", "course", "endDate", "startDate", "visibleDate").isEqualTo(createdExam);
+        assertThat(exam).usingRecursiveComparison().ignoringFields("id", "course", "endDate", "startDate", "visibleDate", "channel").isEqualTo(createdExam);
         assertThat(examCountBefore + 1).isEqualTo(examRepository.count());
         // No course is set -> bad request
         exam = ModelFactory.generateExam(course1);

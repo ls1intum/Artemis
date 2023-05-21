@@ -40,6 +40,7 @@ describe('ResultService', () => {
         numberOfAssessmentsOfCorrectionRounds: [],
         secondCorrectionEnabled: false,
         studentAssignedTeamIdComputed: false,
+        channel: {},
     };
     const participation1: StudentParticipation = { type: ParticipationType.STUDENT, initializationDate: dayjs().subtract(4, 'hours'), exercise: programmingExercise };
     const participation2: StudentParticipation = { type: ParticipationType.STUDENT, exercise: programmingExercise };
@@ -77,6 +78,7 @@ describe('ResultService', () => {
         numberOfAssessmentsOfCorrectionRounds: [],
         secondCorrectionEnabled: false,
         studentAssignedTeamIdComputed: false,
+        channel: {},
     };
     const modelingParticipation: StudentParticipation = { type: ParticipationType.STUDENT, exercise: modelingExercise };
     const modelingResult: Result = { participation: modelingParticipation, score: 42 };
