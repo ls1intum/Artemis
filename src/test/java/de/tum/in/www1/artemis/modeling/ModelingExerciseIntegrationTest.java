@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.modeling;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.verify;
 
 import java.time.ZonedDateTime;
@@ -659,16 +658,16 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
         exerciseToBeImported = request.postWithResponseBody("/api/modeling-exercises/import/" + sourceExercise.getId(), exerciseToBeImported, ModelingExercise.class,
                 HttpStatus.CREATED);
 
-        assertEquals(course2.getId(), exerciseToBeImported.getCourseViaExerciseGroupOrCourseMember().getId(), course2.getId());
-        assertEquals(ExerciseMode.TEAM, exerciseToBeImported.getMode());
-        assertEquals(teamAssignmentConfig.getMinTeamSize(), exerciseToBeImported.getTeamAssignmentConfig().getMinTeamSize());
-        assertEquals(teamAssignmentConfig.getMaxTeamSize(), exerciseToBeImported.getTeamAssignmentConfig().getMaxTeamSize());
-        assertEquals(0, teamRepository.findAllByExerciseIdWithEagerStudents(exerciseToBeImported, null).size());
+        assertThat(exerciseToBeImported.getCourseViaExerciseGroupOrCourseMember().getId()).isEqualTo(course2.getId());
+        assertThat(exerciseToBeImported.getMode()).isEqualTo(ExerciseMode.TEAM);
+        assertThat(exerciseToBeImported.getTeamAssignmentConfig().getMinTeamSize()).isEqualTo(teamAssignmentConfig.getMinTeamSize());
+        assertThat(exerciseToBeImported.getTeamAssignmentConfig().getMaxTeamSize()).isEqualTo(teamAssignmentConfig.getMaxTeamSize());
+        assertThat(teamRepository.findAllByExerciseIdWithEagerStudents(exerciseToBeImported, null)).isEmpty();
 
         sourceExercise = modelingExerciseRepository.findById(sourceExercise.getId()).get();
-        assertEquals(course1.getId(), sourceExercise.getCourseViaExerciseGroupOrCourseMember().getId());
-        assertEquals(ExerciseMode.INDIVIDUAL, sourceExercise.getMode());
-        assertEquals(0, teamRepository.findAllByExerciseIdWithEagerStudents(sourceExercise, null).size());
+        assertThat(sourceExercise.getCourseViaExerciseGroupOrCourseMember().getId()).isEqualTo(course1.getId());
+        assertThat(sourceExercise.getMode()).isEqualTo(ExerciseMode.INDIVIDUAL);
+        assertThat(teamRepository.findAllByExerciseIdWithEagerStudents(sourceExercise, null)).isEmpty();
     }
 
     @Test
@@ -698,15 +697,15 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
         exerciseToBeImported = request.postWithResponseBody("/api/modeling-exercises/import/" + sourceExercise.getId(), exerciseToBeImported, ModelingExercise.class,
                 HttpStatus.CREATED);
 
-        assertEquals(course2.getId(), exerciseToBeImported.getCourseViaExerciseGroupOrCourseMember().getId(), course2.getId());
-        assertEquals(ExerciseMode.INDIVIDUAL, exerciseToBeImported.getMode());
-        assertNull(exerciseToBeImported.getTeamAssignmentConfig());
-        assertEquals(0, teamRepository.findAllByExerciseIdWithEagerStudents(exerciseToBeImported, null).size());
+        assertThat(exerciseToBeImported.getCourseViaExerciseGroupOrCourseMember().getId()).isEqualTo(course2.getId());
+        assertThat(exerciseToBeImported.getMode()).isEqualTo(ExerciseMode.INDIVIDUAL);
+        assertThat(exerciseToBeImported.getTeamAssignmentConfig()).isNull();
+        assertThat(teamRepository.findAllByExerciseIdWithEagerStudents(exerciseToBeImported, null)).isEmpty();
 
         sourceExercise = modelingExerciseRepository.findById(sourceExercise.getId()).get();
-        assertEquals(course1.getId(), sourceExercise.getCourseViaExerciseGroupOrCourseMember().getId());
-        assertEquals(ExerciseMode.TEAM, sourceExercise.getMode());
-        assertEquals(1, teamRepository.findAllByExerciseIdWithEagerStudents(sourceExercise, null).size());
+        assertThat(sourceExercise.getCourseViaExerciseGroupOrCourseMember().getId()).isEqualTo(course1.getId());
+        assertThat(sourceExercise.getMode()).isEqualTo(ExerciseMode.TEAM);
+        assertThat(teamRepository.findAllByExerciseIdWithEagerStudents(sourceExercise, null)).hasSize(1);
     }
 
     @Test
