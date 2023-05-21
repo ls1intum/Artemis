@@ -19,7 +19,6 @@
     background-color: #212529;
     color: white;
     font-weight: bold;
-    font-family: Arial;
     padding: 10px;
 }
 
@@ -72,16 +71,17 @@
     border-radius: 20px;
 }
 
-.send-btn {
-    padding: 5px 10px 5px 10px;
-    border: none;
-    border-radius: 20px;
+.btn-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
     background-color: #4caf50;
-    color: white;
+    border: none;
+}
 
-    &:disabled {
-        background-color: gray;
-    }
+.btn-circle:hover,
+.btn-circle:active {
+    background-color: #3e913e;
 }
 
 @keyframes blink {

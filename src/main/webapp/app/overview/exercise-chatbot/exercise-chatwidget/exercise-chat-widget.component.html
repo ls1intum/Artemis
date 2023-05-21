@@ -38,7 +38,7 @@
                 (keyup.enter)="onSend()"
                 placeholder="{{ 'artemisApp.courseOverview.exerciseDetails.chatInputMessage' | artemisTranslate }}"
             />
-            <button (click)="onSend()" class="send-btn" [disabled]="isLoading">
+            <button (click)="onSend()" class="btn btn-primary btn-md btn-circle" [disabled]="isLoading">
                 <fa-icon [icon]="faPaperPlane"></fa-icon>
             </button>
         </div>
