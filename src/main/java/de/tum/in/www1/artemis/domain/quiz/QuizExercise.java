@@ -13,10 +13,7 @@ import org.hibernate.Hibernate;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonView;
+import com.fasterxml.jackson.annotation.*;
 
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Result;
@@ -36,8 +33,15 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
  */
 @Entity
 @DiscriminatorValue(value = "Q")
+@JsonTypeName("quiz")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class QuizExercise extends Exercise implements QuizConfiguration {
+
+    // used to distinguish the type when used in collections (e.g. SearchResultPageDTO --> resultsOnPage)
+    @JsonView(QuizView.Before.class)
+    public String getType() {
+        return "quiz";
+    }
 
     @Column(name = "randomize_question_order")
     @JsonView(QuizView.Before.class)
@@ -152,11 +156,6 @@ public class QuizExercise extends Exercise implements QuizConfiguration {
 
     public void setQuizMode(QuizMode quizMode) {
         this.quizMode = quizMode;
-    }
-
-    @JsonView(QuizView.Before.class)
-    public String getType() {
-        return "quiz";
     }
 
     /**
