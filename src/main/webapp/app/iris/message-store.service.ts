@@ -76,7 +76,7 @@ export class IrisMessageStore implements OnDestroy {
 
         if (isHistoryMessageLoadedAction(action) || isActiveConversationMessageLoadedAction(action)) {
             return {
-                messages: [action.message, ...state.messages],
+                messages: [...state.messages, action.message],
                 sessionId: state.sessionId,
             };
         }
@@ -88,9 +88,9 @@ export class IrisMessageStore implements OnDestroy {
         }
         if (isStudentMessageSentAction(action)) {
             // if sessionId is null then we have either an error or another action type
-            this.httpMessageService.createMessage(<number>state.sessionId, action.message);
+            this.httpMessageService.createMessage(<number>state.sessionId, action.message).subscribe(action.callbacks);
             return {
-                messages: [action.message, ...state.messages],
+                messages: [...state.messages, action.message],
                 sessionId: state.sessionId,
             };
         }

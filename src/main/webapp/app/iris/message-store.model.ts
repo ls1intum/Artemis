@@ -26,8 +26,9 @@ export class ActiveConversationMessageLoadedAction {
 export class StudentMessageSentAction {
     readonly type: ActionType;
 
-    public constructor(public readonly message: IrisClientMessage) {
+    public constructor(public readonly message: IrisClientMessage, public readonly callbacks = {}) {
         this.type = ActionType.STUDENT_MESSAGE_SENT;
+        this.callbacks = callbacks;
     }
 }
 

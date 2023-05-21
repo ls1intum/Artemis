@@ -1,16 +1,17 @@
-import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, Inject, OnInit, ViewChild } from '@angular/core';
 import { faCircle, faCompress, faPaperPlane, faXmark } from '@fortawesome/free-solid-svg-icons';
-import { MatDialog } from '@angular/material/dialog';
+import { MAT_DIALOG_DATA, MatDialog } from '@angular/material/dialog';
 import { HttpResponse } from '@angular/common/http';
 import { IrisClientMessage, IrisMessage, IrisMessageContent, IrisMessageContentType, IrisSender, IrisServerMessage } from 'app/entities/iris/iris.model';
 import { IrisMessageStore } from 'app/iris/message-store.service';
 import { IrisHttpMessageService } from 'app/iris/http-message.service';
+import { ActiveConversationMessageLoadedAction, StudentMessageSentAction } from 'app/iris/message-store.model';
 
 @Component({
     selector: 'jhi-exercise-chat-widget',
     templateUrl: './exercise-chat-widget.component.html',
     styleUrls: ['./exercise-chat-widget.component.scss'],
-    providers: [IrisHttpMessageService, IrisMessageStore],
+    providers: [IrisHttpMessageService],
 })
 export class ExerciseChatWidgetComponent implements OnInit {
     @ViewChild('chatWidget') chatWidget!: ElementRef;
@@ -19,13 +20,16 @@ export class ExerciseChatWidgetComponent implements OnInit {
     readonly SENDER_USER = IrisSender.USER;
     readonly SENDER_SERVER = IrisSender.SERVER;
 
+    messageStore: IrisMessageStore;
     messages: IrisMessage[] = [];
     newMessage = '';
     isLoading: boolean;
     dots = 1;
-    sessionId = 1; // TODO
+    sessionId: number;
 
-    constructor(private dialog: MatDialog, private irisHttpMessageService: IrisHttpMessageService) {}
+    constructor(private dialog: MatDialog, @Inject(MAT_DIALOG_DATA) public data: any, private irisHttpMessageService: IrisHttpMessageService) {
+        this.messageStore = data.messageStore;
+    }
 
     // Icons
     faPaperPlane = faPaperPlane;
@@ -34,7 +38,12 @@ export class ExerciseChatWidgetComponent implements OnInit {
     faXmark = faXmark;
 
     ngOnInit() {
+        this.scrollToBottom('auto');
         this.animateDots();
+        this.messageStore.getState().subscribe((state) => {
+            this.sessionId = Number(state.sessionId);
+            this.messages = state.messages as IrisMessage[];
+        });
     }
 
     animateDots() {
@@ -47,29 +56,30 @@ export class ExerciseChatWidgetComponent implements OnInit {
         if (this.newMessage) {
             this.isLoading = true;
             const message = this.newUserMessage(this.newMessage);
-            this.messages.push(message);
+            this.messageStore.dispatch(
+                new StudentMessageSentAction(message, {
+                    next: (res: HttpResponse<IrisServerMessage>) => {
+                        this.isLoading = false;
+                        this.messageStore.dispatch(new ActiveConversationMessageLoadedAction(res.body!));
+                        this.scrollToBottom();
+                    },
+                    error: () => {
+                        this.isLoading = false;
+                        // TODO: handle error
+                    },
+                }),
+            );
             this.newMessage = '';
-            this.irisHttpMessageService.createMessage(this.sessionId, message).subscribe({
-                next: (res: HttpResponse<IrisServerMessage>) => {
-                    this.isLoading = false;
-                    this.messages.push(res.body!);
-                    this.scrollToBottom();
-                },
-                error: () => {
-                    this.isLoading = false;
-                    // TODO: handle error
-                },
-            });
         }
         this.scrollToBottom();
     }
 
-    scrollToBottom() {
+    scrollToBottom(behavior = 'smooth') {
         setTimeout(() => {
             const chatBodyElement: HTMLElement = this.chatBody.nativeElement;
             chatBodyElement.scrollTo({
                 top: chatBodyElement.scrollHeight,
-                behavior: 'smooth',
+                behavior: behavior as ScrollBehavior,
             });
         });
     }
