@@ -20,6 +20,7 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.iris.IrisMessage;
 import de.tum.in.www1.artemis.domain.iris.IrisMessageContent;
 import de.tum.in.www1.artemis.domain.iris.IrisMessageSender;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisMessageRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisSessionRepository;
 import de.tum.in.www1.artemis.service.iris.IrisMessageService;
@@ -41,6 +42,9 @@ class IrisMessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Autowired
     private IrisMessageRepository irisMessageRepository;
 
+    @Autowired
+    private ProgrammingExerciseRepository programmingExerciseRepository;
+
     private ProgrammingExercise exercise;
 
     @BeforeEach
@@ -50,6 +54,7 @@ class IrisMessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         final Course course = database.addCourseWithOneProgrammingExerciseAndTestCases();
         exercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
         exercise.setIrisActivated(true);
+        programmingExerciseRepository.save(exercise);
     }
 
     @Test
