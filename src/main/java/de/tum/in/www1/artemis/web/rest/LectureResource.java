@@ -20,7 +20,6 @@ import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ExerciseService;
@@ -28,6 +27,7 @@ import de.tum.in.www1.artemis.service.LectureImportService;
 import de.tum.in.www1.artemis.service.LectureService;
 import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
 import de.tum.in.www1.artemis.service.metis.conversation.ConversationService;
+import de.tum.in.www1.artemis.web.rest.dto.LectureDTO;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -85,13 +85,14 @@ public class LectureResource {
     /**
      * POST /lectures : Create a new lecture.
      *
-     * @param lecture the lecture to create
+     * @param lectureDTO the lecture to create and a unique channel name
      * @return the ResponseEntity with status 201 (Created) and with body the new lecture, or with status 400 (Bad Request) if the lecture has already an ID
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("/lectures")
     @PreAuthorize("hasRole('EDITOR')")
-    public ResponseEntity<Lecture> createLecture(@RequestBody Lecture lecture) throws URISyntaxException {
+    public ResponseEntity<Lecture> createLecture(@RequestBody LectureDTO lectureDTO) throws URISyntaxException {
+        Lecture lecture = lectureDTO.lecture();
         log.debug("REST request to save Lecture : {}", lecture);
         if (lecture.getId() != null) {
             throw new BadRequestAlertException("A new lecture cannot already have an ID", ENTITY_NAME, "idExists");
@@ -100,6 +101,7 @@ public class LectureResource {
 
         Channel createdChannel = channelService.createLectureChannel(lecture);
         channelService.registerUsersToChannelAsynchronously(true, true, true, List.of(), lecture.getCourse(), createdChannel);
+        Channel createdChannel = channelService.createLectureChannel(lecture, lectureDTO.channelName());
 
         lecture.setChannel(createdChannel);
         Lecture savedLecture = lectureRepository.save(lecture);
@@ -110,13 +112,14 @@ public class LectureResource {
     /**
      * PUT /lectures : Updates an existing lecture.
      *
-     * @param lecture the lecture to update
+     * @param lectureDTO the lecture to update and the updated channel name
      * @return the ResponseEntity with status 200 (OK) and with body the updated lecture, or with status 400 (Bad Request) if the lecture is not valid, or with status 500 (Internal
      *         Server Error) if the lecture couldn't be updated
      */
     @PutMapping("/lectures")
     @PreAuthorize("hasRole('EDITOR')")
-    public ResponseEntity<Lecture> updateLecture(@RequestBody Lecture lecture) {
+    public ResponseEntity<Lecture> updateLecture(@RequestBody LectureDTO lectureDTO) {
+        Lecture lecture = lectureDTO.lecture();
         log.debug("REST request to update Lecture : {}", lecture);
         if (lecture.getId() == null) {
             throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idNull");
@@ -129,11 +132,8 @@ public class LectureResource {
         // NOTE: Make sure that all references are preserved here
         lecture.setLectureUnits(originalLecture.getLectureUnits());
 
-        if (originalLecture.getChannel() != null) {
-            // Make sure that the original references are preserved.
-            Channel originalChannel = channelRepository.findByIdElseThrow(originalLecture.getChannel().getId());
-            lecture.setChannel(originalChannel);
-        }
+        // Make sure that the original references are preserved and the channel is updated if necessary
+        channelService.updateLectureChannel(originalLecture, lecture, lectureDTO.channelName());
 
         Lecture result = lectureRepository.save(lecture);
         return ResponseEntity.ok().body(result);
@@ -179,6 +179,27 @@ public class LectureResource {
     }
 
     /**
+     * GET /courses/:courseId/lectures : get all the lectures of a course with their lecture units and slides
+     *
+     * @param courseId the courseId of the course for which all lectures should be returned
+     * @return the ResponseEntity with status 200 (OK) and the set of lectures in body
+     */
+    @GetMapping("courses/{courseId}/lectures-with-slides")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<Set<Lecture>> getLecturesWithSlidesForCourse(@PathVariable Long courseId) {
+        log.debug("REST request to get all Lectures with slides of the units for the course with id : {}", courseId);
+
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
+
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        Set<Lecture> lectures = lectureRepository.findAllByCourseIdWithAttachmentsAndLectureUnitsAndSlides(courseId);
+        lectures.forEach(lectureService::filterActiveAttachmentUnits);
+        lectures.forEach(lecture -> lectureService.filterActiveAttachments(lecture, user));
+        return ResponseEntity.ok().body(lectures);
+    }
+
+    /**
      * GET /lectures/:lectureId : get the "lectureId" lecture.
      *
      * @param lectureId the lectureId of the lecture to retrieve
@@ -188,7 +209,12 @@ public class LectureResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Lecture> getLecture(@PathVariable Long lectureId) {
         log.debug("REST request to get lecture {}", lectureId);
-        Lecture lecture = lectureRepository.findByIdElseThrow(lectureId);
+        Lecture lecture = lectureRepository.findByIdWithChannel(lectureId);
+        Channel lectureChannel = lecture.getChannel();
+        if (lectureChannel != null) {
+            lectureChannel.setLecture(null);
+            lectureChannel.setCreator(null);
+        }
         authCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.STUDENT, lecture, null);
         return ResponseEntity.ok(lecture);
     }
@@ -228,7 +254,7 @@ public class LectureResource {
      * GET /lectures/:lectureId/details : get the "lectureId" lecture.
      *
      * @param lectureId the lectureId of the lecture to retrieve
-     * @return the ResponseEntity with status 200 (OK) and with body the lecture including posts, lecture units and learning goals, or with status 404 (Not Found)
+     * @return the ResponseEntity with status 200 (OK) and with body the lecture including posts, lecture units and competencies, or with status 404 (Not Found)
      */
     @GetMapping("/lectures/{lectureId}/details")
     @PreAuthorize("hasRole('USER')")
@@ -243,6 +269,29 @@ public class LectureResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
         lecture = filterLectureContentForUser(lecture, user);
 
+        return ResponseEntity.ok(lecture);
+    }
+
+    /**
+     * GET /lectures/:lectureId/details-with-slides : get the "lectureId" lecture with active lecture units and with slides.
+     *
+     * @param lectureId the lectureId of the lecture to retrieve
+     * @return the ResponseEntity with status 200 (OK) and with body the lecture including posts, lecture units and learning goals, or with status 404 (Not Found)
+     */
+    @GetMapping("lectures/{lectureId}/details-with-slides")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<Lecture> getLectureWithDetailsAndSlides(@PathVariable Long lectureId) {
+        log.debug("REST request to get lecture {} with details with slides ", lectureId);
+        Lecture lecture = lectureRepository.findByIdWithLectureUnitsAndWithSlidesElseThrow(lectureId);
+        Course course = lecture.getCourse();
+        if (course == null) {
+            return ResponseEntity.badRequest().build();
+        }
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
+
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        lectureService.filterActiveAttachmentUnits(lecture);
+        lectureService.filterActiveAttachments(lecture, user);
         return ResponseEntity.ok(lecture);
     }
 
@@ -292,7 +341,7 @@ public class LectureResource {
                 Exercise exercise = ((ExerciseUnit) lectureUnit).getExercise();
                 // we replace the exercise with one that contains all the information needed for correct display
                 exercisesWithAllInformationNeeded.stream().filter(exercise::equals).findAny().ifPresent(((ExerciseUnit) lectureUnit)::setExercise);
-                // re-add the learning goals already loaded with the exercise unit
+                // re-add the competencies already loaded with the exercise unit
                 ((ExerciseUnit) lectureUnit).getExercise().setLearningGoals(exercise.getLearningGoals());
             }
         }).collect(Collectors.toCollection(ArrayList::new));

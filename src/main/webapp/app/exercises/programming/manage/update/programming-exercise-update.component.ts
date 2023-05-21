@@ -29,6 +29,7 @@ import { SubmissionPolicyType } from 'app/entities/submission-policy.model';
 import { faBan, faExclamationCircle, faHandshakeAngle, faQuestionCircle, faSave } from '@fortawesome/free-solid-svg-icons';
 import { ModePickerOption } from 'app/exercises/shared/mode-picker/mode-picker.component';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
+import { Channel } from 'app/entities/metis/conversation/channel.model';
 
 @Component({
     selector: 'jhi-programming-exercise-update',
@@ -70,6 +71,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     templateParticipationResultLoaded = true;
     notificationText?: string;
     courseId: number;
+    channelName: string | undefined;
 
     EditorMode = EditorMode;
     AssessmentType = AssessmentType;
@@ -415,6 +417,14 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                         }
                     }
 
+                    if (!this.isExamMode && this.programmingExercise.course?.id) {
+                        if (this.programmingExercise.id == undefined && this.programmingExercise.channel == undefined) {
+                            this.programmingExercise.channel = new Channel();
+                            this.programmingExercise.channel.name = '';
+                        }
+                        this.channelName = this.programmingExercise.channel?.name;
+                    }
+
                     // Set submit button text depending on component state
                     if (this.isImportFromExistingExercise || this.isImportFromFile) {
                         this.submitButtonTitle = 'entity.action.import';
@@ -540,6 +550,9 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     }
 
     save() {
+        if (!this.isExamMode && this.programmingExercise.channel !== undefined) {
+            this.programmingExercise.channel.name = this.channelName;
+        }
         const ref = this.popupService.checkExerciseBeforeUpdate(this.programmingExercise, this.backupExercise, this.isExamMode);
         if (!this.modalService.hasOpenModals()) {
             this.saveExercise();

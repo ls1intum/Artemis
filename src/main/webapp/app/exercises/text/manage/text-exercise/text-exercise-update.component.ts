@@ -23,6 +23,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
+import { Channel } from 'app/entities/metis/conversation/channel.model';
 
 @Component({
     selector: 'jhi-text-exercise-update',
@@ -47,6 +48,7 @@ export class TextExerciseUpdateComponent implements OnInit {
     exerciseCategories: ExerciseCategory[];
     existingCategories: ExerciseCategory[];
     notificationText?: string;
+    channelName: string | undefined;
 
     domainCommandsProblemStatement = [new KatexCommand()];
     domainCommandsSampleSolution = [new KatexCommand()];
@@ -103,6 +105,12 @@ export class TextExerciseUpdateComponent implements OnInit {
                 switchMap(() => this.activatedRoute.params),
                 tap((params) => {
                     if (!this.isExamMode) {
+                        if (this.textExercise.id == undefined && this.textExercise.channel == undefined) {
+                            this.textExercise.channel = new Channel();
+                            this.textExercise.channel.name = '';
+                        }
+                        this.channelName = this.textExercise.channel?.name;
+
                         this.exerciseCategories = this.textExercise.categories || [];
                         if (this.examCourseId) {
                             this.courseService.findAllCategoriesOfCourse(this.examCourseId).subscribe({
@@ -179,6 +187,9 @@ export class TextExerciseUpdateComponent implements OnInit {
 
     save() {
         this.isSaving = true;
+        if (!this.isExamMode && this.textExercise.channel !== undefined) {
+            this.textExercise.channel.name = this.channelName;
+        }
 
         new SaveExerciseCommand(this.modalService, this.popupService, this.textExerciseService, this.backupExercise, this.editType, this.alertService)
             .save(this.textExercise, this.isExamMode, this.notificationText)

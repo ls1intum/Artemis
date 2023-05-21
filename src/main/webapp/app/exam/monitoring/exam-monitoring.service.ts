@@ -9,7 +9,7 @@ import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import dayjs from 'dayjs/esm';
 
-export const EXAM_MONITORING_UPDATE_URL = (courseId: number, examId: number) => `${SERVER_API_URL}/api/courses/${courseId}/exams/${examId}/statistics`;
+export const EXAM_MONITORING_UPDATE_URL = (courseId: number, examId: number) => `api/courses/${courseId}/exams/${examId}/statistics`;
 
 @Injectable({ providedIn: 'root' })
 export class ExamMonitoringService {

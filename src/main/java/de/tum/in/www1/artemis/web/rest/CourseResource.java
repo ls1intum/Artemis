@@ -47,7 +47,7 @@ import de.tum.in.www1.artemis.service.dto.UserDTO;
 import de.tum.in.www1.artemis.service.dto.UserPublicInfoDTO;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
-import de.tum.in.www1.artemis.service.metis.conversation.ConversationService;
+import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
 import de.tum.in.www1.artemis.service.tutorialgroups.TutorialGroupsConfigurationService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.dto.CourseForDashboardDTO;
@@ -109,14 +109,14 @@ public class CourseResource {
 
     private final CourseScoreCalculationService courseScoreCalculationService;
 
-    private final ConversationService conversationService;
+    private final ChannelService channelService;
 
     public CourseResource(UserRepository userRepository, CourseService courseService, CourseRepository courseRepository, ExerciseService exerciseService,
             OAuth2JWKSService oAuth2JWKSService, OnlineCourseConfigurationService onlineCourseConfigurationService, AuthorizationCheckService authCheckService,
             TutorParticipationRepository tutorParticipationRepository, SubmissionService submissionService, Optional<VcsUserManagementService> optionalVcsUserManagementService,
             AssessmentDashboardService assessmentDashboardService, ExerciseRepository exerciseRepository, Optional<CIUserManagementService> optionalCiUserManagementService,
             FileService fileService, TutorialGroupsConfigurationService tutorialGroupsConfigurationService, CourseScoreCalculationService courseScoreCalculationService,
-            ConversationService conversationService, GradingScaleService gradingScaleService) {
+            GradingScaleService gradingScaleService, ChannelService channelService) {
         this.courseService = courseService;
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
@@ -134,7 +134,7 @@ public class CourseResource {
         this.tutorialGroupsConfigurationService = tutorialGroupsConfigurationService;
         this.gradingScaleService = gradingScaleService;
         this.courseScoreCalculationService = courseScoreCalculationService;
-        this.conversationService = conversationService;
+        this.channelService = channelService;
     }
 
     /**
@@ -416,9 +416,9 @@ public class CourseResource {
     /**
      * GET /courses/{courseId}/for-dashboard
      *
-     * @param courseId the courseId for which exercises, lectures, exams and learning goals should be fetched
+     * @param courseId the courseId for which exercises, lectures, exams and competencies should be fetched
      * @param refresh  if true, this request was initiated by the user clicking on a refresh button
-     * @return a DTO containing a course with all exercises, lectures, exams, learning goals, etc. visible to the user as well as the total scores for the course, the scores per
+     * @return a DTO containing a course with all exercises, lectures, exams, competencies, etc. visible to the user as well as the total scores for the course, the scores per
      *         exercise type for each exercise, and the participation result for each participation.
      */
     // TODO: we should rename this into courses/{courseId}/details
@@ -1011,6 +1011,7 @@ public class CourseResource {
                 throw new EntityNotFoundException("User", userLogin);
             }
             courseService.addUserToGroup(userToAddToGroup.get(), group, role);
+            channelService.registerUserToDefaultChannels(userToAddToGroup.get(), group, role);
             return ResponseEntity.ok().body(null);
         }
         else {

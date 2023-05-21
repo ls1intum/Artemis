@@ -134,6 +134,12 @@ class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringIntegration
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testCreateDefaultCourseChannelsOnCourseCreation() throws Exception {
+        bitbucketRequestMockProvider.mockUpdateUserDetails(TEST_PREFIX + "student1", TEST_PREFIX + "student1@test.de",
+                TEST_PREFIX + "student1First " + TEST_PREFIX + "student1Last");
+        bitbucketRequestMockProvider.mockAddUserToGroups();
+        bitbucketRequestMockProvider.mockUpdateUserDetails(TEST_PREFIX + "instructor1", TEST_PREFIX + "instructor1@test.de",
+                TEST_PREFIX + "instructor1First " + TEST_PREFIX + "instructor1Last");
+        bitbucketRequestMockProvider.mockAddUserToGroups();
         courseTestService.testCreateCourseWithDefaultChannels();
     }
 

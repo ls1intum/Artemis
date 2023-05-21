@@ -36,12 +36,9 @@ import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.LectureUnitService;
-import de.tum.in.www1.artemis.service.ModelAssessmentKnowledgeService;
 import de.tum.in.www1.artemis.service.ParticipationService;
-import de.tum.in.www1.artemis.service.TextAssessmentKnowledgeService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.CourseLearningGoalProgressDTO;
-import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 
 class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -82,12 +79,6 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     @Autowired
     private LectureUnitRepository lectureUnitRepository;
-
-    @Autowired
-    private TextAssessmentKnowledgeService textAssessmentKnowledgeService;
-
-    @Autowired
-    private ModelAssessmentKnowledgeService modelAssessmentKnowledgeService;
 
     @Autowired
     private ParticipantScoreRepository participantScoreRepository;
@@ -137,7 +128,7 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         teamRepository.saveAll(existingTeams);
 
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
-        this.database.addUsers(TEST_PREFIX, 5, 1, 0, 1);
+        database.addUsers(TEST_PREFIX, 4, 1, 0, 1);
 
         // Add users that are not in the course
         database.createAndSaveUser(TEST_PREFIX + "student42");
@@ -151,7 +142,7 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         Course courseTwo = this.database.createCourse();
         idOfCourseTwo = courseTwo.getId();
 
-        User student1 = userRepository.findOneByLogin(TEST_PREFIX + "student1").get();
+        User student1 = database.getUserByLogin(TEST_PREFIX + "student1");
 
         createLearningGoal();
         createPrerequisite();
@@ -195,7 +186,7 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     }
 
     private void createPrerequisite() {
-        // Add the first learning goal as a prerequisite to the other course
+        // Add the first competency as a prerequisite to the other course
         LearningGoal learningGoal = learningGoalRepository.findByIdWithConsecutiveCourses(idOfLearningGoal).get();
         Course course2 = courseRepository.findWithEagerLearningGoalsById(idOfCourseTwo).get();
         course2.addPrerequisite(learningGoal);
@@ -281,7 +272,6 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         TextExercise textExercise = ModelFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course);
         textExercise.setMaxPoints(10.0);
         textExercise.setBonusPoints(0.0);
-        textExercise.setKnowledge(textAssessmentKnowledgeService.createNewKnowledge());
         textExercise.setLearningGoals(learningGoals);
         textExercise = exerciseRepository.save(textExercise);
         idOfTextExercise = textExercise.getId();
@@ -297,7 +287,6 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         ModelingExercise modelingExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram, course);
         modelingExercise.setMaxPoints(10.0);
         modelingExercise.setBonusPoints(0.0);
-        modelingExercise.setKnowledge(modelAssessmentKnowledgeService.createNewKnowledge());
         modelingExercise.setLearningGoals(learningGoals);
         modelingExercise = exerciseRepository.save(modelingExercise);
         idOfModelingExercise = modelingExercise.getId();
@@ -313,7 +302,6 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         textExercise.setMode(ExerciseMode.TEAM);
         textExercise.setMaxPoints(10.0);
         textExercise.setBonusPoints(0.0);
-        textExercise.setKnowledge(textAssessmentKnowledgeService.createNewKnowledge());
         textExercise.setLearningGoals(learningGoals);
         textExercise = exerciseRepository.save(textExercise);
         idOfTeamTextExercise = textExercise.getId();
@@ -479,7 +467,7 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         relation.setType(LearningGoalRelation.RelationType.EXTENDS);
         learningGoalRelationRepository.save(relation);
 
-        // Should return bad request, as the learning goal still has relations
+        // Should return bad request, as the competency still has relations
         request.delete("/api/courses/" + idOfCourse + "/competencies/" + idOfLearningGoal, HttpStatus.BAD_REQUEST);
     }
 
@@ -812,7 +800,7 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @WithMockUser(username = TEST_PREFIX + "instructor42", roles = "INSTRUCTOR")
     void testInstructorGetsOnlyResultsFromOwningCourses() throws Exception {
         final var search = database.configureSearch("");
-        final var result = request.get("/api/competencies/", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(search));
+        final var result = request.getSearchResult("/api/competencies/", HttpStatus.OK, LearningGoal.class, database.searchMapping(search));
         assertThat(result.getResultsOnPage()).isNullOrEmpty();
     }
 
@@ -821,7 +809,7 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     void testInstructorGetsResultsFromOwningCoursesNotEmpty() throws Exception {
         LearningGoal learningGoal = learningGoalRepository.findById(idOfLearningGoal).get();
         final var search = database.configureSearch(learningGoal.getTitle());
-        final var result = request.get("/api/competencies/", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(search));
+        final var result = request.getSearchResult("/api/competencies/", HttpStatus.OK, LearningGoal.class, database.searchMapping(search));
         assertThat(result.getResultsOnPage()).hasSize(1);
     }
 
@@ -830,7 +818,7 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     void testAdminGetsResultsFromAllCourses() throws Exception {
         LearningGoal learningGoal = learningGoalRepository.findById(idOfLearningGoal).get();
         final var search = database.configureSearch(learningGoal.getTitle());
-        final var result = request.get("/api/competencies/", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(search));
+        final var result = request.getSearchResult("/api/competencies/", HttpStatus.OK, LearningGoal.class, database.searchMapping(search));
         assertThat(result.getResultsOnPage()).hasSize(1);
     }
 
@@ -891,7 +879,7 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void addPrerequisite_doNotAllowCycle() throws Exception {
-        // Test that a learning goal of a course can not be a prerequisite to the same course
+        // Test that a competency of a course can not be a prerequisite to the same course
         LearningGoal learningGoal = learningGoalRepository.findById(idOfLearningGoal).get();
         request.postWithResponseBody("/api/courses/" + idOfCourse + "/prerequisites/" + idOfLearningGoal, learningGoal, LearningGoal.class, HttpStatus.CONFLICT);
     }

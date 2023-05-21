@@ -159,12 +159,12 @@ public class QuizExerciseResource {
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(quizExercise);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
 
-        quizExercise = quizExerciseService.save(quizExercise);
-        if (quizExercise.isCourseExercise()) {
-            Channel createdChannel = channelService.createExerciseChannel(quizExercise);
+        if (quizExercise.isCourseExercise() && quizExercise.getChannel() != null) {
+            Channel createdChannel = channelService.createExerciseChannel(quizExercise, quizExercise.getChannel().getName());
             quizExercise.setChannel(createdChannel);
             channelService.registerUsersToChannelAsynchronously(true, true, true, List.of(), createdChannel.getCourse(), createdChannel);
         }
+        quizExercise = quizExerciseService.save(quizExercise);
 
         return ResponseEntity.created(new URI("/api/quiz-exercises/" + quizExercise.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, quizExercise.getId().toString())).body(quizExercise);
@@ -220,11 +220,8 @@ public class QuizExerciseResource {
             quizExercise.setQuizBatches(batches);
         }
 
-        if (originalQuiz.getChannel() != null) {
-            // Make sure that the original references are preserved.
-            Channel originalChannel = channelRepository.findByIdElseThrow(originalQuiz.getChannel().getId());
-            quizExercise.setChannel(originalChannel);
-        }
+        // Make sure that the original references are preserved and the channel is updated if necessary
+        channelService.updateExerciseChannel(originalQuiz, quizExercise);
 
         quizExercise = quizExerciseService.save(quizExercise);
         exerciseService.logUpdate(quizExercise, quizExercise.getCourseViaExerciseGroupOrCourseMember(), user);

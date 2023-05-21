@@ -22,7 +22,7 @@ public class Channel extends Conversation {
      * The name of the channel. Must be unique in the course.
      */
     @Column(name = "name")
-    @Size(min = 1, max = 20)
+    @Size(min = 1, max = 30)
     @NotBlank
     private String name;
 
@@ -134,16 +134,24 @@ public class Channel extends Conversation {
         return lecture;
     }
 
+    public void setLecture(Lecture lecture) {
+        this.lecture = lecture;
+    }
+
     public Exercise getExercise() {
         return exercise;
+    }
+
+    public void setExercise(Exercise exercise) {
+        this.exercise = exercise;
     }
 
     public Exam getExam() {
         return exam;
     }
 
-    public void setLecture(Lecture lecture) {
-        this.lecture = lecture;
+    public void setExam(Exam exam) {
+        this.exam = exam;
     }
 
     public void setExercise(Exercise exercise) {

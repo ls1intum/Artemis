@@ -97,8 +97,6 @@ public class TextExerciseResource {
 
     private final CourseRepository courseRepository;
 
-    private final TextAssessmentKnowledgeService textAssessmentKnowledgeService;
-
     private final ChannelService channelService;
 
     private final ChannelRepository channelRepository;
@@ -135,7 +133,6 @@ public class TextExerciseResource {
         this.instanceMessageSendService = instanceMessageSendService;
         this.textPlagiarismDetectionService = textPlagiarismDetectionService;
         this.courseRepository = courseRepository;
-        this.textAssessmentKnowledgeService = textAssessmentKnowledgeService;
         this.channelService = channelService;
         this.channelRepository = channelRepository;
         this.conversationService = conversationService;
@@ -170,13 +167,12 @@ public class TextExerciseResource {
         // Check that the user is authorized to create the exercise
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
 
-        // if exercise is created from scratch we create new knowledge instance
-        textExercise.setKnowledge(textAssessmentKnowledgeService.createNewKnowledge());
-        if (textExercise.isCourseExercise()) {
-            Channel createdChannel = channelService.createExerciseChannel(textExercise);
+        if (textExercise.isCourseExercise() && textExercise.getChannel() != null) {
+            Channel createdChannel = channelService.createExerciseChannel(textExercise, textExercise.getChannel().getName());
             textExercise.setChannel(createdChannel);
             channelService.registerUsersToChannelAsynchronously(true, true, true, List.of(), createdChannel.getCourse(), createdChannel);
         }
+
         TextExercise result = textExerciseRepository.save(textExercise);
         instanceMessageSendService.sendTextExerciseSchedule(result.getId());
         groupNotificationScheduleService.checkNotificationsForNewExercise(textExercise);
@@ -221,11 +217,8 @@ public class TextExerciseResource {
         // Forbid conversion between normal course exercise and exam exercise
         exerciseService.checkForConversionBetweenExamAndCourseExercise(textExercise, textExerciseBeforeUpdate, ENTITY_NAME);
 
-        if (textExerciseBeforeUpdate.getChannel() != null) {
-            // Make sure that the original references are preserved.
-            Channel originalChannel = channelRepository.findByIdElseThrow(textExerciseBeforeUpdate.getChannel().getId());
-            textExercise.setChannel(originalChannel);
-        }
+        // Make sure that the original references are preserved and the channel is updated if necessary
+        channelService.updateExerciseChannel(textExerciseBeforeUpdate, textExercise);
 
         TextExercise updatedTextExercise = textExerciseRepository.save(textExercise);
         exerciseService.logUpdate(updatedTextExercise, updatedTextExercise.getCourseViaExerciseGroupOrCourseMember(), user);
@@ -294,7 +287,7 @@ public class TextExerciseResource {
     }
 
     /**
-     * DELETE /text-exercises/:id : delete the "id" textExercise.
+     * DELETE /text-exercises/:exerciseId : delete the "exerciseId" textExercise.
      *
      * @param exerciseId the id of the textExercise to delete
      * @return the ResponseEntity with status 200 (OK)
@@ -306,8 +299,7 @@ public class TextExerciseResource {
         var textExercise = textExerciseRepository.findByIdElseThrow(exerciseId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, textExercise, user);
-        instanceMessageSendService.sendTextExerciseScheduleCancel(textExercise.getId());
-        // note: we use the exercise service here, because this one makes sure to clean up all lazy references correctly.
+        // NOTE: we use the exerciseDeletionService here, because this one makes sure to clean up all lazy references correctly.
         exerciseService.logDeletion(textExercise, textExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         conversationService.deregisterAllClientsFromChannel(textExercise);
         exerciseDeletionService.delete(exerciseId, false, false);

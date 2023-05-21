@@ -15,6 +15,8 @@ import java.time.DayOfWeek;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
@@ -29,8 +31,6 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.test.context.TestSecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
@@ -47,6 +47,7 @@ import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExamUser;
 import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
+import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.Participation;
@@ -475,18 +476,35 @@ public class CourseTestService {
 
         Course course1 = ModelFactory.generateCourse(null, null, null, new HashSet<>());
         course1.setShortName("testdefaultchannels");
+        course1.setRegistrationEnabled(true);
         mockDelegate.mockCreateGroupInUserManagement(course1.getDefaultStudentGroupName());
         mockDelegate.mockCreateGroupInUserManagement(course1.getDefaultTeachingAssistantGroupName());
         mockDelegate.mockCreateGroupInUserManagement(course1.getDefaultEditorGroupName());
         mockDelegate.mockCreateGroupInUserManagement(course1.getDefaultInstructorGroupName());
 
+        var student = userRepo.findOneWithGroupsAndAuthoritiesByLogin(userPrefix + "student1").get();
+        mockDelegate.mockAddUserToGroupInUserManagement(student, course1.getDefaultStudentGroupName(), false);
+
+        var instructor1 = userRepo.findOneWithGroupsAndAuthoritiesByLogin(userPrefix + "instructor1").get();
+        mockDelegate.mockAddUserToGroupInUserManagement(instructor1, course1.getDefaultInstructorGroupName(), false);
+
         var result = request.getMvc().perform(buildCreateCourse(course1)).andExpect(status().isCreated()).andReturn();
-        SecurityContextHolder.setContext(TestSecurityContextHolder.getContext());
         course1 = objectMapper.readValue(result.getResponse().getContentAsString(), Course.class);
         assertThat(courseRepo.findByIdElseThrow(course1.getId())).isNotNull();
+        CountDownLatch latch1 = new CountDownLatch(1);
+        request.postWithoutLocation("/api/courses/" + course1.getId() + "/students/" + userPrefix + "student1", null, HttpStatus.OK, null);
+        request.postWithoutLocation("/api/courses/" + course1.getId() + "/instructors/" + userPrefix + "instructor1", null, HttpStatus.OK, null);
+        latch1.await(5, TimeUnit.SECONDS);
+        // Check if all default channels are created
         var channels = channelRepository.findChannelsByCourseId(course1.getId());
         assertThat(channels).hasSize(DefaultChannelType.values().length);
         channels.forEach(channel -> assertThat(Arrays.stream(DefaultChannelType.values()).map(DefaultChannelType::getName)).contains(channel.getName()));
+        // Check if newly added instructor and student was added to default channels
+        channels.forEach(channel -> {
+            var participants = conversationParticipantRepository.findConversationParticipantByConversationId(channel.getId());
+            assertThat(participants).hasSize(2); // 1 instructor and 1 student
+        });
+
     }
 
     // Test
@@ -705,8 +723,8 @@ public class CourseTestService {
         assertThat(receivedCourse.getExercises()).as("Five exercises are returned").hasSize(5);
         // Test that the received course has two lectures
         assertThat(receivedCourse.getLectures()).as("Two lectures are returned").hasSize(2);
-        // Test that the received course has two learning goals
-        assertThat(receivedCourse.getLearningGoals()).as("Two learning goals are returned").hasSize(2);
+        // Test that the received course has two competencies
+        assertThat(receivedCourse.getLearningGoals()).as("Two competencies are returned").hasSize(2);
 
         // Iterate over all exercises of the remaining course
         for (Exercise exercise : courses.get(0).getExercises()) {
@@ -804,7 +822,21 @@ public class CourseTestService {
         for (int i = 0; i < courses.length; i++) {
             courses[i] = courseRepo.save(courses[i]);
             Exam examRegistered = ModelFactory.generateExam(courses[i]);
+            Channel channel = new Channel();
+            channel.setName(examRegistered.getTitle());
+            channel.setIsAnnouncementChannel(false);
+            channel.setIsPublic(false);
+            channel.setIsArchived(false);
+            channelRepository.save(channel);
+            examRegistered.setChannel(channel);
             Exam examUnregistered = ModelFactory.generateExam(courses[i]);
+            Channel channel1 = new Channel();
+            channel1.setName(examUnregistered.getTitle());
+            channel1.setIsAnnouncementChannel(false);
+            channel1.setIsPublic(false);
+            channel1.setIsArchived(false);
+            channelRepository.save(channel1);
+            examUnregistered.setChannel(channel1);
             Exam testExam = ModelFactory.generateTestExam(courses[i]);
             if (i == 0) {
                 examRegistered.setVisibleDate(ZonedDateTime.now().plusHours(1));
@@ -869,6 +901,14 @@ public class CourseTestService {
         programmingExercise.setReleaseDate(ZonedDateTime.now().minusDays(2));
         programmingExercise.setDueDate(ZonedDateTime.now().minusHours(2));
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().minusMinutes(90));
+        Channel channel = new Channel();
+        channel.setName(programmingExercise.getTitle());
+        channel.setIsAnnouncementChannel(false);
+        channel.setIsPublic(true);
+        channel.setIsArchived(false);
+
+        channelRepository.save(channel);
+        programmingExercise.setChannel(channel);
         programmingExerciseRepository.save(programmingExercise);
         Result gradedResult = database.addProgrammingParticipationWithResultForExercise(programmingExercise, userPrefix + "student1");
         gradedResult.completionDate(ZonedDateTime.now().minusHours(3)).assessmentType(AssessmentType.AUTOMATIC).score(42D);

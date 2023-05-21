@@ -7,7 +7,6 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisTestModule } from '../../test.module';
 
 describe('UnsavedChangesWarningComponent', () => {
-    let component: PrivacyStatementUnsavedChangesWarningComponent;
     let fixture: ComponentFixture<PrivacyStatementUnsavedChangesWarningComponent>;
     let activeModal: NgbActiveModal;
 
@@ -18,7 +17,6 @@ describe('UnsavedChangesWarningComponent', () => {
         }).compileComponents();
 
         fixture = TestBed.createComponent(PrivacyStatementUnsavedChangesWarningComponent);
-        component = fixture.componentInstance;
         activeModal = TestBed.inject(NgbActiveModal);
         fixture.detectChanges();
     });

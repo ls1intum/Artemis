@@ -4,7 +4,7 @@ import { Conversation, ConversationDto, ConversationType } from 'app/entities/me
  * Entity
  */
 export class Channel extends Conversation {
-    public name?: string; // max 20 characters
+    public name?: string; // max 30 characters
     public description?: string; // max 250 characters
     public topic?: string; // max 250 characters;
     public isPublic?: boolean;

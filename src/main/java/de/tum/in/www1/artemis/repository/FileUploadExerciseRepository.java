@@ -31,7 +31,7 @@ public interface FileUploadExerciseRepository extends JpaRepository<FileUploadEx
             """)
     List<FileUploadExercise> findByCourseIdWithCategories(@Param("courseId") Long courseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "teamAssignmentConfig", "categories", "learningGoals" })
+    @EntityGraph(type = LOAD, attributePaths = { "teamAssignmentConfig", "categories", "channel", "learningGoals" })
     Optional<FileUploadExercise> findWithEagerTeamAssignmentConfigAndCategoriesAndLearningGoalsById(Long exerciseId);
 
     /**

@@ -22,7 +22,6 @@ import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.plagiarism.modeling.ModelingPlagiarismResult;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismResultRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.*;
@@ -85,8 +84,6 @@ public class ModelingExerciseResource {
 
     private final ModelingPlagiarismDetectionService modelingPlagiarismDetectionService;
 
-    private final ModelAssessmentKnowledgeService modelAssessmentKnowledgeService;
-
     private final ChannelService channelService;
 
     private final ChannelRepository channelRepository;
@@ -115,7 +112,6 @@ public class ModelingExerciseResource {
         this.exerciseService = exerciseService;
         this.gradingCriterionRepository = gradingCriterionRepository;
         this.modelingPlagiarismDetectionService = modelingPlagiarismDetectionService;
-        this.modelAssessmentKnowledgeService = modelAssessmentKnowledgeService;
         this.channelService = channelService;
         this.channelRepository = channelRepository;
         this.conversationService = conversationService;
@@ -151,13 +147,12 @@ public class ModelingExerciseResource {
         // Check that the user is authorized to create the exercise
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
 
-        // if exercise is created from scratch we create new knowledge instance
-        modelingExercise.setKnowledge(modelAssessmentKnowledgeService.createNewKnowledge());
-        if (modelingExercise.isCourseExercise()) {
-            Channel createdChannel = channelService.createExerciseChannel(modelingExercise);
+        if (modelingExercise.isCourseExercise() && modelingExercise.getChannel() != null) {
+            Channel createdChannel = channelService.createExerciseChannel(modelingExercise, modelingExercise.getChannel().getName());
             modelingExercise.setChannel(createdChannel);
             channelService.registerUsersToChannelAsynchronously(true, true, true, List.of(), createdChannel.getCourse(), createdChannel);
         }
+
         ModelingExercise result = modelingExerciseRepository.save(modelingExercise);
         modelingExerciseService.scheduleOperations(result.getId());
         groupNotificationScheduleService.checkNotificationsForNewExercise(modelingExercise);
@@ -218,11 +213,8 @@ public class ModelingExerciseResource {
         // Forbid conversion between normal course exercise and exam exercise
         exerciseService.checkForConversionBetweenExamAndCourseExercise(modelingExercise, modelingExerciseBeforeUpdate, ENTITY_NAME);
 
-        if (modelingExerciseBeforeUpdate.getChannel() != null) {
-            // Make sure that the original references are preserved.
-            Channel originalChannel = channelRepository.findByIdElseThrow(modelingExerciseBeforeUpdate.getChannel().getId());
-            modelingExercise.setChannel(originalChannel);
-        }
+        // Make sure that the original references are preserved and the channel is updated if necessary
+        channelService.updateExerciseChannel(modelingExerciseBeforeUpdate, modelingExercise);
 
         ModelingExercise updatedModelingExercise = modelingExerciseRepository.save(modelingExercise);
         exerciseService.logUpdate(modelingExercise, modelingExercise.getCourseViaExerciseGroupOrCourseMember(), user);

@@ -20,6 +20,7 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
+import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.util.InvalidExamExerciseDatesArgumentProvider;
 import de.tum.in.www1.artemis.util.InvalidExamExerciseDatesArgumentProvider.InvalidExamExerciseDateConfiguration;
@@ -144,6 +145,9 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooB
     void createFileUploadExercise() throws Exception {
         FileUploadExercise fileUploadExercise = database.createFileUploadExercisesWithCourse().get(0);
         fileUploadExercise.setFilePattern(creationFilePattern);
+        Channel channel = new Channel();
+        channel.setName("testChannel");
+        fileUploadExercise.setChannel(channel);
         gradingCriteria = database.addGradingInstructionsToExercise(fileUploadExercise);
         FileUploadExercise receivedFileUploadExercise = request.postWithResponseBody("/api/file-upload-exercises", fileUploadExercise, FileUploadExercise.class,
                 HttpStatus.CREATED);
@@ -602,7 +606,9 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooB
         fileUploadExercise.setDueDate(baseTime.plusHours(2));
         var exampleSolutionPublicationDate = baseTime.plusHours(3);
         fileUploadExercise.setExampleSolutionPublicationDate(exampleSolutionPublicationDate);
-
+        Channel channel = new Channel();
+        channel.setName("testChannel");
+        fileUploadExercise.setChannel(channel);
         var result = request.postWithResponseBody("/api/file-upload-exercises/", fileUploadExercise, FileUploadExercise.class, HttpStatus.CREATED);
         assertThat(result.getExampleSolutionPublicationDate()).isEqualTo(exampleSolutionPublicationDate);
 
@@ -611,7 +617,7 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooB
         fileUploadExercise.setDueDate(baseTime.plusHours(3));
         exampleSolutionPublicationDate = baseTime.plusHours(2);
         fileUploadExercise.setExampleSolutionPublicationDate(exampleSolutionPublicationDate);
-
+        fileUploadExercise.setChannel(null);
         result = request.postWithResponseBody("/api/file-upload-exercises/", fileUploadExercise, FileUploadExercise.class, HttpStatus.CREATED);
         assertThat(result.getExampleSolutionPublicationDate()).isEqualTo(exampleSolutionPublicationDate);
 
@@ -668,7 +674,7 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooB
         exercise.setTitle(title);
         exercise = fileUploadExerciseRepository.save(exercise);
         final var searchTerm = database.configureSearch(exercise.getTitle());
-        SearchResultPageDTO<Exercise> result = request.get("/api/file-upload-exercises", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(searchTerm));
+        SearchResultPageDTO<Exercise> result = request.getSearchResult("/api/file-upload-exercises", HttpStatus.OK, Exercise.class, database.searchMapping(searchTerm));
         assertThat(result.getResultsOnPage()).hasSize(1);
         assertThat(result.getNumberOfPages()).isEqualTo(1);
 

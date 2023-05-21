@@ -21,6 +21,7 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { NgbModal, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
+import { Channel } from 'app/entities/metis/conversation/channel.model';
 
 describe('ModelingExercise Management Update Component', () => {
     let comp: ModelingExerciseUpdateComponent;
@@ -59,6 +60,9 @@ describe('ModelingExercise Management Update Component', () => {
             const modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
             modelingExercise.course = course;
 
+            modelingExercise.channel = new Channel();
+            modelingExercise.channel.name = 'test';
+
             beforeEach(() => {
                 const route = TestBed.inject(ActivatedRoute);
                 route.data = of({ modelingExercise });
@@ -87,6 +91,9 @@ describe('ModelingExercise Management Update Component', () => {
             const modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
             modelingExercise.course = course;
             modelingExercise.id = 123;
+
+            modelingExercise.channel = new Channel();
+            modelingExercise.channel.name = 'test';
 
             beforeEach(() => {
                 const route = TestBed.inject(ActivatedRoute);
@@ -120,6 +127,8 @@ describe('ModelingExercise Management Update Component', () => {
         modelingExercise.releaseDate = dayjs();
         modelingExercise.dueDate = dayjs();
         modelingExercise.assessmentDueDate = dayjs();
+        modelingExercise.channel = new Channel();
+        modelingExercise.channel.name = 'test';
         const courseId = 1;
         beforeEach(() => {
             const route = TestBed.inject(ActivatedRoute);
@@ -154,6 +163,8 @@ describe('ModelingExercise Management Update Component', () => {
         modelingExercise.releaseDate = dayjs();
         modelingExercise.dueDate = dayjs();
         modelingExercise.assessmentDueDate = dayjs();
+        modelingExercise.channel = new Channel();
+        modelingExercise.channel.name = 'test';
         const courseId = 1;
 
         beforeEach(() => {

@@ -14,7 +14,7 @@ type EntityArrayResponseType = HttpResponse<Lecture[]>;
 
 @Injectable({ providedIn: 'root' })
 export class LectureService {
-    public resourceUrl = SERVER_API_URL + 'api/lectures';
+    public resourceUrl = 'api/lectures';
 
     constructor(
         protected http: HttpClient,
@@ -23,14 +23,18 @@ export class LectureService {
         private entityTitleService: EntityTitleService,
     ) {}
 
-    create(lecture: Lecture): Observable<EntityResponseType> {
+    create(lecture: Lecture, channelName: string): Observable<EntityResponseType> {
         const copy = this.convertLectureDatesFromClient(lecture);
-        return this.http.post<Lecture>(this.resourceUrl, copy, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.convertLectureResponseDatesFromServer(res)));
+        return this.http
+            .post<Lecture>(this.resourceUrl, { lecture: copy, channelName }, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.convertLectureResponseDatesFromServer(res)));
     }
 
-    update(lecture: Lecture): Observable<EntityResponseType> {
+    update(lecture: Lecture, channelName: string | undefined): Observable<EntityResponseType> {
         const copy = this.convertLectureDatesFromClient(lecture);
-        return this.http.put<Lecture>(this.resourceUrl, copy, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.convertLectureResponseDatesFromServer(res)));
+        return this.http
+            .put<Lecture>(this.resourceUrl, { lecture: copy, channelName }, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.convertLectureResponseDatesFromServer(res)));
     }
 
     find(lectureId: number): Observable<EntityResponseType> {
@@ -61,6 +65,23 @@ export class LectureService {
         );
     }
 
+    findWithDetailsWithSlides(lectureId: number): Observable<EntityResponseType> {
+        return this.http.get<Lecture>(`${this.resourceUrl}/${lectureId}/details-with-slides`, { observe: 'response' }).pipe(
+            map((res: EntityResponseType) => {
+                if (res.body) {
+                    // insert an empty list to avoid additional calls in case the list is empty on the server (because then it would be undefined in the client)
+                    if (res.body.posts === undefined) {
+                        res.body.posts = [];
+                    }
+                }
+                this.convertLectureResponseDatesFromServer(res);
+                this.setAccessRightsLecture(res.body);
+                this.sendTitlesToEntityTitleService(res?.body);
+                return res;
+            }),
+        );
+    }
+
     query(req?: any): Observable<EntityArrayResponseType> {
         const options = createRequestOption(req);
         return this.http.get<Lecture[]>(this.resourceUrl, { params: options, observe: 'response' }).pipe(
@@ -74,6 +95,18 @@ export class LectureService {
         return this.http
             .get<Lecture[]>(`api/courses/${courseId}/lectures`, {
                 params,
+                observe: 'response',
+            })
+            .pipe(
+                map((res: EntityArrayResponseType) => this.convertLectureArrayResponseDatesFromServer(res)),
+                map((res: EntityArrayResponseType) => this.setAccessRightsLectureEntityArrayResponseType(res)),
+                tap((res: EntityArrayResponseType) => res?.body?.forEach(this.sendTitlesToEntityTitleService.bind(this))),
+            );
+    }
+
+    findAllByCourseIdWithSlides(courseId: number): Observable<EntityArrayResponseType> {
+        return this.http
+            .get<Lecture[]>(`api/courses/${courseId}/lectures-with-slides`, {
                 observe: 'response',
             })
             .pipe(

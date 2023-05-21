@@ -5,6 +5,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -14,13 +15,15 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.DefaultChannelType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
-import de.tum.in.www1.artemis.repository.LectureRepository;
+import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
+import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.metis.conversation.errors.ChannelNameDuplicateException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -32,25 +35,27 @@ public class ChannelService {
 
     public static final String CHANNEL_ENTITY_NAME = "messages.channel";
 
-    private static final String CHANNEL_NAME_REGEX = "^[a-z0-9$]{1}[a-z0-9-]{0,20}$";
+    private static final String CHANNEL_NAME_REGEX = "^[a-z0-9$][a-z0-9-]{0,30}$";
 
     private final ConversationParticipantRepository conversationParticipantRepository;
 
     private final ChannelRepository channelRepository;
 
-    private final UserRepository userRepository;
-
     private final ConversationService conversationService;
 
     private final LectureRepository lectureRepository;
 
-    public ChannelService(ConversationParticipantRepository conversationParticipantRepository, ChannelRepository channelRepository, UserRepository userRepository,
-            ConversationService conversationService, LectureRepository lectureRepository) {
+    private final CourseRepository courseRepository;
+
+    private final UserRepository userRepository;
+
+    public ChannelService(ConversationParticipantRepository conversationParticipantRepository, ChannelRepository channelRepository, ConversationService conversationService,
+            CourseRepository courseRepository, UserRepository userRepository) {
         this.conversationParticipantRepository = conversationParticipantRepository;
         this.channelRepository = channelRepository;
-        this.userRepository = userRepository;
         this.conversationService = conversationService;
-        this.lectureRepository = lectureRepository;
+        this.courseRepository = courseRepository;
+        this.userRepository = userRepository;
     }
 
     /**
@@ -173,6 +178,16 @@ public class ChannelService {
         registerUsersToChannel(addAllStudents, addAllTutors, addAllInstructors, usersLoginsToRegister, course, channel);
     }
 
+    /** Register users to the newly created channel
+     *
+     * @param addAllStudents        if true, all students of the course will be added to the channel
+     * @param addAllTutors          if true, all tutors of the course will be added to the channel
+     * @param addAllInstructors     if true, all instructors of the course will be added to the channel
+     * @param usersLoginsToRegister the logins of the users to register to the channel
+     * @param course                the course to create the channel for
+     * @param channel               the channel to create
+     * @return all users that were registered to the channel
+     */
     public Set<User> registerUsersToChannel(boolean addAllStudents, boolean addAllTutors, boolean addAllInstructors, List<String> usersLoginsToRegister, Course course,
             Channel channel) {
         Set<User> usersToRegister = new HashSet<>();
@@ -180,6 +195,33 @@ public class ChannelService {
         usersToRegister.addAll(conversationService.findUsersInDatabase(usersLoginsToRegister));
         conversationService.registerUsersToConversation(course, usersToRegister, channel, Optional.empty());
         return usersToRegister;
+    }
+
+    /**
+     * Add user to default channels of courses with the same group asynchronously. This is used when a user is added to a group.
+     *
+     * @param userToAddToGroup the user to be added
+     * @param group            the group of the user
+     * @param role             the role of the user
+     */
+    @Async
+    public void registerUserToDefaultChannels(User userToAddToGroup, String group, Role role) {
+        final Set<String> channelNames = Arrays.stream(DefaultChannelType.values()).map(DefaultChannelType::getName).collect(Collectors.toSet());
+
+        List<Course> courses = switch (role) {
+            case STUDENT -> courseRepository.findCoursesByStudentGroupName(group);
+            case TEACHING_ASSISTANT -> courseRepository.findCoursesByTeachingAssistantGroupName(group);
+            case INSTRUCTOR -> courseRepository.findCoursesByInstructorGroupName(group);
+            default -> List.of();
+        };
+
+        for (Course c : courses) {
+            // set the security context because the async methods use multiple threads
+            SecurityUtils.setAuthorizationObject();
+            channelRepository.findChannelsByCourseId(c.getId()).stream().filter(channel -> channelNames.contains(channel.getName())).forEach(channel -> {
+                conversationService.registerUsersToConversation(c, Set.of(userToAddToGroup), channel, Optional.empty());
+            });
+        }
     }
 
     /**
@@ -234,35 +276,64 @@ public class ChannelService {
         conversationService.notifyAllConversationMembersAboutUpdate(updatedChannel);
     }
 
-    public Channel createLectureChannel(Lecture lecture) {
+    public Channel createLectureChannel(Lecture lecture, @NotNull String channelName) {
         Channel channelToCreate = new Channel();
-        // TODO: Figure out whether two digits for the number are enough
-        channelToCreate.setName(String.format("l-%02d-%.15s", 1, lecture.getTitle().toLowerCase().replace(' ', '-')));
+        channelToCreate.setName(channelName);
         channelToCreate.setIsPublic(true);
         channelToCreate.setIsAnnouncementChannel(false);
         channelToCreate.setIsArchived(false);
-        channelToCreate.setDescription("Channel for lecture - " + lecture.getTitle());
+        channelToCreate.setDescription("Channel for lecture: " + lecture.getTitle());
         return createChannel(lecture.getCourse(), channelToCreate, Optional.of(userRepository.getUserWithGroupsAndAuthorities()));
     }
 
-    public Channel createExerciseChannel(Exercise exercise) {
+    public Channel createExerciseChannel(Exercise exercise, @NotNull String channelName) {
         Channel channelToCreate = new Channel();
-        // TODO: Figure out whether two digits for the number are enough
-        channelToCreate.setName(String.format("e-%02d-%.15s", 1, exercise.getTitle().toLowerCase().replace(' ', '-')));
+        channelToCreate.setName(channelName);
         channelToCreate.setIsPublic(true);
         channelToCreate.setIsAnnouncementChannel(false);
         channelToCreate.setIsArchived(false);
-        channelToCreate.setDescription("Channel for exercise - " + exercise.getTitle());
+        channelToCreate.setDescription(String.format("Channel for %s exercise: %s", exercise.getExerciseType().getExerciseTypeAsReadableString(), exercise.getTitle()));
         return createChannel(exercise.getCourseViaExerciseGroupOrCourseMember(), channelToCreate, Optional.of(userRepository.getUserWithGroupsAndAuthorities()));
     }
 
     public Channel createExamChannel(Exam exam) {
         Channel channelToCreate = new Channel();
         channelToCreate.setName(exam.getTitle().toLowerCase().replace(' ', '-'));
-        channelToCreate.setIsPublic(false); // TODO: discuss if it should be public or private
+        channelToCreate.setIsPublic(false);
         channelToCreate.setIsAnnouncementChannel(false);
         channelToCreate.setIsArchived(false);
-        channelToCreate.setDescription("Channel for exam - " + exam.getTitle());
+        channelToCreate.setDescription("Channel for exam: " + exam.getTitle());
         return createChannel(exam.getCourse(), channelToCreate, Optional.of(userRepository.getUserWithGroupsAndAuthorities()));
+    }
+
+    public void updateLectureChannel(Lecture originalLecture, Lecture updatedLecture, String channelName) {
+        if (originalLecture.getChannel() == null) {
+            return;
+        }
+        Channel updatedChannel = updateChannelName(originalLecture.getChannel().getId(), channelName);
+        updatedLecture.setChannel(updatedChannel);
+
+    }
+
+    public void updateExerciseChannel(Exercise originalExercise, Exercise updatedExercise) {
+        if (originalExercise.getChannel() == null) {
+            return;
+        }
+        Channel updatedChannel = updateChannelName(originalExercise.getChannel().getId(), Objects.requireNonNull(updatedExercise.getChannel().getName()));
+        updatedExercise.setChannel(updatedChannel);
+    }
+
+    private Channel updateChannelName(Long channelId, String newChannelName) {
+        Channel originalChannel = channelRepository.findByIdElseThrow(channelId);
+
+        // Update channel name if necessary
+        if (!newChannelName.equals(originalChannel.getName())) {
+            originalChannel.setName(newChannelName);
+            channelIsValidOrThrow(originalChannel.getCourse().getId(), originalChannel);
+            return channelRepository.save(originalChannel);
+        }
+        else {
+            return originalChannel;
+        }
     }
 }

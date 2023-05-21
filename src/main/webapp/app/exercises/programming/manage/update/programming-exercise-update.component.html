@@ -55,6 +55,7 @@
                 [programmingExercise]="programmingExercise"
                 [infoInputs]="getInfoStepInputs()"
                 [auxiliaryRepositoriesSupported]="auxiliaryRepositoriesSupported"
+                [(channelName)]="channelName"
             >
             </jhi-programming-exercise-info>
             <jhi-programming-exercise-difficulty
@@ -77,6 +78,7 @@
             ></jhi-programming-exercise-grading>
             <jhi-programming-exercise-problem
                 [isImportFromExistingExercise]="isImportFromExistingExercise"
+                [isImportFromFile]="isImportFromFile"
                 [isExamMode]="isExamMode"
                 [(exercise)]="programmingExercise"
                 [problemStatementLoaded]="problemStatementLoaded"

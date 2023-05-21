@@ -127,8 +127,8 @@ public class FileUploadExerciseResource {
         // Check that the user is authorized to create the exercise
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
 
-        if (fileUploadExercise.isCourseExercise()) {
-            Channel createdChannel = channelService.createExerciseChannel(fileUploadExercise);
+        if (fileUploadExercise.isCourseExercise() && fileUploadExercise.getChannel() != null) {
+            Channel createdChannel = channelService.createExerciseChannel(fileUploadExercise, fileUploadExercise.getChannel().getName());
             fileUploadExercise.setChannel(createdChannel);
             channelService.registerUsersToChannelAsynchronously(true, true, true, List.of(), createdChannel.getCourse(), createdChannel);
         }
@@ -259,6 +259,9 @@ public class FileUploadExerciseResource {
             Channel originalChannel = channelRepository.findByIdElseThrow(fileUploadExerciseBeforeUpdate.getChannel().getId());
             fileUploadExercise.setChannel(originalChannel);
         }
+
+        // Make sure that the original references are preserved and the channel is updated if necessary
+        channelService.updateExerciseChannel(fileUploadExerciseBeforeUpdate, fileUploadExercise);
 
         var updatedExercise = fileUploadExerciseRepository.save(fileUploadExercise);
         exerciseService.logUpdate(updatedExercise, updatedExercise.getCourseViaExerciseGroupOrCourseMember(), user);
