@@ -2,7 +2,7 @@ import { Channel } from 'app/entities/metis/conversation/channel.model';
 import { Course } from 'app/entities/course.model';
 import { GroupChat } from 'app/entities/metis/conversation/group-chat.model';
 import { courseManagementRequest, courseMessages } from '../../support/artemis';
-import { convertCourseAfterMultiPart } from '../../support/requests/CourseManagementRequests';
+import { ExamBuilder, convertCourseAfterMultiPart } from '../../support/requests/CourseManagementRequests';
 import { admin, instructor, studentOne, studentTwo, tutor, users } from '../../support/users';
 import { generateUUID } from '../../support/utils';
 
@@ -102,6 +102,31 @@ describe('Course messages', () => {
                 courseMessages.createChannelButton();
                 courseMessages.setName(name);
                 courseMessages.getError().contains('Name can be max 20 characters long!');
+            });
+
+            it('check that channel is created, when a lecture is created', () => {
+                cy.login(admin);
+                courseManagementRequest.createLecture(course, 'Test Lecture');
+                cy.login(instructor, `/courses/${course.id}/messages`);
+                courseMessages.browseChannelsButton();
+                courseMessages.checkChannelsExists('lecture-test-lecture');
+            });
+
+            it('check that channel is created, when an exercise is created', () => {
+                cy.login(admin);
+                courseManagementRequest.createTextExercise({course}, 'Test Exercise');
+                cy.login(instructor, `/courses/${course.id}/messages`);
+                courseMessages.browseChannelsButton();
+                courseMessages.checkChannelsExists('exercise-test-exercise');
+            });
+
+            it('check that channel is created, when an exam is created', () => {
+                cy.login(admin);
+                const examContent = new ExamBuilder(course).title('Test Exam').build();
+                courseManagementRequest.createExam(examContent);
+                cy.login(instructor, `/courses/${course.id}/messages`);
+                courseMessages.browseChannelsButton();
+                courseMessages.checkChannelsExists('test-exam');
             });
         });
 
