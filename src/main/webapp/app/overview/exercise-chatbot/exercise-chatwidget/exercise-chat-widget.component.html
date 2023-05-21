@@ -34,12 +34,7 @@
 
         <!-- input field section -->
         <div class="chat-input">
-            <input
-                [(ngModel)]="newMessage"
-                type="text"
-                (keyup.enter)="onSend()"
-                placeholder="{{ 'artemisApp.courseOverview.exerciseDetails.chatInputMessage' | artemisTranslate }}"
-            />
+            <input [(ngModel)]="newMessage" type="text" (keyup.enter)="onSend()" placeholder="{{ 'artemisApp.exerciseChatbot.inputMessage' | artemisTranslate }}" />
             <button (click)="onSend()" class="btn btn-primary btn-md btn-circle" [disabled]="isLoading">
                 <fa-icon [icon]="faPaperPlane"></fa-icon>
             </button>
