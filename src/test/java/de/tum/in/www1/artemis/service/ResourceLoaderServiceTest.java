@@ -13,7 +13,6 @@ import java.util.List;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -57,7 +56,7 @@ class ResourceLoaderServiceTest extends AbstractSpringIntegrationBambooBitbucket
         try (InputStream inputStream = resourceLoaderService.getResource(javaPath).getInputStream()) {
             String fileContent = IOUtils.toString(inputStream, Charset.defaultCharset());
 
-            Assertions.assertEquals("classpath", fileContent.trim());
+            assertThat(fileContent.trim()).isEqualTo("classpath");
         }
     }
 
@@ -67,7 +66,7 @@ class ResourceLoaderServiceTest extends AbstractSpringIntegrationBambooBitbucket
         try (InputStream inputStream = resourceLoaderService.getResource(jenkinsPath).getInputStream()) {
             String fileContent = IOUtils.toString(inputStream, Charset.defaultCharset());
 
-            Assertions.assertEquals("filesystem", fileContent.trim());
+            assertThat(fileContent.trim()).isEqualTo("filesystem");
         }
     }
 
@@ -76,7 +75,7 @@ class ResourceLoaderServiceTest extends AbstractSpringIntegrationBambooBitbucket
         try (InputStream inputStream = resourceLoaderService.getResource(jenkinsPath).getInputStream()) {
             String fileContent = IOUtils.toString(inputStream, Charset.defaultCharset());
 
-            Assertions.assertEquals("classpath", fileContent.trim());
+            assertThat(fileContent.trim()).isEqualTo("classpath");
         }
     }
 
