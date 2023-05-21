@@ -56,7 +56,6 @@ public class TextExerciseImportService extends ExerciseImportService {
         log.debug("Creating a new Exercise based on exercise {}", templateExercise);
         Map<Long, GradingInstruction> gradingInstructionCopyTracker = new HashMap<>();
         TextExercise newExercise = copyTextExerciseBasis(importedExercise, gradingInstructionCopyTracker);
-        newExercise.setKnowledge(templateExercise.getKnowledge());
 
         if (newExercise.isCourseExercise() && importedExercise.getChannel() != null) {
             Channel createdChannel = channelService.createExerciseChannel(newExercise, importedExercise.getChannel().getName());

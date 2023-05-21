@@ -96,11 +96,7 @@ public class TextExerciseResource {
 
     private final CourseRepository courseRepository;
 
-    private final TextClusterRepository textClusterRepository;
-
     private final ChannelService channelService;
-
-    private final ChannelRepository channelRepository;
 
     public TextExerciseResource(TextExerciseRepository textExerciseRepository, TextExerciseService textExerciseService, FeedbackRepository feedbackRepository,
             ExerciseDeletionService exerciseDeletionService, PlagiarismResultRepository plagiarismResultRepository, UserRepository userRepository,
@@ -109,7 +105,7 @@ public class TextExerciseResource {
             TextSubmissionExportService textSubmissionExportService, ExampleSubmissionRepository exampleSubmissionRepository, ExerciseService exerciseService,
             GradingCriterionRepository gradingCriterionRepository, TextBlockRepository textBlockRepository, GroupNotificationScheduleService groupNotificationScheduleService,
             InstanceMessageSendService instanceMessageSendService, TextPlagiarismDetectionService textPlagiarismDetectionService, CourseRepository courseRepository,
-            TextAssessmentKnowledgeService textAssessmentKnowledgeService, ChannelService channelService, ChannelRepository channelRepository, TextClusterRepository textClusterRepository) {
+            ChannelService channelService, ChannelRepository channelRepository, TextClusterRepository textClusterRepository) {
         this.feedbackRepository = feedbackRepository;
         this.exerciseDeletionService = exerciseDeletionService;
         this.plagiarismResultRepository = plagiarismResultRepository;
@@ -131,10 +127,7 @@ public class TextExerciseResource {
         this.instanceMessageSendService = instanceMessageSendService;
         this.textPlagiarismDetectionService = textPlagiarismDetectionService;
         this.courseRepository = courseRepository;
-        this.textAssessmentKnowledgeService = textAssessmentKnowledgeService;
         this.channelService = channelService;
-        this.channelRepository = channelRepository;
-        this.textClusterRepository = textClusterRepository;
     }
 
     /**
@@ -166,13 +159,11 @@ public class TextExerciseResource {
         // Check that the user is authorized to create the exercise
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
 
-        // if exercise is created from scratch we create new knowledge instance
-        textExercise.setKnowledge(textAssessmentKnowledgeService.createNewKnowledge());
         if (textExercise.isCourseExercise() && textExercise.getChannel() != null) {
             Channel createdChannel = channelService.createExerciseChannel(textExercise, textExercise.getChannel().getName());
             textExercise.setChannel(createdChannel);
         }
-      
+
         TextExercise result = textExerciseRepository.save(textExercise);
         instanceMessageSendService.sendTextExerciseSchedule(result.getId());
         groupNotificationScheduleService.checkNotificationsForNewExercise(textExercise);
