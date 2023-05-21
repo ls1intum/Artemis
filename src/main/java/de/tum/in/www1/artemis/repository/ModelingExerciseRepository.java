@@ -5,7 +5,6 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 import javax.validation.constraints.NotNull;
 
@@ -86,6 +85,4 @@ public interface ModelingExerciseRepository extends JpaRepository<ModelingExerci
     default ModelingExercise findByIdWithStudentParticipationsSubmissionsResultsElseThrow(long exerciseId) {
         return findWithStudentParticipationsSubmissionsResultsById(exerciseId).orElseThrow(() -> new EntityNotFoundException("Modeling Exercise", exerciseId));
     }
-
-    Set<ModelingExercise> findAllByKnowledgeId(Long knowledgeId);
 }

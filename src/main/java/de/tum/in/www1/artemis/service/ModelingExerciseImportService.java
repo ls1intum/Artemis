@@ -55,7 +55,6 @@ public class ModelingExerciseImportService extends ExerciseImportService {
             Channel createdChannel = channelService.createExerciseChannel(newExercise, importedExercise.getChannel().getName());
             newExercise.setChannel(createdChannel);
         }
-
         modelingExerciseRepository.save(newExercise);
         newExercise.setExampleSubmissions(copyExampleSubmission(templateExercise, newExercise, gradingInstructionCopyTracker));
         return newExercise;

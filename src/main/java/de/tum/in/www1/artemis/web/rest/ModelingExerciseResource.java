@@ -89,7 +89,7 @@ public class ModelingExerciseResource {
     private final ChannelService channelService;
 
     private final ChannelRepository channelRepository;
-
+  
     public ModelingExerciseResource(ModelingExerciseRepository modelingExerciseRepository, UserRepository userRepository, CourseService courseService,
             AuthorizationCheckService authCheckService, CourseRepository courseRepository, ParticipationRepository participationRepository,
             ModelingExerciseService modelingExerciseService, ExerciseDeletionService exerciseDeletionService, PlagiarismResultRepository plagiarismResultRepository,
@@ -153,6 +153,7 @@ public class ModelingExerciseResource {
             Channel createdChannel = channelService.createExerciseChannel(modelingExercise, modelingExercise.getChannel().getName());
             modelingExercise.setChannel(createdChannel);
         }
+
         ModelingExercise result = modelingExerciseRepository.save(modelingExercise);
         modelingExerciseService.scheduleOperations(result.getId());
         groupNotificationScheduleService.checkNotificationsForNewExercise(modelingExercise);

@@ -354,7 +354,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
     @WithMockUser(username = TEST_PREFIX + "instructor42", roles = "INSTRUCTOR")
     void testInstructorGetsOnlyResultsFromOwningCourses() throws Exception {
         final var search = database.configureSearch("");
-        final var result = request.get("/api/lectures/", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(search));
+        final var result = request.getSearchResult("/api/lectures/", HttpStatus.OK, Lecture.class, database.searchMapping(search));
         assertThat(result.getResultsOnPage()).isNullOrEmpty();
     }
 
@@ -362,7 +362,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testInstructorGetsResultsFromOwningCoursesNotEmpty() throws Exception {
         final var search = database.configureSearch(lecture1.getTitle());
-        final var result = request.get("/api/lectures/", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(search));
+        final var result = request.getSearchResult("/api/lectures/", HttpStatus.OK, Lecture.class, database.searchMapping(search));
         assertThat(result.getResultsOnPage()).hasSize(1);
     }
 
@@ -370,7 +370,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testAdminGetsResultsFromAllCourses() throws Exception {
         final var search = database.configureSearch(lecture1.getTitle());
-        final var result = request.get("/api/lectures/", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(search));
+        final var result = request.getSearchResult("/api/lectures/", HttpStatus.OK, Lecture.class, database.searchMapping(search));
         assertThat(result.getResultsOnPage()).hasSize(1);
     }
 
