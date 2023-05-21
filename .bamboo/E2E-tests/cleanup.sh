@@ -13,7 +13,7 @@ docker container rm $(docker ps -a -q) || true
 docker volume rm $(docker volume ls -q) || true
 
 docker compose -f ./docker/cypress-E2E-tests-mysql.yml down -v
-docker compose -f ./docker/cypress-E2E-tests-postgres.yml down -v
+docker compose -f ./docker/cypress-E2E-tests-postgresql.yml down -v
 
 # show all running docker containers and volumes after the cleanup to detect issues
 echo "SHOW RUNNING Docker containers and volumes:"
