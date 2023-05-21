@@ -3,10 +3,8 @@
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.18.xsd">
     <changeSet author="kotzian" id="20230519181800">
-        <addColumn tableName="exercise">
-            <column name="iris_activated" type="boolean">
-                <constraints nullable="true"/>
-            </column>
+        <addColumn tableName="programming_exercise_details">
+            <column name="iris_activated" type="boolean" defaultValueBoolean="false"/>
         </addColumn>
     </changeSet>
 </databaseChangeLog>
