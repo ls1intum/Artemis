@@ -119,7 +119,7 @@ export class ModelingExerciseUpdateComponent implements OnInit {
                             this.modelingExercise.channel = new Channel();
                             this.modelingExercise.channel.name = '';
                         }
-                        this.channelName = this.modelingExercise.channel.name;
+                        this.channelName = this.modelingExercise.channel?.name;
                         this.exerciseCategories = this.modelingExercise.categories || [];
                         if (this.modelingExercise.course) {
                             this.courseService.findAllCategoriesOfCourse(this.modelingExercise.course!.id!).subscribe({

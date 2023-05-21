@@ -107,7 +107,7 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
                             this.fileUploadExercise.channel = new Channel();
                             this.fileUploadExercise.channel.name = '';
                         }
-                        this.channelName = this.fileUploadExercise.channel.name;
+                        this.channelName = this.fileUploadExercise.channel?.name;
                     }
                     this.handleExerciseSettings();
                     this.handleImport(params);

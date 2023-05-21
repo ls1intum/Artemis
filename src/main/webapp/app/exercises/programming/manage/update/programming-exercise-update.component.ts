@@ -422,7 +422,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                             this.programmingExercise.channel = new Channel();
                             this.programmingExercise.channel.name = '';
                         }
-                        this.channelName = this.programmingExercise.channel.name;
+                        this.channelName = this.programmingExercise.channel?.name;
                     }
 
                     // Set submit button text depending on component state

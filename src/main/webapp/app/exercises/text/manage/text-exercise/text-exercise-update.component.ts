@@ -109,7 +109,7 @@ export class TextExerciseUpdateComponent implements OnInit {
                             this.textExercise.channel = new Channel();
                             this.textExercise.channel.name = '';
                         }
-                        this.channelName = this.textExercise.channel.name;
+                        this.channelName = this.textExercise.channel?.name;
 
                         this.exerciseCategories = this.textExercise.categories || [];
                         if (this.examCourseId) {

@@ -247,7 +247,7 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
                     this.quizExercise.channel = new Channel();
                     this.quizExercise.channel.name = '';
                 }
-                this.channelName = this.quizExercise.channel.name;
+                this.channelName = this.quizExercise.channel?.name;
             }
         } else {
             this.quizExercise.isEditable = isQuizEditable(this.quizExercise);
