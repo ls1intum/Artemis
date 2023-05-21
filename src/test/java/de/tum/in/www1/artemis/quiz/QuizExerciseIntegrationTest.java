@@ -1650,17 +1650,17 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         changedQuiz = request.postWithResponseBody("/api/quiz-exercises/import/" + quizExercise.getId(), changedQuiz, QuizExercise.class, HttpStatus.CREATED);
 
-        assertEquals(course2.getId(), changedQuiz.getCourseViaExerciseGroupOrCourseMember().getId(), course2.getId());
-        assertEquals(ExerciseMode.TEAM, changedQuiz.getMode());
-        assertEquals(teamAssignmentConfig.getMinTeamSize(), changedQuiz.getTeamAssignmentConfig().getMinTeamSize());
-        assertEquals(teamAssignmentConfig.getMaxTeamSize(), changedQuiz.getTeamAssignmentConfig().getMaxTeamSize());
-        assertEquals(0, teamRepository.findAllByExerciseIdWithEagerStudents(changedQuiz, null).size());
+        assertThat(changedQuiz.getCourseViaExerciseGroupOrCourseMember().getId()).isEqualTo(course2.getId());
+        assertThat(changedQuiz.getMode()).isEqualTo(ExerciseMode.TEAM);
+        assertThat(changedQuiz.getTeamAssignmentConfig().getMinTeamSize()).isEqualTo(teamAssignmentConfig.getMinTeamSize());
+        assertThat(changedQuiz.getTeamAssignmentConfig().getMaxTeamSize()).isEqualTo(teamAssignmentConfig.getMaxTeamSize());
+        assertThat(teamRepository.findAllByExerciseIdWithEagerStudents(changedQuiz, null)).isEmpty();
 
         quizExercise = quizExerciseRepository.findById(quizExercise.getId()).get();
-        assertEquals(course1.getId(), quizExercise.getCourseViaExerciseGroupOrCourseMember().getId());
-        assertEquals(ExerciseMode.INDIVIDUAL, quizExercise.getMode());
-        assertNull(quizExercise.getTeamAssignmentConfig());
-        assertEquals(0, teamRepository.findAllByExerciseIdWithEagerStudents(quizExercise, null).size());
+        assertThat(quizExercise.getCourseViaExerciseGroupOrCourseMember().getId()).isEqualTo(course1.getId());
+        assertThat(quizExercise.getMode()).isEqualTo(ExerciseMode.INDIVIDUAL);
+        assertThat(quizExercise.getTeamAssignmentConfig()).isNull();
+        assertThat(teamRepository.findAllByExerciseIdWithEagerStudents(quizExercise, null)).isEmpty();
     }
 
     /**
@@ -1694,15 +1694,15 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         changedQuiz = request.postWithResponseBody("/api/quiz-exercises/import/" + quizExercise.getId(), changedQuiz, QuizExercise.class, HttpStatus.CREATED);
 
-        assertEquals(course2.getId(), changedQuiz.getCourseViaExerciseGroupOrCourseMember().getId(), course2.getId());
-        assertEquals(ExerciseMode.INDIVIDUAL, changedQuiz.getMode());
-        assertNull(changedQuiz.getTeamAssignmentConfig());
-        assertEquals(0, teamRepository.findAllByExerciseIdWithEagerStudents(changedQuiz, null).size());
+        assertThat(changedQuiz.getCourseViaExerciseGroupOrCourseMember().getId()).isEqualTo(course2.getId());
+        assertThat(changedQuiz.getMode()).isEqualTo(ExerciseMode.INDIVIDUAL);
+        assertThat(changedQuiz.getTeamAssignmentConfig()).isNull();
+        assertThat(teamRepository.findAllByExerciseIdWithEagerStudents(changedQuiz, null)).isEmpty();
 
         quizExercise = quizExerciseRepository.findById(quizExercise.getId()).get();
-        assertEquals(course1.getId(), quizExercise.getCourseViaExerciseGroupOrCourseMember().getId());
-        assertEquals(ExerciseMode.TEAM, quizExercise.getMode());
-        assertEquals(1, teamRepository.findAllByExerciseIdWithEagerStudents(quizExercise, null).size());
+        assertThat(quizExercise.getCourseViaExerciseGroupOrCourseMember().getId()).isEqualTo(course1.getId());
+        assertThat(quizExercise.getMode()).isEqualTo(ExerciseMode.TEAM);
+        assertThat(teamRepository.findAllByExerciseIdWithEagerStudents(quizExercise, null)).hasSize(1);
     }
 
     /**
@@ -1763,7 +1763,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         question.setExplanation("0".repeat(validityThreshold));
 
         QuizExercise response = request.postWithResponseBody("/api/quiz-exercises/", quizExercise, QuizExercise.class, HttpStatus.CREATED);
-        assertNotNull(response);
+        assertThat(response).isNotNull();
     }
 
     /**
@@ -1794,7 +1794,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         question.getAnswerOptions().get(0).setExplanation("0".repeat(validityThreshold));
 
         QuizExercise response = request.postWithResponseBody("/api/quiz-exercises/", quizExercise, QuizExercise.class, HttpStatus.CREATED);
-        assertNotNull(response);
+        assertThat(response).isNotNull();
     }
 
     /**
