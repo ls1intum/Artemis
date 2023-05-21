@@ -48,9 +48,9 @@ public interface ConversationMessageRepository extends JpaRepository<Post, Long>
     @Query("""
             SELECT DISTINCT answer.author
             FROM Post p
-            LEFT JOIN p.answers answer
-            LEFT JOIN p.conversation c
-            LEFT JOIN c.conversationParticipants cp
+                LEFT JOIN p.answers answer
+                LEFT JOIN p.conversation c
+                LEFT JOIN c.conversationParticipants cp
             WHERE p.id = :postId AND answer.author = cp.user
             """)
     Set<User> findUsersWhoRepliedInMessage(@Param("postId") Long postId);

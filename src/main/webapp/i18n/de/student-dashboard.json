@@ -101,7 +101,7 @@
                 "yourPoints": "Deine Punktzahl: {{ number }}",
                 "reachablePoints": "Erreichbare Punktzahl: {{ number }} ({{ relative }}%)",
                 "totalPoints": "Maximale Punktzahl: {{ number }} ({{ relative }}%)",
-                "presentationScore": "Präsentationsergebnis: {{ number }} ",
+                "presentationScore": "Präsentationen: {{ number }} ",
                 "noStatistics": "Es sind keine Statistiken für diesen Kurs vorhanden.",
                 "bonusPointTooltip": "Bonus Aufgabe: Punkte zählen als Bonuspunkte zu deinem Kursergebnis!",
                 "notIncludedTooltip": "Nicht gezählte Aufgabe: Punkte zählen NICHT zu deinem Kursergebnis!",

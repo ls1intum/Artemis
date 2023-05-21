@@ -104,6 +104,7 @@
                 "metrics": "Metriken",
                 "health": "Status",
                 "configuration": "Konfiguration",
+                "privacyStatement": "Datenschutzerklärung",
                 "logs": "Protokoll",
                 "audits": "Audits",
                 "apidocs": "API",
@@ -287,6 +288,9 @@
         },
         "exportRepos": {
             "title": "Herunterladen bestätigen"
+        },
+        "resetProgrammingExercise": {
+            "title": "Programmieraufgabe zurücksetzen"
         },
         "validation": {
             "required": "Dieses Feld wird benötigt.",

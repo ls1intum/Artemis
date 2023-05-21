@@ -29,8 +29,8 @@ describe('LearningGoalPopoverComponent', () => {
             imports: [
                 NgbPopoverModule,
                 RouterTestingModule.withRoutes([
-                    { path: 'courses/:courseId/learning-goals', component: DummyStatisticsComponent },
-                    { path: 'course-management/:courseId/goal-management', component: DummyManagementComponent },
+                    { path: 'courses/:courseId/competencies', component: DummyStatisticsComponent },
+                    { path: 'course-management/:courseId/competency-management', component: DummyManagementComponent },
                 ]),
             ],
             declarations: [LearningGoalsPopoverComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FaIconComponent), DummyStatisticsComponent, DummyManagementComponent],
@@ -65,7 +65,7 @@ describe('LearningGoalPopoverComponent', () => {
         const anchor = learningGoalPopoverComponentFixture.debugElement.query(By.css('a')).nativeElement;
         anchor.click();
         tick();
-        expect(location.path()).toBe('/courses/1/learning-goals');
+        expect(location.path()).toBe('/courses/1/competencies');
     }));
 
     it('should navigate to learning goal management', fakeAsync(() => {
@@ -80,6 +80,6 @@ describe('LearningGoalPopoverComponent', () => {
         const anchor = learningGoalPopoverComponentFixture.debugElement.query(By.css('a')).nativeElement;
         anchor.click();
         tick();
-        expect(location.path()).toBe('/course-management/1/goal-management');
+        expect(location.path()).toBe('/course-management/1/competency-management');
     }));
 });
