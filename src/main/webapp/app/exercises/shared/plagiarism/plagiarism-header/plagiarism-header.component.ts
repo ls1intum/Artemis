@@ -24,6 +24,7 @@ export class PlagiarismHeaderComponent {
     @Input() splitControlSubject: Subject<string>;
 
     readonly plagiarismStatus = PlagiarismStatus;
+    plagiarismStatusDirty = false;
 
     constructor(private plagiarismCasesService: PlagiarismCasesService, private modalService: NgbModal) {}
 
@@ -39,13 +40,16 @@ export class PlagiarismHeaderComponent {
      */
     denyPlagiarism() {
         if (this.comparison.status === PlagiarismStatus.CONFIRMED) {
-            this.askForConfirmation(() => this.updatePlagiarismStatus(PlagiarismStatus.DENIED));
+            this.askForConfirmationOfDenying(() => this.updatePlagiarismStatus(PlagiarismStatus.DENIED));
         } else {
             this.updatePlagiarismStatus(PlagiarismStatus.DENIED);
         }
     }
 
-    private askForConfirmation(onConfirm: () => void) {
+    private askForConfirmationOfDenying(onConfirm: () => void) {
+        // change the status to dirty so that both buttons are disabled
+        this.plagiarismStatusDirty = true;
+
         const modalRef = this.modalService.open(ConfirmAutofocusModalComponent, { keyboard: true, size: 'lg' });
         modalRef.componentInstance.title = 'artemisApp.plagiarism.denyAfterConfirmModalTitle';
         modalRef.componentInstance.text = 'artemisApp.plagiarism.denyAfterConfirmModalText';
@@ -58,10 +62,13 @@ export class PlagiarismHeaderComponent {
      * @param status the new status of the comparison
      */
     updatePlagiarismStatus(status: PlagiarismStatus) {
+        // change the status to dirty so that both buttons are disabled
+        this.plagiarismStatusDirty = true;
         // store comparison in variable in case comparison changes while request is made
         const comparison = this.comparison;
         this.plagiarismCasesService.updatePlagiarismComparisonStatus(getCourseId(this.exercise)!, comparison.id, status).subscribe(() => {
             comparison.status = status;
+            this.plagiarismStatusDirty = false;
         });
     }
 
