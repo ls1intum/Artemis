@@ -17,6 +17,7 @@ import de.tum.in.www1.artemis.domain.iris.IrisMessage;
 import de.tum.in.www1.artemis.domain.iris.IrisMessageContent;
 import de.tum.in.www1.artemis.domain.iris.IrisMessageSender;
 import de.tum.in.www1.artemis.domain.iris.IrisSession;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.iris.IrisMessageService;
 import de.tum.in.www1.artemis.service.iris.IrisSessionService;
 
@@ -30,6 +31,9 @@ class IrisAuthorizationIntegrationTest extends AbstractSpringIntegrationBambooBi
     @Autowired
     private IrisMessageService irisMessageService;
 
+    @Autowired
+    private ProgrammingExerciseRepository programmingExerciseRepository;
+
     private ProgrammingExercise exercise;
 
     @BeforeEach
@@ -39,6 +43,7 @@ class IrisAuthorizationIntegrationTest extends AbstractSpringIntegrationBambooBi
         final Course course = database.addCourseWithOneProgrammingExerciseAndTestCases();
         exercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
         exercise.setIrisActivated(false);
+        programmingExerciseRepository.save(exercise);
     }
 
     @Test
