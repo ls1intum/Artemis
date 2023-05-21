@@ -1,6 +1,6 @@
 # Artemis: Interactive Learning with Individual Feedback 
 
-[![Build & Deploy](https://github.com/ls1intum/Artemis/actions/workflows/build-deploy.yml/badge.svg?event=push)](https://github.com/ls1intum/Artemis/actions/workflows/build-deploy.yml)
+[![Build & Deploy](https://github.com/ls1intum/Artemis/actions/workflows/build.yml/badge.svg?event=push)](https://github.com/ls1intum/Artemis/actions/workflows/build.yml)
 [![Test](https://github.com/ls1intum/Artemis/actions/workflows/test.yml/badge.svg?event=push)](https://github.com/ls1intum/Artemis/actions/workflows/test.yml)
 [![Documentation](https://github.com/ls1intum/Artemis/actions/workflows/docs.yml/badge.svg?event=push)](https://docs.artemis.cit.tum.de)
 [![Code Quality Status](https://app.codacy.com/project/badge/Grade/89860aea5fa74d998ec884f1a875ed0c)](https://www.codacy.com/gh/ls1intum/Artemis?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=ls1intum/Artemis&amp;utm_campaign=Badge_Grade)
@@ -87,6 +87,36 @@ If needed, you can configure self service [user registration](https://docs.artem
 ### Contributing 
 
 Please read the guide on [how to contribute](CONTRIBUTING.md) to Artemis.
+
+Once the PR is ready to merge, notifiy the responsible feature maintainer:
+
+<details>
+  <summary>Feature Maintainers</summary>
+  
+| Feature                        | Maintainer                                                                                      |
+| ------------------------------ | ----------------------------------------------------------------------------------------------- |
+| Programming exercises          | [@mtze](https://github.com/mtze)                                                                |
+| Ares                           | [@MarkusPaulsen](https://github.com/MarkusPaulsen)                                              |
+| Quiz exercises                 | [@Santia-go](https://github.com/Santia-go)                                                      |
+| Modeling exercises (+ Apollon) | [@krusche](https://github.com/krusche)                                                          |
+| Text exercises                 | [@maximiliansoelch](https://github.com/maximiliansoelch)                                        |
+| File upload exercises          | [@maximiliansoelch](https://github.com/maximiliansoelch)                                        |
+| Exam mode                      | [@krusche](https://github.com/krusche)                                                          |
+| Grading                        | [@maximiliansoelch](https://github.com/maximiliansoelch)                                        |
+| Assessment                     | [@maximiliansoelch](https://github.com/maximiliansoelch)                                        |
+| Communication                  | [@bassner](https://github.com/bassner)                                                          |
+| Notifications                  | [@mtze](https://github.com/mtze) [@bassner](https://github.com/bassner)                         |
+| Team Exercises                 | [@krusche](https://github.com/krusche)                                                          |
+| Lectures                       | [@maximiliansoelch](https://github.com/maximiliansoelch) [@bassner](https://github.com/bassner) |
+| Integrated Markdown Editor     | [@maximiliansoelch](https://github.com/maximiliansoelch) [@bassner](https://github.com/bassner) |
+| Plagiarism checks              | [@MarkusPaulsen](https://github.com/MarkusPaulsen)                                              |
+| Learning analytics             | [@bassner](https://github.com/bassner)                                                          |
+| Tutorial Groups                | [@Santia-go](https://github.com/Santia-go)                                                      |
+| Usability + Performance        | [@bassner](https://github.com/bassner)                                                          |
+| Infrastructure                 | [@mtze](https://github.com/mtze)                                                                |
+| Mobile apps (iOS + Android)    | [@krusche](https://github.com/krusche) [@maximiliansoelch](https://github.com/maximiliansoelch) |
+    
+</details>
 
 ### Building for production
 
