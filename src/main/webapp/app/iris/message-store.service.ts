@@ -19,6 +19,7 @@ export class IrisMessageStore implements OnDestroy {
     private readonly initialState: MessageStoreState = {
         messages: [],
         sessionId: null,
+        isLoading: false,
     };
 
     private readonly action = new Subject<MessageStoreAction>();
@@ -78,12 +79,14 @@ export class IrisMessageStore implements OnDestroy {
             return {
                 messages: [...state.messages, action.message],
                 sessionId: state.sessionId,
+                isLoading: false,
             };
         }
         if (isSessionIdReceivedAction(action)) {
             return {
                 messages: [],
                 sessionId: action.sessionId,
+                isLoading: state.isLoading,
             };
         }
         if (isStudentMessageSentAction(action)) {
@@ -92,6 +95,7 @@ export class IrisMessageStore implements OnDestroy {
             return {
                 messages: [...state.messages, action.message],
                 sessionId: state.sessionId,
+                isLoading: true,
             };
         }
 

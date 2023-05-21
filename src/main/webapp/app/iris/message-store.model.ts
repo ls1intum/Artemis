@@ -59,5 +59,5 @@ export function isSessionIdReceivedAction(action: MessageStoreAction): action is
 }
 
 export class MessageStoreState {
-    public constructor(public messages: ReadonlyArray<IrisMessage>, public sessionId: number | null) {}
+    public constructor(public messages: ReadonlyArray<IrisMessage>, public sessionId: number | null, public isLoading: boolean) {}
 }

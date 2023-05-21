@@ -25,7 +25,6 @@ export class ExerciseChatWidgetComponent implements OnInit {
     newMessage = '';
     isLoading: boolean;
     dots = 1;
-    sessionId: number;
 
     constructor(private dialog: MatDialog, @Inject(MAT_DIALOG_DATA) public data: any, private irisHttpMessageService: IrisHttpMessageService) {
         this.messageStore = data.messageStore;
@@ -41,8 +40,8 @@ export class ExerciseChatWidgetComponent implements OnInit {
         this.scrollToBottom('auto');
         this.animateDots();
         this.messageStore.getState().subscribe((state) => {
-            this.sessionId = Number(state.sessionId);
             this.messages = state.messages as IrisMessage[];
+            this.isLoading = state.isLoading;
         });
     }
 
@@ -54,17 +53,14 @@ export class ExerciseChatWidgetComponent implements OnInit {
 
     onSend(): void {
         if (this.newMessage) {
-            this.isLoading = true;
             const message = this.newUserMessage(this.newMessage);
             this.messageStore.dispatch(
                 new StudentMessageSentAction(message, {
                     next: (res: HttpResponse<IrisServerMessage>) => {
-                        this.isLoading = false;
                         this.messageStore.dispatch(new ActiveConversationMessageLoadedAction(res.body!));
                         this.scrollToBottom();
                     },
                     error: () => {
-                        this.isLoading = false;
                         // TODO: handle error
                     },
                 }),
