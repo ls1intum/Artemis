@@ -4,7 +4,9 @@
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.18.xsd">
     <changeSet author="kotzian" id="20230519181800">
         <addColumn tableName="programming_exercise_details">
-            <column name="iris_activated" type="boolean" defaultValueBoolean="false"/>
+            <column name="iris_activated" type="boolean" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
         </addColumn>
     </changeSet>
 </databaseChangeLog>
