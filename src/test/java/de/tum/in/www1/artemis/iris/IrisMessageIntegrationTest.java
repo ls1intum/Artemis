@@ -49,6 +49,7 @@ class IrisMessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         final Course course = database.addCourseWithOneProgrammingExerciseAndTestCases();
         exercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        exercise.setIrisActivated(true);
     }
 
     @Test
