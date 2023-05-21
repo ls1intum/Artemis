@@ -17,9 +17,11 @@
         <!-- main chat section -->
         <div class="chat-body" #chatBody>
             <div *ngFor="let message of messages">
-                <div *ngIf="message.sender === SENDER_USER" class="my-chat">{{ message.content[0].textContent }}</div>
-                <div *ngIf="message.sender === SENDER_SERVER" class="client-chat">{{ message.content[0].textContent }}</div>
-                <!-- <div *ngIf="message.sender === SENDER_SERVER" class="client-chat" *ngFor="let content of message.content" class="my-chat">{{ context.textContent }}</div> -->
+                <div *ngFor="let content of message.content">
+                    <div [ngClass]="{ 'my-chat': message.sender === SENDER_USER, 'client-chat': message.sender === SENDER_SERVER }">
+                        {{ content.textContent }}
+                    </div>
+                </div>
             </div>
             <div class="client-chat" *ngIf="isLoading">
                 <div class="blinking-dots">

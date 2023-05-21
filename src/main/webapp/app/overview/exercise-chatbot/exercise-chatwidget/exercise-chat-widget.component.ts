@@ -53,6 +53,7 @@ export class ExerciseChatWidgetComponent implements OnInit {
                 next: (res: HttpResponse<IrisServerMessage>) => {
                     this.isLoading = false;
                     this.messages.push(res.body!);
+                    this.scrollToBottom();
                 },
                 error: () => {
                     this.isLoading = false;
@@ -66,7 +67,10 @@ export class ExerciseChatWidgetComponent implements OnInit {
     scrollToBottom() {
         setTimeout(() => {
             const chatBodyElement: HTMLElement = this.chatBody.nativeElement;
-            chatBodyElement.scrollTop = chatBodyElement.scrollHeight;
+            chatBodyElement.scrollTo({
+                top: chatBodyElement.scrollHeight,
+                behavior: 'smooth',
+            });
         });
     }
 
