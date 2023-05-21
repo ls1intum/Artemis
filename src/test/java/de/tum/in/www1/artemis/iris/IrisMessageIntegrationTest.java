@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -13,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.iris.IrisMessage;
@@ -142,17 +144,17 @@ class IrisMessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         message4.setContent(List.of(createMockContent(message4), createMockContent(message4), createMockContent(message4)));
 
         irisMessageService.saveMessage(message1, irisSession, IrisMessageSender.ARTEMIS);
-        irisMessageService.saveMessage(message2, irisSession, IrisMessageSender.LLM);
-        irisMessageService.saveMessage(message3, irisSession, IrisMessageSender.USER);
-        irisMessageService.saveMessage(message4, irisSession, IrisMessageSender.LLM);
+        message2 = irisMessageService.saveMessage(message2, irisSession, IrisMessageSender.LLM);
+        message3 = irisMessageService.saveMessage(message3, irisSession, IrisMessageSender.USER);
+        message4 = irisMessageService.saveMessage(message4, irisSession, IrisMessageSender.LLM);
 
         var messages = request.getList("/api/iris/sessions/" + irisSession.getId() + "/messages", HttpStatus.OK, IrisMessage.class);
-        assertThat(messages).hasSize(4).usingElementComparator((o1, o2) -> {
+        assertThat(messages).hasSize(3).usingElementComparator((o1, o2) -> {
             return o1.getContent().size() == o2.getContent().size()
                     && o1.getContent().stream().map(IrisMessageContent::getTextContent).toList().equals(o2.getContent().stream().map(IrisMessageContent::getTextContent).toList())
                             ? 0
                             : -1;
-        }).isEqualTo(List.of(message1, message2, message3, message4));
+        }).isEqualTo(List.of(message2, message3, message4));
     }
 
     @Test

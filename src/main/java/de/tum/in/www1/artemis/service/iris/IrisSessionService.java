@@ -86,6 +86,13 @@ public class IrisSessionService {
         return irisSessionRepository.save(irisSession);
     }
 
+    /**
+     * Sends a request to Iris to get a message for the given session.
+     * It decides which Iris subsystem should handle it based on the session type.
+     * Currently, only the chat subsystem exists.
+     *
+     * @param session The session to get a message for
+     */
     public void requestMessageFromIris(IrisSession session) {
         // TODO: Future: Switch between different session types
         irisChatService.requestAndHandleResponse(session);

@@ -32,6 +32,12 @@ public class IrisChatService {
         this.irisSessionRepository = irisSessionRepository;
     }
 
+    /**
+     * Sends all messages of the session to an LLM and handles the response by saving the message
+     * and sending it to the student via the Websocket.
+     *
+     * @param session The chat session to send to the LLM
+     */
     public void requestAndHandleResponse(IrisSession session) {
         var fullSession = irisSessionRepository.findByIdWithMessagesAndContents(session.getId());
         irisModelService.requestResponse(fullSession).handleAsync((irisMessageOptional, throwable) -> {
