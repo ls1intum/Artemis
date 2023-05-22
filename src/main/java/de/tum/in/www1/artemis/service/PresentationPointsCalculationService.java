@@ -54,7 +54,6 @@ public class PresentationPointsCalculationService {
     /**
      * Adds the presentation points to the ScoreDTOs given the gradingScale, the reachable presentation points of the
      * course, and the presentationsWeight of the courses GradingScale.
-     * TODO: write tests for this method
      *
      * @param gradingScale                the grading scale with the presentation configuration
      * @param scoreDTOS                   the ScoreDTOs to which the presentation points should be added
