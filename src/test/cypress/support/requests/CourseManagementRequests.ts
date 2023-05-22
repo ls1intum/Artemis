@@ -640,12 +640,12 @@ export class CourseManagementRequests {
                 startDate,
                 endDate,
             },
-            channelName: 'lecture-' + titleLowercase(title)
+            channelName: 'lecture-' + titleLowercase(title),
         };
         return cy.request({
             url: `${BASE_API}lectures`,
             method: POST,
-            body
+            body,
         });
     }
 }
