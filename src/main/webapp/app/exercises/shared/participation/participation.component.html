@@ -344,7 +344,12 @@
                                     <span class="d-none d-md-inline" jhiTranslate="artemisApp.participation.addPresentation.label">Add presentation</span>
                                 </button>
                                 <button
-                                    *ngIf="this.gradedPresentationEnabled && !value.testRun && (hasGradedPresentationChanged(value) || !value.presentationScore)"
+                                    *ngIf="
+                                        this.gradedPresentationEnabled &&
+                                        !value.testRun &&
+                                        hasGradedPresentationChanged(value) &&
+                                        (value.presentationScore ?? undefined) !== undefined
+                                    "
                                     [disabled]="!hasGradedPresentationChanged(value) || value.presentationScore < 0 || value.presentationScore > 100"
                                     (click)="addGradedPresentation(value)"
                                     class="btn btn-info btn-sm me-1"
@@ -354,8 +359,8 @@
                                 </button>
                                 <button
                                     *ngIf="
-                                        (this.basicPresentationEnabled && value.presentationScore === 1) ||
-                                        (this.gradedPresentationEnabled && !hasGradedPresentationChanged(value) && value.presentationScore)
+                                        (this.basicPresentationEnabled && value.presentationScore > 0) ||
+                                        (this.gradedPresentationEnabled && (!hasGradedPresentationChanged(value) || (value.presentationScore ?? undefined) === undefined))
                                     "
                                     (click)="removePresentation(value)"
                                     class="btn btn-danger btn-sm me-1"
