@@ -14,6 +14,9 @@ import de.tum.in.www1.artemis.domain.GradingScale;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.web.rest.dto.ScoreDTO;
 
+/**
+ * Service for calculating the presentation points for a course or student.
+ */
 @Service
 public class PresentationPointsCalculationService {
 
@@ -53,10 +56,10 @@ public class PresentationPointsCalculationService {
      * course, and the presentationsWeight of the courses GradingScale.
      *
      * @param gradingScale                the grading scale with the presentation configuration
-     * @param ScoreDTOs                   the ScoreDTOs to which the presentation points should be added
+     * @param scoreDTOS                   the ScoreDTOs to which the presentation points should be added
      * @param reachablePresentationPoints the reachable presentation points in the given course.
      */
-    public void addPresentationPointsToScoreDTOs(GradingScale gradingScale, Collection<ScoreDTO> ScoreDTOs, double reachablePresentationPoints) {
+    public void addPresentationPointsToScoreDTOs(GradingScale gradingScale, Collection<ScoreDTO> scoreDTOS, double reachablePresentationPoints) {
         // return if grading scale is not set
         if (gradingScale == null) {
             return;
@@ -67,10 +70,10 @@ public class PresentationPointsCalculationService {
             return;
         }
 
-        Set<Long> studentIds = ScoreDTOs.stream().map(scoreDTO -> scoreDTO.studentId).collect(toSet());
+        Set<Long> studentIds = scoreDTOS.stream().map(scoreDTO -> scoreDTO.studentId).collect(toSet());
         Map<Long, Double> studentIdToPresentationPointSum = studentParticipationRepository.mapStudentIdToPresentationScoreSumByCourseIdAndStudentIds(course.getId(), studentIds);
 
-        ScoreDTOs.forEach(scoreDTO -> {
+        scoreDTOS.forEach(scoreDTO -> {
             double presentationScoreSum = studentIdToPresentationPointSum.getOrDefault(scoreDTO.studentId, 0.0);
             double presentationPoints = calculatePresentationPoints(gradingScale, reachablePresentationPoints, presentationScoreSum);
             scoreDTO.pointsAchieved += presentationPoints;

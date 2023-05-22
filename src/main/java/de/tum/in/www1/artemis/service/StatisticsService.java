@@ -159,8 +159,8 @@ public class StatisticsService {
 
         // if a grading scale is present and set for graded presentations, calculate average score taking presentation points into account,
         GradingScale gradingScale = gradingScaleRepository.findByCourseId(courseId).orElse(null);
-        if (averageScoreForCourse > 0.0 && gradingScale != null && gradingScale.getCourse() != null && gradingScale.getCourse().getId().equals(courseId)
-                && gradingScale.getPresentationsNumber() != null) {
+        if (averageScoreForCourse > 0.0 && gradingScale != null && gradingScale.getCourse() != null && gradingScale.getPresentationsWeight() != null
+                && gradingScale.getCourse().getId().equals(courseId) && gradingScale.getPresentationsNumber() != null) {
             double avgPresentationScore = studentParticipationRepository.getAvgPresentationScoreByCourseId(course.getId());
             averageScoreForCourse = gradingScale.getPresentationsWeight() / 100.0 * avgPresentationScore
                     + (100.0 - gradingScale.getPresentationsWeight()) / 100.0 * averageScoreForCourse;

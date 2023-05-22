@@ -969,6 +969,13 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             """)
     List<QuizSubmittedAnswerCount> findSubmittedAnswerCountForQuizzesInExam(@Param("examId") long examId);
 
+    /**
+     * Gets the sum of all presentation scores for the given course and student.
+     *
+     * @param courseId  the id of the course
+     * @param studentId the id of the student
+     * @return the sum of all presentation scores for the given course and student
+     */
     @Query("""
             SELECT COALESCE(SUM(p.presentationScore), 0)
             FROM StudentParticipation p
@@ -979,6 +986,13 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             """)
     double sumPresentationScoreByStudentIdAndCourseId(@Param("courseId") long courseId, @Param("studentId") long studentId);
 
+    /**
+     * Maps all given studentIds to their presentation score sum for the given course.
+     *
+     * @param courseId   the id of the course
+     * @param studentIds the ids of the students
+     * @return a set of id to presentation score sum mappings
+     */
     @Query("""
             SELECT COALESCE(p.student.id, ts.id) AS id, COALESCE(SUM(p.presentationScore), 0) AS presentationScoreSum
             FROM StudentParticipation p
@@ -990,6 +1004,9 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             """)
     Set<IdToPresentationScoreSum> sumPresentationScoreByStudentIdsAndCourseId(@Param("courseId") long courseId, @Param("studentIds") Set<Long> studentIds);
 
+    /**
+     * Helper interface to map the result of the {@link #sumPresentationScoreByStudentIdsAndCourseId(long, Set)} query to a map.
+     */
     interface IdToPresentationScoreSum {
 
         long getId();
@@ -997,38 +1014,24 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
         double getPresentationScoreSum();
     }
 
+    /**
+     * Maps all given studentIds to their presentation score sum for the given course.
+     *
+     * @param courseId   the id of the course
+     * @param studentIds the ids of the students
+     * @return a map of studentId to presentation score sum
+     */
     default Map<Long, Double> mapStudentIdToPresentationScoreSumByCourseIdAndStudentIds(long courseId, Set<Long> studentIds) {
         return sumPresentationScoreByStudentIdsAndCourseId(courseId, studentIds).stream()
                 .collect(toMap(IdToPresentationScoreSum::getId, IdToPresentationScoreSum::getPresentationScoreSum));
     }
 
-    @Query("""
-            SELECT p.exercise.course.id AS id, COALESCE(SUM(p.presentationScore), 0) AS presentationScoreSum
-            FROM StudentParticipation p
-            LEFT JOIN p.team.students ts
-            WHERE p.exercise.course.id IN :courseIds
-                 AND p.presentationScore IS NOT NULL
-                 AND (p.student.id IN :studentId OR ts.id IN :studentId)
-            GROUP BY p.exercise.course.id
-            """)
-    Set<IdToPresentationScoreSum> sumPresentationScoreByStudentIdAndCourseIds(@Param("courseIds") Set<Long> courseIds, @Param("studentId") long studentId);
-
-    default Map<Long, Double> mapCourseIdToPresentationScoreSumByCourseIdsAndStudentId(Set<Long> courseIds, long studentId) {
-        return sumPresentationScoreByStudentIdAndCourseIds(courseIds, studentId).stream()
-                .collect(toMap(IdToPresentationScoreSum::getId, IdToPresentationScoreSum::getPresentationScoreSum));
-    }
-
-    @Query("""
-            SELECT COUNT(p)
-            FROM StudentParticipation p
-            LEFT JOIN p.team.students ts
-            WHERE p.exercise.course.id = :courseId
-                 AND p.presentationScore IS NOT NULL
-                 AND (p.student.id = :studentId OR ts.id = :studentId)
-                 AND p.presentationScore > 0.0
-            """)
-    double countNonZeroPresentationsByStudentIdAndCourseId(@Param("courseId") long courseId, @Param("studentId") long studentId);
-
+    /**
+     * Gets the average presentation score for all participations of the given course.
+     *
+     * @param courseId the id of the course
+     * @return the average presentation score
+     */
     @Query("""
             SELECT COALESCE(AVG(p.presentationScore), 0)
             FROM StudentParticipation p

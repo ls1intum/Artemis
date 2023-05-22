@@ -53,7 +53,7 @@ public class CourseScoreCalculationService {
     }
 
     /**
-     * Calculates max and reachable max points for the given exercises. Also calculates the reachable presentation points for the course, if the course is given.
+     * Calculates max and reachable max points for the given exercises. Also calculates the reachable presentation points for the course, if a grading scale with course is given.
      * Max points are the sum of the points for all included (see {@link #includeIntoScoreCalculation(Exercise)}) exercises, whose due date is over or unset or who are
      * automatically assessed and the buildAndTestStudentSubmissionsAfterDueDate is in the past.
      * Reachable max points contain only those points where the exercise's assessmentDueDate is in the past. (see {@link #isAssessmentDone(Exercise)}).

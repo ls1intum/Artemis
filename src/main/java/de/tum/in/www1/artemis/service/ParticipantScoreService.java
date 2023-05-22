@@ -93,8 +93,10 @@ public class ParticipantScoreService {
 
         // this is the denominator when we calculate the achieved score of a student
         double regularAchievablePoints = exercisesToConsider.stream().filter(exercise -> exercise.getIncludedInOverallScore() == IncludedInOverallScore.INCLUDED_COMPLETELY)
-                .map(Exercise::getMaxPoints).reduce(0.0, Double::sum);
+                .mapToDouble(Exercise::getMaxPoints).sum();
         GradingScale gradingScale = gradingScaleService.findGradingScaleByCourseId(course.getId()).orElse(null);
+
+        // calculates the achievable presentation points that need to be added to the regular achievable points
         double achievablePresentationPoints = presentationPointsCalculationService.calculateReachablePresentationPoints(gradingScale, regularAchievablePoints);
         regularAchievablePoints += achievablePresentationPoints;
 

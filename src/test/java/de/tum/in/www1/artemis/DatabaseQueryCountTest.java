@@ -44,7 +44,7 @@ class DatabaseQueryCountTest extends AbstractSpringIntegrationBambooBitbucketJir
         // 1 DB call to load all exercises
         // 1 DB call to load all exams
         // 10 DB calls to get the quiz batches for active quiz exercises
-        // 1 DB call to get all grading scales for presentation configurations
+        // 1 DB call to get all presentation configurations via grading scales
         // 1 DB call to get all individual student participations with submissions and results
         // 1 DB call to get all team student participations with submissions and results
         // 1 DB call to get all plagiarism cases
@@ -64,7 +64,7 @@ class DatabaseQueryCountTest extends AbstractSpringIntegrationBambooBitbucketJir
         // 1 DB call to load all prerequisite
         // 1 DB call to load all tutorial groups
         // 1 DB call to load the tutorial group configuration
-        // 1 DB call to get the grading scale for presentation configuration
+        // 1 DB call to get the presentation configuration via grading scale
         // 1 DB call to get all individual student participations with submissions and results
         // 1 DB call to get all team student participations with submissions and results
         // 1 DB call to get all plagiarism cases
