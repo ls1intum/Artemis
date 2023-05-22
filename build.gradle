@@ -470,7 +470,14 @@ openApi {
     outputDir.set(file("$buildDir/docs"))
     outputFileName.set("swagger.json")
     customBootRun {
-        args.set(["--spring.profiles.active=test,dev,artemis,ldap,scheduling,athene,apollon"])
+        args.set([
+            "--spring.profiles.active=test,dev,artemis,ldap,scheduling,athene,apollon",
+            "--artemis.user-management.use-external=false",
+            "--server.url=https://artemislocal.ase.in.tum.de",
+            "--server.port=8080",
+            "--server.port=8080",
+            "--jhipster.security.authentication.jwt=bXktc2VjcmV0LWtleS13aGljaC1zaG91bGQtYmUtY2hhbmdlZC1pbi1wcm9kdWN0aW9uLWFuZC1iZS1iYXNlNjQtZW5jb2RlZAo="
+        ])
     }
 }
 
