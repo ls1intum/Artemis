@@ -1,13 +1,20 @@
 <div class="form-group mb-0" id="field_problemStatement" name="problemStatement">
     <label class="form-control-label" for="field_problemStatement" jhiTranslate="artemisApp.programmingExercise.problemStatement.title"></label>
-    <ng-container *ngIf="isImportFromExistingExercise">
-        <ngb-alert [dismissible]="false">
-            <span class="font-weight-bold">{{ 'artemisApp.exercise.import.attention' | artemisTranslate }}</span
-            ><span>{{ 'artemisApp.exercise.import.markdownWarning' | artemisTranslate }}</span>
-        </ngb-alert>
-        <jhi-programming-exercise-instructions [exercise]="programmingExercise" [participation]="programmingExercise.templateParticipation!" [personalParticipation]="false">
-        </jhi-programming-exercise-instructions>
-    </ng-container>
+    <ngb-alert *ngIf="isImportFromExistingExercise || isImportFromFile" [dismissible]="false">
+        <span class="font-weight-bold">{{ 'artemisApp.exercise.import.attention' | artemisTranslate }}</span
+        ><span>{{
+            isImportFromExistingExercise
+                ? ('artemisApp.exercise.import.markdownWarning' | artemisTranslate)
+                : ('artemisApp.exercise.import.embeddedFilesWarning' | artemisTranslate)
+        }}</span>
+    </ngb-alert>
+    <jhi-programming-exercise-instructions
+        *ngIf="isImportFromExistingExercise"
+        [exercise]="programmingExercise"
+        [participation]="programmingExercise.templateParticipation!"
+        [personalParticipation]="false"
+    ></jhi-programming-exercise-instructions>
+
     <jhi-programming-exercise-editable-instructions
         *ngIf="problemStatementLoaded && templateParticipationResultLoaded && !isImportFromExistingExercise"
         [participation]="programmingExercise.templateParticipation!"
