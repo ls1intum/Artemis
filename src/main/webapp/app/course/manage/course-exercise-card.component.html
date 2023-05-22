@@ -4,7 +4,7 @@
             <span> {{ exerciseCount }} </span>
             <span [jhiTranslate]="headingJhiTranslate"></span>
         </h5>
-        <div class="ms-auto" *ngIf="course?.isAtLeastEditor">
+        <div class="ms-auto">
             <ng-content select="[exerciseCreateButtons]"></ng-content>
         </div>
         <button class="btn question-collapse" (click)="isCollapsed = !isCollapsed" [attr.aria-expanded]="!isCollapsed" [attr.aria-controls]="'collapseQuestion'">

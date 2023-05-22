@@ -1,4 +1,4 @@
-<div class="d-flex flex-wrap justify-content-end">
+<div *ngIf="course?.isAtLeastEditor" class="d-flex flex-wrap justify-content-end">
     <button
         [id]="'create-' + exerciseType + '-exercise'"
         class="btn btn-primary jh-create-entity text-truncate mb-1 me-1"
