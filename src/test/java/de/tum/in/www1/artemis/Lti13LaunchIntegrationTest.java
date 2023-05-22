@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis;
 
 import static de.tum.in.www1.artemis.util.TestUriParamsUtil.assertUriParamsContain;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
@@ -23,7 +23,7 @@ import de.tum.in.www1.artemis.web.rest.LtiResource;
  * LTI 1.3 Exercise Launch
  * Note that Step 1. of the OpenID Connect Third Party intiated login flow is handled entirely by spring-security-lti13
  * which does not require additional testing here.
- * Testing all possible cases of Step 3. of the OpenID Connect Third Party intiated login flow is
+ * Testing all possible cases of Step 3. of the OpenID Connect Third Party initiated login flow is
  * nearly impossible if spring-security-lti13 is not mocked. Because of that, there is not a full integration test
  * provided here.
  * However, Lti13LaunchFilter is responsible to handle this step and is tested extensively.
@@ -43,7 +43,7 @@ class Lti13LaunchIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
 
         URI header = request.postForm(CustomLti13Configurer.LTI13_LOGIN_REDIRECT_PROXY_PATH, body, HttpStatus.FOUND);
 
-        assertEquals(LtiResource.LOGIN_REDIRECT_CLIENT_PATH, header.getPath());
+        assertThat(header.getPath()).isEqualTo(LtiResource.LOGIN_REDIRECT_CLIENT_PATH);
 
         List<NameValuePair> params = URLEncodedUtils.parse(header, StandardCharsets.UTF_8);
         assertUriParamsContain(params, "id_token", idToken);
