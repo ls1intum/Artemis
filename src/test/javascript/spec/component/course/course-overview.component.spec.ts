@@ -242,7 +242,8 @@ describe('CourseOverviewComponent', () => {
         const spy = jest.spyOn(metisConversationService, 'checkForUnreadMessages');
         metisConversationService._hasUnreadMessages$.next(hasNewMessages);
 
-        await component.ngOnInit();
+        route.snapshot.firstChild!.routeConfig!.path = 'exercises';
+        component.onSubRouteActivate({ controlConfiguration: undefined });
 
         expect(component.hasUnreadMessages).toBe(hasNewMessages);
 
