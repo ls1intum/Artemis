@@ -54,6 +54,7 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractSpringInt
         course = database.addCourseWithOneProgrammingExercise();
         programmingExercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
         String projectKey = programmingExercise.getProjectKey();
+        programmingExercise.setProjectType(ProjectType.PLAIN_GRADLE);
         programmingExercise.setTestRepositoryUrl(localVCBaseUrl + "/git/" + projectKey + "/" + projectKey.toLowerCase() + "-tests.git");
         programmingExerciseRepository.save(programmingExercise);
         programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExercise.getId()).orElseThrow();
@@ -103,9 +104,9 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractSpringInt
         ProgrammingExercise newExercise = ModelFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
         newExercise.setProjectType(ProjectType.PLAIN_GRADLE);
 
-        // Mock dockerClient.copyArchiveFromContainerCmd() such that it returns a dummy commitHash for both the assignment and the tests repository.
-        // Note: The stub needs to receive the same object twice because there are two requests to the same method (one for the assignment repository and one for the tests
-        // repository).
+        // Mock dockerClient.copyArchiveFromContainerCmd() such that it returns a dummy commitHash for both the assignment and the test repository.
+        // Note: The stub needs to receive the same object twice because there are two requests to the same method (one for the template participation and one for the solution
+        // participation).
         // Usually, specifying one doReturn() is enough to make the stub return the same object on every subsequent call.
         // However, in this case we have it return an InputStream, which will be consumed after returning it the first time, so we need to create two separate ones.
         localVCLocalCITestService.mockInputStreamReturnedFromContainer(dockerClient, "/repositories/assignment-repository/.git/refs/heads/[^/]+",
@@ -172,6 +173,26 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractSpringInt
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testImportProgrammingExercise() throws Exception {
+        // The mock commit hashes don't allow the getPushDate() method in the LocalVCService to retrieve the push date using the commit hash. Thus, this method must be mocked.
+        doReturn(ZonedDateTime.now().minusSeconds(2)).when(versionControlService).getPushDate(any(), any(), any());
+
+        // Mock dockerClient.copyArchiveFromContainerCmd() such that it returns a dummy commitHash for both the assignment and the test repository.
+        // Note: The stub needs to receive the same object twice because there are two requests to the same method (one for the template participation and one for the solution
+        // participation).
+        // Usually, specifying one doReturn() is enough to make the stub return the same object on every subsequent call.
+        // However, in this case we have it return an InputStream, which will be consumed after returning it the first time, so we need to create two separate ones.
+        localVCLocalCITestService.mockInputStreamReturnedFromContainer(dockerClient, "/repositories/assignment-repository/.git/refs/heads/[^/]+",
+                Map.of("assignmentComitHash", DUMMY_COMMIT_HASH), Map.of("assignmentComitHash", DUMMY_COMMIT_HASH));
+        localVCLocalCITestService.mockInputStreamReturnedFromContainer(dockerClient, "/repositories/test-repository/.git/refs/heads/[^/]+",
+                Map.of("testsCommitHash", DUMMY_COMMIT_HASH), Map.of("testsCommitHash", DUMMY_COMMIT_HASH));
+
+        // Mock dockerClient.copyArchiveFromContainerCmd() such that it returns the XMLs containing the test results.
+        // Mock the results for the template repository build and for the solution repository build that will both be triggered as a result of creating the exercise.
+        Map<String, String> templateBuildTestResults = localVCLocalCITestService.createMapFromTestResultsFolder(ALL_FAIL_TEST_RESULTS_PATH);
+        Map<String, String> solutionBuildTestResults = localVCLocalCITestService.createMapFromTestResultsFolder(ALL_SUCCEED_TEST_RESULTS_PATH);
+        localVCLocalCITestService.mockInputStreamReturnedFromContainer(dockerClient, "/repositories/test-repository/build/test-results/test", templateBuildTestResults,
+                solutionBuildTestResults);
+
         ProgrammingExercise exerciseToBeImported = ModelFactory.generateToBeImportedProgrammingExercise("ImportTitle", "imported", programmingExercise, database.addEmptyCourse());
 
         // Import the exercise and load all referenced entities
@@ -183,5 +204,13 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractSpringInt
         // Assert that the repositories were correctly created for the imported exercise.
         ProgrammingExercise importedExerciseWithParticipations = programmingExerciseRepository.findWithAllParticipationsById(importedExercise.getId()).orElseThrow();
         localVCLocalCITestService.verifyRepositoryFoldersExist(importedExerciseWithParticipations, localVCBasePath);
+
+        // Also check that the template and solution repositories were built successfully.
+        TemplateProgrammingExerciseParticipation templateParticipation = templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(importedExercise.getId())
+                .orElseThrow();
+        SolutionProgrammingExerciseParticipation solutionParticipation = solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(importedExercise.getId())
+                .orElseThrow();
+        localVCLocalCITestService.testLatestSubmission(templateParticipation.getId(), null, 0, false);
+        localVCLocalCITestService.testLatestSubmission(solutionParticipation.getId(), null, 13, false);
     }
 }
