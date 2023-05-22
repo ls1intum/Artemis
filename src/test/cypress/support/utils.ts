@@ -14,7 +14,8 @@ day.extend(utc);
  * Generates a unique identifier.
  * */
 export function generateUUID() {
-    return uuidv4().replace(/-/g, '');
+    const uuid = uuidv4().replace(/-/g, '');
+    return uuid.substr(0, 5);
 }
 
 /**
