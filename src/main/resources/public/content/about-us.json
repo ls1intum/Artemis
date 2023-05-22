@@ -408,6 +408,10 @@
         {
             "fullName": "Frederik Kutsch",
             "photoDirectory": "public/images/about/Frederik_Kutsch.jpg"
+        },
+        {
+            "fullName": "Tunar Mahmudov",
+            "photoDirectory": "public/images/about/Tunar_Mahmudov.jpg"
         }
     ]
 }
