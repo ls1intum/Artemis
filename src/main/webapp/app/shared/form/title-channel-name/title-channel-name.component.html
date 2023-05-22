@@ -8,7 +8,7 @@
             type="text"
             class="form-control"
             name="title"
-            id="title"
+            id="field_title"
             [ngModel]="title"
             (ngModelChange)="updateTitle($event)"
         />
@@ -20,7 +20,7 @@
             type="text"
             class="form-control"
             name="channelName"
-            id="channel_name"
+            id="field_channel_name"
             [ngModel]="channelName"
             (ngModelChange)="formatChannelName($event)"
             maxlength="30"
