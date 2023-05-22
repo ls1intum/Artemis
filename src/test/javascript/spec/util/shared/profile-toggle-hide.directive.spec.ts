@@ -90,7 +90,6 @@ describe('ProfileToggleHideDirective', () => {
         component.ngOnChanges();
 
         let lectureButton = fixture.debugElement.query(By.directive(ProfileToggleHideDirective));
-        console.log(lectureButton.classes['d-none']);
         // Hidden because DECOUPLING is present but LECTURE is not
         expect(lectureButton.classes['d-none']).toBeTrue();
 

@@ -92,7 +92,6 @@ export class ProfileToggleService {
      */
     getProfileTogglesActive(profiles: ProfileToggle[]): Observable<boolean> {
         return this.subject.asObservable().pipe(
-            tap((activeProfiles) => console.log(activeProfiles)),
             map((activeProfiles) => {
                 if (activeProfiles.includes(ProfileToggle.DECOUPLING)) {
                     // If the 'Decoupling' proxy-profile is set -> Decoupling is activated -> Apply logic
