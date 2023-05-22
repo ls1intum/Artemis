@@ -8,7 +8,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { Course, CourseInformationSharingConfiguration } from 'app/entities/course.model';
 import { BASE_API, CourseWideContext, DELETE, EXERCISE_TYPE, GET, POST, PUT } from '../constants';
 import programmingExerciseTemplate from '../../fixtures/exercise/programming/template.json';
-import { dayjsToString, generateUUID, parseArrayBufferAsJsonObject } from '../utils';
+import { dayjsToString, generateUUID, parseArrayBufferAsJsonObject, titleLowercase } from '../utils';
 import examTemplate from '../../fixtures/exam/template.json';
 import day from 'dayjs/esm';
 import { CypressCredentials } from '../users';
@@ -632,17 +632,20 @@ export class CourseManagementRequests {
     }
 
     createLecture(course: Course, title = 'Cypress lecture' + generateUUID(), startDate = day(), endDate = day().add(10, 'minutes')) {
-        const lecture = {
-            ...lectureTemplate,
-            course,
-            title,
-            startDate,
-            endDate,
+        const body = {
+            lecture: {
+                ...lectureTemplate,
+                course,
+                title,
+                startDate,
+                endDate,
+            },
+            channelName: 'lecture-' + titleLowercase(title)
         };
         return cy.request({
             url: `${BASE_API}lectures`,
             method: POST,
-            body: lecture,
+            body
         });
     }
 }

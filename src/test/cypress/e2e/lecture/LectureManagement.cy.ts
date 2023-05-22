@@ -25,14 +25,8 @@ describe('Lecture management', () => {
         }
     });
 
-    afterEach('Delete lecture', () => {
-        if (lecture) {
-            courseManagementRequest.deleteLecture(lecture.id!);
-        }
-    });
-
     it('creates a lecture', () => {
-        const lectureTitle = 'exam' + generateUUID();
+        const lectureTitle = 'Lecture ' + generateUUID();
         cy.login(instructor, '/course-management/' + course.id);
         cy.get('#lectures').click();
         lectureManagement.clickCreateLecture();
@@ -57,7 +51,7 @@ describe('Lecture management', () => {
         });
 
         it('Deletes an existing lecture', () => {
-            lectureManagement.deleteLecture(lecture!.title!, 0).then((resp) => {
+            lectureManagement.deleteLecture(lecture!).then((resp) => {
                 expect(resp.response!.statusCode).to.eq(200);
                 lectureManagement.getLectureContainer().children().should('have.length', 0);
                 lecture = undefined;
@@ -65,7 +59,7 @@ describe('Lecture management', () => {
         });
 
         it('Adds a text unit to the lecture', () => {
-            lectureManagement.openUnitsPage(0);
+            lectureManagement.openUnitsPage(lecture!.id!);
             cy.fixture('loremIpsum.txt').then((text) => {
                 lectureManagement.addTextUnit('Text unit', text);
             });
