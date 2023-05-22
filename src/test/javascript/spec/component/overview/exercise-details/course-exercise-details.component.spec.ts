@@ -65,6 +65,7 @@ import { ExerciseHintButtonOverlayComponent } from 'app/exercises/shared/exercis
 import { ProgrammingExerciseExampleSolutionRepoDownloadComponent } from 'app/exercises/programming/shared/actions/programming-exercise-example-solution-repo-download.component';
 import { ResetRepoButtonComponent } from 'app/shared/components/reset-repo-button/reset-repo-button.component';
 import { ProblemStatementComponent } from 'app/overview/exercise-details/problem-statement/problem-statement.component';
+import { ExerciseInfoComponent } from 'app/exercises/shared/exercise-info/exercise-info.component';
 
 describe('CourseExerciseDetailsComponent', () => {
     let comp: CourseExerciseDetailsComponent;
@@ -124,6 +125,7 @@ describe('CourseExerciseDetailsComponent', () => {
                 MockPipe(ArtemisDatePipe),
                 MockComponent(LtiInitializerComponent),
                 MockComponent(ModelingEditorComponent),
+                MockComponent(ExerciseInfoComponent),
             ],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
