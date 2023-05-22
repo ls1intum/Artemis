@@ -78,6 +78,9 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBambooBit
     @Autowired
     private ParticipantScoreRepository participantScoreRepository;
 
+    @Autowired
+    private GradingScaleRepository gradingScaleRepository;
+
     @BeforeEach
     void setupTestScenario() {
         ParticipantScoreScheduleService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 50;
@@ -219,6 +222,34 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBambooBit
         assertThat(scoreOfStudent1.pointsAchieved).isEqualTo(10.0);
         assertThat(scoreOfStudent1.scoreAchieved).isEqualTo(50.0);
         assertThat(scoreOfStudent1.regularPointsAchievable).isEqualTo(20.0);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getCourseScores_asInstructorOfCourseWithGradedPresentations_shouldReturnCourseScores() throws Exception {
+        Exam exam = examRepository.findWithExerciseGroupsAndExercisesById(idOfExam).get();
+
+        GradingScale gradingScale = new GradingScale();
+        gradingScale.setPresentationsNumber(2);
+        gradingScale.setPresentationsWeight(20.0);
+        gradingScale.setCourse(exam.getCourse());
+        gradingScaleRepository.save(gradingScale);
+
+        User student = userRepository.findById(idOfStudent1).get();
+
+        Set<Exercise> exercises = exerciseRepository.findAllExercisesByCourseId(exam.getCourse().getId());
+        studentParticipationRepository.getAllParticipationsOfUserInExercises(student, exercises, false).forEach(participation -> {
+            participation.setPresentationScore(100.0);
+            studentParticipationRepository.save(participation);
+        });
+
+        List<ScoreDTO> courseScores = request.getList("/api/courses/" + courseId + "/course-scores", HttpStatus.OK, ScoreDTO.class);
+        assertThat(courseScores).hasSize(3);
+        ScoreDTO scoreOfStudent1 = courseScores.stream().filter(scoreDTO -> scoreDTO.studentId.equals(idOfStudent1)).findFirst().get();
+        assertThat(scoreOfStudent1.studentLogin).isEqualTo(TEST_PREFIX + "student1");
+        assertThat(scoreOfStudent1.pointsAchieved).isEqualTo(15.0);
+        assertThat(scoreOfStudent1.scoreAchieved).isEqualTo(60.0);
+        assertThat(scoreOfStudent1.regularPointsAchievable).isEqualTo(25.0);
     }
 
     @Test

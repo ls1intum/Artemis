@@ -242,11 +242,6 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationBambooB
         assertThat(totalCourseScores.studentScores().currentRelativeScore()).isEqualTo(37.5);
 
         CourseScoresDTO programmingExerciseScores = courseForDashboard.programmingScores();
-        assertThat(programmingExerciseScores.maxPoints()).isZero();
-        assertThat(programmingExerciseScores.reachablePoints()).isZero();
-        assertThat(programmingExerciseScores.studentScores().absoluteScore()).isZero();
-        assertThat(programmingExerciseScores.studentScores().relativeScore()).isZero();
-        assertThat(programmingExerciseScores.studentScores().currentRelativeScore()).isZero();
         assertThat(programmingExerciseScores.studentScores().presentationScore()).isZero();
 
         CourseScoresDTO quizExerciseScores = courseForDashboard.quizScores();

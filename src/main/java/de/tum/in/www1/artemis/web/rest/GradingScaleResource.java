@@ -289,19 +289,24 @@ public class GradingScaleResource {
 
         // Check validity of basic presentation configuration
         if (course != null && course.getPresentationScore() != null && course.getPresentationScore() != 0) {
-            // The presentationsNumber and presentationsWeight must be null. The presentationScore must be above 0
+            // The presentationsNumber and presentationsWeight must be null.
             if (gradingScale.getPresentationsNumber() != null || gradingScale.getPresentationsWeight() != null) {
                 throw new BadRequestAlertException("You cannot set up graded presentations if the course is already set up for basic presentations", ENTITY_NAME,
                         "basicPresentationAlreadySet");
             }
+            // The presentationScore must be above 0.
             if (course.getPresentationScore() <= 0) {
                 throw new BadRequestAlertException("The number of presentations must be a whole number above 0!", ENTITY_NAME, "invalidBasicPresentationsConfiguration");
             }
-            return;
         }
 
         // Check validity of graded presentation configuration
         if (gradingScale.getPresentationsNumber() != null || gradingScale.getPresentationsWeight() != null) {
+            // The gradingScale must belong to a course.
+            if (course == null) {
+                throw new BadRequestAlertException("You cannot set up graded presentations if the gradingScale does not belong to a course", ENTITY_NAME,
+                        "invalidCourseForGradedPresentationsConfiguration");
+            }
             // The presentationsNumber must be above 0. The presentationsWeight must be between 0 and 99.
             if (gradingScale.getPresentationsNumber() == null || gradingScale.getPresentationsNumber() < 1 || gradingScale.getPresentationsWeight() == null
                     || gradingScale.getPresentationsWeight() < 0 || gradingScale.getPresentationsWeight() > 99) {
@@ -309,11 +314,6 @@ public class GradingScaleResource {
                         "The number of presentations must be a whole number above 0 and the combined weight of all presentations must be between 0 and 99!", ENTITY_NAME,
                         "invalidGradedPresentationsConfiguration");
             }
-            // The presentationScore must be 0 or null
-            if (course != null && course.getPresentationScore() != null && course.getPresentationScore() != 0) {
-                throw new BadRequestAlertException("Presentations are already enabled for this course!", ENTITY_NAME, "invalidBasicPresentationIsEnabled");
-            }
-            return;
         }
     }
 }

@@ -745,6 +745,47 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void updateParticipation_exceedingPresentationNumber() throws Exception {
+        Course course = textExercise.getCourseViaExerciseGroupOrCourseMember();
+        course.setPresentationScore(0);
+
+        GradingScale gradingScale = database.generateGradingScale(2, new double[] { 0, 50, 100 }, true, 1, Optional.empty(), course, 1, 20.);
+        gradingScaleService.saveGradingScale(gradingScale);
+
+        StudentParticipation participation1 = ModelFactory.generateStudentParticipation(InitializationState.INITIALIZED, textExercise,
+                database.getUserByLogin(TEST_PREFIX + "student1"));
+        participation1 = participationRepo.save(participation1);
+
+        // SHOULD ADD FIRST PRESENTATION GRADE
+        participation1.setPresentationScore(100.0);
+
+        var actualParticipation1 = request.putWithResponseBody("/api/exercises/" + textExercise.getId() + "/participations", participation1, StudentParticipation.class,
+                HttpStatus.OK);
+        assertThat(actualParticipation1).as("The participation was updated").isNotNull();
+        assertThat(actualParticipation1.getPresentationScore()).as("Presentation score was set to 100").isEqualTo(100.0);
+
+        // SHOULD UPDATE FIRST PRESENTATION GRADE
+        participation1.setPresentationScore(80.0);
+
+        actualParticipation1 = request.putWithResponseBody("/api/exercises/" + textExercise.getId() + "/participations", participation1, StudentParticipation.class, HttpStatus.OK);
+        assertThat(actualParticipation1).as("The participation was updated").isNotNull();
+        assertThat(actualParticipation1.getPresentationScore()).as("Presentation score was set to 100").isEqualTo(80.0);
+
+        // SHOULD NOT ADD SECOND PRESENTATION GRADE
+        StudentParticipation participation2 = ModelFactory.generateStudentParticipation(InitializationState.INITIALIZED, modelingExercise,
+                database.getUserByLogin(TEST_PREFIX + "student1"));
+        participation2 = participationRepo.save(participation2);
+
+        participation2.setPresentationScore(100.0);
+
+        StudentParticipation actualParticipation2 = request.putWithResponseBody("/api/exercises/" + modelingExercise.getId() + "/participations", participation2,
+                StudentParticipation.class, HttpStatus.BAD_REQUEST);
+        assertThat(actualParticipation2).as("The participation was not updated").isNull();
+
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "tutor3", roles = "TA")
     void updateParticipation_notTutorInCourse() throws Exception {
         var participation = ModelFactory.generateStudentParticipation(InitializationState.INITIALIZED, textExercise, database.getUserByLogin(TEST_PREFIX + "student1"));

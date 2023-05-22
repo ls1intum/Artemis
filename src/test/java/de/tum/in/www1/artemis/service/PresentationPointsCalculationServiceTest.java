@@ -36,60 +36,16 @@ class PresentationPointsCalculationServiceTest extends AbstractSpringIntegration
 
     private Course course;
 
+    private GradingScale gradingScale;
+
+    private StudentParticipation studentParticipation;
+
     @BeforeEach
     void init() {
         database.addUsers(TEST_PREFIX, 1, 0, 0, 0);
         course = database.addEmptyCourse();
-    }
 
-    @Test
-    void calculateReachablePresentationPointsWithoutBaseReachablePoints() {
-        // GIVEN
-        GradingScale gradingScale = new GradingScale();
-        gradingScale.setPresentationsNumber(2);
-        gradingScale.setPresentationsWeight(20.0);
-        gradingScale.setCourse(course);
-        gradingScaleRepository.save(gradingScale);
-
-        // WHEN
-        var reachablePresentationPoints = presentationPointsCalculationService.calculateReachablePresentationPoints(gradingScale, 0.0);
-
-        // THEN
-        assertThat(reachablePresentationPoints).isZero();
-    }
-
-    @Test
-    void calculateReachablePresentationPointsWithoutGradingScale() {
-        // WHEN
-        var reachablePresentationPoints = presentationPointsCalculationService.calculateReachablePresentationPoints(null, 80.0);
-
-        // THEN
-        assertThat(reachablePresentationPoints).isZero();
-    }
-
-    @Test
-    void calculateReachablePresentationPoints() {
-        // GIVEN
-        GradingScale gradingScale = new GradingScale();
-        gradingScale.setPresentationsNumber(2);
-        gradingScale.setPresentationsWeight(20.0);
-        gradingScale.setCourse(course);
-        gradingScaleRepository.save(gradingScale);
-
-        // WHEN
-        var reachablePresentationPoints = presentationPointsCalculationService.calculateReachablePresentationPoints(gradingScale, 80.0);
-
-        // THEN
-        assertThat(reachablePresentationPoints).isEqualTo(20.0);
-    }
-
-    @Test
-    @WithMockUser(username = "student1", roles = "USER")
-    void calculatePresentationPoints() {
-        // GIVEN
-        GradingScale gradingScale = new GradingScale();
-        gradingScale.setPresentationsNumber(1);
-        gradingScale.setPresentationsWeight(20.0);
+        gradingScale = new GradingScale();
         gradingScale.setCourse(course);
         gradingScaleRepository.save(gradingScale);
 
@@ -99,14 +55,83 @@ class PresentationPointsCalculationServiceTest extends AbstractSpringIntegration
         exerciseRepository.save(exercise);
 
         User student = database.getUserByLogin(TEST_PREFIX + "student1");
-        StudentParticipation participation = database.addStudentParticipationForProgrammingExercise(exercise, student.getLogin());
-        participation.setPresentationScore(50.0);
-        studentParticipationRepository.save(participation);
+
+        studentParticipation = database.addStudentParticipationForProgrammingExercise(exercise, student.getLogin());
+        studentParticipationRepository.save(studentParticipation);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void calculateReachableAndAchievedPresentationPointsWithoutBaseReachablePoints() {
+        // GIVEN
+        gradingScale.setPresentationsNumber(2);
+        gradingScale.setPresentationsWeight(20.0);
+        gradingScaleRepository.save(gradingScale);
+        User student = database.getUserByLogin(TEST_PREFIX + "student1");
 
         // WHEN
+        var reachablePresentationPoints = presentationPointsCalculationService.calculateReachablePresentationPoints(gradingScale, 0.0);
+        var presentationPoints = presentationPointsCalculationService.calculatePresentationPointsForStudentId(gradingScale, student.getId(), 0.0);
+
+        // THEN
+        assertThat(reachablePresentationPoints).isZero();
+        assertThat(presentationPoints).isZero();
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void calculateReachableAndAchievedPresentationPointsWithoutGradingScale() {
+        // GIVEN
+        studentParticipation.setPresentationScore(50.0);
+        studentParticipationRepository.save(studentParticipation);
+        User student = database.getUserByLogin(TEST_PREFIX + "student1");
+
+        // WHEN
+        var reachablePresentationPoints = presentationPointsCalculationService.calculateReachablePresentationPoints(null, 80.0);
+        var presentationPoints = presentationPointsCalculationService.calculatePresentationPointsForStudentId(null, student.getId(), 20);
+
+        // THEN
+        assertThat(reachablePresentationPoints).isZero();
+        assertThat(presentationPoints).isZero();
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void calculateReachableAndAchievedPresentationPoints() {
+        // GIVEN
+        gradingScale.setPresentationsNumber(1);
+        gradingScale.setPresentationsWeight(20.0);
+        gradingScaleRepository.save(gradingScale);
+
+        User student = database.getUserByLogin(TEST_PREFIX + "student1");
+        studentParticipation.setPresentationScore(50.0);
+        studentParticipationRepository.save(studentParticipation);
+
+        // WHEN
+        var reachablePresentationPoints = presentationPointsCalculationService.calculateReachablePresentationPoints(gradingScale, 80.0);
         var presentationPoints = presentationPointsCalculationService.calculatePresentationPointsForStudentId(gradingScale, student.getId(), 20);
 
         // THEN
+        assertThat(reachablePresentationPoints).isEqualTo(20.0);
         assertThat(presentationPoints).isEqualTo(10.0);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void calculateAchievedPresentationPointsWithoutPresentations() {
+        // GIVEN
+        gradingScale.setPresentationsNumber(1);
+        gradingScale.setPresentationsWeight(20.0);
+        gradingScaleRepository.save(gradingScale);
+
+        User student = database.getUserByLogin(TEST_PREFIX + "student1");
+
+        // WHEN
+        var reachablePresentationPoints = presentationPointsCalculationService.calculateReachablePresentationPoints(gradingScale, 80.0);
+        var presentationPoints = presentationPointsCalculationService.calculatePresentationPointsForStudentId(gradingScale, student.getId(), 20);
+
+        // THEN
+        assertThat(reachablePresentationPoints).isEqualTo(20.0);
+        assertThat(presentationPoints).isEqualTo(0.0);
     }
 }

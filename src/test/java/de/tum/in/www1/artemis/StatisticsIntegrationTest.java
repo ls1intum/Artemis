@@ -7,6 +7,7 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -18,19 +19,14 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.TextExercise;
-import de.tum.in.www1.artemis.domain.TextSubmission;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.GraphType;
 import de.tum.in.www1.artemis.domain.enumeration.SpanType;
 import de.tum.in.www1.artemis.domain.enumeration.StatisticsView;
 import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.Post;
-import de.tum.in.www1.artemis.repository.ParticipantScoreRepository;
-import de.tum.in.www1.artemis.repository.TextExerciseRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.metis.AnswerPostRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.util.ModelFactory;
@@ -55,6 +51,12 @@ class StatisticsIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
     @Autowired
     private ParticipantScoreRepository participantScoreRepository;
+
+    @Autowired
+    private GradingScaleRepository gradingScaleRepository;
+
+    @Autowired
+    private StudentParticipationRepository studentParticipationRepository;
 
     private Course course;
 
@@ -173,6 +175,12 @@ class StatisticsIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         TextExercise laterTextExercise = database.createIndividualTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
         TextExercise earlierTextExercise = database.createIndividualTextExercise(course, pastTimestamp.minusDays(1), pastTimestamp.minusDays(1), pastTimestamp.minusDays(1));
 
+        GradingScale gradingScale = new GradingScale();
+        gradingScale.setPresentationsNumber(2);
+        gradingScale.setPresentationsWeight(20.0);
+        gradingScale.setCourse(course);
+        gradingScaleRepository.save(gradingScale);
+
         var laterTextExerciseId = laterTextExercise.getId();
         var earlierTextExerciseId = earlierTextExercise.getId();
         User student1 = userRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
@@ -189,12 +197,18 @@ class StatisticsIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         await().until(() -> participantScoreRepository.findAllByExercise(laterTextExercise).size() == 2);
         await().until(() -> participantScoreRepository.findAllByExercise(earlierTextExercise).size() == 2);
 
+        // Add presentation grades for student 1
+        studentParticipationRepository.getAllParticipationsOfUserInExercises(student1, Set.of(laterTextExercise), false).forEach(participation -> {
+            participation.setPresentationScore(100.0);
+            studentParticipationRepository.save(participation);
+        });
+
         Long courseId = course.getId();
         LinkedMultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
         parameters.add("courseId", "" + courseId);
         CourseManagementStatisticsDTO result = request.get("/api/management/statistics/course-statistics", HttpStatus.OK, CourseManagementStatisticsDTO.class, parameters);
 
-        assertThat(result.averageScoreOfCourse()).isEqualTo(57.5);
+        assertThat(result.averageScoreOfCourse()).isEqualTo(66.0);
         assertThat(result.averageScoresOfExercises()).hasSize(2);
 
         // take the second entry as the results are getting sorted for release dates

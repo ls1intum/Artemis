@@ -440,7 +440,8 @@ public class ParticipationResource {
 
                 long presentationCountForParticipant = studentParticipationRepository
                         .findByCourseIdAndStudentIdWithRelevantResult(course.getId(), participation.getParticipant().getId()).stream()
-                        .filter(studentParticipation -> studentParticipation.getPresentationScore() != null).count();
+                        .filter(studentParticipation -> studentParticipation.getPresentationScore() != null && !Objects.equals(studentParticipation.getId(), participation.getId()))
+                        .count();
                 if (presentationCountForParticipant >= gradingScale.get().getPresentationsNumber()) {
                     throw new BadRequestAlertException("Participant already gave the maximum number of presentations", ENTITY_NAME,
                             "invalid.presentations.maxNumberOfPresentationsExceeded",
