@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CUSTOM_ELEMENTS_SCHEMA, DebugElement, Directive, EventEmitter, Input, Output } from '@angular/core';
 import { PostingMarkdownEditorComponent } from 'app/shared/metis/posting-markdown-editor/posting-markdown-editor.component';
 import { BoldCommand } from 'app/shared/markdown-editor/commands/bold.command';
+import { MockProvider } from 'ng-mocks';
 import { ItalicCommand } from 'app/shared/markdown-editor/commands/italic.command';
 import { UnderlineCommand } from 'app/shared/markdown-editor/commands/underline.command';
 import { ReferenceCommand } from 'app/shared/markdown-editor/commands/reference.command';
@@ -15,6 +16,9 @@ import { MockMetisService } from '../../../../helpers/mocks/service/mock-metis-s
 import { ExerciseReferenceCommand } from 'app/shared/markdown-editor/commands/courseArtifactReferenceCommands/exerciseReferenceCommand';
 import { LectureAttachmentReferenceCommand } from 'app/shared/markdown-editor/commands/courseArtifactReferenceCommands/lectureAttachmentReferenceCommand';
 import { metisAnswerPostUser2, metisPostExerciseUser1 } from '../../../../helpers/sample/metis-sample-data';
+import { LectureService } from 'app/lecture/lecture.service';
+import { HttpResponse } from '@angular/common/http';
+import { of } from 'rxjs';
 import { ProfileToggleService } from 'app/shared/profile-toggle/profile-toggle.service';
 import { MockHttpService } from '../../../../helpers/mocks/service/mock-http.service';
 import { HttpClient } from '@angular/common/http';
@@ -32,12 +36,15 @@ describe('PostingsMarkdownEditor', () => {
     let fixture: ComponentFixture<PostingMarkdownEditorComponent>;
     let debugElement: DebugElement;
     let metisService: MetisService;
+    let lectureService: LectureService;
+    let findLectureWithDetailsSpy: jest.SpyInstance;
     let profileToggleService: ProfileToggleService;
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
             providers: [
                 { provide: MetisService, useClass: MockMetisService },
+                MockProvider(LectureService),
                 { provide: HttpClient, useClass: MockHttpService },
             ],
             declarations: [PostingMarkdownEditorComponent, MockMarkdownEditorDirective],
@@ -46,11 +53,14 @@ describe('PostingsMarkdownEditor', () => {
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(PostingMarkdownEditorComponent);
-                fixture.autoDetectChanges();
                 component = fixture.componentInstance;
                 debugElement = fixture.debugElement;
                 metisService = TestBed.inject(MetisService);
-                // TODO: Test the toggle correctly
+                lectureService = TestBed.inject(LectureService);
+                findLectureWithDetailsSpy = jest.spyOn(lectureService, 'findAllByCourseIdWithSlides');
+                const returnValue = of(new HttpResponse({ body: [], status: 200 }));
+                findLectureWithDetailsSpy.mockReturnValue(returnValue);
+                fixture.autoDetectChanges();
                 profileToggleService = TestBed.inject(ProfileToggleService);
                 const mockMarkdownEditorElement = fixture.debugElement.query(By.directive(MockMarkdownEditorDirective));
                 mockMarkdownEditorDirective = mockMarkdownEditorElement.injector.get(MockMarkdownEditorDirective) as MockMarkdownEditorDirective;
@@ -71,7 +81,7 @@ describe('PostingsMarkdownEditor', () => {
             new CodeBlockCommand(),
             new LinkCommand(),
             new ExerciseReferenceCommand(metisService),
-            new LectureAttachmentReferenceCommand(metisService, profileToggleService),
+            new LectureAttachmentReferenceCommand(metisService, lectureService, profileToggleService),
         ]);
     });
 

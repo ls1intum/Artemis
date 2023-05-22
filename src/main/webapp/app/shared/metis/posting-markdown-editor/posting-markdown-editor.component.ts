@@ -12,6 +12,7 @@ import { MarkdownEditorHeight } from 'app/shared/markdown-editor/markdown-editor
 import { MetisService } from 'app/shared/metis/metis.service';
 import { ExerciseReferenceCommand } from 'app/shared/markdown-editor/commands/courseArtifactReferenceCommands/exerciseReferenceCommand';
 import { LectureAttachmentReferenceCommand } from 'app/shared/markdown-editor/commands/courseArtifactReferenceCommands/lectureAttachmentReferenceCommand';
+import { LectureService } from 'app/lecture/lecture.service';
 import { ProfileToggleService } from 'app/shared/profile-toggle/profile-toggle.service';
 
 @Component({
@@ -35,7 +36,7 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
     content?: string;
     previewMode = false;
 
-    constructor(private cdref: ChangeDetectorRef, private metisService: MetisService, private profileToggleService: ProfileToggleService) {}
+    constructor(private cdref: ChangeDetectorRef, private metisService: MetisService, private lectureService: LectureService, private profileToggleService: ProfileToggleService) {}
 
     /**
      * on initialization: sets commands that will be available as formatting buttons during creation/editing of postings
@@ -50,7 +51,7 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
             new CodeBlockCommand(),
             new LinkCommand(),
             new ExerciseReferenceCommand(this.metisService),
-            new LectureAttachmentReferenceCommand(this.metisService, this.profileToggleService),
+            new LectureAttachmentReferenceCommand(this.metisService, this.lectureService, this.profileToggleService),
         ];
     }
 
