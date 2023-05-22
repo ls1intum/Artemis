@@ -141,7 +141,6 @@ public class DataExportService {
         dataExport.setDataExportState(DataExportState.EMAIL_SENT);
         dataExport = dataExportRepository.save(dataExport);
         return dataExport;
-
     }
 
     /**
@@ -414,11 +413,13 @@ public class DataExportService {
     }
 
     private void createCommunicationExport(List<Post> posts, List<AnswerPost> answerPosts, List<Reaction> reactions, long courseId, Path courseDir) throws IOException {
-        var postsInCourse = posts.stream().filter(post -> courseId == post.getCoursePostingBelongsTo().getId()).toList();
-        var answerPostsInCourse = answerPosts.stream().filter(answerPost -> courseId == answerPost.getCoursePostingBelongsTo().getId()).toList();
-        var postReactionsInCourse = reactions.stream().filter(reaction -> reaction.getPost() != null)
+        var postsInCourse = posts.stream().filter(post -> post.getCoursePostingBelongsTo() != null).filter(post -> courseId == post.getCoursePostingBelongsTo().getId()).toList();
+        var answerPostsInCourse = answerPosts.stream().filter(post -> post.getCoursePostingBelongsTo() != null)
+                .filter(answerPost -> courseId == answerPost.getCoursePostingBelongsTo().getId()).toList();
+        var postReactionsInCourse = reactions.stream().filter(reaction -> reaction.getPost() != null).filter(reaction -> reaction.getPost().getCoursePostingBelongsTo() != null)
                 .filter(reaction -> courseId == reaction.getPost().getCoursePostingBelongsTo().getId()).toList();
         var answerPostReactionsInCourse = reactions.stream().filter(reaction -> reaction.getAnswerPost() != null)
+                .filter(reaction -> reaction.getAnswerPost().getCoursePostingBelongsTo() != null)
                 .filter(reaction -> courseId == reaction.getAnswerPost().getCoursePostingBelongsTo().getId()).toList();
         String[] headers = { "content/emoji", "creation date", "post content reaction/reply belongs to" };
         CSVFormat csvFormat = CSVFormat.DEFAULT.builder().setHeader(headers).build();
