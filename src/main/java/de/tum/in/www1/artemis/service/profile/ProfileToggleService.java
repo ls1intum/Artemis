@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service.feature;
+package de.tum.in.www1.artemis.service.profile;
 
 import java.util.Set;
 import java.util.UUID;

@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service.feature;
+package de.tum.in.www1.artemis.service.profile;
 
 import org.springframework.boot.actuate.info.Info;
 import org.springframework.boot.actuate.info.InfoContributor;
