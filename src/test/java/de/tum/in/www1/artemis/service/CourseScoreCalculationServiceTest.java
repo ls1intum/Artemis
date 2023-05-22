@@ -40,6 +40,9 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationBambooB
     @Autowired
     private ResultRepository resultRepository;
 
+    @Autowired
+    private GradingScaleRepository gradingScaleRepository;
+
     private Course course;
 
     @BeforeEach
@@ -198,6 +201,53 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationBambooB
         assertThat(programmingExerciseScores.studentScores().absoluteScore()).isZero();
         assertThat(programmingExerciseScores.studentScores().relativeScore()).isZero();
         assertThat(programmingExerciseScores.studentScores().currentRelativeScore()).isZero();
+
+        CourseScoresDTO quizExerciseScores = courseForDashboard.quizScores();
+        assertThat(quizExerciseScores.maxPoints()).isEqualTo(5.0);
+        assertThat(quizExerciseScores.reachablePoints()).isEqualTo(5.0);
+        assertThat(quizExerciseScores.studentScores().absoluteScore()).isZero();
+        assertThat(quizExerciseScores.studentScores().relativeScore()).isZero();
+        assertThat(quizExerciseScores.studentScores().currentRelativeScore()).isZero();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getScoresAndParticipationResultsForPastCourseWithGradedPresentations() {
+        Course pastCourse = database.createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(TEST_PREFIX, true);
+        pastCourse.setPresentationScore(null);
+
+        GradingScale gradingScale = new GradingScale();
+        gradingScale.setPresentationsNumber(5);
+        gradingScale.setPresentationsWeight(37.5);
+        gradingScale.setCourse(pastCourse);
+        gradingScaleRepository.save(gradingScale);
+
+        User student = database.getUserByLogin(TEST_PREFIX + "student1");
+
+        pastCourse.getExercises().forEach(exercise -> {
+            exercise.getStudentParticipations().forEach(participation -> {
+                participation.setPresentationScore(100.0);
+                studentParticipationRepository.save(participation);
+            });
+        });
+
+        CourseForDashboardDTO courseForDashboard = courseScoreCalculationService.getScoresAndParticipationResults(pastCourse, gradingScale, student.getId());
+        assertThat(courseForDashboard.course()).isEqualTo(pastCourse);
+        CourseScoresDTO totalCourseScores = courseForDashboard.totalScores();
+        assertThat(totalCourseScores.maxPoints()).isEqualTo(8.0);
+        assertThat(totalCourseScores.reachablePoints()).isEqualTo(8.0);
+        assertThat(totalCourseScores.reachablePresentationPoints()).isEqualTo(3.0);
+        assertThat(totalCourseScores.studentScores().absoluteScore()).isEqualTo(3.0);
+        assertThat(totalCourseScores.studentScores().relativeScore()).isEqualTo(37.5);
+        assertThat(totalCourseScores.studentScores().currentRelativeScore()).isEqualTo(37.5);
+
+        CourseScoresDTO programmingExerciseScores = courseForDashboard.programmingScores();
+        assertThat(programmingExerciseScores.maxPoints()).isZero();
+        assertThat(programmingExerciseScores.reachablePoints()).isZero();
+        assertThat(programmingExerciseScores.studentScores().absoluteScore()).isZero();
+        assertThat(programmingExerciseScores.studentScores().relativeScore()).isZero();
+        assertThat(programmingExerciseScores.studentScores().currentRelativeScore()).isZero();
+        assertThat(programmingExerciseScores.studentScores().presentationScore()).isZero();
 
         CourseScoresDTO quizExerciseScores = courseForDashboard.quizScores();
         assertThat(quizExerciseScores.maxPoints()).isEqualTo(5.0);
