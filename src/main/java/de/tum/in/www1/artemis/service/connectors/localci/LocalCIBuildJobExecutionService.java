@@ -167,7 +167,7 @@ public class LocalCIBuildJobExecutionService {
 
         localCIContainerService.runScriptInContainer(containerId);
 
-        log.info("Finished running the build script in container for build job " + containerName);
+        log.info("Finished running the build script in container " + containerName);
 
         ZonedDateTime buildCompletedDate = ZonedDateTime.now();
 

@@ -122,7 +122,7 @@ public class LocalCIContainerService {
         });
 
         try {
-            log.info("Started running the build script for build job " + containerId);
+            log.info("Started running the build script for build job in container with id " + containerId);
             // Block until the latch reaches 0 or until the thread is interrupted.
             latch.await();
         }
