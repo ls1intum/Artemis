@@ -216,7 +216,6 @@ export class UserManagementUpdateComponent implements OnInit {
     onSelected(event: MatAutocompleteSelectedEvent): void {
         const groupString = (event.option.viewValue || '').trim();
         this.addGroup(this.user, groupString);
-
         this.groupInput.nativeElement.value = '';
     }
 

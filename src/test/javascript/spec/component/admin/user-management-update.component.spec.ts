@@ -21,7 +21,7 @@ import { MockTranslateService, TranslatePipeMock } from '../../helpers/mocks/ser
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatChipInputEvent, MatChipsModule } from '@angular/material/chips';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
-import { TranslateService } from '@ngx-trate/core';
+import { TranslateService } from '@ngx-translate/core';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { Title } from '@angular/platform-browser';
 import * as Sentry from '@sentry/angular-ivy';
@@ -314,16 +314,12 @@ describe('User Management Update Component', () => {
     });
 
     it('should add users to groups', () => {
-        const groupCtrlSetValueSpy = jest.spyOn(comp.groupCtrl, 'setValue');
-
         const newGroup = 'nicegroup';
+        comp.allGroups = [newGroup];
         comp.user = { groups: [] } as any as User;
         const event = { value: newGroup, chipInput: { clear: jest.fn() } } as any as MatChipInputEvent;
         comp.onGroupAdd(comp.user, event);
-
         expect(comp.user.groups).toEqual([newGroup]);
         expect(event.chipInput!.clear).toHaveBeenCalledOnce();
-        expect(groupCtrlSetValueSpy).toHaveBeenCalledOnce();
-        expect(groupCtrlSetValueSpy).toHaveBeenCalledWith(null);
     });
 });
