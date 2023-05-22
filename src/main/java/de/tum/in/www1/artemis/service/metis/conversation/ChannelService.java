@@ -248,6 +248,13 @@ public class ChannelService {
         conversationService.notifyAllConversationMembersAboutUpdate(updatedChannel);
     }
 
+    /**
+     * Create a channel for a lecture
+     *
+     * @param lecture     the lecture to create the channel for
+     * @param channelName the name of the channel
+     * @return the created channel
+     */
     public Channel createLectureChannel(Lecture lecture, @NotNull String channelName) {
         Channel channelToCreate = new Channel();
         channelToCreate.setName(channelName);
@@ -258,6 +265,13 @@ public class ChannelService {
         return createChannel(lecture.getCourse(), channelToCreate, Optional.of(userRepository.getUserWithGroupsAndAuthorities()));
     }
 
+    /**
+     * Create a channel for an exercise
+     *
+     * @param exercise    the exercise to create the channel for
+     * @param channelName the name of the channel
+     * @return the created channel
+     */
     public Channel createExerciseChannel(Exercise exercise, @NotNull String channelName) {
         Channel channelToCreate = new Channel();
         channelToCreate.setName(channelName);
@@ -268,6 +282,12 @@ public class ChannelService {
         return createChannel(exercise.getCourseViaExerciseGroupOrCourseMember(), channelToCreate, Optional.of(userRepository.getUserWithGroupsAndAuthorities()));
     }
 
+    /**
+     * Create a channel for an exam
+     *
+     * @param exam the exam to create the channel for
+     * @return the created channel
+     */
     public Channel createExamChannel(Exam exam) {
         Channel channelToCreate = new Channel();
         channelToCreate.setName(exam.getTitle().toLowerCase().replace(' ', '-'));
@@ -278,15 +298,27 @@ public class ChannelService {
         return createChannel(exam.getCourse(), channelToCreate, Optional.of(userRepository.getUserWithGroupsAndAuthorities()));
     }
 
+    /**
+     * Update the channel of a lecture
+     *
+     * @param originalLecture the original lecture
+     * @param updatedLecture  the updated lecture
+     * @param channelName     the new channel name
+     */
     public void updateLectureChannel(Lecture originalLecture, Lecture updatedLecture, String channelName) {
         if (originalLecture.getChannel() == null) {
             return;
         }
         Channel updatedChannel = updateChannelName(originalLecture.getChannel().getId(), channelName);
         updatedLecture.setChannel(updatedChannel);
-
     }
 
+    /**
+     * Update the channel of an exercise
+     *
+     * @param originalExercise the original exercise
+     * @param updatedExercise  the updated exercise
+     */
     public void updateExerciseChannel(Exercise originalExercise, Exercise updatedExercise) {
         if (originalExercise.getChannel() == null) {
             return;
@@ -295,6 +327,13 @@ public class ChannelService {
         updatedExercise.setChannel(updatedChannel);
     }
 
+    /**
+     * Update the channel name
+     *
+     * @param channelId      the id of the channel to update
+     * @param newChannelName the new channel name
+     * @return the updated channel
+     */
     private Channel updateChannelName(Long channelId, String newChannelName) {
         Channel originalChannel = channelRepository.findByIdElseThrow(channelId);
 
