@@ -13,7 +13,7 @@ export class ExerciseChatbotComponent implements OnDestroy {
     public chatAccepted = 'false';
     public buttonDisabled = false;
     private dialogRef: MatDialogRef<ExerciseChatWidgetComponent> | null = null;
-
+    private chatOpen = false;
     // Icons
     faCommentDots = faCommentDots;
 
@@ -26,7 +26,10 @@ export class ExerciseChatbotComponent implements OnDestroy {
     }
 
     handleButtonClick() {
-        if (this.chatAccepted === 'true') {
+        if (this.chatOpen) {
+            this.dialogRef!.close();
+            this.chatOpen = false;
+        } else if (this.chatAccepted === 'true') {
             this.openChat();
         } else {
             this.openDialog();
@@ -46,6 +49,7 @@ export class ExerciseChatbotComponent implements OnDestroy {
 
     openChat() {
         if (!this.buttonDisabled) {
+            this.chatOpen = true;
             this.dialogRef = this.dialog.open(ExerciseChatWidgetComponent, {
                 hasBackdrop: false,
                 position: { bottom: '0px', right: '0px' },
