@@ -39,9 +39,8 @@ describe('DataExportService', () => {
         dataExport.requestDate = dayjs();
         dataExport.creationDate = dayjs();
         accountService.userIdentity = dataExport.user;
-        let req;
         service.requestDataExport().subscribe((resp) => expect(resp).toEqual(dataExport));
-        req = httpMock.expectOne({ method: 'PUT', url: `api/1/data-export` });
+        const req = httpMock.expectOne({ method: 'PUT', url: `api/1/data-export` });
         req.flush(dataExport);
         tick();
     }));

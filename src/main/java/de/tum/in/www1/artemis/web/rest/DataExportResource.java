@@ -50,7 +50,7 @@ public class DataExportResource {
         }
         catch (Exception e) {
             log.error("Could not create data export", e);
-            throw new InternalServerErrorException("Could not create data export");
+            throw new InternalServerErrorException("Could not create data export:" + e.getMessage());
         }
 
     }
