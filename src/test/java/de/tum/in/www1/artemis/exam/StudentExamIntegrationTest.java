@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.exam;
 import static de.tum.in.www1.artemis.util.SensitiveInformationUtil.*;
 import static de.tum.in.www1.artemis.util.TestConstants.*;
 import static org.assertj.core.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
@@ -2296,7 +2295,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         StudentExam studentExamReceived = request.get(
                 "/api/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/student-exams/" + studentExamForTestExam1.getId() + "/conduction", HttpStatus.OK,
                 StudentExam.class);
-        assertEquals(studentExamForTestExam1, studentExamReceived);
+        assertThat(studentExamReceived).isEqualTo(studentExamForTestExam1);
     }
 
     // StudentExamResource - getStudentExamsForCoursePerUser
@@ -2322,7 +2321,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     void testGetStudentExamsForCoursePerUser_success_noStudentExams() throws Exception {
         course2 = database.addEmptyCourse();
         List<StudentExam> studentExamListReceived = request.getList("/api/courses/" + course2.getId() + "/test-exams-per-user", HttpStatus.OK, StudentExam.class);
-        assertEquals(0, studentExamListReceived.size());
+        assertThat(studentExamListReceived).isEmpty();
     }
 
     // StudentExamResource - getStudentExamForTestExamForSummary
@@ -2381,7 +2380,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         StudentExam studentExamReceived = request.get(
                 "/api/courses/" + course1.getId() + "/exams/" + testExam2.getId() + "/student-exams/" + studentExamForTestExam2.getId() + "/summary", HttpStatus.OK,
                 StudentExam.class);
-        assertEquals(studentExamForTestExam2, studentExamReceived);
+        assertThat(studentExamReceived).isEqualTo(studentExamForTestExam2);
     }
 
     // StudentExamRessource - GetStudentExamForConduction
@@ -2416,7 +2415,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     void testGetStudentExamForConduction_successful() throws Exception {
         StudentExam studentExamRetrieved = request.get("/api/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/student-exams/" + studentExam1.getId() + "/conduction",
                 HttpStatus.OK, StudentExam.class);
-        assertEquals(studentExam1, studentExamRetrieved);
+        assertThat(studentExamRetrieved).isEqualTo(studentExam1);
     }
 
     @Test
@@ -2450,8 +2449,8 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         // Step 1: Call /start
         StudentExam studentExamForStart = request.get("/api/courses/" + course1.getId() + "/exams/" + testExamWithExercises.getId() + "/start", HttpStatus.OK, StudentExam.class);
 
-        assertEquals(studentExamForStart.getUser(), student1);
-        assertEquals(studentExamForStart.getExam().getId(), testExamWithExercises.getId());
+        assertThat(studentExamForStart.getUser()).isEqualTo(student1);
+        assertThat(studentExamForStart.getExam().getId()).isEqualTo(testExamWithExercises.getId());
         assertThat(studentExamForStart.isStarted()).isNull();
         assertThat(studentExamForStart.isSubmitted()).isFalse();
         assertThat(studentExamForStart.getStartedDate()).isNull();
@@ -2463,9 +2462,9 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                 "/api/courses/" + course1.getId() + "/exams/" + testExamWithExercises.getId() + "/student-exams/" + studentExamForStart.getId() + "/conduction", HttpStatus.OK,
                 StudentExam.class);
 
-        assertEquals(studentExamForStart.getId(), studentExamForConduction.getId());
-        assertEquals(studentExamForConduction.getUser(), student1);
-        assertEquals(studentExamForConduction.getExam().getId(), testExamWithExercises.getId());
+        assertThat(studentExamForConduction.getId()).isEqualTo(studentExamForStart.getId());
+        assertThat(studentExamForConduction.getUser()).isEqualTo(student1);
+        assertThat(studentExamForConduction.getExam().getId()).isEqualTo(testExamWithExercises.getId());
         assertThat(studentExamForConduction.isStarted()).isTrue();
         assertThat(studentExamForConduction.isSubmitted()).isFalse();
         // Acceptance range, startedDate is to be set to now()

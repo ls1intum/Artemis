@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.ByteArrayOutputStream;
 import java.nio.file.Path;
@@ -244,7 +243,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         Lecture lecture = database.createCourseWithLecture(true);
 
         MockMultipartFile file = new MockMultipartFile("file", "filename2.png", "application/json", "some data".getBytes());
-        AttachmentUnit attachmentUnit = uploadAttachmentUnit(file, lecture.getId(), HttpStatus.CREATED);
+        AttachmentUnit attachmentUnit = uploadAttachmentUnit(file, HttpStatus.CREATED);
         database.addLectureUnitsToLecture(lecture, Set.of(attachmentUnit));
 
         String attachmentPath = attachmentUnit.getAttachment().getLink();
@@ -345,8 +344,6 @@ class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testGetLecturePdfAttachmentsMerged_InvalidLectureId() throws Exception {
-        Lecture lecture = createLectureWithLectureUnits();
-
         request.get("/api/files/attachments/lecture/" + 999999999 + "/merge-pdf", HttpStatus.NOT_FOUND, byte[].class);
     }
 
@@ -377,7 +374,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         assertThat(receivedFile).isNotEmpty();
         try (PDDocument mergedDoc = PDDocument.load(receivedFile)) {
-            assertEquals(expectedPages, mergedDoc.getNumberOfPages());
+            assertThat(mergedDoc.getNumberOfPages()).isEqualTo(expectedPages);
         }
     }
 
@@ -393,8 +390,6 @@ class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         lecture.setStartDate(ZonedDateTime.now().minusHours(1));
         lectureRepo.save(lecture);
 
-        Long lectureId = lecture.getId();
-
         // create pdf file 1
         AttachmentUnit unit1;
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream(); PDDocument doc1 = new PDDocument()) {
@@ -403,12 +398,12 @@ class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
             doc1.addPage(new PDPage());
             doc1.save(outputStream);
             MockMultipartFile file1 = new MockMultipartFile("file", "file.pdf", "application/json", outputStream.toByteArray());
-            unit1 = uploadAttachmentUnit(file1, lectureId, expectedStatus);
+            unit1 = uploadAttachmentUnit(file1, expectedStatus);
         }
 
         // create image file
         MockMultipartFile file2 = new MockMultipartFile("file", "filename2.png", "application/json", "some text".getBytes());
-        AttachmentUnit unit2 = uploadAttachmentUnit(file2, lectureId, expectedStatus);
+        AttachmentUnit unit2 = uploadAttachmentUnit(file2, expectedStatus);
 
         // create pdf file 3
         AttachmentUnit unit3;
@@ -417,7 +412,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
             doc2.addPage(new PDPage());
             doc2.save(outputStream);
             MockMultipartFile file3 = new MockMultipartFile("file", "filename3.pdf", "application/json", outputStream.toByteArray());
-            unit3 = uploadAttachmentUnit(file3, lectureId, expectedStatus);
+            unit3 = uploadAttachmentUnit(file3, expectedStatus);
         }
 
         lecture = database.addLectureUnitsToLecture(lecture, Set.of(unit1, unit2, unit3));
@@ -425,8 +420,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         return lecture;
     }
 
-    private AttachmentUnit uploadAttachmentUnit(MockMultipartFile file, Long lectureId, HttpStatus expectedStatus) throws Exception {
-        Lecture lecture = lectureRepo.findByIdWithLectureUnits(lectureId).get();
+    private AttachmentUnit uploadAttachmentUnit(MockMultipartFile file, HttpStatus expectedStatus) throws Exception {
 
         AttachmentUnit attachmentUnit = database.createAttachmentUnit(false);
 
