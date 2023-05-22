@@ -1054,6 +1054,7 @@ public class FileService implements DisposableBean {
      * create a directory at a given path
      *
      * @param path the original path, e.g. /opt/artemis/repos-download
+     * @return the path to the created directory
      */
     public Path createDirectory(Path path) {
         try {

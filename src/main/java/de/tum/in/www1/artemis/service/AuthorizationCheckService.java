@@ -475,7 +475,6 @@ public class AuthorizationCheckService {
      * @param dataExport the data export that needs to be checked
      * @throws AccessForbiddenException if logged-in user isn't the owner of the data export
      */
-
     public void currentlyLoggedInUserIsOwnerOfDataExportElseThrow(@NotNull DataExport dataExport) {
         if (!currentlyLoggedInUserIsOwnerOfDataExport(dataExport)) {
             throw new AccessForbiddenException("data export", dataExport.getId());

@@ -11,8 +11,6 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import javax.annotation.Nullable;
-
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.io.FileUtils;
@@ -81,8 +79,8 @@ public class DataExportService {
 
     private final DragAndDropQuizAnswerConversionService dragAndDropQuizAnswerConversionService;
 
-    // nullable in the constructor because otherwise the application doesn't start if the apollon profile is not set
-    private final ApollonConversionService apollonConversionService;
+    // Optional because otherwise the application doesn't start if the apollon profile is not set
+    private final Optional<ApollonConversionService> apollonConversionService;
 
     private Path workingDirectory;
 
@@ -97,7 +95,7 @@ public class DataExportService {
     public DataExportService(CourseRepository courseRepository, UserRepository userRepository, AuthorizationCheckService authorizationCheckService, ZipFileService zipFileService,
             ProgrammingExerciseExportService programmingExerciseExportService, DataExportRepository dataExportRepository, QuizQuestionRepository quizQuestionRepository,
             QuizSubmissionRepository quizSubmissionRepository, ExerciseRepository exerciseRepository, DragAndDropQuizAnswerConversionService dragAndDropQuizAnswerConversionService,
-            @Nullable ApollonConversionService apollonConversionService, FileService fileService, PostRepository postRepository, AnswerPostRepository answerPostRepository,
+            Optional<ApollonConversionService> apollonConversionService, FileService fileService, PostRepository postRepository, AnswerPostRepository answerPostRepository,
             ReactionRepository reactionRepository) {
         this.courseRepository = courseRepository;
         this.userRepository = userRepository;
@@ -151,8 +149,10 @@ public class DataExportService {
      * @param userId       the id of the user for which to download the data export
      * @param dataExportId the id of the data export to download
      * @return the file path where the data export is stored
+     * @throws de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException  if the data export or the user could not be found
+     * @throws de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException if the user is not allowed to download the data export
      */
-    public String downloadDataExport(long userId, long dataExportId) {
+    public Path downloadDataExport(long userId, long dataExportId) {
         var dataExport = dataExportRepository.findByIdElseThrow(dataExportId);
         var user = userRepository.findByIdElseThrow(userId);
         // check data export belongs to specified user
@@ -168,8 +168,7 @@ public class DataExportService {
         dataExport.setDownloadDate(ZonedDateTime.now());
         dataExport.setDataExportState(DataExportState.DOWNLOADED);
         dataExport = dataExportRepository.save(dataExport);
-        return dataExport.getFilePath();
-
+        return Path.of(dataExport.getFilePath());
     }
 
     /**
@@ -179,7 +178,6 @@ public class DataExportService {
      * @param user the user for which to create the data export
      * @return the path to the created data export
      **/
-
     private Path createDataExport(User user) throws IOException {
         // retrieve all posts, answer posts, reactions of the user and filter them by course later to avoid additional database calls
         var posts = postRepository.findPostsByAuthorId(user.getId());
@@ -210,7 +208,6 @@ public class DataExportService {
         }
         addGeneralUserInformation(user);
         return createDataExportZipFile(user.getLogin());
-
     }
 
     private void createExportForQuizExercises(Set<QuizExercise> quizExercises, Path courseDir) throws IOException {
@@ -461,12 +458,12 @@ public class DataExportService {
             log.warn("Cannot include modeling submission content in data export because content is null for submission with id: {}", modelingSubmission.getId());
             return;
         }
-        if (apollonConversionService == null) {
+        if (apollonConversionService.isEmpty()) {
             log.warn("Cannot include modeling submission content in data export because apollon profile is not active");
             return;
         }
 
-        try (var modelAsPdf = apollonConversionService.convertModel(modelingSubmission.getModel())) {
+        try (var modelAsPdf = apollonConversionService.get().convertModel(modelingSubmission.getModel())) {
             Files.write(outputDir.resolve("submission_" + modelingSubmission.getId() + PDF_FILE_EXTENSION), modelAsPdf.readAllBytes());
         }
 

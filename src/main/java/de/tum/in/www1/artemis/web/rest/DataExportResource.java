@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 
@@ -67,7 +66,7 @@ public class DataExportResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Resource> downloadDataExport(@PathVariable long userId, @PathVariable long dataExportId) {
         var dataExportPath = dataExportService.downloadDataExport(userId, dataExportId);
-        var finalZipFile = new File(dataExportPath);
+        var finalZipFile = dataExportPath.toFile();
         InputStreamResource resource;
         try {
             resource = new InputStreamResource(new FileInputStream(finalZipFile));

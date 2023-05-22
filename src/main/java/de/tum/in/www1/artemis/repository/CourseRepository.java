@@ -272,7 +272,11 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     @Query("""
             SELECT c
             FROM Course c
-            WHERE (:isAdmin = TRUE OR c.studentGroupName IN :userGroups OR c.teachingAssistantGroupName IN :userGroups OR c.editorGroupName IN :userGroups OR c.instructorGroupName IN :userGroups)
+            WHERE (:isAdmin = TRUE
+                   OR c.studentGroupName IN :userGroups
+                   OR c.teachingAssistantGroupName IN :userGroups
+                   OR c.editorGroupName IN :userGroups
+                   OR c.instructorGroupName IN :userGroups)
             """)
     Set<Course> getAllCoursesUserIsMemberOf(@Param("isAdmin") boolean isAdmin, @Param("userGroups") Set<String> userGroups);
 

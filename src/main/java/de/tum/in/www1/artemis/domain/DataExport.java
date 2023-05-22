@@ -15,7 +15,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @Entity
 @Table(name = "data_export")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class DataExport extends DomainObject {
 
