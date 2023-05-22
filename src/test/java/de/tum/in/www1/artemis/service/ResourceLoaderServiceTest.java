@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
@@ -64,7 +63,7 @@ class ResourceLoaderServiceTest extends AbstractSpringIntegrationBambooBitbucket
         try (InputStream inputStream = resourceLoaderService.getResource(javaPath).getInputStream()) {
             String fileContent = IOUtils.toString(inputStream, Charset.defaultCharset());
 
-            assertEquals("classpath", fileContent.trim());
+            assertThat(fileContent.trim()).isEqualTo("classpath");
         }
     }
 
@@ -74,7 +73,7 @@ class ResourceLoaderServiceTest extends AbstractSpringIntegrationBambooBitbucket
         try (InputStream inputStream = resourceLoaderService.getResource(jenkinsPath).getInputStream()) {
             String fileContent = IOUtils.toString(inputStream, Charset.defaultCharset());
 
-            assertEquals("filesystem", fileContent.trim());
+            assertThat(fileContent.trim()).isEqualTo("filesystem");
         }
     }
 
@@ -83,7 +82,7 @@ class ResourceLoaderServiceTest extends AbstractSpringIntegrationBambooBitbucket
         try (InputStream inputStream = resourceLoaderService.getResource(jenkinsPath).getInputStream()) {
             String fileContent = IOUtils.toString(inputStream, Charset.defaultCharset());
 
-            assertEquals("classpath", fileContent.trim());
+            assertThat(fileContent.trim()).isEqualTo("classpath");
         }
     }
 
