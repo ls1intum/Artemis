@@ -340,7 +340,6 @@ public class ChannelService {
         // Update channel name if necessary
         if (!newChannelName.equals(originalChannel.getName())) {
             originalChannel.setName(newChannelName);
-            channelIsValidOrThrow(originalChannel.getCourse().getId(), originalChannel);
             return channelRepository.save(originalChannel);
         }
         else {
