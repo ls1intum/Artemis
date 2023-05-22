@@ -421,6 +421,20 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetExerciseDetails_withExamExercise_asStudent() throws Exception {
+        Exercise exercise = database.addCourseExamExerciseGroupWithOneProgrammingExercise();
+        request.get("/api/exercises/" + exercise.getId() + "/details", HttpStatus.FORBIDDEN, Exercise.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testGetExerciseDetails_withExamExercise_asTutor() throws Exception {
+        Exercise exercise = database.addCourseExamExerciseGroupWithOneProgrammingExercise();
+        request.get("/api/exercises/" + exercise.getId() + "/details", HttpStatus.OK, Exercise.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void filterForCourseDashboard_assessmentDueDate_notPassed() {
         Course course = database.createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(TEST_PREFIX, false);
         for (Exercise exercise : course.getExercises()) {
