@@ -2,7 +2,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { of } from 'rxjs';
-
 import { ArtemisTestModule } from '../../test.module';
 import { FileUploadExerciseComponent } from 'app/exercises/file-upload/manage/file-upload-exercise.component';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
@@ -14,17 +13,12 @@ import { Course } from 'app/entities/course.model';
 import { ExerciseFilter } from 'app/entities/exercise-filter.model';
 import { FileUploadExerciseService } from 'app/exercises/file-upload/manage/file-upload-exercise.service';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
-import { ExerciseType } from 'app/entities/exercise.model';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
-import { ExerciseImportWrapperComponent } from 'app/exercises/shared/import/exercise-import-wrapper/exercise-import-wrapper.component';
 
 describe('FileUploadExercise Management Component', () => {
     let comp: FileUploadExerciseComponent;
     let fixture: ComponentFixture<FileUploadExerciseComponent>;
     let service: CourseExerciseService;
     let fileUploadExerciseService: FileUploadExerciseService;
-    let modalService: NgbModal;
 
     const course: Course = { id: 123 } as Course;
     const fileUploadExercise = new FileUploadExercise(course, undefined);
@@ -41,7 +35,6 @@ describe('FileUploadExercise Management Component', () => {
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: NgbModal, useClass: MockNgbModalService },
             ],
         })
             .overrideTemplate(FileUploadExerciseComponent, '')
@@ -51,7 +44,6 @@ describe('FileUploadExercise Management Component', () => {
         comp = fixture.componentInstance;
         service = TestBed.inject(CourseExerciseService);
         fileUploadExerciseService = TestBed.inject(FileUploadExerciseService);
-        modalService = TestBed.inject(NgbModal);
 
         comp.fileUploadExercises = [fileUploadExercise];
     });

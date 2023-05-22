@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ExerciseType } from 'app/entities/exercise.model';
 import { of, throwError } from 'rxjs';
 import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
@@ -14,10 +13,7 @@ import { MockTranslateService } from '../../helpers/mocks/service/mock-translate
 import { Course } from 'app/entities/course.model';
 import { ExerciseFilter } from 'app/entities/exercise-filter.model';
 import { AlertService } from 'app/core/util/alert.service';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { ExerciseImportWrapperComponent } from 'app/exercises/shared/import/exercise-import-wrapper/exercise-import-wrapper.component';
 
 describe('QuizExercise Management Component', () => {
     let comp: QuizExerciseComponent;
@@ -25,7 +21,6 @@ describe('QuizExercise Management Component', () => {
     let quizExerciseService: QuizExerciseService;
     let exerciseService: ExerciseService;
     let alertService: AlertService;
-    let modalService: NgbModal;
 
     const course = { id: 123 } as Course;
     const quizExercise = new QuizExercise(course, undefined);
@@ -44,7 +39,6 @@ describe('QuizExercise Management Component', () => {
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: NgbModal, useClass: MockNgbModalService },
             ],
         })
             .overrideTemplate(QuizExerciseComponent, '')
@@ -55,7 +49,6 @@ describe('QuizExercise Management Component', () => {
         quizExerciseService = fixture.debugElement.injector.get(QuizExerciseService);
         exerciseService = fixture.debugElement.injector.get(ExerciseService);
         alertService = fixture.debugElement.injector.get(AlertService);
-        modalService = fixture.debugElement.injector.get(NgbModal);
 
         comp.course = course;
         comp.quizExercises = [quizExercise];
