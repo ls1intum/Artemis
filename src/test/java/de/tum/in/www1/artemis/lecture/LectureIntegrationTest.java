@@ -14,7 +14,9 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.lecture.*;
+import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.LectureDTO;
 
@@ -33,6 +35,9 @@ class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
 
     @Autowired
     private AttachmentRepository attachmentRepository;
+
+    @Autowired
+    ChannelRepository channelRepository;
 
     private Attachment attachmentDirectOfLecture;
 
@@ -107,14 +112,18 @@ class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
         lecture.setTitle("loremIpsum");
         lecture.setCourse(course);
         lecture.setDescription("loremIpsum");
-        LectureDTO lectureDTO = new LectureDTO(lecture, "test");
+        LectureDTO lectureDTO = new LectureDTO(lecture, lecture.getTitle());
         Lecture returnedLecture = request.postWithResponseBody("/api/lectures", lectureDTO, Lecture.class, HttpStatus.CREATED);
+
+        Optional<Channel> channel = channelRepository.findById(returnedLecture.getChannel().getId());
 
         assertThat(returnedLecture).isNotNull();
         assertThat(returnedLecture.getId()).isNotNull();
         assertThat(returnedLecture.getTitle()).isEqualTo(lecture.getTitle());
         assertThat(returnedLecture.getCourse().getId()).isEqualTo(lecture.getCourse().getId());
         assertThat(returnedLecture.getDescription()).isEqualTo(lecture.getDescription());
+        assertThat(channel).isPresent();
+        assertThat(channel.get().getName()).isEqualTo("loremipsum"); // note "i" is lower case as a channel name should not contain upper case letters
     }
 
     @Test
