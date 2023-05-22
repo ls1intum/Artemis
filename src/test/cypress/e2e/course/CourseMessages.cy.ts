@@ -114,7 +114,7 @@ describe('Course messages', () => {
 
             it('check that channel is created, when an exercise is created', () => {
                 cy.login(admin);
-                courseManagementRequest.createTextExercise({course}, 'Test Exercise');
+                courseManagementRequest.createTextExercise({ course }, 'Test Exercise');
                 cy.login(instructor, `/courses/${course.id}/messages`);
                 courseMessages.browseChannelsButton();
                 courseMessages.checkChannelsExists('exercise-test-exercise');
