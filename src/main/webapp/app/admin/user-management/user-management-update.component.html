@@ -153,6 +153,7 @@
                             </mat-chip-row>
                             <input
                                 (matChipInputTokenEnd)="onGroupAdd(user, $event)"
+                                [(ngModel)]="groupInput"
                                 [formControl]="groupCtrl"
                                 [matAutocomplete]="auto"
                                 [matChipInputFor]="groupList"

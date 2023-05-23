@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { User } from 'app/core/user/user.model';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
@@ -52,7 +52,7 @@ export class UserManagementUpdateComponent implements OnInit {
     faBan = faBan;
     faSave = faSave;
     editForm: FormGroup;
-    @ViewChild('.group-tag-input') groupInput: ElementRef<HTMLInputElement>;
+    groupInput = '';
 
     private oldLogin?: string;
     private isJenkins: boolean;
@@ -197,6 +197,7 @@ export class UserManagementUpdateComponent implements OnInit {
     onGroupAdd(user: User, event: MatChipInputEvent) {
         const groupString = (event.value || '').trim();
         this.addGroup(user, groupString);
+        this.groupInput = '';
         event.chipInput!.clear();
     }
 
@@ -216,7 +217,7 @@ export class UserManagementUpdateComponent implements OnInit {
     onSelected(event: MatAutocompleteSelectedEvent): void {
         const groupString = (event.option.viewValue || '').trim();
         this.addGroup(this.user, groupString);
-        this.groupInput.nativeElement.value = '';
+        this.groupInput = '';
     }
 
     private initializeForm() {
