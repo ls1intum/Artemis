@@ -104,9 +104,12 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @WithMockUser(username = TEST_PREFIX + "student3")
     void testRepositoryMethods() {
         assertThatExceptionOfType(EntityNotFoundException.class).isThrownBy(() -> submissionRepository.findByIdWithParticipationExerciseResultAssessorElseThrow(Long.MAX_VALUE));
+
         assertThatExceptionOfType(EntityNotFoundException.class).isThrownBy(() -> submissionRepository.findByIdWithEagerResultsAndFeedbackAndTextBlocksElseThrow(Long.MAX_VALUE));
+
         assertThatExceptionOfType(BadRequestAlertException.class)
                 .isThrownBy(() -> submissionRepository.getTextSubmissionWithResultAndTextBlocksAndFeedbackByResultIdElseThrow(Long.MAX_VALUE));
+
         assertThatExceptionOfType(BadRequestAlertException.class)
                 .isThrownBy(() -> submissionRepository.findByIdWithEagerParticipationExerciseResultAssessorElseThrow(Long.MAX_VALUE));
     }

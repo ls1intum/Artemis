@@ -611,6 +611,7 @@ public class UserTestService {
     // Test
     public void createUserWithGroups() throws Exception {
         assertThatExceptionOfType(EntityNotFoundException.class).isThrownBy(() -> userRepository.findByIdWithGroupsAndAuthoritiesElseThrow(Long.MAX_VALUE));
+
         assertThatExceptionOfType(EntityNotFoundException.class).isThrownBy(() -> userRepository.findByIdWithGroupsAndAuthoritiesAndOrganizationsElseThrow(Long.MAX_VALUE));
 
         var course = database.addEmptyCourse();
