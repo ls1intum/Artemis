@@ -16,12 +16,8 @@ export class LectureManagementPage {
         return cy.wait('@deleteLecture');
     }
 
-    getLectureSelector(lectureTitle: string) {
-        return this.getLectureContainer().contains(lectureTitle);
-    }
-
-    getLectureContainer() {
-        return cy.get('#lecture-preview');
+    getLecture(lecture: Lecture) {
+        return cy.get(`#lecture-${lecture.id}`);
     }
 
     openUnitsPage(lectureID: number) {

@@ -138,6 +138,10 @@ export class CourseManagementRequests {
             title,
             shortName: programmingShortName,
             packageName,
+            channel: {
+                type: 'channel',
+                name: 'exercise-' + titleLowercase(title),
+            },
             assessmentType: ProgrammingExerciseAssessmentType[assessmentType],
         };
         const exercise: ProgrammingExercise = Object.assign({}, template, body) as ProgrammingExercise;
@@ -391,7 +395,14 @@ export class CourseManagementRequests {
      * @returns <Chainable> request response
      */
     createTextExercise(body: { course: Course } | { exerciseGroup: ExerciseGroup }, title = 'Text exercise ' + generateUUID()) {
-        const template = { ...textExerciseTemplate, title };
+        const template = { 
+            ...textExerciseTemplate,
+            title,
+            channel: {
+                type: 'channel',
+                name: 'exercise-' + titleLowercase(title),
+            },
+        };
         const textExercise = Object.assign({}, template, body);
         return cy.request({ method: POST, url: TEXT_EXERCISE_BASE, body: textExercise });
     }
@@ -422,6 +433,10 @@ export class CourseManagementRequests {
         const templateCopy = {
             ...modelingExerciseTemplate,
             title,
+            channel: {
+                type: 'channel',
+                name: 'exercise-' + titleLowercase(title),
+            },
         };
         const dates = {
             releaseDate: dayjsToString(releaseDate),
@@ -485,7 +500,7 @@ export class CourseManagementRequests {
     createQuizExercise(
         body: { course: Course } | { exerciseGroup: ExerciseGroup },
         quizQuestions: [any],
-        title = 'Cypress quiz exercise' + generateUUID(),
+        title = 'Quiz exercise' + generateUUID(),
         releaseDate = day().add(1, 'year'),
         duration = 600,
     ) {
@@ -494,6 +509,10 @@ export class CourseManagementRequests {
             title,
             quizQuestions,
             duration,
+            channel: {
+                type: 'channel',
+                name: 'exercise-' + titleLowercase(title),
+            },
         };
         let newQuizExercise;
         const dates = {

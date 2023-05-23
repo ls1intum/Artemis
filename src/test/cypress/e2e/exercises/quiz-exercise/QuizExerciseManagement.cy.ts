@@ -10,7 +10,6 @@ import { admin } from '../../../support/users';
 
 // Common primitives
 let course: Course;
-const quizQuestionTitle = 'Cypress Quiz Exercise';
 
 describe('Quiz Exercise Management', () => {
     before('Set up course', () => {
@@ -29,23 +28,34 @@ describe('Quiz Exercise Management', () => {
             cy.login(admin, '/course-management/');
             courseManagement.openExercisesOfCourse(course.shortName!);
             courseManagementExercises.createQuizExercise();
-            quizExerciseCreation.setTitle('Cypress Quiz Exercise ' + generateUUID());
+            quizExerciseCreation.setTitle('Quiz Exercise ' + generateUUID());
         });
 
         it('Creates a Quiz with Multiple Choice', () => {
-            quizExerciseCreation.addMultipleChoiceQuestion(quizQuestionTitle);
-            saveAndVerifyQuizCreation();
+            const title = 'Multiple Choice Quiz';
+            quizExerciseCreation.addMultipleChoiceQuestion(title);
+            quizExerciseCreation.saveQuiz().then((quizResponse: Interception) => {
+                cy.visit('/course-management/' + course.id + '/quiz-exercises/' + quizResponse.response!.body.id + '/preview');
+                cy.contains(title).should('be.visible');
+            });
         });
 
         it('Creates a Quiz with Short Answer', () => {
-            quizExerciseCreation.addShortAnswerQuestion(quizQuestionTitle);
-            saveAndVerifyQuizCreation();
+            const title = 'Short Answer Quiz';
+            quizExerciseCreation.addShortAnswerQuestion(title);
+            quizExerciseCreation.saveQuiz().then((quizResponse: Interception) => {
+                cy.visit('/course-management/' + course.id + '/quiz-exercises/' + quizResponse.response!.body.id + '/preview');
+                cy.contains(title).should('be.visible');
+            });
         });
 
         // TODO: Fix the drag and drop
         // it.skip('Creates a Quiz with Drag and Drop', () => {
         //     quizExerciseCreation.addDragAndDropQuestion(quizQuestionTitle);
-        //     saveAndVerifyQuizCreation();
+        //     quizExerciseCreation.saveQuiz().then((quizResponse: Interception) => {
+        //         cy.visit('/course-management/' + course.id + '/quiz-exercises/' + quizResponse.response!.body.id + '/preview');
+        //         cy.contains(quizQuestionTitle).should('be.visible');
+        //     });
         // });
     });
 
@@ -71,11 +81,4 @@ describe('Quiz Exercise Management', () => {
             });
         });
     });
-
-    function saveAndVerifyQuizCreation() {
-        quizExerciseCreation.saveQuiz().then((quizResponse: Interception) => {
-            cy.visit('/course-management/' + course.id + '/quiz-exercises/' + quizResponse.response!.body.id + '/preview');
-            cy.contains(quizQuestionTitle).should('be.visible');
-        });
-    }
 });
