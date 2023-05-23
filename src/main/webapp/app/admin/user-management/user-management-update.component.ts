@@ -197,7 +197,7 @@ export class UserManagementUpdateComponent implements OnInit {
     onGroupAdd(user: User, event: MatChipInputEvent) {
         const groupString = (event.value || '').trim();
         this.addGroup(user, groupString);
-        this.groupInput = '';
+        this.groupCtrl.setValue('');
         event.chipInput!.clear();
     }
 
@@ -217,7 +217,7 @@ export class UserManagementUpdateComponent implements OnInit {
     onSelected(event: MatAutocompleteSelectedEvent): void {
         const groupString = (event.option.viewValue || '').trim();
         this.addGroup(this.user, groupString);
-        this.groupInput = '';
+        this.groupCtrl.setValue('');
     }
 
     private initializeForm() {

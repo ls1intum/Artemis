@@ -152,8 +152,8 @@
                                 </div>
                             </mat-chip-row>
                             <input
+                                #groupInput
                                 (matChipInputTokenEnd)="onGroupAdd(user, $event)"
-                                [(ngModel)]="groupInput"
                                 [formControl]="groupCtrl"
                                 [matAutocomplete]="auto"
                                 [matChipInputFor]="groupList"
@@ -162,7 +162,7 @@
                                 class="group-tag-input"
                             />
                         </mat-chip-grid>
-                        <mat-autocomplete #auto="matAutocomplete" (optionSelected)="onSelected($event)" class="group-panel" classlist="group-panel">
+                        <mat-autocomplete #auto="matAutocomplete" (optionSelected)="onSelected($event); groupInput.value = ''" class="group-panel" classlist="group-panel">
                             <ng-container *ngFor="let group of filteredGroups | async">
                                 <mat-option *ngIf="!user.groups?.includes(group)" [value]="group">
                                     {{ group }}
