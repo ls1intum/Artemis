@@ -325,11 +325,11 @@ public class CourseResource {
      * @return the list of groups (the user has access to)
      */
     @GetMapping("courses/groups")
-    @PreAuthorize("hasRole('TA')")
-    public ResponseEntity<List<String>> getAllGroupsForAllCourses() {
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Set<String>> getAllGroupsForAllCourses() {
         log.debug("REST request to get all Groups for all Courses");
         List<Course> courses = courseRepository.findAll();
-        List<String> groups = new ArrayList<>();
+        Set<String> groups = new LinkedHashSet<>();
         for (Course course : courses) {
             groups.add(course.getInstructorGroupName());
             groups.add(course.getEditorGroupName());
