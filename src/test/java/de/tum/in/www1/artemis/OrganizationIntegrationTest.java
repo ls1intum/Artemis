@@ -49,12 +49,12 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     }
 
     /**
-     * Test if getting courses a user can register to works with multi organization and
+     * Test if getting courses a user can enroll in works with multi organization and
      * filters out basing on user's organizations
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "login2")
-    void testGetCoursesToRegisterWithOrganizationsEnabled() throws Exception {
+    void testGetCoursesToEnrollWithOrganizationsEnabled() throws Exception {
         jiraRequestMockProvider.enableMockingOfRequests();
 
         Organization organization = database.createOrganization();
@@ -70,7 +70,11 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         Course course1 = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "testcourse1", "tutor", "editor", "instructor");
         Course course2 = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "testcourse2", "tutor", "editor", "instructor");
         course1.setEnrollmentEnabled(true);
+        course1.setEnrollmentStartDate(pastTimestamp);
+        course1.setEnrollmentEndDate(futureTimestamp);
         course2.setEnrollmentEnabled(true);
+        course2.setEnrollmentStartDate(pastTimestamp);
+        course2.setEnrollmentEndDate(futureTimestamp);
         course1.setOrganizations(organizations);
 
         course1 = courseRepo.save(course1);
@@ -78,13 +82,13 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         jiraRequestMockProvider.mockAddUserToGroupForMultipleGroups(Set.of(course1.getStudentGroupName()));
         jiraRequestMockProvider.mockAddUserToGroupForMultipleGroups(Set.of(course2.getStudentGroupName()));
 
-        List<Course> coursesToRegister = request.getList("/api/courses/for-enrollment", HttpStatus.OK, Course.class);
-        assertThat(coursesToRegister).contains(course1).contains(course2);
+        List<Course> coursesToEnroll = request.getList("/api/courses/for-enrollment", HttpStatus.OK, Course.class);
+        assertThat(coursesToEnroll).contains(course1).contains(course2);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "login1")
-    void testRegisterForCourseWithOrganizationsEnabled() throws Exception {
+    void testEnrollForCourseWithOrganizationsEnabled() throws Exception {
         jiraRequestMockProvider.enableMockingOfRequests();
 
         Organization organization = database.createOrganization();
@@ -106,7 +110,11 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         Course course3 = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "testcourse2", "tutor", "editor", "instructor");
 
         course1.setEnrollmentEnabled(true);
+        course1.setEnrollmentStartDate(pastTimestamp);
+        course1.setEnrollmentEndDate(futureTimestamp);
         course2.setEnrollmentEnabled(true);
+        course2.setEnrollmentStartDate(pastTimestamp);
+        course2.setEnrollmentEndDate(futureTimestamp);
         course1.setOrganizations(organizations);
         course3.setOrganizations(otherOrganizations);
 
@@ -125,10 +133,10 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         bitbucketRequestMockProvider.mockAddUserToGroups();
 
         User updatedStudent = request.postWithResponseBody("/api/courses/" + course1.getId() + "/enroll", null, User.class, HttpStatus.OK);
-        assertThat(updatedStudent.getGroups()).as("User is registered for course").contains(course1.getStudentGroupName());
+        assertThat(updatedStudent.getGroups()).as("User is enrolled in course").contains(course1.getStudentGroupName());
 
         updatedStudent = request.postWithResponseBody("/api/courses/" + course2.getId() + "/enroll", null, User.class, HttpStatus.OK);
-        assertThat(updatedStudent.getGroups()).as("User is registered for course").contains(course2.getStudentGroupName());
+        assertThat(updatedStudent.getGroups()).as("User is enrolled in course").contains(course2.getStudentGroupName());
 
         request.postWithResponseBody("/api/courses/" + course3.getId() + "/enroll", null, User.class, HttpStatus.FORBIDDEN);
     }
