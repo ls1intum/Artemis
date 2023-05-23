@@ -369,7 +369,7 @@ public class ProgrammingExerciseResultTestService {
     public void shouldIgnoreResultIfNotOnDefaultBranch(Object resultNotification) {
         solutionParticipation.setProgrammingExercise(programmingExercise);
 
-        assertThatIllegalStateException().isThrownBy(() -> gradingService.processNewProgrammingExerciseResult(solutionParticipation, resultNotification))
+        assertThatIllegalArgumentException().isThrownBy(() -> gradingService.processNewProgrammingExerciseResult(solutionParticipation, resultNotification))
                 .isInstanceOf(IllegalArgumentException.class).withMessageContaining("different branch");
     }
 
