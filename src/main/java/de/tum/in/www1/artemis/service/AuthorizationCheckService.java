@@ -202,7 +202,7 @@ public class AuthorizationCheckService {
      * or ALLOWED if the user is allowed to self enroll in the course.
      */
     private enum EnrollmentAuthorization {
-        ALLOWED, USERNAME_PATTERN, COURSE_STATUS, ENROLLMENT_STATUS, ONLINE, ORGANIZATIONS
+        ALLOWED, USERNAME_PATTERN, ENROLLMENT_STATUS, ENROLLMENT_PERIOD, ONLINE, ORGANIZATIONS
     }
 
     /**
@@ -220,11 +220,11 @@ public class AuthorizationCheckService {
         if (allowedCourseEnrollmentUsernamePattern != null && !allowedCourseEnrollmentUsernamePattern.matcher(user.getLogin()).matches()) {
             return EnrollmentAuthorization.USERNAME_PATTERN;
         }
-        if (!course.isActive()) {
-            return EnrollmentAuthorization.COURSE_STATUS;
-        }
         if (!Boolean.TRUE.equals(course.isEnrollmentEnabled())) {
             return EnrollmentAuthorization.ENROLLMENT_STATUS;
+        }
+        if (!Boolean.TRUE.equals(course.enrollmentIsActive())) {
+            return EnrollmentAuthorization.ENROLLMENT_PERIOD;
         }
         Set<Organization> courseOrganizations = course.getOrganizations();
         if (courseOrganizations != null && !courseOrganizations.isEmpty() && !courseRepository.checkIfUserIsMemberOfCourseOrganizations(user, course)) {
@@ -260,8 +260,8 @@ public class AuthorizationCheckService {
         EnrollmentAuthorization auth = getUserEnrollmentAuthorizationForCourse(user, course);
         switch (auth) {
             case USERNAME_PATTERN -> throw new AccessForbiddenException("Enrollment with this username is not allowed.");
-            case COURSE_STATUS -> throw new AccessForbiddenException("The course is not currently active.");
             case ENROLLMENT_STATUS -> throw new AccessForbiddenException("The course does not allow enrollment.");
+            case ENROLLMENT_PERIOD -> throw new AccessForbiddenException("The course does currently not allow enrollment.");
             case ORGANIZATIONS -> throw new AccessForbiddenException("User is not member of any organization of this course.");
             case ONLINE -> throw new AccessForbiddenException("Online courses cannot be enrolled in.");
         }

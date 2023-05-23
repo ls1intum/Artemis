@@ -364,6 +364,17 @@ public class Course extends DomainObject {
         this.enrollmentEndDate = enrollmentEndDate;
     }
 
+    /**
+     * Determine whether the current date is within the enrollment period (after start, before end).
+     *
+     * @return true if the current date is within the enrollment period, false otherwise
+     */
+    @JsonIgnore
+    public boolean enrollmentIsActive() {
+        ZonedDateTime now = ZonedDateTime.now();
+        return (getEnrollmentStartDate() == null || getEnrollmentStartDate().isBefore(now)) && (getEnrollmentEndDate() == null || getEnrollmentEndDate().isAfter(now));
+    }
+
     public ZonedDateTime getUnenrollmentEndDate() {
         return unenrollmentEndDate;
     }

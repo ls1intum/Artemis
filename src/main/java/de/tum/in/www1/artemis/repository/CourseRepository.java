@@ -82,6 +82,16 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
             """)
     List<Course> findAllActiveWithLectures(@Param("now") ZonedDateTime now);
 
+    @Query("""
+            SELECT DISTINCT c FROM Course c
+                LEFT JOIN FETCH c.organizations organizations
+                LEFT JOIN FETCH c.prerequisites prerequisites
+            WHERE (c.enrollmentEnabled = true)
+                AND (c.enrollmentStartDate <= :now)
+                AND (c.enrollmentEndDate >= :now)
+            """)
+    List<Course> findAllEnrollmentActiveWithOrganizationsAndPrerequisites(@Param("now") ZonedDateTime now);
+
     /**
      * Note: you should not add exercises or exercises+categories here, because this would make the query too complex and would take significantly longer
      *

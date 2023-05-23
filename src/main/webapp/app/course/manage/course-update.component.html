@@ -364,7 +364,7 @@
                     <label class="form-control-label" jhiTranslate="artemisApp.course.registrationEnabled.title" for="field_registrationEnabled">Registration Enabled</label>
                     <fa-icon [icon]="faQuestionCircle" class="text-secondary" ngbTooltip="{{ 'artemisApp.course.registrationEnabled.description' | artemisTranslate }}"></fa-icon>
                 </div>
-                <div class="d-flex" *ngIf="course.registrationEnabled">
+                <div class="d-flex" *ngIf="course.enrollmentEnabled">
                     <div class="form-group flex-grow-1">
                         <jhi-date-time-picker
                             id="field_enrollmentStartDate"
@@ -399,7 +399,7 @@
                 </div>
 
                 <!-- unenrollment -->
-                <div class="form-check" *ngIf="this.course.registrationEnabled">
+                <div class="form-check" *ngIf="this.course.enrollmentEnabled">
                     <input
                         type="checkbox"
                         class="form-check-input"

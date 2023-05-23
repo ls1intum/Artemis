@@ -327,6 +327,17 @@ public class CourseService {
     }
 
     /**
+     * Gets all courses that the specified user can enroll in.
+     *
+     * @param user the user entity
+     * @return unmodifiable set of courses the student can enroll in
+     */
+    public Set<Course> findAllEnrollableForUser(User user) {
+        return courseRepository.findAllEnrollmentActiveWithOrganizationsAndPrerequisites(ZonedDateTime.now()).stream()
+                .filter(course -> !user.getGroups().contains(course.getStudentGroupName())).collect(Collectors.toSet());
+    }
+
+    /**
      * Deletes all elements associated with the course including:
      * <ul>
      * <li>The Course</li>

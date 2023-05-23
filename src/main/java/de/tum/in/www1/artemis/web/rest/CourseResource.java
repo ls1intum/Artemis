@@ -418,14 +418,7 @@ public class CourseResource {
     public List<Course> getAllCoursesForEnrollment() {
         log.debug("REST request to get all currently active courses that are not online courses");
         User user = userRepository.getUserWithGroupsAndAuthoritiesAndOrganizations();
-
-        Set<Course> allEnrolledCourses = courseService.findAllActiveForUser(user);
-        List<Course> allCoursesToPotentiallyEnroll = courseRepository.findAllActiveNotOnlineAndEnrollmentEnabledWithOrganizationsAndPrerequisites();
-        // check whether enrollment is actually possible for each of the courses
-        return allCoursesToPotentiallyEnroll.stream().filter(course -> {
-            boolean isAlreadyInCourse = allEnrolledCourses.contains(course);
-            return authCheckService.isUserAllowedToSelfEnrollInCourse(user, course) && !isAlreadyInCourse;
-        }).toList();
+        return courseService.findAllEnrollableForUser(user).stream().filter(course -> authCheckService.isUserAllowedToSelfEnrollInCourse(user, course)).toList();
     }
 
     /**
