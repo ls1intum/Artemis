@@ -66,7 +66,8 @@ public class AttachmentResource {
     /**
      * POST /attachments : Create a new attachment.
      *
-     * @param attachment the attachment to create
+     * @param attachment the attachment object to create
+     * @param file       the file to save
      * @return the ResponseEntity with status 201 (Created) and with body the new attachment, or with status 400 (Bad Request) if the attachment has already an ID
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
@@ -87,7 +88,9 @@ public class AttachmentResource {
     /**
      * PUT /attachments/:id : Updates an existing attachment.
      *
+     * @param id               the id of the attachment to save
      * @param attachment       the attachment to update
+     * @param file             the file to save if the file got changed (optional)
      * @param notificationText text that will be sent to student group
      * @return the ResponseEntity with status 200 (OK) and with body the updated attachment, or with status 400 (Bad Request) if the attachment is not valid, or with status 500
      *         (Internal Server Error) if the attachment couldn't be updated
