@@ -76,7 +76,9 @@ import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseTaskRepositor
 import de.tum.in.www1.artemis.repository.metis.AnswerPostRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
+import de.tum.in.www1.artemis.repository.metis.ReactionRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ConversationRepository;
+import de.tum.in.www1.artemis.repository.metis.conversation.OneToOneChatRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismResultRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.*;
@@ -132,12 +134,6 @@ public class DatabaseUtilService {
 
     @Autowired
     private ExerciseRepository exerciseRepo;
-
-    @Autowired
-    private TextAssessmentKnowledgeService textAssessmentKnowledgeService;
-
-    @Autowired
-    private ModelAssessmentKnowledgeService modelAssessmentKnowledgeService;
 
     @Autowired
     private AttachmentRepository attachmentRepo;
@@ -327,6 +323,12 @@ public class DatabaseUtilService {
 
     @Autowired
     private LectureUnitRepository lectureUnitRepository;
+
+    @Autowired
+    private OneToOneChatRepository oneToOneChatRepository;
+
+    @Autowired
+    private ReactionRepository reactionRepository;
 
     @Value("${info.guided-tour.course-group-students:#{null}}")
     private Optional<String> tutorialGroupStudents;
@@ -783,7 +785,6 @@ public class DatabaseUtilService {
         TextExercise textExercise = ModelFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course);
         textExercise.setMaxPoints(10.0);
         textExercise.setBonusPoints(0.0);
-        textExercise.setKnowledge(textAssessmentKnowledgeService.createNewKnowledge());
         return exerciseRepo.save(textExercise);
     }
 
@@ -804,7 +805,6 @@ public class DatabaseUtilService {
         teamTextExercise.setMaxPoints(10.0);
         teamTextExercise.setBonusPoints(0.0);
         teamTextExercise.setMode(ExerciseMode.TEAM);
-        teamTextExercise.setKnowledge(textAssessmentKnowledgeService.createNewKnowledge());
         return exerciseRepo.save(teamTextExercise);
     }
 
@@ -993,7 +993,6 @@ public class DatabaseUtilService {
         modelingExercise.setExampleSolutionExplanation("Example Solution");
         addGradingInstructionsToExercise(modelingExercise);
         modelingExercise.getCategories().add("Modeling");
-        modelingExercise.setKnowledge(modelAssessmentKnowledgeService.createNewKnowledge());
         course1.addExercises(modelingExercise);
 
         TextExercise textExercise = ModelFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course1);
@@ -1001,7 +1000,6 @@ public class DatabaseUtilService {
         textExercise.setExampleSolution("Example Solution");
         addGradingInstructionsToExercise(textExercise);
         textExercise.getCategories().add("Text");
-        textExercise.setKnowledge(textAssessmentKnowledgeService.createNewKnowledge());
         course1.addExercises(textExercise);
 
         FileUploadExercise fileUploadExercise = ModelFactory.generateFileUploadExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, "png", course1);
@@ -1174,6 +1172,56 @@ public class DatabaseUtilService {
         posts.addAll(createBasicPosts(course1, courseWideContexts, userPrefix));
         posts.addAll(createBasicPosts(createOneToOneChat(course1, userPrefix), userPrefix));
 
+        return posts;
+    }
+
+    public List<Post> createPostsWithAnswersAndReactionsAndConversation(Course course, User student1, User student2, int numberOfPosts, String userPrefix) {
+        var chat = new OneToOneChat();
+        chat.setCourse(course);
+        chat.setCreator(student1);
+        chat.setCreationDate(ZonedDateTime.now());
+        chat.setLastMessageDate(ZonedDateTime.now());
+        chat = oneToOneChatRepository.save(chat);
+        var participant1 = new ConversationParticipant();
+        participant1.setConversation(chat);
+        participant1.setUser(student1);
+        participant1.setUnreadMessagesCount(0L);
+        participant1.setLastRead(ZonedDateTime.now().minusYears(2));
+        conversationParticipantRepository.save(participant1);
+        var participant2 = new ConversationParticipant();
+        participant2.setConversation(chat);
+        participant2.setUser(student2);
+        participant2.setUnreadMessagesCount(0L);
+        participant2.setLastRead(ZonedDateTime.now().minusYears(2));
+        conversationParticipantRepository.save(participant2);
+        chat = oneToOneChatRepository.findByIdWithConversationParticipantsAndUserGroups(chat.getId()).get();
+
+        var posts = new ArrayList<Post>();
+        for (int i = 0; i < numberOfPosts; i++) {
+            var post = new Post();
+            post.setAuthor(student1);
+            post.setDisplayPriority(DisplayPriority.NONE);
+            post.setConversation(chat);
+            post = postRepository.save(post);
+            posts.add(post);
+        }
+
+        // add many answers for all posts in conversation
+        for (var post : posts) {
+            post.setAnswers(createBasicAnswers(post, userPrefix));
+            postRepository.save(post);
+        }
+
+        // add many reactions for all posts in conversation
+        for (var post : posts) {
+            Reaction reaction = new Reaction();
+            reaction.setEmojiId("smiley");
+            reaction.setPost(post);
+            reaction.setUser(student1);
+            reactionRepository.save(reaction);
+            post.setReactions(Set.of(reaction));
+            postRepository.save(post);
+        }
         return posts;
     }
 
@@ -1565,41 +1613,26 @@ public class DatabaseUtilService {
         var exercise1a = ModelFactory.generateTextExerciseForExam(exam.getExerciseGroups().get(0));
         var exercise1b = ModelFactory.generateTextExerciseForExam(exam.getExerciseGroups().get(0));
         var exercise1c = ModelFactory.generateTextExerciseForExam(exam.getExerciseGroups().get(0));
-        exercise1a.setKnowledge(textAssessmentKnowledgeService.createNewKnowledge());
-        exercise1b.setKnowledge(textAssessmentKnowledgeService.createNewKnowledge());
-        exercise1c.setKnowledge(textAssessmentKnowledgeService.createNewKnowledge());
         exerciseRepo.saveAll(List.of(exercise1a, exercise1b, exercise1c));
 
         var exercise2a = ModelFactory.generateTextExerciseForExam(exam.getExerciseGroups().get(1));
         var exercise2b = ModelFactory.generateTextExerciseForExam(exam.getExerciseGroups().get(1));
         var exercise2c = ModelFactory.generateTextExerciseForExam(exam.getExerciseGroups().get(1));
-        exercise2a.setKnowledge(textAssessmentKnowledgeService.createNewKnowledge());
-        exercise2b.setKnowledge(textAssessmentKnowledgeService.createNewKnowledge());
-        exercise2c.setKnowledge(textAssessmentKnowledgeService.createNewKnowledge());
         exerciseRepo.saveAll(List.of(exercise2a, exercise2b, exercise2c));
 
         var exercise3a = ModelFactory.generateTextExerciseForExam(exam.getExerciseGroups().get(2));
         var exercise3b = ModelFactory.generateTextExerciseForExam(exam.getExerciseGroups().get(2));
         var exercise3c = ModelFactory.generateTextExerciseForExam(exam.getExerciseGroups().get(2));
-        exercise3a.setKnowledge(textAssessmentKnowledgeService.createNewKnowledge());
-        exercise3b.setKnowledge(textAssessmentKnowledgeService.createNewKnowledge());
-        exercise3c.setKnowledge(textAssessmentKnowledgeService.createNewKnowledge());
         exerciseRepo.saveAll(List.of(exercise3a, exercise3b, exercise3c));
 
         var exercise4a = ModelFactory.generateTextExerciseForExam(exam.getExerciseGroups().get(3));
         var exercise4b = ModelFactory.generateTextExerciseForExam(exam.getExerciseGroups().get(3));
         var exercise4c = ModelFactory.generateTextExerciseForExam(exam.getExerciseGroups().get(3));
-        exercise4a.setKnowledge(textAssessmentKnowledgeService.createNewKnowledge());
-        exercise4b.setKnowledge(textAssessmentKnowledgeService.createNewKnowledge());
-        exercise4c.setKnowledge(textAssessmentKnowledgeService.createNewKnowledge());
         exerciseRepo.saveAll(List.of(exercise4a, exercise4b, exercise4c));
 
         var exercise5a = ModelFactory.generateTextExerciseForExam(exam.getExerciseGroups().get(4));
         var exercise5b = ModelFactory.generateTextExerciseForExam(exam.getExerciseGroups().get(4));
         var exercise5c = ModelFactory.generateTextExerciseForExam(exam.getExerciseGroups().get(4));
-        exercise5a.setKnowledge(textAssessmentKnowledgeService.createNewKnowledge());
-        exercise5b.setKnowledge(textAssessmentKnowledgeService.createNewKnowledge());
-        exercise5c.setKnowledge(textAssessmentKnowledgeService.createNewKnowledge());
         exerciseRepo.saveAll(List.of(exercise5a, exercise5b, exercise5c));
 
         // register user
@@ -1828,8 +1861,6 @@ public class DatabaseUtilService {
 
         TextExercise textExercise1 = ModelFactory.generateTextExerciseForExam(exerciseGroup0);
         TextExercise textExercise2 = ModelFactory.generateTextExerciseForExam(exerciseGroup0);
-        textExercise1.setKnowledge(textAssessmentKnowledgeService.createNewKnowledge());
-        textExercise2.setKnowledge(textAssessmentKnowledgeService.createNewKnowledge());
         exerciseGroup0.setExercises(Set.of(textExercise1, textExercise2));
         exerciseRepo.save(textExercise1);
         exerciseRepo.save(textExercise2);
@@ -1848,21 +1879,17 @@ public class DatabaseUtilService {
 
         ModelingExercise modelingExercise1 = ModelFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, exerciseGroup3);
         ModelingExercise modelingExercise2 = ModelFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, exerciseGroup3);
-        modelingExercise1.setKnowledge(modelAssessmentKnowledgeService.createNewKnowledge());
-        modelingExercise2.setKnowledge(modelAssessmentKnowledgeService.createNewKnowledge());
         exerciseGroup3.setExercises(Set.of(modelingExercise1, modelingExercise2));
         exerciseRepo.save(modelingExercise1);
         exerciseRepo.save(modelingExercise2);
 
         TextExercise bonusTextExercise = ModelFactory.generateTextExerciseForExam(exerciseGroup4);
         bonusTextExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_AS_BONUS);
-        bonusTextExercise.setKnowledge(textAssessmentKnowledgeService.createNewKnowledge());
         exerciseGroup4.setExercises(Set.of(bonusTextExercise));
         exerciseRepo.save(bonusTextExercise);
 
         TextExercise notIncludedTextExercise = ModelFactory.generateTextExerciseForExam(exerciseGroup5);
         notIncludedTextExercise.setIncludedInOverallScore(IncludedInOverallScore.NOT_INCLUDED);
-        notIncludedTextExercise.setKnowledge(textAssessmentKnowledgeService.createNewKnowledge());
         exerciseGroup5.setExercises(Set.of(notIncludedTextExercise));
         exerciseRepo.save(notIncludedTextExercise);
 
@@ -1895,16 +1922,12 @@ public class DatabaseUtilService {
 
         TextExercise textExercise1 = ModelFactory.generateTextExerciseForExam(exerciseGroup0);
         TextExercise textExercise2 = ModelFactory.generateTextExerciseForExam(exerciseGroup0);
-        textExercise1.setKnowledge(textAssessmentKnowledgeService.createNewKnowledge());
-        textExercise2.setKnowledge(textAssessmentKnowledgeService.createNewKnowledge());
         exerciseGroup0.setExercises(Set.of(textExercise1, textExercise2));
         exerciseRepo.save(textExercise1);
         exerciseRepo.save(textExercise2);
 
         ModelingExercise modelingExercise1 = ModelFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, exerciseGroup1);
         ModelingExercise modelingExercise2 = ModelFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, exerciseGroup1);
-        modelingExercise1.setKnowledge(modelAssessmentKnowledgeService.createNewKnowledge());
-        modelingExercise2.setKnowledge(modelAssessmentKnowledgeService.createNewKnowledge());
         exerciseGroup1.setExercises(Set.of(modelingExercise1, modelingExercise2));
         exerciseRepo.save(modelingExercise1);
         exerciseRepo.save(modelingExercise2);
@@ -2228,7 +2251,6 @@ public class DatabaseUtilService {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         ModelingExercise modelingExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram, course);
         modelingExercise.setTitle(title);
-        modelingExercise.setKnowledge(modelAssessmentKnowledgeService.createNewKnowledge());
         course.addExercises(modelingExercise);
         course.setMaxComplaintTimeDays(14);
         course = courseRepo.save(course);
@@ -2250,7 +2272,6 @@ public class DatabaseUtilService {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         TextExercise textExercise = ModelFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course);
         textExercise.setTitle(title);
-        textExercise.setKnowledge(textAssessmentKnowledgeService.createNewKnowledge());
         course.addExercises(textExercise);
         course = courseRepo.save(course);
         textExercise = exerciseRepo.save(textExercise);
@@ -2264,7 +2285,6 @@ public class DatabaseUtilService {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         ModelingExercise modelingExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram, course);
         modelingExercise.setTitle(title);
-        modelingExercise.setKnowledge(modelAssessmentKnowledgeService.createNewKnowledge());
         course.addExercises(modelingExercise);
         courseRepo.save(course);
         exerciseRepo.save(modelingExercise);
@@ -2358,7 +2378,6 @@ public class DatabaseUtilService {
         if (title != null) {
             textExercise.setTitle(title);
         }
-        textExercise.setKnowledge(textAssessmentKnowledgeService.createNewKnowledge());
         return exerciseRepo.save(textExercise);
     }
 
@@ -4534,7 +4553,7 @@ public class DatabaseUtilService {
             fail("Invalid grading scale parameters");
         }
         GradingScale gradingScale = new GradingScale();
-        Set<GradeStep> gradeSteps = new LinkedHashSet<>();
+        Set<GradeStep> gradeSteps = new HashSet<>();
         double currentLowerBoundPercentage = 0.0;
         for (int i = 0; i < gradeStepCount; i++) {
             GradeStep gradeStep = new GradeStep();
