@@ -94,6 +94,9 @@ export class LectureAttachmentsComponent implements OnInit, OnDestroy {
         this.attachmentToBeCreated = newAttachment;
     }
 
+    /**
+     * If there is an attachment to save, it will be created or updated depending on its current state. The file will be automatically provided with the request.
+     */
     saveAttachment() {
         if (!this.attachmentToBeCreated) {
             return;
@@ -133,7 +136,7 @@ export class LectureAttachmentsComponent implements OnInit, OnDestroy {
         }
     }
 
-    handleFailedUpload(error: HttpErrorResponse) {
+    private handleFailedUpload(error: HttpErrorResponse) {
         this.errorMessage = error.message;
         this.erroredFile = this.attachmentFile;
         this.fileInput.nativeElement.value = '';

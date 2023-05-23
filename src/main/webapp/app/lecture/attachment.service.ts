@@ -16,6 +16,11 @@ export class AttachmentService {
 
     constructor(protected http: HttpClient) {}
 
+    /**
+     * Create a new attachment
+     * @param attachment the attachment object to create
+     * @param file the file to save as an attachment
+     */
     create(attachment: Attachment, file: File): Observable<EntityResponseType> {
         const copy = this.convertAttachmentDatesFromClient(attachment);
         // avoid potential issues when sending the attachment to the server
@@ -38,6 +43,13 @@ export class AttachmentService {
             .pipe(map((res: EntityResponseType) => this.convertAttachmentResponseDatesFromServer(res)));
     }
 
+    /**
+     * Update an existing attachment
+     * @param attachmentId the id of the attachment to update
+     * @param attachment the attachment object holding the updated values
+     * @param file the file to save as an attachment if it was changed (optional)
+     * @param req optional request parameters
+     */
     update(attachmentId: number, attachment: Attachment, file?: File, req?: any): Observable<EntityResponseType> {
         const options = createRequestOption(req);
         const copy = this.convertAttachmentDatesFromClient(attachment);
@@ -52,12 +64,21 @@ export class AttachmentService {
             .pipe(map((res: EntityResponseType) => this.convertAttachmentResponseDatesFromServer(res)));
     }
 
+    /**
+     * Return the attachment with the given id
+     *
+     * @param attachmentId the id of the attachment to find
+     */
     find(attachmentId: number): Observable<EntityResponseType> {
         return this.http
             .get<Attachment>(`${this.resourceUrl}/${attachmentId}`, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.convertAttachmentResponseDatesFromServer(res)));
     }
 
+    /**
+     * Search for attachments
+     * @param req optional request parameters
+     */
     query(req?: any): Observable<EntityArrayResponseType> {
         const options = createRequestOption(req);
         return this.http
@@ -65,12 +86,20 @@ export class AttachmentService {
             .pipe(map((res: EntityArrayResponseType) => this.convertAttachmentArrayResponseDatesFromServer(res)));
     }
 
+    /**
+     * Return all attachments for the given lecture
+     * @param lectureId the id of the lecture to find attachments for
+     */
     findAllByLectureId(lectureId: number): Observable<EntityArrayResponseType> {
         return this.http
             .get<Attachment[]>(`api/lectures/${lectureId}/attachments`, { observe: 'response' })
             .pipe(map((res: EntityArrayResponseType) => this.convertAttachmentArrayResponseDatesFromServer(res)));
     }
 
+    /**
+     * Delete the attachment with the given id
+     * @param attachmentId the id of the attachment to delete
+     */
     delete(attachmentId: number): Observable<HttpResponse<void>> {
         return this.http.delete<any>(`${this.resourceUrl}/${attachmentId}`, { observe: 'response' });
     }
@@ -83,13 +112,6 @@ export class AttachmentService {
         return copy;
     }
 
-    convertAttachmentResponseDatesFromServer(res: EntityResponseType): EntityResponseType {
-        if (res.body) {
-            this.convertAttachmentDatesFromServer(res.body);
-        }
-        return res;
-    }
-
     convertAttachmentDatesFromServer(attachment?: Attachment) {
         if (attachment) {
             attachment.releaseDate = convertDateFromServer(attachment.releaseDate);
@@ -98,7 +120,14 @@ export class AttachmentService {
         return attachment;
     }
 
-    convertAttachmentArrayResponseDatesFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
+    private convertAttachmentResponseDatesFromServer(res: EntityResponseType): EntityResponseType {
+        if (res.body) {
+            this.convertAttachmentDatesFromServer(res.body);
+        }
+        return res;
+    }
+
+    private convertAttachmentArrayResponseDatesFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
         if (res.body) {
             res.body.forEach((attachment: Attachment) => {
                 this.convertAttachmentDatesFromServer(attachment);
