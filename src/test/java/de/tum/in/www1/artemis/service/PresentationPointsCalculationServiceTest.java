@@ -34,16 +34,15 @@ class PresentationPointsCalculationServiceTest extends AbstractSpringIntegration
     @Autowired
     private PresentationPointsCalculationService presentationPointsCalculationService;
 
-    private Course course;
-
     private GradingScale gradingScale;
 
     private StudentParticipation studentParticipation;
 
     @BeforeEach
     void init() {
+        Course course = database.addEmptyCourse();
+
         database.addUsers(TEST_PREFIX, 1, 0, 0, 0);
-        course = database.addEmptyCourse();
 
         gradingScale = new GradingScale();
         gradingScale.setCourse(course);
