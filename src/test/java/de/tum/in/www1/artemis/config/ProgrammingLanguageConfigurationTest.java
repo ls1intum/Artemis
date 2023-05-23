@@ -27,7 +27,7 @@ class ProgrammingLanguageConfigurationTest {
         defaultConfig.remove("swift");
         var config = new ProgrammingLanguageConfiguration();
 
-        assertThatIllegalStateException().isThrownBy(() -> config.setImages(defaultConfig)).withMessageContaining("Missing: SWIFT");
+        assertThatIllegalArgumentException().isThrownBy(() -> config.setImages(defaultConfig)).withMessageContaining("Missing: SWIFT");
     }
 
     @Test
@@ -35,7 +35,7 @@ class ProgrammingLanguageConfigurationTest {
         defaultConfig.put("kotlin", Map.of());
         var config = new ProgrammingLanguageConfiguration();
 
-        assertThatIllegalStateException().isThrownBy(() -> config.setImages(defaultConfig)).withMessageContaining("Missing: KOTLIN");
+        assertThatIllegalArgumentException().isThrownBy(() -> config.setImages(defaultConfig)).withMessageContaining("Missing: KOTLIN");
     }
 
     @Test
@@ -43,7 +43,7 @@ class ProgrammingLanguageConfigurationTest {
         defaultConfig.put("whitespace", Map.of("default", OVERRIDDEN_IMAGE_NAME));
         var config = new ProgrammingLanguageConfiguration();
 
-        assertThatIllegalStateException().isThrownBy(() -> config.setImages(defaultConfig)).withMessageContaining("Unknown programming language: whitespace");
+        assertThatIllegalArgumentException().isThrownBy(() -> config.setImages(defaultConfig)).withMessageContaining("Unknown programming language: whitespace");
     }
 
     @Test
@@ -51,7 +51,7 @@ class ProgrammingLanguageConfigurationTest {
         defaultConfig.get("java").put("sbt", OVERRIDDEN_IMAGE_NAME);
         var config = new ProgrammingLanguageConfiguration();
 
-        assertThatIllegalStateException().isThrownBy(() -> config.setImages(defaultConfig)).withMessageContaining("Unknown project type for JAVA: sbt");
+        assertThatIllegalArgumentException().isThrownBy(() -> config.setImages(defaultConfig)).withMessageContaining("Unknown project type for JAVA: sbt");
     }
 
     @Test

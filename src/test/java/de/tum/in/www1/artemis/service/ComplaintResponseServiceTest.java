@@ -86,9 +86,9 @@ class ComplaintResponseServiceTest extends AbstractSpringIntegrationBambooBitbuc
         complaintWithResult.setResult(new Result());
         User user = new User();
 
-        assertThatIllegalStateException().isThrownBy(() -> complaintResponseService.isUserAuthorizedToRespondToComplaint(complaintWithResult, null));
-        assertThatIllegalStateException().isThrownBy(() -> complaintResponseService.isUserAuthorizedToRespondToComplaint(null, user));
-        assertThatIllegalStateException().isThrownBy(() -> complaintResponseService.isUserAuthorizedToRespondToComplaint(complaintWithoutResult, user));
+        assertThatIllegalArgumentException().isThrownBy(() -> complaintResponseService.isUserAuthorizedToRespondToComplaint(complaintWithResult, null));
+        assertThatIllegalArgumentException().isThrownBy(() -> complaintResponseService.isUserAuthorizedToRespondToComplaint(null, user));
+        assertThatIllegalArgumentException().isThrownBy(() -> complaintResponseService.isUserAuthorizedToRespondToComplaint(complaintWithoutResult, user));
     }
 
     @Test

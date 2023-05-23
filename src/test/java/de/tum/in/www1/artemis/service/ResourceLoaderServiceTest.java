@@ -40,13 +40,13 @@ class ResourceLoaderServiceTest extends AbstractSpringIntegrationBambooBitbucket
     @Test
     void testShouldNotAllowAbsolutePathsSingleResource() {
         final Path path = javaPath.toAbsolutePath();
-        assertThatIllegalStateException().isThrownBy(() -> resourceLoaderService.getResource(path));
+        assertThatIllegalArgumentException().isThrownBy(() -> resourceLoaderService.getResource(path));
     }
 
     @Test
     void testShouldNotAllowAbsolutePathsMultipleResources() {
         final Path path = javaPath.toAbsolutePath();
-        assertThatIllegalStateException().isThrownBy(() -> resourceLoaderService.getResources(path));
+        assertThatIllegalArgumentException().isThrownBy(() -> resourceLoaderService.getResources(path));
     }
 
     @Test
