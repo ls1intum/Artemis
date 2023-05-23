@@ -12,9 +12,11 @@ import javax.validation.constraints.NotNull;
 
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.TextCluster;
 import de.tum.in.www1.artemis.domain.TextExercise;
@@ -58,6 +60,10 @@ public interface TextClusterRepository extends JpaRepository<TextCluster, Long> 
             GROUP BY textblock.cluster.id HAVING textblock.cluster.id > 0
             """)
     List<TextClusterStatisticsDTO> getClusterStatistics(@Param("exerciseId") Long exerciseId);
+
+    @Transactional // ok because of delete
+    @Modifying
+    void deleteByExercise_Id(Long exerciseId);
 
     interface TextClusterIdAndDisabled {
 
