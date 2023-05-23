@@ -20,6 +20,7 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.iris.IrisMessage;
 import de.tum.in.www1.artemis.domain.iris.IrisMessageContent;
 import de.tum.in.www1.artemis.domain.iris.IrisMessageSender;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisMessageRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisSessionRepository;
 import de.tum.in.www1.artemis.service.iris.IrisMessageService;
@@ -41,6 +42,9 @@ class IrisMessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Autowired
     private IrisMessageRepository irisMessageRepository;
 
+    @Autowired
+    private ProgrammingExerciseRepository programmingExerciseRepository;
+
     private ProgrammingExercise exercise;
 
     @BeforeEach
@@ -49,6 +53,8 @@ class IrisMessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         final Course course = database.addCourseWithOneProgrammingExerciseAndTestCases();
         exercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        exercise.setIrisActivated(true);
+        programmingExerciseRepository.save(exercise);
     }
 
     @Test
@@ -143,18 +149,18 @@ class IrisMessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         message4.setSentAt(ZonedDateTime.now());
         message4.setContent(List.of(createMockContent(message4), createMockContent(message4), createMockContent(message4)));
 
-        irisMessageService.saveNewMessage(message1, irisSession, IrisMessageSender.ARTEMIS);
-        irisMessageService.saveNewMessage(message2, irisSession, IrisMessageSender.LLM);
-        irisMessageService.saveNewMessage(message3, irisSession, IrisMessageSender.USER);
-        irisMessageService.saveNewMessage(message4, irisSession, IrisMessageSender.LLM);
+        irisMessageService.saveMessage(message1, irisSession, IrisMessageSender.ARTEMIS);
+        message2 = irisMessageService.saveMessage(message2, irisSession, IrisMessageSender.LLM);
+        message3 = irisMessageService.saveMessage(message3, irisSession, IrisMessageSender.USER);
+        message4 = irisMessageService.saveMessage(message4, irisSession, IrisMessageSender.LLM);
 
         var messages = request.getList("/api/iris/sessions/" + irisSession.getId() + "/messages", HttpStatus.OK, IrisMessage.class);
-        assertThat(messages).hasSize(4).usingElementComparator((o1, o2) -> {
+        assertThat(messages).hasSize(3).usingElementComparator((o1, o2) -> {
             return o1.getContent().size() == o2.getContent().size()
                     && o1.getContent().stream().map(IrisMessageContent::getTextContent).toList().equals(o2.getContent().stream().map(IrisMessageContent::getTextContent).toList())
                             ? 0
                             : -1;
-        }).isEqualTo(List.of(message1, message2, message3, message4));
+        }).isEqualTo(List.of(message2, message3, message4));
     }
 
     @Test
@@ -165,7 +171,7 @@ class IrisMessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         message.setSession(irisSession);
         message.setSentAt(ZonedDateTime.now());
         message.setContent(List.of(createMockContent(message)));
-        var irisMessage = irisMessageService.saveNewMessage(message, irisSession, IrisMessageSender.LLM);
+        var irisMessage = irisMessageService.saveMessage(message, irisSession, IrisMessageSender.LLM);
         request.putWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages/" + irisMessage.getId() + "/helpful/true", null, IrisMessage.class, HttpStatus.OK);
         irisMessage = irisMessageRepository.findById(irisMessage.getId()).orElseThrow();
         assertThat(irisMessage.getHelpful()).isTrue();
@@ -179,7 +185,7 @@ class IrisMessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         message.setSession(irisSession);
         message.setSentAt(ZonedDateTime.now());
         message.setContent(List.of(createMockContent(message)));
-        var irisMessage = irisMessageService.saveNewMessage(message, irisSession, IrisMessageSender.LLM);
+        var irisMessage = irisMessageService.saveMessage(message, irisSession, IrisMessageSender.LLM);
         request.putWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages/" + irisMessage.getId() + "/helpful/false", null, IrisMessage.class, HttpStatus.OK);
         irisMessage = irisMessageRepository.findById(irisMessage.getId()).orElseThrow();
         assertThat(irisMessage.getHelpful()).isFalse();
@@ -193,7 +199,7 @@ class IrisMessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         message.setSession(irisSession);
         message.setSentAt(ZonedDateTime.now());
         message.setContent(List.of(createMockContent(message)));
-        var irisMessage = irisMessageService.saveNewMessage(message, irisSession, IrisMessageSender.LLM);
+        var irisMessage = irisMessageService.saveMessage(message, irisSession, IrisMessageSender.LLM);
         request.putWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages/" + irisMessage.getId() + "/helpful/null", null, IrisMessage.class, HttpStatus.OK);
         irisMessage = irisMessageRepository.findById(irisMessage.getId()).orElseThrow();
         assertThat(irisMessage.getHelpful()).isNull();
@@ -207,7 +213,7 @@ class IrisMessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         message.setSession(irisSession);
         message.setSentAt(ZonedDateTime.now());
         message.setContent(List.of(createMockContent(message)));
-        var irisMessage = irisMessageService.saveNewMessage(message, irisSession, IrisMessageSender.USER);
+        var irisMessage = irisMessageService.saveMessage(message, irisSession, IrisMessageSender.USER);
         request.putWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages/" + irisMessage.getId() + "/helpful/true", null, IrisMessage.class,
                 HttpStatus.BAD_REQUEST);
     }
@@ -221,7 +227,7 @@ class IrisMessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         message.setSession(irisSession1);
         message.setSentAt(ZonedDateTime.now());
         message.setContent(List.of(createMockContent(message)));
-        var irisMessage = irisMessageService.saveNewMessage(message, irisSession1, IrisMessageSender.USER);
+        var irisMessage = irisMessageService.saveMessage(message, irisSession1, IrisMessageSender.USER);
         request.putWithResponseBody("/api/iris/sessions/" + irisSession2.getId() + "/messages/" + irisMessage.getId() + "/helpful/true", null, IrisMessage.class,
                 HttpStatus.CONFLICT);
     }

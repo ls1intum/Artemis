@@ -1,6 +1,7 @@
-package de.tum.in.www1.artemis.service.iris;
+package de.tum.in.www1.artemis.service.iris.model;
 
 import java.net.URL;
+import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,7 +32,7 @@ import de.tum.in.www1.artemis.service.dto.OpenAIChatResponseDTO;
  * A service which sends REST requests to the GPT-3.5 API to generate responses to Iris conversations.
  */
 @Service
-@Profile("gpt3_5")
+@Profile("iris-gpt3_5")
 public class IrisGPT3_5Service implements IrisModel {
 
     private final Logger log = LoggerFactory.getLogger(IrisGPT3_5Service.class);
@@ -94,7 +95,7 @@ public class IrisGPT3_5Service implements IrisModel {
      */
     @Override
     @Async
-    public CompletableFuture<String> getResponse(IrisSession session) {
+    public CompletableFuture<IrisMessage> getResponse(IrisSession session) {
         try {
             Map<String, Object> requestParams = createRequestParams(session.getMessages());
             ObjectMapper jsonMapper = new ObjectMapper();
@@ -107,14 +108,30 @@ public class IrisGPT3_5Service implements IrisModel {
 
             // TODO: Create DTO for error responses, and handle them
             OpenAIChatResponseDTO response = jsonMapper.readValue(responseBody, OpenAIChatResponseDTO.class);
-            String content = response.getChoices().get(0).getMessage().getContent();
-
-            return CompletableFuture.completedFuture(content);
+            var irisMessage = convertToIrisMessage(response.getChoices().get(0).getMessage());
+            return CompletableFuture.completedFuture(irisMessage);
         }
         catch (JsonProcessingException e) {
             log.error(e.getMessage(), e);
             return CompletableFuture.failedFuture(e);
         }
+    }
+
+    /**
+     * Converts the response from the GPT-3.5 API into an {@link IrisMessage} object.
+     *
+     * @param message the response from the GPT-3.5 API
+     * @return the converted {@link IrisMessage}
+     */
+    private IrisMessage convertToIrisMessage(OpenAIChatResponseDTO.Message message) {
+        var content = new IrisMessageContent();
+        content.setTextContent(message.getContent());
+        var irisMessage = new IrisMessage();
+        irisMessage.setSender(IrisMessageSender.LLM);
+        irisMessage.setSentAt(ZonedDateTime.now());
+        irisMessage.setContent(List.of(content));
+
+        return irisMessage;
     }
 
     /**
@@ -168,8 +185,8 @@ public class IrisGPT3_5Service implements IrisModel {
     private static Map<String, String> toOpenAIFormat(IrisMessage message) {
         // @formatter:off
         return Map.of(
-                "role", toRole(message.getSender()),
-                "content", joinContents(message.getContent())
+            "role", toRole(message.getSender()),
+            "content", joinContents(message.getContent())
         );
         // @formatter:on
     }
@@ -198,5 +215,4 @@ public class IrisGPT3_5Service implements IrisModel {
     private static String joinContents(List<IrisMessageContent> messageContents) {
         return messageContents.stream().map(IrisMessageContent::getTextContent).collect(Collectors.joining("\n"));
     }
-
 }

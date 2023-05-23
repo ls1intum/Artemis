@@ -57,8 +57,9 @@ public class IrisMessageResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<List<IrisMessage>> getMessages(@PathVariable Long sessionId) {
         IrisSession irisSession = irisSessionRepository.findByIdElseThrow(sessionId);
+        irisSessionService.checkIrisActivated(irisSession.getExercise());
         irisSessionService.checkHasAccessToIrisSession(irisSession, null);
-        var messages = irisMessageRepository.findAllWithContentBySessionId(sessionId);
+        var messages = irisMessageRepository.findAllExceptSystemMessagesWithContentBySessionId(sessionId);
         return ResponseEntity.ok(messages);
     }
 
@@ -73,8 +74,10 @@ public class IrisMessageResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<IrisMessage> createMessage(@PathVariable Long sessionId, @RequestBody IrisMessage message) throws URISyntaxException {
         var session = irisSessionRepository.findByIdElseThrow(sessionId);
+        irisSessionService.checkIrisActivated(session.getExercise());
         irisSessionService.checkHasAccessToIrisSession(session, null);
-        var savedMessage = irisMessageService.saveNewMessage(message, session, IrisMessageSender.USER);
+        var savedMessage = irisMessageService.saveMessage(message, session, IrisMessageSender.USER);
+        irisSessionService.requestMessageFromIris(session);
 
         var uriString = "/api/iris/sessions/" + session.getId() + "/messages/" + savedMessage.getId();
         return ResponseEntity.created(new URI(uriString)).body(savedMessage);
@@ -94,10 +97,12 @@ public class IrisMessageResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<IrisMessage> rateMessage(@PathVariable Long sessionId, @PathVariable Long messageId, @PathVariable(required = false) Boolean helpful) {
         var message = irisMessageRepository.findByIdElseThrow(messageId);
-        if (!Objects.equals(message.getSession().getId(), sessionId)) {
+        var session = message.getSession();
+        if (!Objects.equals(session.getId(), sessionId)) {
             throw new ConflictException("The message does not belong to the session", "IrisMessage", "irisMessageSessionConflict");
         }
-        irisSessionService.checkHasAccessToIrisSession(message.getSession(), null);
+        irisSessionService.checkIrisActivated(session.getExercise());
+        irisSessionService.checkHasAccessToIrisSession(session, null);
         if (message.getSender() != IrisMessageSender.LLM) {
             throw new BadRequestException("You can only rate messages send by Iris");
         }

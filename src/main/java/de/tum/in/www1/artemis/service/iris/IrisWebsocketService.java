@@ -20,7 +20,7 @@ public class IrisWebsocketService {
     }
 
     /**
-     * sends a message over the websocket to a specific user
+     * Sends a message over the websocket to a specific user
      *
      * @param irisMessage that should be send over the websocket
      */

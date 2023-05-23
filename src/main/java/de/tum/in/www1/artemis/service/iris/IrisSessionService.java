@@ -21,15 +21,19 @@ import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 @Service
 public class IrisSessionService {
 
-    private final AuthorizationCheckService authCheckService;
-
     private final UserRepository userRepository;
+
+    private final IrisChatService irisChatService;
+
+    private final AuthorizationCheckService authCheckService;
 
     private final IrisSessionRepository irisSessionRepository;
 
-    public IrisSessionService(AuthorizationCheckService authCheckService, UserRepository userRepository, IrisSessionRepository irisSessionRepository) {
-        this.authCheckService = authCheckService;
+    public IrisSessionService(UserRepository userRepository, IrisChatService irisChatService, AuthorizationCheckService authCheckService,
+            IrisSessionRepository irisSessionRepository) {
         this.userRepository = userRepository;
+        this.irisChatService = irisChatService;
+        this.authCheckService = authCheckService;
         this.irisSessionRepository = irisSessionRepository;
     }
 
@@ -52,6 +56,18 @@ public class IrisSessionService {
     }
 
     /**
+     * Checks if the programming exercise for which an Iris operation was requested has Iris activated.
+     * An Iris operation can be performed if the programming exercise has Iris activated.
+     *
+     * @param programmingExercise The programming exercise to check
+     */
+    public void checkIrisActivated(ProgrammingExercise programmingExercise) {
+        if (!programmingExercise.isIrisActivated()) {
+            throw new BadRequestException("Iris not activated for Programming Exercise: " + programmingExercise.getId());
+        }
+    }
+
+    /**
      * Creates a new Iris session for the given exercise and user.
      * If a session already exists, a BadRequestException is thrown.
      *
@@ -68,5 +84,17 @@ public class IrisSessionService {
         irisSession.setExercise(exercise);
         irisSession.setUser(user);
         return irisSessionRepository.save(irisSession);
+    }
+
+    /**
+     * Sends a request to Iris to get a message for the given session.
+     * It decides which Iris subsystem should handle it based on the session type.
+     * Currently, only the chat subsystem exists.
+     *
+     * @param session The session to get a message for
+     */
+    public void requestMessageFromIris(IrisSession session) {
+        // TODO: Future: Switch between different session types
+        irisChatService.requestAndHandleResponse(session);
     }
 }
