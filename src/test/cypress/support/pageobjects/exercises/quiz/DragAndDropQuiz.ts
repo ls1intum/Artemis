@@ -14,7 +14,7 @@ export class DragAndDropQuiz {
     }
 
     setTitle(title: string) {
-        cy.get('#quiz-title').type(title);
+        cy.get('#field_title').type(title);
     }
 
     /**

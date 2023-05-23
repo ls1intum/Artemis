@@ -14,7 +14,9 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.lecture.*;
+import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.LectureDTO;
 
@@ -34,6 +36,9 @@ class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
     @Autowired
     private AttachmentRepository attachmentRepository;
 
+    @Autowired
+    ChannelRepository channelRepository;
+
     private Attachment attachmentDirectOfLecture;
 
     private Attachment attachmentOfAttachmentUnit;
@@ -52,6 +57,13 @@ class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
         this.course1 = this.courseRepository.findByIdWithExercisesAndLecturesElseThrow(courses.get(0).getId());
         var lecture = this.course1.getLectures().stream().findFirst().get();
         lecture.setTitle("Lecture " + new Random().nextInt()); // needed for search by title
+        Channel channel = new Channel();
+        channel.setIsAnnouncementChannel(false);
+        channel.setIsPublic(true);
+        channel.setIsArchived(false);
+        channel.setName("test");
+        channel = channelRepository.save(channel);
+        lecture.setChannel(channel);
         this.lecture1 = lectureRepository.save(lecture);
         this.textExercise = textExerciseRepository.findByCourseIdWithCategories(course1.getId()).stream().findFirst().get();
         // Add users that are not in the course
@@ -107,14 +119,18 @@ class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
         lecture.setTitle("loremIpsum");
         lecture.setCourse(course);
         lecture.setDescription("loremIpsum");
-        LectureDTO lectureDTO = new LectureDTO(lecture, "test");
+        LectureDTO lectureDTO = new LectureDTO(lecture, lecture.getTitle());
         Lecture returnedLecture = request.postWithResponseBody("/api/lectures", lectureDTO, Lecture.class, HttpStatus.CREATED);
+
+        Optional<Channel> channel = channelRepository.findById(returnedLecture.getChannel().getId());
 
         assertThat(returnedLecture).isNotNull();
         assertThat(returnedLecture.getId()).isNotNull();
         assertThat(returnedLecture.getTitle()).isEqualTo(lecture.getTitle());
         assertThat(returnedLecture.getCourse().getId()).isEqualTo(lecture.getCourse().getId());
         assertThat(returnedLecture.getDescription()).isEqualTo(lecture.getDescription());
+        assertThat(channel).isPresent();
+        assertThat(channel.get().getName()).isEqualTo("loremipsum"); // note "i" is lower case as a channel name should not contain upper case letters
     }
 
     @Test
@@ -129,12 +145,19 @@ class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateLecture_correctRequestBody_shouldUpdateLecture() throws Exception {
-        Lecture originalLecture = lectureRepository.findByIdWithLectureUnits(lecture1.getId()).get();
+        Lecture originalLecture = lectureRepository.findByIdWithChannel(lecture1.getId());
         originalLecture.setTitle("Updated");
         originalLecture.setDescription("Updated");
-        LectureDTO lectureDTO = new LectureDTO(originalLecture, "test");
+        LectureDTO lectureDTO = new LectureDTO(originalLecture, "updated");
+
+        assertThat(originalLecture.getChannel()).isNotNull();
 
         Lecture updatedLecture = request.putWithResponseBody("/api/lectures", lectureDTO, Lecture.class, HttpStatus.OK);
+
+        Optional<Channel> channel = channelRepository.findById(originalLecture.getChannel().getId());
+
+        assertThat(channel).isPresent();
+        assertThat(channel.get().getName()).isNotEqualTo("test");
         assertThat(updatedLecture.getTitle()).isEqualTo("Updated");
         assertThat(updatedLecture.getDescription()).isEqualTo("Updated");
     }

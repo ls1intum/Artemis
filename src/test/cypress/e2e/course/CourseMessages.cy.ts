@@ -96,12 +96,12 @@ describe('Course messages', () => {
                 courseMessages.getError().contains('Names can only contain lowercase letters');
             });
 
-            it('instructors should not be able to create channel with name longer than 20 chars', () => {
+            it('instructors should not be able to create channel with name longer than 30 chars', () => {
                 cy.login(instructor, `/courses/${course.id}/messages`);
-                const name = 'way-to-long-channel-title';
+                const name = 'way-way-way-too-long-channel-title';
                 courseMessages.createChannelButton();
                 courseMessages.setName(name);
-                courseMessages.getError().contains('Name can be max 20 characters long!');
+                courseMessages.getError().contains('Name can be max 30 characters long!');
             });
 
             it('check that channel is created, when a lecture is created', () => {
@@ -114,7 +114,7 @@ describe('Course messages', () => {
 
             it('check that channel is created, when an exercise is created', () => {
                 cy.login(admin);
-                courseManagementRequest.createTextExercise({course}, 'Test Exercise');
+                courseManagementRequest.createTextExercise({ course }, 'Test Exercise');
                 cy.login(instructor, `/courses/${course.id}/messages`);
                 courseMessages.browseChannelsButton();
                 courseMessages.checkChannelsExists('exercise-test-exercise');

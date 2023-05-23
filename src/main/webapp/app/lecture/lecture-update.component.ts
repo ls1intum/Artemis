@@ -189,11 +189,15 @@ export class LectureUpdateComponent implements OnInit {
 
     /**
      * Action on unsuccessful lecture creation or edit
-     * @param error the error handed to the alert service
+     * @param errorRes the errorRes handed to the alert service
      */
-    protected onSaveError(error: HttpErrorResponse) {
+    protected onSaveError(errorRes: HttpErrorResponse) {
         this.isSaving = false;
-        onError(this.alertService, error);
+        if (errorRes.error && errorRes.error.title) {
+            this.alertService.addErrorAlert(errorRes.error.title, errorRes.error.message, errorRes.error.params);
+        } else {
+            onError(this.alertService, errorRes);
+        }
     }
 
     onDatesValuesChanged() {

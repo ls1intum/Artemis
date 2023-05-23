@@ -21,6 +21,6 @@ export class LectureCreationPage {
     }
 
     setEndDate(date: Dayjs) {
-        cy.get('#end-date').find('#date-input-field').type(date.toString());
+        cy.get('#end-date').find('#date-input-field').type(' ').clear().type(date.toString());
     }
 }

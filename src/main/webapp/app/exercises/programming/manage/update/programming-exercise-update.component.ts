@@ -638,6 +638,9 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     }
 
     private onSaveError(error: HttpErrorResponse) {
+        if (error.error && error.error.title) {
+            this.alertService.addErrorAlert(error.error.title, error.error.message, error.error.params);
+        }
         const errorMessage = error.headers.get('X-artemisApp-alert')!;
         this.alertService.addAlert({
             type: AlertType.DANGER,

@@ -215,8 +215,12 @@ export class TextExerciseUpdateComponent implements OnInit {
         this.navigationUtilService.navigateForwardFromExerciseUpdateOrCreation(exercise);
     }
 
-    private onSaveError(error: HttpErrorResponse) {
-        onError(this.alertService, error);
+    private onSaveError(errorRes: HttpErrorResponse) {
+        if (errorRes.error && errorRes.error.title) {
+            this.alertService.addErrorAlert(errorRes.error.title, errorRes.error.message, errorRes.error.params);
+        } else {
+            onError(this.alertService, errorRes);
+        }
         this.isSaving = false;
     }
 }

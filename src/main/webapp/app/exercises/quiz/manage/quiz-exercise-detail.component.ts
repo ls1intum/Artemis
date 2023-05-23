@@ -875,7 +875,7 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
                             this.onSaveError();
                         }
                     },
-                    error: () => this.onSaveError(),
+                    error: (error) => this.onSaveError(error),
                 });
             } else {
                 const requestOptions = {} as any;
@@ -891,7 +891,7 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
                             this.onSaveError();
                         }
                     },
-                    error: () => this.onSaveError(),
+                    error: (error) => this.onSaveError(error),
                 });
             }
         } else {
@@ -903,7 +903,7 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
                         this.onSaveError();
                     }
                 },
-                error: () => this.onSaveError(),
+                error: (error) => this.onSaveError(error),
             });
         }
     }
@@ -939,7 +939,10 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
     /**
      * Callback function for when the save fails
      */
-    private onSaveError = (): void => {
+    private onSaveError = (errorRes?: HttpErrorResponse): void => {
+        if (errorRes?.error && errorRes.error.title) {
+            this.alertService.addErrorAlert(errorRes.error.title, errorRes.error.message, errorRes.error.params);
+        }
         console.error('Saving Quiz Failed! Please try again later.');
         this.alertService.error('artemisApp.quizExercise.saveError');
         this.isSaving = false;

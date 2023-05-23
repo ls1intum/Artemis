@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Function;
 
@@ -22,6 +23,7 @@ import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.util.InvalidExamExerciseDatesArgumentProvider;
 import de.tum.in.www1.artemis.util.InvalidExamExerciseDatesArgumentProvider.InvalidExamExerciseDateConfiguration;
 import de.tum.in.www1.artemis.util.ModelFactory;
@@ -49,6 +51,9 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @Autowired
     private StudentParticipationRepository studentParticipationRepository;
+
+    @Autowired
+    private ChannelRepository channelRepository;
 
     private List<GradingCriterion> gradingCriteria;
 
@@ -152,6 +157,8 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooB
         FileUploadExercise receivedFileUploadExercise = request.postWithResponseBody("/api/file-upload-exercises", fileUploadExercise, FileUploadExercise.class,
                 HttpStatus.CREATED);
 
+        Optional<Channel> channelFromDB = channelRepository.findById(receivedFileUploadExercise.getChannel().getId());
+
         assertThat(receivedFileUploadExercise).isNotNull();
         assertThat(receivedFileUploadExercise.getId()).isNotNull();
         assertThat(receivedFileUploadExercise.getFilePattern()).isEqualTo(creationFilePattern.toLowerCase().replaceAll("\\s+", ""));
@@ -166,6 +173,9 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooB
         assertThat(gradingCriteria.get(0).getStructuredGradingInstructions()).hasSize(1);
         assertThat(gradingCriteria.get(0).getStructuredGradingInstructions().get(0).getInstructionDescription())
                 .isEqualTo("created first instruction with empty criteria for testing");
+
+        assertThat(channelFromDB).isPresent();
+        assertThat(channelFromDB.get().getName()).isEqualTo("testchannel");
     }
 
     @Test
@@ -176,6 +186,8 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooB
 
         gradingCriteria = database.addGradingInstructionsToExercise(fileUploadExercise);
         FileUploadExercise createdFileUploadExercise = request.postWithResponseBody("/api/file-upload-exercises", fileUploadExercise, FileUploadExercise.class, HttpStatus.CREATED);
+
+        assertThat(createdFileUploadExercise.getChannel()).isNull(); // there should not be any channel for exam exercise
 
         assertThat(createdFileUploadExercise).isNotNull();
         assertThat(createdFileUploadExercise.getId()).isNotNull();

@@ -64,6 +64,10 @@ export function titleCaseWord(str: string) {
     return sentence.join(' ');
 }
 
+export function titleLowercase(title: string) {
+    return title.replace(' ', '-').toLowerCase();
+}
+
 export function getExercise(exerciseId: number) {
     return cy.get(`#exercise-${exerciseId}`);
 }
