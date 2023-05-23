@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.programmingexercise;
 
 import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 
 import java.io.IOException;
@@ -131,7 +130,7 @@ class ProgrammingExerciseIntegrationBambooBitbucketJiraTest extends AbstractSpri
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testExportSubmissionsByStudentLogins_failToCreateZip() throws Exception {
-        doThrow(IOException.class).when(zipFileService).createZipFile(any(Path.class), any(), eq(false));
+        doThrow(IOException.class).when(zipFileService).createZipFile(any(Path.class), any());
         programmingExerciseIntegrationTestService.testExportSubmissionsByStudentLogins_failToCreateZip();
     }
 

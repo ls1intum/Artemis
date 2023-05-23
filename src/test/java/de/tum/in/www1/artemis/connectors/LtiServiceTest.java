@@ -102,8 +102,8 @@ class LtiServiceTest {
 
         String initialize = uriComponents.getQueryParams().getFirst("initialize");
         String ltiSuccessLoginRequired = uriComponents.getQueryParams().getFirst("ltiSuccessLoginRequired");
-        assertEquals("", initialize);
-        assertNull(ltiSuccessLoginRequired);
+        assertThat(initialize).isEmpty();
+        assertThat(ltiSuccessLoginRequired).isNull();
     }
 
     @Test
@@ -124,8 +124,8 @@ class LtiServiceTest {
 
         String initialize = uriComponents.getQueryParams().getFirst("initialize");
         String ltiSuccessLoginRequired = uriComponents.getQueryParams().getFirst("ltiSuccessLoginRequired");
-        assertEquals(user.getLogin(), ltiSuccessLoginRequired);
-        assertNull(initialize);
+        assertThat(ltiSuccessLoginRequired).isEqualTo(user.getLogin());
+        assertThat(initialize).isNull();
     }
 
     @Test
@@ -150,7 +150,7 @@ class LtiServiceTest {
 
         ltiService.authenticateLtiUser("useremail@tum.de", "username", "firstname", "lastname", onlineCourseConfiguration.isRequireExistingUser());
 
-        assertEquals(auth, SecurityContextHolder.getContext().getAuthentication());
+        assertThat(SecurityContextHolder.getContext().getAuthentication()).isEqualTo(auth);
     }
 
     @Test
@@ -165,7 +165,7 @@ class LtiServiceTest {
         ltiService.authenticateLtiUser("email", "username", "firstname", "lastname", onlineCourseConfiguration.isRequireExistingUser());
 
         auth = SecurityContextHolder.getContext().getAuthentication();
-        assertEquals(user.getLogin(), auth.getPrincipal());
+        assertThat(auth.getPrincipal()).isEqualTo(user.getLogin());
     }
 
     @Test
@@ -186,7 +186,7 @@ class LtiServiceTest {
         ltiService.authenticateLtiUser("email", "username", "firstname", "lastname", onlineCourseConfiguration.isRequireExistingUser());
 
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        assertEquals(user.getLogin(), auth.getPrincipal());
+        assertThat(auth.getPrincipal()).isEqualTo(user.getLogin());
     }
 
     @Test
@@ -199,7 +199,7 @@ class LtiServiceTest {
         ltiService.authenticateLtiUser("email", "username", "firstname", "lastname", onlineCourseConfiguration.isRequireExistingUser());
 
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        assertEquals(user.getLogin(), auth.getPrincipal());
+        assertThat(auth.getPrincipal()).isEqualTo(user.getLogin());
         assertThat(user.getGroups()).contains(LtiService.LTI_GROUP_NAME);
     }
 
@@ -214,13 +214,13 @@ class LtiServiceTest {
 
     @Test
     void isLtiCreatedUser() {
-        assertTrue(ltiService.isLtiCreatedUser(user));
+        assertThat(ltiService.isLtiCreatedUser(user)).isTrue();
     }
 
     @Test
     void isNotLtiCreatedUser() {
         user.setGroups(new HashSet<>(Arrays.asList("students", "editors")));
 
-        assertFalse(ltiService.isLtiCreatedUser(user));
+        assertThat(ltiService.isLtiCreatedUser(user)).isFalse();
     }
 }

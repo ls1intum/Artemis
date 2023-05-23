@@ -1,8 +1,8 @@
 package de.tum.in.www1.artemis.connectors;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import java.util.Collections;
@@ -245,7 +245,7 @@ class Lti13ServiceTest {
 
         String username = lti13Service.createUsernameFromLaunchRequest(oidcIdToken, onlineCourseConfiguration);
 
-        assertEquals("prefix_john", username);
+        assertThat(username).isEqualTo("prefix_john");
     }
 
     @Test
@@ -256,7 +256,7 @@ class Lti13ServiceTest {
 
         String username = lti13Service.createUsernameFromLaunchRequest(oidcIdToken, onlineCourseConfiguration);
 
-        assertEquals("prefix_jonsnow", username);
+        assertThat(username).isEqualTo("prefix_jonsnow");
     }
 
     @Test
@@ -268,7 +268,7 @@ class Lti13ServiceTest {
 
         String username = lti13Service.createUsernameFromLaunchRequest(oidcIdToken, onlineCourseConfiguration);
 
-        assertEquals("prefix_jon.snow", username);
+        assertThat(username).isEqualTo("prefix_jon.snow");
     }
 
     @Test
@@ -280,7 +280,7 @@ class Lti13ServiceTest {
 
         String username = lti13Service.createUsernameFromLaunchRequest(oidcIdToken, onlineCourseConfiguration);
 
-        assertEquals("prefix_jon.snow", username);
+        assertThat(username).isEqualTo("prefix_jon.snow");
     }
 
     @Test
@@ -465,21 +465,21 @@ class Lti13ServiceTest {
         HttpEntity<String> httpEntity = httpEntityCapture.getValue();
 
         List<String> authHeaders = httpEntity.getHeaders().get("Authorization");
-        assertNotNull(authHeaders, "Score publish request must contain an Authorization header");
-        assertTrue(authHeaders.contains("Bearer " + accessToken), "Score publish request must contain the corresponding Authorization Bearer token");
+        assertThat(authHeaders).as("Score publish request must contain an Authorization header").isNotNull();
+        assertThat(authHeaders).as("Score publish request must contain the corresponding Authorization Bearer token").contains("Bearer " + accessToken);
 
         JSONParser jsonParser = new JSONParser(JSONParser.MODE_JSON_SIMPLE);
         JSONObject body = (JSONObject) jsonParser.parse(httpEntity.getBody());
-        assertEquals(launch.getSub(), body.get("userId"), "Invalid parameter in score publish request: userId");
-        assertNotNull(body.get("timestamp"), "Parameter missing in score publish request: timestamp");
-        assertNotNull(body.get("activityProgress"), "Parameter missing in score publish request: activityProgress");
-        assertNotNull(body.get("gradingProgress"), "Parameter missing in score publish request: gradingProgress");
+        assertThat(body.get("userId")).as("Invalid parameter in score publish request: userId").isEqualTo(launch.getSub());
+        assertThat(body.get("timestamp")).as("Parameter missing in score publish request: timestamp").isNotNull();
+        assertThat(body.get("activityProgress")).as("Parameter missing in score publish request: activityProgress").isNotNull();
+        assertThat(body.get("gradingProgress")).as("Parameter missing in score publish request: gradingProgress").isNotNull();
 
-        assertEquals("Good job. Not so good", body.get("comment"), "Invalid parameter in score publish request: comment");
-        assertEquals(scoreGiven, body.get("scoreGiven"), "Invalid parameter in score publish request: scoreGiven");
-        assertEquals(100d, body.get("scoreMaximum"), "Invalid parameter in score publish request: scoreMaximum");
+        assertThat(body.get("comment")).as("Invalid parameter in score publish request: comment").isEqualTo("Good job. Not so good");
+        assertThat(body.get("scoreGiven")).as("Invalid parameter in score publish request: scoreGiven").isEqualTo(scoreGiven);
+        assertThat(body.get("scoreMaximum")).as("Invalid parameter in score publish request: scoreMaximum").isEqualTo(100d);
 
-        assertEquals(urlCapture.getValue(), launch.getScoreLineItemUrl() + "/scores", "Score publish request was sent to a wrong URI");
+        assertThat(launch.getScoreLineItemUrl() + "/scores").as("Score publish request was sent to a wrong URI").isEqualTo(urlCapture.getValue());
     }
 
     private State getValidStateForNewResult(Result result) {

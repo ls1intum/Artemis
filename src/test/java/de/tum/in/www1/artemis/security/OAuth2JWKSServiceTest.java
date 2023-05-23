@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.security;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import java.util.Collections;
@@ -56,7 +55,7 @@ class OAuth2JWKSServiceTest {
     @Test
     void getJWK() {
         JWK jwk = oAuth2JWKSService.getJWK(clientRegistrationId);
-        assertNotNull(jwk);
+        assertThat(jwk).isNotNull();
     }
 
     @Test
@@ -65,7 +64,7 @@ class OAuth2JWKSServiceTest {
 
         oAuth2JWKSService.updateKey("regId");
 
-        assertThat(oAuth2JWKSService.getJwkSet().getKeys().size()).isEqualTo(1);
+        assertThat(oAuth2JWKSService.getJwkSet().getKeys()).hasSize(1);
     }
 
     @Test
@@ -74,6 +73,6 @@ class OAuth2JWKSServiceTest {
 
         oAuth2JWKSService.updateKey("regId");
 
-        assertThat(oAuth2JWKSService.getJwkSet().getKeys().size()).isZero();
+        assertThat(oAuth2JWKSService.getJwkSet().getKeys()).isEmpty();
     }
 }

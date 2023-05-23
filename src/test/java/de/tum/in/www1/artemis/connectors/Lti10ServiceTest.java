@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.connectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 
 import java.io.IOException;
@@ -141,7 +140,7 @@ class Lti10ServiceTest {
 
         String username = lti10Service.createUsernameFromLaunchRequest(launchRequest, onlineCourseConfiguration);
 
-        assertEquals("prefix_john", username);
+        assertThat(username).isEqualTo("prefix_john");
     }
 
     @Test
@@ -151,7 +150,7 @@ class Lti10ServiceTest {
 
         String username = lti10Service.createUsernameFromLaunchRequest(launchRequest, onlineCourseConfiguration);
 
-        assertEquals("prefix_johnid", username);
+        assertThat(username).isEqualTo("prefix_johnid");
     }
 
     @Test
@@ -162,7 +161,7 @@ class Lti10ServiceTest {
 
         String username = lti10Service.createUsernameFromLaunchRequest(launchRequest, onlineCourseConfiguration);
 
-        assertEquals("prefix_userid", username);
+        assertThat(username).isEqualTo("prefix_userid");
     }
 
     @Test
@@ -174,7 +173,7 @@ class Lti10ServiceTest {
 
         String username = lti10Service.createUsernameFromLaunchRequest(launchRequest, onlineCourseConfiguration);
 
-        assertEquals("prefix_jon.snow", username);
+        assertThat(username).isEqualTo("prefix_jon.snow");
     }
 
     @Test
@@ -183,7 +182,7 @@ class Lti10ServiceTest {
 
         String lastname = lti10Service.getUserLastNameFromLaunchRequest(launchRequest);
 
-        assertEquals("snow", lastname);
+        assertThat(lastname).isEqualTo("snow");
     }
 
     @Test
@@ -193,7 +192,7 @@ class Lti10ServiceTest {
 
         String lastname = lti10Service.getUserLastNameFromLaunchRequest(launchRequest);
 
-        assertEquals("sourceId", lastname);
+        assertThat(lastname).isEqualTo("sourceId");
     }
 
     @Test
@@ -203,7 +202,7 @@ class Lti10ServiceTest {
 
         String lastname = lti10Service.getUserLastNameFromLaunchRequest(launchRequest);
 
-        assertEquals("", lastname);
+        assertThat(lastname).isEmpty();
     }
 
     @Test
@@ -215,7 +214,7 @@ class Lti10ServiceTest {
         request.setMethod("GET");
         request.setRequestURI(url);
         String message = lti10Service.verifyRequest(request, onlineCourseConfiguration);
-        assertThat("LTI signature verification failed with message: Failed to validate: parameter_absent; error: bad_request, launch result: null").isEqualTo(message);
+        assertThat(message).isEqualTo("LTI signature verification failed with message: Failed to validate: parameter_absent; error: bad_request, launch result: null");
     }
 
     @Test
