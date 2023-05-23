@@ -58,6 +58,7 @@ export class ExerciseChatbotComponent implements OnDestroy {
             });
             this.dialogRef.afterClosed().subscribe(() => {
                 this.buttonDisabled = false;
+                this.chatOpen = false;
             });
         }
         this.buttonDisabled = true;
