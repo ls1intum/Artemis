@@ -390,19 +390,19 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkin
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetCourseForDashboardForbiddenWithRegistrationPossible() throws Exception {
-        courseTestService.testGetCourseForDashboardForbiddenWithRegistrationPossible();
+        courseTestService.testGetCourseForDashboardForbiddenWithEnrollmentPossible();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetCourseForRegistration() throws Exception {
-        courseTestService.testGetCourseForRegistration();
+        courseTestService.testGetCourseForEnrollment();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetCourseForRegistrationAccessDenied() throws Exception {
-        courseTestService.testGetCourseForRegistrationAccessDenied();
+        courseTestService.testGetCourseForEnrollmentAccessDenied();
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
@@ -451,7 +451,7 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkin
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1")
     void testGetCoursesToRegisterAndAccurateTimeZoneEvaluation() throws Exception {
-        courseTestService.testGetCoursesForRegistrationAndAccurateTimeZoneEvaluation();
+        courseTestService.testGetCoursesForEnrollmentAndAccurateTimeZoneEvaluation();
     }
 
     @Test
@@ -541,7 +541,7 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkin
     @Test
     @WithMockUser(username = "ab12cde")
     void testRegisterForCourse() throws Exception {
-        courseTestService.testRegisterForCourse();
+        courseTestService.testEnrollInCourse();
     }
 
     @Test
@@ -577,7 +577,7 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkin
     @Test
     @WithMockUser(username = "ab12cde")
     void testRegisterForCourse_notMeetsDate() throws Exception {
-        courseTestService.testRegisterForCourse_notMeetsDate();
+        courseTestService.testEnrollInCourse_notMeetsDate();
     }
 
     @Test
