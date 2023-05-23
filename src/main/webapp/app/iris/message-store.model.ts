@@ -3,6 +3,7 @@ import { IrisClientMessage, IrisMessage, IrisServerMessage } from 'app/entities/
 export enum ActionType {
     HISTORY_MESSAGE_LOADED = 'history-message-loaded',
     ACTIVE_CONVERSATION_MESSAGE_LOADED = 'active-conversation-message-loaded',
+    ACTIVE_CONVERSATION_MESSAGE_LOADED_ERROR = 'active-conversation-message-loaded-error',
     STUDENT_MESSAGE_SENT = 'student-message-sent',
     SESSION_ID_CHANGED = 'session-id-changed',
 }
@@ -23,6 +24,14 @@ export class ActiveConversationMessageLoadedAction {
     }
 }
 
+export class ActiveConversationMessageLoadedErrorAction {
+    readonly type: ActionType;
+
+    public constructor(public readonly errorMessage: string) {
+        this.type = ActionType.ACTIVE_CONVERSATION_MESSAGE_LOADED_ERROR;
+    }
+}
+
 export class StudentMessageSentAction {
     readonly type: ActionType;
 
@@ -40,7 +49,12 @@ export class SessionIdReceivedAction {
     }
 }
 
-export type MessageStoreAction = HistoryMessageLoadedAction | ActiveConversationMessageLoadedAction | StudentMessageSentAction | SessionIdReceivedAction;
+export type MessageStoreAction =
+    | HistoryMessageLoadedAction
+    | ActiveConversationMessageLoadedAction
+    | ActiveConversationMessageLoadedErrorAction
+    | StudentMessageSentAction
+    | SessionIdReceivedAction;
 
 export function isHistoryMessageLoadedAction(action: MessageStoreAction): action is HistoryMessageLoadedAction {
     return action.type === ActionType.HISTORY_MESSAGE_LOADED;
@@ -48,6 +62,10 @@ export function isHistoryMessageLoadedAction(action: MessageStoreAction): action
 
 export function isActiveConversationMessageLoadedAction(action: MessageStoreAction): action is ActiveConversationMessageLoadedAction {
     return action.type === ActionType.ACTIVE_CONVERSATION_MESSAGE_LOADED;
+}
+
+export function isActiveConversationMessageLoadedErrorAction(action: MessageStoreAction): action is ActiveConversationMessageLoadedErrorAction {
+    return action.type === ActionType.ACTIVE_CONVERSATION_MESSAGE_LOADED_ERROR;
 }
 
 export function isStudentMessageSentAction(action: MessageStoreAction): action is StudentMessageSentAction {
@@ -59,5 +77,5 @@ export function isSessionIdReceivedAction(action: MessageStoreAction): action is
 }
 
 export class MessageStoreState {
-    public constructor(public messages: ReadonlyArray<IrisMessage>, public sessionId: number | null, public isLoading: boolean) {}
+    public constructor(public messages: ReadonlyArray<IrisMessage>, public sessionId: number | null, public isLoading: boolean, public error: string) {}
 }

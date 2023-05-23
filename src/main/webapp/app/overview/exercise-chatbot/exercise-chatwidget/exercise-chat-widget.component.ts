@@ -1,11 +1,11 @@
 import { Component, ElementRef, Inject, OnInit, ViewChild } from '@angular/core';
 import { faCircle, faExpand, faPaperPlane, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { MAT_DIALOG_DATA, MatDialog } from '@angular/material/dialog';
-import { HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { IrisClientMessage, IrisMessage, IrisMessageContent, IrisMessageContentType, IrisSender, IrisServerMessage } from 'app/entities/iris/iris.model';
 import { IrisMessageStore } from 'app/iris/message-store.service';
 import { IrisHttpMessageService } from 'app/iris/http-message.service';
-import { ActiveConversationMessageLoadedAction, StudentMessageSentAction } from 'app/iris/message-store.model';
+import { ActiveConversationMessageLoadedAction, ActiveConversationMessageLoadedErrorAction, StudentMessageSentAction } from 'app/iris/message-store.model';
 
 @Component({
     selector: 'jhi-exercise-chat-widget',
@@ -24,6 +24,7 @@ export class ExerciseChatWidgetComponent implements OnInit {
     messages: IrisMessage[] = [];
     newMessage = '';
     isLoading: boolean;
+    error = ''; // TODO: error object
     dots = 1;
 
     constructor(private dialog: MatDialog, @Inject(MAT_DIALOG_DATA) public data: any, private irisHttpMessageService: IrisHttpMessageService) {
@@ -42,6 +43,7 @@ export class ExerciseChatWidgetComponent implements OnInit {
         this.messageStore.getState().subscribe((state) => {
             this.messages = state.messages as IrisMessage[];
             this.isLoading = state.isLoading;
+            this.error = state.error;
         });
     }
 
@@ -60,8 +62,9 @@ export class ExerciseChatWidgetComponent implements OnInit {
                         this.messageStore.dispatch(new ActiveConversationMessageLoadedAction(res.body!));
                         this.scrollToBottom();
                     },
-                    error: () => {
-                        // TODO: handle error
+                    error: (error: HttpErrorResponse) => {
+                        // this.messageStore.dispatch(new ActiveConversationMessageLoadedErrorAction(res.body!));
+                        this.messageStore.dispatch(new ActiveConversationMessageLoadedErrorAction('Something went wrong. Please try again later!'));
                     },
                 }),
             );
