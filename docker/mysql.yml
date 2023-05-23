@@ -9,10 +9,9 @@ services:
         pull_policy: always
         volumes:
             - artemis-mysql-data:/var/lib/mysql
-        environment:
-            MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
-            MYSQL_ROOT_PASSWORD:
-            MYSQL_DATABASE: "Artemis"
+        # DO NOT use this default file for production systems!
+        env_file:
+            - ./mysql/default.env
         ports:
             - "127.0.0.1:3306:3306"
         # expose the port to make it reachable docker internally even if the external port mapping changes
@@ -35,6 +34,7 @@ networks:
     artemis:
         driver: "bridge"
         name: artemis
+
 volumes:
     artemis-mysql-data:
         name: artemis-mysql-data

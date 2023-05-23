@@ -4,6 +4,11 @@
     "description": "Interactive Learning with Individual Feedback",
     "private": true,
     "license": "MIT",
+    "author": {
+        "name": "Stephan Krusche",
+        "email": "krusche@tum.de",
+        "url": "https://ase.cit.tum.de/krusche"
+    },
     "cacheDirectories": [
         "node_modules"
     ],
