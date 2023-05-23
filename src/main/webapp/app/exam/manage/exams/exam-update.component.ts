@@ -141,7 +141,11 @@ export class ExamUpdateComponent implements OnInit {
             const numberOfInvalidProgrammingExercises = httpErrorResponse.error.numberOfInvalidProgrammingExercises;
             this.alertService.error('artemisApp.examManagement.exerciseGroup.importModal.invalidKey', { number: numberOfInvalidProgrammingExercises });
         } else {
-            onError(this.alertService, httpErrorResponse);
+            if (httpErrorResponse.error && httpErrorResponse.error.title) {
+                this.alertService.addErrorAlert(httpErrorResponse.error.title, httpErrorResponse.error.message, httpErrorResponse.error.params);
+            } else {
+                onError(this.alertService, httpErrorResponse);
+            }
         }
         this.isSaving = false;
     }

@@ -395,7 +395,7 @@ export class CourseManagementRequests {
      * @returns <Chainable> request response
      */
     createTextExercise(body: { course: Course } | { exerciseGroup: ExerciseGroup }, title = 'Text exercise ' + generateUUID()) {
-        const template = { 
+        const template = {
             ...textExerciseTemplate,
             title,
             channel: {
