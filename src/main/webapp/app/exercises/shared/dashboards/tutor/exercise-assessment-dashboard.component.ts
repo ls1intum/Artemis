@@ -47,7 +47,6 @@ import dayjs from 'dayjs/esm';
 import { faCheckCircle, faExclamationTriangle, faFolderOpen, faQuestionCircle, faSort, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { GraphColors } from 'app/entities/statistics.model';
 import { PROFILE_LOCALVC } from 'app/app.constants';
-import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 
 export interface ExampleSubmissionQueryParams {
@@ -212,7 +211,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
         this.translateService.onLangChange.subscribe(() => {
             this.setupGraph();
         });
-        this.profileService.getProfileInfo().subscribe((profileInfo: ProfileInfo) => {
+        this.profileService.getProfileInfo().subscribe((profileInfo) => {
             this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
         });
     }

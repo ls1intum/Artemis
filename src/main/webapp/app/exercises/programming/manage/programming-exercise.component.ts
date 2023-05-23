@@ -2,7 +2,6 @@ import { Component, ContentChild, Input, OnDestroy, OnInit, TemplateRef } from '
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { ExerciseImportComponent } from 'app/exercises/shared/import/exercise-import.component';
 import { ProgrammingExerciseInstructorRepositoryType, ProgrammingExerciseService } from './services/programming-exercise.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ExerciseComponent } from 'app/exercises/shared/exercise/exercise.component';

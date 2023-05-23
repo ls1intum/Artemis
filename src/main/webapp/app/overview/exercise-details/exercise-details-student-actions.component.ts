@@ -19,7 +19,6 @@ import { ParticipationService } from 'app/exercises/shared/participation/partici
 import dayjs from 'dayjs/esm';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { PROFILE_LOCALVC } from 'app/app.constants';
 
 @Component({
@@ -81,7 +80,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
             this.quizNotStarted = ArtemisQuizService.notStarted(quizExercise);
         } else if (this.exercise.type === ExerciseType.PROGRAMMING) {
             this.programmingExercise = this.exercise as ProgrammingExercise;
-            this.profileService.getProfileInfo().subscribe((profileInfo: ProfileInfo) => {
+            this.profileService.getProfileInfo().subscribe((profileInfo) => {
                 this.localVCEnabled = profileInfo.activeProfiles?.includes(PROFILE_LOCALVC);
             });
         } else if (this.exercise.type === ExerciseType.MODELING) {

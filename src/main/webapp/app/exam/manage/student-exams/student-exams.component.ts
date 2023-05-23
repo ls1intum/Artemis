@@ -20,7 +20,6 @@ import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { convertDateFromServer } from 'app/utils/date.utils';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { PROFILE_LOCALVC } from 'app/app.constants';
 
 const getWebsocketChannel = (examId: number) => `/topic/exams/${examId}/exercise-start-status`;
@@ -86,7 +85,7 @@ export class StudentExamsComponent implements OnInit, OnDestroy {
         this.examId = Number(this.route.snapshot.paramMap.get('examId'));
         this.loadAll();
 
-        this.profileService.getProfileInfo().subscribe((profileInfo: ProfileInfo) => {
+        this.profileService.getProfileInfo().subscribe((profileInfo) => {
             this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
         });
 

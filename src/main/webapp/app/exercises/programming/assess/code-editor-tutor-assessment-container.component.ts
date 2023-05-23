@@ -37,7 +37,6 @@ import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { cloneDeep } from 'lodash-es';
 import { AssessmentAfterComplaint } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
 import { PROFILE_LOCALVC } from 'app/app.constants';
-import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 
 @Component({
@@ -200,7 +199,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                 .subscribe();
         });
 
-        this.profileService.getProfileInfo().subscribe((profileInfo: ProfileInfo) => {
+        this.profileService.getProfileInfo().subscribe((profileInfo) => {
             this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
         });
     }
