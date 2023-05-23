@@ -6,7 +6,7 @@ Artemis. Artemis is based on `JHipster <https://jhipster.github.io>`__,
 i.e. \ `Spring Boot <http://projects.spring.io/spring-boot>`__
 development on the application server using Java 17, and TypeScript
 development on the application client in the browser using
-`Angular <https://angular.io>`__ and Webpack. To get an overview of the
+`Angular <https://angular.io>`__. To get an overview of the
 used technology, have a look at the `JHipster Technology stack <https://jhipster.github.io/tech-stack>`__
 and other tutorials on the JHipster homepage.
 
@@ -527,9 +527,8 @@ command:
 
    npm run serve
 
-This compiles TypeScript code to JavaScript code, starts the hot module
-replacement feature in Webpack (i.e. whenever you change a TypeScript
-file and save, the client is automatically reloaded with the new code)
+This compiles TypeScript code to JavaScript code, starts the live reloading feature
+(i.e. whenever you change a TypeScript file and save, the client is automatically reloaded with the new code)
 and will start the client application in your browser on
 ``http://localhost:9000``. If you have activated the JIRA profile (see
 above in `Server Setup <#server-setup>`__) and if you have configured
