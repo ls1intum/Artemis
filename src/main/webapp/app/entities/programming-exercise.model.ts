@@ -58,6 +58,7 @@ export class ProgrammingExercise extends Exercise {
     public gitDiffReport?: ProgrammingExerciseGitDiffReport;
     public buildLogStatistics?: BuildLogStatisticsDTO;
     public releaseTestsWithExampleSolution?: boolean;
+    public irisChatbot?: boolean;
 
     public buildAndTestStudentSubmissionsAfterDueDate?: dayjs.Dayjs;
     public testCasesChanged?: boolean;
@@ -93,5 +94,6 @@ export class ProgrammingExercise extends Exercise {
         this.projectType = ProjectType.PLAIN_GRADLE; // default value
         this.showTestNamesToStudents = false; // default value
         this.testwiseCoverageEnabled = false; // default value
+        this.irisChatbot = false; // default value
     }
 }

@@ -154,6 +154,20 @@
         </label>
     </div>
 </div>
+<div class="form-group mb-0">
+    <div class="form-check">
+        <label class="form-check-label" for="field_irisChatbot">
+            <input class="form-check-input" type="checkbox" name="irisChatbot" id="field_irisChatbot" [(ngModel)]="programmingExercise.irisChatbot" checked />
+            <span jhiTranslate="artemisApp.programmingExercise.irisChatbot">Iris Chatbot</span>
+            <fa-icon
+                [icon]="faQuestionCircle"
+                class="text-secondary"
+                placement="auto"
+                ngbTooltip="{{ 'artemisApp.programmingExercise.irisChatbotTooltip' | artemisTranslate }}"
+            ></fa-icon>
+        </label>
+    </div>
+</div>
 <div *ngIf="isImportFromExistingExercise" class="form-group mb-0">
     <div class="form-check">
         <label class="form-check-label" for="field_recreateBuildPlans">

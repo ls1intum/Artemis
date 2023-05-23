@@ -19,6 +19,8 @@ export type ProgrammingLanguageFeature = {
     testwiseCoverageAnalysisSupported: boolean;
     auxiliaryRepositoriesSupported: boolean;
     publishBuildPlanUrlAllowed: boolean;
+    //TODO: add iris chatbot according to server
+    irisChatbot: boolean;
 };
 
 @Injectable({ providedIn: 'root' })

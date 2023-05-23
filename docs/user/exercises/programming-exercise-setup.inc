@@ -286,6 +286,8 @@ Exercise Creation
       If this option is disabled, students will not be able to visually differentiate between automatic and manual feedback.
     - **Publish Build Plan:** Allow students to access and edit their personal build plan. Useful for exercises where students should
       configure parts of the build plan themselves.
+    - **Iris Chatbot:** Activate this option to enable Iris chatbot for students.
+          If this option is disabled, students will not be able to chat with LLM.
 
 - Click on |generate| to create the exercise
 

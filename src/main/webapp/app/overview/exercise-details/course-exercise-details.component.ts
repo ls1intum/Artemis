@@ -99,6 +99,8 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
 
     exampleSolutionInfo?: ExampleSolutionInfo;
 
+    irisChatbot: boolean | undefined;
+
     // extension points, see shared/extension-point
     @ContentChild('overrideStudentActions') overrideStudentActions: TemplateRef<any>;
 
@@ -214,6 +216,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                 this.submissionPolicy = submissionPolicy;
                 this.hasSubmissionPolicy = true;
             });
+            this.irisChatbot = programmingExercise.irisChatbot;
         }
 
         this.showIfExampleSolutionPresent(newExercise);
