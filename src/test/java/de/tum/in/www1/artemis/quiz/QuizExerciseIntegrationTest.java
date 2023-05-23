@@ -35,6 +35,7 @@ import de.tum.in.www1.artemis.util.ExerciseIntegrationTestUtils;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.QuizUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.QuizBatchJoinDTO;
+import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.websocket.QuizSubmissionWebsocketService;
 
 class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -326,6 +327,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         assertThat(quizExerciseServer.getQuizPointStatistic()).isNotNull();
         assertThat(quizExerciseServer.getQuizQuestions()).hasSameSizeAs(quizExercise.getQuizQuestions());
         assertThat(quizExerciseServer.getQuizBatches()).hasSameSizeAs(quizExercise.getQuizBatches());
+        assertThat(quizExerciseServer.getQuizQuestions()).usingRecursiveComparison().ignoringFields("id").isEqualTo(quizExercise.getQuizQuestions());
     }
 
     @Test
@@ -1205,7 +1207,6 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         assertThat(changedQuiz.getMode()).isEqualTo(ExerciseMode.INDIVIDUAL);
         assertThat(changedQuiz.getTeamAssignmentConfig()).isNull();
         assertThat(teamRepository.findAllByExerciseIdWithEagerStudents(changedQuiz, null)).isEmpty();
-
 
         quizExercise = quizExerciseRepository.findByIdElseThrow(quizExercise.getId());
         assertThat(quizExercise.getMode()).isEqualTo(ExerciseMode.TEAM);
