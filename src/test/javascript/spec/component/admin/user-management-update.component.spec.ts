@@ -322,4 +322,15 @@ describe('User Management Update Component', () => {
         expect(comp.user.groups).toEqual([newGroup]);
         expect(event.chipInput!.clear).toHaveBeenCalledOnce();
     });
+
+    it('should not add users to groups', () => {
+        const newGroup1 = 'nicegroup';
+        const newGroup2 = 'badgroup';
+        comp.allGroups = [newGroup1];
+        comp.user = { groups: [] } as any as User;
+        const event = { value: newGroup2, chipInput: { clear: jest.fn() } } as any as MatChipInputEvent;
+        comp.onGroupAdd(comp.user, event);
+        expect(comp.user.groups).toEqual([]);
+        expect(event.chipInput!.clear).toHaveBeenCalledOnce();
+    });
 });
