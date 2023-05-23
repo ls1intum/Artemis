@@ -115,7 +115,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     public testwiseCoverageAnalysisSupported = false;
     public auxiliaryRepositoriesSupported = false;
     public auxiliaryRepositoriesValid = true;
-    public irisChatbot = false;
 
     // Additional options for import
     public recreateBuildPlans = false;
@@ -246,7 +245,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         this.publishBuildPlanUrlAllowed = programmingLanguageFeature.publishBuildPlanUrlAllowed;
         this.testwiseCoverageAnalysisSupported = programmingLanguageFeature.testwiseCoverageAnalysisSupported;
         this.auxiliaryRepositoriesSupported = programmingLanguageFeature.auxiliaryRepositoriesSupported;
-        this.irisChatbot = programmingLanguageFeature.irisChatbot;
         // filter out MAVEN_MAVEN and GRADLE_GRADLE because they are not directly selectable but only via a checkbox
         this.projectTypes = programmingLanguageFeature.projectTypes.filter((projectType) => projectType !== ProjectType.MAVEN_MAVEN && projectType !== ProjectType.GRADLE_GRADLE);
         this.modePickerOptions = this.projectTypes.map((projectType) => ({
