@@ -1,5 +1,5 @@
 import { Component, ElementRef, Inject, OnInit, ViewChild } from '@angular/core';
-import { faCircle, faCompress, faPaperPlane, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faCircle, faExpand, faPaperPlane, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { MAT_DIALOG_DATA, MatDialog } from '@angular/material/dialog';
 import { HttpResponse } from '@angular/common/http';
 import { IrisClientMessage, IrisMessage, IrisMessageContent, IrisMessageContentType, IrisSender, IrisServerMessage } from 'app/entities/iris/iris.model';
@@ -33,7 +33,7 @@ export class ExerciseChatWidgetComponent implements OnInit {
     // Icons
     faPaperPlane = faPaperPlane;
     faCircle = faCircle;
-    faCompress = faCompress;
+    faExpand = faExpand;
     faXmark = faXmark;
 
     ngOnInit() {

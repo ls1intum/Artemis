@@ -4,6 +4,7 @@ import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { ChatbotPopupComponent } from './chatbot-popup/chatbot-popup.component';
 import { ExerciseChatWidgetComponent } from 'app/overview/exercise-chatbot/exercise-chatwidget/exercise-chat-widget.component';
 import { IrisMessageStore } from 'app/iris/message-store.service';
+import { Overlay } from '@angular/cdk/overlay';
 
 @Component({
     selector: 'jhi-exercise-chatbot',
@@ -14,11 +15,11 @@ export class ExerciseChatbotComponent implements OnDestroy {
     public chatAccepted = 'false';
     public buttonDisabled = false;
     private dialogRef: MatDialogRef<ExerciseChatWidgetComponent> | null = null;
-
+    private chatOpen = false;
     // Icons
     faCommentDots = faCommentDots;
 
-    constructor(private dialog: MatDialog, private messageStore: IrisMessageStore) {}
+    constructor(private dialog: MatDialog, private overlay: Overlay, private messageStore: IrisMessageStore) {}
 
     ngOnDestroy() {
         if (this.dialogRef) {
@@ -27,7 +28,10 @@ export class ExerciseChatbotComponent implements OnDestroy {
     }
 
     handleButtonClick() {
-        if (this.chatAccepted === 'true') {
+        if (this.chatOpen) {
+            this.dialogRef!.close();
+            this.chatOpen = false;
+        } else if (this.chatAccepted === 'true') {
             this.openChat();
         } else {
             this.openDialog();
@@ -47,6 +51,7 @@ export class ExerciseChatbotComponent implements OnDestroy {
 
     openChat() {
         if (!this.buttonDisabled) {
+            this.chatOpen = true;
             this.dialogRef = this.dialog.open(ExerciseChatWidgetComponent, {
                 hasBackdrop: false,
                 position: { bottom: '0px', right: '0px' },
