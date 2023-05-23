@@ -83,9 +83,9 @@ public class AdminCourseResource {
                     .body(null);
         }
 
-        course.validateRegistrationConfirmationMessage();
+        course.validateEnrollmentConfirmationMessage();
         course.validateComplaintsAndRequestMoreFeedbackConfig();
-        course.validateOnlineCourseAndRegistrationEnabled();
+        course.validateOnlineCourseAndEnrollmentEnabled();
         course.validateAccuracyOfScores();
         course.validateStartAndEndDate();
 

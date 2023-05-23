@@ -162,11 +162,11 @@ public class Course extends DomainObject {
     @Column(name = "course_icon")
     private String courseIcon;
 
-    @Column(name = "registration_enabled")
-    private Boolean registrationEnabled;
+    @Column(name = "registration_enabled") // TODO: rename column in database
+    private Boolean enrollmentEnabled;
 
-    @Column(name = "registration_confirmation_message")
-    private String registrationConfirmationMessage;
+    @Column(name = "registration_confirmation_message") // TODO: rename column in database
+    private String enrollmentConfirmationMessage;
 
     @Column(name = "unenrollment_enabled")
     private boolean unenrollmentEnabled = false;
@@ -520,20 +520,20 @@ public class Course extends DomainObject {
         this.courseIcon = courseIcon;
     }
 
-    public Boolean isRegistrationEnabled() {
-        return registrationEnabled;
+    public Boolean isEnrollmentEnabled() {
+        return enrollmentEnabled;
     }
 
-    public void setRegistrationEnabled(Boolean registrationEnabled) {
-        this.registrationEnabled = registrationEnabled;
+    public void setEnrollmentEnabled(Boolean enrollmentEnabled) {
+        this.enrollmentEnabled = enrollmentEnabled;
     }
 
-    public String getRegistrationConfirmationMessage() {
-        return registrationConfirmationMessage;
+    public String getEnrollmentConfirmationMessage() {
+        return enrollmentConfirmationMessage;
     }
 
-    public void setRegistrationConfirmationMessage(String registrationConfirmationMessage) {
-        this.registrationConfirmationMessage = registrationConfirmationMessage;
+    public void setEnrollmentConfirmationMessage(String enrollmentConfirmationMessage) {
+        this.enrollmentConfirmationMessage = enrollmentConfirmationMessage;
     }
 
     public boolean isUnenrollmentEnabled() {
@@ -675,7 +675,7 @@ public class Course extends DomainObject {
                 + getEditorGroupName() + "'" + ", instructorGroupName='" + getInstructorGroupName() + "'" + ", startDate='" + getStartDate() + "'" + ", endDate='" + getEndDate()
                 + "'" + ", enrollmentStartDate='" + getEnrollmentStartDate() + "'" + ", enrollmentEndDate='" + getEnrollmentEndDate() + "'" + ", unenrollmentEndDate='"
                 + getUnenrollmentEndDate() + "'" + ", semester='" + getSemester() + "'" + "'" + ", onlineCourse='" + isOnlineCourse() + "'" + ", color='" + getColor() + "'"
-                + ", courseIcon='" + getCourseIcon() + "'" + ", registrationEnabled='" + isRegistrationEnabled() + "'" + ", unenrollmentEnabled='" + isUnenrollmentEnabled() + "'"
+                + ", courseIcon='" + getCourseIcon() + "'" + ", enrollmentEnabled='" + isEnrollmentEnabled() + "'" + ", unenrollmentEnabled='" + isUnenrollmentEnabled() + "'"
                 + ", presentationScore='" + getPresentationScore() + "'" + "}";
     }
 
@@ -764,12 +764,11 @@ public class Course extends DomainObject {
     }
 
     /**
-     * Validates that only one of onlineCourse and registrationEnabled is selected
+     * Validates that only one of onlineCourse and enrollmentEnabled is selected
      */
-    public void validateOnlineCourseAndRegistrationEnabled() {
-        if (isOnlineCourse() && isRegistrationEnabled()) {
-            throw new BadRequestAlertException("Online course and registration enabled cannot be active at the same time", ENTITY_NAME, "onlineCourseRegistrationEnabledInvalid",
-                    true);
+    public void validateOnlineCourseAndEnrollmentEnabled() {
+        if (isOnlineCourse() && isEnrollmentEnabled()) {
+            throw new BadRequestAlertException("Online course and enrollment enabled cannot be active at the same time", ENTITY_NAME, "onlineCourseEnrollmentEnabledInvalid", true);
         }
     }
 
@@ -845,10 +844,9 @@ public class Course extends DomainObject {
         }
     }
 
-    public void validateRegistrationConfirmationMessage() {
-        if (getRegistrationConfirmationMessage() != null && getRegistrationConfirmationMessage().length() > 2000) {
-            throw new BadRequestAlertException("Confirmation registration message must be shorter than 2000 characters", ENTITY_NAME, "confirmationRegistrationMessageInvalid",
-                    true);
+    public void validateEnrollmentConfirmationMessage() {
+        if (getEnrollmentConfirmationMessage() != null && getEnrollmentConfirmationMessage().length() > 2000) {
+            throw new BadRequestAlertException("Confirmation enrollment message must be shorter than 2000 characters", ENTITY_NAME, "confirmationEnrollmentMessageInvalid", true);
         }
     }
 
