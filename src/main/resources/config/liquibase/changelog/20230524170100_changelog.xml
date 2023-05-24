@@ -1,0 +1,11 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.18.xsd">
+    <changeSet author="kutsch" id="20230524170100">
+        <comment>Add index for the project key column as exercises are often retrieved by their project key for the local VCS and local CIS.</comment>
+        <sql>
+            CREATE INDEX idx_projectKey ON programming_exercise_details (project_key);
+        </sql>
+    </changeSet>
+</databaseChangeLog>
