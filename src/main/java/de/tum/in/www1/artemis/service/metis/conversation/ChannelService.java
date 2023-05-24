@@ -285,7 +285,8 @@ public class ChannelService {
     /**
      * Create a channel for an exam
      *
-     * @param exam the exam to create the channel for
+     * @param exam        the exam to create the channel for
+     * @param channelName the name of the channel
      * @return the created channel
      */
     public Channel createExamChannel(Exam exam, @NotNull String channelName) {
