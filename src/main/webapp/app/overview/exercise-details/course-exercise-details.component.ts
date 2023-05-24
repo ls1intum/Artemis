@@ -385,18 +385,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         return this.sortedHistoryResults.length > MAX_RESULT_HISTORY_LENGTH;
     }
 
-    get showResults(): boolean {
-        if (!this.sortedHistoryResults?.length) {
-            return false;
-        }
-
-        if (this.exercise!.type === ExerciseType.MODELING || this.exercise!.type === ExerciseType.TEXT) {
-            return this.isAfterAssessmentDueDate;
-        } else {
-            return true;
-        }
-    }
-
     /**
      * Loads and stores the complaint if any exists. Furthermore, loads the latest rated result and stores it.
      */
