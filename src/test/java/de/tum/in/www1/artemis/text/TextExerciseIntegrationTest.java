@@ -21,12 +21,14 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
+import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismStatus;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextSubmissionElement;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismComparisonRepository;
 import de.tum.in.www1.artemis.util.*;
 import de.tum.in.www1.artemis.util.InvalidExamExerciseDatesArgumentProvider.InvalidExamExerciseDateConfiguration;
@@ -75,6 +77,9 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     @Autowired
     private ExerciseIntegrationTestUtils exerciseIntegrationTestUtils;
+
+    @Autowired
+    private ChannelRepository channelRepository;
 
     @BeforeEach
     void initTestCase() {
@@ -156,14 +161,21 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         textExercise.setId(null);
         textExercise.setTitle(title);
         textExercise.setDifficulty(difficulty);
+        Channel channelToCreate = new Channel();
+        channelToCreate.setName("new-text-exercise");
+        textExercise.setChannel(channelToCreate);
 
         TextExercise newTextExercise = request.postWithResponseBody("/api/text-exercises/", textExercise, TextExercise.class, HttpStatus.CREATED);
+
+        Optional<Channel> channel = channelRepository.findById(newTextExercise.getChannel().getId());
 
         assertThat(newTextExercise.getTitle()).as("text exercise title was correctly set").isEqualTo(title);
         assertThat(newTextExercise.getDifficulty()).as("text exercise difficulty was correctly set").isEqualTo(difficulty);
         assertThat(newTextExercise.getCourseViaExerciseGroupOrCourseMember()).as("course was set for normal exercise").isNotNull();
         assertThat(newTextExercise.getExerciseGroup()).as("exerciseGroup was not set for normal exercise").isNull();
         assertThat(newTextExercise.getCourseViaExerciseGroupOrCourseMember().getId()).as("exerciseGroupId was set correctly").isEqualTo(course.getId());
+        assertThat(channel).as("channel was created").isPresent();
+        assertThat(channel.get().getName()).as("channel name was set correctly").isEqualTo("new-text-exercise");
     }
 
     @Test
@@ -209,6 +221,8 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         textExercise.setDifficulty(difficulty);
 
         TextExercise newTextExercise = request.postWithResponseBody("/api/text-exercises/", textExercise, TextExercise.class, HttpStatus.CREATED);
+
+        assertThat(newTextExercise.getChannel()).isNull(); // there should not be any channel for exam exercise
 
         assertThat(newTextExercise.getTitle()).as("text exercise title was correctly set").isEqualTo(title);
         assertThat(newTextExercise.getDifficulty()).as("text exercise difficulty was correctly set").isEqualTo(difficulty);

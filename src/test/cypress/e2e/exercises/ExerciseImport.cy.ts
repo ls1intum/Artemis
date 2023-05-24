@@ -95,7 +95,7 @@ describe('Import exercises', () => {
         courseManagementExercises.importQuizExercise();
         courseManagementExercises.clickImportExercise(quizExercise.id!);
 
-        checkField('#quiz-title', quizExercise.title!);
+        checkField('#field_title', quizExercise.title!);
         checkField('#quiz-duration-minutes', quizExercise.duration! / 60);
 
         cy.wait(500);

@@ -306,7 +306,7 @@ public class ChannelService {
      * @param channelName     the new channel name
      */
     public void updateLectureChannel(Lecture originalLecture, Lecture updatedLecture, String channelName) {
-        if (originalLecture.getChannel() == null) {
+        if (originalLecture.getChannel() == null || channelName == null) {
             return;
         }
         Channel updatedChannel = updateChannelName(originalLecture.getChannel().getId(), channelName);
@@ -320,7 +320,7 @@ public class ChannelService {
      * @param updatedExercise  the updated exercise
      */
     public void updateExerciseChannel(Exercise originalExercise, Exercise updatedExercise) {
-        if (originalExercise.getChannel() == null) {
+        if (originalExercise.getChannel() == null || updatedExercise.getChannel() == null) {
             return;
         }
         Channel updatedChannel = updateChannelName(originalExercise.getChannel().getId(), Objects.requireNonNull(updatedExercise.getChannel().getName()));
@@ -340,7 +340,6 @@ public class ChannelService {
         // Update channel name if necessary
         if (!newChannelName.equals(originalChannel.getName())) {
             originalChannel.setName(newChannelName);
-            channelIsValidOrThrow(originalChannel.getCourse().getId(), originalChannel);
             return channelRepository.save(originalChannel);
         }
         else {
