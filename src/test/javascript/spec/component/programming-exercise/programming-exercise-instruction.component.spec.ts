@@ -6,7 +6,6 @@ import { BrowserDynamicTestingModule } from '@angular/platform-browser-dynamic/t
 import { DebugElement } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { Subject, Subscription, of, throwError } from 'rxjs';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTestModule } from '../../test.module';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { MockResultService } from '../../helpers/mocks/service/mock-result.service';
@@ -82,7 +81,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
                 { provide: NgbModal, useClass: MockNgbModalService },
             ],
         })
-            .overrideModule(BrowserDynamicTestingModule, { set: { entryComponents: [FaIconComponent, ProgrammingExerciseInstructionTaskStatusComponent] } })
+            .overrideModule(BrowserDynamicTestingModule, { set: {} })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(ProgrammingExerciseInstructionComponent);
