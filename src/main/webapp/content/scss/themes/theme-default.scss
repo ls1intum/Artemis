@@ -6,9 +6,30 @@
 
 html {
     @include generate-css-vars.generate('default-variables');
+
+    .mat-mdc-menu-item:hover:not([disabled]),
+    .mat-mdc-menu-item.cdk-program-focused:not([disabled]),
+    .mat-mdc-menu-item.cdk-keyboard-focused:not([disabled]),
+    .mat-mdc-menu-item-highlighted:not([disabled]) {
+        background-color: $body-bg;
+    }
+
+    .mat-mdc-menu-panel {
+        background-color: $gray-100;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.2); /* Shadow effect */
+    }
+
+    .mat-mdc-button:disabled {
+        color: $secondary;
+    }
+
+    .mat-mdc-menu-trigger.mat-mdc-button:hover {
+        background-color: $gray-200;
+    }
 }
 
 @import '../global';
 
 // Needed for highlighting code in the markdown editor
-@import '~highlight.js/styles/vs.css';
+@import 'node_modules/highlight.js/styles/vs.css';

@@ -48,7 +48,6 @@
         "src/main/webapp/app"
     ],
     "exclude": [
-        "node_modules",
-        "webpack"
+        "node_modules"
     ]
 }
