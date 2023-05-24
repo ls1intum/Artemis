@@ -163,6 +163,9 @@ public class TextExerciseResource {
             Channel createdChannel = channelService.createExerciseChannel(textExercise, textExercise.getChannel().getName());
             textExercise.setChannel(createdChannel);
         }
+        else {
+            textExercise.setChannel(null);
+        }
 
         TextExercise result = textExerciseRepository.save(textExercise);
         instanceMessageSendService.sendTextExerciseSchedule(result.getId());

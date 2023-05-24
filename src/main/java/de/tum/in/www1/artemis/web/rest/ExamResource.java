@@ -168,6 +168,9 @@ public class ExamResource {
             Channel createdChannel = channelService.createExamChannel(exam, exam.getChannel().getName());
             exam.setChannel(createdChannel);
         }
+        else {
+            exam.setChannel(null);
+        }
         Exam result = examRepository.save(exam);
 
         if (result.isMonitoring()) {

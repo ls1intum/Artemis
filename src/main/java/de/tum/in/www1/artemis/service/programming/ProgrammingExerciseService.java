@@ -202,6 +202,9 @@ public class ProgrammingExerciseService {
             Channel createdChannel = channelService.createExerciseChannel(programmingExercise, programmingExercise.getChannel().getName());
             programmingExercise.setChannel(createdChannel);
         }
+        else {
+            programmingExercise.setChannel(null);
+        }
 
         programmingExercise.generateAndSetProjectKey();
         final User exerciseCreator = userRepository.getUser();

@@ -158,6 +158,10 @@ public class QuizExerciseResource {
             Channel createdChannel = channelService.createExerciseChannel(quizExercise, quizExercise.getChannel().getName());
             quizExercise.setChannel(createdChannel);
         }
+        else {
+            quizExercise.setChannel(null);
+        }
+
         quizExercise = quizExerciseService.save(quizExercise);
 
         return ResponseEntity.created(new URI("/api/quiz-exercises/" + quizExercise.getId()))

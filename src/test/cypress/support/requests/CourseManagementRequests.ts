@@ -686,6 +686,8 @@ export class ExamBuilder {
         this.template.startDate = dayjsToString(day().add(1, 'day'));
         this.template.endDate = dayjsToString(day().add(2, 'day'));
         this.template.workingTime = 86400;
+        this.template.channel = new Channel();
+        this.template.channel.name = titleLowercase(this.template.title);
     }
 
     /**

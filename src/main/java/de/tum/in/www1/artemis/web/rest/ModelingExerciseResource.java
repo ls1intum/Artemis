@@ -143,6 +143,9 @@ public class ModelingExerciseResource {
             Channel createdChannel = channelService.createExerciseChannel(modelingExercise, modelingExercise.getChannel().getName());
             modelingExercise.setChannel(createdChannel);
         }
+        else {
+            modelingExercise.setChannel(null);
+        }
 
         ModelingExercise result = modelingExerciseRepository.save(modelingExercise);
         modelingExerciseService.scheduleOperations(result.getId());

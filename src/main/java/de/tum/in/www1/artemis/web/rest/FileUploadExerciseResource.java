@@ -127,6 +127,9 @@ public class FileUploadExerciseResource {
             Channel createdChannel = channelService.createExerciseChannel(fileUploadExercise, fileUploadExercise.getChannel().getName());
             fileUploadExercise.setChannel(createdChannel);
         }
+        else {
+            fileUploadExercise.setChannel(null);
+        }
 
         FileUploadExercise result = fileUploadExerciseRepository.save(fileUploadExercise);
         groupNotificationScheduleService.checkNotificationsForNewExercise(fileUploadExercise);
