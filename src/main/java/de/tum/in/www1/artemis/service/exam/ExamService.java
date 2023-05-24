@@ -383,6 +383,24 @@ public class ExamService {
     }
 
     /**
+     * retrieves/calculates all the necessary grade information for the given student exam used in the data export
+     *
+     * @param studentExam the student exam for which the grade should be calculated
+     * @return the student exam result with points and grade
+     */
+    public StudentExamWithGradeDTO getStudentExamGradeForDataExport(StudentExam studentExam) {
+        loadQuizExercisesForStudentExam(studentExam);
+
+        // fetch participations, submissions and results and connect them to the studentExam
+        fetchParticipationsSubmissionsAndResultsForExam(studentExam, studentExam.getUser());
+
+        List<StudentParticipation> participations = studentExam.getExercises().stream().flatMap(exercise -> exercise.getStudentParticipations().stream()).toList();
+        // fetch all submitted answers for quizzes
+        submittedAnswerRepository.loadQuizSubmissionsSubmittedAnswers(participations);
+        return calculateStudentResultWithGradeAndPoints(studentExam, participations);
+    }
+
+    /**
      * Loads the quiz questions as is not possible to load them in a generic way with the entity graph used.
      * See {@link StudentParticipationRepository#findByStudentExamWithEagerSubmissionsResult}
      *

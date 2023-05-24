@@ -39,7 +39,9 @@ import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.repository.metis.ReactionRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.service.connectors.apollon.ApollonConversionService;
+import de.tum.in.www1.artemis.service.exam.ExamService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseExportService;
+import de.tum.in.www1.artemis.web.rest.dto.ExamScoresDTO;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryExportOptionsDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 
@@ -77,6 +79,8 @@ public class DataExportService {
 
     private final ProgrammingExerciseExportService programmingExerciseExportService;
 
+    private final ExamService examService;
+
     private final DataExportRepository dataExportRepository;
 
     private final QuizQuestionRepository quizQuestionRepository;
@@ -105,15 +109,17 @@ public class DataExportService {
     private final PlagiarismCaseRepository plagiarismCaseRepository;
 
     public DataExportService(CourseRepository courseRepository, UserRepository userRepository, AuthorizationCheckService authorizationCheckService, ZipFileService zipFileService,
-            ProgrammingExerciseExportService programmingExerciseExportService, DataExportRepository dataExportRepository, QuizQuestionRepository quizQuestionRepository,
-            QuizSubmissionRepository quizSubmissionRepository, ExerciseRepository exerciseRepository, DragAndDropQuizAnswerConversionService dragAndDropQuizAnswerConversionService,
-            @Nullable ApollonConversionService apollonConversionService, StudentExamRepository studentExamRepository, FileService fileService, PostRepository postRepository,
-            AnswerPostRepository answerPostRepository, ReactionRepository reactionRepository, PlagiarismCaseRepository plagiarismCaseRepository) {
+            ProgrammingExerciseExportService programmingExerciseExportService, ExamService examService, DataExportRepository dataExportRepository,
+            QuizQuestionRepository quizQuestionRepository, QuizSubmissionRepository quizSubmissionRepository, ExerciseRepository exerciseRepository,
+            DragAndDropQuizAnswerConversionService dragAndDropQuizAnswerConversionService, @Nullable ApollonConversionService apollonConversionService,
+            StudentExamRepository studentExamRepository, FileService fileService, PostRepository postRepository, AnswerPostRepository answerPostRepository,
+            ReactionRepository reactionRepository, PlagiarismCaseRepository plagiarismCaseRepository) {
         this.courseRepository = courseRepository;
         this.userRepository = userRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.zipFileService = zipFileService;
         this.programmingExerciseExportService = programmingExerciseExportService;
+        this.examService = examService;
         this.dataExportRepository = dataExportRepository;
         this.quizQuestionRepository = quizQuestionRepository;
         this.quizSubmissionRepository = quizSubmissionRepository;
@@ -247,16 +253,59 @@ public class DataExportService {
                 createNonProgrammingExerciseExport(exercise, examWorkingDir);
             }
         }
+        // leave out the results if the results are not published yet to avoid leaking information through the data export
+        if (studentExam.areResultsPublishedYet()) {
+            addExamScores(studentExam, examWorkingDir);
+        }
         addGeneralExamInformation(studentExam, examWorkingDir);
     }
 
+    private void addExamScores(StudentExam studentExam, Path examWorkingDir) throws IOException {
+        var studentExamGrade = examService.getStudentExamGradeForDataExport(studentExam);
+        var studentResult = studentExamGrade.studentResult();
+        List<String> headers = new ArrayList<>();
+        var examResults = getExamResultsStreamToPrint(studentResult, headers);
+        CSVFormat csvFormat = CSVFormat.DEFAULT.builder().setHeader(headers.toArray(new String[0])).build();
+        try (final CSVPrinter printer = new CSVPrinter(Files.newBufferedWriter(examWorkingDir.resolve("exam_" + studentExam.getId() + "_result" + CSV_FILE_EXTENSION)),
+                csvFormat)) {
+            printer.printRecord(examResults);
+            printer.flush();
+
+        }
+    }
+
+    private Stream<?> getExamResultsStreamToPrint(ExamScoresDTO.StudentResult studentResult, List<String> headers) {
+        var builder = Stream.builder();
+        if (studentResult.overallPointsAchieved() != null) {
+            builder.add(studentResult.overallPointsAchieved());
+            headers.add("overall points");
+        }
+        if (studentResult.hasPassed() != null) {
+            builder.add(studentResult.hasPassed());
+            headers.add("passed");
+        }
+        if (studentResult.overallGrade() != null) {
+            builder.add(studentResult.overallGrade());
+            headers.add("overall grade");
+        }
+        if (studentResult.gradeWithBonus() != null) {
+            builder.add(studentResult.gradeWithBonus());
+            headers.add("grade with bonus");
+        }
+        if (studentResult.overallScoreAchieved() != null) {
+            builder.add(studentResult.overallScoreAchieved());
+            headers.add("overall score (%)");
+        }
+        return builder.build();
+    }
+
     private void addGeneralExamInformation(StudentExam studentExam, Path examWorkingDir) throws IOException {
-        String[] headers = new String[] { "started", "testExam", "started at", "submitted", "submitted at", "working time", "individual end date" };
+        String[] headers = new String[] { "started", "testExam", "started at", "submitted", "submitted at", "working time (in minutes)", "individual end date" };
         CSVFormat csvFormat = CSVFormat.DEFAULT.builder().setHeader(headers).build();
 
         try (final CSVPrinter printer = new CSVPrinter(Files.newBufferedWriter(examWorkingDir.resolve("exam_" + studentExam.getId() + CSV_FILE_EXTENSION)), csvFormat)) {
             printer.printRecord(studentExam.isStarted(), studentExam.isTestExam(), studentExam.getStartedDate(), studentExam.isSubmitted(), studentExam.getSubmissionDate(),
-                    studentExam.getWorkingTime(), studentExam.getIndividualEndDate());
+                    studentExam.getWorkingTime() / 60, studentExam.getIndividualEndDate());
             printer.flush();
 
         }
