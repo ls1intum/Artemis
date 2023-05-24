@@ -12,7 +12,7 @@ describe('Navigation Util Service', () => {
     router.setUrl('a');
 
     beforeEach(() => {
-        TestBed.configureTestingModule({
+        return TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
             providers: [
                 { provide: Router, useValue: router },
@@ -67,9 +67,11 @@ describe('Navigation Util Service', () => {
     it('should route correctly', () => {
         const route = ['course-management', 17];
         const queryParam = { filterOption: 30 };
-        const urlTreeMock = { path: 'testValue' } as unknown as UrlTree;
+        const urlTreeMock = { path: 'urlTreeMockTestValue' } as unknown as UrlTree;
         const creationMock = jest.spyOn(router, 'createUrlTree');
+        creationMock.mockReturnValue(urlTreeMock);
         const serializationMock = jest.spyOn(router, 'serializeUrl');
+        serializationMock.mockReturnValue('serializationMockTestValue');
         const windowStub = jest.spyOn(window, 'open').mockImplementation();
 
         service.routeInNewTab(['course-management', 17], queryParam);
@@ -77,6 +79,6 @@ describe('Navigation Util Service', () => {
         expect(creationMock).toHaveBeenCalledWith(route, queryParam);
         expect(creationMock).toHaveBeenCalledOnce();
         expect(serializationMock).toHaveBeenCalledWith(urlTreeMock);
-        expect(windowStub).toHaveBeenCalledWith('testValue', '_blank');
+        expect(windowStub).toHaveBeenCalledWith('serializationMockTestValue', '_blank');
     });
 });
