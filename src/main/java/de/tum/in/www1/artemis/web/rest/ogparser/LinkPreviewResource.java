@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.in.www1.artemis.service.linkpreview.LinkPreviewService;
+import de.tum.in.www1.artemis.web.rest.dto.LinkPreviewDTO;
 
 /**
  * REST controller for Link Preview.
@@ -26,8 +27,8 @@ public class LinkPreviewResource {
     }
 
     @GetMapping("/link-preview")
-    @PreAuthorize("hasRole('User')")
-    public String getLinkPreview(@RequestBody String url) {
+    @PreAuthorize("hasRole('USER')")
+    public LinkPreviewDTO getLinkPreview(@RequestBody String url) {
         log.debug("REST request to get link preview for url: {}", url);
         return linkPreviewService.getLinkPreview(url);
     }
