@@ -479,7 +479,9 @@ public class ExerciseService {
      */
     public Exercise findOneWithDetailsForStudents(Long exerciseId, User user) {
         var exercise = exerciseRepository.findByIdWithDetailsForStudent(exerciseId).orElseThrow(() -> new EntityNotFoundException("Exercise", exerciseId));
-        exercise.getChannel().setExercise(null);
+        if (exercise.getChannel() != null) {
+            exercise.getChannel().setExercise(null);
+        }
         setAssignedTeamIdForExerciseAndUser(exercise, user);
         return exercise;
     }

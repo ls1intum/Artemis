@@ -68,6 +68,7 @@ public interface LectureRepository extends JpaRepository<Lecture, Long> {
             LEFT JOIN FETCH lu.learningGoals
             LEFT JOIN FETCH lu.exercise exercise
             LEFT JOIN FETCH exercise.learningGoals
+            LEFT JOIN FETCH lecture.channel
             WHERE lecture.id = :#{#lectureId}
             """)
     Optional<Lecture> findByIdWithPostsAndLectureUnitsAndLearningGoalsAndCompletions(@Param("lectureId") Long lectureId);

@@ -216,8 +216,8 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
     setFilterAndSort(): void {
         this.currentPostContextFilter = {
             courseId: undefined,
-            exerciseId: this.exercise?.id,
-            lectureId: this.lecture?.id,
+            // exerciseId: this.exercise?.id,
+            // lectureId: this.lecture?.id,
             conversationId: this.lecture ? this.lecture?.channel?.id : this.exercise?.channel?.id,
             searchText: this.searchText,
             filterToUnresolved: this.formGroup.get('filterToUnresolved')?.value,
