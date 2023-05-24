@@ -485,8 +485,11 @@ public class DataExportService {
         StringBuilder resultScoreAndFeedbacks = new StringBuilder();
         for (var result : submission.getResults()) {
             if (result != null) {
-                resultScoreAndFeedbacks.append("Score of submission: ").append(result.getScore()).append("%").append(" ")
-                        .append(result.getScore() * submission.getParticipation().getExercise().getMaxPoints() / 100).append(" Points").append("\n");
+                var score = result.getScore();
+                if (score != null) {
+                    resultScoreAndFeedbacks.append("Score of submission: ").append(score).append("%").append(" ")
+                            .append(score * submission.getParticipation().getExercise().getMaxPoints() / 100).append(" Points").append("\n");
+                }
                 if (submission instanceof ProgrammingSubmission && result.getPassedTestCaseCount() != null && result.getTestCaseCount() != null && result.getTestCaseCount() > 0) {
                     resultScoreAndFeedbacks.append("Passed test cases: ").append(result.getPassedTestCaseCount()).append("/").append(result.getTestCaseCount()).append("\n");
                 }
