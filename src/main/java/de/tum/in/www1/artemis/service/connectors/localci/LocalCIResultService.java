@@ -34,7 +34,7 @@ public class LocalCIResultService extends AbstractContinuousIntegrationResultSer
     @Override
     public void extractAndPersistBuildLogStatistics(ProgrammingSubmission programmingSubmission, ProgrammingLanguage programmingLanguage, ProjectType projectType,
             List<BuildLogEntry> buildLogEntries) {
-        // Not yet implemented for local CI.
+        // TODO LOCALVC_CI: Implement build logs for local CI.
     }
 
     @Override

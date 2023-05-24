@@ -23,6 +23,6 @@ public class LocalCIBuildPlanService {
      * @throws LocalCIException if the build plan id is null.
      */
     public void updateBuildPlanStatus(ProgrammingExerciseParticipation participation, ContinuousIntegrationService.BuildStatus newBuildStatus) {
-        // TODO: Update the build plan status in the database.
+        // TODO LOCALVC_CI: Update the build status in the database.
     }
 }

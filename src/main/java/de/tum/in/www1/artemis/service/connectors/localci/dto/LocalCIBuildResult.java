@@ -79,7 +79,8 @@ public class LocalCIBuildResult extends AbstractBuildResultNotificationDTO {
     }
 
     /**
-     * Local CI does not support artifacts as of now.
+     * Local CI does not support checking for artifacts as of now.
+     * TODO LOCALVC_CI: Figure out in the build process whether an artifact was created, and return true here if yes.
      *
      * @return false
      */
@@ -90,13 +91,13 @@ public class LocalCIBuildResult extends AbstractBuildResultNotificationDTO {
 
     @Override
     public boolean hasLogs() {
-        // Logs are not implemented for local CI yet.
+        // TODO LOCALVC_CI: Implement the retrieval of build logs and return true here if there are any.
         return false;
     }
 
     @Override
     public List<BuildLogEntry> extractBuildLogs(ProgrammingLanguage programmingLanguage) {
-        // Not implemented for local CI yet.
+        // TODO LOCALVC_CI: Implement the retrieval of build logs.
         return Collections.emptyList();
     }
 
@@ -107,13 +108,13 @@ public class LocalCIBuildResult extends AbstractBuildResultNotificationDTO {
 
     @Override
     public List<StaticCodeAnalysisReportDTO> getStaticCodeAnalysisReports() {
-        // Static code analysis is not implemented for local CI yet.
+        // TODO LOCALVC_CI: Implement static code analysis and return the reports here.
         return Collections.emptyList();
     }
 
     @Override
     public List<TestwiseCoverageReportDTO> getTestwiseCoverageReports() {
-        // Testwise coverage is not implemented for local CI yet.
+        // TODO LOCALVC_CI: Implement testwise coverage and return the reports here.
         return Collections.emptyList();
     }
 

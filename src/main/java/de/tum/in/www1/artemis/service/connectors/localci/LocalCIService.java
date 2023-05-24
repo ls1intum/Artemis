@@ -176,7 +176,7 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
      * @return the html representation of the artifact page.
      */
     public ResponseEntity<byte[]> retrieveLatestArtifact(ProgrammingExerciseParticipation participation) {
-        // Build artifacts are not supported by local CI yet.
+        // TODO LOCALVC_CI: Extract artifacts from the container when running the build job, store them on disk, and retrieve them here.
         log.error("Unsupported action: LocalCIService.retrieveLatestArtifact()");
         return ResponseEntity.status(HttpStatus.NO_CONTENT).body(new byte[0]);
     }

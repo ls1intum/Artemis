@@ -155,6 +155,9 @@ public class LocalCIConfiguration {
      * However, if the application is packaged (like it is in production), the Java runtime does not provide direct access to the file system for embedded resources.
      * To make the path available, the resource is retrieved as an InputStream and written to a temporary file.
      * This is a rather costly operation, so we only do it once and then provide the Path object via this Bean.
+     * TODO LOCALVC_CI: Find a better way to provide the build script to the Docker container.
+     * To implement additional features like Sequential Test Runs, Static Code Analysis, and Testwise Coverage Analysis, the build script needs to be configurable when creating the
+     * exercise.
      *
      * @return the Path to the build script.
      */
