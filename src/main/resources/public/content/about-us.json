@@ -412,6 +412,10 @@
         {
             "fullName": "Tunar Mahmudov",
             "photoDirectory": "public/images/about/Tunar_Mahmudov.jpg"
+        },
+        {
+            "fullName": "Rizky Riyaldhi",
+            "photoDirectory": "public/images/about/Rizky_Riyaldhi.jpg"
         }
     ]
 }
