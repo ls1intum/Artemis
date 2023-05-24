@@ -1,5 +1,10 @@
-import { isQuizEditable } from 'app/exercises/quiz/shared/quiz-manage-util.service';
+import { isQuizEditable, isQuizQuestionValid } from 'app/exercises/quiz/shared/quiz-manage-util.service';
 import { QuizBatch, QuizExercise, QuizMode, QuizStatus } from 'app/entities/quiz/quiz-exercise.model';
+import { DragAndDropQuestionUtil } from 'app/exercises/quiz/shared/drag-and-drop-question-util.service';
+import { ShortAnswerQuestionUtil } from 'app/exercises/quiz/shared/short-answer-question-util.service';
+import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
+import { MAX_QUIZ_QUESTION_POINTS } from 'app/shared/constants/input.constants';
+import { AnswerOption } from 'app/entities/quiz/answer-option.model';
 
 describe('QuizManageUtil', () => {
     let quizExercise: QuizExercise;
@@ -53,6 +58,37 @@ describe('QuizManageUtil', () => {
             quizExercise.quizMode = QuizMode.SYNCHRONIZED;
             quizExercise.isAtLeastEditor = false;
             expect(isQuizEditable(quizExercise)).toBeFalse();
+        });
+    });
+
+    describe('isQuizQuestionValid', () => {
+        const dragAndDropQuestionUtil = new DragAndDropQuestionUtil();
+        const shortAnswerQuestionUtil = new ShortAnswerQuestionUtil();
+        const multipleChoiceQuestion = new MultipleChoiceQuestion();
+
+        it('should return false if points is undefined', () => {
+            multipleChoiceQuestion.points = undefined;
+            expect(isQuizQuestionValid(multipleChoiceQuestion, dragAndDropQuestionUtil, shortAnswerQuestionUtil)).toBeFalse();
+        });
+
+        it('should return false if points < 1', () => {
+            multipleChoiceQuestion.points = -1;
+            expect(isQuizQuestionValid(multipleChoiceQuestion, dragAndDropQuestionUtil, shortAnswerQuestionUtil)).toBeFalse();
+        });
+
+        it('should return false if points > 9999', () => {
+            multipleChoiceQuestion.points = 10000;
+            expect(isQuizQuestionValid(multipleChoiceQuestion, dragAndDropQuestionUtil, shortAnswerQuestionUtil)).toBeFalse();
+        });
+
+        it('should return true if question is valid', () => {
+            multipleChoiceQuestion.points = 100;
+            multipleChoiceQuestion.title = 'Title';
+            const answerOption0 = new AnswerOption();
+            const answerOption1 = new AnswerOption();
+            answerOption0.isCorrect = true;
+            multipleChoiceQuestion.answerOptions = [answerOption0, answerOption1];
+            expect(isQuizQuestionValid(multipleChoiceQuestion, dragAndDropQuestionUtil, shortAnswerQuestionUtil)).toBeTrue();
         });
     });
 });

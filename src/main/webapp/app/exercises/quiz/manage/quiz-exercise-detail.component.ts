@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, HostListener, OnChanges, OnInit, QueryList, SimpleChanges, ViewChildren, ViewEncapsulation } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, HostListener, OnChanges, OnInit, SimpleChanges, ViewChild, ViewEncapsulation } from '@angular/core';
 import { QuizExerciseService } from './quiz-exercise.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -14,30 +14,17 @@ import dayjs from 'dayjs/esm';
 import { Location } from '@angular/common';
 import { AlertService } from 'app/core/util/alert.service';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
-import { QuizQuestion, QuizQuestionType, ScoringType } from 'app/entities/quiz/quiz-question.model';
+import { QuizQuestion } from 'app/entities/quiz/quiz-question.model';
 import { Exercise, IncludedInOverallScore, ValidationReason, resetDates } from 'app/entities/exercise.model';
-import { AnswerOption } from 'app/entities/quiz/answer-option.model';
-import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
-import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
 import { Course } from 'app/entities/course.model';
-import { QuizQuestionEdit } from 'app/exercises/quiz/manage/quiz-question-edit.interface';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
-import { QuizConfirmImportInvalidQuestionsModalComponent } from 'app/exercises/quiz/manage/quiz-confirm-import-invalid-questions-modal.component';
 import { cloneDeep } from 'lodash-es';
 import { Exam } from 'app/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 
-// False-positives:
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { DragAndDropQuestionEditComponent } from 'app/exercises/quiz/manage/drag-and-drop-question/drag-and-drop-question-edit.component';
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { MultipleChoiceQuestionEditComponent } from 'app/exercises/quiz/manage/multiple-choice-question/multiple-choice-question-edit.component';
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { ShortAnswerQuestionEditComponent } from 'app/exercises/quiz/manage/short-answer-question/short-answer-question-edit.component';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { round } from 'app/shared/util/utils';
 import { onError } from 'app/shared/util/global.utils';
@@ -46,6 +33,7 @@ import { faExclamationCircle, faPlus, faXmark } from '@fortawesome/free-solid-sv
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { isQuizEditable } from 'app/exercises/quiz/shared/quiz-manage-util.service';
 import { Channel } from 'app/entities/metis/conversation/channel.model';
+import { QuizQuestionListEditComponent } from 'app/exercises/quiz/manage/quiz-question-list-edit.component';
 
 @Component({
     selector: 'jhi-quiz-exercise-detail',
@@ -56,14 +44,8 @@ import { Channel } from 'app/entities/metis/conversation/channel.model';
     encapsulation: ViewEncapsulation.None,
 })
 export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective implements OnInit, OnChanges, ComponentCanDeactivate {
-    @ViewChildren('editMultipleChoice')
-    editMultipleChoiceQuestionComponents: QueryList<MultipleChoiceQuestionEditComponent>;
-
-    @ViewChildren('editDragAndDrop')
-    editDragAndDropQuestionComponents: QueryList<DragAndDropQuestionEditComponent>;
-
-    @ViewChildren('editShortAnswer')
-    editShortAnswerQuestionComponents: QueryList<ShortAnswerQuestionEditComponent>;
+    @ViewChild('quizQuestionsEdit')
+    quizQuestionsEditComponent: QuizQuestionListEditComponent;
 
     course?: Course;
     exerciseGroup?: ExerciseGroup;
@@ -75,15 +57,10 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
 
     /** Constants for 'Add existing questions' and 'Import file' features **/
     showExistingQuestions = false;
-    showExistingQuestionsFromCourse = true;
-    showExistingQuestionsFromExam = false;
-    showExistingQuestionsFromFile = false;
 
     exams: Exam[] = [];
-    selectedExamId?: number;
 
     courses: Course[] = [];
-    selectedCourseId?: number;
     quizExercises: QuizExercise[];
     allExistingQuestions: QuizQuestion[];
     existingQuestions: QuizQuestion[];
@@ -406,87 +383,6 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
             .isBefore(dayjs());
 
     /**
-     * Add an empty multiple choice question to the quiz
-     */
-    addMultipleChoiceQuestion() {
-        if (this.quizExercise == undefined) {
-            this.quizExercise = this.initializeNewQuizExercise();
-        }
-
-        const mcQuestion = new MultipleChoiceQuestion();
-        mcQuestion.title = '';
-        mcQuestion.text = 'Enter your long question if needed';
-        mcQuestion.hint = 'Add a hint here (visible during the quiz via ?-Button)';
-        mcQuestion.scoringType = ScoringType.ALL_OR_NOTHING; // explicit default value for multiple questions
-        mcQuestion.randomizeOrder = true;
-        mcQuestion.points = 1;
-
-        const correctSampleAnswerOption = new AnswerOption();
-        correctSampleAnswerOption.isCorrect = true;
-        correctSampleAnswerOption.text = 'Enter a correct answer option here';
-        correctSampleAnswerOption.hint = 'Add a hint here (visible during the quiz via ?-Button)';
-        correctSampleAnswerOption.explanation = 'Add an explanation here (only visible in feedback after quiz has ended)';
-
-        const incorrectSampleAnswerOption = new AnswerOption();
-        incorrectSampleAnswerOption.isCorrect = false;
-        incorrectSampleAnswerOption.text = 'Enter a wrong answer option here';
-
-        mcQuestion.answerOptions = [correctSampleAnswerOption, incorrectSampleAnswerOption];
-        this.quizExercise.quizQuestions!.push(mcQuestion);
-        this.cacheValidation();
-    }
-
-    /**
-     * Add an empty drag and drop question to the quiz
-     */
-    addDragAndDropQuestion(): void {
-        if (this.quizExercise == undefined) {
-            this.quizExercise = this.initializeNewQuizExercise();
-        }
-
-        const dndQuestion = new DragAndDropQuestion();
-        dndQuestion.title = '';
-        dndQuestion.text = 'Enter your long question if needed';
-        dndQuestion.hint = 'Add a hint here (visible during the quiz via ?-Button)';
-        dndQuestion.scoringType = ScoringType.PROPORTIONAL_WITH_PENALTY; // explicit default value for drag and drop questions
-        dndQuestion.randomizeOrder = true;
-        dndQuestion.points = 1;
-        dndQuestion.dropLocations = [];
-        dndQuestion.dragItems = [];
-        dndQuestion.correctMappings = [];
-        this.quizExercise.quizQuestions!.push(dndQuestion);
-        this.cacheValidation();
-    }
-
-    /**
-     * Add an empty short answer question to the quiz
-     */
-    addShortAnswerQuestion(): void {
-        if (this.quizExercise == undefined) {
-            this.quizExercise = this.initializeNewQuizExercise();
-        }
-
-        const shortAnswerQuestion = new ShortAnswerQuestion();
-        shortAnswerQuestion.title = '';
-        shortAnswerQuestion.text =
-            'Enter your long question if needed\n\n' +
-            'Select a part of the text and click on Add Spot to automatically create an input field and the corresponding mapping\n\n' +
-            'You can define a input field like this: This [-spot 1] an [-spot 2] field.\n\n' +
-            'To define the solution for the input fields you need to create a mapping (multiple mapping also possible):\n\n' +
-            '[-option 1] is\n' +
-            '[-option 2] input\n' +
-            '[-option 1,2] correctInBothFields';
-        shortAnswerQuestion.scoringType = ScoringType.PROPORTIONAL_WITHOUT_PENALTY; // explicit default value for short answer questions
-        shortAnswerQuestion.randomizeOrder = true;
-        shortAnswerQuestion.points = 1;
-        shortAnswerQuestion.spots = [];
-        shortAnswerQuestion.solutions = [];
-        shortAnswerQuestion.correctMappings = [];
-        this.quizExercise.quizQuestions!.push(shortAnswerQuestion);
-        this.cacheValidation();
-    }
-
-    /**
      * Iterates over the questions of the quizExercise and calculates the sum of all question scores
      */
     calculateMaxExerciseScore(): number {
@@ -496,357 +392,12 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
     }
 
     /**
-     * Toggles existing questions view
-     */
-    showHideExistingQuestions(): void {
-        if (!this.quizExercise) {
-            this.quizExercise = this.initializeNewQuizExercise();
-        }
-
-        // If courses are not populated, then populate list of courses
-        if (this.courses.length === 0) {
-            this.courseRepository.getAllCoursesWithQuizExercises().subscribe((res: HttpResponse<Course[]>) => {
-                this.courses = res.body!;
-            });
-        }
-        // If exams are not populated, then populate list of exams
-        if (this.exams.length === 0) {
-            this.examRepository.findAllExamsAccessibleToUser(this.courseId!).subscribe((res: HttpResponse<Exam[]>) => {
-                this.exams = res.body!;
-            });
-        }
-        this.showExistingQuestions = !this.showExistingQuestions;
-        this.setExistingQuestionSourceToCourse();
-    }
-
-    /**
-     * Callback function for when a user selected a Course from the Dropdown list from 'Add existing questions'
-     * Populates list of quiz exercises for the selected course
-     */
-    onCourseSelect(): void {
-        this.allExistingQuestions = this.existingQuestions = [];
-        if (!this.selectedCourseId) {
-            return;
-        }
-
-        /** Search the selected course by id in all available courses **/
-        const selectedCourse = this.courses.find((course) => course.id === Number(this.selectedCourseId))!;
-
-        // TODO: the following code seems duplicated (see quiz-exercise-export.component.ts in the method loadForCourse). Try to avoid duplication!
-        // For the given course, get list of all quiz exercises. And for all quiz exercises, get list of all questions in a quiz exercise,
-        this.quizExerciseService.findForCourse(selectedCourse.id!).subscribe({
-            next: (quizExercisesResponse: HttpResponse<QuizExercise[]>) => {
-                if (quizExercisesResponse.body) {
-                    this.applyQuestionsAndFilter(quizExercisesResponse.body!);
-                }
-            },
-            error: (error: HttpErrorResponse) => onError(this.alertService, error),
-        });
-    }
-
-    onExamSelect(): void {
-        this.allExistingQuestions = this.existingQuestions = [];
-        if (!this.selectedExamId) {
-            return;
-        }
-
-        /** Search the selected exam by id in all available exams **/
-        const selectedExam = this.exams.find((exam) => exam.id === Number(this.selectedExamId))!;
-
-        // For the given exam, get list of all quiz exercises. And for all quiz exercises, get list of all questions in a quiz exercise
-        this.quizExerciseService.findForExam(selectedExam.id!).subscribe({
-            next: (quizExercisesResponse: HttpResponse<QuizExercise[]>) => {
-                if (quizExercisesResponse.body) {
-                    this.applyQuestionsAndFilter(quizExercisesResponse.body!);
-                }
-            },
-            error: (error: HttpErrorResponse) => onError(this.alertService, error),
-        });
-    }
-
-    private applyQuestionsAndFilter(quizExercises: QuizExercise[]) {
-        for (const quizExercise of quizExercises) {
-            this.quizExerciseService.find(quizExercise.id!).subscribe((response: HttpResponse<QuizExercise>) => {
-                const quizExerciseResponse = response.body!;
-                if (quizExerciseResponse.quizQuestions && quizExerciseResponse.quizQuestions.length > 0) {
-                    for (const question of quizExerciseResponse.quizQuestions) {
-                        question.exercise = quizExercise;
-                        this.allExistingQuestions.push(question);
-                    }
-                }
-                this.applyFilter();
-            });
-        }
-    }
-
-    /**
-     * Applies filter on questions shown in add existing questions view.
-     */
-    applyFilter(): void {
-        this.existingQuestions = [];
-        /**
-         * Depending on the filter selected by user, filter out questions.
-         * allExistingQuestions contains list of all questions.
-         * We don't change it. We populate existingQuestions list depending on the filter options.
-         */
-        for (const question of this.allExistingQuestions) {
-            if (!this.searchQueryText || this.searchQueryText === '' || question.title!.toLowerCase().indexOf(this.searchQueryText.toLowerCase()) !== -1) {
-                if (this.mcqFilterEnabled && question.type === QuizQuestionType.MULTIPLE_CHOICE) {
-                    this.existingQuestions.push(question);
-                }
-                if (this.dndFilterEnabled && question.type === QuizQuestionType.DRAG_AND_DROP) {
-                    this.existingQuestions.push(question);
-                }
-                if (this.shortAnswerFilterEnabled && question.type === QuizQuestionType.SHORT_ANSWER) {
-                    this.existingQuestions.push(question);
-                }
-            }
-        }
-        this.cacheValidation();
-    }
-
-    /**
-     * Assigns the uploaded import file
-     * @param event object containing the uploaded file
-     */
-    setImportFile(event: any): void {
-        if (event.target.files.length) {
-            const fileList: FileList = event.target.files;
-            this.importFile = fileList[0];
-            this.importFileName = this.importFile.name;
-        }
-        this.changeDetector.detectChanges();
-    }
-
-    /**
-     * Adds selected quizzes to current quiz exercise
-     */
-    addExistingQuestions(): void {
-        const questions: QuizQuestion[] = [];
-        for (const question of this.existingQuestions) {
-            if (question.exportQuiz) {
-                questions.push(question);
-            }
-        }
-        this.verifyAndImportQuestions(questions);
-        this.showExistingQuestions = !this.showExistingQuestions;
-        this.showExistingQuestionsFromCourse = true;
-        this.showExistingQuestionsFromExam = false;
-        this.showExistingQuestionsFromFile = false;
-        this.selectedCourseId = undefined;
-        this.selectedExamId = undefined;
-        this.allExistingQuestions = this.existingQuestions = [];
-        this.cacheValidation();
-    }
-
-    /**
      * Remove question from the quiz
      * @param questionToDelete {QuizQuestion} the question to remove
      */
     deleteQuestion(questionToDelete: QuizQuestion): void {
         this.quizExercise.quizQuestions = this.quizExercise.quizQuestions?.filter((question) => question !== questionToDelete);
         this.cacheValidation();
-    }
-
-    /**
-     * Handles the change of a question by replacing the array with a copy (allows for shallow comparison)
-     */
-    onQuestionUpdated(): void {
-        this.cacheValidation();
-        this.quizExercise.quizQuestions = Array.from(this.quizExercise.quizQuestions!);
-    }
-
-    /**
-     * Get the reasons, why the quiz is invalid as an HTML string
-     * @return {string} the reasons in HTML
-     */
-    invalidReasonsHTML(): string {
-        const translate = this.translateService;
-        let reasonString = '';
-        for (const reason of this.computeInvalidReasons()) {
-            translate.get(reason['translateKey'], reason['translateValues']).subscribe((res: string) => {
-                reasonString += res + '   -   ';
-            });
-        }
-        return reasonString.slice(0, reasonString.length - 5);
-    }
-
-    /**
-     * Move file reader creation to separate function to be able to mock
-     * https://fromanegg.com/post/2015/04/22/easy-testing-of-code-involving-native-methods-in-javascript/
-     */
-    generateFileReader() {
-        return new FileReader();
-    }
-
-    onFileLoadImport(fileReader: FileReader) {
-        try {
-            // Read the file and get list of questions from the file
-            const questions = JSON.parse(fileReader.result as string) as QuizQuestion[];
-            this.verifyAndImportQuestions(questions);
-            // Clearing html elements,
-            this.importFile = undefined;
-            this.importFileName = '';
-            const control = document.getElementById('importFileInput') as HTMLInputElement;
-            if (control) {
-                control.value = '';
-            }
-        } catch (e) {
-            alert('Import Quiz Failed! Invalid quiz file.');
-        }
-    }
-
-    /**
-     * Imports a json quiz file and adds questions to current quiz exercise.
-     */
-    async importQuiz() {
-        if (!this.importFile) {
-            return;
-        }
-        const fileReader = this.generateFileReader();
-        fileReader.onload = () => this.onFileLoadImport(fileReader);
-        fileReader.readAsText(this.importFile);
-        this.cacheValidation();
-    }
-
-    /**
-     * Calls {@link checkForInvalidFlaggedQuestions} to verify whether any question or its elements have the invalid flag set.
-     * If this is the case, the user is notified using the {@link QuizConfirmImportInvalidQuestionsModalComponent} modal.
-     * If the user accepts importing the questions with invalid flags, all these flags are reset. See {@link addQuestions}.
-     * @param questions the question which are being imported.
-     */
-    async verifyAndImportQuestions(questions: QuizQuestion[]) {
-        this.checkForInvalidFlaggedQuestions(questions);
-        if (!this.isEmpty(this.invalidFlaggedQuestions)) {
-            const modal = this.modalService.open(QuizConfirmImportInvalidQuestionsModalComponent, { keyboard: true, size: 'lg' });
-            modal.componentInstance.invalidFlaggedQuestions = questions
-                .map((question, index) => {
-                    if (this.invalidFlaggedQuestions[question.title!]) {
-                        return {
-                            translateKey: 'artemisApp.quizExercise.invalidReasons.questionHasInvalidFlaggedElements',
-                            translateValues: { index: index + 1 },
-                        };
-                    }
-                })
-                .filter(Boolean);
-
-            modal.componentInstance.shouldImport.subscribe(async () => {
-                await this.addQuestions(questions);
-                // Reset the invalid flagged questions
-                this.invalidFlaggedQuestions = {};
-                this.cacheValidation();
-            });
-        } else {
-            await this.addQuestions(questions);
-            this.cacheValidation();
-        }
-    }
-
-    /**
-     * Adds given questions to current quiz exercise.
-     * Ids are removed from new questions so that new id is assigned upon saving the quiz exercise.
-     * Caution: All "invalid" flags are also removed.
-     * Images are duplicated for drag and drop questions.
-     * @param questions list of questions
-     */
-    async addQuestions(questions: QuizQuestion[]) {
-        // To make sure all questions are duplicated (new resources are created), we need to remove some fields from the input questions,
-        // This contains removing all ids, duplicating images in case of dnd questions, the question statistic and the exercise
-        for (const question of questions) {
-            // do not set question.exercise = this.quizExercise, because it will cause a cycle when converting to json
-            question.exercise = undefined;
-            question.quizQuestionStatistic = undefined;
-            question.invalid = false;
-            question.id = undefined;
-            if (question.type === QuizQuestionType.MULTIPLE_CHOICE) {
-                const mcQuestion = question as MultipleChoiceQuestion;
-                mcQuestion.answerOptions!.forEach((answerOption) => {
-                    answerOption.id = undefined;
-                    answerOption.invalid = false;
-                });
-            } else if (question.type === QuizQuestionType.DRAG_AND_DROP) {
-                const dndQuestion = question as DragAndDropQuestion;
-                // Get image from the old question and duplicate it on the server and then save new image to the question,
-                let fileUploadResponse = await this.fileUploaderService.duplicateFile(dndQuestion.backgroundFilePath!);
-                dndQuestion.backgroundFilePath = fileUploadResponse.path;
-
-                // For DropLocations, DragItems and CorrectMappings we need to provide tempID,
-                // This tempID is used for keep tracking of mappings by server. The server removes tempID and generated a new id,
-                dndQuestion.dropLocations!.forEach((dropLocation) => {
-                    dropLocation.tempID = dropLocation.id;
-                    dropLocation.id = undefined;
-                    dropLocation.invalid = false;
-                });
-                for (const dragItem of dndQuestion.dragItems || []) {
-                    // Duplicating image on server. This is only valid for image drag items. For text drag items, pictureFilePath is undefined,
-                    if (dragItem.pictureFilePath) {
-                        fileUploadResponse = await this.fileUploaderService.duplicateFile(dragItem.pictureFilePath);
-                        dragItem.pictureFilePath = fileUploadResponse.path;
-                    }
-                    dragItem.tempID = dragItem.id;
-                    dragItem.id = undefined;
-                    dragItem.invalid = false;
-                }
-                for (const correctMapping of dndQuestion.correctMappings || []) {
-                    // Following fields are not required for dnd question. They will be generated by the server,
-                    correctMapping.id = undefined;
-                    correctMapping.dragItemIndex = undefined;
-                    correctMapping.dropLocationIndex = undefined;
-                    correctMapping.invalid = false;
-
-                    // Duplicating image on server. This is only valid for image drag items. For text drag items, pictureFilePath is undefined,
-                    const correctMappingDragItem = correctMapping.dragItem!;
-                    if (correctMappingDragItem.pictureFilePath) {
-                        fileUploadResponse = await this.fileUploaderService.duplicateFile(correctMappingDragItem.pictureFilePath);
-                        correctMappingDragItem.pictureFilePath = fileUploadResponse.path;
-                    }
-                    correctMappingDragItem.tempID = correctMappingDragItem?.id;
-                    correctMapping.dragItem!.id = undefined;
-                    correctMapping.dropLocation!.tempID = correctMapping.dropLocation!.id;
-                    correctMapping.dropLocation!.id = undefined;
-                }
-            } else if (question.type === QuizQuestionType.SHORT_ANSWER) {
-                const shortAnswerQuestion = question as ShortAnswerQuestion;
-
-                // For Spots, Solutions and CorrectMappings we need to provide tempID,
-                // This tempID is used for keep tracking of mappings by server. The server removes tempID and generated a new id,
-                shortAnswerQuestion.spots!.forEach((spot) => {
-                    spot.tempID = spot.id;
-                    spot.id = undefined;
-                    spot.invalid = false;
-                });
-                shortAnswerQuestion.solutions!.forEach((solution) => {
-                    solution.tempID = solution.id;
-                    solution.id = undefined;
-                    solution.invalid = false;
-                });
-                shortAnswerQuestion.correctMappings!.forEach((correctMapping) => {
-                    // Following fields are not required for short answer question. They will be generated by the server,
-                    correctMapping.id = undefined;
-                    correctMapping.shortAnswerSolutionIndex = undefined;
-                    correctMapping.shortAnswerSpotIndex = undefined;
-                    correctMapping.invalid = false;
-
-                    correctMapping.solution!.tempID = correctMapping.solution!.id;
-                    correctMapping.solution!.id = undefined;
-                    correctMapping.spot!.tempID = correctMapping.spot!.id;
-                    correctMapping.spot!.id = undefined;
-                });
-            }
-            this.quizExercise.quizQuestions = this.quizExercise.quizQuestions!.concat([question]);
-        }
-    }
-
-    /**
-     * triggers the parsing of the editor content in the designated edit component
-     */
-    parseAllQuestions(): void {
-        const editQuestionComponents: QuizQuestionEdit[] = [
-            ...this.editMultipleChoiceQuestionComponents.toArray(),
-            ...this.editDragAndDropQuestionComponents.toArray(),
-            ...this.editShortAnswerQuestionComponents.toArray(),
-        ];
-        editQuestionComponents.forEach((component) => component.prepareForSave());
     }
 
     /**
@@ -865,6 +416,7 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
         }
 
         this.parseAllQuestions();
+        this.quizQuestionsEditComponent.parseAllQuestions();
         if (this.quizExercise.id !== undefined) {
             if (this.isImport) {
                 this.quizExerciseService.import(this.quizExercise).subscribe({
@@ -994,49 +546,6 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
     }
 
     /**
-     * Update adding existing questions from a file or course or exam
-     */
-    setExistingQuestionSourceToCourse(): void {
-        this.showExistingQuestionsFromCourse = true;
-        this.showExistingQuestionsFromExam = false;
-        this.showExistingQuestionsFromFile = false;
-        this.updateSelectionAndView();
-    }
-
-    /**
-     * Update adding existing questions from an exam
-     */
-    setExistingQuestionSourceToExam(): void {
-        this.showExistingQuestionsFromCourse = false;
-        this.showExistingQuestionsFromExam = true;
-        this.showExistingQuestionsFromFile = false;
-        this.updateSelectionAndView();
-    }
-
-    /**
-     * Update adding existing questions from a file
-     */
-    setExistingQuestionSourceToFile(): void {
-        this.showExistingQuestionsFromCourse = false;
-        this.showExistingQuestionsFromExam = false;
-        this.showExistingQuestionsFromFile = true;
-        this.updateSelectionAndView();
-    }
-
-    private updateSelectionAndView() {
-        this.selectedCourseId = undefined;
-        this.selectedExamId = undefined;
-        this.allExistingQuestions = this.existingQuestions = [];
-        this.importFile = undefined;
-        this.importFileName = '';
-        const control = document.getElementById('importFileInput') as HTMLInputElement;
-        if (control) {
-            control.value = '';
-        }
-        this.changeDetector.detectChanges();
-    }
-
-    /**
      * Navigate back to the overview
      */
     previousState(): void {
@@ -1091,5 +600,9 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
 
     hasErrorInQuizBatches(): boolean {
         return !!this.quizExercise?.quizBatches?.some((batch) => batch.startTimeError);
+    }
+
+    handleQuestionChanged() {
+        this.cacheValidation();
     }
 }
