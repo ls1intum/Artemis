@@ -32,6 +32,7 @@ export class ProgrammingExerciseProblemComponent {
     @Input() recreateBuildPlans: boolean;
     @Input() recreateBuildPlanOrUpdateTemplateChange: () => void;
     @Input() updateTemplate: boolean;
+    @Input() irisActivated: boolean;
 
     @Output() exerciseChange = new EventEmitter<ProgrammingExercise>();
 

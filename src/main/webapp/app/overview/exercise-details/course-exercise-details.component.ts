@@ -99,7 +99,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
 
     exampleSolutionInfo?: ExampleSolutionInfo;
 
-    irisActivated: boolean | undefined;
+    irisActivated: boolean;
 
     // extension points, see shared/extension-point
     @ContentChild('overrideStudentActions') overrideStudentActions: TemplateRef<any>;
@@ -216,7 +216,8 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                 this.submissionPolicy = submissionPolicy;
                 this.hasSubmissionPolicy = true;
             });
-            this.irisActivated = programmingExercise.irisActivated;
+            this.irisActivated = programmingExercise.irisActivated || false;
+            console.log('programming-exercise ' + programmingExercise);
         }
 
         this.showIfExampleSolutionPresent(newExercise);

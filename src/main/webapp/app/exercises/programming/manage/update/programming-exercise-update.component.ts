@@ -70,6 +70,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     templateParticipationResultLoaded = true;
     notificationText?: string;
     courseId: number;
+    irisActivated: boolean;
 
     EditorMode = EditorMode;
     AssessmentType = AssessmentType;
