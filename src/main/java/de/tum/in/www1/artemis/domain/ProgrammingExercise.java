@@ -6,6 +6,7 @@ import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
 import javax.persistence.*;
@@ -15,16 +16,14 @@ import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.*;
 
 import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.hestia.ExerciseHint;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPolicy;
 import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeature;
@@ -35,9 +34,15 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
  */
 @Entity
 @DiscriminatorValue(value = "P")
+@JsonTypeName("programming")
 @SecondaryTable(name = "programming_exercise_details")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ProgrammingExercise extends Exercise {
+
+    // used to distinguish the type when used in collections (e.g. SearchResultPageDTO --> resultsOnPage)
+    public String getType() {
+        return "programming";
+    }
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExercise.class);
 
@@ -644,6 +649,30 @@ public class ProgrammingExercise extends Exercise {
     @Override
     public Set<Result> findResultsFilteredForStudents(Participation participation) {
         return participation.getResults().stream().filter(this::checkForAssessedResult).collect(Collectors.toSet());
+    }
+
+    /**
+     * Find relevant participations for this exercise. Normally there are only one practice and graded participation.
+     * In case there are multiple, they are filtered as implemented in {@link Exercise#findRelevantParticipation(List)}
+     *
+     * @param participations the list of available participations
+     * @return the found participation in an unmodifiable list or the empty list, if none exists
+     */
+    @Override
+    public List<StudentParticipation> findRelevantParticipation(List<StudentParticipation> participations) {
+        List<StudentParticipation> participationOfExercise = participations.stream()
+                .filter(participation -> participation.getExercise() != null && participation.getExercise().equals(this)).toList();
+        List<StudentParticipation> gradedParticipations = participationOfExercise.stream().filter(participation -> !participation.isTestRun()).toList();
+        List<StudentParticipation> practiceParticipations = participationOfExercise.stream().filter(Participation::isTestRun).toList();
+
+        if (gradedParticipations.size() > 1) {
+            gradedParticipations = super.findRelevantParticipation(gradedParticipations);
+        }
+        if (practiceParticipations.size() > 1) {
+            practiceParticipations = super.findRelevantParticipation(practiceParticipations);
+        }
+
+        return Stream.concat(gradedParticipations.stream(), practiceParticipations.stream()).toList();
     }
 
     /**

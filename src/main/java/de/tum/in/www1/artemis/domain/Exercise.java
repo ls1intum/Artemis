@@ -9,7 +9,6 @@ import javax.persistence.*;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
-import org.hibernate.annotations.DiscriminatorOptions;
 
 import com.fasterxml.jackson.annotation.*;
 
@@ -37,13 +36,18 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "discriminator", discriminatorType = DiscriminatorType.STRING)
 @DiscriminatorValue(value = "E")
-@DiscriminatorOptions(force = true)
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
 // Annotation necessary to distinguish between concrete implementations of Exercise when deserializing from JSON
-@JsonSubTypes({ @JsonSubTypes.Type(value = ProgrammingExercise.class, name = "programming"), @JsonSubTypes.Type(value = ModelingExercise.class, name = "modeling"),
-        @JsonSubTypes.Type(value = QuizExercise.class, name = "quiz"), @JsonSubTypes.Type(value = TextExercise.class, name = "text"),
-        @JsonSubTypes.Type(value = FileUploadExercise.class, name = "file-upload"), })
+// @formatter:off
+@JsonSubTypes({
+    @JsonSubTypes.Type(value = ProgrammingExercise.class, name = "programming"),
+    @JsonSubTypes.Type(value = ModelingExercise.class, name = "modeling"),
+    @JsonSubTypes.Type(value = QuizExercise.class, name = "quiz"),
+    @JsonSubTypes.Type(value = TextExercise.class, name = "text"),
+    @JsonSubTypes.Type(value = FileUploadExercise.class, name = "file-upload")
+})
+// @formatter:on
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public abstract class Exercise extends BaseExercise implements LearningObject {
 
@@ -433,17 +437,16 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
      * Find a relevant participation for this exercise (relevancy depends on InitializationState)
      *
      * @param participations the list of available participations
-     * @return the found participation, or null, if none exist
+     * @return the found participation in an unmodifiable list or the empty list, if none exists
      */
-    @Nullable
-    public StudentParticipation findRelevantParticipation(List<StudentParticipation> participations) {
+    public List<StudentParticipation> findRelevantParticipation(List<StudentParticipation> participations) {
         StudentParticipation relevantParticipation = null;
         for (StudentParticipation participation : participations) {
             if (participation.getExercise() != null && participation.getExercise().equals(this)) {
                 if (participation.getInitializationState() == InitializationState.INITIALIZED) {
                     // InitializationState INITIALIZED is preferred
                     // => if we find one, we can return immediately
-                    return participation;
+                    return List.of(participation);
                 }
                 else if (participation.getInitializationState() == InitializationState.INACTIVE) {
                     // InitializationState INACTIVE is also ok
@@ -454,11 +457,11 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
                 else if (participation.getExercise() instanceof ModelingExercise || participation.getExercise() instanceof TextExercise
                         || participation.getExercise() instanceof FileUploadExercise
                         || (participation.getExercise() instanceof ProgrammingExercise && participation.getInitializationState() == InitializationState.FINISHED)) {
-                    return participation;
+                    return List.of(participation);
                 }
             }
         }
-        return relevantParticipation;
+        return relevantParticipation != null ? List.of(relevantParticipation) : Collections.emptyList();
     }
 
     /**
@@ -487,9 +490,11 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
             boolean isAssessmentOver = ignoreAssessmentDueDate || getAssessmentDueDate() == null || getAssessmentDueDate().isBefore(ZonedDateTime.now());
             boolean isProgrammingExercise = participation.getExercise() instanceof ProgrammingExercise;
             // Check that submission was submitted in time (rated). For non programming exercises we check if the assessment due date has passed (if set)
-            if (Boolean.TRUE.equals(result.isRated()) && (!isProgrammingExercise && isAssessmentOver
-                    // For programming exercises we check that the assessment due date has passed (if set) for manual results otherwise we always show the automatic result
-                    || isProgrammingExercise && ((result.isManual() && isAssessmentOver) || result.isAutomatic()))) {
+            boolean ratedOrPractice = Boolean.TRUE.equals(result.isRated()) || participation.isTestRun();
+            boolean noProgrammingAndAssessmentOver = !isProgrammingExercise && isAssessmentOver;
+            // For programming exercises we check that the assessment due date has passed (if set) for manual results otherwise we always show the automatic result
+            boolean programmingAfterAssessmentOrAutomatic = isProgrammingExercise && ((result.isManual() && isAssessmentOver) || result.isAutomatic());
+            if (ratedOrPractice && (noProgrammingAndAssessmentOver || programmingAfterAssessmentOrAutomatic)) {
                 // take the first found result that fulfills the above requirements
                 if (latestSubmission == null) {
                     latestSubmission = submission;

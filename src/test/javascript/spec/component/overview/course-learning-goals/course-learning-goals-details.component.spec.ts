@@ -59,7 +59,7 @@ describe('CourseLearningGoalsDetails', () => {
                 {
                     provide: ActivatedRoute,
                     useValue: {
-                        params: of({ learningGoalId: '1', courseId: '1' }),
+                        params: of({ competencyId: '1', courseId: '1' }),
                     },
                 },
                 { provide: Router, useValue: MockRouter },

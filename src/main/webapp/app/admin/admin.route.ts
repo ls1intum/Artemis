@@ -79,6 +79,10 @@ export const adminState: Routes = [
                     pageTitle: 'statistics.title',
                 },
             },
+            {
+                path: 'privacy-statement',
+                loadChildren: () => import('./privacy-statement/privacy-statement-update/privacy-statement-update.module').then((module) => module.PrivacyStatementUpdateModule),
+            },
             ...organizationMgmtRoute,
             ...userManagementRoute,
             ...systemNotificationManagementRoute,

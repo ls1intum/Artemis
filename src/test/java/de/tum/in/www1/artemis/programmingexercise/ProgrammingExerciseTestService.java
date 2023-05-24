@@ -37,8 +37,11 @@ import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.treewalk.CanonicalTreeParser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 
@@ -60,6 +63,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseTaskRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.CourseExamExportService;
+import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
@@ -74,6 +78,7 @@ import de.tum.in.www1.artemis.util.*;
 import de.tum.in.www1.artemis.util.GitUtilService.MockFileRepositoryUrl;
 import de.tum.in.www1.artemis.util.InvalidExamExerciseDatesArgumentProvider.InvalidExamExerciseDateConfiguration;
 import de.tum.in.www1.artemis.web.rest.dto.BuildLogStatisticsDTO;
+import de.tum.in.www1.artemis.web.rest.dto.CourseForDashboardDTO;
 
 /**
  * Note: this class should be independent of the actual VCS and CIS and contains common test logic for both scenarios:
@@ -386,8 +391,116 @@ public class ProgrammingExerciseTestService {
         mockDelegate.mockConnectorRequestsForSetup(exercise, false);
         var generatedExercise = request.postWithResponseBody(ROOT + SETUP, exercise, ProgrammingExercise.class);
         var savedExercise = programmingExerciseRepository.findById(generatedExercise.getId()).get();
-        assertThat(generatedExercise.getBonusPoints()).isEqualTo(0D);
-        assertThat(savedExercise.getBonusPoints()).isEqualTo(0D);
+        assertThat(generatedExercise.getBonusPoints()).isZero();
+        assertThat(savedExercise.getBonusPoints()).isZero();
+    }
+
+    void importFromFile_validJavaExercise_isSuccessfullyImported(boolean scaEnabled) throws Exception {
+        mockDelegate.mockConnectorRequestForImportFromFile(exercise);
+        Resource resource = new ClassPathResource("test-data/import-from-file/valid-import.zip");
+        if (scaEnabled) {
+            exercise.setStaticCodeAnalysisEnabled(true);
+        }
+
+        var file = new MockMultipartFile("file", "test.zip", "application/zip", resource.getInputStream());
+        var course = database.addEmptyCourse();
+        var importedExercise = request.postWithMultipartFile(ROOT + "/courses/" + course.getId() + "/programming-exercises/import-from-file", exercise, "programmingExercise", file,
+                ProgrammingExercise.class, HttpStatus.OK);
+        assertThat(importedExercise).isNotNull();
+        assertThat(importedExercise.getProgrammingLanguage()).isEqualTo(JAVA);
+        assertThat(importedExercise.getMode()).isEqualTo(ExerciseMode.INDIVIDUAL);
+        assertThat(importedExercise.getProjectType()).isEqualTo(ProjectType.PLAIN_MAVEN);
+        if (scaEnabled) {
+            assertThat(importedExercise.isStaticCodeAnalysisEnabled()).isTrue();
+        }
+        else {
+            assertThat(importedExercise.isStaticCodeAnalysisEnabled()).isFalse();
+        }
+        var savedExercise = programmingExerciseRepository.findById(importedExercise.getId()).get();
+        assertThat(savedExercise).isNotNull();
+        assertThat(savedExercise.getProgrammingLanguage()).isEqualTo(JAVA);
+        assertThat(savedExercise.getMode()).isEqualTo(ExerciseMode.INDIVIDUAL);
+        assertThat(savedExercise.getProjectType()).isEqualTo(ProjectType.PLAIN_MAVEN);
+        if (scaEnabled) {
+            assertThat(savedExercise.isStaticCodeAnalysisEnabled()).isTrue();
+        }
+        else {
+            assertThat(savedExercise.isStaticCodeAnalysisEnabled()).isFalse();
+        }
+        assertThat(importedExercise.getCourseViaExerciseGroupOrCourseMember()).isEqualTo(course);
+    }
+
+    void importFromFile_validExercise_isSuccessfullyImported(ProgrammingLanguage language) throws Exception {
+        mockDelegate.mockConnectorRequestForImportFromFile(exercise);
+        Resource resource = null;
+        exercise.programmingLanguage(language);
+        exercise.setProjectType(null);
+        switch (language) {
+            case PYTHON -> resource = new ClassPathResource("test-data/import-from-file/valid-import-python.zip");
+            case C -> {
+                resource = new ClassPathResource("test-data/import-from-file/valid-import-c.zip");
+                exercise.setProjectType(ProjectType.FACT);
+            }
+            case HASKELL -> resource = new ClassPathResource("test-data/import-from-file/valid-import-haskell.zip");
+            case OCAML -> resource = new ClassPathResource("test-data/import-from-file/valid-import-ocaml.zip");
+            case ASSEMBLER -> resource = new ClassPathResource("test-data/import-from-file/valid-import-assembler.zip");
+        }
+
+        var file = new MockMultipartFile("file", "test.zip", "application/zip", resource.getInputStream());
+        request.postWithMultipartFile(ROOT + "/courses/" + course.getId() + "/programming-exercises/import-from-file", exercise, "programmingExercise", file,
+                ProgrammingExercise.class, HttpStatus.OK);
+    }
+
+    void importFromFile_embeddedFiles_embeddedFilesCopied() throws Exception {
+        String embeddedFileName1 = "Markdown_2023-05-06T16-17-46-410_ad323711.jpg";
+        String embeddedFileName2 = "Markdown_2023-05-06T16-17-46-822_b921f475.jpg";
+        Path fileSystemPathEmbeddedFile1 = Path.of(FilePathService.getMarkdownFilePath(), embeddedFileName1);
+        Path fileSystemPathEmbeddedFile2 = Path.of(FilePathService.getMarkdownFilePath(), embeddedFileName2);
+        // clean up to make sure the test doesn't pass because it has passed previously
+        if (Files.exists(fileSystemPathEmbeddedFile1)) {
+            Files.delete(fileSystemPathEmbeddedFile1);
+        }
+        if (Files.exists(fileSystemPathEmbeddedFile2)) {
+            Files.delete(fileSystemPathEmbeddedFile2);
+        }
+        mockDelegate.mockConnectorRequestForImportFromFile(exercise);
+
+        Resource resource = new ClassPathResource("test-data/import-from-file/valid-import-embedded-files.zip");
+        var file = new MockMultipartFile("file", "test.zip", "application/zip", resource.getInputStream());
+        request.postWithMultipartFile(ROOT + "/courses/" + course.getId() + "/programming-exercises/import-from-file", exercise, "programmingExercise", file,
+                ProgrammingExercise.class, HttpStatus.OK);
+        assertThat(Path.of(FilePathService.getMarkdownFilePath())).isDirectoryContaining(path -> embeddedFileName1.equals(path.getFileName().toString()))
+                .isDirectoryContaining(path -> embeddedFileName2.equals(path.getFileName().toString()));
+
+    }
+
+    void importFromFile_missingExerciseDetailsJson_badRequest() throws Exception {
+        Resource resource = new ClassPathResource("test-data/import-from-file/missing-json.zip");
+        var file = new MockMultipartFile("file", "test.zip", "application/zip", resource.getInputStream());
+        request.postWithMultipartFile(ROOT + "/courses/" + course.getId() + "/programming-exercises/import-from-file", exercise, "programmingExercise", file,
+                ProgrammingExercise.class, HttpStatus.BAD_REQUEST);
+    }
+
+    void importFromFile_fileNoZip_badRequest() throws Exception {
+        Resource resource = new ClassPathResource("test-data/import-from-file/valid-import.zip");
+        var file = new MockMultipartFile("file", "test.txt", "application/zip", resource.getInputStream());
+        request.postWithMultipartFile(ROOT + "/courses/" + course.getId() + "/programming-exercises/import-from-file", exercise, "programmingExercise", file,
+                ProgrammingExercise.class, HttpStatus.BAD_REQUEST);
+    }
+
+    void importFromFile_tutor_forbidden() throws Exception {
+        course.setInstructorGroupName("test");
+        courseRepository.save(course);
+        var file = new MockMultipartFile("file", "test.zip", "application/zip", new byte[0]);
+        request.postWithMultipartFile(ROOT + "/courses/" + course.getId() + "/programming-exercises/import-from-file", exercise, "programmingExercise", file,
+                ProgrammingExercise.class, HttpStatus.FORBIDDEN);
+    }
+
+    void importFromFile_missingRepository_BadRequest() throws Exception {
+        Resource resource = new ClassPathResource("test-data/import-from-file/missing-repository.zip");
+        var file = new MockMultipartFile("file", "test.zip", "application/zip", resource.getInputStream());
+        request.postWithMultipartFile(ROOT + "/courses/" + course.getId() + "/programming-exercises/import-from-file", exercise, "programmingExercise", file,
+                ProgrammingExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     // TEST
@@ -645,15 +758,15 @@ public class ProgrammingExerciseTestService {
 
         exerciseToBeImported = request.postWithResponseBody(ROOT + IMPORT.replace("{sourceExerciseId}", sourceExercise.getId().toString()), exerciseToBeImported,
                 ProgrammingExercise.class, HttpStatus.OK);
-        assertEquals(TEAM, exerciseToBeImported.getMode());
-        assertEquals(teamAssignmentConfig.getMinTeamSize(), exerciseToBeImported.getTeamAssignmentConfig().getMinTeamSize());
-        assertEquals(teamAssignmentConfig.getMaxTeamSize(), exerciseToBeImported.getTeamAssignmentConfig().getMaxTeamSize());
-        assertEquals(0, teamRepository.findAllByExerciseIdWithEagerStudents(exerciseToBeImported, null).size());
+        assertThat(exerciseToBeImported.getMode()).isEqualTo(TEAM);
+        assertThat(exerciseToBeImported.getTeamAssignmentConfig().getMinTeamSize()).isEqualTo(teamAssignmentConfig.getMinTeamSize());
+        assertThat(exerciseToBeImported.getTeamAssignmentConfig().getMaxTeamSize()).isEqualTo(teamAssignmentConfig.getMaxTeamSize());
+        assertThat(teamRepository.findAllByExerciseIdWithEagerStudents(exerciseToBeImported, null)).isEmpty();
 
         sourceExercise = database.loadProgrammingExerciseWithEagerReferences(sourceExercise);
-        assertEquals(ExerciseMode.INDIVIDUAL, sourceExercise.getMode());
-        assertNull(sourceExercise.getTeamAssignmentConfig());
-        assertEquals(0, teamRepository.findAllByExerciseIdWithEagerStudents(sourceExercise, null).size());
+        assertThat(sourceExercise.getMode()).isEqualTo(ExerciseMode.INDIVIDUAL);
+        assertThat(sourceExercise.getTeamAssignmentConfig()).isNull();
+        assertThat(teamRepository.findAllByExerciseIdWithEagerStudents(sourceExercise, null)).isEmpty();
     }
 
     // TEST
@@ -687,13 +800,13 @@ public class ProgrammingExerciseTestService {
         exerciseToBeImported = request.postWithResponseBody(ROOT + IMPORT.replace("{sourceExerciseId}", sourceExercise.getId().toString()), exerciseToBeImported,
                 ProgrammingExercise.class, HttpStatus.OK);
 
-        assertEquals(ExerciseMode.INDIVIDUAL, exerciseToBeImported.getMode());
-        assertNull(exerciseToBeImported.getTeamAssignmentConfig());
-        assertEquals(0, teamRepository.findAllByExerciseIdWithEagerStudents(exerciseToBeImported, null).size());
+        assertThat(exerciseToBeImported.getMode()).isEqualTo(ExerciseMode.INDIVIDUAL);
+        assertThat(exerciseToBeImported.getTeamAssignmentConfig()).isNull();
+        assertThat(teamRepository.findAllByExerciseIdWithEagerStudents(exerciseToBeImported, null)).isEmpty();
 
         sourceExercise = database.loadProgrammingExerciseWithEagerReferences(sourceExercise);
-        assertEquals(TEAM, sourceExercise.getMode());
-        assertEquals(1, teamRepository.findAllByExerciseIdWithEagerStudents(sourceExercise, null).size());
+        assertThat(sourceExercise.getMode()).isEqualTo(TEAM);
+        assertThat(teamRepository.findAllByExerciseIdWithEagerStudents(sourceExercise, null)).hasSize(1);
     }
 
     // TEST
@@ -1115,7 +1228,11 @@ public class ProgrammingExerciseTestService {
         // Assure, that the zip folder is already created and not 'in creation' which would lead to a failure when extracting it in the next step
         await().until(zipFile::exists);
         assertThat(zipFile).isNotNull();
-
+        String embeddedFileName1 = "Markdown_2023-05-06T16-17-46-410_ad323711.jpg";
+        String embeddedFileName2 = "Markdown_2023-05-06T16-17-46-822_b921f475.jpg";
+        // delete the files to not only make a test pass because a previous test run succeeded
+        Files.delete(Path.of(FilePathService.getMarkdownFilePath(), embeddedFileName1));
+        Files.delete(Path.of(FilePathService.getMarkdownFilePath(), embeddedFileName2));
         // Recursively unzip the exported file, to make sure there is no erroneous content
         zipFileTestUtilService.extractZipFileRecursively(zipFile.getAbsolutePath());
         String extractedZipDir = zipFile.getPath().substring(0, zipFile.getPath().length() - 4);
@@ -1126,7 +1243,8 @@ public class ProgrammingExerciseTestService {
             assertThat(listOfIncludedFiles).anyMatch((filename) -> filename.toString().matches(".*-exercise.zip"))
                     .anyMatch((filename) -> filename.toString().matches(".*-solution.zip")).anyMatch((filename) -> filename.toString().matches(".*-tests.zip"))
                     .anyMatch((filename) -> filename.toString().matches(EXPORTED_EXERCISE_PROBLEM_STATEMENT_FILE_PREFIX + ".*.md"))
-                    .anyMatch((filename) -> filename.toString().matches(EXPORTED_EXERCISE_DETAILS_FILE_PREFIX + ".*.json"));
+                    .anyMatch((filename) -> filename.toString().matches(EXPORTED_EXERCISE_DETAILS_FILE_PREFIX + ".*.json"))
+                    .anyMatch((filename) -> filename.toString().equals(embeddedFileName1)).anyMatch((filename) -> filename.toString().equals(embeddedFileName2));
         }
     }
 
@@ -1140,7 +1258,6 @@ public class ProgrammingExerciseTestService {
 
     java.io.File exportProgrammingExerciseInstructorMaterial(HttpStatus expectedStatus) throws Exception {
         generateProgrammingExerciseForExport();
-
         // Mock template repo
         Repository templateRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(exerciseRepo.localRepoFile.toPath(), null);
         createAndCommitDummyFileInLocalRepository(exerciseRepo, "Template.java");
@@ -1160,7 +1277,18 @@ public class ProgrammingExerciseTestService {
         return request.getFile(url, expectedStatus, new LinkedMultiValueMap<>());
     }
 
-    private void generateProgrammingExerciseForExport() {
+    private void generateProgrammingExerciseForExport() throws IOException {
+        String embeddedFileName1 = "Markdown_2023-05-06T16-17-46-410_ad323711.jpg";
+        String embeddedFileName2 = "Markdown_2023-05-06T16-17-46-822_b921f475.jpg";
+        exercise.setProblemStatement(String.format("""
+                Problem statement
+                ![mountain.jpg](/api/files/markdown/%s)
+                ![matterhorn.jpg](/api/files/markdown/%s)
+                """, embeddedFileName1, embeddedFileName2));
+        Files.write(Path.of(FilePathService.getMarkdownFilePath(), embeddedFileName1),
+                new ClassPathResource("test-data/repository-export/" + embeddedFileName1).getInputStream().readAllBytes());
+        Files.write(Path.of(FilePathService.getMarkdownFilePath(), embeddedFileName2),
+                new ClassPathResource("test-data/repository-export/" + embeddedFileName2).getInputStream().readAllBytes());
         exercise = programmingExerciseRepository.save(exercise);
         exercise = database.addTemplateParticipationForProgrammingExercise(exercise);
         exercise = database.addSolutionParticipationForProgrammingExercise(exercise);
@@ -1870,7 +1998,7 @@ public class ProgrammingExerciseTestService {
     void testGetProgrammingExercise_exampleSolutionVisibility(boolean isStudent, String username) throws Exception {
 
         if (isStudent) {
-            assertEquals(userPrefix + studentLogin, username, "The setup is done according to studentLogin value, another username may not work as expected");
+            assertThat(username).as("The setup is done according to studentLogin value, another username may not work as expected").isEqualTo(userPrefix + studentLogin);
         }
 
         // Utility function to avoid duplication
@@ -1881,7 +2009,9 @@ public class ProgrammingExerciseTestService {
         exercise.setExampleSolutionPublicationDate(null);
         programmingExerciseRepository.save(exercise);
 
-        Course courseFromServer = request.get("/api/courses/" + exercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK, Course.class);
+        CourseForDashboardDTO courseForDashboardFromServer = request.get("/api/courses/" + exercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard",
+                HttpStatus.OK, CourseForDashboardDTO.class);
+        Course courseFromServer = courseForDashboardFromServer.course();
         ProgrammingExercise programmingExerciseFromApi = programmingExerciseGetter.apply(courseFromServer);
 
         assertThat(programmingExerciseFromApi.isExampleSolutionPublished()).isFalse();
@@ -1890,7 +2020,9 @@ public class ProgrammingExerciseTestService {
         exercise.setExampleSolutionPublicationDate(ZonedDateTime.now().minusHours(1));
         programmingExerciseRepository.save(exercise);
 
-        courseFromServer = request.get("/api/courses/" + exercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK, Course.class);
+        courseForDashboardFromServer = request.get("/api/courses/" + exercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK,
+                CourseForDashboardDTO.class);
+        courseFromServer = courseForDashboardFromServer.course();
         programmingExerciseFromApi = programmingExerciseGetter.apply(courseFromServer);
 
         assertThat(programmingExerciseFromApi.isExampleSolutionPublished()).isTrue();
@@ -1899,7 +2031,9 @@ public class ProgrammingExerciseTestService {
         exercise.setExampleSolutionPublicationDate(ZonedDateTime.now().plusHours(1));
         programmingExerciseRepository.save(exercise);
 
-        courseFromServer = request.get("/api/courses/" + exercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK, Course.class);
+        courseForDashboardFromServer = request.get("/api/courses/" + exercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK,
+                CourseForDashboardDTO.class);
+        courseFromServer = courseForDashboardFromServer.course();
         programmingExerciseFromApi = programmingExerciseGetter.apply(courseFromServer);
 
         assertThat(programmingExerciseFromApi.isExampleSolutionPublished()).isFalse();
@@ -1984,7 +2118,7 @@ public class ProgrammingExerciseTestService {
     void buildLogStatistics_noStatistics() throws Exception {
         exercise = programmingExerciseRepository.save(ModelFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course));
         var statistics = request.get("/api/programming-exercises/" + exercise.getId() + "/build-log-statistics", HttpStatus.OK, BuildLogStatisticsDTO.class);
-        assertThat(statistics.getBuildCount()).isEqualTo(0);
+        assertThat(statistics.getBuildCount()).isZero();
         assertThat(statistics.getAgentSetupDuration()).isNull();
         assertThat(statistics.getTestDuration()).isNull();
         assertThat(statistics.getScaDuration()).isNull();

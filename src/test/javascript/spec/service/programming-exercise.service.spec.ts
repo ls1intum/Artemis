@@ -15,13 +15,14 @@ import { Result } from 'app/entities/result.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../helpers/mocks/service/mock-account.service';
 import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programming-exercise-solution-entry.model';
+import { Course } from 'app/entities/course.model';
 
 describe('ProgrammingExercise Service', () => {
     let service: ProgrammingExerciseService;
     let httpMock: HttpTestingController;
 
     let defaultProgrammingExercise: ProgrammingExercise;
-    const resourceUrl = SERVER_API_URL + 'api/programming-exercises';
+    const resourceUrl = 'api/programming-exercises';
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -44,16 +45,14 @@ describe('ProgrammingExercise Service', () => {
 
     describe('Service methods', () => {
         it('should find an exercise', fakeAsync(() => {
-            const returnedFromService = Object.assign(
-                {
-                    releaseDate: undefined,
-                    dueDate: undefined,
-                    assessmentDueDate: undefined,
-                    buildAndTestStudentSubmissionsAfterDueDate: undefined,
-                    studentParticipations: [],
-                },
-                defaultProgrammingExercise,
-            );
+            const returnedFromService = {
+                ...defaultProgrammingExercise,
+                releaseDate: undefined,
+                dueDate: undefined,
+                assessmentDueDate: undefined,
+                buildAndTestStudentSubmissionsAfterDueDate: undefined,
+                studentParticipations: [],
+            };
             const expected = { ...returnedFromService };
             service
                 .find(123)
@@ -65,17 +64,15 @@ describe('ProgrammingExercise Service', () => {
         }));
 
         it('should create a ProgrammingExercise', fakeAsync(() => {
-            const returnedFromService = Object.assign(
-                {
-                    id: 0,
-                    releaseDate: undefined,
-                    dueDate: undefined,
-                    assessmentDueDate: undefined,
-                    buildAndTestStudentSubmissionsAfterDueDate: undefined,
-                    studentParticipations: [],
-                },
-                defaultProgrammingExercise,
-            );
+            const returnedFromService = {
+                ...defaultProgrammingExercise,
+                id: 0,
+                releaseDate: undefined,
+                dueDate: undefined,
+                assessmentDueDate: undefined,
+                buildAndTestStudentSubmissionsAfterDueDate: undefined,
+                studentParticipations: [],
+            };
             const expected = Object.assign({}, returnedFromService);
             service
                 .automaticSetup(new ProgrammingExercise(undefined, undefined))
@@ -93,17 +90,16 @@ describe('ProgrammingExercise Service', () => {
             tempResult.id = 2;
             tempSubmission.results = [tempResult];
             templateParticipation.submissions = [tempSubmission];
-            const returnedFromService = Object.assign(
-                {
-                    id: 0,
-                    releaseDate: undefined,
-                    dueDate: undefined,
-                    assessmentDueDate: undefined,
-                    buildAndTestStudentSubmissionsAfterDueDate: undefined,
-                    studentParticipations: [],
-                },
-                { ...defaultProgrammingExercise, templateParticipation },
-            );
+            const returnedFromService = {
+                ...defaultProgrammingExercise,
+                templateParticipation,
+                id: 0,
+                releaseDate: undefined,
+                dueDate: undefined,
+                assessmentDueDate: undefined,
+                buildAndTestStudentSubmissionsAfterDueDate: undefined,
+                studentParticipations: [],
+            };
             const expected = Object.assign({}, returnedFromService);
             service
                 .findWithTemplateAndSolutionParticipation(expected.id, true)
@@ -115,21 +111,19 @@ describe('ProgrammingExercise Service', () => {
         }));
 
         it('should update a ProgrammingExercise', fakeAsync(() => {
-            const returnedFromService = Object.assign(
-                {
-                    templateRepositoryUrl: 'BBBBBB',
-                    solutionRepositoryUrl: 'BBBBBB',
-                    templateBuildPlanId: 'BBBBBB',
-                    publishBuildPlanUrl: true,
-                    allowOnlineEditor: true,
-                    releaseDate: undefined,
-                    dueDate: undefined,
-                    assessmentDueDate: undefined,
-                    buildAndTestStudentSubmissionsAfterDueDate: undefined,
-                    studentParticipations: [],
-                },
-                defaultProgrammingExercise,
-            );
+            const returnedFromService = {
+                ...defaultProgrammingExercise,
+                templateRepositoryUrl: 'BBBBBB',
+                solutionRepositoryUrl: 'BBBBBB',
+                templateBuildPlanId: 'BBBBBB',
+                publishBuildPlanUrl: true,
+                allowOnlineEditor: true,
+                releaseDate: undefined,
+                dueDate: undefined,
+                assessmentDueDate: undefined,
+                buildAndTestStudentSubmissionsAfterDueDate: undefined,
+                studentParticipations: [],
+            };
 
             const expected = Object.assign({}, returnedFromService);
             service
@@ -142,16 +136,14 @@ describe('ProgrammingExercise Service', () => {
         }));
 
         it('should update the Timeline of a ProgrammingExercise', fakeAsync(() => {
-            const returnedFromService = Object.assign(
-                {
-                    releaseDate: dayjs('2020-12-10 10:00:00'),
-                    dueDate: dayjs('2021-01-01 10:00:00'),
-                    assessmentDueDate: dayjs('2021-01-02 10:00:00'),
-                    buildAndTestStudentSubmissionsAfterDueDate: undefined,
-                    studentParticipations: [],
-                },
-                defaultProgrammingExercise,
-            );
+            const returnedFromService = {
+                ...defaultProgrammingExercise,
+                releaseDate: dayjs('2020-12-10 10:00:00'),
+                dueDate: dayjs('2021-01-01 10:00:00'),
+                assessmentDueDate: dayjs('2021-01-02 10:00:00'),
+                buildAndTestStudentSubmissionsAfterDueDate: undefined,
+                studentParticipations: [],
+            };
             const expected = Object.assign({}, returnedFromService);
             service
                 .updateTimeline(expected)
@@ -163,20 +155,18 @@ describe('ProgrammingExercise Service', () => {
         }));
 
         it('should return a list of ProgrammingExercise', fakeAsync(() => {
-            const returnedFromService = Object.assign(
-                {
-                    templateRepositoryUrl: 'BBBBBB',
-                    solutionRepositoryUrl: 'BBBBBB',
-                    templateBuildPlanId: 'BBBBBB',
-                    publishBuildPlanUrl: true,
-                    allowOnlineEditor: true,
-                    releaseDate: undefined,
-                    dueDate: undefined,
-                    assessmentDueDate: undefined,
-                    studentParticipations: [],
-                },
-                defaultProgrammingExercise,
-            );
+            const returnedFromService = {
+                ...defaultProgrammingExercise,
+                templateRepositoryUrl: 'BBBBBB',
+                solutionRepositoryUrl: 'BBBBBB',
+                templateBuildPlanId: 'BBBBBB',
+                publishBuildPlanUrl: true,
+                allowOnlineEditor: true,
+                releaseDate: undefined,
+                dueDate: undefined,
+                assessmentDueDate: undefined,
+                studentParticipations: [],
+            };
             const expected = Object.assign({}, returnedFromService);
             service
                 .query(expected)
@@ -221,6 +211,21 @@ describe('ProgrammingExercise Service', () => {
         service.createBehavioralSolutionEntries(123).subscribe((resp) => expect(resp).toEqual(expected));
         const req = httpMock.expectOne({ method: 'POST', url: `${resourceUrl}/123/behavioral-solution-entries` });
         req.flush(expected);
+        tick();
+    }));
+    it('should make post request for import from file', fakeAsync(() => {
+        const course = new Course();
+        course.id = 1;
+        const request = new ProgrammingExercise(course, undefined);
+        const expected = new ProgrammingExercise(course, undefined);
+        const dummyFile = new File([''], 'dummyFile');
+        expected.studentParticipations = [];
+        expected.zipFileForImport = dummyFile;
+        request.zipFileForImport = dummyFile;
+        service.importFromFile(request, course.id).subscribe((resp) => expect(resp.body).toEqual(expected));
+        const url = `api/courses/1/programming-exercises/import-from-file`;
+        const req = httpMock.expectOne({ method: 'POST', url: url });
+        req.flush(request);
         tick();
     }));
 

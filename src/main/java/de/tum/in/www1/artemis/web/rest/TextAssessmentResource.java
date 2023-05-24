@@ -585,7 +585,6 @@ public class TextAssessmentResource extends AssessmentResource {
             final var updatedTextBlocks = textBlocks.stream().filter(tb -> !existingTextBlockIds.contains(tb.getId())).peek(tb -> {
                 tb.setSubmission(textSubmission);
                 tb.setFeedback(feedbackMap.get(tb.getId()));
-                tb.setKnowledge(exercise.getKnowledge());
             }).collect(toSet());
             // Update the feedback_id for existing text blocks
             if (!existingTextBlockIds.isEmpty()) {

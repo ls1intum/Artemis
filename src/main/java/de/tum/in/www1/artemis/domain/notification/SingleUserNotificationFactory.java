@@ -12,6 +12,8 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.Post;
+import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
+import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
 
@@ -187,6 +189,88 @@ public class SingleUserNotificationFactory {
             }
             default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
         }
+        return notification;
+    }
+
+    /**
+     * Creates an instance of SingleUserNotification for message replies.
+     *
+     * @param answerPost           to which the notification is related
+     * @param notificationType     type of the notification that should be created
+     * @param user                 who should be notified or are related to the notification
+     * @param responsibleForAction the user who is responsible for the action that triggered the notification
+     * @return an instance of SingleUserNotification
+     */
+    public static SingleUserNotification createNotification(AnswerPost answerPost, NotificationType notificationType, User user, User responsibleForAction) {
+        String title = findCorrespondingNotificationTitleOrThrow(notificationType);
+        if (user == null) {
+            throw new IllegalArgumentException("No users provided for notification");
+        }
+
+        if (notificationType != NotificationType.CONVERSATION_NEW_REPLY_MESSAGE) {
+            throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
+        }
+        String[] placeholders = new String[] { answerPost.getPost().getConversation().getCourse().getTitle(), answerPost.getPost().getContent(),
+                answerPost.getPost().getCreationDate().toString(), answerPost.getPost().getAuthor().getName(), answerPost.getContent(), answerPost.getCreationDate().toString(),
+                answerPost.getAuthor().getName() };
+        SingleUserNotification notification = new SingleUserNotification(user, title, MESSAGE_REPLY_IN_CONVERSATION_TEXT, true, placeholders);
+        notification.setTransientAndStringTarget(createMessageReplyTarget(answerPost, answerPost.getPost().getConversation().getCourse().getId()));
+        notification.setAuthor(responsibleForAction);
+        return notification;
+    }
+
+    /**
+     * Creates an instance of SingleUserNotification for conversation creation or deletion.
+     *
+     * @param conversation         to which the notification is related
+     * @param notificationType     type of the notification that should be created
+     * @param user                 who should be notified or are related to the notification
+     * @param responsibleForAction the user who is responsible for the action that triggered the notification
+     * @return an instance of SingleUserNotification
+     */
+    public static SingleUserNotification createNotification(Conversation conversation, NotificationType notificationType, User user, User responsibleForAction) {
+        String title = findCorrespondingNotificationTitleOrThrow(notificationType);
+        if (user == null) {
+            throw new IllegalArgumentException("No user provided for notification");
+        }
+        SingleUserNotification notification = switch (notificationType) {
+            case CONVERSATION_CREATE_ONE_TO_ONE_CHAT -> {
+                // text is null because the notification is not shown
+                yield new SingleUserNotification(user, title, null, false, new String[] {})
+                        .transientAndStringTarget(createConversationCreationTarget(conversation, conversation.getCourse().getId()));
+            }
+            case CONVERSATION_CREATE_GROUP_CHAT, CONVERSATION_ADD_USER_GROUP_CHAT -> {
+                String[] placeholders = new String[] { conversation.getCourse().getTitle(), responsibleForAction.getName() };
+                yield new SingleUserNotification(user, title, CONVERSATION_ADD_USER_GROUP_CHAT_TEXT, true, placeholders)
+                        .transientAndStringTarget(createConversationCreationTarget(conversation, conversation.getCourse().getId()));
+            }
+            case CONVERSATION_ADD_USER_CHANNEL -> {
+                var channel = (Channel) conversation;
+                String[] placeholders = new String[] { channel.getCourse().getTitle(), channel.getName(), responsibleForAction.getName() };
+                yield new SingleUserNotification(user, title, CONVERSATION_ADD_USER_CHANNEL_TEXT, true, placeholders)
+                        .transientAndStringTarget(createConversationCreationTarget(channel, channel.getCourse().getId()));
+            }
+            case CONVERSATION_REMOVE_USER_CHANNEL -> {
+                var channel = (Channel) conversation;
+                String[] placeholders = new String[] { channel.getCourse().getTitle(), channel.getName(), responsibleForAction.getName() };
+                yield new SingleUserNotification(user, title, CONVERSATION_REMOVE_USER_CHANNEL_TEXT, true, placeholders)
+                        .transientAndStringTarget(createConversationDeletionTarget(channel, channel.getCourse().getId()));
+            }
+            case CONVERSATION_REMOVE_USER_GROUP_CHAT -> {
+                String[] placeholders = new String[] { conversation.getCourse().getTitle(), responsibleForAction.getName() };
+                yield new SingleUserNotification(user, title, CONVERSATION_REMOVE_USER_GROUP_CHAT_TEXT, true, placeholders)
+                        .transientAndStringTarget(createConversationDeletionTarget(conversation, conversation.getCourse().getId()));
+            }
+            case CONVERSATION_DELETE_CHANNEL -> {
+                var channel = (Channel) conversation;
+                String[] placeholders = new String[] { channel.getCourse().getTitle(), channel.getName(), responsibleForAction.getName() };
+                yield new SingleUserNotification(user, title, CONVERSATION_DELETE_CHANNEL_TEXT, true, placeholders)
+                        .transientAndStringTarget(createConversationDeletionTarget(channel, channel.getCourse().getId()));
+            }
+            default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
+        };
+        notification.setAuthor(responsibleForAction);
+
         return notification;
     }
 

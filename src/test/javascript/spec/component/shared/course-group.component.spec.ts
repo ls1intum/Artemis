@@ -23,16 +23,18 @@ import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.s
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTestModule } from '../../test.module';
 import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
-import { UsersImportButtonComponent } from 'app/shared/import/users-import-button.component';
+import { UsersImportButtonComponent } from 'app/shared/user-import/users-import-button.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { AlertService } from 'app/core/util/alert.service';
 import { EMAIL_KEY, NAME_KEY, REGISTRATION_NUMBER_KEY, USERNAME_KEY } from 'app/shared/export/export-constants';
 
-jest.mock('export-to-csv', () => ({
-    ExportToCsv: jest.fn().mockImplementation(() => ({
-        generateCsv: jest.fn(),
-    })),
-}));
+const generateCsv = jest.fn();
+jest.mock('export-to-csv', () => {
+    class MockExportToCsv {
+        generateCsv = generateCsv;
+    }
+    return { ExportToCsv: MockExportToCsv };
+});
 
 describe('Course Group Component', () => {
     let comp: CourseGroupComponent;

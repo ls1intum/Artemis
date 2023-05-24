@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.modeling;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.verify;
 
 import java.time.ZonedDateTime;
@@ -28,7 +27,7 @@ import de.tum.in.www1.artemis.domain.plagiarism.modeling.ModelingPlagiarismResul
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.util.*;
 import de.tum.in.www1.artemis.util.InvalidExamExerciseDatesArgumentProvider.InvalidExamExerciseDateConfiguration;
-import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
+import de.tum.in.www1.artemis.web.rest.dto.CourseForDashboardDTO;
 
 class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -559,7 +558,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
     @WithMockUser(username = TEST_PREFIX + "instructor2", roles = "INSTRUCTOR")
     void testInstructorGetsOnlyResultsFromOwningCourses() throws Exception {
         final var search = database.configureSearch("");
-        final var result = request.get("/api/modeling-exercises/", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(search));
+        final var result = request.getSearchResult("/api/modeling-exercises/", HttpStatus.OK, ModelingExercise.class, database.searchMapping(search));
         assertThat(result.getResultsOnPage()).isNullOrEmpty();
     }
 
@@ -586,7 +585,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
         exercise = modelingExerciseRepository.save(exercise);
 
         final var searchTerm = database.configureSearch(exercise.getTitle());
-        final var searchResult = request.get("/api/modeling-exercises", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(searchTerm));
+        final var searchResult = request.getSearchResult("/api/modeling-exercises", HttpStatus.OK, ModelingExercise.class, database.searchMapping(searchTerm));
         assertThat(searchResult.getResultsOnPage()).hasSize(1);
     }
 
@@ -597,11 +596,11 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
         database.addCourseWithOneModelingExercise("ClassDiagram" + uuid);
         database.addCourseWithOneModelingExercise("Activity Diagram" + uuid);
         final var searchClassDiagram = database.configureSearch("ClassDiagram" + uuid);
-        final var resultClassDiagram = request.get("/api/modeling-exercises/", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(searchClassDiagram));
+        final var resultClassDiagram = request.getSearchResult("/api/modeling-exercises/", HttpStatus.OK, ModelingExercise.class, database.searchMapping(searchClassDiagram));
         assertThat(resultClassDiagram.getResultsOnPage()).hasSize(1);
 
         final var searchActivityDiagram = database.configureSearch("Activity Diagram" + uuid);
-        final var resultActivityDiagram = request.get("/api/modeling-exercises/", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(searchActivityDiagram));
+        final var resultActivityDiagram = request.getSearchResult("/api/modeling-exercises/", HttpStatus.OK, ModelingExercise.class, database.searchMapping(searchActivityDiagram));
         assertThat(resultActivityDiagram.getResultsOnPage()).hasSize(1);
     }
 
@@ -611,9 +610,9 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
         final String uuid = UUID.randomUUID().toString();
         String searchTerm = "ClassDiagram" + uuid;
         final var search = database.configureSearch(searchTerm);
-        final var oldResult = request.get("/api/modeling-exercises/", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(search));
+        final var oldResult = request.getSearchResult("/api/modeling-exercises/", HttpStatus.OK, ModelingExercise.class, database.searchMapping(search));
         database.addCourseInOtherInstructionGroupAndExercise(searchTerm);
-        final var result = request.get("/api/modeling-exercises/", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(search));
+        final var result = request.getSearchResult("/api/modeling-exercises/", HttpStatus.OK, ModelingExercise.class, database.searchMapping(search));
         assertThat(result.getResultsOnPage()).hasSize(oldResult.getResultsOnPage().size() + 1);
     }
 
@@ -659,16 +658,16 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
         exerciseToBeImported = request.postWithResponseBody("/api/modeling-exercises/import/" + sourceExercise.getId(), exerciseToBeImported, ModelingExercise.class,
                 HttpStatus.CREATED);
 
-        assertEquals(course2.getId(), exerciseToBeImported.getCourseViaExerciseGroupOrCourseMember().getId(), course2.getId());
-        assertEquals(ExerciseMode.TEAM, exerciseToBeImported.getMode());
-        assertEquals(teamAssignmentConfig.getMinTeamSize(), exerciseToBeImported.getTeamAssignmentConfig().getMinTeamSize());
-        assertEquals(teamAssignmentConfig.getMaxTeamSize(), exerciseToBeImported.getTeamAssignmentConfig().getMaxTeamSize());
-        assertEquals(0, teamRepository.findAllByExerciseIdWithEagerStudents(exerciseToBeImported, null).size());
+        assertThat(exerciseToBeImported.getCourseViaExerciseGroupOrCourseMember().getId()).isEqualTo(course2.getId());
+        assertThat(exerciseToBeImported.getMode()).isEqualTo(ExerciseMode.TEAM);
+        assertThat(exerciseToBeImported.getTeamAssignmentConfig().getMinTeamSize()).isEqualTo(teamAssignmentConfig.getMinTeamSize());
+        assertThat(exerciseToBeImported.getTeamAssignmentConfig().getMaxTeamSize()).isEqualTo(teamAssignmentConfig.getMaxTeamSize());
+        assertThat(teamRepository.findAllByExerciseIdWithEagerStudents(exerciseToBeImported, null)).isEmpty();
 
         sourceExercise = modelingExerciseRepository.findById(sourceExercise.getId()).get();
-        assertEquals(course1.getId(), sourceExercise.getCourseViaExerciseGroupOrCourseMember().getId());
-        assertEquals(ExerciseMode.INDIVIDUAL, sourceExercise.getMode());
-        assertEquals(0, teamRepository.findAllByExerciseIdWithEagerStudents(sourceExercise, null).size());
+        assertThat(sourceExercise.getCourseViaExerciseGroupOrCourseMember().getId()).isEqualTo(course1.getId());
+        assertThat(sourceExercise.getMode()).isEqualTo(ExerciseMode.INDIVIDUAL);
+        assertThat(teamRepository.findAllByExerciseIdWithEagerStudents(sourceExercise, null)).isEmpty();
     }
 
     @Test
@@ -698,15 +697,15 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
         exerciseToBeImported = request.postWithResponseBody("/api/modeling-exercises/import/" + sourceExercise.getId(), exerciseToBeImported, ModelingExercise.class,
                 HttpStatus.CREATED);
 
-        assertEquals(course2.getId(), exerciseToBeImported.getCourseViaExerciseGroupOrCourseMember().getId(), course2.getId());
-        assertEquals(ExerciseMode.INDIVIDUAL, exerciseToBeImported.getMode());
-        assertNull(exerciseToBeImported.getTeamAssignmentConfig());
-        assertEquals(0, teamRepository.findAllByExerciseIdWithEagerStudents(exerciseToBeImported, null).size());
+        assertThat(exerciseToBeImported.getCourseViaExerciseGroupOrCourseMember().getId()).isEqualTo(course2.getId());
+        assertThat(exerciseToBeImported.getMode()).isEqualTo(ExerciseMode.INDIVIDUAL);
+        assertThat(exerciseToBeImported.getTeamAssignmentConfig()).isNull();
+        assertThat(teamRepository.findAllByExerciseIdWithEagerStudents(exerciseToBeImported, null)).isEmpty();
 
         sourceExercise = modelingExerciseRepository.findById(sourceExercise.getId()).get();
-        assertEquals(course1.getId(), sourceExercise.getCourseViaExerciseGroupOrCourseMember().getId());
-        assertEquals(ExerciseMode.TEAM, sourceExercise.getMode());
-        assertEquals(1, teamRepository.findAllByExerciseIdWithEagerStudents(sourceExercise, null).size());
+        assertThat(sourceExercise.getCourseViaExerciseGroupOrCourseMember().getId()).isEqualTo(course1.getId());
+        assertThat(sourceExercise.getMode()).isEqualTo(ExerciseMode.TEAM);
+        assertThat(teamRepository.findAllByExerciseIdWithEagerStudents(sourceExercise, null)).hasSize(1);
     }
 
     @Test
@@ -896,7 +895,9 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
         classExercise.setExampleSolutionPublicationDate(null);
         modelingExerciseRepository.save(classExercise);
 
-        Course course = request.get("/api/courses/" + classExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK, Course.class);
+        CourseForDashboardDTO courseForDashboard = request.get("/api/courses/" + classExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK,
+                CourseForDashboardDTO.class);
+        Course course = courseForDashboard.course();
         ModelingExercise modelingExercise = modelingExerciseGetter.apply(course);
 
         if (isStudent) {
@@ -912,7 +913,9 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
         classExercise.setExampleSolutionPublicationDate(ZonedDateTime.now().minusHours(1));
         modelingExerciseRepository.save(classExercise);
 
-        course = request.get("/api/courses/" + classExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK, Course.class);
+        courseForDashboard = request.get("/api/courses/" + classExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK,
+                CourseForDashboardDTO.class);
+        course = courseForDashboard.course();
         modelingExercise = modelingExerciseGetter.apply(course);
 
         assertThat(modelingExercise.getExampleSolutionModel()).isEqualTo(classExercise.getExampleSolutionModel());
@@ -922,7 +925,9 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
         classExercise.setExampleSolutionPublicationDate(ZonedDateTime.now().plusHours(1));
         modelingExerciseRepository.save(classExercise);
 
-        course = request.get("/api/courses/" + classExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK, Course.class);
+        courseForDashboard = request.get("/api/courses/" + classExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/for-dashboard", HttpStatus.OK,
+                CourseForDashboardDTO.class);
+        course = courseForDashboard.course();
         modelingExercise = modelingExerciseGetter.apply(course);
 
         if (isStudent) {

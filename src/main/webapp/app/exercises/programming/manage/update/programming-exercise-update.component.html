@@ -6,7 +6,8 @@
         [toggleMode]="toggleMode"
         [isSaving]="isSaving"
         [getInvalidReasons]="getInvalidReasonsForWizard"
-        [isImport]="isImport"
+        [isImportFromExistingExercise]="isImportFromExistingExercise"
+        [isExamMode]="isExamMode"
         [(exercise)]="programmingExercise"
         [infoStepInputs]="getInfoStepInputs()"
         [languageStepInputs]="getLanguageStepInputs()"
@@ -15,14 +16,18 @@
         [auxiliaryRepositoriesSupported]="auxiliaryRepositoriesSupported"
     ></jhi-programming-exercise-update-wizard>
     <form name="editForm" role="form" novalidate #editForm="ngForm" (keydown.enter)="isEventInsideTextArea($event)" *ngIf="!isShowingWizardMode">
-        <div class="d-flex" *ngIf="!isImport && !programmingExercise.id">
+        <div class="d-flex" *ngIf="!isImportFromExistingExercise && !programmingExercise.id">
             <div class="flex-grow-1 align-items-center">
-                <h4 *ngIf="!isImport && !programmingExercise.id" id="jhi-programming-exercise-heading-create" jhiTranslate="artemisApp.programmingExercise.home.createLabel">
-                    Generate new Programming Exercise
+                <h4
+                    *ngIf="!isImportFromExistingExercise && !isImportFromFile && !programmingExercise.id"
+                    id="jhi-programming-exercise-heading-create"
+                    jhiTranslate="artemisApp.programmingExercise.home.createLabel"
+                >
+                    Create Programming Exercise
                 </h4>
                 <jhi-documentation-button [type]="documentationType"></jhi-documentation-button>
             </div>
-            <div class="flex-grow-1 ms-3" *ngIf="!isEdit && !isExamMode && !isImport">
+            <div class="flex-grow-1 ms-3" *ngIf="!isEdit && !isExamMode && !isImportFromExistingExercise">
                 <div class="guided-mode-button">
                     <button type="button" id="guided.mode" class="btn btn-primary" (click)="toggleWizardMode()">
                         <fa-icon [icon]="faHandShakeAngle"></fa-icon>&nbsp;<span jhiTranslate="artemisApp.programmingExercise.home.switchToGuidedModeLabel"
@@ -32,17 +37,19 @@
                 </div>
             </div>
         </div>
-        <h4 *ngIf="!isImport && programmingExercise.id" id="jhi-programming-exercise-heading-edit" jhiTranslate="artemisApp.programmingExercise.home.editLabel">
+        <h4 *ngIf="!isImportFromExistingExercise && programmingExercise.id" id="jhi-programming-exercise-heading-edit" jhiTranslate="artemisApp.programmingExercise.home.editLabel">
             Edit Programming Exercise
         </h4>
-        <h4 *ngIf="isImport" id="jhi-programming-exercise-heading-import" jhiTranslate="artemisApp.programmingExercise.home.importLabel">Import Programming Exercise</h4>
+        <h4 *ngIf="isImportFromExistingExercise || isImportFromFile" id="jhi-programming-exercise-heading-import" jhiTranslate="artemisApp.programmingExercise.home.importLabel">
+            Import Programming Exercise
+        </h4>
         <div class="update-programming-exercise">
-            <div class="form-group" [hidden]="isImport || !programmingExercise.id">
+            <div class="form-group" [hidden]="isImportFromExistingExercise || !programmingExercise.id">
                 <label for="id" jhiTranslate="global.field.id">ID</label>
                 <input type="text" class="form-control" id="id" name="id" [(ngModel)]="programmingExercise.id" readonly />
             </div>
             <jhi-programming-exercise-info
-                [isImport]="isImport"
+                [isImportFromExistingExercise]="isImportFromExistingExercise"
                 [isEdit]="isEdit"
                 [isExamMode]="isExamMode"
                 [programmingExercise]="programmingExercise"
@@ -50,17 +57,27 @@
                 [auxiliaryRepositoriesSupported]="auxiliaryRepositoriesSupported"
             >
             </jhi-programming-exercise-info>
-            <jhi-programming-exercise-difficulty [isImport]="isImport" [programmingExercise]="programmingExercise"></jhi-programming-exercise-difficulty>
-            <jhi-programming-exercise-language [isImport]="isImport" [programmingExercise]="programmingExercise" [languageStepInputs]="getLanguageStepInputs()">
+            <jhi-programming-exercise-difficulty
+                [isImportFromExistingExercise]="isImportFromExistingExercise"
+                [programmingExercise]="programmingExercise"
+            ></jhi-programming-exercise-difficulty>
+            <jhi-programming-exercise-language
+                [isImportFromExistingExercise]="isImportFromExistingExercise"
+                [isImportFromFile]="isImportFromFile"
+                [programmingExercise]="programmingExercise"
+                [languageStepInputs]="getLanguageStepInputs()"
+            >
             </jhi-programming-exercise-language>
             <jhi-programming-exercise-grading
                 class="form-step"
-                [isImport]="isImport"
+                [isImportFromExistingExercise]="isImportFromExistingExercise"
+                [isExamMode]="isExamMode"
                 [programmingExercise]="programmingExercise"
                 [gradingInputs]="getGradingStepInputs()"
             ></jhi-programming-exercise-grading>
             <jhi-programming-exercise-problem
-                [isImport]="isImport"
+                [isImportFromExistingExercise]="isImportFromExistingExercise"
+                [isImportFromFile]="isImportFromFile"
                 [isExamMode]="isExamMode"
                 [(exercise)]="programmingExercise"
                 [problemStatementLoaded]="problemStatementLoaded"

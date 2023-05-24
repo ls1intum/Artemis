@@ -12,8 +12,8 @@ import { By } from '@angular/platform-browser';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
-import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { Course } from 'app/entities/course.model';
+import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { ArtemisTestModule } from '../../test.module';
 import { LearningGoalCardStubComponent } from './learning-goal-card-stub.component';
@@ -39,6 +39,11 @@ describe('CourseLearningGoals', () => {
     let courseLearningGoalsComponentFixture: ComponentFixture<CourseLearningGoalsComponent>;
     let courseLearningGoalsComponent: CourseLearningGoalsComponent;
     let learningGoalService: LearningGoalService;
+    const mockCourseStorageService = {
+        getCourse: () => {},
+        setCourses: () => {},
+        subscribeToCourseUpdates: () => of(),
+    };
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -46,7 +51,7 @@ describe('CourseLearningGoals', () => {
             declarations: [CourseLearningGoalsComponent, LearningGoalCardStubComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [
                 MockProvider(AlertService),
-                MockProvider(CourseScoreCalculationService),
+                { provide: CourseStorageService, useValue: mockCourseStorageService },
                 MockProvider(LearningGoalService),
                 MockProvider(AccountService),
                 {
@@ -79,7 +84,7 @@ describe('CourseLearningGoals', () => {
     });
 
     it('should load progress for each learning goal in a given course', () => {
-        const courseCalculationService = TestBed.inject(CourseScoreCalculationService);
+        const courseStorageService = TestBed.inject(CourseStorageService);
         const learningGoal = new LearningGoal();
         learningGoal.userProgress = [{ progress: 70, confidence: 45 } as LearningGoalProgress];
         const textUnit = new TextUnit();
@@ -92,18 +97,18 @@ describe('CourseLearningGoals', () => {
         course.id = 1;
         course.learningGoals = [learningGoal];
         course.prerequisites = [learningGoal];
-        courseCalculationService.setCourses([course]);
-        const getCourseSpy = jest.spyOn(courseCalculationService, 'getCourse').mockReturnValue(course);
+        courseStorageService.setCourses([course]);
+        const getCourseStub = jest.spyOn(courseStorageService, 'getCourse').mockReturnValue(course);
 
         const getAllForCourseSpy = jest.spyOn(learningGoalService, 'getAllForCourse');
 
         courseLearningGoalsComponentFixture.detectChanges();
 
-        expect(getCourseSpy).toHaveBeenCalledOnce();
-        expect(getCourseSpy).toHaveBeenCalledWith(1);
+        expect(getCourseStub).toHaveBeenCalledOnce();
+        expect(getCourseStub).toHaveBeenCalledWith(1);
         expect(courseLearningGoalsComponent.course).toEqual(course);
         expect(courseLearningGoalsComponent.learningGoals).toEqual([learningGoal]);
-        expect(getAllForCourseSpy).not.toHaveBeenCalled(); // do not load learning goals again as already fetched
+        expect(getAllForCourseSpy).not.toHaveBeenCalled(); // do not load competencies again as already fetched
     });
 
     it('should load prerequisites and learning goals (with associated progress) and display a card for each of them', () => {
@@ -130,7 +135,7 @@ describe('CourseLearningGoals', () => {
         courseLearningGoalsComponentFixture.detectChanges();
 
         const learningGoalCards = courseLearningGoalsComponentFixture.debugElement.queryAll(By.directive(LearningGoalCardStubComponent));
-        expect(learningGoalCards).toHaveLength(3); // 1 prerequisite and 2 learning goals
+        expect(learningGoalCards).toHaveLength(3); // 1 prerequisite and 2 competencies
         expect(getAllPrerequisitesForCourseSpy).toHaveBeenCalledOnce();
         expect(getAllForCourseSpy).toHaveBeenCalledOnce();
         expect(courseLearningGoalsComponent.learningGoals).toHaveLength(2);

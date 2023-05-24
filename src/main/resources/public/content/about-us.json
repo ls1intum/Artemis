@@ -375,7 +375,7 @@
         },
         {
             "fullName": "Ludwig Pusl",
-            "photoDirectory": "public/images/about/Ludwig_Pusl.png"
+            "photoDirectory": "public/images/about/Ludwig_Pusl.jpg"
         },
         {
             "fullName": "Paul Schwind",
@@ -392,6 +392,30 @@
         {
             "fullName": "Tarlan Ismayilsoy",
             "photoDirectory": "public/images/about/Tarlan_Ismayilsoy.jpg"
+        },
+        {
+            "fullName": "Felix T.J. Dietrich",
+            "photoDirectory": "public/images/about/Felix_TJ_Dietrich.jpg"
+        },
+        {
+            "fullName": "Simon Huang",
+            "photoDirectory": "public/images/about/Simon_Huang.jpg"
+        },
+        {
+            "fullName": "Pellumb Baboci",
+            "photoDirectory": "public/images/about/Pellumb_Baboci.jpg"
+        },
+        {
+            "fullName": "Frederik Kutsch",
+            "photoDirectory": "public/images/about/Frederik_Kutsch.jpg"
+        },
+        {
+            "fullName": "Tunar Mahmudov",
+            "photoDirectory": "public/images/about/Tunar_Mahmudov.jpg"
+        },
+        {
+            "fullName": "Rizky Riyaldhi",
+            "photoDirectory": "public/images/about/Rizky_Riyaldhi.jpg"
         }
     ]
 }

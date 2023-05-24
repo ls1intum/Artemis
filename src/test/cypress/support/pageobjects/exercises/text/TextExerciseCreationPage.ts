@@ -1,7 +1,7 @@
 import { BASE_API } from '../../../constants';
 import { Dayjs } from 'dayjs/esm';
 import { POST } from '../../../constants';
-import { dayjsToString } from '../../../utils';
+import { enterDate } from '../../../utils';
 /**
  * A class which encapsulates UI selectors and actions for the text exercise creation page.
  */
@@ -14,15 +14,15 @@ export class TextExerciseCreationPage {
     }
 
     setReleaseDate(date: Dayjs) {
-        this.typeDate(date, '#pick-releaseDate');
+        enterDate('#pick-releaseDate', date);
     }
 
     setDueDate(date: Dayjs) {
-        this.typeDate(date, '#pick-dueDate');
+        enterDate('#pick-dueDate', date);
     }
 
     setAssessmentDueDate(date: Dayjs) {
-        this.typeDate(date, '#pick-assessmentDueDate');
+        enterDate('#pick-assessmentDueDate', date);
     }
 
     typeMaxPoints(maxPoints: number) {
@@ -51,8 +51,10 @@ export class TextExerciseCreationPage {
         return cy.wait('@textExerciseCreation');
     }
 
-    private typeDate(date: Dayjs, inputSelector: string) {
-        cy.get(inputSelector).find('#date-input-field').clear().type(dayjsToString(date), { force: true });
+    import() {
+        cy.intercept(POST, BASE_API + 'text-exercises/import/*').as('textExerciseImport');
+        cy.get('#submit-entity').click();
+        return cy.wait('@textExerciseImport');
     }
 
     private typeText(selector: string, text: string) {
