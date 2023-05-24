@@ -59,13 +59,15 @@ describe('CourseRegistrationButtonComponent', () => {
     });
 
     it('should report student can enroll again for valid', () => {
-        component.course.registrationEnabled = true;
+        component.course.unenrollmentEnabled = true;
+        component.course.enrollmentEnabled = true;
         component.course.enrollmentEndDate = dayjs().add(1, 'day');
         expect(component.canEnrollAgain).toBeTrue();
     });
 
     it('should not report student can enroll again for invalid', () => {
-        component.course.registrationEnabled = true;
+        component.course.unenrollmentEnabled = true;
+        component.course.enrollmentEnabled = true;
         component.course.enrollmentEndDate = dayjs().subtract(1, 'day');
         expect(component.canEnrollAgain).toBeFalse();
     });
