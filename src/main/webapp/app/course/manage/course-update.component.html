@@ -337,7 +337,7 @@
                         ></fa-icon>
                     </div>
                 </div>
-                <div class="form-check" *ngIf="!this.course.registrationEnabled">
+                <div class="form-check" *ngIf="!this.course.enrollmentEnabled">
                     <input
                         type="checkbox"
                         class="form-check-input"
@@ -358,13 +358,13 @@
                         class="form-check-input"
                         name="registrationEnabled"
                         id="field_registrationEnabled"
-                        [checked]="course.registrationEnabled"
+                        [checked]="course.enrollmentEnabled"
                         (change)="this.changeRegistrationEnabled()"
                     />
                     <label class="form-control-label" jhiTranslate="artemisApp.course.registrationEnabled.title" for="field_registrationEnabled">Registration Enabled</label>
                     <fa-icon [icon]="faQuestionCircle" class="text-secondary" ngbTooltip="{{ 'artemisApp.course.registrationEnabled.description' | artemisTranslate }}"></fa-icon>
                 </div>
-                <div class="d-flex" *ngIf="course.registrationEnabled">
+                <div class="d-flex" *ngIf="course.enrollmentEnabled">
                     <div class="form-group flex-grow-1">
                         <jhi-date-time-picker
                             id="field_enrollmentStartDate"
@@ -386,20 +386,20 @@
                         <span *ngIf="!isValidEnrollmentPeriod" class="invalid-feedback"> {{ 'artemisApp.course.form.enrollmentEndDate.invalid' | artemisTranslate }}</span>
                     </div>
                 </div>
-                <div class="form-group" id="field_registrationConfirmationMessage" *ngIf="course.registrationEnabled">
+                <div class="form-group" id="field_registrationConfirmationMessage" *ngIf="course.enrollmentEnabled">
                     <label class="form-control-label" jhiTranslate="artemisApp.course.registrationConfirmationMessage" for="field_registrationConfirmationMessage"
                         >Registration Confirmation Message</label
                     >
                     <jhi-markdown-editor
                         class="markdown-editor"
-                        [(markdown)]="course.registrationConfirmationMessage"
+                        [(markdown)]="course.enrollmentConfirmationMessage"
                         (markdownChange)="updateRegistrationConfirmationMessage($event)"
                     >
                     </jhi-markdown-editor>
                 </div>
 
                 <!-- unenrollment -->
-                <div class="form-check" *ngIf="this.course.registrationEnabled">
+                <div class="form-check" *ngIf="this.course.enrollmentEnabled">
                     <input
                         type="checkbox"
                         class="form-check-input"

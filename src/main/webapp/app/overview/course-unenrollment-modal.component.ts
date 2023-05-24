@@ -23,7 +23,7 @@ export class CourseUnenrollmentModalComponent {
      * Returns true if the student will be able to enroll again, otherwise false.
      */
     get canEnrollAgain() {
-        return this.course.registrationEnabled && dayjs().isBefore(this.course.enrollmentEndDate);
+        return this.course.enrollmentEnabled && dayjs().isBefore(this.course.enrollmentEndDate);
     }
 
     /**
