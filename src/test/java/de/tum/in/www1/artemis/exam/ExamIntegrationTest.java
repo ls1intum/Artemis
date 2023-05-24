@@ -43,6 +43,7 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExamUser;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
+import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.Participation;
@@ -884,15 +885,15 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCreateExam_asInstructor() throws Exception {
         // Test for bad request when exam id is already set.
-        Exam examA = ModelFactory.generateExam(course1);
+        Exam examA = ModelFactory.generateExam(course1, "examA");
         examA.setId(55L);
         request.post("/api/courses/" + course1.getId() + "/exams", examA, HttpStatus.BAD_REQUEST);
         // Test for bad request when course is null.
-        Exam examB = ModelFactory.generateExam(course1);
+        Exam examB = ModelFactory.generateExam(course1, "examB");
         examB.setCourse(null);
         request.post("/api/courses/" + course1.getId() + "/exams", examB, HttpStatus.BAD_REQUEST);
         // Test for bad request when course deviates from course specified in route.
-        Exam examC = ModelFactory.generateExam(course1);
+        Exam examC = ModelFactory.generateExam(course1, "examC");
         request.post("/api/courses/" + course2.getId() + "/exams", examC, HttpStatus.BAD_REQUEST);
         // Test invalid dates
         List<Exam> examsWithInvalidDate = createExamsWithInvalidDates(course1);
@@ -900,11 +901,11 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
             request.post("/api/courses/" + course1.getId() + "/exams", exam, HttpStatus.BAD_REQUEST);
         }
         // Test for conflict when user tries to create an exam with exercise groups.
-        Exam examD = ModelFactory.generateExam(course1);
+        Exam examD = ModelFactory.generateExam(course1, "examD");
         examD.addExerciseGroup(ModelFactory.generateExerciseGroup(true, exam1));
         request.post("/api/courses/" + course1.getId() + "/exams", examD, HttpStatus.CONFLICT);
         // Test examAccessService.
-        Exam examE = ModelFactory.generateExam(course1);
+        Exam examE = ModelFactory.generateExam(course1, "examE");
         examE.setTitle("          Exam 123              ");
         URI examUri = request.post("/api/courses/" + course1.getId() + "/exams", examE, HttpStatus.CREATED);
         Exam savedExam = request.get(String.valueOf(examUri), HttpStatus.OK, Exam.class);
@@ -1012,6 +1013,9 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         Exam examB = ModelFactory.generateTestExam(course1);
         examB.setNumberOfCorrectionRoundsInExam(1);
         examB.setTestExam(false);
+        Channel examBChannel = new Channel();
+        examBChannel.setName("examB");
+        examB.setChannel(examBChannel);
         Exam createdExamB = request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams", examB, Exam.class, HttpStatus.CREATED);
         createdExamB.setTestExam(true);
         createdExamB.setNumberOfCorrectionRoundsInExam(0);
@@ -1023,7 +1027,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateExam_asInstructor() throws Exception {
         // Create instead of update if no id was set
-        Exam exam = ModelFactory.generateExam(course1);
+        Exam exam = ModelFactory.generateExam(course1, "exam1");
         exam.setTitle("Over 9000");
         long examCountBefore = examRepository.count();
         Exam createdExam = request.putWithResponseBody("/api/courses/" + course1.getId() + "/exams", exam, Exam.class, HttpStatus.CREATED);
