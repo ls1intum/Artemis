@@ -88,22 +88,22 @@ public class AttachmentResource {
     /**
      * PUT /attachments/:id : Updates an existing attachment.
      *
-     * @param id               the id of the attachment to save
+     * @param attachmentId     the id of the attachment to save
      * @param attachment       the attachment to update
      * @param file             the file to save if the file got changed (optional)
      * @param notificationText text that will be sent to student group
      * @return the ResponseEntity with status 200 (OK) and with body the updated attachment, or with status 400 (Bad Request) if the attachment is not valid, or with status 500
      *         (Internal Server Error) if the attachment couldn't be updated
      */
-    @PutMapping(value = "attachments/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PutMapping(value = "attachments/{attachmentId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasRole('EDITOR')")
-    public ResponseEntity<Attachment> updateAttachment(@PathVariable Long id, @RequestPart Attachment attachment, @RequestPart(required = false) MultipartFile file,
+    public ResponseEntity<Attachment> updateAttachment(@PathVariable Long attachmentId, @RequestPart Attachment attachment, @RequestPart(required = false) MultipartFile file,
             @RequestParam(value = "notificationText", required = false) String notificationText) {
         log.debug("REST request to update Attachment : {}", attachment);
-        attachment.setId(id);
+        attachment.setId(attachmentId);
 
         // Make sure that the original references are preserved.
-        Attachment originalAttachment = attachmentRepository.findById(attachment.getId()).orElseThrow();
+        Attachment originalAttachment = attachmentRepository.findByIdOrThrow(attachment.getId());
         attachment.setAttachmentUnit(originalAttachment.getAttachmentUnit());
 
         if (file != null) {
