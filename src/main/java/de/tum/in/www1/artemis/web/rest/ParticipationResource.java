@@ -32,6 +32,7 @@ import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.participation.*;
+import de.tum.in.www1.artemis.domain.quiz.AbstractQuizSubmission;
 import de.tum.in.www1.artemis.domain.quiz.QuizBatch;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
@@ -917,7 +918,7 @@ public class ParticipationResource {
     // TODO: we should move this method (and others related to quizzes) into a QuizParticipationService (or similar) to make this resource independent of specific quiz exercise
     // functionality
     private StudentParticipation participationForQuizWithResult(QuizExercise quizExercise, String username, QuizBatch quizBatch) {
-        if (quizExercise.isQuizEnded() || quizSubmissionService.isSubmitted(quizBatch, username)) {
+        if (quizExercise.isQuizEnded() || quizSubmissionService.hasUserSubmitted(quizBatch, username)) {
             // try getting participation from database
             Optional<StudentParticipation> optionalParticipation = participationService.findOneByExerciseAndStudentLoginAnyState(quizExercise, username);
 
@@ -950,7 +951,7 @@ public class ParticipationResource {
         }
 
         // get submission from HashMap
-        QuizSubmission quizSubmission = quizScheduleService.getQuizSubmission(quizExercise.getId(), username);
+        AbstractQuizSubmission quizSubmission = quizScheduleService.getQuizSubmission(quizExercise.getId(), username);
 
         // construct result
         Result result = new Result().submission(quizSubmission);
