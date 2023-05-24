@@ -8,7 +8,6 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Random;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -171,7 +170,7 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     private void createLearningGoal() {
         Course course = courseRepository.findWithEagerLearningGoalsById(idOfCourse).get();
         LearningGoal learningGoal = new LearningGoal();
-        learningGoal.setTitle("LearningGoal" + new Random().nextInt());
+        learningGoal.setTitle("LearningGoal" + idOfCourse);
         learningGoal.setDescription("This is an example learning goal");
         learningGoal.setTaxonomy(LearningGoalTaxonomy.UNDERSTAND);
         learningGoal.setCourse(course);

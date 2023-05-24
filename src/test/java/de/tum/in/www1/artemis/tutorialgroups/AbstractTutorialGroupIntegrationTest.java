@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.tutorialgroups;
 import static de.tum.in.www1.artemis.tutorialgroups.AbstractTutorialGroupIntegrationTest.RandomTutorialGroupGenerator.generateRandomTitle;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.security.SecureRandom;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -333,7 +332,7 @@ abstract class AbstractTutorialGroupIntegrationTest extends AbstractSpringIntegr
 
         private static final String ALL_CHARS = LOWERCASE_LETTERS + NUMBERS;
 
-        private static final SecureRandom RANDOM = new SecureRandom();
+        private static final Random RANDOM = new Random(1042001L);
 
         public static String generateRandomTitle() {
             StringBuilder sb = new StringBuilder();
