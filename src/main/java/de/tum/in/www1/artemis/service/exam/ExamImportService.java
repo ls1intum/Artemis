@@ -317,8 +317,8 @@ public class ExamImportService {
         examToCopy.setCourse(targetCourse);
 
         // create a new channel for the exam
-        if (!examToCopy.isTestExam()) {
-            Channel createdChannel = channelService.createExamChannel(examToCopy);
+        if (!examToCopy.isTestExam() && examToCopy.getChannel() != null) {
+            Channel createdChannel = channelService.createExamChannel(examToCopy, examToCopy.getChannel().getName());
             examToCopy.setChannel(createdChannel);
         }
 

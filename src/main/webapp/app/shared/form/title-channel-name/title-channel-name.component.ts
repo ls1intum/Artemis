@@ -6,11 +6,11 @@ import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
     styleUrls: ['./title-channel-name.component.scss'],
 })
 export class TitleChannelNameComponent implements OnInit {
-    @Input() title: string | undefined;
-    @Input() channelName: string | undefined;
+    @Input() title?: string;
+    @Input() channelName?: string;
     @Input() channelNamePrefix: string;
     @Input() pattern: string;
-    @Input() isProgrammingExercise: boolean;
+    @Input() hideTitleLabel: boolean;
 
     @Input() minTitleLength: number;
 
@@ -22,7 +22,7 @@ export class TitleChannelNameComponent implements OnInit {
             this.channelNamePrefix = '';
         }
         if (this.channelName === '') {
-            this.channelName = this.channelNamePrefix;
+            this.formatChannelName(this.channelNamePrefix);
         }
     }
 

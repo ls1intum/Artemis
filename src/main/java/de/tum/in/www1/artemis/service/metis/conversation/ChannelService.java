@@ -288,9 +288,9 @@ public class ChannelService {
      * @param exam the exam to create the channel for
      * @return the created channel
      */
-    public Channel createExamChannel(Exam exam) {
+    public Channel createExamChannel(Exam exam, @NotNull String channelName) {
         Channel channelToCreate = new Channel();
-        channelToCreate.setName(exam.getTitle().toLowerCase().replace(' ', '-'));
+        channelToCreate.setName(channelName);
         channelToCreate.setIsPublic(false);
         channelToCreate.setIsAnnouncementChannel(false);
         channelToCreate.setIsArchived(false);
@@ -325,6 +325,20 @@ public class ChannelService {
         }
         Channel updatedChannel = updateChannelName(originalExercise.getChannel().getId(), Objects.requireNonNull(updatedExercise.getChannel().getName()));
         updatedExercise.setChannel(updatedChannel);
+    }
+
+    /**
+     * Update the channel of an exam
+     *
+     * @param originalExam the original exam
+     * @param updatedExam  the updated exam
+     */
+    public void updateExamChannel(Exam originalExam, Exam updatedExam) {
+        if (originalExam.getChannel() == null || updatedExam.getChannel() == null) {
+            return;
+        }
+        Channel updatedChannel = updateChannelName(originalExam.getChannel().getId(), Objects.requireNonNull(updatedExam.getChannel().getName()));
+        updatedExam.setChannel(updatedChannel);
     }
 
     /**

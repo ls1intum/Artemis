@@ -1,6 +1,6 @@
 <div>
     <div class="form-group">
-        <label *ngIf="!isProgrammingExercise" class="form-control-label" jhiTranslate="artemisApp.lecture.title" for="field_title">Title</label>
+        <label *ngIf="!hideTitleLabel" class="form-control-label" jhiTranslate="artemisApp.lecture.title" for="field_title">Title</label>
         <input
             required
             [minlength]="minTitleLength"

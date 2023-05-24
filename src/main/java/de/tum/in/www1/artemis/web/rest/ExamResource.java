@@ -165,7 +165,7 @@ public class ExamResource {
         examAccessService.checkCourseAccessForInstructorElseThrow(courseId);
 
         if (!exam.isTestExam()) {
-            Channel createdChannel = channelService.createExamChannel(exam);
+            Channel createdChannel = channelService.createExamChannel(exam, exam.getChannel().getName());
             exam.setChannel(createdChannel);
         }
         Exam result = examRepository.save(exam);
@@ -211,17 +211,7 @@ public class ExamResource {
         updatedExam.setStudentExams(originalExam.getStudentExams());
         updatedExam.setExamUsers(originalExam.getExamUsers());
 
-        if (originalExam.getChannel() != null) {
-            Channel originalChannel = channelRepository.findByIdElseThrow(originalExam.getChannel().getId());
-            if (!Objects.equals(originalExam.getTitle(), updatedExam.getTitle())) {
-                originalChannel.setName(updatedExam.getTitle().toLowerCase().replace(' ', '-'));
-                Channel updatedChannel = channelRepository.save(originalChannel);
-                updatedExam.setChannel(updatedChannel);
-            }
-            else {
-                updatedExam.setChannel(originalChannel);
-            }
-        }
+        channelService.updateExamChannel(originalExam, updatedExam);
 
         Exam result = examRepository.save(updatedExam);
 
@@ -461,7 +451,7 @@ public class ExamResource {
         }
 
         if (!withStudents && !withExerciseGroups) {
-            return ResponseEntity.ok(examRepository.findByIdElseThrow(examId));
+            return ResponseEntity.ok(examRepository.findByIdWithChannelElseThrow(examId));
         }
 
         if (withExerciseGroups) {
