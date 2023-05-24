@@ -92,6 +92,13 @@ export class TextExerciseUpdateComponent implements OnInit {
         // Get the textExercise
         this.activatedRoute.data.subscribe(({ textExercise }) => {
             this.textExercise = textExercise;
+
+            if (this.textExercise.id == undefined && this.textExercise.channel == undefined) {
+                this.textExercise.channel = new Channel();
+                this.textExercise.channel.name = '';
+            }
+            this.channelName = this.textExercise.channel?.name;
+
             this.backupExercise = cloneDeep(this.textExercise);
             this.examCourseId = this.textExercise.course?.id || this.textExercise.exerciseGroup?.exam?.course?.id;
         });
@@ -105,12 +112,6 @@ export class TextExerciseUpdateComponent implements OnInit {
                 switchMap(() => this.activatedRoute.params),
                 tap((params) => {
                     if (!this.isExamMode) {
-                        if (this.textExercise.id == undefined && this.textExercise.channel == undefined) {
-                            this.textExercise.channel = new Channel();
-                            this.textExercise.channel.name = '';
-                        }
-                        this.channelName = this.textExercise.channel?.name;
-
                         this.exerciseCategories = this.textExercise.categories || [];
                         if (this.examCourseId) {
                             this.courseService.findAllCategoriesOfCourse(this.examCourseId).subscribe({

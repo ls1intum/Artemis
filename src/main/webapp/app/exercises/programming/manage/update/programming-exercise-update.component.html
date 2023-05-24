@@ -14,6 +14,7 @@
         [gradingStepInputs]="getGradingStepInputs()"
         [problemStepInputs]="getProblemStepInputs()"
         [auxiliaryRepositoriesSupported]="auxiliaryRepositoriesSupported"
+        [(channelName)]="channelName"
     ></jhi-programming-exercise-update-wizard>
     <form name="editForm" role="form" novalidate #editForm="ngForm" (keydown.enter)="isEventInsideTextArea($event)" *ngIf="!isShowingWizardMode">
         <div class="d-flex" *ngIf="!isImportFromExistingExercise && !programmingExercise.id">

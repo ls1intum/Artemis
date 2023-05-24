@@ -92,6 +92,9 @@ export class ProgrammingExerciseUpdateWizardComponent implements OnInit {
     @Input() problemStepInputs: ProblemStepInputs;
     @Input() auxiliaryRepositoriesSupported: boolean;
 
+    @Input() channelName: string | undefined;
+    @Output() channelNameChange = new EventEmitter<string>();
+
     constructor(protected activatedRoute: ActivatedRoute) {}
 
     ngOnInit() {
@@ -100,5 +103,10 @@ export class ProgrammingExerciseUpdateWizardComponent implements OnInit {
 
     nextStep() {
         this.onNextStep.emit();
+    }
+
+    updateChannelName(newChannelName: string) {
+        this.channelName = newChannelName;
+        this.channelNameChange.emit(newChannelName);
     }
 }

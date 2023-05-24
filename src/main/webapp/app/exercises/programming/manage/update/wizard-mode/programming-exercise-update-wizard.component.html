@@ -7,6 +7,8 @@
         [programmingExercise]="programmingExercise"
         [infoStepInputs]="infoStepInputs"
         [auxiliaryRepositoriesSupported]="auxiliaryRepositoriesSupported"
+        [channelName]="channelName"
+        (channelNameChange)="updateChannelName($event)"
     ></jhi-programming-exercise-update-wizard-info>
 
     <jhi-programming-exercise-update-wizard-difficulty
