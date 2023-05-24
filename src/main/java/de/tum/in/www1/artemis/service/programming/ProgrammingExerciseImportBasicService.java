@@ -132,7 +132,7 @@ public class ProgrammingExerciseImportBasicService {
 
         // Create exercise channel only if the exercise is a course exercise
         if (newExercise.isCourseExercise() && templateExercise.getChannel() != null) {
-            Channel createdChannel = channelService.createExerciseChannel(newExercise, templateExercise.getChannel().getName());
+            Channel createdChannel = channelService.createExerciseChannel(newExercise, newExercise.getChannel().getName());
             newExercise.setChannel(createdChannel);
         }
 
