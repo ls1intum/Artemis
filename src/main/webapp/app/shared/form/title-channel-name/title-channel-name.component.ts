@@ -22,7 +22,7 @@ export class TitleChannelNameComponent implements OnInit {
             this.channelNamePrefix = '';
         }
         if (this.channelName === '') {
-            this.formatChannelName(this.channelNamePrefix);
+            this.channelName = this.channelNamePrefix;
         }
     }
 

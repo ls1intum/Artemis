@@ -11,7 +11,7 @@ export class ExamCreationPage {
      * @param title the exam title
      */
     setTitle(title: string) {
-        cy.get('#title').clear().type(title);
+        cy.get('#field_title').clear().type(title);
     }
 
     /**
