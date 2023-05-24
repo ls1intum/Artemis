@@ -62,7 +62,7 @@ export class CourseManagementRequests {
      */
     createCourse(
         customizeGroups = false,
-        courseName = 'Cypress course' + generateUUID(),
+        courseName = 'Course ' + generateUUID(),
         courseShortName = 'cypress' + generateUUID(),
         start = day().subtract(2, 'hours'),
         end = day().add(2, 'hours'),
@@ -127,7 +127,7 @@ export class CourseManagementRequests {
         recordTestwiseCoverage = false,
         releaseDate = day(),
         dueDate = day().add(1, 'day'),
-        title = 'Cypress programming exercise ' + generateUUID(),
+        title = 'Programming ' + generateUUID(),
         programmingShortName = 'cypress' + generateUUID(),
         packageName = 'de.test',
         assessmentDate = day().add(2, 'days'),
@@ -382,7 +382,7 @@ export class CourseManagementRequests {
      * add exercise group to exam
      * @returns <Chainable> request response
      * */
-    addExerciseGroupForExam(exam: Exam, title = 'group' + generateUUID(), mandatory = true) {
+    addExerciseGroupForExam(exam: Exam, title = 'Group ' + generateUUID(), mandatory = true) {
         const exerciseGroup = new ExerciseGroup();
         exerciseGroup.exam = exam;
         exerciseGroup.title = title;
@@ -394,7 +394,7 @@ export class CourseManagementRequests {
      * add text exercise to an exercise group in exam or to a course
      * @returns <Chainable> request response
      */
-    createTextExercise(body: { course: Course } | { exerciseGroup: ExerciseGroup }, title = 'Text exercise ' + generateUUID()) {
+    createTextExercise(body: { course: Course } | { exerciseGroup: ExerciseGroup }, title = 'Text ' + generateUUID()) {
         const template = {
             ...textExerciseTemplate,
             title,
@@ -425,7 +425,7 @@ export class CourseManagementRequests {
 
     createModelingExercise(
         body: { course: Course } | { exerciseGroup: ExerciseGroup },
-        title = 'Cypress modeling exercise ' + generateUUID(),
+        title = 'Modeling ' + generateUUID(),
         releaseDate = day(),
         dueDate = day().add(1, 'days'),
         assessmentDueDate = day().add(2, 'days'),
@@ -500,7 +500,7 @@ export class CourseManagementRequests {
     createQuizExercise(
         body: { course: Course } | { exerciseGroup: ExerciseGroup },
         quizQuestions: [any],
-        title = 'Quiz exercise' + generateUUID(),
+        title = 'Quiz ' + generateUUID(),
         releaseDate = day().add(1, 'year'),
         duration = 600,
     ) {
@@ -650,7 +650,7 @@ export class CourseManagementRequests {
         });
     }
 
-    createLecture(course: Course, title = 'Cypress lecture' + generateUUID(), startDate = day(), endDate = day().add(10, 'minutes')) {
+    createLecture(course: Course, title = 'Lecture ' + generateUUID(), startDate = day(), endDate = day().add(10, 'minutes')) {
         const body = {
             lecture: {
                 ...lectureTemplate,
