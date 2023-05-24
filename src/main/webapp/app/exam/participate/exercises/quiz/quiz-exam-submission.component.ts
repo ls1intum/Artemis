@@ -11,12 +11,12 @@ import { ShortAnswerSubmittedText } from 'app/entities/quiz/short-answer-submitt
 import { MultipleChoiceSubmittedAnswer } from 'app/entities/quiz/multiple-choice-submitted-answer.model';
 import { DragAndDropSubmittedAnswer } from 'app/entities/quiz/drag-and-drop-submitted-answer.model';
 import { ShortAnswerSubmittedAnswer } from 'app/entities/quiz/short-answer-submitted-answer.model';
+import { AbstractQuizSubmission } from 'app/entities/quiz/abstract-quiz-exam-submission.model';
 import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-submission.component';
 import { cloneDeep } from 'lodash-es';
 import { ArtemisQuizService } from 'app/shared/quiz/quiz.service';
 import { Submission } from 'app/entities/submission.model';
 import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
-import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
 
 @Component({
     selector: 'jhi-quiz-submission-exam',
@@ -44,7 +44,7 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
 
     // IMPORTANT: this reference must be contained in this.studentParticipation.submissions[0] otherwise the parent component will not be able to react to changes
     @Input()
-    studentSubmission: QuizSubmission;
+    studentSubmission: AbstractQuizSubmission;
 
     @Input() exerciseId: number | undefined;
 
