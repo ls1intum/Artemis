@@ -19,7 +19,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.audit.AuditEvent;
-import org.springframework.core.env.Environment;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
@@ -42,6 +41,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AssessmentDashboardService;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.ProfileService;
 import de.tum.in.www1.artemis.service.SubmissionService;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.exam.*;
@@ -72,7 +72,7 @@ public class ExamResource {
     @Value("${artemis.course-archives-path}")
     private String examArchivesDirPath;
 
-    private final Environment environment;
+    private final ProfileService profileService;
 
     private final UserRepository userRepository;
 
@@ -108,12 +108,13 @@ public class ExamResource {
 
     private final CustomAuditEventRepository auditEventRepository;
 
-    public ExamResource(Environment environment, UserRepository userRepository, CourseRepository courseRepository, ExamService examService, ExamDeletionService examDeletionService,
-            ExamAccessService examAccessService, InstanceMessageSendService instanceMessageSendService, ExamRepository examRepository, SubmissionService submissionService,
-            AuthorizationCheckService authCheckService, ExamDateService examDateService, TutorParticipationRepository tutorParticipationRepository,
-            AssessmentDashboardService assessmentDashboardService, ExamRegistrationService examRegistrationService, StudentExamRepository studentExamRepository,
-            ExamImportService examImportService, ExamMonitoringScheduleService examMonitoringScheduleService, CustomAuditEventRepository auditEventRepository) {
-        this.environment = environment;
+    public ExamResource(ProfileService profileService, UserRepository userRepository, CourseRepository courseRepository, ExamService examService,
+            ExamDeletionService examDeletionService, ExamAccessService examAccessService, InstanceMessageSendService instanceMessageSendService, ExamRepository examRepository,
+            SubmissionService submissionService, AuthorizationCheckService authCheckService, ExamDateService examDateService,
+            TutorParticipationRepository tutorParticipationRepository, AssessmentDashboardService assessmentDashboardService, ExamRegistrationService examRegistrationService,
+            StudentExamRepository studentExamRepository, ExamImportService examImportService, ExamMonitoringScheduleService examMonitoringScheduleService,
+            CustomAuditEventRepository auditEventRepository) {
+        this.profileService = profileService;
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
         this.examService = examService;
@@ -856,7 +857,7 @@ public class ExamResource {
     public ResponseEntity<Integer> unlockAllRepositories(@PathVariable Long courseId, @PathVariable Long examId) {
         // Locking and unlocking repositories is not supported when using the local version control system. Repository access is checked in the LocalVCFetchFilter and
         // LocalVCPushFilter.
-        if (Set.of(this.environment.getActiveProfiles()).contains(Constants.PROFILE_LOCALVC)) {
+        if (profileService.isLocalVcsCi()) {
             return ResponseEntity.badRequest().build();
         }
 
@@ -883,7 +884,7 @@ public class ExamResource {
     public ResponseEntity<Integer> lockAllRepositories(@PathVariable Long courseId, @PathVariable Long examId) {
         // Locking and unlocking repositories is not supported when using the local version control system. Repository access is checked in the LocalVCFetchFilter and
         // LocalVCPushFilter.
-        if (Set.of(this.environment.getActiveProfiles()).contains(Constants.PROFILE_LOCALVC)) {
+        if (profileService.isLocalVcsCi()) {
             return ResponseEntity.badRequest().build();
         }
 

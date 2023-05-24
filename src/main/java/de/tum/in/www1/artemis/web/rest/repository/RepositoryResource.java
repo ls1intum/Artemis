@@ -14,7 +14,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -23,17 +22,16 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.WrongRepositoryStateException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.core.env.Environment;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
-import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.ProfileService;
 import de.tum.in.www1.artemis.service.RepositoryAccessService;
 import de.tum.in.www1.artemis.service.RepositoryService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
@@ -56,7 +54,7 @@ public abstract class RepositoryResource {
 
     protected final Logger log = LoggerFactory.getLogger(RepositoryResource.class);
 
-    private final Environment environment;
+    private final ProfileService profileService;
 
     protected final AuthorizationCheckService authCheckService;
 
@@ -76,11 +74,11 @@ public abstract class RepositoryResource {
 
     private final Optional<LocalCIConnectorService> localCIConnectorService;
 
-    public RepositoryResource(Environment environment, UserRepository userRepository, AuthorizationCheckService authCheckService, GitService gitService,
+    public RepositoryResource(ProfileService profileService, UserRepository userRepository, AuthorizationCheckService authCheckService, GitService gitService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, RepositoryService repositoryService, Optional<VersionControlService> versionControlService,
             ProgrammingExerciseRepository programmingExerciseRepository, RepositoryAccessService repositoryAccessService,
             Optional<LocalCIConnectorService> localCIConnectorService) {
-        this.environment = environment;
+        this.profileService = profileService;
         this.userRepository = userRepository;
         this.authCheckService = authCheckService;
         this.gitService = gitService;
@@ -268,7 +266,7 @@ public abstract class RepositoryResource {
             // Trigger a build, and process the result. Only implemented for local CI.
             // For Bitbucket + Bamboo and GitLab + Jenkins, webhooks were added when creating the repository,
             // that notify the CI system when the commit happens and thus trigger the build.
-            if (Set.of(this.environment.getActiveProfiles()).contains(Constants.PROFILE_LOCALCI)) {
+            if (profileService.isLocalVcsCi()) {
                 localCIConnectorService.orElseThrow().processNewPush(null, repository);
             }
             return new ResponseEntity<>(HttpStatus.OK);

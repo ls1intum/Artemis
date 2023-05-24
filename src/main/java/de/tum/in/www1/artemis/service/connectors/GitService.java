@@ -53,6 +53,7 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentPar
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exception.GitException;
 import de.tum.in.www1.artemis.service.FileService;
+import de.tum.in.www1.artemis.service.ProfileService;
 import de.tum.in.www1.artemis.service.ZipFileService;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUrl;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -63,6 +64,8 @@ public class GitService {
     private final Logger log = LoggerFactory.getLogger(GitService.class);
 
     private final Environment environment;
+
+    private final ProfileService profileService;
 
     @Value("${artemis.version-control.url}")
     private URL gitUrl;
@@ -115,7 +118,8 @@ public class GitService {
 
     private static final String REMOTE_NAME = "origin";
 
-    public GitService(Environment environment, FileService fileService, ZipFileService zipFileService) {
+    public GitService(Environment environment, ProfileService profileService, FileService fileService, ZipFileService zipFileService) {
+        this.profileService = profileService;
         log.info("file.encoding={}", System.getProperty("file.encoding"));
         log.info("sun.jnu.encoding={}", System.getProperty("sun.jnu.encoding"));
         log.info("Default Charset={}", Charset.defaultCharset());
@@ -269,7 +273,7 @@ public class GitService {
      * @throws URISyntaxException if SSH is used and the SSH URI could not be retrieved.
      */
     private URI getGitUri(VcsRepositoryUrl vcsRepositoryUrl) throws URISyntaxException {
-        if (Set.of(this.environment.getActiveProfiles()).contains(de.tum.in.www1.artemis.config.Constants.PROFILE_LOCALVC)) {
+        if (profileService.isLocalVcsCi()) {
             // Create less generic LocalVCRepositoryUrl out of VcsRepositoryUrl.
             LocalVCRepositoryUrl localVCRepositoryUrl = new LocalVCRepositoryUrl(vcsRepositoryUrl.toString(), gitUrl);
             String localVCBasePath = environment.getProperty("artemis.version-control.local-vcs-repo-path");
