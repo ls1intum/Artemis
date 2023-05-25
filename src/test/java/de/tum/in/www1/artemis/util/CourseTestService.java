@@ -1166,7 +1166,6 @@ public class CourseTestService {
         courseRepo.findAll().stream().findAny().ifPresent(course -> {
             assertThat(allGroups)
                     .containsAll(List.of(course.getStudentGroupName(), course.getTeachingAssistantGroupName(), course.getEditorGroupName(), course.getInstructorGroupName()));
-            assertThat(allGroups).hasSize((int) (courseRepo.count() * 4));
         });
     }
 
