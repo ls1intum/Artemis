@@ -2,12 +2,10 @@ package de.tum.in.www1.artemis.domain;
 
 import static de.tum.in.www1.artemis.domain.enumeration.ExerciseType.TEXT;
 
-import java.util.List;
-
 import javax.persistence.*;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonTypeName;
 
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseType;
@@ -17,21 +15,20 @@ import de.tum.in.www1.artemis.domain.enumeration.ExerciseType;
  */
 @Entity
 @DiscriminatorValue(value = "T")
+@JsonTypeName("text")
 @SecondaryTable(name = "text_exercise_details")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class TextExercise extends Exercise {
 
+    // used to distinguish the type when used in collections (e.g. SearchResultPageDTO --> resultsOnPage)
+    public String getType() {
+        return "text";
+    }
+
     @Column(name = "example_solution")
     private String exampleSolution;
 
-    @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE)
-    @JsonIgnore
-    private List<TextCluster> clusters;
-
-    @ManyToOne
-    @JoinColumn(table = "text_exercise_details")
-    @JsonIgnore
-    private TextAssessmentKnowledge knowledge;
+    // TODO: we should add a OneToMany to TextCluster with delete cascade
 
     public String getExampleSolution() {
         return exampleSolution;
@@ -64,14 +61,6 @@ public class TextExercise extends Exercise {
     @Override
     public String toString() {
         return "TextExercise{" + "id=" + getId() + ", exampleSolution='" + getExampleSolution() + "'" + "}";
-    }
-
-    public TextAssessmentKnowledge getKnowledge() {
-        return knowledge;
-    }
-
-    public void setKnowledge(TextAssessmentKnowledge knowledge) {
-        this.knowledge = knowledge;
     }
 
 }
