@@ -293,7 +293,7 @@ public class LocalVCService extends AbstractVersionControlService {
      * @param commitHash    The commit hash that identifies the latest commit.
      * @param eventObject   An object describing the push event, that contains the node "date". null if not available
      * @return The date of the push event or the date of the latest commit.
-     * @throws LocalVCInternalException if the repository could not be retrieved or the push date could not be retrieved from the repository..
+     * @throws LocalVCInternalException if the repository could not be retrieved or the push date could not be retrieved from the repository.
      */
     @Override
     public ZonedDateTime getPushDate(ProgrammingExerciseParticipation participation, String commitHash, Object eventObject) {

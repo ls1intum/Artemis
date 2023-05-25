@@ -153,7 +153,6 @@
                     <td *jhiExtensionPoint="overrideRepositoryAndBuildPlan">
                         <ng-container *ngIf="programmingExercise.templateParticipation?.buildPlanId">
                             <span *ngIf="!localVCEnabled; else plainBuildPlanId">
-                                <!-- TODO get the correct URL from the server instead of hardcoding Bamboo here -->
                                 <a target="_blank" rel="noreferrer" href="{{ programmingExercise.templateParticipation!.buildPlanUrl }}">Template</a>
                             </span>
                             <ng-template #plainBuildPlanId>
@@ -162,7 +161,6 @@
                         </ng-container>
                         <ng-container *ngIf="programmingExercise.solutionParticipation?.buildPlanId">
                             <span *ngIf="!localVCEnabled; else plainBuildPlanId">
-                                <!-- TODO get the correct URL from the server instead of hardcoding Bamboo here -->
                                 <a target="_blank" rel="noreferrer" href="{{ programmingExercise.solutionParticipation!.buildPlanUrl }}">Solution</a>
                             </span>
                             <ng-template #plainBuildPlanId>

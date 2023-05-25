@@ -91,7 +91,7 @@ public class LocalCIConfiguration {
      * @return The scheduled executor service bean.
      */
     @Bean
-    public ExecutorService buildQueueLogger(ExecutorService localCIBuildExecutorService) {
+    public ScheduledExecutorService buildQueueLogger(ExecutorService localCIBuildExecutorService) {
         ScheduledExecutorService buildQueueLogger = Executors.newSingleThreadScheduledExecutor();
         buildQueueLogger.scheduleAtFixedRate(() -> {
             ThreadPoolExecutor threadPoolExecutor = (ThreadPoolExecutor) localCIBuildExecutorService;
