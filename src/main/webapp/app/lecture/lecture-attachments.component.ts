@@ -206,16 +206,4 @@ export class LectureAttachmentsComponent implements OnInit, OnDestroy {
             this.attachmentToBeCreated!.link = attachmentFile.name;
         }
     }
-
-    /**
-     * @function uploadLectureAttachmentAndSave
-     * @desc Upload the selected file and add it to the attachment
-     */
-    uploadLectureAttachmentAndSave(): void {
-        if (!this.attachmentToBeCreated!.name || !this.attachmentFile) {
-            return;
-        }
-
-        return this.saveAttachment();
-    }
 }
