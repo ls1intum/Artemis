@@ -40,8 +40,7 @@ artemis:
 
     # activate the following line if you want to support push notifications for the mobile clients.
     # More information about the TUM hosted hermes service can be found here: https://github.com/ls1intum/Hermes
-#    TODO: comment out following line
-    push-notification-relay: https://hermes-sandbox.artemis.cit.tum.de
+    # push-notification-relay: https://hermes.artemis.cit.tum.de
 
     continuous-integration:
         # Defines the used docker images for certain programming languages.
