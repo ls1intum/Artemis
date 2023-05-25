@@ -55,7 +55,7 @@ export class QuizExamSummaryComponent implements OnChanges {
                     ? this.studentParticipations[0].results[0]
                     : undefined;
         } else {
-            this.result = this.submission.results && this.submission.results.length > 0 ? this.submission.results[0] : undefined;
+            this.result = this.submission.results?.length ? this.submission.results[0] : undefined;
         }
     }
 
