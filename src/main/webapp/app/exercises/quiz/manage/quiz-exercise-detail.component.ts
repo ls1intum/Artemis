@@ -629,4 +629,8 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
         }
         this.cacheValidation();
     }
+
+    handleQuestionChanged() {
+        this.cacheValidation();
+    }
 }
