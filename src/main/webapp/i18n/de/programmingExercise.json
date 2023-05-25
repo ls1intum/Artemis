@@ -107,6 +107,8 @@
                 "alert": "Es muss mindestens eine Option (Offline-IDE oder Online-Editor) ausgewählt sein"
             },
             "offlineIde": "Offline-IDE",
+            "irisActivated": "Iris Chatbot",
+            "irisActivatedTooltip": "Durch Aktivierung dieser Checkbox wird der Iris-Chatbot für Studierende freigeschaltet.",
             "showTestNamesToStudents": "Zeige die Test Namen den Studierenden",
             "showTestNamesToStudentsTooltip": "Durch Aktivierung dieser Option werden die Namen der automatischen Tests den Studierenden angezeigt. Lasse die Option deaktiviert, um keine visuelle Unterscheidung zwischen manuellem und automatischem Feedback für die Studierenden vorzunehmen.",
             "participationMode": "Teilnahmemodus",
