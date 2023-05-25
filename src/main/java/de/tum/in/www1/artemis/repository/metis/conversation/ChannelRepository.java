@@ -25,6 +25,27 @@ public interface ChannelRepository extends JpaRepository<Channel, Long> {
     @Query("""
              SELECT DISTINCT channel
              FROM Channel channel
+             WHERE channel.lecture.id = :lectureId
+            """)
+    Channel findChannelByLectureId(@Param("lectureId") Long lectureId);
+
+    @Query("""
+             SELECT DISTINCT channel
+             FROM Channel channel
+             WHERE channel.exam.id = :examId
+            """)
+    Channel findChannelByExamId(@Param("examId") Long examId);
+
+    @Query("""
+             SELECT DISTINCT channel
+             FROM Channel channel
+             WHERE channel.exercise.id = :exerciseId
+            """)
+    Channel findChannelByExerciseId(@Param("exerciseId") Long exerciseId);
+
+    @Query("""
+             SELECT DISTINCT channel
+             FROM Channel channel
              JOIN channel.conversationParticipants conversationParticipant
              WHERE channel.course.id = :#{#courseId}
              AND conversationParticipant.user.id = :#{#userId}

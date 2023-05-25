@@ -15,7 +15,7 @@ export class Lecture implements BaseEntity {
     attachments?: Attachment[];
     posts?: Post[];
 
-    channel?: Channel;
+    channelName?: string;
     lectureUnits?: LectureUnit[];
     course?: Course;
 

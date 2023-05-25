@@ -8,9 +8,10 @@ import { AccountService } from 'app/core/auth/account.service';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
 import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
+import { LectureDTO } from 'app/entities/lecture-dto.model';
 
-type EntityResponseType = HttpResponse<Lecture>;
-type EntityArrayResponseType = HttpResponse<Lecture[]>;
+type EntityResponseType = HttpResponse<LectureDTO>;
+type EntityArrayResponseType = HttpResponse<LectureDTO[]>;
 
 @Injectable({ providedIn: 'root' })
 export class LectureService {
@@ -53,8 +54,8 @@ export class LectureService {
             map((res: EntityResponseType) => {
                 if (res.body) {
                     // insert an empty list to avoid additional calls in case the list is empty on the server (because then it would be undefined in the client)
-                    if (res.body.posts === undefined) {
-                        res.body.posts = [];
+                    if (res.body.lecture.posts === undefined) {
+                        res.body.lecture.posts = [];
                     }
                 }
                 this.convertLectureResponseDatesFromServer(res);
@@ -70,8 +71,8 @@ export class LectureService {
             map((res: EntityResponseType) => {
                 if (res.body) {
                     // insert an empty list to avoid additional calls in case the list is empty on the server (because then it would be undefined in the client)
-                    if (res.body.posts === undefined) {
-                        res.body.posts = [];
+                    if (res.body.lecture.posts === undefined) {
+                        res.body.lecture.posts = [];
                     }
                 }
                 this.convertLectureResponseDatesFromServer(res);
@@ -160,10 +161,10 @@ export class LectureService {
 
     protected convertLectureResponseDatesFromServer(res: EntityResponseType): EntityResponseType {
         if (res.body) {
-            res.body.startDate = convertDateFromServer(res.body.startDate);
-            res.body.endDate = convertDateFromServer(res.body.endDate);
-            if (res.body.lectureUnits) {
-                res.body.lectureUnits = this.lectureUnitService.convertLectureUnitArrayDatesFromServer(res.body.lectureUnits);
+            res.body.lecture.startDate = convertDateFromServer(res.body.lecture.startDate);
+            res.body.lecture.endDate = convertDateFromServer(res.body.lecture.endDate);
+            if (res.body.lecture.lectureUnits) {
+                res.body.lecture.lectureUnits = this.lectureUnitService.convertLectureUnitArrayDatesFromServer(res.body.lecture.lectureUnits);
             }
         }
         return res;
@@ -171,8 +172,8 @@ export class LectureService {
 
     protected convertLectureArrayResponseDatesFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
         if (res.body) {
-            res.body.map((lecture: Lecture) => {
-                return this.convertLectureDatesFromServer(lecture);
+            res.body.map((lectureDTO: LectureDTO) => {
+                return this.convertLectureDatesFromServer(lectureDTO.lecture);
             });
         }
         return res;
@@ -180,8 +181,8 @@ export class LectureService {
 
     private setAccessRightsLectureEntityArrayResponseType<ERT extends EntityArrayResponseType>(res: ERT): ERT {
         if (res.body) {
-            res.body.forEach((lecture: Lecture) => {
-                this.setAccessRightsLecture(lecture);
+            res.body.forEach((lectureDTO: LectureDTO) => {
+                this.setAccessRightsLecture(lectureDTO.lecture);
             });
         }
         return res;

@@ -16,7 +16,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.security.Role;
@@ -123,13 +122,13 @@ public class FileUploadExerciseResource {
         // Check that the user is authorized to create the exercise
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
 
-        if (fileUploadExercise.isCourseExercise() && fileUploadExercise.getChannel() != null) {
-            Channel createdChannel = channelService.createExerciseChannel(fileUploadExercise, fileUploadExercise.getChannel().getName());
-            fileUploadExercise.setChannel(createdChannel);
-        }
-        else {
-            fileUploadExercise.setChannel(null);
-        }
+        // if (fileUploadExercise.isCourseExercise() && fileUploadExercise.getChannel() != null) {
+        // Channel createdChannel = channelService.createExerciseChannel(fileUploadExercise, fileUploadExercise.getChannel().getName());
+        // fileUploadExercise.setChannel(createdChannel);
+        // }
+        // else {
+        // fileUploadExercise.setChannel(null);
+        // }
 
         FileUploadExercise result = fileUploadExerciseRepository.save(fileUploadExercise);
         groupNotificationScheduleService.checkNotificationsForNewExercise(fileUploadExercise);
@@ -252,11 +251,11 @@ public class FileUploadExerciseResource {
         // Forbid conversion between normal course exercise and exam exercise
         exerciseService.checkForConversionBetweenExamAndCourseExercise(fileUploadExercise, fileUploadExerciseBeforeUpdate, ENTITY_NAME);
 
-        if (fileUploadExerciseBeforeUpdate.getChannel() != null) {
-            // Make sure that the original references are preserved.
-            Channel originalChannel = channelRepository.findByIdElseThrow(fileUploadExerciseBeforeUpdate.getChannel().getId());
-            fileUploadExercise.setChannel(originalChannel);
-        }
+        // if (fileUploadExerciseBeforeUpdate.getChannel() != null) {
+        // // Make sure that the original references are preserved.
+        // Channel originalChannel = channelRepository.findByIdElseThrow(fileUploadExerciseBeforeUpdate.getChannel().getId());
+        // fileUploadExercise.setChannel(originalChannel);
+        // }
 
         // Make sure that the original references are preserved and the channel is updated if necessary
         channelService.updateExerciseChannel(fileUploadExerciseBeforeUpdate, fileUploadExercise);

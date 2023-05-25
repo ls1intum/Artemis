@@ -745,7 +745,7 @@ public class ModelFactory {
         if (channelName != null) {
             Channel examChannel = new Channel();
             examChannel.setName(channelName);
-            exam.setChannel(examChannel);
+            // exam.setChannel(examChannel);
         }
         return exam;
     }

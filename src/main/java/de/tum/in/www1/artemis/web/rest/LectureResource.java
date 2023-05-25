@@ -20,6 +20,7 @@ import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ExerciseService;
@@ -43,8 +44,6 @@ public class LectureResource {
 
     private static final String ENTITY_NAME = "lecture";
 
-    private final ChannelService channelService;
-
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
@@ -62,8 +61,13 @@ public class LectureResource {
 
     private final ExerciseService exerciseService;
 
+    private final ChannelService channelService;
+
+    private final ChannelRepository channelRepository;
+
     public LectureResource(LectureRepository lectureRepository, LectureService lectureService, LectureImportService lectureImportService, CourseRepository courseRepository,
-            UserRepository userRepository, AuthorizationCheckService authCheckService, ExerciseService exerciseService, ChannelService channelService) {
+            UserRepository userRepository, AuthorizationCheckService authCheckService, ExerciseService exerciseService, ChannelService channelService,
+            ChannelRepository channelRepository) {
         this.lectureRepository = lectureRepository;
         this.lectureService = lectureService;
         this.lectureImportService = lectureImportService;
@@ -72,6 +76,7 @@ public class LectureResource {
         this.authCheckService = authCheckService;
         this.exerciseService = exerciseService;
         this.channelService = channelService;
+        this.channelRepository = channelRepository;
     }
 
     /**
@@ -90,11 +95,9 @@ public class LectureResource {
             throw new BadRequestAlertException("A new lecture cannot already have an ID", ENTITY_NAME, "idExists");
         }
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, lecture.getCourse(), null);
-
-        Channel createdChannel = channelService.createLectureChannel(lecture, lectureDTO.channelName());
-
-        lecture.setChannel(createdChannel);
+        // lecture.setChannel(createdChannel);
         Lecture savedLecture = lectureRepository.save(lecture);
+        channelService.createLectureChannel(savedLecture, lectureDTO.channelName());
 
         return ResponseEntity.created(new URI("/api/lectures/" + savedLecture.getId())).body(savedLecture);
     }
@@ -108,7 +111,7 @@ public class LectureResource {
      */
     @PutMapping("/lectures")
     @PreAuthorize("hasRole('EDITOR')")
-    public ResponseEntity<Lecture> updateLecture(@RequestBody LectureDTO lectureDTO) {
+    public ResponseEntity<LectureDTO> updateLecture(@RequestBody LectureDTO lectureDTO) {
         Lecture lecture = lectureDTO.lecture();
         log.debug("REST request to update Lecture : {}", lecture);
         if (lecture.getId() == null) {
@@ -123,10 +126,11 @@ public class LectureResource {
         lecture.setLectureUnits(originalLecture.getLectureUnits());
 
         // Make sure that the original references are preserved and the channel is updated if necessary
-        channelService.updateLectureChannel(originalLecture, lecture, lectureDTO.channelName());
+        channelService.updateLectureChannel(originalLecture, lectureDTO.channelName());
 
         Lecture result = lectureRepository.save(lecture);
-        return ResponseEntity.ok().body(result);
+        LectureDTO lectureDTOResult = new LectureDTO(result, lectureDTO.channelName());
+        return ResponseEntity.ok().body(lectureDTOResult);
     }
 
     /**
@@ -151,7 +155,7 @@ public class LectureResource {
      */
     @GetMapping(value = "/courses/{courseId}/lectures")
     @PreAuthorize("hasRole('EDITOR')")
-    public ResponseEntity<Set<Lecture>> getLecturesForCourse(@PathVariable Long courseId, @RequestParam(required = false, defaultValue = "false") boolean withLectureUnits) {
+    public ResponseEntity<Set<LectureDTO>> getLecturesForCourse(@PathVariable Long courseId, @RequestParam(required = false, defaultValue = "false") boolean withLectureUnits) {
         log.debug("REST request to get all Lectures for the course with id : {}", courseId);
 
         Course course = courseRepository.findByIdElseThrow(courseId);
@@ -165,7 +169,9 @@ public class LectureResource {
             lectures = lectureRepository.findAllByCourseIdWithAttachments(courseId);
         }
 
-        return ResponseEntity.ok().body(lectures);
+        Set<LectureDTO> lectureDTOS = lectures.stream().map(lecture -> new LectureDTO(lecture, "")).collect(Collectors.toSet());
+
+        return ResponseEntity.ok().body(lectureDTOS);
     }
 
     /**
@@ -197,16 +203,18 @@ public class LectureResource {
      */
     @GetMapping("/lectures/{lectureId}")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<Lecture> getLecture(@PathVariable Long lectureId) {
+    public ResponseEntity<LectureDTO> getLecture(@PathVariable Long lectureId) {
         log.debug("REST request to get lecture {}", lectureId);
         Lecture lecture = lectureRepository.findByIdWithChannel(lectureId);
-        Channel lectureChannel = lecture.getChannel();
+        Channel lectureChannel = channelRepository.findChannelByLectureId(lectureId);
         if (lectureChannel != null) {
             lectureChannel.setLecture(null);
             lectureChannel.setCreator(null);
         }
         authCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.STUDENT, lecture, null);
-        return ResponseEntity.ok(lecture);
+        assert lectureChannel != null;
+        LectureDTO lectureDTO = new LectureDTO(lecture, lectureChannel.getName());
+        return ResponseEntity.ok(lectureDTO);
     }
 
     /**

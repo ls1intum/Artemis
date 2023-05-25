@@ -16,6 +16,7 @@ import { faBan, faHandshakeAngle, faPuzzlePiece, faSave } from '@fortawesome/fre
 import { LectureUpdateWizardComponent } from 'app/lecture/wizard-mode/lecture-update-wizard.component';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { FILE_EXTENSIONS } from 'app/shared/constants/file-extensions.constants';
+import { LectureDTO } from 'app/entities/lecture-dto.model';
 
 @Component({
     selector: 'jhi-lecture-update',
@@ -78,10 +79,10 @@ export class LectureUpdateComponent implements OnInit {
         this.isShowingWizardMode = false;
         this.activatedRoute.parent!.data.subscribe((data) => {
             // Create a new lecture to use unless we fetch an existing lecture
-            const lecture = data['lecture'];
+            const lecture = data['lecture'].lecture;
             this.lecture = lecture ?? new Lecture();
 
-            this.channelName = lecture ? this.lecture.channel?.name : '';
+            this.channelName = lecture ? data['lecture'].channelName : '';
 
             const course = data['course'];
             if (course) {
@@ -154,9 +155,9 @@ export class LectureUpdateComponent implements OnInit {
      * @callback Callback function after saving a lecture, handles appropriate action in case of error
      * @param result The Http response from the server
      */
-    protected subscribeToSaveResponse(result: Observable<HttpResponse<Lecture>>) {
+    protected subscribeToSaveResponse(result: Observable<HttpResponse<LectureDTO>>) {
         result.subscribe({
-            next: (response: HttpResponse<Lecture>) => this.onSaveSuccess(response.body!),
+            next: (response: HttpResponse<LectureDTO>) => this.onSaveSuccess(response.body!),
             error: (error: HttpErrorResponse) => this.onSaveError(error),
         });
     }
@@ -164,26 +165,26 @@ export class LectureUpdateComponent implements OnInit {
     /**
      * Action on successful lecture creation or edit
      */
-    protected onSaveSuccess(lecture: Lecture) {
+    protected onSaveSuccess(lectureDTO: LectureDTO) {
         if (this.isShowingWizardMode && !this.lecture.id) {
-            this.lectureService.findWithDetails(lecture.id!).subscribe({
+            this.lectureService.findWithDetails(lectureDTO.lecture.id!).subscribe({
                 next: (response: HttpResponse<Lecture>) => {
                     this.isSaving = false;
                     this.lecture = response.body!;
-                    this.alertService.success(`Lecture with title ${lecture.title} was successfully created.`);
+                    this.alertService.success(`Lecture with title ${lectureDTO.lecture.title} was successfully created.`);
                     this.wizardComponent.onLectureCreationSucceeded();
                 },
             });
         } else if (this.processUnitMode) {
             this.isSaving = false;
             this.isProcessing = false;
-            this.alertService.success(`Lecture with title ${lecture.title} was successfully ${this.lecture.id !== undefined ? 'updated' : 'created'}.`);
-            this.router.navigate(['course-management', lecture.course!.id, 'lectures', lecture.id, 'unit-management', 'attachment-units', 'process'], {
+            this.alertService.success(`Lecture with title ${lectureDTO.lecture.title} was successfully ${this.lecture.id !== undefined ? 'updated' : 'created'}.`);
+            this.router.navigate(['course-management', lectureDTO.lecture.course!.id, 'lectures', lectureDTO.lecture.id, 'unit-management', 'attachment-units', 'process'], {
                 state: { file: this.file, fileName: this.fileName },
             });
         } else {
             this.isSaving = false;
-            this.router.navigate(['course-management', lecture.course!.id, 'lectures', lecture.id]);
+            this.router.navigate(['course-management', lectureDTO.lecture.course!.id, 'lectures', lectureDTO.lecture.id]);
         }
     }
 

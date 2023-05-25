@@ -32,7 +32,6 @@ import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseSolutionEntry;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
-import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.repository.*;
@@ -198,13 +197,13 @@ public class ProgrammingExerciseService {
     // ok because we create many objects in a rather complex way and need a rollback in case of exceptions
     public ProgrammingExercise createProgrammingExercise(ProgrammingExercise programmingExercise) throws GitAPIException, IOException {
         // We have to save the channel first before setting up the programming exercise because the channel attached to it right now doesn't have an id
-        if (programmingExercise.isCourseExercise() && programmingExercise.getChannel() != null) {
-            Channel createdChannel = channelService.createExerciseChannel(programmingExercise, programmingExercise.getChannel().getName());
-            programmingExercise.setChannel(createdChannel);
-        }
-        else {
-            programmingExercise.setChannel(null);
-        }
+        // if (programmingExercise.isCourseExercise() && programmingExercise.getChannel() != null) {
+        // Channel createdChannel = channelService.createExerciseChannel(programmingExercise, programmingExercise.getChannel().getName());
+        // programmingExercise.setChannel(createdChannel);
+        // }
+        // else {
+        // programmingExercise.setChannel(null);
+        // }
 
         programmingExercise.generateAndSetProjectKey();
         final User exerciseCreator = userRepository.getUser();
@@ -502,11 +501,11 @@ public class ProgrammingExerciseService {
 
         programmingExercise.validateDates();
 
-        if (programmingExerciseBeforeUpdate.getChannel() != null) {
-            // Make sure that the original references are preserved.
-            Channel originalChannel = channelRepository.findByIdElseThrow(programmingExerciseBeforeUpdate.getChannel().getId());
-            programmingExerciseBeforeUpdate.setChannel(originalChannel);
-        }
+        // if (programmingExerciseBeforeUpdate.getChannel() != null) {
+        // // Make sure that the original references are preserved.
+        // Channel originalChannel = channelRepository.findByIdElseThrow(programmingExerciseBeforeUpdate.getChannel().getId());
+        // programmingExerciseBeforeUpdate.setChannel(originalChannel);
+        // }
 
         ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
         groupNotificationScheduleService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(programmingExerciseBeforeUpdate, savedProgrammingExercise, notificationText);

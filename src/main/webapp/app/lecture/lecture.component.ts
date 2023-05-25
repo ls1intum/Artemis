@@ -12,6 +12,7 @@ import { faFile, faFilter, faPencilAlt, faPlus, faPuzzlePiece, faTimes } from '@
 import { LectureImportComponent } from 'app/lecture/lecture-import.component';
 import { Subject } from 'rxjs';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
+import { LectureDTO } from 'app/entities/lecture-dto.model';
 
 export enum LectureDateFilter {
     PAST = 'filterPast',
@@ -115,12 +116,17 @@ export class LectureComponent implements OnInit {
         this.lectureService
             .findAllByCourseId(this.courseId)
             .pipe(
-                filter((res: HttpResponse<Lecture[]>) => res.ok),
-                map((res: HttpResponse<Lecture[]>) => res.body),
+                filter((res: HttpResponse<LectureDTO[]>) => res.ok),
+                map((res: HttpResponse<LectureDTO[]>) => res.body),
             )
             .subscribe({
-                next: (res: Lecture[]) => {
-                    this.lectures = res;
+                next: (res: LectureDTO[]) => {
+                    console.log(res);
+                    this.lectures = res.map((lectureDTO) => {
+                        const lecture = lectureDTO.lecture;
+                        lecture.channelName = lectureDTO.channelName;
+                        return lecture as Lecture;
+                    });
                     this.applyFilters();
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),

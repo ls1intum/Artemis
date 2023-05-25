@@ -144,7 +144,6 @@ public interface LectureRepository extends JpaRepository<Lecture, Long> {
     @Query("""
             SELECT DISTINCT lecture
             FROM Lecture lecture
-            LEFT JOIN FETCH lecture.channel
             WHERE lecture.id = :lectureId
             """)
     Lecture findByIdWithChannel(@Param("lectureId") Long lectureId);

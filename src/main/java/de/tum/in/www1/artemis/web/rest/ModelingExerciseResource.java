@@ -18,7 +18,6 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.GradingCriterion;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.plagiarism.modeling.ModelingPlagiarismResult;
 import de.tum.in.www1.artemis.repository.*;
@@ -139,13 +138,13 @@ public class ModelingExerciseResource {
         // Check that the user is authorized to create the exercise
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
 
-        if (modelingExercise.isCourseExercise() && modelingExercise.getChannel() != null) {
-            Channel createdChannel = channelService.createExerciseChannel(modelingExercise, modelingExercise.getChannel().getName());
-            modelingExercise.setChannel(createdChannel);
-        }
-        else {
-            modelingExercise.setChannel(null);
-        }
+        // if (modelingExercise.isCourseExercise() && modelingExercise.getChannel() != null) {
+        // Channel createdChannel = channelService.createExerciseChannel(modelingExercise, modelingExercise.getChannel().getName());
+        // modelingExercise.setChannel(createdChannel);
+        // }
+        // else {
+        // modelingExercise.setChannel(null);
+        // }
 
         ModelingExercise result = modelingExerciseRepository.save(modelingExercise);
         modelingExerciseService.scheduleOperations(result.getId());

@@ -22,7 +22,7 @@ export class LectureDetailComponent implements OnInit {
      */
     ngOnInit() {
         this.activatedRoute.data.subscribe(({ lecture }) => {
-            this.lecture = lecture;
+            this.lecture = lecture.lecture;
         });
     }
 }

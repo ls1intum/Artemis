@@ -262,6 +262,7 @@ public class ChannelService {
         channelToCreate.setIsAnnouncementChannel(false);
         channelToCreate.setIsArchived(false);
         channelToCreate.setDescription("Channel for lecture: " + lecture.getTitle());
+        channelToCreate.setLecture(lecture);
         return createChannel(lecture.getCourse(), channelToCreate, Optional.of(userRepository.getUserWithGroupsAndAuthorities()));
     }
 
@@ -303,15 +304,11 @@ public class ChannelService {
      * Update the channel of a lecture
      *
      * @param originalLecture the original lecture
-     * @param updatedLecture  the updated lecture
      * @param channelName     the new channel name
      */
-    public void updateLectureChannel(Lecture originalLecture, Lecture updatedLecture, String channelName) {
-        if (originalLecture.getChannel() == null || channelName == null) {
-            return;
-        }
-        Channel updatedChannel = updateChannelName(originalLecture.getChannel().getId(), channelName);
-        updatedLecture.setChannel(updatedChannel);
+    public void updateLectureChannel(Lecture originalLecture, String channelName) {
+        Channel channel = channelRepository.findChannelByLectureId(originalLecture.getId());
+        updateChannelName(channel, channelName);
     }
 
     /**
@@ -321,11 +318,11 @@ public class ChannelService {
      * @param updatedExercise  the updated exercise
      */
     public void updateExerciseChannel(Exercise originalExercise, Exercise updatedExercise) {
-        if (originalExercise.getChannel() == null || updatedExercise.getChannel() == null) {
-            return;
-        }
-        Channel updatedChannel = updateChannelName(originalExercise.getChannel().getId(), Objects.requireNonNull(updatedExercise.getChannel().getName()));
-        updatedExercise.setChannel(updatedChannel);
+        // if (originalExercise.getChannel() == null || updatedExercise.getChannel() == null) {
+        // return;
+        // }
+        // Channel updatedChannel = updateChannelName(originalExercise.getChannel().getId(), Objects.requireNonNull(updatedExercise.getChannel().getName()));
+        // updatedExercise.setChannel(updatedChannel);
     }
 
     /**
@@ -335,30 +332,29 @@ public class ChannelService {
      * @param updatedExam  the updated exam
      */
     public void updateExamChannel(Exam originalExam, Exam updatedExam) {
-        if (originalExam.getChannel() == null || updatedExam.getChannel() == null) {
-            return;
-        }
-        Channel updatedChannel = updateChannelName(originalExam.getChannel().getId(), Objects.requireNonNull(updatedExam.getChannel().getName()));
-        updatedExam.setChannel(updatedChannel);
+        // if (originalExam.getChannel() == null || updatedExam.getChannel() == null) {
+        // return;
+        // }
+        // Channel updatedChannel = updateChannelName(originalExam.getChannel().getId(), Objects.requireNonNull(updatedExam.getChannel().getName()));
+        // updatedExam.setChannel(updatedChannel);
     }
 
     /**
      * Update the channel name
      *
-     * @param channelId      the id of the channel to update
+     * @param channel        the channel to update
      * @param newChannelName the new channel name
      * @return the updated channel
      */
-    private Channel updateChannelName(Long channelId, String newChannelName) {
-        Channel originalChannel = channelRepository.findByIdElseThrow(channelId);
+    private Channel updateChannelName(Channel channel, String newChannelName) {
 
         // Update channel name if necessary
-        if (!newChannelName.equals(originalChannel.getName())) {
-            originalChannel.setName(newChannelName);
-            return channelRepository.save(originalChannel);
+        if (!newChannelName.equals(channel.getName())) {
+            channel.setName(newChannelName);
+            return channelRepository.save(channel);
         }
         else {
-            return originalChannel;
+            return channel;
         }
     }
 }

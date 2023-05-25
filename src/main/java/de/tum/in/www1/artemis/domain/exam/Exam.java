@@ -19,7 +19,6 @@ import com.fasterxml.jackson.annotation.*;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 
 @Entity
 @Table(name = "exam")
@@ -145,10 +144,6 @@ public class Exam extends DomainObject {
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties("exam")
     private Set<ExamUser> examUsers = new HashSet<>();
-
-    @OneToOne(cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
-    @JoinColumn(name = "channel_id")
-    private Channel channel;
 
     @Transient
     private Long numberOfExamUsersTransient;
@@ -476,14 +471,6 @@ public class Exam extends DomainObject {
 
     public void setExampleSolutionPublicationDate(@Nullable ZonedDateTime exampleSolutionPublicationDate) {
         this.exampleSolutionPublicationDate = exampleSolutionPublicationDate;
-    }
-
-    public Channel getChannel() {
-        return channel;
-    }
-
-    public void setChannel(Channel channel) {
-        this.channel = channel;
     }
 
     /**

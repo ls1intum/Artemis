@@ -20,7 +20,6 @@ import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.QuizMode;
-import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.quiz.QuizBatch;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.exception.QuizJoinException;
@@ -154,13 +153,13 @@ public class QuizExerciseResource {
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(quizExercise);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
 
-        if (quizExercise.isCourseExercise() && quizExercise.getChannel() != null) {
-            Channel createdChannel = channelService.createExerciseChannel(quizExercise, quizExercise.getChannel().getName());
-            quizExercise.setChannel(createdChannel);
-        }
-        else {
-            quizExercise.setChannel(null);
-        }
+        // if (quizExercise.isCourseExercise() && quizExercise.getChannel() != null) {
+        // Channel createdChannel = channelService.createExerciseChannel(quizExercise, quizExercise.getChannel().getName());
+        // quizExercise.setChannel(createdChannel);
+        // }
+        // else {
+        // quizExercise.setChannel(null);
+        // }
 
         quizExercise = quizExerciseService.save(quizExercise);
 

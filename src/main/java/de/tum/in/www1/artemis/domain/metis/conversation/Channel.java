@@ -66,16 +66,19 @@ public class Channel extends Conversation {
     @NotNull
     private Boolean isArchived;
 
-    @OneToOne(mappedBy = "channel")
-    @JsonIgnoreProperties(value = "channel", allowSetters = true)
+    @OneToOne(cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JoinColumn(unique = true, name = "lecture_id")
+    @JsonIgnoreProperties("channel")
     private Lecture lecture;
 
-    @OneToOne(mappedBy = "channel")
-    @JsonIgnoreProperties(value = "channel", allowSetters = true)
+    @OneToOne(cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JoinColumn(unique = true, name = "exercise_id")
+    @JsonIgnoreProperties("channel")
     private Exercise exercise;
 
-    @OneToOne(mappedBy = "channel")
-    @JsonIgnoreProperties(value = "channel", allowSetters = true)
+    @OneToOne(cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JoinColumn(unique = true, name = "exam_id")
+    @JsonIgnoreProperties("channel")
     private Exam exam;
 
     @Nullable

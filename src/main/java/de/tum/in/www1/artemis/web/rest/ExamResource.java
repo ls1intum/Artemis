@@ -36,7 +36,6 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
-import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
@@ -164,13 +163,13 @@ public class ExamResource {
 
         examAccessService.checkCourseAccessForInstructorElseThrow(courseId);
 
-        if (!exam.isTestExam()) {
-            Channel createdChannel = channelService.createExamChannel(exam, exam.getChannel().getName());
-            exam.setChannel(createdChannel);
-        }
-        else {
-            exam.setChannel(null);
-        }
+        // if (!exam.isTestExam()) {
+        // Channel createdChannel = channelService.createExamChannel(exam, exam.getChannel().getName());
+        // exam.setChannel(createdChannel);
+        // }
+        // else {
+        // exam.setChannel(null);
+        // }
         Exam result = examRepository.save(exam);
 
         if (result.isMonitoring()) {

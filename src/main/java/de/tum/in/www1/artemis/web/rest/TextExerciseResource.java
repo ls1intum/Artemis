@@ -15,7 +15,6 @@ import org.springframework.web.bind.annotation.*;
 
 import de.jplag.exceptions.ExitException;
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.repository.*;
@@ -159,13 +158,13 @@ public class TextExerciseResource {
         // Check that the user is authorized to create the exercise
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
 
-        if (textExercise.isCourseExercise() && textExercise.getChannel() != null) {
-            Channel createdChannel = channelService.createExerciseChannel(textExercise, textExercise.getChannel().getName());
-            textExercise.setChannel(createdChannel);
-        }
-        else {
-            textExercise.setChannel(null);
-        }
+        // if (textExercise.isCourseExercise() && textExercise.getChannel() != null) {
+        // Channel createdChannel = channelService.createExerciseChannel(textExercise, textExercise.getChannel().getName());
+        // textExercise.setChannel(createdChannel);
+        // }
+        // else {
+        // textExercise.setChannel(null);
+        // }
 
         TextExercise result = textExerciseRepository.save(textExercise);
         instanceMessageSendService.sendTextExerciseSchedule(result.getId());

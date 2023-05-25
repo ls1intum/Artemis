@@ -12,7 +12,6 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
-import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.*;
@@ -317,10 +316,10 @@ public class ExamImportService {
         examToCopy.setCourse(targetCourse);
 
         // create a new channel for the exam
-        if (!examToCopy.isTestExam() && examToCopy.getChannel() != null) {
-            Channel createdChannel = channelService.createExamChannel(examToCopy, examToCopy.getChannel().getName());
-            examToCopy.setChannel(createdChannel);
-        }
+        // if (!examToCopy.isTestExam() && examToCopy.getChannel() != null) {
+        // Channel createdChannel = channelService.createExamChannel(examToCopy, examToCopy.getChannel().getName());
+        // examToCopy.setChannel(createdChannel);
+        // }
 
         return examRepository.save(examToCopy);
     }

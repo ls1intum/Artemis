@@ -8,7 +8,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
@@ -49,10 +48,10 @@ public class QuizExerciseImportService extends ExerciseImportService {
         log.debug("Creating a new Exercise based on exercise {}", templateExercise);
         QuizExercise newExercise = copyQuizExerciseBasis(importedExercise);
 
-        if (newExercise.isCourseExercise() && importedExercise.getChannel() != null) {
-            Channel createdChannel = channelService.createExerciseChannel(newExercise, importedExercise.getChannel().getName());
-            newExercise.setChannel(createdChannel);
-        }
+        // if (newExercise.isCourseExercise() && importedExercise.getChannel() != null) {
+        // Channel createdChannel = channelService.createExerciseChannel(newExercise, importedExercise.getChannel().getName());
+        // newExercise.setChannel(createdChannel);
+        // }
 
         copyQuizQuestions(importedExercise, newExercise);
         copyQuizBatches(importedExercise, newExercise);
