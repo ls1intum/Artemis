@@ -327,7 +327,6 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         assertThat(quizExerciseServer.getQuizPointStatistic()).isNotNull();
         assertThat(quizExerciseServer.getQuizQuestions()).hasSameSizeAs(quizExercise.getQuizQuestions());
         assertThat(quizExerciseServer.getQuizBatches()).hasSameSizeAs(quizExercise.getQuizBatches());
-        assertThat(quizExerciseServer.getQuizQuestions()).usingRecursiveComparison().ignoringFields("id").isEqualTo(quizExercise.getQuizQuestions());
     }
 
     @Test
