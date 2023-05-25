@@ -36,7 +36,7 @@ describe('Participation Service', () => {
         httpMock = TestBed.inject(HttpTestingController);
         currentDate = dayjs();
 
-        participationDefault = new StudentParticipation();
+        participationDefault = { type: 'student' } as unknown as StudentParticipation;
     });
 
     it('should find an element', fakeAsync(() => {
@@ -185,24 +185,27 @@ describe('Participation Service', () => {
         exercise.categories = undefined;
         exercise.exampleSolutionPublicationDate = undefined;
 
-        const returnedFromService = Object.assign(
-            {
-                repositoryUrl: 'BBBBBB',
-                buildPlanId: 'BBBBBB',
-                initializationState: 'BBBBBB',
-                initializationDate: currentDate,
-                presentationScore: 1,
-                exercise,
-            },
-            participationDefault,
-        );
+        const returnedFromService = {
+            ...participationDefault,
+            repositoryUrl: 'BBBBBB',
+            buildPlanId: 'BBBBBB',
+            initializationState: 'BBBBBB',
+            initializationDate: currentDate,
+            presentationScore: 1,
+            exercise,
+            // the update service will make the participation results and submissions
+            // empty arrays instead of undefined, so we need to adapt our expected
+            // values accordingly
+            results: [],
+            submissions: [],
+        };
 
-        const expected = Object.assign({}, returnedFromService);
+        const expected = Object.assign({}, returnedFromService) as StudentParticipation;
 
         service
             .update(exercise, expected)
             .pipe(take(1))
-            .subscribe((resp) => expect(resp).toMatchObject({ body: expected }));
+            .subscribe((resp) => expect(resp.body).toMatchObject({ ...expected }));
         const req = httpMock.expectOne({ method: 'PUT' });
         req.flush(returnedFromService);
         tick();
