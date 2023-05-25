@@ -34,12 +34,8 @@ export class AttachmentService {
             copy.lecture.posts = undefined;
         }
 
-        const formData = new FormData();
-        formData.append('attachment', objectToJsonBlob(copy));
-        formData.append('file', file);
-
         return this.http
-            .post<Attachment>(this.resourceUrl, formData, { observe: 'response' })
+            .post<Attachment>(this.resourceUrl, this.createFormData(copy, file), { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.convertAttachmentResponseDatesFromServer(res)));
     }
 
@@ -54,13 +50,8 @@ export class AttachmentService {
         const options = createRequestOption(req);
         const copy = this.convertAttachmentDatesFromClient(attachment);
 
-        const formData = new FormData();
-        formData.append('attachment', objectToJsonBlob(copy));
-        if (file) {
-            formData.append('file', file);
-        }
         return this.http
-            .put<Attachment>(this.resourceUrl + '/' + attachmentId, formData, { params: options, observe: 'response' })
+            .put<Attachment>(this.resourceUrl + '/' + attachmentId, this.createFormData(copy, file), { params: options, observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.convertAttachmentResponseDatesFromServer(res)));
     }
 
@@ -134,5 +125,14 @@ export class AttachmentService {
             });
         }
         return res;
+    }
+
+    private createFormData(attachment: Attachment, file?: File) {
+        const formData = new FormData();
+        formData.append('attachment', objectToJsonBlob(attachment));
+        if (file) {
+            formData.append('file', file);
+        }
+        return formData;
     }
 }

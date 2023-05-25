@@ -103,7 +103,7 @@ public class AttachmentResource {
         attachment.setId(attachmentId);
 
         // Make sure that the original references are preserved.
-        Attachment originalAttachment = attachmentRepository.findByIdOrThrow(attachment.getId());
+        Attachment originalAttachment = attachmentRepository.findByIdOrElseThrow(attachment.getId());
         attachment.setAttachmentUnit(originalAttachment.getAttachmentUnit());
 
         if (file != null) {

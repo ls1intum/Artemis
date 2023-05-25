@@ -14,8 +14,6 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.*;
@@ -33,9 +31,6 @@ class AttachmentResourceIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @Autowired
     private LectureRepository lectureRepository;
-
-    @Autowired
-    private ObjectMapper objectMapper;
 
     private Attachment attachment;
 

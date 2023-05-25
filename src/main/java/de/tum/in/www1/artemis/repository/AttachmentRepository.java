@@ -13,14 +13,13 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 /**
  * Spring Data repository for the Attachment entity.
  */
-@SuppressWarnings("unused")
 @Repository
 public interface AttachmentRepository extends JpaRepository<Attachment, Long> {
 
     @Query("select a FROM Attachment a WHERE a.lecture.id =  :#{#lectureId}")
     List<Attachment> findAllByLectureId(@Param("lectureId") Long lectureId);
 
-    default Attachment findByIdOrThrow(Long attachmentId) {
+    default Attachment findByIdOrElseThrow(Long attachmentId) {
         return findById(attachmentId).orElseThrow(() -> new EntityNotFoundException("Attachment", attachmentId));
     }
 }
