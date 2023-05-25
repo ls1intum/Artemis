@@ -1,0 +1,10 @@
+artemis:
+    iris:
+        models:
+            gpt3_5:
+                url: http://gpt35.fake
+                api-key: 42
+                model: gpt-3.5-turbo
+                temperature: 0.3
+                max-generated-tokens: 100
+                stop-sequences:

@@ -44,6 +44,19 @@ public class OpenAIChatResponseDTO {
     @JsonProperty("choices")
     private List<Choice> choices;
 
+    public OpenAIChatResponseDTO() {
+    }
+
+    // To create instances for unit tests
+    public OpenAIChatResponseDTO(String id, String object, Long created, String model, Usage usage, List<Choice> choices) {
+        this.id = id;
+        this.object = object;
+        this.created = created;
+        this.model = model;
+        this.usage = usage;
+        this.choices = choices;
+    }
+
     public String getId() {
         return id;
     }
@@ -92,6 +105,16 @@ public class OpenAIChatResponseDTO {
         @JsonProperty("total_tokens")
         private Integer totalTokens;
 
+        public Usage() {
+        }
+
+        // To create instances for unit tests
+        public Usage(Integer promptTokens, Integer completionTokens, Integer totalTokens) {
+            this.promptTokens = promptTokens;
+            this.completionTokens = completionTokens;
+            this.totalTokens = totalTokens;
+        }
+
         public Integer getPromptTokens() {
             return promptTokens;
         }
@@ -137,6 +160,16 @@ public class OpenAIChatResponseDTO {
         @JsonProperty("finish_reason")
         private String finishReason;
 
+        public Choice() {
+        }
+
+        // To create instances for unit tests
+        public Choice(Message message, Integer index, String finishReason) {
+            this.message = message;
+            this.index = index;
+            this.finishReason = finishReason;
+        }
+
         public Message getMessage() {
             return message;
         }
@@ -172,6 +205,15 @@ public class OpenAIChatResponseDTO {
          */
         @JsonProperty("content")
         private String content;
+
+        public Message() {
+        }
+
+        // To create instances for unit tests
+        public Message(String role, String content) {
+            this.role = role;
+            this.content = content;
+        }
 
         public String getRole() {
             return role;

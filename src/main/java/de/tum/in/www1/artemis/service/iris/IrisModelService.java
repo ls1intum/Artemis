@@ -28,10 +28,10 @@ public class IrisModelService {
      * @param irisSession The session to send to the LLM.
      * @return A CompletableFuture containing the response from the LLM or an empty Optional if no model is available.
      */
-    public CompletableFuture<Optional<IrisMessage>> requestResponse(IrisSession irisSession) {
+    public CompletableFuture<IrisMessage> requestResponse(IrisSession irisSession) {
         if (irisGPT3_5Service.isPresent()) {
-            return irisGPT3_5Service.get().getResponse(irisSession).thenApply(Optional::ofNullable);
+            return irisGPT3_5Service.get().getResponse(irisSession);
         }
-        return CompletableFuture.completedFuture(Optional.empty());
+        return CompletableFuture.failedFuture(new IllegalStateException("No Iris model available"));
     }
 }
