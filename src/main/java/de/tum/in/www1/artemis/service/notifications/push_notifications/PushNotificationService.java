@@ -81,6 +81,13 @@ public abstract class PushNotificationService implements InstantNotificationServ
         CompletableFuture.allOf(futures);
     }
 
+    /**
+     * Sends the actual request to the Hermes Relay Service (see here: https://github.com/ls1intum/Hermes)
+     * It uses exponential backoff to retry once the request fails
+     *
+     * @param body               to be sent to Hermes. Differs between iOS and Android
+     * @param relayServerBaseUrl the url where Hermes is hosted
+     */
     @Async
     void sendRelayRequest(String body, String relayServerBaseUrl) {
         RetryTemplate template = RetryTemplate.builder().exponentialBackoff(1000, 4, 60 * 1000).retryOn(RestClientException.class).maxAttempts(4).build();
@@ -100,11 +107,27 @@ public abstract class PushNotificationService implements InstantNotificationServ
         }
     }
 
+    /**
+     * Wrapper to handle a single user the same way as a list of users
+     *
+     * @param notification        to be sent via the channel the implementing service is responsible for
+     * @param user                who should be contacted
+     * @param notificationSubject that is used to provide further information for mails (e.g. exercise, attachment, post, etc.)
+     */
     @Override
     public final void sendNotification(Notification notification, User user, Object notificationSubject) {
         sendNotification(notification, Collections.singletonList(user), notificationSubject);
     }
 
+    /**
+     * Handles the finding of deviceConfigurations for all given users.
+     * Constructs the payload to be sent and encrypts it with an AES256 encryption.
+     * Sends the requests to the Hermes relay service with a fire and forget mechanism.
+     *
+     * @param notification        to be sent via the channel the implementing service is responsible for
+     * @param users               who should be contacted
+     * @param notificationSubject that is used to provide further information (e.g. exercise, attachment, post, etc.)
+     */
     @Override
     @Async
     public void sendNotification(Notification notification, List<User> users, Object notificationSubject) {
