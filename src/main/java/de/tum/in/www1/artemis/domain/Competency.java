@@ -17,7 +17,7 @@ import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 @Entity
 @Table(name = "learning_goal")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-public class LearningGoal extends DomainObject {
+public class Competency extends DomainObject {
 
     @Column(name = "title", nullable = false)
     private String title;
@@ -34,21 +34,21 @@ public class LearningGoal extends DomainObject {
      * @see <a href="https://en.wikipedia.org/wiki/Bloom%27s_taxonomy">Wikipedia</a>
      */
     @Column(name = "taxonomy")
-    @Convert(converter = LearningGoalTaxonomy.TaxonomyConverter.class)
+    @Convert(converter = CompetencyTaxonomy.TaxonomyConverter.class)
     @JsonInclude
-    private LearningGoalTaxonomy taxonomy;
+    private CompetencyTaxonomy taxonomy;
 
     @ManyToOne
     @JoinColumn(name = "course_id")
-    @JsonIgnoreProperties({ "learningGoals", "prerequisites" })
+    @JsonIgnoreProperties({ "competencies", "prerequisites" })
     private Course course;
 
-    @ManyToMany(mappedBy = "learningGoals")
-    @JsonIgnoreProperties({ "learningGoals", "course" })
+    @ManyToMany(mappedBy = "competencies")
+    @JsonIgnoreProperties({ "competencies", "course" })
     private Set<Exercise> exercises = new HashSet<>();
 
-    @ManyToMany(mappedBy = "learningGoals")
-    @JsonIgnoreProperties("learningGoals")
+    @ManyToMany(mappedBy = "competencies")
+    @JsonIgnoreProperties("competencies")
     private Set<LectureUnit> lectureUnits = new HashSet<>();
 
     /**
@@ -56,13 +56,13 @@ public class LearningGoal extends DomainObject {
      */
     @ManyToMany
     @JoinTable(name = "learning_goal_course", joinColumns = @JoinColumn(name = "learning_goal_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "course_id", referencedColumnName = "id"))
-    @JsonIgnoreProperties({ "learningGoals", "prerequisites" })
+    @JsonIgnoreProperties({ "competencies", "prerequisites" })
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<Course> consecutiveCourses = new HashSet<>();
 
     @OneToMany(mappedBy = "learningGoal", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE, orphanRemoval = true)
-    @JsonIgnoreProperties({ "user", "learningGoal" })
-    private Set<LearningGoalProgress> userProgress = new HashSet<>();
+    @JsonIgnoreProperties({ "user", "competency" })
+    private Set<CompetencyProgress> userProgress = new HashSet<>();
 
     public String getTitle() {
         return title;
@@ -88,11 +88,11 @@ public class LearningGoal extends DomainObject {
         this.masteryThreshold = masteryThreshold;
     }
 
-    public LearningGoalTaxonomy getTaxonomy() {
+    public CompetencyTaxonomy getTaxonomy() {
         return taxonomy;
     }
 
-    public void setTaxonomy(LearningGoalTaxonomy taxonomy) {
+    public void setTaxonomy(CompetencyTaxonomy taxonomy) {
         this.taxonomy = taxonomy;
     }
 
@@ -114,12 +114,12 @@ public class LearningGoal extends DomainObject {
 
     public void addExercise(Exercise exercise) {
         this.exercises.add(exercise);
-        exercise.getLearningGoals().add(this);
+        exercise.getCompetencies().add(this);
     }
 
     public void removeExercise(Exercise exercise) {
         this.exercises.remove(exercise);
-        exercise.getLearningGoals().remove(this);
+        exercise.getCompetencies().remove(this);
     }
 
     public Set<LectureUnit> getLectureUnits() {
@@ -142,7 +142,7 @@ public class LearningGoal extends DomainObject {
             throw new IllegalArgumentException("ExerciseUnits can not be connected to competencies");
         }
         this.lectureUnits.add(lectureUnit);
-        lectureUnit.getLearningGoals().add(this);
+        lectureUnit.getCompetencies().add(this);
     }
 
     /**
@@ -157,7 +157,7 @@ public class LearningGoal extends DomainObject {
             throw new IllegalArgumentException("ExerciseUnits can not be disconnected from competencies");
         }
         this.lectureUnits.remove(lectureUnit);
-        lectureUnit.getLearningGoals().remove(this);
+        lectureUnit.getCompetencies().remove(this);
     }
 
     public Set<Course> getConsecutiveCourses() {
@@ -168,11 +168,11 @@ public class LearningGoal extends DomainObject {
         this.consecutiveCourses = consecutiveCourses;
     }
 
-    public Set<LearningGoalProgress> getUserProgress() {
+    public Set<CompetencyProgress> getUserProgress() {
         return userProgress;
     }
 
-    public void setUserProgress(Set<LearningGoalProgress> userProgress) {
+    public void setUserProgress(Set<CompetencyProgress> userProgress) {
         this.userProgress = userProgress;
     }
 
@@ -185,13 +185,13 @@ public class LearningGoal extends DomainObject {
         this.lectureUnits.removeIf(lectureUnit -> lectureUnit instanceof ExerciseUnit);
     }
 
-    public enum LearningGoalSearchColumn {
+    public enum CompetencySearchColumn {
 
         ID("id"), TITLE("title"), COURSE_TITLE("course.title"), SEMESTER("course.semester");
 
         private final String mappedColumnName;
 
-        LearningGoalSearchColumn(String mappedColumnName) {
+        CompetencySearchColumn(String mappedColumnName) {
             this.mappedColumnName = mappedColumnName;
         }
 

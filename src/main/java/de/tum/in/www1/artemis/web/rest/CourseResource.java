@@ -147,7 +147,7 @@ public class CourseResource {
         log.debug("REST request to update Course : {}", courseUpdate);
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
-        var existingCourse = courseRepository.findByIdWithOrganizationsAndLearningGoalsAndOnlineConfigurationElseThrow(courseUpdate.getId());
+        var existingCourse = courseRepository.findByIdWithOrganizationsAndCompetenciesAndOnlineConfigurationElseThrow(courseUpdate.getId());
 
         if (existingCourse.getTimeZone() != null && courseUpdate.getTimeZone() == null) {
             throw new IllegalArgumentException("You can not remove the time zone of a course");
@@ -425,7 +425,7 @@ public class CourseResource {
         log.debug("REST request to get one course {} with exams, lectures, exercises, participations, submissions and results, etc.", courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
-        Course course = courseService.findOneWithExercisesAndLecturesAndExamsAndLearningGoalsAndTutorialGroupsForUser(courseId, user, refresh);
+        Course course = courseService.findOneWithExercisesAndLecturesAndExamsAndCompetenciesAndTutorialGroupsForUser(courseId, user, refresh);
         if (!authCheckService.isAtLeastStudentInCourse(course, user)) {
             // user might be allowed to register for the course
             // We need the course with organizations so that we can check if the user is allowed to register
