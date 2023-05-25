@@ -16,13 +16,15 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { NgModel } from '@angular/forms';
-import { of, throwError } from 'rxjs';
+import { of, take, throwError } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { LectureService } from 'app/lecture/lecture.service';
 
 describe('LectureAttachmentsComponent', () => {
     let comp: LectureAttachmentsComponent;
     let fixture: ComponentFixture<LectureAttachmentsComponent>;
+    let lectureService: LectureService;
     let attachmentService: AttachmentService;
     let attachmentServiceFindAllByLectureIdStub: jest.SpyInstance;
     let attachmentServiceCreateStub: jest.SpyInstance;
@@ -103,6 +105,7 @@ describe('LectureAttachmentsComponent', () => {
                 fixture = TestBed.createComponent(LectureAttachmentsComponent);
                 comp = fixture.componentInstance;
                 attachmentService = TestBed.inject(AttachmentService);
+                lectureService = TestBed.inject(LectureService);
                 attachmentServiceFindAllByLectureIdStub = jest.spyOn(attachmentService, 'findAllByLectureId').mockReturnValue(of(new HttpResponse({ body: [...attachments] })));
                 attachmentServiceCreateStub = jest.spyOn(attachmentService, 'create').mockReturnValue(of(new HttpResponse({ body: newAttachment })));
                 attachmentServiceUpdateStub = jest.spyOn(attachmentService, 'update').mockReturnValue(of(new HttpResponse({ body: newAttachment })));
@@ -113,6 +116,15 @@ describe('LectureAttachmentsComponent', () => {
         comp.attachments = [...attachments];
         jest.restoreAllMocks();
     });
+
+    it('should load existing lecture', fakeAsync(() => {
+        comp.lectureId = 42;
+        const findWithDetailsStub = jest.spyOn(lectureService, 'findWithDetails').mockReturnValue(of(new HttpResponse({ body: { ...lecture, id: 42 } })));
+        const findAllAttachmentsByLectureId = jest.spyOn(attachmentService, 'findAllByLectureId').mockReturnValue(of(new HttpResponse({ body: attachments })));
+        fixture.detectChanges();
+        expect(findWithDetailsStub).toHaveBeenCalledWith(42);
+        expect(findAllAttachmentsByLectureId).toHaveBeenCalledWith(42);
+    }));
 
     it('should accept file and add attachment to list', fakeAsync(() => {
         fixture.detectChanges();
@@ -284,19 +296,41 @@ describe('LectureAttachmentsComponent', () => {
 
     it('should delete attachment', fakeAsync(() => {
         fixture.detectChanges();
+        const attachmentId = 52;
         const toDelete = {
-            id: 52,
+            id: attachmentId,
             name: 'test2',
             link: '/api/files/attachments/lecture/4/Mein_Test_PDF3.pdf',
             version: 1,
             uploadDate: dayjs('2019-05-07T08:49:59+02:00'),
             attachmentType: 'FILE',
         } as Attachment;
+        comp.dialogError$.pipe(take(1)).subscribe((error) => expect(error).toBeEmpty());
         const attachmentServiceDeleteStub = jest.spyOn(attachmentService, 'delete').mockReturnValue(of(new HttpResponse({ body: null })));
         comp.deleteAttachment(toDelete);
         expect(comp.attachments).toHaveLength(1);
-        expect(attachmentServiceDeleteStub).toHaveBeenCalledOnce();
-        expect(attachmentServiceFindAllByLectureIdStub).toHaveBeenCalledOnce();
+        expect(attachmentServiceDeleteStub).toHaveBeenCalledOnceWith(attachmentId);
+        tick();
+    }));
+
+    it('should handle error on delete', fakeAsync(() => {
+        fixture.detectChanges();
+        const attachmentId = 52;
+        const toDelete = {
+            id: attachmentId,
+            name: 'test2',
+            link: '/api/files/attachments/lecture/4/Mein_Test_PDF3.pdf',
+            version: 1,
+            uploadDate: dayjs('2019-05-07T08:49:59+02:00'),
+            attachmentType: 'FILE',
+        } as Attachment;
+        const errorMessage = 'Some error message';
+        comp.dialogError$.pipe(take(1)).subscribe((error) => expect(error).toBe(errorMessage));
+        const attachmentServiceDeleteStub = jest.spyOn(attachmentService, 'delete').mockReturnValue(throwError(new Error(errorMessage)));
+        comp.deleteAttachment(toDelete);
+        expect(comp.attachments).toHaveLength(2);
+        expect(attachmentServiceDeleteStub).toHaveBeenCalledOnceWith(attachmentId);
+        tick();
     }));
 
     it('should call cancel', fakeAsync(() => {
