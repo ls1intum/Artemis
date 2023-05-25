@@ -493,21 +493,21 @@ public class CourseTestService {
 
         Set<Organization> organizations = course.getOrganizations();
 
-        Set<LearningGoal> learningGoals = new HashSet<>();
-        learningGoals.add(database.createLearningGoal(course));
-        course.setLearningGoals(learningGoals);
+        Set<Competency> competencies = new HashSet<>();
+        competencies.add(database.createCompetency(course));
+        course.setCompetencies(competencies);
         course = courseRepo.save(course);
 
-        Set<LearningGoal> prerequisites = new HashSet<>();
-        prerequisites.add(database.createLearningGoal(database.createCourse()));
+        Set<Competency> prerequisites = new HashSet<>();
+        prerequisites.add(database.createCompetency(database.createCourse()));
         course.setPrerequisites(prerequisites);
         course = courseRepo.save(course);
 
         request.getMvc().perform(buildUpdateCourse(course.getId(), course)).andExpect(status().isOk());
 
-        Course updatedCourse = courseRepo.findByIdWithOrganizationsAndLearningGoalsAndOnlineConfigurationElseThrow(course.getId());
+        Course updatedCourse = courseRepo.findByIdWithOrganizationsAndCompetenciesAndOnlineConfigurationElseThrow(course.getId());
         assertThat(updatedCourse.getOrganizations()).containsExactlyElementsOf(organizations);
-        assertThat(updatedCourse.getLearningGoals()).containsExactlyElementsOf(learningGoals);
+        assertThat(updatedCourse.getCompetencies()).containsExactlyElementsOf(competencies);
         assertThat(updatedCourse.getPrerequisites()).containsExactlyElementsOf(prerequisites);
     }
 
@@ -671,7 +671,7 @@ public class CourseTestService {
 
     // Test
     public void testGetCourseForDashboard(boolean userRefresh) throws Exception {
-        List<Course> courses = database.createCoursesWithExercisesAndLecturesAndLectureUnitsAndLearningGoals(userPrefix, true, false, numberOfTutors);
+        List<Course> courses = database.createCoursesWithExercisesAndLecturesAndLectureUnitsAndCompetencies(userPrefix, true, false, numberOfTutors);
         CourseForDashboardDTO receivedCourseForDashboard = request.get("/api/courses/" + courses.get(0).getId() + "/for-dashboard?refresh=" + userRefresh, HttpStatus.OK,
                 CourseForDashboardDTO.class);
         Course receivedCourse = receivedCourseForDashboard.course();
@@ -681,7 +681,7 @@ public class CourseTestService {
         // Test that the received course has two lectures
         assertThat(receivedCourse.getLectures()).as("Two lectures are returned").hasSize(2);
         // Test that the received course has two competencies
-        assertThat(receivedCourse.getLearningGoals()).as("Two competencies are returned").hasSize(2);
+        assertThat(receivedCourse.getCompetencies()).as("Two competencies are returned").hasSize(2);
 
         // Iterate over all exercises of the remaining course
         for (Exercise exercise : courses.get(0).getExercises()) {
@@ -710,7 +710,7 @@ public class CourseTestService {
     }
 
     private Course createCourseWithRegistrationEnabled(boolean registrationEnabled) throws Exception {
-        List<Course> courses = database.createCoursesWithExercisesAndLecturesAndLectureUnitsAndLearningGoals(userPrefix, true, false, numberOfTutors);
+        List<Course> courses = database.createCoursesWithExercisesAndLecturesAndLectureUnitsAndCompetencies(userPrefix, true, false, numberOfTutors);
         Course course = courses.get(0);
         course.setRegistrationEnabled(registrationEnabled);
         courseRepo.save(course);

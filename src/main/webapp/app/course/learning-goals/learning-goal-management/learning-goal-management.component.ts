@@ -183,8 +183,8 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
                     this.edges = relations.map(
                         (relation): Edge => ({
                             id: `edge${relation.id}`,
-                            source: `${relation.tailLearningGoal?.id}`,
-                            target: `${relation.headLearningGoal?.id}`,
+                            source: `${relation.tailCompetency?.id}`,
+                            target: `${relation.headCompetency?.id}`,
                             label: relation.type,
                             data: {
                                 id: relation.id,
@@ -197,7 +197,7 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
                             (relation): ClusterNode => ({
                                 id: `cluster${relation.id}`,
                                 label: relation.type,
-                                childNodeIds: [`${relation.tailLearningGoal?.id}`, `${relation.headLearningGoal?.id}`],
+                                childNodeIds: [`${relation.tailCompetency?.id}`, `${relation.headCompetency?.id}`],
                                 data: {
                                     id: relation.id,
                                 },
@@ -206,7 +206,7 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
 
                     for (const learningGoalProgressResponse of learningGoalProgressResponses) {
                         const courseLearningGoalProgress: CourseLearningGoalProgress = learningGoalProgressResponse.body!;
-                        this.learningGoals.find((lg) => lg.id === courseLearningGoalProgress.learningGoalId)!.courseProgress = courseLearningGoalProgress;
+                        this.learningGoals.find((lg) => lg.id === courseLearningGoalProgress.competencyId)!.courseProgress = courseLearningGoalProgress;
                     }
                 },
                 error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),

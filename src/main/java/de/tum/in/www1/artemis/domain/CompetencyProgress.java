@@ -23,14 +23,14 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @Table(name = "learning_goal_user")
 @EntityListeners(AuditingEntityListener.class)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class LearningGoalProgress implements Serializable {
+public class CompetencyProgress implements Serializable {
 
     /**
-     * The primary key of the association, composited through {@link LearningGoalUserId}.
+     * The primary key of the association, composited through {@link CompetencyUserId}.
      */
     @EmbeddedId
     @JsonIgnore
-    private LearningGoalUserId id = new LearningGoalUserId();
+    private CompetencyUserId id = new CompetencyUserId();
 
     @ManyToOne
     @MapsId("userId")
@@ -40,7 +40,7 @@ public class LearningGoalProgress implements Serializable {
     @ManyToOne
     @MapsId("learningGoalId")
     @JsonIgnore
-    private LearningGoal learningGoal;
+    private Competency learningGoal;
 
     @Column(name = "progress")
     private Double progress;
@@ -53,7 +53,7 @@ public class LearningGoalProgress implements Serializable {
     @JsonIgnore
     private Instant lastModifiedDate;
 
-    public LearningGoalUserId getId() {
+    public CompetencyUserId getId() {
         return id;
     }
 
@@ -65,12 +65,12 @@ public class LearningGoalProgress implements Serializable {
         this.user = user;
     }
 
-    public LearningGoal getLearningGoal() {
+    public Competency getCompetency() {
         return learningGoal;
     }
 
-    public void setLearningGoal(LearningGoal learningGoal) {
-        this.learningGoal = learningGoal;
+    public void setCompetency(Competency competency) {
+        this.learningGoal = competency;
     }
 
     public Double getProgress() {
@@ -101,7 +101,7 @@ public class LearningGoalProgress implements Serializable {
         if (obj == null || getClass() != obj.getClass()) {
             return false;
         }
-        LearningGoalProgress that = (LearningGoalProgress) obj;
+        CompetencyProgress that = (CompetencyProgress) obj;
         return getId().equals(that.getId());
     }
 
@@ -112,7 +112,7 @@ public class LearningGoalProgress implements Serializable {
 
     @Override
     public String toString() {
-        return "LearningGoalProgress{" + "id=" + id + ", user=" + user + ", learningGoal=" + learningGoal + ", progress=" + progress + ", confidence=" + confidence + '}';
+        return "CompetencyProgress{" + "id=" + id + ", user=" + user + ", competency=" + learningGoal + ", progress=" + progress + ", confidence=" + confidence + '}';
     }
 
     /**
@@ -121,7 +121,7 @@ public class LearningGoalProgress implements Serializable {
      */
     @Embeddable
     @SuppressWarnings("unused")
-    public static class LearningGoalUserId implements Serializable {
+    public static class CompetencyUserId implements Serializable {
 
         @Serial
         private static final long serialVersionUID = 1L;
@@ -130,11 +130,11 @@ public class LearningGoalProgress implements Serializable {
 
         private Long learningGoalId;
 
-        public LearningGoalUserId() {
+        public CompetencyUserId() {
             // Empty constructor for Spring
         }
 
-        public LearningGoalUserId(Long userId, Long learningGoalId) {
+        public CompetencyUserId(Long userId, Long learningGoalId) {
             this.userId = userId;
             this.learningGoalId = learningGoalId;
         }
@@ -147,7 +147,7 @@ public class LearningGoalProgress implements Serializable {
             if (obj == null || getClass() != obj.getClass()) {
                 return false;
             }
-            LearningGoalUserId that = (LearningGoalUserId) obj;
+            CompetencyUserId that = (CompetencyUserId) obj;
             if (userId == null || that.userId == null) {
                 return false;
             }
