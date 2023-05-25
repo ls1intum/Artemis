@@ -22,6 +22,7 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentPar
 import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
@@ -46,13 +47,17 @@ public abstract class AbstractVersionControlService implements VersionControlSer
 
     protected final ProgrammingExerciseRepository programmingExerciseRepository;
 
+    protected final TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
+
     public AbstractVersionControlService(ApplicationContext applicationContext, GitService gitService, UrlService urlService,
-            ProgrammingExerciseStudentParticipationRepository studentParticipationRepository, ProgrammingExerciseRepository programmingExerciseRepository) {
+            ProgrammingExerciseStudentParticipationRepository studentParticipationRepository, ProgrammingExerciseRepository programmingExerciseRepository,
+            TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository) {
         this.applicationContext = applicationContext;
         this.gitService = gitService;
         this.urlService = urlService;
         this.studentParticipationRepository = studentParticipationRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
+        this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
     }
 
     /**
@@ -165,7 +170,7 @@ public abstract class AbstractVersionControlService implements VersionControlSer
     public String getOrRetrieveBranchOfExercise(ProgrammingExercise programmingExercise) {
         if (programmingExercise.getBranch() == null) {
             if (!Hibernate.isInitialized(programmingExercise.getTemplateParticipation())) {
-                programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationByIdElseThrow(programmingExercise.getId());
+                programmingExercise.setTemplateParticipation(templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseIdElseThrow(programmingExercise.getId()));
             }
             String branch = getDefaultBranchOfRepository(programmingExercise.getVcsTemplateRepositoryUrl());
             programmingExercise.setBranch(branch);
