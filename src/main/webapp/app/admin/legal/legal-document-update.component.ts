@@ -62,12 +62,12 @@ export class LegalDocumentUpdateComponent implements OnInit, AfterContentChecked
             )
             .subscribe();
         if (this.legalDocumentType === LegalDocumentType.IMPRINT) {
-            this.languageHelper.updateTitle('artemisApp.legal.imprint.updateImprint');
             this.titleKey = 'artemisApp.legal.imprint.updateImprint';
         } else {
-            this.languageHelper.updateTitle('artemisApp.legal.privacyStatement.updatePrivacyStatement');
             this.titleKey = 'artemisApp.legal.privacyStatement.updatePrivacyStatement';
         }
+        this.languageHelper.updateTitle(this.titleKey);
+
         this.legalDocument = new LegalDocument(this.legalDocumentType, this.defaultLanguage);
         this.getLegalDocumentForUpdate(this.legalDocumentType, this.defaultLanguage).subscribe((document) => {
             this.legalDocument = document;
@@ -114,6 +114,7 @@ export class LegalDocumentUpdateComponent implements OnInit, AfterContentChecked
             this.currentLanguage = legalDocumentLanguage;
             this.getLegalDocumentForUpdate(this.legalDocumentType, legalDocumentLanguage).subscribe((document) => {
                 this.legalDocument = document;
+                this.unsavedChanges = false;
                 // if we are currently in preview mode, we need to update the preview
                 if (this.markdownEditor.previewMode) {
                     this.markdownEditor.previewTextAsHtml = this.markdownService.safeHtmlForMarkdown(this.legalDocument.text);
@@ -152,14 +153,14 @@ export class LegalDocumentUpdateComponent implements OnInit, AfterContentChecked
     }
 
     /**
-     * If the language is changed while we are in the preview mode, we must set the value of the markdown editor to the text of the new legal document.
+     * If the language is changed while we are in the preview mode, we must trigger a change event, so the ace editor updates its content.
      * We must do this when the editor is visible because otherwise the editor will only be updated if you click on it once.
      */
     updateTextIfLanguageChangedInPreview() {
         if (this.languageChangeInPreview) {
+            // we have to trigger a change event, so the ace editor updates its content
+            this.markdownEditor.aceEditorContainer.getEditor().session._emit('change', { start: { row: 0, column: 0 }, end: { row: 0, column: 0 }, action: 'insert', lines: [] });
             this.languageChangeInPreview = false;
-            this.markdownEditor.aceEditorContainer.getEditor().setValue(this.legalDocument.text);
-            this.markdownEditor.aceEditorContainer.getEditor().clearSelection();
         }
     }
 }
