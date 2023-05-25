@@ -67,9 +67,6 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     private QuizUtilService quizUtilService;
 
     @Autowired
-    private QuizBatchRepository quizBatchRepository;
-
-    @Autowired
     private TeamRepository teamRepository;
 
     @Autowired
@@ -864,8 +861,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     void testPerformJoin(QuizMode quizMode, ZonedDateTime release, ZonedDateTime due, QuizBatch batch, String password, HttpStatus result) throws Exception {
         QuizExercise quizExercise = createQuizOnServer(release, due, quizMode);
         if (batch != null) {
-            batch.setQuizExercise(quizExercise);
-            quizBatchRepository.save(batch);
+            database.setQuizBatchExerciseAndSave(batch, quizExercise);
         }
         // switch to student
         SecurityContextHolder.getContext().setAuthentication(SecurityUtils.makeAuthorizationObject(TEST_PREFIX + "student1"));

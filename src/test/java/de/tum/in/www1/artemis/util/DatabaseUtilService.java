@@ -330,6 +330,9 @@ public class DatabaseUtilService {
     @Autowired
     private ReactionRepository reactionRepository;
 
+    @Autowired
+    private QuizBatchRepository quizBatchRepository;
+
     @Value("${info.guided-tour.course-group-students:#{null}}")
     private Optional<String> tutorialGroupStudents;
 
@@ -4174,6 +4177,11 @@ public class DatabaseUtilService {
     public void renameAndSaveQuiz(QuizExercise quizExercise, String newTitle) {
         quizExercise.setTitle(newTitle);
         quizExerciseRepository.save(quizExercise);
+    }
+
+    public void setQuizBatchExerciseAndSave(QuizBatch batch, QuizExercise quizExercise) {
+        batch.setQuizExercise(quizExercise);
+        quizBatchRepository.save(batch);
     }
 
     @NotNull
