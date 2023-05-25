@@ -84,7 +84,7 @@ describe('Course Management Service', () => {
         course.lectures = undefined;
         course.startDate = undefined;
         course.endDate = undefined;
-        course.learningGoals = [];
+        course.competencies = [];
         course.prerequisites = [];
 
         courseForDashboard = new CourseForDashboardDTO();
