@@ -51,7 +51,7 @@ export class QuizExamSummaryComponent implements OnChanges {
         this.updateViewFromSubmission();
         if (this.studentParticipations) {
             this.result =
-                this.studentParticipations.length > 0 && this.studentParticipations[0].results && this.studentParticipations[0].results.length > 0
+                this.studentParticipations.length > 0 && this.studentParticipations[0].results?.length 
                     ? this.studentParticipations[0].results[0]
                     : undefined;
         } else {
