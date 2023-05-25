@@ -32,6 +32,9 @@ public class GeneralInstantNotificationService implements InstantNotificationSer
 
     private final NotificationSettingsService notificationSettingsService;
 
+    /**
+     * Constructor to create a GeneralInstantNotificationService
+     */
     public GeneralInstantNotificationService(ApplePushNotificationService applePushNotificationService, FirebasePushNotificationService firebasePushNotificationService,
             MailService mailService, NotificationSettingsService notificationSettingsService) {
         this.applePushNotificationService = applePushNotificationService;
@@ -44,9 +47,9 @@ public class GeneralInstantNotificationService implements InstantNotificationSer
      * Checks for the user if the notification should be sent as an email or/and as a push notification.
      * Then delegates the actual sending to the corresponding {@link InstantNotificationService}s
      *
-     * @param notification        the notification to be sent
-     * @param user                the user the notification should be sent to
-     * @param notificationSubject the object that is used to provide further information for mails (e.g. exercise, attachment, post, etc.)
+     * @param notification        to be sent via the channel the implementing service is responsible for
+     * @param user                who should be contacted
+     * @param notificationSubject that is used to provide further information for mails (e.g. exercise, attachment, post, etc.)
      */
     @Override
     public void sendNotification(Notification notification, User user, Object notificationSubject) {
@@ -68,6 +71,10 @@ public class GeneralInstantNotificationService implements InstantNotificationSer
     /**
      * Checks for each user if the notification should be sent as an email or/and as a push notification.
      * Then delegates the actual sending to the corresponding {@link InstantNotificationService}s
+     *
+     * @param notification        to be sent via the channel the implementing service is responsible for
+     * @param users               who should be contacted
+     * @param notificationSubject that is used to provide further information (e.g. exercise, attachment, post, etc.)
      */
     @Async
     @Override
@@ -86,6 +93,14 @@ public class GeneralInstantNotificationService implements InstantNotificationSer
         }
     }
 
+    /**
+     * Filters the given user array based on if the notification (i.e. its type based on title) is allowed by the respective notification settings
+     *
+     * @param notification which type (based on title) should be checked
+     * @param users        whose notification settings will be used for checking
+     * @param channel      which channel to use (e.g. email or webapp or push)
+     * @return filtered user list
+     */
     @NotNull
     private List<User> filterRecipients(Notification notification, List<User> users, NotificationSettingsCommunicationChannel channel) {
         return notificationSettingsService.filterUsersByNotificationIsAllowedInCommunicationChannelBySettings(notification, users, channel);
