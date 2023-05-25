@@ -6,5 +6,5 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * A DTO representing the competency progress of the whole course.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record CourseLearningGoalProgressDTO(long learningGoalId, long numberOfStudents, long numberOfMasteredStudents, double averageStudentScore) {
+public record CourseCompetencyProgressDTO(long competencyId, long numberOfStudents, long numberOfMasteredStudents, double averageStudentScore) {
 }

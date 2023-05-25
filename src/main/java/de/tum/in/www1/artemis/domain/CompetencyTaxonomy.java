@@ -8,15 +8,15 @@ import javax.persistence.Converter;
  *
  * @see <a href="https://en.wikipedia.org/wiki/Bloom%27s_taxonomy">Wikipedia</a>
  */
-public enum LearningGoalTaxonomy {
+public enum CompetencyTaxonomy {
 
     REMEMBER, UNDERSTAND, APPLY, ANALYZE, EVALUATE, CREATE;
 
     @Converter
-    public static class TaxonomyConverter implements AttributeConverter<LearningGoalTaxonomy, String> {
+    public static class TaxonomyConverter implements AttributeConverter<CompetencyTaxonomy, String> {
 
         @Override
-        public String convertToDatabaseColumn(LearningGoalTaxonomy taxonomy) {
+        public String convertToDatabaseColumn(CompetencyTaxonomy taxonomy) {
             if (taxonomy == null) {
                 return null;
             }
@@ -32,18 +32,18 @@ public enum LearningGoalTaxonomy {
         }
 
         @Override
-        public LearningGoalTaxonomy convertToEntityAttribute(String value) {
+        public CompetencyTaxonomy convertToEntityAttribute(String value) {
             if (value == null) {
                 return null;
             }
 
             return switch (value) {
-                case "R" -> LearningGoalTaxonomy.REMEMBER;
-                case "U" -> LearningGoalTaxonomy.UNDERSTAND;
-                case "Y" -> LearningGoalTaxonomy.APPLY;
-                case "A" -> LearningGoalTaxonomy.ANALYZE;
-                case "E" -> LearningGoalTaxonomy.EVALUATE;
-                case "C" -> LearningGoalTaxonomy.CREATE;
+                case "R" -> CompetencyTaxonomy.REMEMBER;
+                case "U" -> CompetencyTaxonomy.UNDERSTAND;
+                case "Y" -> CompetencyTaxonomy.APPLY;
+                case "A" -> CompetencyTaxonomy.ANALYZE;
+                case "E" -> CompetencyTaxonomy.EVALUATE;
+                case "C" -> CompetencyTaxonomy.CREATE;
                 default -> throw new IllegalArgumentException("Unknown Taxonomy: " + value);
             };
         }

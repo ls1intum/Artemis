@@ -8,34 +8,34 @@ import javax.persistence.*;
  */
 @Entity
 @Table(name = "learning_goal_relation")
-public class LearningGoalRelation extends DomainObject {
+public class CompetencyRelation extends DomainObject {
 
     @ManyToOne
     @JoinColumn(name = "tail_learning_goal_id")
-    private LearningGoal tailLearningGoal;
+    private Competency tailCompetency;
 
     @ManyToOne
     @JoinColumn(name = "head_learning_goal_id")
-    private LearningGoal headLearningGoal;
+    private Competency headCompetency;
 
     @Column(name = "type")
     @Convert(converter = RelationTypeConverter.class)
     private RelationType type;
 
-    public LearningGoal getTailLearningGoal() {
-        return tailLearningGoal;
+    public Competency getTailCompetency() {
+        return tailCompetency;
     }
 
-    public void setTailLearningGoal(LearningGoal tailLearningGoal) {
-        this.tailLearningGoal = tailLearningGoal;
+    public void setTailCompetency(Competency tailCompetency) {
+        this.tailCompetency = tailCompetency;
     }
 
-    public LearningGoal getHeadLearningGoal() {
-        return headLearningGoal;
+    public Competency getHeadCompetency() {
+        return headCompetency;
     }
 
-    public void setHeadLearningGoal(LearningGoal headLearningGoal) {
-        this.headLearningGoal = headLearningGoal;
+    public void setHeadCompetency(Competency headCompetency) {
+        this.headCompetency = headCompetency;
     }
 
     public RelationType getType() {
