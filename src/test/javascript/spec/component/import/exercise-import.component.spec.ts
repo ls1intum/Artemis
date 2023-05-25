@@ -70,7 +70,6 @@ describe('ExerciseImportComponent', () => {
 
     beforeEach(() => {
         comp.exerciseType = ExerciseType.QUIZ;
-        fixture.detectChanges();
         quizExercise = new QuizExercise(undefined, undefined);
         quizExercise.id = 5;
         searchResult = { numberOfPages: 3, resultsOnPage: [quizExercise] };
@@ -266,7 +265,8 @@ describe('ExerciseImportComponent', () => {
         'uses the correct paging service',
         fakeAsync((exerciseType: ExerciseType, expectedPagingService: typeof PagingService) => {
             const getSpy = jest.spyOn(injector, 'get');
-            jest.resetAllMocks();
+            // This is needed for `.toHaveBeenCalledWith` to work properly:
+            getSpy.mockImplementation(() => undefined);
 
             comp.exerciseType = exerciseType;
 
@@ -278,7 +278,8 @@ describe('ExerciseImportComponent', () => {
 
     it('should allow importing SCA configurations', () => {
         const getSpy = jest.spyOn(injector, 'get');
-        jest.resetAllMocks();
+        // This is needed for `.toHaveBeenCalledWith` to work properly:
+        getSpy.mockImplementation(() => undefined);
 
         comp.exerciseType = ExerciseType.PROGRAMMING;
         comp.programmingLanguage = ProgrammingLanguage.JAVA;
