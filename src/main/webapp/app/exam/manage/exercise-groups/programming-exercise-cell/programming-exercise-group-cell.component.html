@@ -4,11 +4,16 @@
     </div>
     <div *ngIf="displayRepositoryUrl">
         <div>
-            <span *ngIf="programmingExercise.templateParticipation?.repositoryUrl">
+            <ng-container *ngIf="programmingExercise.templateParticipation?.repositoryUrl">
                 <!--Checks if the programming exercise has a setup with VCS and CI, if this not the case
-                                            the links are disabled--->
-                <a href="{{ programmingExercise.templateParticipation?.repositoryUrl || '' }}" target="_blank">Template</a>
-            </span>
+                                            the links/clone-buttons are disabled--->
+                <span *ngIf="!localVCEnabled; else downloadRepoLink">
+                    <a href="{{ programmingExercise.templateParticipation?.repositoryUrl || '' }}" target="_blank">Template</a>
+                </span>
+                <ng-template #downloadRepoLink>
+                    <a [routerLink]="" (click)="downloadRepository('TEMPLATE')"> <fa-icon [icon]="faDownload"></fa-icon> Template </a>
+                </ng-template>
+            </ng-container>
             <jhi-programming-exercise-instructor-status
                 *ngIf="programmingExercise.templateParticipation?.results?.length"
                 [participationType]="participationType.TEMPLATE"
@@ -17,9 +22,14 @@
             ></jhi-programming-exercise-instructor-status>
         </div>
         <div>
-            <span *ngIf="programmingExercise.solutionParticipation?.repositoryUrl">
-                <a href="{{ programmingExercise.solutionParticipation!.repositoryUrl! }}" target="_blank">Solution</a>
-            </span>
+            <ng-container *ngIf="programmingExercise.solutionParticipation?.repositoryUrl">
+                <span *ngIf="!localVCEnabled; else downloadRepoLink">
+                    <a href="{{ programmingExercise.solutionParticipation?.repositoryUrl || '' }}" target="_blank">Solution</a>
+                </span>
+                <ng-template #downloadRepoLink>
+                    <a [routerLink]="" (click)="downloadRepository('SOLUTION')"> <fa-icon [icon]="faDownload"></fa-icon> Solution </a>
+                </ng-template>
+            </ng-container>
             <jhi-programming-exercise-instructor-status
                 *ngIf="programmingExercise.solutionParticipation?.results?.length"
                 [participationType]="participationType.SOLUTION"
@@ -28,19 +38,30 @@
             ></jhi-programming-exercise-instructor-status>
         </div>
         <div>
-            <span *ngIf="programmingExercise.testRepositoryUrl">
-                <a href="{{ programmingExercise.testRepositoryUrl }}" target="_blank">Test</a>
-            </span>
+            <ng-container *ngIf="programmingExercise.testRepositoryUrl">
+                <span *ngIf="!localVCEnabled; else downloadRepoLink">
+                    <a href="{{ programmingExercise.testRepositoryUrl }}" target="_blank">Test</a>
+                </span>
+                <ng-template #downloadRepoLink>
+                    <a [routerLink]="" (click)="downloadRepository('TESTS')"> <fa-icon [icon]="faDownload"></fa-icon> Test </a>
+                </ng-template>
+            </ng-container>
         </div>
     </div>
     <div *ngIf="displayTemplateUrls">
-        <span *ngIf="programmingExercise.templateParticipation?.buildPlanId"
-            ><a target="_blank" rel="noreferrer" href="{{ programmingExercise.templateParticipation!.buildPlanUrl }}">Template</a></span
-        >
+        <span *ngIf="programmingExercise.templateParticipation?.buildPlanId">
+            <a *ngIf="!localVCEnabled; else plainBuildPlanId" target="_blank" rel="noreferrer" href="{{ programmingExercise.templateParticipation!.buildPlanUrl }}">Template</a>
+            <ng-template #plainBuildPlanId>
+                {{ programmingExercise.templateParticipation!.buildPlanId }}
+            </ng-template>
+        </span>
         <br />
-        <span *ngIf="programmingExercise.solutionParticipation?.buildPlanId"
-            ><a target="_blank" rel="noreferrer" href="{{ programmingExercise.solutionParticipation!.buildPlanUrl }}">Solution</a></span
-        >
+        <span *ngIf="programmingExercise.solutionParticipation?.buildPlanId">
+            <a *ngIf="!localVCEnabled; else plainBuildPlanId" target="_blank" rel="noreferrer" href="{{ programmingExercise.solutionParticipation!.buildPlanUrl }}">Solution</a>
+            <ng-template #plainBuildPlanId>
+                {{ programmingExercise.solutionParticipation!.buildPlanId }}
+            </ng-template>
+        </span>
         <br />
     </div>
     <div *ngIf="displayEditorModus">

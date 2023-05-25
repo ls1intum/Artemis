@@ -103,7 +103,7 @@ for (const group of groups) {
         const mergedContent = files.reduce((acc, file) => {
             const content = JSON.parse(fs.readFileSync(path.resolve(group.folder, file)).toString());
             return deepMerge(acc, content);
-        });
+        }, {});
 
         await fs.promises.writeFile(group.output, JSON.stringify(mergedContent));
     } catch (error) {
