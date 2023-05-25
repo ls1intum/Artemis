@@ -26,7 +26,6 @@ import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.ser
 import { DragAndDropQuestionUtil } from 'app/exercises/quiz/shared/drag-and-drop-question-util.service';
 import { ShortAnswerQuestionUtil } from 'app/exercises/quiz/shared/short-answer-question-util.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 import { advanceTo } from 'jest-date-mock';
 import dayjs from 'dayjs/esm';
 import { AlertService } from 'app/core/util/alert.service';
@@ -37,7 +36,6 @@ import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.s
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTestModule } from '../../test.module';
 import { Exam } from 'app/entities/exam.model';
-import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { MockProvider } from 'ng-mocks';
 import { Duration } from 'app/exercises/quiz/manage/quiz-exercise-interfaces';
 import { QuizQuestionListEditComponent } from 'app/exercises/quiz/manage/quiz-question-list-edit.component';
@@ -46,17 +44,13 @@ describe('QuizExercise Management Detail Component', () => {
     let comp: QuizExerciseDetailComponent;
     let exerciseGroupService: ExerciseGroupService;
     let courseManagementService: CourseManagementService;
-    let examManagementService: ExamManagementService;
     let quizExerciseService: QuizExerciseService;
     let exerciseService: ExerciseService;
-    let fileUploaderService: FileUploaderService;
     let fixture: ComponentFixture<QuizExerciseDetailComponent>;
     let router: Router;
     let alertService: AlertService;
     let dragAndDropQuestionUtil: DragAndDropQuestionUtil;
     let shortAnswerQuestionUtil: ShortAnswerQuestionUtil;
-    let changeDetector: ChangeDetectorRef;
-    let modalService: NgbModal;
 
     const course: Course = { id: 123 } as Course;
     const quizExercise = new QuizExercise(course, undefined);
@@ -170,17 +164,13 @@ describe('QuizExercise Management Detail Component', () => {
         fixture = TestBed.createComponent(QuizExerciseDetailComponent);
         comp = fixture.componentInstance;
         courseManagementService = fixture.debugElement.injector.get(CourseManagementService);
-        examManagementService = fixture.debugElement.injector.get(ExamManagementService);
         quizExerciseService = fixture.debugElement.injector.get(QuizExerciseService);
         router = fixture.debugElement.injector.get(Router);
-        fileUploaderService = TestBed.inject(FileUploaderService);
         alertService = fixture.debugElement.injector.get(AlertService);
         dragAndDropQuestionUtil = fixture.debugElement.injector.get(DragAndDropQuestionUtil);
         shortAnswerQuestionUtil = fixture.debugElement.injector.get(ShortAnswerQuestionUtil);
-        changeDetector = fixture.debugElement.injector.get(ChangeDetectorRef);
         exerciseGroupService = fixture.debugElement.injector.get(ExerciseGroupService);
         exerciseService = fixture.debugElement.injector.get(ExerciseService);
-        modalService = fixture.debugElement.injector.get(NgbModal);
     };
 
     describe('onInit', () => {
@@ -670,38 +660,6 @@ describe('QuizExercise Management Detail Component', () => {
             });
         });
 
-        describe('add questions', () => {
-            // setup
-            beforeEach(() => {
-                resetQuizExercise();
-                comp.quizExercise = quizExercise;
-            });
-
-            it('should add empty MC question', () => {
-                const amountQuizQuestions = comp.quizExercise.quizQuestions?.length || 0;
-                comp.addMultipleChoiceQuestion();
-
-                expect(comp.quizExercise.quizQuestions).toHaveLength(amountQuizQuestions + 1);
-                expect(comp.quizExercise.quizQuestions?.last()?.type).toEqual(QuizQuestionType.MULTIPLE_CHOICE);
-            });
-
-            it('should add empty DnD question', () => {
-                const amountQuizQuestions = comp.quizExercise.quizQuestions?.length || 0;
-                comp.addDragAndDropQuestion();
-
-                expect(comp.quizExercise.quizQuestions).toHaveLength(amountQuizQuestions + 1);
-                expect(comp.quizExercise.quizQuestions?.last()?.type).toEqual(QuizQuestionType.DRAG_AND_DROP);
-            });
-
-            it('should add empty SA question', () => {
-                const amountQuizQuestions = comp.quizExercise.quizQuestions?.length || 0;
-                comp.addShortAnswerQuestion();
-
-                expect(comp.quizExercise.quizQuestions).toHaveLength(amountQuizQuestions + 1);
-                expect(comp.quizExercise.quizQuestions?.last()?.type).toEqual(QuizQuestionType.SHORT_ANSWER);
-            });
-        });
-
         describe('handle invalid dates when switching quiz mode', () => {
             // setup
             beforeEach(() => {
@@ -735,36 +693,6 @@ describe('QuizExercise Management Detail Component', () => {
                 comp.isInvalidDueDate = true;
                 comp.switchQuizMode();
                 expect(comp.isInvalidDueDate).toBeTrue();
-            });
-        });
-
-        describe('add questions without quizExercise', () => {
-            let initializeNewQuizExerciseStub: jest.SpyInstance;
-
-            beforeEach(() => {
-                initializeNewQuizExerciseStub = jest.spyOn(comp, 'initializeNewQuizExercise').mockImplementation();
-                initializeNewQuizExerciseStub.mockReturnValue(quizExercise);
-            });
-
-            it('should set quiz exercise to entity when adding MC question', () => {
-                expect(comp.quizExercise).toBeUndefined();
-                comp.addMultipleChoiceQuestion();
-                expect(initializeNewQuizExerciseStub).toHaveBeenCalledOnce();
-                expect(comp.quizExercise).toEqual(quizExercise);
-            });
-
-            it('should set quiz exercise to entity when adding Dnd question', () => {
-                expect(comp.quizExercise).toBeUndefined();
-                comp.addDragAndDropQuestion();
-                expect(initializeNewQuizExerciseStub).toHaveBeenCalledOnce();
-                expect(comp.quizExercise).toEqual(quizExercise);
-            });
-
-            it('should set quiz exercise to entity when adding SA question', () => {
-                expect(comp.quizExercise).toBeUndefined();
-                comp.addShortAnswerQuestion();
-                expect(initializeNewQuizExerciseStub).toHaveBeenCalledOnce();
-                expect(comp.quizExercise).toEqual(quizExercise);
             });
         });
 
