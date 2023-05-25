@@ -12,7 +12,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
-public class CourseTest {
+class CourseTest {
 
     private static Stream<Arguments> validateOnlineCourseAndEnrollmentEnabledProvider() {
         Course course1 = new Course();
