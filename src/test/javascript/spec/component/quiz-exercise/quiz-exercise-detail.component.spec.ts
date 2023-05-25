@@ -46,17 +46,13 @@ describe('QuizExercise Management Detail Component', () => {
     let comp: QuizExerciseDetailComponent;
     let exerciseGroupService: ExerciseGroupService;
     let courseManagementService: CourseManagementService;
-    let examManagementService: ExamManagementService;
     let quizExerciseService: QuizExerciseService;
     let exerciseService: ExerciseService;
-    let fileUploaderService: FileUploaderService;
     let fixture: ComponentFixture<QuizExerciseDetailComponent>;
     let router: Router;
     let alertService: AlertService;
     let dragAndDropQuestionUtil: DragAndDropQuestionUtil;
     let shortAnswerQuestionUtil: ShortAnswerQuestionUtil;
-    let changeDetector: ChangeDetectorRef;
-    let modalService: NgbModal;
 
     const course: Course = { id: 123 } as Course;
     const quizExercise = new QuizExercise(course, undefined);
@@ -170,17 +166,13 @@ describe('QuizExercise Management Detail Component', () => {
         fixture = TestBed.createComponent(QuizExerciseDetailComponent);
         comp = fixture.componentInstance;
         courseManagementService = fixture.debugElement.injector.get(CourseManagementService);
-        examManagementService = fixture.debugElement.injector.get(ExamManagementService);
         quizExerciseService = fixture.debugElement.injector.get(QuizExerciseService);
         router = fixture.debugElement.injector.get(Router);
-        fileUploaderService = TestBed.inject(FileUploaderService);
         alertService = fixture.debugElement.injector.get(AlertService);
         dragAndDropQuestionUtil = fixture.debugElement.injector.get(DragAndDropQuestionUtil);
         shortAnswerQuestionUtil = fixture.debugElement.injector.get(ShortAnswerQuestionUtil);
-        changeDetector = fixture.debugElement.injector.get(ChangeDetectorRef);
         exerciseGroupService = fixture.debugElement.injector.get(ExerciseGroupService);
         exerciseService = fixture.debugElement.injector.get(ExerciseService);
-        modalService = fixture.debugElement.injector.get(NgbModal);
     };
 
     describe('onInit', () => {
