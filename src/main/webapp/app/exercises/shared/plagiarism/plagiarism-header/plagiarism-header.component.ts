@@ -47,7 +47,6 @@ export class PlagiarismHeaderComponent {
     }
 
     private askForConfirmationOfDenying(onConfirm: () => void) {
-        // change the status to dirty so that both buttons are disabled
         this.disableConfirmDenyButton = true;
 
         const modalRef = this.modalService.open(ConfirmAutofocusModalComponent, { keyboard: true, size: 'lg' });
@@ -62,7 +61,6 @@ export class PlagiarismHeaderComponent {
      * @param status the new status of the comparison
      */
     updatePlagiarismStatus(status: PlagiarismStatus) {
-        // change the status to dirty so that both buttons are disabled
         this.disableConfirmDenyButton = true;
         // store comparison in variable in case comparison changes while request is made
         const comparison = this.comparison;
