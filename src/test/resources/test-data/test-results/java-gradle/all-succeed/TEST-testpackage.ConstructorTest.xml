@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="testpackage.ConstructorTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2023-04-04T19:38:04" hostname="DE-ADN-4Q5Q8D3" time="0.016">
+  <properties/>
+  <testcase name="testConstructors[Policy]" classname="testpackage.ConstructorTest" time="0.016"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[[DEBUG] [Test worker] Validated build configuration regarding trusted package rules, 0 are missing.
+[INFO] [Test worker] Request install with ASC-Impl [testMethod=Optional.empty, executionPath=/home/kutsch/MA/Development/testing/base_repositories/tests-repository, whitelistedPaths=Optional[[PathRule["target" (STARTS_WITH) in WHITELIST; level READ]]], blacklistedPaths=[PathRule["target/test-classes" (STARTS_WITH) in BLACKLIST; level READ]], allowedLocalPorts=[], trustedPackages=[]]
+[INFO] [Test worker] Request uninstall
+[DEBUG] [Test worker] Validated build configuration regarding trusted package rules, 0 are missing.
+[INFO] [Test worker] Request install with ASC-Impl [testMethod=Optional[protected org.junit.jupiter.api.DynamicContainer testpackage.ConstructorTest.generateTestsForAllClasses() throws java.net.URISyntaxException], executionPath=/home/kutsch/MA/Development/testing/base_repositories/tests-repository, whitelistedPaths=Optional[[PathRule["target" (STARTS_WITH) in WHITELIST; level READ]]], blacklistedPaths=[PathRule["target/test-classes" (STARTS_WITH) in BLACKLIST; level READ]], allowedLocalPorts=[], trustedPackages=[]]
+[INFO] [Test worker] Request whitelisting: Thread[ajts-to-8,5,Test-Threadgroup] []
+[INFO] [Test worker] Thread whitelisted: Thread[ajts-to-8,5,Test-Threadgroup]
+[INFO] [Test worker] Request uninstall
+[DEBUG] [Test worker] Validated build configuration regarding trusted package rules, 0 are missing.
+[INFO] [Test worker] Request install with ASC-Impl [testMethod=Optional[protected org.junit.jupiter.api.DynamicContainer testpackage.ConstructorTest.generateTestsForAllClasses() throws java.net.URISyntaxException], executionPath=/home/kutsch/MA/Development/testing/base_repositories/tests-repository, whitelistedPaths=Optional[[PathRule["target" (STARTS_WITH) in WHITELIST; level READ]]], blacklistedPaths=[PathRule["target/test-classes" (STARTS_WITH) in BLACKLIST; level READ]], allowedLocalPorts=[], trustedPackages=[]]
+[INFO] [Test worker] Request whitelisting: Thread[ajts-to-9,5,Test-Threadgroup] []
+[INFO] [Test worker] Thread whitelisted: Thread[ajts-to-9,5,Test-Threadgroup]
+[INFO] [Test worker] Request uninstall
+]]></system-err>
+</testsuite>
