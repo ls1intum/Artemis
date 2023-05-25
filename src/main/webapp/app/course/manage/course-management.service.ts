@@ -25,9 +25,6 @@ import { CourseForDashboardDTO } from 'app/course/manage/course-for-dashboard-dt
 import { ScoresStorageService } from 'app/course/course-scores/scores-storage.service';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { ExerciseType, ScoresPerExerciseType } from 'app/entities/exercise.model';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
-import { AlertService } from 'app/core/util/alert.service';
 
 export type EntityResponseType = HttpResponse<Course>;
 export type EntityArrayResponseType = HttpResponse<Course[]>;
